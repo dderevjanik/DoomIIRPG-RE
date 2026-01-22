@@ -25,6 +25,7 @@
 #include "SDLGL.h"
 #include "Input.h"
 #include "GLES.h"
+#include "INIReader.h"
 
 Game::Game() {
 	std::memset(this, 0, sizeof(Game));
@@ -1910,150 +1911,198 @@ bool Game::loadWorldState(InputStream* IS) {
 	}
 }
 
+// Key binding action names for INI file
+static const char* keyBindingNames[KEY_MAPPIN_MAX] = {
+	"move_forward",
+	"move_backward",
+	"turn_left",
+	"turn_right",
+	"strafe_left",
+	"strafe_right",
+	"next_weapon",
+	"prev_weapon",
+	"action",
+	"pass_turn",
+	"automap",
+	"menu",
+	"items_info",
+	"drinks",
+	"pda",
+	"bot_discard"
+};
+
 void Game::saveConfig() {
 	Applet* app = CAppContainer::getInstance()->app;
 	SDLGL* sdlGL = CAppContainer::getInstance()->sdlGL;
-	OutputStream OS;
-	const char* name = this->GetSaveFile(Game::FILE_NAME_CONFIG, 0);
-	
-	if (OS.openFile(name, 1)) {
-		OS.writeInt(11);
-		OS.writeByte(this->difficulty);
-		OS.writeBoolean(app->sound->allowSounds);
-		OS.writeByte((uint8_t)app->sound->soundFxVolume);
-		OS.writeByte((uint8_t)app->sound->musicVolume);
-		OS.writeBoolean(app->canvas->vibrateEnabled);
-		OS.writeBoolean(app->player->enableHelp);
-		OS.writeInt(app->localization->defaultLanguage);
-		OS.writeInt(app->player->currentLevelDeaths);
-		OS.writeInt(app->player->totalDeaths);
-		OS.writeInt(app->canvas->animFrames);
-		OS.writeInt(app->canvas->m_controlLayout);
-		OS.writeInt(app->canvas->m_controlAlpha);
-		OS.writeBoolean(app->canvas->isFlipControls);
-		OS.writeInt(app->player->helpBitmask);
-		OS.writeInt(app->player->invHelpBitmask);
-		OS.writeInt(app->player->ammoHelpBitmask);
-		OS.writeInt(app->player->weaponHelpBitmask);
-		OS.writeInt(app->player->armorHelpBitmask);
-		for (int i = 0; i < 5; ++i) {
-			OS.writeInt(app->menuSystem->indexes[i * 2]);
-			OS.writeInt(app->menuSystem->indexes[i * 2 + 1]);
-		}
-		OS.writeBoolean(app->canvas->recentBriefSave);
-		OS.writeBoolean(this->hasSeenIntro);
-		for (int j = 0; j < 10; ++j) {
-			OS.writeShort(this->numLevelLoads[j]);
-		}
-		OS.writeInt(this->totalPlayTime += (app->upTimeMs - this->lastSaveTime) / 1000);
-		OS.writeInt(app->player->currentGrades);
-		OS.writeInt(app->player->bestGrades);
-		this->lastSaveTime = app->upTimeMs;
+	INIReader ini;
 
-		// [GEC] Port Configurations
-		OS.writeInt(sdlGL->windowMode);
-		OS.writeBoolean(sdlGL->vSync);
-		OS.writeInt(sdlGL->resolutionIndex);
-		OS.writeInt(gVibrationIntensity);
-		OS.writeInt(gDeadZone);
-		OS.writeBoolean(_glesObj->isInit);
+	// [General]
+	ini.setInt("General", "version", 11);
+	ini.setInt("General", "difficulty", this->difficulty);
+	ini.setInt("General", "language", app->localization->defaultLanguage);
 
-		for (int i = 0; i < KEY_MAPPIN_MAX; i++) {
-			for (int j = 0; j < KEYBINDS_MAX; j++) {
-				OS.writeInt(keyMapping[i].keyBinds[j]);
-			}
-		}
+	// [Sound]
+	ini.setBool("Sound", "enabled", app->sound->allowSounds);
+	ini.setInt("Sound", "fx_volume", app->sound->soundFxVolume);
+	ini.setInt("Sound", "music_volume", app->sound->musicVolume);
 
-		OS.writeInt(0xDEADBEEF);
-		OS.close();
+	// [Controls]
+	ini.setBool("Controls", "vibrate_enabled", app->canvas->vibrateEnabled);
+	ini.setInt("Controls", "vibration_intensity", gVibrationIntensity);
+	ini.setInt("Controls", "control_layout", app->canvas->m_controlLayout);
+	ini.setInt("Controls", "control_alpha", app->canvas->m_controlAlpha);
+	ini.setBool("Controls", "flip_controls", app->canvas->isFlipControls);
+	ini.setInt("Controls", "dead_zone", gDeadZone);
+
+	// [Display]
+	ini.setInt("Display", "window_mode", sdlGL->windowMode);
+	ini.setBool("Display", "vsync", sdlGL->vSync);
+	ini.setInt("Display", "resolution_index", sdlGL->resolutionIndex);
+	ini.setInt("Display", "anim_frames", app->canvas->animFrames);
+	ini.setBool("Display", "gles_init", _glesObj->isInit);
+
+	// [Help]
+	ini.setBool("Help", "enabled", app->player->enableHelp);
+	ini.setInt("Help", "help_bitmask", app->player->helpBitmask);
+	ini.setInt("Help", "inv_help_bitmask", app->player->invHelpBitmask);
+	ini.setInt("Help", "ammo_help_bitmask", app->player->ammoHelpBitmask);
+	ini.setInt("Help", "weapon_help_bitmask", app->player->weaponHelpBitmask);
+	ini.setInt("Help", "armor_help_bitmask", app->player->armorHelpBitmask);
+
+	// [Stats]
+	ini.setInt("Stats", "current_level_deaths", app->player->currentLevelDeaths);
+	ini.setInt("Stats", "total_deaths", app->player->totalDeaths);
+	this->totalPlayTime += (app->upTimeMs - this->lastSaveTime) / 1000;
+	ini.setInt("Stats", "total_play_time", this->totalPlayTime);
+	ini.setInt("Stats", "current_grades", app->player->currentGrades);
+	ini.setInt("Stats", "best_grades", app->player->bestGrades);
+	ini.setBool("Stats", "has_seen_intro", this->hasSeenIntro);
+	ini.setBool("Stats", "recent_brief_save", app->canvas->recentBriefSave);
+	this->lastSaveTime = app->upTimeMs;
+
+	// [LevelLoads]
+	for (int j = 0; j < 10; ++j) {
+		char key[16];
+		snprintf(key, sizeof(key), "level_%d", j);
+		ini.setInt("LevelLoads", key, this->numLevelLoads[j]);
 	}
-	else {
-		app->Error("I/O Error in saveConfig"); // ERR_SAVECONFIG
+
+	// [Menu]
+	for (int i = 0; i < 10; ++i) {
+		char key[16];
+		snprintf(key, sizeof(key), "index_%d", i);
+		ini.setInt("Menu", key, app->menuSystem->indexes[i]);
 	}
-	OS.~OutputStream();
+
+	// [KeyBindings]
+	for (int i = 0; i < KEY_MAPPIN_MAX; i++) {
+		ini.setIntArray("KeyBindings", keyBindingNames[i], keyMapping[i].keyBinds, KEYBINDS_MAX);
+	}
+
+	const char* name = this->getProfileSaveFileName("config.ini");
+	if (!ini.save(name)) {
+		app->Error("I/O Error in saveConfig");
+	}
 }
 
 void Game::loadConfig() {
 	Applet* app = CAppContainer::getInstance()->app;
 	SDLGL* sdlGL = CAppContainer::getInstance()->sdlGL;
-	InputStream IS;
-	const char* name = this->GetSaveFile(Game::FILE_NAME_CONFIG, 0);
+	INIReader ini;
 
-	if (IS.loadFile(name, LT_FILE)) {
-		if (IS.readInt() == 11) {
-			this->difficulty = IS.readByte();
-			app->sound->allowSounds = IS.readBoolean();
-			app->canvas->areSoundsAllowed = app->sound->allowSounds;
-			app->sound->soundFxVolume = IS.readByte();
-			app->sound->musicVolume = IS.readByte();
-			app->canvas->vibrateEnabled = IS.readBoolean();
-			app->player->enableHelp = IS.readBoolean();
-			int l = IS.readInt();
-			if (l != app->localization->defaultLanguage) {
-				app->localization->setLanguage(l);
-			}
-			app->player->currentLevelDeaths = IS.readInt();
-			app->player->totalDeaths = IS.readInt();
-			int animFrames = IS.readInt();
-			if (animFrames < 2) {
-				animFrames = 2;
-			}
-			else if (animFrames > 64) {
-				animFrames = 64;
-			}
-			app->canvas->setAnimFrames(animFrames);
-			app->canvas->m_controlLayout = IS.readInt();
-			if (app->canvas->m_controlLayout > 2) {
-				app->canvas->m_controlLayout = 0;
-			}
-			app->canvas->m_controlAlpha = IS.readInt();
-			app->canvas->isFlipControls = IS.readBoolean();
-			app->player->helpBitmask = IS.readInt();
-			app->player->invHelpBitmask = IS.readInt();
-			app->player->ammoHelpBitmask = IS.readInt();
-			app->player->weaponHelpBitmask = IS.readInt();
-			app->player->armorHelpBitmask = IS.readInt();
-			for (int i = 0; i < 5; ++i) {
-				app->menuSystem->indexes[i * 2] = IS.readInt();
-				app->menuSystem->indexes[i * 2 + 1] = IS.readInt();
-			}
-			app->canvas->recentBriefSave = IS.readBoolean();
-			this->hasSeenIntro = IS.readBoolean();
-			for (int j = 0; j < 10; ++j) {
-				this->numLevelLoads[j] = IS.readShort();
-			}
-			this->totalPlayTime = IS.readInt();
-			app->player->currentGrades = IS.readInt();
-			app->player->bestGrades = IS.readInt();
-			this->lastSaveTime = app->upTimeMs;
+	const char* name = this->getProfileSaveFileName("config.ini");
+	if (!ini.load(name)) {
+		// Config file doesn't exist, use defaults
+		return;
+	}
 
-			// [GEC] Port Configurations
-			sdlGL->windowMode = IS.readInt();
-			sdlGL->vSync = IS.readBoolean();
-			sdlGL->resolutionIndex = IS.readInt();
-			gVibrationIntensity = IS.readInt();
-			gDeadZone = IS.readInt();
-			_glesObj->isInit = IS.readBoolean();
+	// Check version
+	int version = ini.getInt("General", "version", 0);
+	if (version != 11) {
+		// Invalid or old version, use defaults
+		return;
+	}
 
-			for (int i = 0; i < KEY_MAPPIN_MAX; i++) {
-				for (int j = 0; j < KEYBINDS_MAX; j++) {
-					keyMapping[i].keyBinds[j] = IS.readInt();
-				}
-			}
+	// [General]
+	this->difficulty = ini.getInt("General", "difficulty", 1);
+	int lang = ini.getInt("General", "language", 0);
+	if (lang != app->localization->defaultLanguage) {
+		app->localization->setLanguage(lang);
+	}
 
-			SDL_memcpy(keyMappingTemp, keyMapping, sizeof(keyMapping));
+	// [Sound]
+	app->sound->allowSounds = ini.getBool("Sound", "enabled", true);
+	app->canvas->areSoundsAllowed = app->sound->allowSounds;
+	app->sound->soundFxVolume = ini.getInt("Sound", "fx_volume", 100);
+	app->sound->musicVolume = ini.getInt("Sound", "music_volume", 100);
 
-			if (IS.readInt() != 0xDEADBEEF) {
-				app->Error("Failed marker check in loadConfig()");
-			}
-			IS.close();
-			app->sound->updateVolume();
-		}
-		else {
-			IS.close();
+	// [Controls]
+	app->canvas->vibrateEnabled = ini.getBool("Controls", "vibrate_enabled", true);
+	gVibrationIntensity = ini.getInt("Controls", "vibration_intensity", 100);
+	app->canvas->m_controlLayout = ini.getInt("Controls", "control_layout", 0);
+	if (app->canvas->m_controlLayout > 2) {
+		app->canvas->m_controlLayout = 0;
+	}
+	app->canvas->m_controlAlpha = ini.getInt("Controls", "control_alpha", 255);
+	app->canvas->isFlipControls = ini.getBool("Controls", "flip_controls", false);
+	gDeadZone = ini.getInt("Controls", "dead_zone", 8000);
+
+	// [Display]
+	sdlGL->windowMode = ini.getInt("Display", "window_mode", 0);
+	sdlGL->vSync = ini.getBool("Display", "vsync", true);
+	sdlGL->resolutionIndex = ini.getInt("Display", "resolution_index", 0);
+	int animFrames = ini.getInt("Display", "anim_frames", 8);
+	if (animFrames < 2) {
+		animFrames = 2;
+	}
+	else if (animFrames > 64) {
+		animFrames = 64;
+	}
+	app->canvas->setAnimFrames(animFrames);
+	_glesObj->isInit = ini.getBool("Display", "gles_init", false);
+
+	// [Help]
+	app->player->enableHelp = ini.getBool("Help", "enabled", true);
+	app->player->helpBitmask = ini.getInt("Help", "help_bitmask", 0);
+	app->player->invHelpBitmask = ini.getInt("Help", "inv_help_bitmask", 0);
+	app->player->ammoHelpBitmask = ini.getInt("Help", "ammo_help_bitmask", 0);
+	app->player->weaponHelpBitmask = ini.getInt("Help", "weapon_help_bitmask", 0);
+	app->player->armorHelpBitmask = ini.getInt("Help", "armor_help_bitmask", 0);
+
+	// [Stats]
+	app->player->currentLevelDeaths = ini.getInt("Stats", "current_level_deaths", 0);
+	app->player->totalDeaths = ini.getInt("Stats", "total_deaths", 0);
+	this->totalPlayTime = ini.getInt("Stats", "total_play_time", 0);
+	app->player->currentGrades = ini.getInt("Stats", "current_grades", 0);
+	app->player->bestGrades = ini.getInt("Stats", "best_grades", 0);
+	this->hasSeenIntro = ini.getBool("Stats", "has_seen_intro", false);
+	app->canvas->recentBriefSave = ini.getBool("Stats", "recent_brief_save", false);
+	this->lastSaveTime = app->upTimeMs;
+
+	// [LevelLoads]
+	for (int j = 0; j < 10; ++j) {
+		char key[16];
+		snprintf(key, sizeof(key), "level_%d", j);
+		this->numLevelLoads[j] = ini.getInt("LevelLoads", key, 0);
+	}
+
+	// [Menu]
+	for (int i = 0; i < 10; ++i) {
+		char key[16];
+		snprintf(key, sizeof(key), "index_%d", i);
+		app->menuSystem->indexes[i] = ini.getInt("Menu", key, 0);
+	}
+
+	// [KeyBindings]
+	for (int i = 0; i < KEY_MAPPIN_MAX; i++) {
+		std::vector<int> binds = ini.getIntArray("KeyBindings", keyBindingNames[i], KEYBINDS_MAX, -1);
+		for (int j = 0; j < KEYBINDS_MAX; j++) {
+			keyMapping[i].keyBinds[j] = binds[j];
 		}
 	}
-	IS.~InputStream();
+
+	SDL_memcpy(keyMappingTemp, keyMapping, sizeof(keyMapping));
+	app->sound->updateVolume();
 }
 
 void Game::saveState(int lastMapID, int loadMapID, int viewX, int viewY, int viewAngle, int viewPitch, int prevX, int prevY, int saveX, int saveY, int saveZ, int saveAngle, int savePitch, int saveType) {
@@ -2223,14 +2272,13 @@ bool Game::loadState(int activeLoadType) {
 }
 
 bool Game::hasConfig() {
-	InputStream IS;
-	const char* name = this->GetSaveFile(Game::FILE_NAME_CONFIG, 0);
-	if (IS.loadFile(name, LT_FILE)) {
-		if (IS.readInt() == 11) {
+	INIReader ini;
+	const char* name = this->getProfileSaveFileName("config.ini");
+	if (ini.load(name)) {
+		if (ini.getInt("General", "version", 0) == 11) {
 			return true;
 		}
 	}
-	IS.~InputStream();
 	return false;
 }
 
@@ -2318,57 +2366,75 @@ void Game::removeState(bool b) {
 void Game::saveEmptyConfig() {
 	Applet* app = CAppContainer::getInstance()->app;
 	SDLGL* sdlGL = CAppContainer::getInstance()->sdlGL;
-	OutputStream OS;
-	const char* name = this->GetSaveFile(Game::FILE_NAME_CONFIG, 0);
+	INIReader ini;
 
-	if (OS.openFile(name, 1)) {
-		OS.writeInt(11);
-		OS.writeByte(1);
-		OS.writeBoolean(app->sound->allowSounds);
-		OS.writeByte((uint8_t)app->sound->soundFxVolume);
-		OS.writeByte((uint8_t)app->sound->musicVolume);
-		OS.writeBoolean(app->canvas->vibrateEnabled);
-		OS.writeBoolean(app->player->enableHelp);
-		OS.writeInt(app->localization->defaultLanguage);
-		OS.writeInt(0);
-		OS.writeInt(0);
-		OS.writeInt(app->canvas->animFrames);
-		OS.writeInt(app->canvas->m_controlLayout);
-		OS.writeInt(app->canvas->m_controlAlpha);
-		OS.writeBoolean(app->canvas->isFlipControls);
-		OS.writeInt(0);
-		OS.writeInt(0);
-		OS.writeInt(0);
-		OS.writeInt(0);
-		OS.writeInt(0);
-		for (int i = 0; i < 5; ++i) {
-			OS.writeInt(0);
-			OS.writeInt(0);
-		}
-		OS.writeBoolean(false);
-		OS.writeBoolean(this->hasSeenIntro);
+	// [General] - reset difficulty to 1, keep language
+	ini.setInt("General", "version", 11);
+	ini.setInt("General", "difficulty", 1);
+	ini.setInt("General", "language", app->localization->defaultLanguage);
 
-		for (int j = 0; j < 10; ++j) {
-			OS.writeShort(this->numLevelLoads[j]);
-		}
+	// [Sound] - keep current settings
+	ini.setBool("Sound", "enabled", app->sound->allowSounds);
+	ini.setInt("Sound", "fx_volume", app->sound->soundFxVolume);
+	ini.setInt("Sound", "music_volume", app->sound->musicVolume);
 
-		OS.writeInt(this->totalPlayTime += (app->upTimeMs - this->lastSaveTime) / 1000);
-		OS.writeInt(0);
-		OS.writeInt(0);
-		this->lastSaveTime = app->upTimeMs;
+	// [Controls] - keep current settings
+	ini.setBool("Controls", "vibrate_enabled", app->canvas->vibrateEnabled);
+	ini.setInt("Controls", "vibration_intensity", gVibrationIntensity);
+	ini.setInt("Controls", "control_layout", app->canvas->m_controlLayout);
+	ini.setInt("Controls", "control_alpha", app->canvas->m_controlAlpha);
+	ini.setBool("Controls", "flip_controls", app->canvas->isFlipControls);
+	ini.setInt("Controls", "dead_zone", gDeadZone);
 
-		// [GEC] Port Configurations
-		OS.writeInt(sdlGL->windowMode);
-		OS.writeBoolean(sdlGL->vSync);
-		OS.writeInt(sdlGL->resolutionIndex);
+	// [Display] - keep current settings
+	ini.setInt("Display", "window_mode", sdlGL->windowMode);
+	ini.setBool("Display", "vsync", sdlGL->vSync);
+	ini.setInt("Display", "resolution_index", sdlGL->resolutionIndex);
+	ini.setInt("Display", "anim_frames", app->canvas->animFrames);
+	ini.setBool("Display", "gles_init", _glesObj->isInit);
 
-		OS.writeInt(0xDEADBEEF);
-		OS.close();
+	// [Help] - reset bitmasks
+	ini.setBool("Help", "enabled", app->player->enableHelp);
+	ini.setInt("Help", "help_bitmask", 0);
+	ini.setInt("Help", "inv_help_bitmask", 0);
+	ini.setInt("Help", "ammo_help_bitmask", 0);
+	ini.setInt("Help", "weapon_help_bitmask", 0);
+	ini.setInt("Help", "armor_help_bitmask", 0);
+
+	// [Stats] - reset player stats but keep some data
+	ini.setInt("Stats", "current_level_deaths", 0);
+	ini.setInt("Stats", "total_deaths", 0);
+	this->totalPlayTime += (app->upTimeMs - this->lastSaveTime) / 1000;
+	ini.setInt("Stats", "total_play_time", this->totalPlayTime);
+	ini.setInt("Stats", "current_grades", 0);
+	ini.setInt("Stats", "best_grades", 0);
+	ini.setBool("Stats", "has_seen_intro", this->hasSeenIntro);
+	ini.setBool("Stats", "recent_brief_save", false);
+	this->lastSaveTime = app->upTimeMs;
+
+	// [LevelLoads] - keep level load counts
+	for (int j = 0; j < 10; ++j) {
+		char key[16];
+		snprintf(key, sizeof(key), "level_%d", j);
+		ini.setInt("LevelLoads", key, this->numLevelLoads[j]);
 	}
-	else {
+
+	// [Menu] - reset menu indexes
+	for (int i = 0; i < 10; ++i) {
+		char key[16];
+		snprintf(key, sizeof(key), "index_%d", i);
+		ini.setInt("Menu", key, 0);
+	}
+
+	// [KeyBindings] - keep current key mappings
+	for (int i = 0; i < KEY_MAPPIN_MAX; i++) {
+		ini.setIntArray("KeyBindings", keyBindingNames[i], keyMapping[i].keyBinds, KEYBINDS_MAX);
+	}
+
+	const char* name = this->getProfileSaveFileName("config.ini");
+	if (!ini.save(name)) {
 		app->Error("I/O Error in saveConfig");
 	}
-	OS.~OutputStream();
 }
 
 bool Game::canSnapMonsters() {
