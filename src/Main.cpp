@@ -96,7 +96,7 @@ void drawView(SDLGL *sdlGL) {
         lastTimems = CAppContainer::getInstance()->getTimeMS();
     }
 
-    SDL_GetWindowSize(sdlGL->window, &cx, &cy);
+    SDL_GL_GetDrawableSize(sdlGL->window, &cx, &cy);
     if (w != cx || h != cy) {
         w = cx; h = cy;
     }
