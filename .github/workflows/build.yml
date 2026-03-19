@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
 
       - name: Install dependencies
         run: |
@@ -23,10 +25,18 @@ jobs:
       - name: Build
         run: cmake --build build --parallel
 
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DoomIIRPG-linux
+          path: build/DoomIIRPG
+
   build-macos:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
 
       - name: Install dependencies
         run: brew install sdl2 openal-soft
@@ -37,17 +47,39 @@ jobs:
       - name: Build
         run: cmake --build build --parallel
 
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DoomIIRPG-macos
+          path: build/DoomIIRPG
+
   # build-windows:
   #   runs-on: windows-latest
   #   steps:
   #     - uses: actions/checkout@v4
+  #       with:
+  #         submodules: true
+
+  #     - name: Setup vcpkg cache
+  #       uses: actions/cache@v4
+  #       with:
+  #         path: |
+  #           ${{ env.VCPKG_INSTALLATION_ROOT }}/installed
+  #           ${{ env.VCPKG_INSTALLATION_ROOT }}/packages
+  #         key: vcpkg-windows-x64-${{ hashFiles('vcpkg.json') }}
+  #         restore-keys: vcpkg-windows-x64-
 
   #     - name: Install dependencies
-  #       run: |
-  #         vcpkg install sdl2:x64-windows zlib:x64-windows openal-soft:x64-windows
+  #       run: vcpkg install --triplet x64-windows
 
   #     - name: Configure
   #       run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
 
   #     - name: Build
   #       run: cmake --build build --config Release --parallel
+
+  #     - name: Upload artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: DoomIIRPG-windows
+  #         path: build/Release/DoomIIRPG.exe
