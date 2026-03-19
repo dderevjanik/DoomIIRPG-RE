@@ -18,7 +18,6 @@
 #include "MenuSystem.h"
 #include "Player.h"
 #include "Sound.h"
-#include "Combat.h"
 #include "Hud.h"
 #include "EntityDef.h"
 #include "ParticleSystem.h"
