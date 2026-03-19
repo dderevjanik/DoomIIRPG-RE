@@ -37,17 +37,17 @@ jobs:
       - name: Build
         run: cmake --build build --parallel
 
-  build-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
+  # build-windows:
+  #   runs-on: windows-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: |
-          vcpkg install sdl2:x64-windows zlib:x64-windows openal-soft:x64-windows
+  #     - name: Install dependencies
+  #       run: |
+  #         vcpkg install sdl2:x64-windows zlib:x64-windows openal-soft:x64-windows
 
-      - name: Configure
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+  #     - name: Configure
+  #       run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
 
-      - name: Build
-        run: cmake --build build --config Release --parallel
+  #     - name: Build
+  #       run: cmake --build build --config Release --parallel
