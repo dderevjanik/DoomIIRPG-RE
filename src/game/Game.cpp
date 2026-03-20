@@ -4057,18 +4057,19 @@ char* Game::getProfileSaveFileName(const char* name) {
 	if (name != nullptr) {
 		// Ensure save directory exists
 		struct stat sb;
-		if (stat(dir, &sb) != 0) {
+		const char* saveDir = getSaveDir().c_str();
+		if (stat(saveDir, &sb) != 0) {
 #ifdef _WIN32
-			_mkdir(dir);
+			_mkdir(saveDir);
 #else
-			mkdir(dir, 0755);
+			mkdir(saveDir, 0755);
 #endif
 		}
 
-		int len1 = std::strlen(dir);
+		int len1 = std::strlen(saveDir);
 		int len2 = std::strlen(name);
 		char* namePath = new char[len1 + len2 + 200];
-		std::strcpy(namePath, dir);
+		std::strcpy(namePath, saveDir);
 		std::strcat(namePath, "/");
 		std::strcat(namePath, name);
 		return namePath;

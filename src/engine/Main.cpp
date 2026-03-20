@@ -10,6 +10,7 @@
 #include "SDLGL.h"
 #include "ZipFile.h"
 #include "VFS.h"
+#include "INIReader.h"
 
 #include "CAppContainer.h"
 #include "App.h"
@@ -17,6 +18,7 @@
 #include "Resource.h"
 #include "Render.h"
 #include "GLES.h"
+#include "JavaStream.h"
 
 #include "Canvas.h"
 #include "Graphics.h"
@@ -75,6 +77,25 @@ int main(int argc, char* args[]) {
 		printf("Working directory: %s\n", gameDir);
 	}
 
+	// Load game.ini early (before VFS) for game name, save dir, and IPA prefix
+	{
+		INIReader gameIni;
+		if (gameIni.load("game.ini")) {
+			GameConfig& gc = CAppContainer::getInstance()->gameConfig;
+			gc.name = gameIni.getString("Game", "name", gc.name.c_str());
+			gc.windowTitle = gameIni.getString("Game", "window_title", gc.name.c_str());
+			gc.saveDir = gameIni.getString("Game", "save_dir", gc.saveDir.c_str());
+			gc.ipaPrefix = gameIni.getString("Game", "ipa_prefix", gc.ipaPrefix.c_str());
+			gc.entryMap = gameIni.getString("Game", "entry_map", gc.entryMap.c_str());
+			printf("Game: %s (save: %s)\n", gc.name.c_str(), gc.saveDir.c_str());
+		}
+	}
+
+	const GameConfig& gc = CAppContainer::getInstance()->gameConfig;
+
+	// Apply save directory from game config
+	setSaveDir(gc.saveDir);
+
 	ZipFile zipFile;
 	zipFile.openZipFile(ipaPath);
 
@@ -84,7 +105,7 @@ int main(int argc, char* args[]) {
 	// Mount basedata for shared/fallback assets
 	vfs.mountDir("basedata", 100);
 	// Mount the .ipa zip with the internal package prefix
-	vfs.mountZip(&zipFile, "Payload/Doom2rpg.app/Packages/", 0);
+	vfs.mountZip(&zipFile, gc.ipaPrefix.c_str(), 0);
 
 	SDLGL sdlGL;
 	sdlGL.Initialize();

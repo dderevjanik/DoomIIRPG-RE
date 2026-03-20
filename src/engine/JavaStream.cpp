@@ -7,30 +7,37 @@
 #include "ZipFile.h"
 #include "VFS.h"
 
-namespace {
-    template<typename T>
-    T readData(const uint8_t* data, uint32_t& cursor)
-    {
-        T value;
-        std::memcpy(&value, data, sizeof(T));
-        cursor += sizeof(T);
-        return value;
-    }
+// Save directory (defaults to "Doom2rpg.app", overridden from GameConfig at startup)
+static std::string s_saveDir = "Doom2rpg.app";
 
-    template<typename T>
-    void writeData(T data, uint8_t* stream, uint32_t& cursor)
-    {
-        std::memcpy(stream, &data, sizeof(T));
-        cursor += sizeof(T);
-    }
+const std::string& getSaveDir() {
+	return s_saveDir;
 }
+
+void setSaveDir(const std::string& dir) {
+	s_saveDir = dir;
+}
+
+namespace {
+template <typename T> T readData(const uint8_t* data, uint32_t& cursor) {
+	T value;
+	std::memcpy(&value, data, sizeof(T));
+	cursor += sizeof(T);
+	return value;
+}
+
+template <typename T> void writeData(T data, uint8_t* stream, uint32_t& cursor) {
+	std::memcpy(stream, &data, sizeof(T));
+	cursor += sizeof(T);
+}
+} // namespace
 
 // ------------------
 // InputStream Class
 // ------------------
 
 InputStream::InputStream() {
-	//printf("InputStream::init\n");
+	// printf("InputStream::init\n");
 	this->data = nullptr;
 	this->field_0x4 = 0;
 	this->cursor = 0;
@@ -51,21 +58,19 @@ InputStream::~InputStream() {
 	}
 }
 
-void InputStream::offsetCursor(int offset)
-{
-    this->cursor += offset;
+void InputStream::offsetCursor(int offset) {
+	this->cursor += offset;
 }
 
 const uint8_t* InputStream::getData() {
-    return this->data;
+	return this->data;
 }
 
 int InputStream::getFileSize() {
-    return this->fileSize;
+	return this->fileSize;
 }
 
-bool InputStream::loadResource(const char* fileName)
-{
+bool InputStream::loadResource(const char* fileName) {
 	return loadFile(fileName, LT_RESOURCE);
 }
 
@@ -79,17 +84,15 @@ bool InputStream::loadFile(const char* fileName, int loadType) {
 		if (this->data) {
 			return true;
 		}
-	}
-	else if (loadType == LT_SOUND_RESOURCE) { // [GEC]
+	} else if (loadType == LT_SOUND_RESOURCE) { // [GEC]
 		VFS* vfs = CAppContainer::getInstance()->vfs;
 		std::snprintf(namePath, sizeof(namePath), "sounds2/%s", fileName);
 		this->data = vfs->readFile(namePath, &this->fileSize);
 		if (this->data) {
 			return true;
 		}
-	}
-	else if (loadType == LT_FILE) {
-		std::strcpy(namePath, dir);
+	} else if (loadType == LT_FILE) {
+		std::strcpy(namePath, getSaveDir().c_str());
 		std::strcat(namePath, "/");
 		std::strcat(namePath, fileName);
 
@@ -103,19 +106,17 @@ bool InputStream::loadFile(const char* fileName, int loadType) {
 			std::fread(this->data, sizeof(uint8_t), this->fileSize, this->file);
 
 			if (std::ferror(this->file)) {
-				CAppContainer::getInstance()->app->Error( "Error Reading File!\n");
+				CAppContainer::getInstance()->app->Error("Error Reading File!\n");
 				return false;
 			}
 
 			std::fclose(this->file);
 			this->file = nullptr;
 			return true;
+		} else {
+			// CAppContainer::getInstance()->app->Error("Error Openeing File: %s\n", namePath);
 		}
-		else {
-			//CAppContainer::getInstance()->app->Error("Error Openeing File: %s\n", namePath);
-		}
-	}
-	else {
+	} else {
 		CAppContainer::getInstance()->app->Error("File does not exist\n");
 	}
 
@@ -130,37 +131,31 @@ void InputStream::close() {
 }
 
 uint8_t* InputStream::getTop() {
-    return &this->data[this->cursor];
+	return &this->data[this->cursor];
 };
 
-int InputStream::readInt()
-{
-    return readData<int32_t>(this->getTop(), this->cursor);
+int InputStream::readInt() {
+	return readData<int32_t>(this->getTop(), this->cursor);
 }
 
-int InputStream::readShort()
-{
-    return readData<int16_t>(this->getTop(), this->cursor);
+int InputStream::readShort() {
+	return readData<int16_t>(this->getTop(), this->cursor);
 }
 
-bool InputStream::readBoolean()
-{
-    return readData<uint8_t>(this->getTop(), this->cursor) != 0;
+bool InputStream::readBoolean() {
+	return readData<uint8_t>(this->getTop(), this->cursor) != 0;
 }
 
-uint8_t InputStream::readByte()
-{
-    return readData<uint8_t>(this->getTop(), this->cursor);
+uint8_t InputStream::readByte() {
+	return readData<uint8_t>(this->getTop(), this->cursor);
 }
 
-uint8_t InputStream::readUnsignedByte()
-{
-    return readData<uint8_t>(this->getTop(), this->cursor);
+uint8_t InputStream::readUnsignedByte() {
+	return readData<uint8_t>(this->getTop(), this->cursor);
 }
 
-int InputStream::readSignedByte()
-{
-    return (int)readData<int8_t>(this->getTop(), this->cursor);
+int InputStream::readSignedByte() {
+	return (int)readData<int8_t>(this->getTop(), this->cursor);
 }
 
 void InputStream::read(uint8_t* dest, int off, int size) {
@@ -173,17 +168,17 @@ void InputStream::read(uint8_t* dest, int off, int size) {
 	}
 }
 
-
 // -------------------
 // OutputStream Class
 // -------------------
 
 OutputStream::OutputStream() {
-	//printf("OutputStream::init\n");
+	// printf("OutputStream::init\n");
 	this->buffer = nullptr;
 	this->writeBuff = nullptr;
 	this->file = nullptr;
-	this->App = CAppContainer::getInstance()->app;;
+	this->App = CAppContainer::getInstance()->app;
+	;
 	this->field_0x24_ = -1;
 	this->written = 0;
 	this->flushCount = 0;
@@ -211,21 +206,21 @@ int OutputStream::openFile(const char* fileName, int openMode) {
 	char namePath[2060];
 
 	struct stat sb;
-	if (stat(dir, &sb)) {
+	if (stat(getSaveDir().c_str(), &sb)) {
 		char command[64];
 		std::strcpy(command, "mkdir ");
 		std::strcat(command, "\"");
-		std::strcat(command, dir);
+		std::strcat(command, getSaveDir().c_str());
 		std::strcat(command, "\"");
-		//printf("command %s\n", command);
+		// printf("command %s\n", command);
 		std::system(command);
 	}
 
-	std::strcpy(namePath, dir);
+	std::strcpy(namePath, getSaveDir().c_str());
 	std::strcat(namePath, "/");
 	std::strcat(namePath, fileName);
 
-	//printf("output file: %s\n", namePath);
+	// printf("output file: %s\n", namePath);
 	this->buffer = (uint8_t*)std::malloc(512);
 	std::memset(this->buffer, 0, 512);
 
@@ -239,19 +234,18 @@ int OutputStream::openFile(const char* fileName, int openMode) {
 		return 1;
 	}
 
-	switch (openMode)
-	{
-	case 1:
-		this->file = std::fopen(namePath, "wb");
-		break;
-	case 2:
-		this->file = std::fopen(namePath, "rb");
-		break;
-	case 3:
-		this->file = std::fopen(namePath, "w+b");
-		break;
-	default:
-		return 0;
+	switch (openMode) {
+		case 1:
+			this->file = std::fopen(namePath, "wb");
+			break;
+		case 2:
+			this->file = std::fopen(namePath, "rb");
+			break;
+		case 3:
+			this->file = std::fopen(namePath, "w+b");
+			break;
+		default:
+			return 0;
 	}
 
 	if (this->file != nullptr) {
@@ -265,23 +259,20 @@ int OutputStream::openFile(const char* fileName, int openMode) {
 	return 0;
 }
 
-uint8_t* OutputStream::getTop()
-{
-    return &this->buffer[this->written];
+uint8_t* OutputStream::getTop() {
+	return &this->buffer[this->written];
 }
 
-bool OutputStream::canWrite(int typeSizeof)
-{
-    if ((256U - this->written) < typeSizeof) {
-        if (this->flush() == 0) {
-            return false;
-        }
-    }
-    return true;
+bool OutputStream::canWrite(int typeSizeof) {
+	if ((256U - this->written) < typeSizeof) {
+		if (this->flush() == 0) {
+			return false;
+		}
+	}
+	return true;
 }
 
-void OutputStream::close()
-{
+void OutputStream::close() {
 	this->flush();
 	if (this->file != nullptr) {
 		std::fclose(this->file);
@@ -294,8 +285,7 @@ void OutputStream::close()
 	}
 }
 
-int OutputStream::flush()
-{
+int OutputStream::flush() {
 	if (this->written == 0) {
 		return 1;
 	}
@@ -312,43 +302,38 @@ int OutputStream::flush()
 	return 1;
 }
 
-void OutputStream::writeInt(int i)
-{
-    if(!this->canWrite(sizeof(i))) {
-        return;
-    }
-    
-    writeData(i, this->getTop(), this->written);
+void OutputStream::writeInt(int i) {
+	if (!this->canWrite(sizeof(i))) {
+		return;
+	}
+
+	writeData(i, this->getTop(), this->written);
 }
 
-void OutputStream::writeShort(int16_t i)
-{
-    if(!this->canWrite(sizeof(i))) {
-        return;
-    }
+void OutputStream::writeShort(int16_t i) {
+	if (!this->canWrite(sizeof(i))) {
+		return;
+	}
 
-    writeData(i, this->getTop(), this->written);
+	writeData(i, this->getTop(), this->written);
 }
 
-void OutputStream::writeByte(uint8_t i)
-{
-    if(!this->canWrite(sizeof(i))) {
-        return;
-    }
+void OutputStream::writeByte(uint8_t i) {
+	if (!this->canWrite(sizeof(i))) {
+		return;
+	}
 
-    writeData(i, this->getTop(), this->written);
+	writeData(i, this->getTop(), this->written);
 }
 
-void OutputStream::writeBoolean(bool b)
-{
-    if(!this->canWrite(sizeof(uint8_t))) {
-        return;
-    }
-    writeData((uint8_t)b, this->getTop(), this->written);
+void OutputStream::writeBoolean(bool b) {
+	if (!this->canWrite(sizeof(uint8_t))) {
+		return;
+	}
+	writeData((uint8_t)b, this->getTop(), this->written);
 }
 
-void OutputStream::write(uint8_t* buff, int off, int size)
-{
+void OutputStream::write(uint8_t* buff, int off, int size) {
 	const int& _written = this->written;
 	if ((uint32_t)(_written + size) >= 256) {
 		int count = 256 - _written;

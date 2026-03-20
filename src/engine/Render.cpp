@@ -3519,14 +3519,13 @@ void Render::renderFearEyes(Entity* entity, int frame, int x, int y, int z, int 
 		return;
 	}
 
+	const EntityDef::FearEyeData& eyes = entity->def->fearEyes;
+
 	int eyeZ = 16;
-	int eyeL = -1;
-	int eyeR = -1;
 	if (anim == 0) {
 		int n10 = app->time + entity->getSprite() * 1337;
 		int n11;
-		if (eSubType == Enums::MONSTER_CACODEMON || eSubType == Enums::MONSTER_SENTINEL ||
-		    eSubType == Enums::MONSTER_LOST_SOUL) {
+		if (entity->def->hasRenderFlag(EntityDef::RFLAG_FLOATER)) {
 			n11 = (n10 / 512 & 0x1) << 4;
 		} else {
 			n11 = (n10 / 1024 & 0x1) * 26;
@@ -3536,73 +3535,22 @@ void Render::renderFearEyes(Entity* entity, int frame, int x, int y, int z, int 
 		}
 		eyeZ += n11;
 	}
-	if (eSubType == Enums::MONSTER_LOST_SOUL) {
-		eyeZ += 192;
-	} else if (eSubType == Enums::MONSTER_REVENANT) {
-		eyeZ += ((anim == 0) ? 12 : 10) << 4;
-	} else if (anim == 0 && eSubType == Enums::MONSTER_ARCH_VILE) {
-		eyeZ += 48;
+
+	// Per-monster Z adjustments from data
+	eyeZ += eyes.zAlwaysPre;
+	if (anim == 0) {
+		eyeZ += eyes.zIdlePre;
 	}
-	switch (eSubType) {
-		case Enums::MONSTER_ARCH_VILE: {
-			eyeL = -3;
-			eyeR = 3;
-			eyeZ += 403;
-			break;
-		}
-		case Enums::MONSTER_SAW_GOBLIN: {
-			eyeL = -3;
-			eyeR = 3;
-			eyeZ += 388;
-			break;
-		}
-		case Enums::MONSTER_IMP: {
-			eyeL = -3; // old eyeL = -3;
-			eyeR = 3;
-			eyeZ += 294;
-			break;
-		}
-		case Enums::MONSTER_LOST_SOUL: {
-			eyeL = -4; // old eyeL = -6;
-			eyeR = 4;
-			eyeZ -= 192;
-			break;
-		}
-		case Enums::MONSTER_MANCUBUS: {
-			eyeL = -3;
-			eyeR = 3;
-			eyeZ += 280;
-			break;
-		}
-		case Enums::MONSTER_PINKY: {
-			eyeL = -5;
-			eyeR = 5;   // eyeR = 4;
-			eyeZ += 35; // eyeZ += 45;
-			break;
-		}
-		case Enums::MONSTER_CACODEMON: {
-			eyeZ += 32;
-			eyeL = 0;
-			eyeR = -1;
-			break;
-		}
-		case Enums::MONSTER_REVENANT: {
-			if (flipH) { // Old line code, wrong -> if (app->canvas->loadMapID == 8) {
-				eyeL = -5;
-				eyeR = 2;
-			} else {
-				eyeL = -2;
-				eyeR = 5;
-			}
-			eyeZ += 324;
-			break;
-		}
-		case Enums::MONSTER_SENTINEL: {
-			eyeL = -1;
-			eyeR = 4;
-			eyeZ += 274;
-			break;
-		}
+	eyeZ += eyes.zAdd;
+
+	// Eye lateral positions from data
+	int eyeL = eyes.eyeL;
+	int eyeR = eyes.eyeR;
+
+	// Flip-dependent overrides (e.g. Revenant asymmetry)
+	if (flipH && eyes.eyeLFlip != -128) {
+		eyeL = eyes.eyeLFlip;
+		eyeR = eyes.eyeRFlip;
 	}
 	if (flipH) {
 		int tmp = eyeL;
@@ -3614,7 +3562,7 @@ void Render::renderFearEyes(Entity* entity, int frame, int x, int y, int z, int 
 	int scaleEyeZ = eyeZ * scaleFactor / 65536;
 	this->renderSprite(x + (scaleEyeL * this->viewRightStepX >> 6), y + (scaleEyeL * this->viewRightStepY >> 6),
 	                   z + scaleEyeZ, 251, 0, 0, 0, scaleFactor, 0);
-	if (eSubType != Enums::MONSTER_CACODEMON) {
+	if (!eyes.singleEye) {
 		this->renderSprite(x + (scaleEyeR * this->viewRightStepX >> 6), y + (scaleEyeR * this->viewRightStepY >> 6),
 		                   z + scaleEyeZ, 251, 0, 0, 0, scaleFactor, 0);
 	}
@@ -3649,6 +3597,12 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 	int n12 = 0;
 	int n13;
 	int min;
+
+	// Look up body part offsets from EntityDef
+	EntityDef* bpDef = app->entityDefManager->lookup(tileNum);
+	static const EntityDef::BodyPartData defaultBody{};
+	const EntityDef::BodyPartData& bp = bpDef ? bpDef->bodyParts : defaultBody;
+
 	if ((entity->monster != nullptr && (entity->monster->flags & 0x4000) != 0x0) || this->isNPC(tileNum)) {
 		n13 = z;
 		min = 0;
@@ -3682,27 +3636,8 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 			// Legs
 			this->renderSprite(x, y, z, tileNum, n12, flags, renderMode, scaleFactor, renderFlags);
 
-			if (this->isRevenant(tileNum) && anim == Enums::MANIM_IDLE) {
-				n15 = -30;
-			}
-
-			if ((tileNum == Enums::TILENUM_NPC_RILEY_OCONNOR) || (tileNum == Enums::TILENUM_NPC_CIVILIAN2) ||
-			    (tileNum == Enums::TILENUM_NPC_SCIENTIST)) {
-				if (anim == Enums::MANIM_IDLE) {
-					n15 = -18;
-				}
-			}
-
-			if (this->isArchVile(tileNum) && anim == Enums::MANIM_IDLE) {
-				n15 = -36;
-			}
-
-			if (tileNum == Enums::TILENUM_BOSS_CYBERDEMON && anim == Enums::MANIM_IDLE) { // [GEC]
-				n16 = -15;
-			}
-
-			if (tileNum == Enums::TILENUM_BOSS_CYBERDEMON) {
-				n15 = -30;
+			if (anim == Enums::MANIM_IDLE) {
+				n15 = bp.idleTorsoZ;
 			}
 
 			// Torso
@@ -3710,21 +3645,15 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 			                   (z + n21) + n15, tileNum, n12 + 2, flags, renderMode, scaleFactor, renderFlags);
 
 			// Head
-			if ((tileNum == Enums::TILENUM_MONSTER_SENTRY_BOT) || (tileNum == Enums::TILENUM_MONSTER_RED_SENTRY_BOT)) {
+			if (bp.sentryHeadFlip) {
 				flags ^= (((app->time + n * 1337) / 2048) & 0x1) << 17; // Flip Head
 				this->renderSprite(x + (n17 * this->viewRightStepX >> 6), y + (n17 * this->viewRightStepY >> 6),
 				                   (z + n21) + n16, tileNum, n12 + 3, flags, renderMode, scaleFactor, renderFlags);
 				break;
 			}
-			if (n19 != 0 && (!this->isPinky(tileNum) || anim != Enums::MANIM_IDLE_BACK)) {
-				if (this->isRevenant(tileNum) && anim == Enums::MANIM_IDLE) {
-					n16 = 140;
-				} else if (this->isArchVile(tileNum) && anim == Enums::MANIM_IDLE) {
-					n16 = 109;
-				} else if ((tileNum == Enums::TILENUM_NPC_RILEY_OCONNOR) && anim == Enums::MANIM_IDLE) {
-					n16 = -32;
-				} else if (this->isRevenant(tileNum) && anim == Enums::MANIM_IDLE) {
-					n16 = 8;
+			if (n19 != 0 && (!bp.noHeadOnBack || anim != Enums::MANIM_IDLE_BACK)) {
+				if (anim == Enums::MANIM_IDLE) {
+					n16 = bp.idleHeadZ;
 				}
 				this->renderSprite(x + (n17 * this->viewRightStepX >> 6), y + (n17 * this->viewRightStepY >> 6),
 				                   (z + n21) + n16, tileNum, n12 + 3, flags, renderMode, scaleFactor, renderFlags);
@@ -3749,27 +3678,18 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 			x += n23 * this->viewRightStepX >> 6;
 			y += n23 * this->viewRightStepY >> 6;
 
-			if (this->isArchVile(tileNum)) {
-				n15 = -36;
-			}
+			n15 = bp.walkTorsoZ;
 			// Torso
-			this->renderSprite(
-			    x + (n17 * this->viewRightStepX >> 6), y + (n17 * this->viewRightStepY >> 6),
-			    z + n15 + ((frame & 0x1) << 4), tileNum, n12 + 2,
-			    ((this->isNPC(tileNum) && tileNum != Enums::TILENUM_NPC_SARGE) || this->isArchVile(tileNum)) ? n22
-			                                                                                                 : flags,
-			    renderMode, scaleFactor, renderFlags);
+			this->renderSprite(x + (n17 * this->viewRightStepX >> 6), y + (n17 * this->viewRightStepY >> 6),
+			                   z + n15 + ((frame & 0x1) << 4), tileNum, n12 + 2, bp.flipTorsoWalk ? n22 : flags,
+			                   renderMode, scaleFactor, renderFlags);
 
 			// Head
-			if ((tileNum == Enums::TILENUM_MONSTER_SENTRY_BOT) || (tileNum == Enums::TILENUM_MONSTER_RED_SENTRY_BOT)) {
+			if (bp.sentryHeadFlip) {
 				flags ^= ((app->time + n * 1337) / 1024 & 0x1) << 17; // Flip Head
 			}
-			if (n19 != 0 && (!this->isPinky(tileNum) || anim != Enums::MANIM_WALK_BACK)) {
-				if (this->isRevenant(tileNum) && anim == Enums::MANIM_WALK_FRONT) {
-					n16 = 160;
-				} else if (this->isArchVile(tileNum)) {
-					n16 = 109;
-				}
+			if (n19 != 0 && (!bp.noHeadOnBack || anim != Enums::MANIM_WALK_BACK)) {
+				n16 = bp.walkHeadZ;
 				this->renderSprite(x + (n18 * this->viewRightStepX >> 6), y + (n18 * this->viewRightStepY >> 6),
 				                   z + n16 + ((frame & 0x1) << 4), tileNum, n12 + 3, flags, renderMode, scaleFactor,
 				                   renderFlags);
@@ -3781,7 +3701,7 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 		case Enums::MANIM_ATTACK2: {
 			int n24 = 0;
 			int n25 = flags;
-			if (this->isZombie(tileNum) && frame == 1) {
+			if (bp.noHeadOnAttack && frame == 1) { // Zombie-like: flip torso on frame 1
 				n25 ^= 0x20000;
 			}
 			int n26;
@@ -3796,7 +3716,7 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 				this->renderSprite(x, y, z, tileNum, n26, flags, renderMode, scaleFactor, renderFlags);
 				break;
 			}
-			if (this->isPinky(tileNum)) {
+			if (bp.noHeadOnBack) { // Pinky-type: unique attack path (legs, torso, head/attack)
 				int n27 = n26;
 				int n28 = 2;
 				this->renderSprite(x, y, z, tileNum, n24, flags ^ 0x20000, renderMode, scaleFactor, renderFlags);
@@ -3818,25 +3738,25 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 			this->renderSprite(x + ((n27 * this->viewRightStepX) >> 6), y + ((n27 * this->viewRightStepY) >> 6), z,
 			                   tileNum, n24, n25 ^ 0x20000, renderMode, scaleFactor, renderFlags);
 
-			if (this->isArchVile(tileNum)) {
+			// Attack torso Z offset from data
+			if (bp.attackTorsoZF0 != 0 || bp.attackTorsoZF1 != 0) {
 				if (frame == 0) {
-					n15 = 288;
+					n15 = bp.attackTorsoZF0;
+				} else if (frame == 1 && bp.attackTorsoZF1 != 0) {
+					n15 = bp.attackTorsoZF1;
 				}
-				n19 = 0;
-			} else if (this->isChainsawGoblin(tileNum)) {
-				if (frame == 0) {
-					n15 = 96;
-				} else if (frame == 1) {
-					n15 = -100;
+				if (bp.attackTorsoZF0 != 0 && bp.noHeadOnAttack) {
+					n19 = 0; // ArchVile-type: suppress head when attack torso used
 				}
-			} else if (this->isRevenant(tileNum) && (anim == Enums::MANIM_ATTACK2)) { //[GEC]
+			}
+			if (bp.attackRevAtk2TorsoZ != 0 && (anim == Enums::MANIM_ATTACK2)) {
 				if (frame == 0) {
-					n15 = 130;
+					n15 = bp.attackRevAtk2TorsoZ;
 				}
 			}
 
 			if (frame == 1 &&
-			    (!this->hasGunFlare(tileNum) || (this->isRevenant(tileNum) && anim == Enums::MANIM_ATTACK2))) {
+			    (!this->hasGunFlare(tileNum) || (bp.attackRevAtk2TorsoZ != 0 && anim == Enums::MANIM_ATTACK2))) {
 				++n26;
 			}
 			// Torso
@@ -3845,43 +3765,26 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 
 			bool b = (flags & 0x20000) != 0x0;
 
-			// [GEC] No muestra las cabezas para los siguientes sprites, ya que el torzo contine la cabeza incluida
-			// Mancubus
-			// Revenant
+			// Determine if head should render separately
 			bool renderHead = true;
-			{
-				if (this->isMancubus(tileNum)) {
-					renderHead = false;
-				}
-				if (this->isRevenant(tileNum) && (anim == Enums::MANIM_ATTACK2)) {
-					renderHead = false;
-				}
+			if (bp.noHeadOnMancAtk) {
+				renderHead = false;
+			}
+			if (bp.attackRevAtk2TorsoZ != 0 && (anim == Enums::MANIM_ATTACK2)) {
+				renderHead = false; // Merged torso+head in attack2 (Revenant)
 			}
 
-			if (n19 != 0 && !this->isZombie(tileNum) && !this->isImp(tileNum) && renderHead) {
+			if (n19 != 0 && !bp.noHeadOnAttack && renderHead) {
 				int n29 = 3;
-				if (this->isRevenant(tileNum)) {
-					n18 = 2;
-					n16 = 20; // [GEC]
-				} else if (this->isMancubus(tileNum)) {
-					n18 = 7;
-					n16 = -112;
-				} else if (this->isChainsawGoblin(tileNum)) {
-#if 0 // J2ME
-				if (frame == 0) {
-					n16 = 96;
-				}
-				else {
+				n18 = bp.attackHeadX;
+				n16 = bp.attackHeadZ;
+				if (this->isChainsawGoblin(tileNum)) {
+					// ChainsawGoblin has frame-dependent head offsets
 					n16 = 16;
-				}
-#else
-					n16 = 16;
-
-					if (frame == 0) { //[GEC]
+					if (frame == 0) {
 						n18 = 2;
 						n16 = 17;
 					}
-#endif
 				}
 				if (b) {
 					n18 = -n18;
@@ -3893,46 +3796,28 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 			}
 			if (frame == 1 && this->hasGunFlare(tileNum) &&
 			    (!this->isRevenant(tileNum) || anim != Enums::MANIM_ATTACK2)) {
+				EntityDef* flareDef = app->entityDefManager->lookup(tileNum);
+				static const EntityDef::GunFlareData defaultFlare{};
+				const EntityDef::GunFlareData& flare = flareDef ? flareDef->gunFlare : defaultFlare;
 				int n30 = 0;
 				int n31 = 0;
 				int n32 = 0;
-				if (this->isMancubus(tileNum)) {
-					int n33 = -24 * this->viewRightStepX >> 6;
-					int n34 = -24 * this->viewRightStepY >> 6;
-					int n35 = 160;
+				if (flare.dualFlare) {
+					// First flash (dual-flare monsters like Mancubus, Revenant)
+					int fx = flare.flash1X * this->viewRightStepX >> 6;
+					int fy = flare.flash1X * this->viewRightStepY >> 6;
 					if ((flags & 0x20000) != 0x0) {
-						n33 = -n33;
-						n34 = -n34;
+						fx = -fx;
+						fy = -fy;
 					}
-					// Flash
-					this->renderSprite(x + n33, y + n34, z + n35, tileNum, n26 + 1,
+					this->renderSprite(x + fx, y + fy, z + flare.flash1Z, tileNum, n26 + 1,
 					                   (app->player->totalMoves + app->combat->animLoopCount & 0x3) << 17, 4,
 					                   scaleFactor / 3, renderFlags);
-					n30 = (22 * this->viewRightStepX) >> 6;
-					n31 = (22 * this->viewRightStepY) >> 6;
-					n32 = 128;
-				} else if (this->isRevenant(tileNum)) {
-					int n36 = -9 * this->viewRightStepX >> 6;
-					int n37 = -9 * this->viewRightStepY >> 6;
-					int n38 = 736;
-					if ((flags & 0x20000) != 0x0) {
-						n36 = -n36;
-						n37 = -n37;
-					}
-					// Flash
-					this->renderSprite(x + n36, y + n37, z + n38, tileNum, n26 + 1,
-					                   (app->player->totalMoves + app->combat->animLoopCount & 0x3) << 17, 4,
-					                   scaleFactor / 3, renderFlags);
-					n30 = 15 * this->viewRightStepX >> 6;
-					n31 = 15 * this->viewRightStepY >> 6;
-					n32 = 736;
-				} else if (this->isSentryBot(tileNum)) {
-					n32 = -64;
-				} else if (tileNum == Enums::TILENUM_BOSS_CYBERDEMON) {
-					n30 = 14 * this->viewRightStepX >> 6;
-					n31 = 14 * this->viewRightStepY >> 6;
-					n32 = 352;
 				}
+				// Second (dual) or single flash position from data
+				n30 = flare.flash2X * this->viewRightStepX >> 6;
+				n31 = flare.flash2X * this->viewRightStepY >> 6;
+				n32 = flare.flash2Z;
 				if (b) {
 					n30 = -n30;
 					n31 = -n31;

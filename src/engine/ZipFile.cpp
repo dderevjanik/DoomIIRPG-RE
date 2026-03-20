@@ -5,12 +5,12 @@
 #include <SDL.h>
 #include "ZipFile.h"
 #include "SDLGL.h"
+#include "CAppContainer.h"
 
-#define MIN(a,b) (((a)<(b))?(a):(b))
-#define MAX(a,b) (((a)>(b))?(a):(b))
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
 
-void Error(const char* fmt, ...)
-{
+void Error(const char* fmt, ...) {
 	char errMsg[256];
 	va_list ap;
 	va_start(ap, fmt);
@@ -24,48 +24,42 @@ void Error(const char* fmt, ...)
 	printf("%s", errMsg);
 
 	const SDL_MessageBoxButtonData buttons[] = {
-		{ /* .flags, .buttonid, .text */        0, 0, "Ok" },
+	    {/* .flags, .buttonid, .text */ 0, 0, "Ok"},
 	};
-	const SDL_MessageBoxColorScheme colorScheme = {
-		{ /* .colors (.r, .g, .b) */
-			/* [SDL_MESSAGEBOX_COLOR_BACKGROUND] */
-			{ 255,   0,   0 },
-			/* [SDL_MESSAGEBOX_COLOR_TEXT] */
-			{   0, 255,   0 },
-			/* [SDL_MESSAGEBOX_COLOR_BUTTON_BORDER] */
-			{ 255, 255,   0 },
-			/* [SDL_MESSAGEBOX_COLOR_BUTTON_BACKGROUND] */
-			{   0,   0, 255 },
-			/* [SDL_MESSAGEBOX_COLOR_BUTTON_SELECTED] */
-			{ 255,   0, 255 }
-		}
-	};
+	const SDL_MessageBoxColorScheme colorScheme = {{/* .colors (.r, .g, .b) */
+	                                                /* [SDL_MESSAGEBOX_COLOR_BACKGROUND] */
+	                                                {255, 0, 0},
+	                                                /* [SDL_MESSAGEBOX_COLOR_TEXT] */
+	                                                {0, 255, 0},
+	                                                /* [SDL_MESSAGEBOX_COLOR_BUTTON_BORDER] */
+	                                                {255, 255, 0},
+	                                                /* [SDL_MESSAGEBOX_COLOR_BUTTON_BACKGROUND] */
+	                                                {0, 0, 255},
+	                                                /* [SDL_MESSAGEBOX_COLOR_BUTTON_SELECTED] */
+	                                                {255, 0, 255}}};
 	const SDL_MessageBoxData messageboxdata = {
-		SDL_MESSAGEBOX_ERROR, /* .flags */
-		NULL, /* .window */
-		"Doom II RPG Error", /* .title */
-		errMsg, /* .message */
-		SDL_arraysize(buttons), /* .numbuttons */
-		buttons, /* .buttons */
-		&colorScheme /* .colorScheme */
+	    SDL_MESSAGEBOX_ERROR,                                               /* .flags */
+	    NULL,                                                               /* .window */
+	    (CAppContainer::getInstance()->gameConfig.name + " Error").c_str(), /* .title */
+	    errMsg,                                                             /* .message */
+	    SDL_arraysize(buttons),                                             /* .numbuttons */
+	    buttons,                                                            /* .buttons */
+	    &colorScheme                                                        /* .colorScheme */
 	};
 
 	SDL_ShowMessageBox(&messageboxdata, NULL);
 	exit(0);
 }
 
-static void* zip_alloc(void* ctx, unsigned int items, unsigned int size)
-{
+static void* zip_alloc(void* ctx, unsigned int items, unsigned int size) {
 	return std::malloc(items * size);
 }
 
-static void zip_free(void* ctx, void* ptr)
-{
+static void zip_free(void* ctx, void* ptr) {
 	std::free(ptr);
 }
 
-static int16_t _ReadShort(FILE* fp)
-{
+static int16_t _ReadShort(FILE* fp) {
 	int16_t sData = 0;
 
 	if (fp) {
@@ -75,8 +69,7 @@ static int16_t _ReadShort(FILE* fp)
 	return SDL_SwapLE16(sData);
 }
 
-static int32_t _ReadInt(FILE* fp)
-{
+static int32_t _ReadInt(FILE* fp) {
 	int32_t iData = 0;
 
 	if (fp) {
@@ -90,8 +83,7 @@ ZipFile::ZipFile() {
 	std::memset(this, 0, sizeof(ZipFile));
 }
 
-ZipFile::~ZipFile() {
-}
+ZipFile::~ZipFile() {}
 
 void ZipFile::findAndReadZipDir(int startoffset) {
 	int sig, offset, count;
@@ -105,20 +97,19 @@ void ZipFile::findAndReadZipDir(int startoffset) {
 		Error("wrong zip end of central directory signature (0x%x)", sig);
 	}
 
-	_ReadShort(this->file); // this disk
-	_ReadShort(this->file); // start disk
-	_ReadShort(this->file); // entries in this disk
+	_ReadShort(this->file);         // this disk
+	_ReadShort(this->file);         // start disk
+	_ReadShort(this->file);         // entries in this disk
 	count = _ReadShort(this->file); // entries in central directory disk
-	_ReadInt(this->file); // size of central directory
-	offset = _ReadInt(this->file); // offset to central directory
+	_ReadInt(this->file);           // size of central directory
+	offset = _ReadInt(this->file);  // offset to central directory
 
 	this->entry = (zip_entry_t*)calloc(count, sizeof(zip_entry_t));
 	this->entry_count = count;
 
 	fseek(this->file, offset, SEEK_SET);
 
-	for (i = 0; i < count; i++)
-	{
+	for (i = 0; i < count; i++) {
 		zip_entry_t* entry = this->entry + i;
 
 		sig = _ReadInt(this->file);
@@ -126,21 +117,21 @@ void ZipFile::findAndReadZipDir(int startoffset) {
 			Error("wrong zip central directory signature (0x%x)", sig);
 		}
 
-		_ReadShort(this->file); // version made by
-		_ReadShort(this->file); // version to extract
-		_ReadShort(this->file); // general
-		_ReadShort(this->file); // method
-		_ReadShort(this->file); // last mod file time
-		_ReadShort(this->file); // last mod file date
-		_ReadInt(this->file); // crc-32
-		entry->csize = _ReadInt(this->file); // csize
-		entry->usize = _ReadInt(this->file); // usize
-		namesize = _ReadShort(this->file); // namesize
-		metasize = _ReadShort(this->file); // metasize
+		_ReadShort(this->file);               // version made by
+		_ReadShort(this->file);               // version to extract
+		_ReadShort(this->file);               // general
+		_ReadShort(this->file);               // method
+		_ReadShort(this->file);               // last mod file time
+		_ReadShort(this->file);               // last mod file date
+		_ReadInt(this->file);                 // crc-32
+		entry->csize = _ReadInt(this->file);  // csize
+		entry->usize = _ReadInt(this->file);  // usize
+		namesize = _ReadShort(this->file);    // namesize
+		metasize = _ReadShort(this->file);    // metasize
 		commentsize = _ReadShort(this->file); // commentsize
-		_ReadShort(this->file); // disk number start
-		_ReadShort(this->file); // int file atts
-		_ReadInt(this->file); // ext file atts
+		_ReadShort(this->file);               // disk number start
+		_ReadShort(this->file);               // int file atts
+		_ReadInt(this->file);                 // ext file atts
 		entry->offset = _ReadInt(this->file); // offset
 
 		entry->name = (char*)malloc(namesize + 1);
@@ -170,13 +161,11 @@ void ZipFile::openZipFile(const char* name) {
 	maxback = MIN(filesize, 0xFFFF + sizeof(buf));
 	back = MIN(maxback, sizeof(buf));
 
-	while (back < maxback)
-	{
+	while (back < maxback) {
 		fseek(this->file, filesize - back, SEEK_SET);
 		n = sizeof(buf);
 		fread(buf, sizeof(uint8_t), n, this->file);
-		for (i = n - 4; i > 0; i--)
-		{
+		for (i = n - 4; i > 0; i--) {
 			if (!std::memcmp(buf + i, "PK\5\6", 4)) {
 				findAndReadZipDir(filesize - back + i);
 				return;
@@ -208,8 +197,7 @@ uint8_t* ZipFile::readZipFileEntry(const char* name, int* sizep) {
 	uint8_t* cdata;
 	int code;
 
-	for (i = 0; i < this->entry_count; i++)
-	{
+	for (i = 0; i < this->entry_count; i++) {
 		zip_entry_t* entryTmp = this->entry + i;
 		if (!SDL_strcasecmp(name, entryTmp->name)) {
 			entry = this->entry + i;
@@ -228,34 +216,31 @@ uint8_t* ZipFile::readZipFileEntry(const char* name, int* sizep) {
 		Error("wrong zip local file signature (0x%x)", sig);
 	}
 
-	_ReadShort(this->file); // version
+	_ReadShort(this->file);           // version
 	general = _ReadShort(this->file); // general
 	if (general & ZIP_ENCRYPTED_FLAG) {
 		Error("zipfile content is encrypted");
 	}
 
-	method = _ReadShort(this->file); // method
-	_ReadShort(this->file); // file time
-	_ReadShort(this->file); // file date
-	_ReadInt(this->file); // crc-32
-	_ReadInt(this->file); // csize
-	_ReadInt(this->file); // usize
-	namelength = _ReadShort(this->file); // namelength
+	method = _ReadShort(this->file);      // method
+	_ReadShort(this->file);               // file time
+	_ReadShort(this->file);               // file date
+	_ReadInt(this->file);                 // crc-32
+	_ReadInt(this->file);                 // csize
+	_ReadInt(this->file);                 // usize
+	namelength = _ReadShort(this->file);  // namelength
 	extralength = _ReadShort(this->file); // extralength
 
 	fseek(this->file, namelength + extralength, SEEK_CUR);
 
-	cdata = (uint8_t*) malloc(entry->csize);
+	cdata = (uint8_t*)malloc(entry->csize);
 	fread(cdata, sizeof(uint8_t), entry->csize, this->file);
 
-	if (method == 0)
-	{
+	if (method == 0) {
 		*sizep = entry->usize;
 		return cdata;
-	}
-	else if (method == 8)
-	{
-		uint8_t* udata = (uint8_t*) malloc(entry->usize);
+	} else if (method == 8) {
+		uint8_t* udata = (uint8_t*)malloc(entry->usize);
 		z_stream stream;
 
 		std::memset(&stream, 0, sizeof stream);
@@ -288,8 +273,7 @@ uint8_t* ZipFile::readZipFileEntry(const char* name, int* sizep) {
 
 		*sizep = entry->usize;
 		return udata;
-	}
-	else {
+	} else {
 		Error("unknown zip method: %d", method);
 	}
 

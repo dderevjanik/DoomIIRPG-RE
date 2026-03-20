@@ -37,8 +37,7 @@ Applet::Applet() {
 	std::memset(this, 0, sizeof(Applet));
 }
 
-Applet::~Applet() {
-}
+Applet::~Applet() {}
 
 bool Applet::startup() {
 	printf("Applet::startup\n");
@@ -66,7 +65,7 @@ bool Applet::startup() {
 	this->field_0x428 = 0;
 
 	this->backBuffer = new IDIB;
-	this->backBuffer->pBmp =  new uint8_t[480 * 320 *2];
+	this->backBuffer->pBmp = new uint8_t[480 * 320 * 2];
 	std::memset(this->backBuffer->pBmp, 0, 480 * 320 * 2);
 	this->backBuffer->pRGB888 = nullptr;
 	this->backBuffer->pRGB565 = nullptr;
@@ -100,8 +99,8 @@ bool Applet::startup() {
 	this->comicBook = new ComicBook;
 
 	Applet::loadConfig();
-	//this->moreGames = getStartupVarBool("More_Games", false);
-	//this->systemFont = getStartupVarBool("System_Font", false);
+	// this->moreGames = getStartupVarBool("More_Games", false);
+	// this->systemFont = getStartupVarBool("System_Font", false);
 	int time = this->upTimeMs;
 	this->gameTime = this->upTimeMs;
 	this->startupMemory = Applet::MAXMEMORY;
@@ -142,7 +141,7 @@ bool Applet::startup() {
 												this->accelerationIndex = 0;
 												this->field_0x290 = false;
 												this->field_0x291 = '\0';
-												//this->accelStart();
+												// this->accelStart();
 												printf("**** Startup took %i ms\n", this->upTimeMs - time);
 												printf("**** Fragment size %i ms\n", 0);
 
@@ -162,12 +161,9 @@ bool Applet::startup() {
 	return false;
 }
 
-void Applet::loadConfig() {
+void Applet::loadConfig() {}
 
-}
-
-Image* Applet::createImage(InputStream* inputStream, bool isTransparentMask)
-{
+Image* Applet::createImage(InputStream* inputStream, bool isTransparentMask) {
 	Image* img;
 	int Width, Height, offBeg, BitsPerPixel, ColorsUsed, rgb, pitch;
 	img = (Image*)std::malloc(sizeof(Image));
@@ -178,22 +174,22 @@ Image* Applet::createImage(InputStream* inputStream, bool isTransparentMask)
 	img->piDIB->pRGB565 = nullptr;
 
 	// read header
-    inputStream->offsetCursor(10);
+	inputStream->offsetCursor(10);
 	offBeg = inputStream->readInt();
-    inputStream->offsetCursor(4);
+	inputStream->offsetCursor(4);
 	Width = inputStream->readInt();
 	Height = inputStream->readInt();
-    inputStream->offsetCursor(2);
+	inputStream->offsetCursor(2);
 	BitsPerPixel = inputStream->readShort();
-    inputStream->offsetCursor(16);
+	inputStream->offsetCursor(16);
 	ColorsUsed = inputStream->readInt();
-    inputStream->offsetCursor(4);
+	inputStream->offsetCursor(4);
 
-	//printf("offBeg %d\n", offBeg);
-	//printf("Width %d\n", Width);
-	//printf("Height %d\n", Height);
-	//printf("BitsPerPixel %d\n", BitsPerPixel);
-	//printf("ColorsUsed %d\n", ColorsUsed);
+	// printf("offBeg %d\n", offBeg);
+	// printf("Width %d\n", Width);
+	// printf("Height %d\n", Height);
+	// printf("BitsPerPixel %d\n", BitsPerPixel);
+	// printf("ColorsUsed %d\n", ColorsUsed);
 
 	// read data
 
@@ -202,7 +198,7 @@ Image* Applet::createImage(InputStream* inputStream, bool isTransparentMask)
 		if (ColorsUsed == 0) {
 			ColorsUsed = 1 << (BitsPerPixel & 0xff);
 		}
-		//printf("ColorsUsed %d\n", ColorsUsed);
+		// printf("ColorsUsed %d\n", ColorsUsed);
 
 		img->piDIB->cntRGB = ColorsUsed;
 		img->piDIB->nColorScheme = 0;
@@ -216,7 +212,6 @@ Image* Applet::createImage(InputStream* inputStream, bool isTransparentMask)
 		}
 		inputStream->offsetCursor(img->piDIB->cntRGB * sizeof(uint32_t));
 
-
 		img->isTransparentMask = isTransparentMask;
 
 		if (isTransparentMask) {
@@ -224,9 +219,9 @@ Image* Applet::createImage(InputStream* inputStream, bool isTransparentMask)
 				rgb = img->piDIB->pRGB888[i];
 				if (rgb == 0xff00ff) {
 					img->piDIB->ncTransparent = i;
-				}
-				else {
-					if (((rgb >> 8 & 0xf800U) | (rgb >> 5 & 0x07e0U) | ((rgb >> 3) & 0x001f)) == 0) { // rgb888 to rgb565
+				} else {
+					if (((rgb >> 8 & 0xf800U) | (rgb >> 5 & 0x07e0U) | ((rgb >> 3) & 0x001f)) ==
+					    0) { // rgb888 to rgb565
 						img->piDIB->pRGB888[i] = 8;
 					}
 				}
@@ -235,7 +230,8 @@ Image* Applet::createImage(InputStream* inputStream, bool isTransparentMask)
 
 		for (uint32_t i = 0; i < img->piDIB->cntRGB; i++) {
 			rgb = img->piDIB->pRGB888[i];
-			img->piDIB->pRGB565[i] = (rgb >> 8 & 0xf800) | (rgb >> 5 & 0x07e0) | (rgb >> 3 & 0x001f); // rgb888 to rgb565
+			img->piDIB->pRGB565[i] =
+			    (rgb >> 8 & 0xf800) | (rgb >> 5 & 0x07e0) | (rgb >> 3 & 0x001f); // rgb888 to rgb565
 		}
 
 		// read pixels
@@ -246,13 +242,13 @@ Image* Applet::createImage(InputStream* inputStream, bool isTransparentMask)
 		pitch = BitsPerPixel * Width;
 		int _pitch = pitch;
 		if ((pitch & 7) != 0) {
-			//printf("pitch 7 %d\n", pitch);
+			// printf("pitch 7 %d\n", pitch);
 			ColorsUsed = (uint32_t)((int)pitch >> 0x1f) >> 0x1d;
 			_pitch = (pitch - ((pitch + ColorsUsed & 7) - ColorsUsed)) + 8;
 		}
 
 		if ((pitch & 0x1f) != 0) {
-			//printf("pitch 31 %d\n", pitch);
+			// printf("pitch 31 %d\n", pitch);
 			ColorsUsed = (uint32_t)((int)pitch >> 0x1f) >> 0x1b;
 			pitch = (pitch - ((pitch + ColorsUsed & 0x1f) - ColorsUsed)) + 0x20;
 		}
@@ -270,7 +266,7 @@ Image* Applet::createImage(InputStream* inputStream, bool isTransparentMask)
 			ColorsUsed = _pitch;
 		}
 
-		//printf("sVar6 %d\n", sVar6);
+		// printf("sVar6 %d\n", sVar6);
 		img->piDIB->pBmp = (uint8_t*)std::malloc(sVar6 * sizeof(int16_t));
 		img->piDIB->width = Width;
 		img->piDIB->pitch = Width;
@@ -288,16 +284,16 @@ Image* Applet::createImage(InputStream* inputStream, bool isTransparentMask)
 		}
 		img->depth = img->piDIB->depth;
 
-		uint8_t *data = inputStream->getTop();
+		uint8_t* data = inputStream->getTop();
 		if (bVar7) {
 			for (; Width < Height; Width = Width + 1) {
 				std::memcpy(img->piDIB->pBmp + img->piDIB->pitch * Width, data + iVar8 * (Height + (-1 - Width)),
-					(int)ColorsUsed >> 3);
+				            (int)ColorsUsed >> 3);
 			}
-		}
-		else {
+		} else {
 			for (int i = 0; i < Height; i++) {
-				std::memcpy(img->piDIB->pBmp + (i * img->piDIB->pitch >> 1), data + iVar8 * Width, (int)ColorsUsed >> 3);
+				std::memcpy(img->piDIB->pBmp + (i * img->piDIB->pitch >> 1), data + iVar8 * Width,
+				            (int)ColorsUsed >> 3);
 				Width = Width - 1;
 			}
 		}
@@ -319,8 +315,7 @@ Image* Applet::createImage(InputStream* inputStream, bool isTransparentMask)
 		}
 		img->width = img->piDIB->width;
 		img->height = img->piDIB->height;
-	}
-	else {
+	} else {
 		img->~Image();
 		img = nullptr;
 
@@ -363,30 +358,27 @@ void Applet::Error(const char* fmt, ...) {
 	printf("%s", errMsg);
 
 	const SDL_MessageBoxButtonData buttons[] = {
-		{ /* .flags, .buttonid, .text */        0, 0, "Ok" },
+	    {/* .flags, .buttonid, .text */ 0, 0, "Ok"},
 	};
-	const SDL_MessageBoxColorScheme colorScheme = {
-		{ /* .colors (.r, .g, .b) */
-			/* [SDL_MESSAGEBOX_COLOR_BACKGROUND] */
-			{ 255,   0,   0 },
-			/* [SDL_MESSAGEBOX_COLOR_TEXT] */
-			{   0, 255,   0 },
-			/* [SDL_MESSAGEBOX_COLOR_BUTTON_BORDER] */
-			{ 255, 255,   0 },
-			/* [SDL_MESSAGEBOX_COLOR_BUTTON_BACKGROUND] */
-			{   0,   0, 255 },
-			/* [SDL_MESSAGEBOX_COLOR_BUTTON_SELECTED] */
-			{ 255,   0, 255 }
-		}
-	};
+	const SDL_MessageBoxColorScheme colorScheme = {{/* .colors (.r, .g, .b) */
+	                                                /* [SDL_MESSAGEBOX_COLOR_BACKGROUND] */
+	                                                {255, 0, 0},
+	                                                /* [SDL_MESSAGEBOX_COLOR_TEXT] */
+	                                                {0, 255, 0},
+	                                                /* [SDL_MESSAGEBOX_COLOR_BUTTON_BORDER] */
+	                                                {255, 255, 0},
+	                                                /* [SDL_MESSAGEBOX_COLOR_BUTTON_BACKGROUND] */
+	                                                {0, 0, 255},
+	                                                /* [SDL_MESSAGEBOX_COLOR_BUTTON_SELECTED] */
+	                                                {255, 0, 255}}};
 	const SDL_MessageBoxData messageboxdata = {
-		SDL_MESSAGEBOX_ERROR, /* .flags */
-		NULL, /* .window */
-		"Doom II RPG Error", /* .title */
-		errMsg, /* .message */
-		SDL_arraysize(buttons), /* .numbuttons */
-		buttons, /* .buttons */
-		&colorScheme /* .colorScheme */
+	    SDL_MESSAGEBOX_ERROR,                                               /* .flags */
+	    NULL,                                                               /* .window */
+	    (CAppContainer::getInstance()->gameConfig.name + " Error").c_str(), /* .title */
+	    errMsg,                                                             /* .message */
+	    SDL_arraysize(buttons),                                             /* .numbuttons */
+	    buttons,                                                            /* .buttons */
+	    &colorScheme                                                        /* .colorScheme */
 	};
 
 	SDL_ShowMessageBox(&messageboxdata, NULL);
@@ -395,18 +387,15 @@ void Applet::Error(const char* fmt, ...) {
 	exit(0);
 }
 
-void Applet::Error(int id)
-{
+void Applet::Error(int id) {
 	std::printf("Error id: %i\n", id);
 	this->Error("App Error");
 	this->idError = id;
 }
 
-void Applet::beginImageLoading() {
-}
+void Applet::beginImageLoading() {}
 
-void Applet::endImageLoading() {
-}
+void Applet::endImageLoading() {}
 
 void Applet::loadTables() {
 	// Try loading from tables.ini in CWD first
@@ -425,20 +414,20 @@ void Applet::loadTables() {
 	int count01, count02, count03, count04, count05, count06, count07;
 	int count08, count09, count10, count11, count12, count13, count14;
 
-	count01 = this->resource->getNumTableShorts(0); // count TBL_COMBAT_MONSTERATTACKS
-	count02 = this->resource->getNumTableBytes(1);	// count TBL_COMBAT_WEAPONINFO
-	count03 = this->resource->getNumTableBytes(2);	// count TBL_COMBAT_WEAPONDATA
-	count04 = this->resource->getNumTableBytes(3);	// count TBL_COMBAT_MONSTERSTATS
-	count05 = this->resource->getNumTableInts(4);	// count TBL_COMBAT_COMBATMASKS
-	count06 = this->resource->getNumTableBytes(5);	// count TBL_CANVAS_KEYSNUMERIC
-	count07 = this->resource->getNumTableBytes(6);	// count TBL_ENUMS_OSC_CYCLE
-	count08 = this->resource->getNumTableShorts(7); // count TBL_GAME_LEVELNAMES
-	count09 = this->resource->getNumTableBytes(8);	// count TBL_MONSTER_COLORS
-	count10 = this->resource->getNumTableInts(9);	// count TBL_RENDER_SINETABLE
-	count11 = this->resource->getNumTableShorts(10);// count TBL_ENERGY_DRINK_DATA
-	count12 = this->resource->getNumTableBytes(11); // count TBL_MONSTER_WEAKNESS
-	count13 = this->resource->getNumTableInts(12);	// count TBL_UNK
-	count14 = this->resource->getNumTableBytes(13); // count TBL_MONSTER_SOUNDS
+	count01 = this->resource->getNumTableShorts(0);  // count TBL_COMBAT_MONSTERATTACKS
+	count02 = this->resource->getNumTableBytes(1);   // count TBL_COMBAT_WEAPONINFO
+	count03 = this->resource->getNumTableBytes(2);   // count TBL_COMBAT_WEAPONDATA
+	count04 = this->resource->getNumTableBytes(3);   // count TBL_COMBAT_MONSTERSTATS
+	count05 = this->resource->getNumTableInts(4);    // count TBL_COMBAT_COMBATMASKS
+	count06 = this->resource->getNumTableBytes(5);   // count TBL_CANVAS_KEYSNUMERIC
+	count07 = this->resource->getNumTableBytes(6);   // count TBL_ENUMS_OSC_CYCLE
+	count08 = this->resource->getNumTableShorts(7);  // count TBL_GAME_LEVELNAMES
+	count09 = this->resource->getNumTableBytes(8);   // count TBL_MONSTER_COLORS
+	count10 = this->resource->getNumTableInts(9);    // count TBL_RENDER_SINETABLE
+	count11 = this->resource->getNumTableShorts(10); // count TBL_ENERGY_DRINK_DATA
+	count12 = this->resource->getNumTableBytes(11);  // count TBL_MONSTER_WEAKNESS
+	count13 = this->resource->getNumTableInts(12);   // count TBL_UNK
+	count14 = this->resource->getNumTableBytes(13);  // count TBL_MONSTER_SOUNDS
 
 	this->combat->monsterAttacks = new short[count01];
 	this->combat->wpinfo = new int8_t[count02];
@@ -477,42 +466,88 @@ void Applet::loadTables() {
 
 // --- Helpers for tables.ini parsing ---
 
-static const char* tblWeaponNames[] = {
-	"assault_rifle", "chainsaw", "holy_water_pistol", "shooting_sentry_bot",
-	"exploding_sentry_bot", "red_shooting_sentry_bot", "red_exploding_sentry_bot",
-	"super_shotgun", "chaingun", "assault_rifle_with_scope", "plasma_gun",
-	"rocket_launcher", "bfg", "soul_cube", "item",
-	"m_bite", "m_claw", "m_punch", "m_charge", "m_flesh_throw",
-	"m_fireball", "m_plasma", "m_floor_strike", "m_fire", "m_machine_gun",
-	"m_chain_gun", "m_rockets", "m_acid_spit", "m_plasma_gun",
-	"m_vios_plasma", "m_vios_lightning", "m_vios_poison"
-};
+static const char* tblWeaponNames[] = {"assault_rifle",
+                                       "chainsaw",
+                                       "holy_water_pistol",
+                                       "shooting_sentry_bot",
+                                       "exploding_sentry_bot",
+                                       "red_shooting_sentry_bot",
+                                       "red_exploding_sentry_bot",
+                                       "super_shotgun",
+                                       "chaingun",
+                                       "assault_rifle_with_scope",
+                                       "plasma_gun",
+                                       "rocket_launcher",
+                                       "bfg",
+                                       "soul_cube",
+                                       "item",
+                                       "m_bite",
+                                       "m_claw",
+                                       "m_punch",
+                                       "m_charge",
+                                       "m_flesh_throw",
+                                       "m_fireball",
+                                       "m_plasma",
+                                       "m_floor_strike",
+                                       "m_fire",
+                                       "m_machine_gun",
+                                       "m_chain_gun",
+                                       "m_rockets",
+                                       "m_acid_spit",
+                                       "m_plasma_gun",
+                                       "m_vios_plasma",
+                                       "m_vios_lightning",
+                                       "m_vios_poison"};
 static const int numTblWeaponNames = 32;
 
 static int weaponNameToIndex(const std::string& name) {
 	for (int i = 0; i < numTblWeaponNames; i++) {
-		if (name == tblWeaponNames[i]) return i;
+		if (name == tblWeaponNames[i])
+			return i;
 	}
-	try { return std::stoi(name); } catch (...) { return 0; }
+	try {
+		return std::stoi(name);
+	} catch (...) {
+		return 0;
+	}
 }
 
 static int projTypeFromName(const std::string& name) {
-	if (name == "none") return -1;
-	if (name == "bullet") return 0;
-	if (name == "melee") return 1;
-	if (name == "water") return 2;
-	if (name == "plasma") return 3;
-	if (name == "rocket") return 4;
-	if (name == "bfg") return 5;
-	if (name == "flesh") return 6;
-	if (name == "fire") return 7;
-	if (name == "caco_plasma") return 8;
-	if (name == "thorns") return 9;
-	if (name == "acid") return 10;
-	if (name == "electric") return 11;
-	if (name == "soul_cube") return 12;
-	if (name == "item") return 13;
-	try { return std::stoi(name); } catch (...) { return -1; }
+	if (name == "none")
+		return -1;
+	if (name == "bullet")
+		return 0;
+	if (name == "melee")
+		return 1;
+	if (name == "water")
+		return 2;
+	if (name == "plasma")
+		return 3;
+	if (name == "rocket")
+		return 4;
+	if (name == "bfg")
+		return 5;
+	if (name == "flesh")
+		return 6;
+	if (name == "fire")
+		return 7;
+	if (name == "caco_plasma")
+		return 8;
+	if (name == "thorns")
+		return 9;
+	if (name == "acid")
+		return 10;
+	if (name == "electric")
+		return 11;
+	if (name == "soul_cube")
+		return 12;
+	if (name == "item")
+		return 13;
+	try {
+		return std::stoi(name);
+	} catch (...) {
+		return -1;
+	}
 }
 
 static std::vector<int> parseIntList(const std::string& str) {
@@ -522,9 +557,16 @@ static std::vector<int> parseIntList(const std::string& str) {
 	while (std::getline(ss, item, ',')) {
 		// trim
 		size_t start = item.find_first_not_of(" \t");
-		if (start == std::string::npos) { result.push_back(0); continue; }
+		if (start == std::string::npos) {
+			result.push_back(0);
+			continue;
+		}
 		item = item.substr(start);
-		try { result.push_back(std::stoi(item)); } catch (...) { result.push_back(0); }
+		try {
+			result.push_back(std::stoi(item));
+		} catch (...) {
+			result.push_back(0);
+		}
 	}
 	return result;
 }
@@ -653,9 +695,7 @@ bool Applet::loadTablesFromINI(const char* path) {
 	{
 		// Parse "name = r,g,b" entries
 		// We need to iterate keys; use the known monster names
-		static const char* monsterNames[] = {
-			"zombie", "zombie_commando", "lost_soul", "imp", "sawcubus", "pinky"
-		};
+		static const char* monsterNames[] = {"zombie", "zombie_commando", "lost_soul", "imp", "sawcubus", "pinky"};
 		int idx = 0;
 		for (int i = 0; i < 6 && idx + 2 < monsterColorsCount; i++) {
 			std::string val = ini.getString("MonsterColors", monsterNames[i], "");
@@ -698,11 +738,9 @@ bool Applet::loadTablesFromINI(const char* path) {
 	{
 		// Parse named entries, fall back to indexed
 		static const char* monsterNames[] = {
-			"zombie", "zombie_commando", "lost_soul", "imp", "sawcubus", "pinky",
-			"cacodemon", "sentinel", "mancubus", "revenant", "arch_vile", "sentry_bot",
-			"cyberdemon", "mastermind", "phantom", "archvile_ghost",
-			"belphegor", "apollyon"
-		};
+		    "zombie",   "zombie_commando", "lost_soul", "imp",       "sawcubus",   "pinky",      "cacodemon",
+		    "sentinel", "mancubus",        "revenant",  "arch_vile", "sentry_bot", "cyberdemon", "mastermind",
+		    "phantom",  "archvile_ghost",  "belphegor", "apollyon"};
 		for (int i = 0; i < 18 && i < monsterWeaknessCount; i++) {
 			if (ini.hasKey("MonsterWeakness", monsterNames[i])) {
 				this->combat->monsterWeakness[i] = (int8_t)ini.getInt("MonsterWeakness", monsterNames[i], 0);
@@ -732,9 +770,10 @@ bool Applet::loadTablesFromINI(const char* path) {
 	int numMonsterSounds = ini.getInt("MonsterSounds", "count", 0);
 	int msoundBytes = numMonsterSounds * 8;
 	this->game->monsterSounds = new uint8_t[msoundBytes];
-	std::memset(this->game->monsterSounds, 255, msoundBytes);  // default to "none" (255)
+	std::memset(this->game->monsterSounds, 255, msoundBytes); // default to "none" (255)
 	{
-		static const char* msoundFields[] = { "alert1", "alert2", "alert3", "attack1", "attack2", "idle", "pain", "death" };
+		static const char* msoundFields[] = {"alert1",  "alert2", "alert3", "attack1",
+		                                     "attack2", "idle",   "pain",   "death"};
 		for (int m = 0; m < numMonsterSounds; m++) {
 			char section[32];
 			snprintf(section, sizeof(section), "MonsterSound_%d", m);
@@ -755,8 +794,8 @@ bool Applet::loadTablesFromINI(const char* path) {
 }
 
 void Applet::loadRuntimeImages() {
-	//printf("Applet::loadRuntimeImages\n");
-	//printf("this->initLoadImages %d\n", this->initLoadImages);
+	// printf("Applet::loadRuntimeImages\n");
+	// printf("this->initLoadImages %d\n", this->initLoadImages);
 	if (this->initLoadImages == false) {
 		this->imageMemory = 1000000000;
 
@@ -769,7 +808,7 @@ void Applet::loadRuntimeImages() {
 		this->hud->imgActions = this->loadImage("Hud_Actions.bmp", true);
 		this->hud->imgBottomBarIcons = this->loadImage("Hud_Fill.bmp", true);
 		this->hud->imgHudFill = this->loadImage("Hud_Actions.bmp", true);
-		
+
 		this->hud->imgPlayerFrameNormal->~Image();
 		this->hud->imgPlayerFrameNormal = nullptr;
 		this->hud->imgPlayerFrameActive->~Image();
@@ -786,12 +825,10 @@ void Applet::loadRuntimeImages() {
 		if (this->player->characterChoice == 1) {
 			this->hud->imgPlayerFaces = this->loadImage("Hud_Player.bmp", true);
 			this->hud->imgPlayerActive = this->loadImage("HUD_Player_Active.bmp", true);
-		}
-		else if (this->player->characterChoice == 2) {
+		} else if (this->player->characterChoice == 2) {
 			this->hud->imgPlayerFaces = this->loadImage("Hud_PlayerDoom.bmp", true);
 			this->hud->imgPlayerActive = this->loadImage("HUD_PlayerDoom_Active.bmp", true);
-		}
-		else if (this->player->characterChoice == 3) {
+		} else if (this->player->characterChoice == 3) {
 			this->hud->imgPlayerFaces = this->loadImage("Hud_PlayerScientist.bmp", true);
 			this->hud->imgPlayerActive = this->loadImage("HUD_PlayerScientist_Active.bmp", true);
 		}
@@ -862,7 +899,6 @@ void Applet::setFontRenderMode(int fontRenderMode) {
 	this->canvas->fontRenderMode = fontRenderMode;
 }
 
-
 void Applet::AccelerometerUpdated(float x, float y, float z) {
 
 	this->accelerationX[this->accelerationIndex] = x;
@@ -878,7 +914,7 @@ void Applet::AccelerometerUpdated(float x, float y, float z) {
 	if (v8) {
 		this->field_0x291 = v7 + 1;
 	}
-	//this->comicBook->UpdateAccelerometer(x, y, z);
+	// this->comicBook->UpdateAccelerometer(x, y, z);
 }
 
 void Applet::StartAccelerometer() {
@@ -894,30 +930,28 @@ void Applet::StopAccelerometer() {
 }
 
 void Applet::CalcAccelerometerAngles() {
-	bool v2; // zf
-	float y; // s13
-	int v5; // r2
-	float x; // s14
-	float z; // s12
-	float v9; // s11
-	float v10; // s14
-	int zoomAngle; // r3
-	int v14; // r3
+	bool v2;          // zf
+	float y;          // s13
+	int v5;           // r2
+	float x;          // s14
+	float z;          // s12
+	float v9;         // s11
+	float v10;        // s14
+	int zoomAngle;    // r3
+	int v14;          // r3
 	int zoomMaxAngle; // r3
-	int zoomPitch; // r1
+	int zoomPitch;    // r1
 
 	v2 = this->field_0x291 == false;
-	if (this->field_0x291)
-	{
+	if (this->field_0x291) {
 		v2 = !this->canvas->isZoomedIn;
 	}
-	if (!v2)
-	{
+	if (!v2) {
 		v5 = 0;
 		x = 0.0;
 		y = 0.0;
 		z = 0.0;
-		do{
+		do {
 			x += this->accelerationX[v5];
 			y += this->accelerationY[v5];
 			z += this->accelerationZ[v5];
@@ -927,8 +961,7 @@ void Applet::CalcAccelerometerAngles() {
 		this->field_0x418 = y * 0.03125;
 		this->field_0x41c = z * 0.03125;
 
-		if (!this->field_0x290)
-		{
+		if (!this->field_0x290) {
 			this->field_0x290 = true;
 			this->field_0x420 = x * 0.03125;
 			this->field_0x424 = y * 0.03125;
@@ -938,14 +971,11 @@ void Applet::CalcAccelerometerAngles() {
 		this->canvas->zoomAngle = (int)(float)((float)(this->field_0x414 - this->field_0x420) * 420.0);
 
 		zoomAngle = this->canvas->zoomAngle;
-		if (zoomAngle >= -200)
-		{
+		if (zoomAngle >= -200) {
 			if (zoomAngle <= 200)
 				goto LABEL_13;
 			v14 = 200;
-		}
-		else
-		{
+		} else {
 			v14 = -200;
 		}
 		this->canvas->zoomAngle = v14;
@@ -954,13 +984,10 @@ void Applet::CalcAccelerometerAngles() {
 		this->canvas->zoomPitch = (int)(float)((float)(this->field_0x418 - this->field_0x424) * 420.0);
 		zoomMaxAngle = this->canvas->zoomMaxAngle;
 		zoomPitch = this->canvas->zoomPitch;
-		if (zoomPitch >= -zoomMaxAngle)
-		{
+		if (zoomPitch >= -zoomMaxAngle) {
 			if (zoomPitch > zoomMaxAngle)
 				this->canvas->zoomPitch = zoomMaxAngle;
-		}
-		else
-		{
+		} else {
 			this->canvas->zoomPitch = -zoomMaxAngle;
 		}
 	}

@@ -3,28 +3,12 @@
 
 #include "SDLGL.h"
 #include "App.h"
+#include "CAppContainer.h"
 
-
-SDLResVidModes sdlResVideoModes[18] = {
-	{480, 320},
-	{640, 480},
-	{720, 400},
-	{720, 480},
-	{720, 576},
-	{800, 600},
-	{832, 624},
-	{960, 640},
-	{1024, 768},
-	{1152, 864},
-	{1152, 872},
-	{1280, 720},
-	{1280, 800},
-	{1280, 1024},
-	{1440, 900},
-	{1600, 1000},
-	{1680, 1050},
-	{1920, 1080}
-};
+SDLResVidModes sdlResVideoModes[18] = {{480, 320},   {640, 480},   {720, 400},  {720, 480},   {720, 576},
+                                       {800, 600},   {832, 624},   {960, 640},  {1024, 768},  {1152, 864},
+                                       {1152, 872},  {1280, 720},  {1280, 800}, {1280, 1024}, {1440, 900},
+                                       {1600, 1000}, {1680, 1050}, {1920, 1080}};
 
 SDLGL::SDLGL() {
 	initialized = false;
@@ -47,7 +31,7 @@ bool SDLGL::Initialize() {
 	Uint32 flags;
 
 	if (!this->initialized) {
-		
+
 		SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
 		if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
 			printf("Could not initialize SDL: %s", SDL_GetError());
@@ -60,13 +44,15 @@ bool SDLGL::Initialize() {
 
 		this->oldResolutionIndex = -1;
 		this->resolutionIndex = 0;
-		this->winVidWidth = sdlResVideoModes[this->resolutionIndex].width;//Applet::IOS_WIDTH*2;
-		this->winVidHeight = sdlResVideoModes[this->resolutionIndex].height;//Applet::IOS_HEIGHT*2;
+		this->winVidWidth = sdlResVideoModes[this->resolutionIndex].width;   // Applet::IOS_WIDTH*2;
+		this->winVidHeight = sdlResVideoModes[this->resolutionIndex].height; // Applet::IOS_HEIGHT*2;
 
-		//this->winVidWidth = 1440;
-		//this->winVidHeight = 900;
+		// this->winVidWidth = 1440;
+		// this->winVidHeight = 900;
 
-		this->window = SDL_CreateWindow("Doom II RPG By [GEC] Version 0.1", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, winVidWidth, winVidHeight, flags);
+		this->window =
+		    SDL_CreateWindow(CAppContainer::getInstance()->gameConfig.windowTitle.c_str(), SDL_WINDOWPOS_UNDEFINED,
+		                     SDL_WINDOWPOS_UNDEFINED, winVidWidth, winVidHeight, flags);
 		if (!this->window) {
 			printf("Could not set %dx%d video mode: %s", winVidWidth, winVidHeight, SDL_GetError());
 		}
@@ -78,9 +64,9 @@ bool SDLGL::Initialize() {
 		this->oldVSync = false;
 		this->vSync = true;
 
-		//SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengles2");
-		//SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
-		//SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");//sdlVideo.vSync ? "1" : "0");
+		// SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengles2");
+		// SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
+		// SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");//sdlVideo.vSync ? "1" : "0");
 		this->updateVideo();
 
 		this->glcontext = SDL_GL_CreateContext(window);
@@ -99,11 +85,9 @@ bool SDLGL::Initialize() {
 	return this->initialized;
 }
 
-
 #include <stdarg.h> //va_list|va_start|va_end
 
-void SDLGL::Error(const char* fmt, ...)
-{
+void SDLGL::Error(const char* fmt, ...) {
 	char errMsg[256];
 	va_list ap;
 	va_start(ap, fmt);
@@ -117,41 +101,37 @@ void SDLGL::Error(const char* fmt, ...)
 	printf("%s", errMsg);
 
 	const SDL_MessageBoxButtonData buttons[] = {
-		{ /* .flags, .buttonid, .text */        0, 0, "Ok" },
+	    {/* .flags, .buttonid, .text */ 0, 0, "Ok"},
 	};
-	const SDL_MessageBoxColorScheme colorScheme = {
-		{ /* .colors (.r, .g, .b) */
-			/* [SDL_MESSAGEBOX_COLOR_BACKGROUND] */
-			{ 255,   0,   0 },
-			/* [SDL_MESSAGEBOX_COLOR_TEXT] */
-			{   0, 255,   0 },
-			/* [SDL_MESSAGEBOX_COLOR_BUTTON_BORDER] */
-			{ 255, 255,   0 },
-			/* [SDL_MESSAGEBOX_COLOR_BUTTON_BACKGROUND] */
-			{   0,   0, 255 },
-			/* [SDL_MESSAGEBOX_COLOR_BUTTON_SELECTED] */
-			{ 255,   0, 255 }
-		}
-	};
+	const SDL_MessageBoxColorScheme colorScheme = {{/* .colors (.r, .g, .b) */
+	                                                /* [SDL_MESSAGEBOX_COLOR_BACKGROUND] */
+	                                                {255, 0, 0},
+	                                                /* [SDL_MESSAGEBOX_COLOR_TEXT] */
+	                                                {0, 255, 0},
+	                                                /* [SDL_MESSAGEBOX_COLOR_BUTTON_BORDER] */
+	                                                {255, 255, 0},
+	                                                /* [SDL_MESSAGEBOX_COLOR_BUTTON_BACKGROUND] */
+	                                                {0, 0, 255},
+	                                                /* [SDL_MESSAGEBOX_COLOR_BUTTON_SELECTED] */
+	                                                {255, 0, 255}}};
 	const SDL_MessageBoxData messageboxdata = {
-		SDL_MESSAGEBOX_ERROR, /* .flags */
-		NULL, /* .window */
-		"Doom II RPG Error", /* .title */
-		errMsg, /* .message */
-		SDL_arraysize(buttons), /* .numbuttons */
-		buttons, /* .buttons */
-		&colorScheme /* .colorScheme */
+	    SDL_MESSAGEBOX_ERROR,                                               /* .flags */
+	    NULL,                                                               /* .window */
+	    (CAppContainer::getInstance()->gameConfig.name + " Error").c_str(), /* .title */
+	    errMsg,                                                             /* .message */
+	    SDL_arraysize(buttons),                                             /* .numbuttons */
+	    buttons,                                                            /* .buttons */
+	    &colorScheme                                                        /* .colorScheme */
 	};
 
 	SDL_ShowMessageBox(&messageboxdata, NULL);
-	//closeZipFile(&zipFile);
-	//DoomRPG_FreeAppData(doomRpg);
-	//SDL_CloseAudio();
-	//SDL_Close();
+	// closeZipFile(&zipFile);
+	// DoomRPG_FreeAppData(doomRpg);
+	// SDL_CloseAudio();
+	// SDL_Close();
 	SDLGL::~SDLGL();
 	exit(0);
 }
-
 
 void SDLGL::transformCoord2f(float* x, float* y) {
 	int w, h;
@@ -184,17 +164,18 @@ void SDLGL::updateVideo() {
 
 		if (this->windowMode == 1) {
 			SDL_SetWindowBordered(this->window, SDL_FALSE);
-		}
-		else if (this->windowMode == 2) {
+		} else if (this->windowMode == 2) {
 			SDL_SetWindowFullscreen(this->window, SDL_WINDOW_FULLSCREEN);
 		}
 		this->oldWindowMode = this->windowMode;
 	}
 
 	if (this->resolutionIndex != this->oldResolutionIndex) {
-		SDL_SetWindowSize(this->window, sdlResVideoModes[this->resolutionIndex].width, sdlResVideoModes[this->resolutionIndex].height);
+		SDL_SetWindowSize(this->window, sdlResVideoModes[this->resolutionIndex].width,
+		                  sdlResVideoModes[this->resolutionIndex].height);
 		SDL_SetWindowPosition(this->window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-		this->updateWinVid(sdlResVideoModes[this->resolutionIndex].width, sdlResVideoModes[this->resolutionIndex].height);
+		this->updateWinVid(sdlResVideoModes[this->resolutionIndex].width,
+		                   sdlResVideoModes[this->resolutionIndex].height);
 		this->oldResolutionIndex = this->resolutionIndex;
 	}
 
