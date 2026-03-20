@@ -189,11 +189,10 @@ def extract_strings(ipa_path, output_path):
 
                 data = chunks[chunk_id][offset:offset + size]
 
-                # Split by null terminator
-                raw_strings = data.split(b"\x00")
-                # Remove trailing empty from final null
-                if raw_strings and raw_strings[-1] == b"":
-                    raw_strings = raw_strings[:-1]
+                # Count null terminators to get the true string count
+                # Each string (including empty ones) ends with \x00
+                num_strings = data.count(b"\x00")
+                raw_strings = data.split(b"\x00")[:num_strings]
 
                 section = f"Lang_{lang}_Group_{grp}"
                 lang_name = LANGUAGE_NAMES[lang]
