@@ -12,6 +12,10 @@ class EntityDefManager
 private:
 	EntityDef* list;
 	int numDefs;
+
+	bool loadFromBinary();
+	bool loadFromINI(const char* path);
+
 public:
 
 	// Constructor
@@ -20,6 +24,7 @@ public:
 	~EntityDefManager();
 
 	bool startup();
+	void exportToINI(const char* path);
 	EntityDef* find(int eType, int eSubType);
 	EntityDef* find(int eType, int eSubType, int parm);
 	EntityDef* lookup(int tileIndex);
