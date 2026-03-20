@@ -5,13 +5,13 @@ Extract entities.bin from DoomIIRPG .ipa and generate human-readable entities.in
 Usage:
     python3 tools/extract_entities.py ["Doom 2 RPG.ipa"] [entities.ini]
 
-The script reads entities.bin (gzipped) from the .ipa zip archive, decodes each
-entity definition, and writes a human-readable INI file with entity type names
-and string table comments.
+The script reads entities.bin from the .ipa zip archive, decodes each entity
+definition, and writes a human-readable INI file with entity type names and
+string table comments.
 
-Binary format:
-    Header: int16 count (big-endian)
-    Per entity (8 bytes each, big-endian):
+Binary format (little-endian):
+    Header: int16 count
+    Per entity (8 bytes each):
         int16  tileIndex
         uint8  eType
         uint8  eSubType
@@ -21,12 +21,12 @@ Binary format:
         uint8  description (string table index)
 
 String resolution:
-    The script also extracts the string index and string data files from the .ipa
-    to resolve entity name/longName/description into human-readable comments.
-    String IDs use group << 10 | index encoding (FILE_ENTITYSTRINGS = group 1).
+    The script also extracts the string index (strings.idx) and string data
+    files (strings00.bin, etc.) from the .ipa to resolve entity name/longName/
+    description into human-readable comments. Soft hyphens (0xAD) are removed.
 """
 
-import gzip
+import re
 import struct
 import sys
 import zipfile
@@ -55,13 +55,15 @@ def entity_type_name(etype):
     return ENTITY_TYPE_NAMES.get(etype, str(etype))
 
 
-def load_string_table(ipa, prefix, group):
+def load_string_table(ipa, prefix, group_index):
     """
     Load strings from the .ipa string table files.
 
-    String table format:
-        strings.idx: packed index entries (5 bytes each: 1 byte group/flags, 2 bytes offset_hi, 2 bytes count)
-        stringsNN.bin: null-terminated strings per group
+    Replicates the engine's Resource::loadFileIndex() logic:
+        - strings.idx: int16 group_count, then per group: uint8 file#, int32 packed_offset
+        - File# 0xFF is a sentinel (marks end of a file's groups)
+        - String count per group is computed from offset differences
+        - stringsNN.bin: raw null-terminated strings
 
     Returns a dict mapping string_index -> string_text for the given group.
     """
@@ -70,39 +72,58 @@ def load_string_table(ipa, prefix, group):
     except KeyError:
         return {}
 
-    # Parse index to find the file and offset for our group
-    # The index format: each entry is 5 bytes
-    # But the actual format used by the game is loadFileIndex which reads:
-    #   for each group: shiftByte (file#), shiftUShort (offset), shiftUShort (count)
-    # Total = groups * 5 bytes
-    num_groups = len(idx_data) // 5
+    # Replicate loadFileIndex
+    total_groups = struct.unpack_from("<h", idx_data, 0)[0]
+    array = [0] * (total_groups * 3 + 10)
+
+    off = 2
+    n4 = 0
+    for _ in range(total_groups):
+        fb = idx_data[off]
+        fi = struct.unpack_from("<i", idx_data, off + 1)[0]
+        off += 5
+
+        if fi != 0:
+            array[(n4 * 3) - 1] = fi - array[(n4 * 3) - 2]
+        if fb != 0xFF:
+            array[(n4 * 3) + 0] = fb   # file number
+            array[(n4 * 3) + 1] = fi   # byte offset
+            n4 += 1
+
+    # Final sentinel
+    fb = idx_data[off]
+    fi = struct.unpack_from("<i", idx_data, off + 1)[0]
+    array[(n4 * 3) - 1] = fi - array[(n4 * 3) - 2]
+
+    if group_index >= n4:
+        return {}
+
+    file_num = array[group_index * 3 + 0]
+    byte_offset = array[group_index * 3 + 1]
+    byte_size = array[group_index * 3 + 2]
+
+    str_filename = f"strings{file_num:02d}.bin"
+    try:
+        str_data = ipa.read(prefix + str_filename)
+    except KeyError:
+        return {}
+
+    # Read null-terminated strings in the byte range
     strings = {}
-
-    for g in range(num_groups):
-        base = g * 5
-        file_num = idx_data[base]
-        offset = struct.unpack_from(">H", idx_data, base + 1)[0]
-        count = struct.unpack_from(">H", idx_data, base + 3)[0]
-
-        if g != group:
-            continue
-
-        # Load the string data file
-        str_filename = f"strings{file_num:02d}.bin"
-        try:
-            str_data = ipa.read(prefix + str_filename)
-        except KeyError:
-            break
-
-        # Read null-terminated strings starting at offset
-        pos = offset
-        for i in range(count):
-            end = str_data.index(b'\x00', pos)
-            raw = str_data[pos:end]
-            # Decode, replacing soft hyphens (0xAD) with empty string
-            text = raw.decode('latin-1').replace('\xad', '')
-            strings[i] = text
-            pos = end + 1
+    pos = byte_offset
+    end_pos = byte_offset + byte_size
+    idx = 0
+    while pos < end_pos:
+        nul = str_data.index(b'\x00', pos)
+        raw = str_data[pos:nul]
+        # Decode and remove soft hyphens: the game stores word-break hints
+        # as regular hyphens (0x2D) between letters within words.
+        # Remove single hyphens between word characters, keep -- (em-dash).
+        text = raw.decode('latin-1')
+        text = re.sub(r'(?<=\w)-(?=\w)', '', text)
+        strings[idx] = text
+        pos = nul + 1
+        idx += 1
 
     return strings
 
@@ -112,24 +133,23 @@ def extract_entities(ipa_path, output_path):
     prefix = "Payload/Doom2rpg.app/Packages/"
 
     with zipfile.ZipFile(ipa_path) as ipa:
-        # entities.bin is gzip-compressed in the resource pack
-        raw = ipa.read(prefix + "entities.bin")
-        data = gzip.decompress(raw)
+        data = ipa.read(prefix + "entities.bin")
 
         # Load entity strings (group 1 = FILE_ENTITYSTRINGS)
         entity_strings = load_string_table(ipa, prefix, 1)
 
-    print(f"entities.bin: {len(raw)} compressed, {len(data)} decompressed")
+    print(f"entities.bin: {len(data)} bytes")
+    print(f"Entity strings loaded: {len(entity_strings)} strings")
 
-    # Parse header (big-endian)
-    count = struct.unpack_from(">h", data, 0)[0]
+    # Parse header (little-endian)
+    count = struct.unpack_from("<h", data, 0)[0]
     print(f"Entity count: {count}")
 
     # Parse entities
     entities = []
     offset = 2
     for i in range(count):
-        tile_index = struct.unpack_from(">h", data, offset)[0]
+        tile_index = struct.unpack_from("<h", data, offset)[0]
         etype = data[offset + 2]
         esubtype = data[offset + 3]
         parm = data[offset + 4]
@@ -150,6 +170,13 @@ def extract_entities(ipa_path, output_path):
             name_str = entity_strings.get(name, "(none)")
             long_name_str = entity_strings.get(long_name, "(none)")
             desc_str = entity_strings.get(desc, "(none)")
+
+            if not name_str:
+                name_str = "(none)"
+            if not long_name_str:
+                long_name_str = "(none)"
+            if not desc_str:
+                desc_str = "(none)"
 
             f.write(f"; name: {name_str}\n")
             f.write(f"; long_name: {long_name_str}\n")

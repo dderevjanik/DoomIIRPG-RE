@@ -5,11 +5,11 @@ Extract tables.bin from DoomIIRPG .ipa and generate human-readable tables.ini.
 Usage:
     python3 tools/extract_tables.py ["Doom 2 RPG.ipa"] [tables.ini]
 
-The script reads tables.bin (gzipped) from the .ipa zip archive, decodes all
+The script reads tables.bin from the .ipa zip archive, decodes all
 14 game data tables, and writes a human-readable INI file.
 
-Binary format:
-    Header: 20 x int32 (big-endian) table end-offsets
+Binary format (little-endian):
+    Header: 20 x int32 table end-offsets
     Then 14 tables, each starting with int32 count followed by typed data:
         Table  0: MonsterAttacks  - short[count] (stride 9 shorts per monster, 3 parms x 3 fields)
         Table  1: WeaponInfo      - byte[count]  (stride 6 bytes per weapon)
@@ -27,7 +27,6 @@ Binary format:
         Table 13: MonsterSounds   - byte[count]  (stride 8 bytes per monster)
 """
 
-import gzip
 import struct
 import sys
 import zipfile
@@ -86,7 +85,7 @@ class TableReader:
         self.pos = offset
 
     def read_byte(self):
-        val = struct.unpack_from(">b", self.data, self.pos)[0]
+        val = struct.unpack_from("<b", self.data, self.pos)[0]
         self.pos += 1
         return val
 
@@ -96,12 +95,12 @@ class TableReader:
         return val
 
     def read_short(self):
-        val = struct.unpack_from(">h", self.data, self.pos)[0]
+        val = struct.unpack_from("<h", self.data, self.pos)[0]
         self.pos += 2
         return val
 
     def read_int(self):
-        val = struct.unpack_from(">i", self.data, self.pos)[0]
+        val = struct.unpack_from("<i", self.data, self.pos)[0]
         self.pos += 4
         return val
 
@@ -111,15 +110,14 @@ def extract_tables(ipa_path, output_path):
     prefix = "Payload/Doom2rpg.app/Packages/"
 
     with zipfile.ZipFile(ipa_path) as ipa:
-        raw = ipa.read(prefix + "tables.bin")
-        data = gzip.decompress(raw)
+        data = ipa.read(prefix + "tables.bin")
 
-    print(f"tables.bin: {len(raw)} compressed, {len(data)} decompressed")
+    print(f"tables.bin: {len(data)} bytes")
 
     # Parse 20 x int32 offsets header
     offsets = []
     for i in range(20):
-        offsets.append(struct.unpack_from(">i", data, i * 4)[0])
+        offsets.append(struct.unpack_from("<i", data, i * 4)[0])
     print(f"Table offsets: {offsets[:14]}")
 
     # Data starts after the 80-byte header
@@ -152,22 +150,22 @@ def extract_tables(ipa_path, output_path):
     for i in range(num_weapons):
         w(f"; {weapon_name(i)}")
         w(f"[Weapon_{i}]")
-        str_min = r.read_byte()
-        str_max = r.read_byte()
-        range_min = r.read_byte()
-        range_max = r.read_byte()
-        ammo_type = r.read_byte()
-        ammo_usage = r.read_byte()
-        pt = r.read_byte()
-        num_shots = r.read_byte()
-        shot_hold = r.read_byte()
+        str_min = r.read_ubyte()
+        str_max = r.read_ubyte()
+        range_min = r.read_ubyte()
+        range_max = r.read_ubyte()
+        ammo_type = r.read_ubyte()
+        ammo_usage = r.read_ubyte()
+        pt = r.read_ubyte()
+        num_shots = r.read_ubyte()
+        shot_hold = r.read_ubyte()
         w(f"str_min = {str_min}")
         w(f"str_max = {str_max}")
         w(f"range_min = {range_min}")
         w(f"range_max = {range_max}")
         w(f"ammo_type = {ammo_type}")
         w(f"ammo_usage = {ammo_usage}")
-        pt_signed = pt if pt < 128 else pt - 256
+        pt_signed = pt if pt < 128 else (pt - 256)
         w(f"proj_type = {PROJ_TYPE_NAMES.get(pt_signed, str(pt_signed))}")
         w(f"num_shots = {num_shots}")
         w(f"shot_hold = {shot_hold}")
@@ -215,6 +213,7 @@ def extract_tables(ipa_path, output_path):
         w()
 
     # === Table 3: MonsterStats (byte table, flat) ===
+    w("; Monster base stats (raw byte array)")
     w("[MonsterStats]")
     start, end = table_range(3)
     r = TableReader(data, data_start + start)
@@ -251,6 +250,7 @@ def extract_tables(ipa_path, output_path):
     w()
 
     # === Table 13: MonsterSounds (byte table, stride 8) ===
+    w("; Monster sounds: alert1, alert2, alert3, attack1, attack2, idle, pain, death (255 = none)")
     w("[MonsterSounds]")
     start, end = table_range(13)
     r = TableReader(data, data_start + start)
@@ -268,6 +268,7 @@ def extract_tables(ipa_path, output_path):
         w()
 
     # === Table 8: MonsterColors (byte table, stride 3) ===
+    w("; Monster particle colors (RGB bytes, 3 per monster)")
     w("[MonsterColors]")
     start, end = table_range(8)
     r = TableReader(data, data_start + start)
