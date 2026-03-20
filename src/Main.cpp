@@ -32,12 +32,15 @@ int main(int argc, char* args[]) {
 
     const char* ipaPath = "Doom 2 RPG.ipa";
     const char* gameDir = ".";
+    const char* customMap = nullptr;
 
     for (int i = 1; i < argc; i++) {
         if (strcmp(args[i], "--ipa") == 0 && i + 1 < argc) {
             ipaPath = args[++i];
         } else if (strcmp(args[i], "--gamedir") == 0 && i + 1 < argc) {
             gameDir = args[++i];
+        } else if (strcmp(args[i], "--map") == 0 && i + 1 < argc) {
+            customMap = args[++i];
         }
     }
 
@@ -66,6 +69,10 @@ int main(int argc, char* args[]) {
     input.init(); // [GEC] Port: set default Binds
 
     CAppContainer::getInstance()->Construct(&sdlGL, &zipFile, &vfs);
+    if (customMap) {
+        CAppContainer::getInstance()->customMapFile = customMap;
+        printf("Custom map: %s\n", customMap);
+    }
     sdlGL.updateVideo(); // [GEC]
 
     SDL_Event ev;

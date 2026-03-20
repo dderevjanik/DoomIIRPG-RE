@@ -20,6 +20,7 @@ CAppContainer::CAppContainer() {
 	this->MoveX = 0.0;
 	this->MoveY = 0.0;
 	this->MoveAng = 0.0;
+	this->customMapFile = nullptr;
 }
 
 CAppContainer::~CAppContainer() {

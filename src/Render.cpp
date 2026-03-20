@@ -586,7 +586,10 @@ bool Render::beginLoadMap(int mapNameID) {
 
 	app->canvas->updateLoadingBar(false);
 
-	IS.loadResource(Resources::RES_MAP_FILE_ARRAY[(mapNameID - 1)]);
+	const char* mapFile = CAppContainer::getInstance()->customMapFile
+		? CAppContainer::getInstance()->customMapFile
+		: Resources::RES_MAP_FILE_ARRAY[(mapNameID - 1)];
+	IS.loadResource(mapFile);
 	app->resource->read(&IS, 42);
 	if (app->resource->shiftUByte() != 3) {
 		app->Error(68); // ERR_BADMAPVERSION
@@ -684,7 +687,7 @@ bool Render::beginLoadMap(int mapNameID) {
 	app->game->setKeyOffsets();
 
 	//app->checkPeakMemory("Allocated memory for the map");
-	IS.loadResource(Resources::RES_MAP_FILE_ARRAY[(mapNameID - 1)]);
+	IS.loadResource(mapFile);
 	app->canvas->updateLoadingBar(false);
 	//app->checkPeakMemory(, "Reading in final map data");
 

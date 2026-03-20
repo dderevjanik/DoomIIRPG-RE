@@ -16,6 +16,7 @@ public:
 	SDLGL* sdlGL; // New
 	ZipFile* zipFile; // New
 	VFS* vfs;
+	const char* customMapFile; // --map override
 	static CAppContainer* getInstance();
 	static int m_cheatEntry;
 	float MoveX, MoveY, MoveAng;

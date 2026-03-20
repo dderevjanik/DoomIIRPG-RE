@@ -3871,6 +3871,42 @@ void Canvas::logoState() {
 		app->sound->cacheSounds();
 	}
 
+	if (CAppContainer::getInstance()->customMapFile) {
+		// Replicate startGame(true) + character selection init
+		if (app->menuSystem->background != app->menuSystem->imgMainBG) {
+			app->menuSystem->background->~Image();
+		}
+		app->menuSystem->imgMainBG->~Image();
+		app->menuSystem->background = nullptr;
+		app->menuSystem->imgMainBG = nullptr;
+		app->sound->soundStop();
+
+		this->setLoadingBarText(-1, -1);
+		app->game->removeState(true);
+		app->game->activeLoadType = 0;
+		this->loadType = 0;
+		this->loadMapID = 0;
+		this->lastMapID = 0;
+		app->player->reset();
+		app->player->totalDeaths = 0;
+		app->player->currentLevelDeaths = 0;
+		app->player->helpBitmask = 0;
+		app->player->invHelpBitmask = 0;
+		app->player->ammoHelpBitmask = 0;
+		app->player->weaponHelpBitmask = 0;
+		app->player->armorHelpBitmask = 0;
+		app->player->currentGrades = 0;
+		app->player->ce->weapon = -1;
+		this->clearEvents(1);
+
+		app->game->difficulty = 1; // Normal
+		app->player->setCharacterChoice(1); // Major (default)
+		app->player->reset();
+
+		this->loadMap(this->startupMap, false, true);
+		return;
+	}
+
 	if (this->pacLogoTime <= 120) {
 		this->pacLogoTime++;
 		if (this->imgStartupLogo == nullptr) {
