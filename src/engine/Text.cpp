@@ -22,6 +22,7 @@ Localization::~Localization() {
 }
 
 bool Localization::startup() {
+	this->app = CAppContainer::getInstance()->app;
 	printf("Localization::startup\n");
 
 	this->text = new char* [Localization::MAXTEXT]();
@@ -56,7 +57,7 @@ bool Localization::startup() {
 		std::fclose(f);
 		printf("Localization: loading from strings.ini\n");
 		if (!this->loadFromINI("strings.ini")) {
-			CAppContainer::getInstance()->app->Error("Failed to load strings.ini\n");
+			this->app->Error("Failed to load strings.ini\n");
 			return false;
 		}
 		this->resetTextArgs();
@@ -291,7 +292,7 @@ void Localization::setLanguage(int language) {
 }
 
 void Localization::beginTextLoading() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	this->textIndex = app->resource->loadFileIndex(Resources::RES_STRINGS_IDX_GZ);
 	this->textLastType = -1;
@@ -315,7 +316,7 @@ void Localization::finishTextLoading() {
 }
 
 void Localization::loadTextFromIndex(int i, int textLastType) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (textLastType < this->textLastType) {
 		app->Error(87); // ERR_STRINGTABLE
@@ -368,7 +369,7 @@ void Localization::resetTextArgs()
 }
 
 void Localization::addTextArg(char c) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	if (this->numTextArgs + 1 >= 50) {
 		app->Error("Added too many String Args");
 	}
@@ -378,7 +379,7 @@ void Localization::addTextArg(char c) {
 
 void Localization::addTextArg(int i)
 {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	if (this->numTextArgs + 1 >= 50) {
 		app->Error("Added too many String Args");
 	}
@@ -387,7 +388,7 @@ void Localization::addTextArg(int i)
 }
 
 void Localization::addTextArg(Text *text, int i, int i2) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	if (this->numTextArgs + 1 >= 50) {
 		app->Error("Added too many String Args");
 	}
@@ -396,7 +397,7 @@ void Localization::addTextArg(Text *text, int i, int i2) {
 }
 
 void Localization::addTextArg(Text* text) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	if (this->numTextArgs + 1 >= 50) {
 		app->Error("Added too many String Args");
 	}
@@ -422,7 +423,7 @@ void Localization::composeText(int i, Text *text) {
 
 void Localization::composeText(int16_t n, int16_t n2, Text *text) {
 	char *textBuff = this->text[n];
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (textBuff == nullptr) {
 		app->Error(85); // ERR_LOCALIZE_UNLOADED_TYPE
@@ -1075,8 +1076,8 @@ void Text::toUpper() {
 }
 
 void Text::dispose() {
-	Applet* app = CAppContainer::getInstance()->app;
-	Localization* loc = app->localization;
+
+	Localization* loc = CAppContainer::getInstance()->app->localization;
 
 	for (int i = 0; i < 7; ++i) {
 		if (loc->scratchBuffers[i] == this) {

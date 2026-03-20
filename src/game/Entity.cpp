@@ -28,6 +28,7 @@ Entity::~Entity() {
 
 bool Entity::startup() {
 	//printf("Entity::startup\n");
+	this->app = CAppContainer::getInstance()->app;
 
 	return false;
 }
@@ -48,7 +49,7 @@ void Entity::reset() {
 }
 
 void Entity::initspawn() {
-    Applet* app = CAppContainer::getInstance()->app;
+    if (!this->app) this->app = CAppContainer::getInstance()->app;
 
     uint8_t eType = this->def->eType;
     uint8_t eSubType = this->def->eSubType;
@@ -116,7 +117,7 @@ int Entity::getSprite() {
 }
 
 bool Entity::touched() {
-    Applet* app = CAppContainer::getInstance()->app;
+
 
     uint8_t eType = this->def->eType;
     //printf("Entity::touched %d -------------------------->\n", eType);
@@ -150,7 +151,7 @@ bool Entity::touched() {
 }
 
 bool Entity::touchedItem() {
-    Applet* app = CAppContainer::getInstance()->app;
+
 
     if (this->def->eSubType == Enums::IT_INVENTORY) {
         int param = 1;
@@ -279,7 +280,7 @@ bool Entity::touchedItem() {
 }
 
 bool Entity::pain(int n, Entity* entity) {
-    Applet* app = CAppContainer::getInstance()->app;
+
 
     bool b = false;
     int sprite = this->getSprite();
@@ -394,7 +395,7 @@ bool Entity::pain(int n, Entity* entity) {
 }
 
 void Entity::checkMonsterDeath(bool b, bool b2) {
-    Applet* app = CAppContainer::getInstance()->app;
+
 
     if (b && (app->player->weapons & 0x2000) != 0x0 && app->combat->attackerWeaponId != 13) {
         app->player->give(2, 6, 1);
@@ -422,7 +423,7 @@ void Entity::checkMonsterDeath(bool b, bool b2) {
 }
 
 void Entity::died(bool b, Entity* entity) {
-    Applet* app = CAppContainer::getInstance()->app;
+
 
     int sprite = this->getSprite();
     short n = app->render->mapSprites[app->render->S_X + sprite];
@@ -528,12 +529,12 @@ void Entity::died(bool b, Entity* entity) {
 }
 
 bool Entity::deathByExplosion(Entity* entity) {
-    Applet* app = CAppContainer::getInstance()->app;
+
     return entity == app->player->getPlayerEnt() && app->player->ce->weapon == 11;
 }
 
 void Entity::aiCalcSimpleGoal(bool b) {
-    Applet* app = CAppContainer::getInstance()->app;
+
 
     if (this->def->eSubType == Enums::MONSTER_ARCH_VILE && this->aiCalcArchVileGoal()) {
         return;
@@ -570,7 +571,7 @@ bool Entity::aiCalcArchVileGoal() {
 }
 
 void Entity::aiMoveToGoal() {
-    Applet* app = CAppContainer::getInstance()->app;
+
 
     uint8_t goalType = this->monster->goalType;
     EntityMonster* monster = this->monster;
@@ -603,7 +604,7 @@ void Entity::aiChooseNewGoal(bool b) {
 }
 
 bool Entity::aiIsValidGoal() {
-    Applet* app = CAppContainer::getInstance()->app;
+
 
     uint8_t goalType = this->monster->goalType;
     if (this->monster->goalTurns >= 16 || goalType == 3 || goalType == 0) {
@@ -642,7 +643,7 @@ bool Entity::aiIsValidGoal() {
 }
 
 bool Entity::aiIsAttackValid() {
-    Applet* app = CAppContainer::getInstance()->app;
+
 
     EntityMonster* monster = this->monster;
     int weapon = monster->ce.weapon;
@@ -685,7 +686,7 @@ void Entity::aiThink(bool b) {
 }
 
 int Entity::aiWeaponForTarget(Entity* entity) {
-    Applet* app = CAppContainer::getInstance()->app;
+
 
     int sprite = this->getSprite();
     int viewX;
@@ -850,7 +851,7 @@ int Entity::aiWeaponForTarget(Entity* entity) {
 }
 
 LerpSprite* Entity::aiInitLerp(int travelTime) {
-    Applet* app = CAppContainer::getInstance()->app;
+
 
     int sprite = this->getSprite();
     LerpSprite* allocLerpSprite = app->game->allocLerpSprite(nullptr, sprite, true);
@@ -882,7 +883,7 @@ void Entity::aiFinishLerp() {
 }
 
 bool Entity::checkLineOfSight(int n, int n2, int n3, int n4, int n5) {
-    Applet* app = CAppContainer::getInstance()->app;
+
 
     int a = n3 - n;
     int a2 = n4 - n2;
@@ -906,7 +907,7 @@ bool Entity::checkLineOfSight(int n, int n2, int n3, int n4, int n5) {
 }
 
 bool Entity::calcPath(int n, int n2, int n3, int n4, int n5, bool b) {
-    Applet* app = CAppContainer::getInstance()->app;
+
 
     int n6 = n3 - n;
     int n7 = n4 - n2;
@@ -1028,7 +1029,7 @@ bool Entity::calcPath(int n, int n2, int n3, int n4, int n5, bool b) {
 }
 
 bool Entity::aiGoal_MOVE() {
-    Applet* app = CAppContainer::getInstance()->app;
+
 
     bool b = false;
     int sprite = this->getSprite();
@@ -1116,7 +1117,7 @@ bool Entity::aiGoal_MOVE() {
 }
 
 void Entity::aiReachedGoal_MOVE() {
-    Applet* app = CAppContainer::getInstance()->app;
+
     EntityMonster* monster = this->monster;
     EntityDef* def = this->def;
     this->info &= ~0x10000000;
@@ -1158,7 +1159,7 @@ int Entity::distFrom(int n, int n2) {
 }
 
 void Entity::attack() {
-    Applet* app = CAppContainer::getInstance()->app;
+
     if ((this->monster->flags & 0x400) == 0x0) {
         this->monster->flags |= 0x400;
         this->monster->nextAttacker = app->game->combatMonsters;
@@ -1167,7 +1168,7 @@ void Entity::attack() {
 }
 
 void Entity::undoAttack() {
-    Applet* app = CAppContainer::getInstance()->app;
+
     if ((this->monster->flags & 0x400) == 0x0) {
         return;
     }
@@ -1192,7 +1193,7 @@ void Entity::undoAttack() {
 }
 
 void Entity::trimCorpsePile(int n, int n2) {
-    Applet* app = CAppContainer::getInstance()->app;
+
     Entity* entity = app->game->inactiveMonsters;
     if (entity != nullptr) {
         int n3 = 0;
@@ -1209,7 +1210,7 @@ void Entity::trimCorpsePile(int n, int n2) {
 }
 
 void Entity::knockback(int n, int n2, int n3) {
-    Applet* app = CAppContainer::getInstance()->app;
+
     int32_t* knockbackDelta = this->knockbackDelta;
     if (n3 == 0) {
         return;
@@ -1268,7 +1269,7 @@ void Entity::knockback(int n, int n2, int n3) {
 }
 
 int Entity::getFarthestKnockbackDist(int n, int n2, int n3, int n4, Entity* entity, int n5, int n6, int n7) {
-    Applet* app = CAppContainer::getInstance()->app;
+
     int n8 = n7;
     app->game->trace(n, n2, n3, n4, entity, n5, n6);
     if (app->game->traceEntity != nullptr) {
@@ -1278,7 +1279,7 @@ int Entity::getFarthestKnockbackDist(int n, int n2, int n3, int n4, Entity* enti
 }
 
 int Entity::findRaiseTarget(int n, int n2, int n3) {
-    Applet* app = CAppContainer::getInstance()->app;
+
     Entity* inactiveMonsters = app->game->inactiveMonsters;
     int* calcPosition = this->calcPosition();
     int n4 = calcPosition[0];
@@ -1318,7 +1319,7 @@ int Entity::findRaiseTarget(int n, int n2, int n3) {
 }
 
 void Entity::raiseTarget(int n) {
-    Applet* app = CAppContainer::getInstance()->app;
+
     Entity* entity = &app->game->entities[n];
     int sprite = entity->getSprite();
     app->localization->resetTextArgs();
@@ -1343,7 +1344,7 @@ void Entity::raiseTarget(int n) {
 }
 
 void Entity::resurrect(int n, int n2, int n3) {
-    Applet* app = CAppContainer::getInstance()->app;
+
     int sprite = this->getSprite();
     this->def = app->entityDefManager->find(2, this->def->eSubType, this->def->parm);
     this->name = (short)(this->def->name | 0x400);
@@ -1369,7 +1370,7 @@ void Entity::resurrect(int n, int n2, int n3) {
 }
 
 int* Entity::calcPosition() {
-    Applet* app = CAppContainer::getInstance()->app;
+
     int x;
     int y;
     if (this->def->eType == Enums::ET_WORLD) {
@@ -1404,13 +1405,13 @@ bool Entity::isHasteResistant() {
 }
 
 bool Entity::isDroppedEntity() {
-    Applet* app = CAppContainer::getInstance()->app;
+
     short index = this->getIndex();
     return index >= app->game->firstDropIndex && index < app->game->firstDropIndex + 16;
 }
 
 bool Entity::isBinaryEntity(int* array) {
-    Applet* app = CAppContainer::getInstance()->app;
+
     bool b = false;
     if (this->def == nullptr) {
         return false;
@@ -1482,7 +1483,7 @@ bool Entity::isBinaryEntity(int* array) {
 }
 
 bool Entity::isNamedEntity(int* array) {
-    Applet* app = CAppContainer::getInstance()->app;
+
     if (this->def == nullptr || this->name == Localization::STRINGID((short)1, this->def->name) || this->def->eType == Enums::ET_CORPSE) {
         return false;
     }
@@ -1495,7 +1496,7 @@ bool Entity::isNamedEntity(int* array) {
 }
 
 void Entity::saveState(OutputStream* OS, int n) {
-    Applet* app = CAppContainer::getInstance()->app;
+
 
     short* mapSprites = app->render->mapSprites;
     int* mapSpriteInfo = app->render->mapSpriteInfo;
@@ -1572,7 +1573,7 @@ void Entity::saveState(OutputStream* OS, int n) {
 }
 
 void Entity::loadState(InputStream* IS, int n) {
-    Applet* app = CAppContainer::getInstance()->app;
+
 
     if ((n & 0x20000) != 0x0) {
         this->name = IS->readShort();
@@ -1785,7 +1786,7 @@ void Entity::loadState(InputStream* IS, int n) {
 }
 
 int Entity::getSaveHandle(bool b) {
-    Applet* app = CAppContainer::getInstance()->app;
+
     int* tempSaveBuf = this->tempSaveBuf;
     tempSaveBuf[tempSaveBuf[0] = 1] = this->getIndex();
     bool droppedEntity = this->isDroppedEntity();
@@ -1857,7 +1858,7 @@ int Entity::getSaveHandle(bool b) {
 }
 
 void Entity::restoreBinaryState(int n) {
-    Applet* app = CAppContainer::getInstance()->app;
+
     bool b = (n & 0x10000) != 0x0;
     switch (this->def->eType) {
         case Enums::ET_ITEM:
@@ -1932,7 +1933,7 @@ void Entity::restoreBinaryState(int n) {
 }
 
 short Entity::getIndex() {
-    Applet* app = CAppContainer::getInstance()->app;
+
     for (short n = 0; n < app->game->numEntities; ++n) {
         if (this == &app->game->entities[n]) {
             return n;
@@ -1942,7 +1943,7 @@ short Entity::getIndex() {
 }
 
 void Entity::updateMonsterFX() {
-    Applet* app = CAppContainer::getInstance()->app;
+
     if (nullptr != this->monster) {
         for (int i = 0; i < 5; ++i) {
             int n = 1 << i;
@@ -2048,7 +2049,7 @@ void Entity::populateDefaultLootSet() {
 }
 
 int Entity::findRandomJokeItem() {
-    Applet* app = CAppContainer::getInstance()->app;
+
 
     int sprite = this->getSprite();
 

@@ -10,11 +10,14 @@
 class TGLVert;
 class TGLEdge;
 
+class Applet;
+
 class TinyGL
 {
 private:
 
 public:
+    Applet* app;  // Set in startup(), replaces CAppContainer::getInstance()->app
 
     static constexpr int SHIFT_STRETCH = 12;
     static constexpr int UNIT_SCALE = 65536;

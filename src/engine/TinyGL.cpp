@@ -19,8 +19,8 @@ TinyGL::~TinyGL() {
 }
 
 bool TinyGL::startup(int screenWidth, int screenHeight) {
-	Applet* app = CAppContainer::getInstance()->app;
-	Canvas* canvas = app->canvas;
+	this->app = CAppContainer::getInstance()->app;
+	Canvas* canvas = this->app->canvas;
 
 	printf("TinyGL::startup, w [%d], h [%d]\n", screenWidth, screenHeight);
 
@@ -52,7 +52,7 @@ uint16_t* TinyGL::getFogPalette(int i) {
 }
 
 void TinyGL::clearColorBuffer(int color) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	Canvas* canvas = app->canvas;
 
 	if (!app->render->_gles->ClearBuffer(color)) {
@@ -66,7 +66,7 @@ void TinyGL::clearColorBuffer(int color) {
 }
 
 void TinyGL::buildViewMatrix(int x, int y, int z, int yaw, int pitch, int roll, int* matrix) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	int *sinTable = app->render->sinTable;
 
 	int iVar7 = sinTable[yaw + 512 & 0x3ff] >> 2;
@@ -98,7 +98,7 @@ void TinyGL::buildViewMatrix(int x, int y, int z, int yaw, int pitch, int roll, 
 }
 
 void TinyGL::buildProjectionMatrix(int fov, int aspect, int* matrix) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	int* sinTable = app->render->sinTable;
 
 	int n3 = aspect >> 1;
@@ -147,7 +147,7 @@ void TinyGL::_setViewport(int viewportX, int viewportY, int viewportWidth, int v
 }
 
 void TinyGL::setViewport(int x, int y, int w, int h) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int posX = x - app->canvas->viewRect[0];
 	int posY = y - app->canvas->viewRect[1];
@@ -171,13 +171,13 @@ void TinyGL::setViewport(int x, int y, int w, int h) {
 }
 
 void TinyGL::resetViewPort() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	this->setViewport(app->canvas->viewRect[0], app->canvas->viewRect[1], app->canvas->viewRect[2], app->canvas->viewRect[3]);
 }
 
 void TinyGL::setView(int viewX, int viewY, int viewZ, int viewYaw, int viewPitch, int viewRoll, int viewFov, int viewAspect) {
 	
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	this->viewX = viewX;
 	this->viewY = viewY;
@@ -221,7 +221,7 @@ void TinyGL::viewMtxMove(TGLVert* tglVert, int n, int n2, int n3) {
 }
 
 void TinyGL::drawModelVerts(TGLVert* array, int n) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if ((app->render->renderMode & 0x1) == 0x0) {
 		return;
@@ -525,7 +525,7 @@ void TinyGL::projectVerts(TGLVert* array, int n) {
 }
 
 void TinyGL::RasterizeConvexPolygon(int n) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if ((app->render->renderMode & 0x4) == 0x0) {
 		return;
@@ -745,7 +745,7 @@ bool TinyGL::occludeClippedLine(TGLVert* tglVert, TGLVert* tglVert2) {
 }
 
 void TinyGL::drawClippedSpriteLine(TGLVert* tglVert, TGLVert* tglVert2, TGLVert* tglVert3, int n, bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int i = 0;
 	int n2 = (tglVert->y - tglVert3->y << 12) / 176 >> 3;
@@ -853,7 +853,7 @@ void TinyGL::resetCounters() {
 // [GEC]
 
 void TinyGL::applyClearColorBuffer() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	uint16_t* pixels = this->pixels;
 	int color = this->colorBuffer;
 	int n2 = this->viewportX + this->viewportY * this->screenWidth;

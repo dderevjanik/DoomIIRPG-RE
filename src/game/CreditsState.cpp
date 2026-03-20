@@ -13,7 +13,7 @@
 #include "Resource.h"
 
 void CreditsState::onEnter(Canvas* canvas) {
-	Applet* app = CAppContainer::getInstance()->app;
+	Applet* app = canvas->app;
 	app->localization->loadText(2);
 	canvas->initScrollingText(2, 0, false, 16, 5, 500);
 	app->localization->unloadText(2);
@@ -33,7 +33,7 @@ void CreditsState::render(Canvas* canvas, Graphics* graphics) {
 }
 
 bool CreditsState::handleInput(Canvas* canvas, int key, int action) {
-	Applet* app = CAppContainer::getInstance()->app;
+	Applet* app = canvas->app;
 
 	if (key == 18) { // Back button — handled same as other states
 		return true;

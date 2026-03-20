@@ -36,11 +36,11 @@ void gles::SwapBuffers() {
 }
 
 void gles::GLInit(Render* render) {
-	Applet* app = CAppContainer::getInstance()->app;
+	this->app = CAppContainer::getInstance()->app;
 
 	_glesObj = this;
 	this->render = render;
-	this->tinyGL = app->tinyGL;
+	this->tinyGL = this->app->tinyGL;
 	this->isInit = true;
 
 	int j = 0;
@@ -109,7 +109,7 @@ void gles::SetGLState() {
 }
 
 void gles::BeginFrame(int x, int y, int w, int h, int* mtxView, int* mtxProjection) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	Canvas* canvas = app->canvas;
 	int posX, posY;
 
@@ -297,7 +297,7 @@ void gles::CreateAllActiveTextures() {
 }
 
 bool gles::RasterizeConvexPolygon(int numVerts, TGLVert* verts) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	Vertex* immediate;
 	GLfloat projectionMatrix[MAX_GLVERTS];
 	int fogMode;
@@ -578,7 +578,7 @@ bool gles::DrawModelVerts(TGLVert* verts, int numVerts) {
 }
 
 void gles::SetupTexture(int n, int n2, int renderMode, int flags) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	glChain* chain;
 	glChain* next;
 	glChain* prev;
@@ -761,7 +761,7 @@ void gles::SetupTexture(int n, int n2, int renderMode, int flags) {
 
 void gles::CreateTextureForMediaID(int n, int mediaID, bool b) {
 	//printf("CreateTextureForMediaID %d\n", mediaID);
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	Render* render; // r2
 	int v5; // r1

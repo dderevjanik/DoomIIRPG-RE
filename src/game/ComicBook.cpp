@@ -213,7 +213,8 @@ LABEL_29:
 }
 
 void ComicBook::DrawLoading(Graphics* graphics) {
-    Applet* app = CAppContainer::getInstance()->app;
+    if (!this->app) this->app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
     int x; // r10
     int y; // r8
     int flags; // r0
@@ -258,7 +259,8 @@ void ComicBook::DrawLoading(Graphics* graphics) {
 
 
 void ComicBook::loadImage(int index, bool vComic) {
-    Applet* app = CAppContainer::getInstance()->app;
+    if (!this->app) this->app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
     if (vComic)
     {
         switch (index)
@@ -747,7 +749,8 @@ void ComicBook::UpdateTransition()
 
 void ComicBook::Touch(int x, int y, bool b)
 {
-    Applet* app = CAppContainer::getInstance()->app;
+    if (!this->app) this->app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
     bool v4; // r6
     int v7; // r5
     bool v9; // r3
@@ -970,7 +973,8 @@ void ComicBook::DeleteImages() {
 }
 
 void ComicBook::DrawExitButton(Graphics* graphics) {
-    Applet* app = CAppContainer::getInstance()->app;
+    if (!this->app) this->app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
     int v3; // r11
     int v4; // r10
     int v5; // r6
@@ -1012,7 +1016,8 @@ void ComicBook::DrawExitButton(Graphics* graphics) {
 
 
 void ComicBook::handleComicBookEvents(int key, int keyAction) {
-    Applet* app = CAppContainer::getInstance()->app;
+    if (!this->app) this->app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
     int cX = app->canvas->SCR_CX;
     int cY = app->canvas->SCR_CY;
     int i;

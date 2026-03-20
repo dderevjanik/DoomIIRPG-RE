@@ -1,6 +1,7 @@
 #ifndef __VENDINGMACHINE_H__
 #define __VENDINGMACHINE_H__
 
+class Applet;
 class ScriptThread;
 class Image;
 class fmButtonContainer;
@@ -11,6 +12,7 @@ class VendingMachine
 private:
 
 public:
+	Applet* app; // Set in startup(), replaces CAppContainer::getInstance()->app
 	int touchMe;
 	ScriptThread* callingThread;
 	int16_t* energyDrinkData;

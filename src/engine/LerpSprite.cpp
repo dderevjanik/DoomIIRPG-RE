@@ -9,13 +9,15 @@
 #include "Enums.h"
 
 LerpSprite::LerpSprite() {
+    this->app = nullptr;
 }
 
 LerpSprite::~LerpSprite() {
 }
 
 void LerpSprite::saveState(OutputStream* OS) {
-    Applet* app = CAppContainer::getInstance()->app;
+    if (!this->app) this->app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
     if (this->hSprite == 0) {
         return;
     }
@@ -44,12 +46,14 @@ void LerpSprite::saveState(OutputStream* OS) {
 }
 
 void LerpSprite::calcDist() {
-	Applet* app = CAppContainer::getInstance()->app;
+	if (!this->app) this->app = CAppContainer::getInstance()->app;
+	Applet* app = this->app;
 	this->dist = (int)(app->game->FixedSqrt((this->dstX - this->srcX) * (this->dstX - this->srcX) + (this->dstY - this->srcY) * (this->dstY - this->srcY) << 8) >> 8);
 }
 
 void LerpSprite::loadState(InputStream* IS) {
-    Applet* app = CAppContainer::getInstance()->app;
+    if (!this->app) this->app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
     this->travelTime = IS->readInt();
     this->startTime = app->gameTime - IS->readInt();
     this->hSprite = IS->readShort();

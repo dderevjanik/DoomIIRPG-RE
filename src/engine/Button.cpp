@@ -143,7 +143,8 @@ void fmButton::SetTouchArea(int x, int y, int w, int h, bool drawing) { // Port:
 }
 
 void fmButton::SetHighlighted(bool highlighted) {
-	Applet* app = CAppContainer::getInstance()->app;
+	if (!this->app) this->app = CAppContainer::getInstance()->app;
+	Applet* app = this->app;
 
 	if (this->drawButton != 0) {
 
@@ -159,7 +160,8 @@ void fmButton::SetHighlighted(bool highlighted) {
 }
 
 void fmButton::Render(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+	if (!this->app) this->app = CAppContainer::getInstance()->app;
+	Applet* app = this->app;
 
 	//printf("fmButton::Render\n");
 

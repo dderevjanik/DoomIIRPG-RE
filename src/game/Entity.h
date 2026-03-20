@@ -1,6 +1,7 @@
 #ifndef __ENTITY_H__
 #define __ENTITY_H__
 
+class Applet;
 class EntityDef;
 class EntityMonster;
 class LerpSprite;
@@ -12,6 +13,7 @@ class Entity
 private:
 
 public:
+	Applet* app; // Set in startup(), replaces CAppContainer::getInstance()->app
 	int touchMe;
 	EntityDef* def;
 	EntityMonster* monster;

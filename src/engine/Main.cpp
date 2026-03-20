@@ -129,12 +129,13 @@ int main(int argc, char* args[]) {
 	sdlGL.Initialize();
 
 	Input input;
-	input.init(); // [GEC] Port: set default Binds
 
 	// Set up the game module — custom games would provide their own IGameModule here
 	DoomIIRPGGame doom2rpgModule;
 
 	CAppContainer::getInstance()->Construct(&sdlGL, &zipFile, &vfs, &doom2rpgModule);
+
+	input.init(); // [GEC] Port: set default Binds — must be after Construct() so app pointer exists
 
 	if (customMap) {
 		CAppContainer::getInstance()->customMapFile = customMap;

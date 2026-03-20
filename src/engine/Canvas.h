@@ -3,6 +3,7 @@
 
 #include "Graphics.h"
 
+class Applet;
 class ICanvasState;
 class Image;
 class Text;
@@ -21,6 +22,8 @@ class Canvas
 private:
 
 public:
+	Applet* app;  // Set in startup(), replaces CAppContainer::getInstance()->app
+
 	static constexpr int KNOCKBACK_HEIGHT = 10;
 	static constexpr int FALLDOWNDEATHTIME = 750;
 	static constexpr int DEATHFADETIME = 2000;

@@ -42,7 +42,8 @@ MenuSystem::~MenuSystem() {
 }
 
 bool MenuSystem::startup() {
-	Applet* app = CAppContainer::getInstance()->app;
+	this->app = CAppContainer::getInstance()->app;
+	Applet* app = this->app;
 	printf("MenuSystem::startup\n");
 
 	// Try loading from menus.ini in CWD first
@@ -416,7 +417,7 @@ static const char* menuIdToName(int id) {
 }
 
 bool MenuSystem::loadMenusFromBinary() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	InputStream IS;
 
 	if (!IS.loadResource(Resources::RES_MENUS_BIN_GZ)) {
@@ -584,7 +585,7 @@ void MenuSystem::buildDivider(Text* text, int i) {
 }
 
 bool MenuSystem::enterDigit(int i) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	this->cheatCombo *= 10;
 	this->cheatCombo += i;
@@ -665,7 +666,7 @@ void MenuSystem::scrollPageUp() { // J2ME
 }
 
 bool MenuSystem::shiftBlockText(int n, int i, int j) { // J2ME
-	Applet* app = CAppContainer::getInstance()->app;
+
 	if (n > this->numItems || (this->items[n].flags & 0x100) == 0x0) {
 		return false;
 	}
@@ -701,7 +702,7 @@ bool MenuSystem::shiftBlockText(int n, int i, int j) { // J2ME
 }
 
 void MenuSystem::moveDir(int n) { // J2ME
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	//this->menuMode = this->MODE_FULLREFRESH;
 	if (this->type == 5 || this->type == 7) {
@@ -868,7 +869,7 @@ void MenuSystem::doDetailsSelect()
 }
 
 void MenuSystem::back() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	//printf("back:: this->menu %d\n", this->menu);
 
 	if ((this->menu == Menus::MENU_MAIN_BINDINGS) || (this->menu == Menus::MENU_INGAME_BINDINGS)) {
@@ -892,7 +893,7 @@ void MenuSystem::back() {
 
 	if (this->stackCount != 0) {
 		if (this->stackCount - 1 < 0){
-			CAppContainer::getInstance()->app->Error("Menu stack is empty");
+			this->app->Error("Menu stack is empty");
 		}
 		int y1;
 		int y2;
@@ -913,7 +914,7 @@ void MenuSystem::back() {
 }
 
 void MenuSystem::setMenu(int menu) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	printf("menu %d\n", menu);
 	this->cheatCombo = 0;
@@ -967,7 +968,7 @@ void MenuSystem::setMenu(int menu) {
 
 
 void MenuSystem::paint(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	Canvas* canvas; // r1
 	int* screenRect; // r5
 	int ScrollPos; // r0
@@ -1491,7 +1492,7 @@ LABEL_61:
 }
 
 void MenuSystem::setItemsFromText(int i, Text* text, int i2, int i3, int i4) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	this->numItems = i;
 	text->wrapText(i2);
@@ -1509,7 +1510,7 @@ void MenuSystem::setItemsFromText(int i, Text* text, int i2, int i3, int i4) {
 
 
 void MenuSystem::returnToGame() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	this->numItems = 0;
 	app->time = app->lastTime = app->upTimeMs;
@@ -1522,7 +1523,7 @@ void MenuSystem::returnToGame() {
 }
 
 void MenuSystem::initMenu(int menu) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	Text* textbuff;
 	int flags = 0;
 
@@ -3126,7 +3127,7 @@ void MenuSystem::gotoMenu(int menu) {
 }
 
 void MenuSystem::handleMenuEvents(int key, int keyAction) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	key &= ~AVK_MENU_NUMBER; // [GEC]
 	if (((key - AVK_0) < 10) && (this->enterDigit(key - AVK_0) != 0)) {
@@ -3134,7 +3135,7 @@ void MenuSystem::handleMenuEvents(int key, int keyAction) {
 	}
 
 	if (this->menu == Menus::MENU_COMIC_BOOK) { // [GEC]
-		CAppContainer::getInstance()->app->comicBook->handleComicBookEvents(key, keyAction);
+		this->app->comicBook->handleComicBookEvents(key, keyAction);
 	}
 
 	if (!this->changeValues) { // Old changeSfxVolume
@@ -3271,7 +3272,7 @@ void MenuSystem::handleMenuEvents(int key, int keyAction) {
 }
 
 void MenuSystem::select(int i) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	//printf("select %d\n", i);
 
@@ -3657,8 +3658,8 @@ void MenuSystem::select(int i) {
 		}
 
 		case Menus::ACTION_TOG_TINYGL: { // [GEC]
-			Canvas* canvas = CAppContainer::getInstance()->app->canvas;
-			TinyGL* tinyGL = CAppContainer::getInstance()->app->tinyGL;
+			Canvas* canvas = this->app->canvas;
+			TinyGL* tinyGL = this->app->tinyGL;
 			_glesObj->isInit = !_glesObj->isInit;
 
 			if (canvas->state == Canvas::ST_CAMERA) {
@@ -3827,7 +3828,7 @@ int MenuSystem::infiniteRecursion(int* array) {
 }
 
 void MenuSystem::systemTest(int sysType) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	int i = 0;
 	int j = 0;
 
@@ -3871,7 +3872,7 @@ void MenuSystem::systemTest(int sysType) {
 }
 
 void MenuSystem::startGame(bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (this->background != this->imgMainBG) {
 		this->background->~Image();
@@ -3911,7 +3912,7 @@ void MenuSystem::startGame(bool b) {
 }
 
 void MenuSystem::SetYESNO(short i, int i2, int i3, int i4) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	Text* text;
 
 	text = app->localization->getLargeBuffer();
@@ -3921,7 +3922,7 @@ void MenuSystem::SetYESNO(short i, int i2, int i3, int i4) {
 }
 
 void MenuSystem::SetYESNO(short i, int i2, int i3, int i4, int i5, int i6) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	Text* text;
 
 	text = app->localization->getLargeBuffer();
@@ -3931,7 +3932,7 @@ void MenuSystem::SetYESNO(short i, int i2, int i3, int i4, int i5, int i6) {
 }
 
 void MenuSystem::SetYESNO(Text* text, int i, int i2, int i3, int i4, int i5) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	app->localization->resetTextArgs();
 	if (text->findFirstOf('\n', 0) >= 0) {
@@ -3962,7 +3963,7 @@ void MenuSystem::SetYESNO(Text* text, int i, int i2, int i3, int i4, int i5) {
 }
 
 void MenuSystem::LoadHelpResource(short i) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	Text* text;
 
 	this->scrollIndex = 0;
@@ -4004,7 +4005,7 @@ void MenuSystem::LoadHelpResource(short i) {
 }
 
 void MenuSystem::FillRanking() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	int max = std::max(app->player->finalCurrentGrade(), 1);
 	this->addItem(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, 0, 0, 0, MenuSystem::EMPTY_TEXT);
 	this->addItem(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, 0, 0, 0, MenuSystem::EMPTY_TEXT);
@@ -4077,7 +4078,7 @@ void MenuSystem::FillRanking() {
 }
 
 void MenuSystem::LoadNotebook() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	this->detailsHelpText = app->localization->getLargeBuffer();
 	this->type = 7;
 	this->items[this->numItems++].Set(app->render->mapNameField, MenuSystem::EMPTY_TEXT, 9);
@@ -4111,7 +4112,7 @@ void MenuSystem::LoadNotebook() {
 }
 
 void MenuSystem::LoadHelpItems(Text* text, int i) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int n2 = 2;
 	int n3;
@@ -4164,7 +4165,7 @@ void MenuSystem::buildModStat(int i, int i2, Text* text) {
 }
 
 void MenuSystem::buildLevelGrades(Text* text) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	int n = 30;
 	app->localization->resetTextArgs();
 	text->setLength(0);
@@ -4198,7 +4199,7 @@ void MenuSystem::buildLevelGrades(Text* text) {
 }
 
 void MenuSystem::buildLevelGrade(int i, Text* text, int i2, int i3) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	int n4 = (i == app->canvas->loadMapID) ? app->player->levelGrade(false) : app->player->getCurrentGrade(i);
 	int bestGrade = app->player->getBestGrade(i);
 	text->setLength(0);
@@ -4228,7 +4229,7 @@ void MenuSystem::buildLevelGrade(int i, Text* text, int i2, int i3) {
 }
 
 void MenuSystem::fillStatus(bool b, bool b2, bool b3) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	app->localization->resetTextArgs();
 	Text* largeBuffer = app->localization->getLargeBuffer();
 	if (b2) {
@@ -4297,7 +4298,7 @@ void MenuSystem::showDetailsMenu() {
 }
 
 void MenuSystem::addItem(int textField, int textField2, int flags, int action, int param, int helpField) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	if (this->numItems == 50) {
 		app->Error(100); // ERR_MAXMENUITEMS
 	}
@@ -4305,7 +4306,7 @@ void MenuSystem::addItem(int textField, int textField2, int flags, int action, i
 }
 
 void MenuSystem::loadMenuItems(int menu, int begItem, int numItems) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int length = this->menuDataCount;
 	for (int j = 0; j < length; ++j) {
@@ -4341,7 +4342,7 @@ int MenuSystem::onOffValue(bool b) {
 }
 
 void MenuSystem::leaveOptionsMenu(void) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	//app->canvas->pacifierX = app->canvas->SCR_CX - 66;
 	//app->canvas->repaintFlags |= Canvas::REPAINT_CLEAR;
@@ -4359,7 +4360,7 @@ void MenuSystem::clearStack() {
 }
 
 void MenuSystem::pushMenu(int i, int i2, int Y1, int Y2, int index2) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	if (this->stackCount + 1 >= 10) {
 		app->Error("Menu stack is full.");
 	}
@@ -4371,7 +4372,7 @@ void MenuSystem::pushMenu(int i, int i2, int Y1, int Y2, int index2) {
 }
 
 int MenuSystem::popMenu(int* array, int* Y1, int* Y2, int *index2) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	if (this->stackCount - 1 < 0) {
 		app->Error("Menu stack is empty");
 	}
@@ -4390,7 +4391,7 @@ int MenuSystem::peekMenu() {
 }
 
 int MenuSystem::getLastArgString() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (app->localization->numTextArgs > 0) {
 		return Localization::STRINGID(Strings::FILE_MENUSTRINGS, (short)(MenuStrings::ARGUMENT1 + (app->localization->numTextArgs - 1)));
@@ -4400,7 +4401,7 @@ int MenuSystem::getLastArgString() {
 }
 
 void MenuSystem::fillVendingMachineSnacks(int i, Text* text) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int n2 = 1;
 	if (i >= 1 && i <= 3) {
@@ -4468,7 +4469,7 @@ void MenuSystem::fillVendingMachineSnacks(int i, Text* text) {
 //--------------------------------------------------------------------------
 
 void MenuSystem::setMenuSettings() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	fmButton* button;
 	int x, y, w, h, imgH;
 
@@ -4931,7 +4932,7 @@ void MenuSystem::updateTouchButtonState() {
 }
 
 void MenuSystem::handleUserTouch(int x, int y, bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	bool v4; // r6
 	int v5; // s16
 	int v8; // s17
@@ -5132,7 +5133,7 @@ void MenuSystem::handleUserMoved(int x, int y) {
 	}
 
 	if (this->menu == Menus::MENU_COMIC_BOOK) {
-		CAppContainer::getInstance()->app->comicBook->TouchMove(_x, _y);
+		this->app->comicBook->TouchMove(_x, _y);
 	}
 	else {
 		//printf("field_0x674_ %d\n", field_0x674_);
@@ -5247,7 +5248,7 @@ int MenuSystem::getScrollPos() {
 }
 
 int MenuSystem::getMenuItemHeight(int i) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int padding;
 	int height = 29; // default
@@ -5286,7 +5287,7 @@ int MenuSystem::getMenuItemHeight(int i) {
 }
 
 int MenuSystem::getMenuItemHeight2(int i) { //[GEC]
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int padding;
 	int height = 29; // default
@@ -5343,7 +5344,7 @@ void MenuSystem::drawScrollbar(Graphics* graphics) {
 }
 
 void MenuSystem::drawButtonFrame(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if ((this->menu != Menus::MENU_END_) &&
 		((this->menu != Menus::MENU_MAIN_CONFIRMNEW && this->menu != Menus::MENU_MAIN_CONFIRMNEW2) && this->menu != Menus::MENU_END_FINALQUIT) &&
@@ -5362,7 +5363,7 @@ void MenuSystem::drawButtonFrame(Graphics* graphics) {
 }
 
 void MenuSystem::drawTouchButtons(Graphics* graphics, bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	Text* textBuff;
 	fmButton* button;
@@ -5482,7 +5483,7 @@ void MenuSystem::drawTouchButtons(Graphics* graphics, bool b) {
 
 void MenuSystem::drawSoftkeyButtons(Graphics* graphics)
 {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	Text* textBuff;
 	fmButton* button;
 	int curFontType;
@@ -5596,7 +5597,7 @@ void MenuSystem::drawSoftkeyButtons(Graphics* graphics)
 }
 
 int MenuSystem::drawCustomScrollbar(Graphics* graphics, MenuItem* item, Text* text, int yPos) { // [GEC]
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int menuItem_width = this->menuItem_width;
 	int v70 = this->menuItem_height >> 1;
@@ -5762,7 +5763,7 @@ int MenuSystem::drawCustomScrollbar(Graphics* graphics, MenuItem* item, Text* te
 
 void MenuSystem::drawOptionsScreen(Graphics* graphics)
 {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	Text* LargeBuffer; // r0
 	int menu; // r3
@@ -6119,7 +6120,7 @@ bool MenuSystem::isUserMusicOn() {
 
 bool MenuSystem::updateVolumeSlider(int buttonId, int x)
 {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	int* value;
 	int v9;
 	int v10;
@@ -6174,5 +6175,5 @@ void MenuSystem::refresh() {
 }
 
 void MenuSystem::soundClick() {
-	CAppContainer::getInstance()->app->sound->playSound(1027, 0, 5, false);
+	this->app->sound->playSound(1027, 0, 5, false);
 }

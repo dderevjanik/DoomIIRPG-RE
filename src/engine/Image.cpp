@@ -7,6 +7,7 @@
 #include "SDLGL.h"
 
 Image::Image() {
+    this->app = nullptr;
 }
 
 Image::~Image() {
@@ -158,7 +159,8 @@ void Image::DrawTexture(int texX, int texY, int texW, int texH, int posX, int po
 }
 
 void Image::setRenderMode(int renderMode) {
-    Applet* app = CAppContainer::getInstance()->app;
+    if (!this->app) this->app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
     int color;
 
     switch (renderMode) {

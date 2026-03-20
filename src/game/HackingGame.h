@@ -1,6 +1,7 @@
 #ifndef __HACKINGGAME_H__
 #define __HACKINGGAME_H__
 
+class Applet;
 class ScriptThread;
 class Image;
 class fmButtonContainer;
@@ -10,6 +11,7 @@ class HackingGame
 private:
 
 public:
+	Applet* app; // Set lazily, replaces CAppContainer::getInstance()->app
 	static int touchedColumn;
 
 	int touchMe;

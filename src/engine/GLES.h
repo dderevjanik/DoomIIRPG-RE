@@ -35,9 +35,13 @@ typedef struct _GLVert
 	int t;
 }GLVert;
 
+class Applet;
+
 class gles
 {
-public:	bool isInit;
+public:
+	Applet* app;  // Set in startup(), replaces CAppContainer::getInstance()->app
+	bool isInit;
 	static constexpr int scale = 1;
 	static constexpr int MAX_GLVERTS = 16;
 	static constexpr int MAX_MEDIA = 1024;

@@ -31,7 +31,8 @@ short Combat::getWeaponWeakness(int n, int n2, int n3) {
 }
 
 bool Combat::startup() {
-	Applet* app = CAppContainer::getInstance()->app;
+	this->app = CAppContainer::getInstance()->app;
+	Applet* app = this->app;
 	printf("Combat::startup\n");
 
 	for (int n = 0, i = 0; i < 51; ++i, n += 6) {
@@ -52,7 +53,7 @@ bool Combat::startup() {
 }
 
 void Combat::performAttack(Entity* curAttacker, Entity* curTarget, int attackX, int attackY, bool b) {
-    Applet* app = CAppContainer::getInstance()->app;
+
 
     this->attackX = attackX;
     this->attackY = attackY;
@@ -166,7 +167,7 @@ void Combat::performAttack(Entity* curAttacker, Entity* curTarget, int attackX, 
 }
 
 void Combat::checkMonsterFX() {
-    Applet* app = CAppContainer::getInstance()->app;
+
     EntityMonster* monster = this->curTarget->monster;
     int monsterEffects = monster->monsterEffects;
     if (app->player->statusEffects[12] > 0) {
@@ -176,7 +177,7 @@ void Combat::checkMonsterFX() {
 }
 
 int Combat::playerSeq() {
-    Applet* app = CAppContainer::getInstance()->app;
+
     int animLoopCount = 0;
     bool b = false;
     if (this->nextStageTime != 0 && app->gameTime > this->nextStageTime && this->numActiveMissiles == 0 && app->game->animatingEffects == 0) {
@@ -425,7 +426,7 @@ int Combat::playerSeq() {
 }
 
 int Combat::monsterSeq() {
-    Applet* app = CAppContainer::getInstance()->app;
+
     int sprite = this->curAttacker->getSprite();
     int n = app->render->mapSpriteInfo[sprite];
     int n2 = (n & 0xFF00) >> 8;
@@ -610,7 +611,7 @@ int Combat::monsterSeq() {
 }
 
 void Combat::drawEffects() {
-    Applet* app = CAppContainer::getInstance()->app;
+
     if (app->player->statusEffects[13] > 0) {
         int n = 131072;
         int n2 = ((176 * n) / 65536);
@@ -619,7 +620,7 @@ void Combat::drawEffects() {
 }
 
 void Combat::drawWeapon(int sx, int sy) {
-    Applet* app = CAppContainer::getInstance()->app;
+
     bool b = false;
     int frame = 0;
     int renderFlags = 0;
@@ -844,7 +845,7 @@ void Combat::drawWeapon(int sx, int sy) {
 }
 
 void Combat::shiftWeapon(bool lerpWpDown) {
-    Applet* app = CAppContainer::getInstance()->app;
+
     if (lerpWpDown == this->lerpWpDown || lerpWpDown == this->weaponDown) {
         return;
     }
@@ -862,7 +863,7 @@ int Combat::runFrame() {
 }
 
 int Combat::calcHit(Entity* entity) {
-    Applet* app = CAppContainer::getInstance()->app;
+
     int n = app->player->ce->weapon * 9;
     int worldDistToTileDist = this->WorldDistToTileDist(entity->distFrom(app->canvas->destX, app->canvas->destY));
     int8_t b = this->weapons[n + 3];
@@ -883,7 +884,7 @@ int Combat::calcHit(Entity* entity) {
 }
 
 void Combat::explodeOnMonster() {
-    Applet* app = CAppContainer::getInstance()->app;
+
     if (this->explodeThread != nullptr) {
         this->explodeThread->run();
         this->explodeThread = nullptr;
@@ -946,7 +947,7 @@ void Combat::explodeOnMonster() {
 }
 
 void Combat::explodeOnPlayer() {
-    Applet* app = CAppContainer::getInstance()->app;
+
     if (this->curTarget != nullptr) {
         return;
     }
@@ -1060,7 +1061,7 @@ int Combat::getMonsterField(EntityDef* entityDef, int n) {
 }
 
 void Combat::checkForBFGDeaths(int x, int y) {
-    Applet* app = CAppContainer::getInstance()->app;
+
     int n3 = (x << 6) + 32;
     int n4 = (y << 6) + 32;
     int n5 = app->render->getHeight(x << 6, y << 6) + 32;
@@ -1083,7 +1084,7 @@ void Combat::checkForBFGDeaths(int x, int y) {
 }
 
 void Combat::radiusHurtEntities(int n, int n2, int n3, int n4, Entity* entity, Entity* entity2) {
-    Applet* app = CAppContainer::getInstance()->app;
+
     int n5 = (n << 6) + 32;
     int n6 = (n2 << 6) + 32;
     int n7 = app->render->getHeight(n << 6, n2 << 6) + 32;
@@ -1112,7 +1113,7 @@ void Combat::hurtEntityAt(int n, int n2, int n3, int n4, int n5, int n6, Entity*
 }
 
 void Combat::hurtEntityAt(int n, int n2, int n3, int n4, int n5, int n6, Entity* entity, bool b, Entity* entity2) {
-    Applet* app = CAppContainer::getInstance()->app;
+
     this->crFlags = 16;
     app->render->shotsFired = true;
     Entity* playerEnt = app->player->getPlayerEnt();
@@ -1196,7 +1197,7 @@ void Combat::hurtEntityAt(int n, int n2, int n3, int n4, int n5, int n6, Entity*
 }
 
 Text* Combat::getWeaponStatStr(int n) {
-    Applet* app = CAppContainer::getInstance()->app;
+
     int n2 = n * Combat::WEAPON_MAX_FIELDS;
     Text* largeBuffer = app->localization->getLargeBuffer();
      app->localization->resetTextArgs();
@@ -1221,7 +1222,7 @@ Text* Combat::getWeaponStatStr(int n) {
 }
 
 Text* Combat::getArmorStatStr(int n) {
-    Applet* app = CAppContainer::getInstance()->app;
+
     Text* largeBuffer = app->localization->getLargeBuffer();
     if (n != -1) {
         app->localization->resetTextArgs();
@@ -1247,7 +1248,7 @@ void Combat::cleanUpAttack() {
 }
 
 void Combat::updateProjectile() {
-    Applet* app = CAppContainer::getInstance()->app;
+
     if (this->numActiveMissiles > 0) {
         int renderMode = 0;
         for (int i = 0; i < this->numActiveMissiles; ++i) {
@@ -1431,7 +1432,7 @@ void Combat::updateProjectile() {
 }
 
 void Combat::launchProjectile() {
-    Applet* app = CAppContainer::getInstance()->app;
+
     int n = 256;
     int n2;
     int n3 = 16;
@@ -1668,7 +1669,7 @@ void Combat::launchProjectile() {
 }
 
 GameSprite* Combat::allocMissile(int x1, int y1, int z1, int x2, int y2, int z2, int duration, int renderMode) {
-    Applet* app = CAppContainer::getInstance()->app;
+
     if (this->numActiveMissiles == 8) {
         app->Error("MAX_ACTIVE_MISSILES", Enums::ERR_MAX_MISSILES);
         return nullptr;
@@ -1717,7 +1718,7 @@ GameSprite* Combat::allocMissile(int x1, int y1, int z1, int x2, int y2, int z2,
 }
 
 void Combat::launchSoulCube() {
-    Applet* app = CAppContainer::getInstance()->app;
+
     int sprite = this->curTarget->getSprite();
     int x1, y1, z1;
     int x2, y2, z2;

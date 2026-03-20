@@ -29,11 +29,15 @@ public:
         "newTexels035.bin", "newTexels036.bin", "newTexels037.bin", "newTexels038.bin" };
 };
 
+class Applet;
+
 class Resource
 {
 private:
 
 public:
+    Applet* app;  // Set in startup(), replaces CAppContainer::getInstance()->app
+
     static constexpr int IO_SIZE = 20480;
 
     int touchMe;

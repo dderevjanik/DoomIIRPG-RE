@@ -24,6 +24,8 @@ Player::~Player() {}
 
 bool Player::startup() {
 	printf("Player::startup\n");
+	this->app = CAppContainer::getInstance()->app;
+	Applet* app = this->app;
 	this->isFamiliar = false;
 	this->noclip = false;
 	this->god = false;
@@ -44,13 +46,13 @@ bool Player::startup() {
 }
 
 bool Player::modifyCollision(Entity* entity) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	return nullptr != entity && entity->def->eType == Enums::ET_SPRITEWALL &&
 	       (app->render->mapSpriteInfo[(entity->info & 0xFFFF) - 1] & 0xFF) == 131;
 }
 
 void Player::advanceTurn() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	this->moves++;
 	this->totalMoves++;
@@ -93,7 +95,7 @@ void Player::advanceTurn() {
 }
 
 void Player::levelInit() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	this->moves = 0;
 	this->numNotebookIndexes = 0;
 	this->questComplete = 0;
@@ -106,7 +108,7 @@ void Player::levelInit() {
 }
 
 void Player::fillMonsterStats() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int n = 0;
 	int n2 = 0;
@@ -127,11 +129,11 @@ void Player::fillMonsterStats() {
 }
 
 void Player::readyWeapon() {
-	CAppContainer::getInstance()->app->canvas->readyWeaponSound = 2;
+	this->app->canvas->readyWeaponSound = 2;
 }
 
 void Player::selectWeapon(int i) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (this->isFamiliar) {
 		return;
@@ -164,7 +166,7 @@ void Player::selectWeapon(int i) {
 }
 
 void Player::selectPrevWeapon() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int weapon = this->ce->weapon;
 	int n = this->weapons & ~this->disabledWeapons;
@@ -191,7 +193,7 @@ void Player::selectPrevWeapon() {
 }
 
 void Player::selectNextWeapon() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int weapon = this->ce->weapon;
 	int n = this->weapons & ~this->disabledWeapons;
@@ -262,7 +264,7 @@ bool Player::requireItem(int n, int n2, int n3, int n4) {
 }
 
 void Player::addXP(int xp) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	app->localization->resetTextArgs();
 	app->localization->addTextArg(xp);
@@ -280,7 +282,7 @@ void Player::addXP(int xp) {
 }
 
 void Player::addLevel() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	Text* textBuff;
 	int stat;
 
@@ -361,7 +363,7 @@ int Player::calcLevelXP(int n) {
 }
 
 int Player::calcScore() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	int n = 0;
 	bool b = true;
 	int i;
@@ -409,7 +411,7 @@ bool Player::addHealth(int i) {
 }
 
 bool Player::addHealth(int i, bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	app->hud->repaintFlags |= 0x4;
 	int stat;
@@ -498,7 +500,7 @@ void Player::setStatsAccordingToCharacterChoice() {
 }
 
 void Player::reset() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	app->hud->msgCount = 0;
 	this->numNotebookIndexes = 0;
@@ -627,7 +629,7 @@ int Player::calcDamageDir(int x1, int y1, int angle, int x2, int y2) {
 }
 
 void Player::painEvent(Entity* entity, bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (entity == nullptr) {
 		app->hud->damageDir = 3;
@@ -652,7 +654,7 @@ void Player::painEvent(Entity* entity, bool b) {
 }
 
 void Player::pain(int n, Entity* entity, bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	if (this->god) {
 		return;
 	}
@@ -706,7 +708,7 @@ void Player::pain(int n, Entity* entity, bool b) {
 }
 
 void Player::died() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (app->canvas->state == Canvas::ST_DYING) {
 		return;
@@ -729,7 +731,7 @@ void Player::died() {
 }
 
 void Player::familiarDying(bool familiarSelfDestructed) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (app->canvas->state == Canvas::ST_BOT_DYING) {
 		return;
@@ -747,7 +749,7 @@ void Player::familiarDying(bool familiarSelfDestructed) {
 }
 
 bool Player::fireWeapon(Entity* entity, int n, int n2) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (this->ce->weapon == Enums::WP_SOUL_CUBE && entity->monster == nullptr) {
 		return false;
@@ -796,7 +798,7 @@ bool Player::fireWeapon(Entity* entity, int n, int n2) {
 }
 
 bool Player::useItem(int n) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (this->inventory[n] == 0 && n != 22) {
 		return false;
@@ -965,7 +967,7 @@ bool Player::give(int n, int n2, int n3, bool b) {
 }
 
 bool Player::give(int n, int n2, int n3, bool b, bool b2) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	if (n3 == 0) {
 		return false;
 	}
@@ -1065,7 +1067,7 @@ void Player::giveAmmoWeapon(int n, bool b) {
 }
 
 void Player::updateQuests(short n, int n2) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (n2 == 0) {
 		if (this->numNotebookIndexes == 8) {
@@ -1136,7 +1138,7 @@ void Player::formatTime(int n, Text* text) {
 }
 
 void Player::showInvHelp(int n, bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (!this->enableHelp && !b) {
 		return;
@@ -1150,7 +1152,7 @@ void Player::showInvHelp(int n, bool b) {
 }
 
 void Player::showAmmoHelp(int n, bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (!this->enableHelp && !b) {
 		return;
@@ -1164,7 +1166,7 @@ void Player::showAmmoHelp(int n, bool b) {
 }
 
 bool Player::showHelp(short n, bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (app->game->isCameraActive()) {
 		return false;
@@ -1185,7 +1187,7 @@ bool Player::showHelp(short n, bool b) {
 }
 
 void Player::showWeaponHelp(int n, bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (!this->enableHelp && !b) {
 		return;
@@ -1198,7 +1200,7 @@ void Player::showWeaponHelp(int n, bool b) {
 }
 
 void Player::drawBuffs(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	if (this->numbuffs == 0 || app->canvas->state == Canvas::ST_DIALOG) {
 		return;
 	}
@@ -1252,13 +1254,13 @@ void Player::drawBuffs(Graphics* graphics) {
 }
 
 void Player::setCharacterChoice(short i) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	this->characterChoice = i;
 	app->game->scriptStateVars[14] = i;
 }
 
 bool Player::loadState(InputStream* IS) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	this->baseCe->loadState(IS, true);
 	this->ce->loadState(IS, true);
 	this->setCharacterChoice(IS->readShort());
@@ -1337,7 +1339,7 @@ bool Player::loadState(InputStream* IS) {
 }
 
 bool Player::saveState(OutputStream* OS) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	this->baseCe->saveState(OS, true);
 	this->ce->saveState(OS, true);
 	OS->writeShort(this->characterChoice);
@@ -1416,7 +1418,7 @@ void Player::relink() {
 }
 
 void Player::unlink() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	Entity* playerEnt = getPlayerEnt();
 	if ((playerEnt->info & 0x100000) != 0x0) {
@@ -1425,7 +1427,7 @@ void Player::unlink() {
 }
 
 void Player::link() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	Entity* playerEnt = getPlayerEnt();
 	if (app->canvas->destX >= 0 && app->canvas->destX <= 2047 && app->canvas->destY >= 0 &&
@@ -1520,7 +1522,7 @@ void Player::translateStatusEffects() {
 }
 
 void Player::removeStatusEffect(int n) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (n == 18) {
 		this->numStatusEffects = 0;
@@ -1547,7 +1549,7 @@ void Player::removeStatusEffect(int n) {
 }
 
 bool Player::addStatusEffect(int n, int n2, int n3) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (this->isFamiliar) {
 		return false;
@@ -1582,7 +1584,7 @@ bool Player::addStatusEffect(int n, int n2, int n3) {
 }
 
 void Player::drawStatusEffectIcon(Graphics* graphics, int n, int n2, int n3, int n4, int n5) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	Text* smallBuffer = app->localization->getSmallBuffer();
 	smallBuffer->setLength(0);
@@ -1615,11 +1617,11 @@ void Player::resetCounters() {
 }
 
 Entity* Player::getPlayerEnt() {
-	return &CAppContainer::getInstance()->app->game->entities[1];
+	return &this->app->game->entities[1];
 }
 
 void Player::setPickUpWeapon(int n) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	EntityDef* lookup = nullptr;
 	EntityDef* find = app->entityDefManager->find(6, 1, 14);
@@ -1640,7 +1642,7 @@ void Player::setPickUpWeapon(int n) {
 }
 
 void Player::giveAll() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (!this->isFamiliar) {
 		if (this->hasASentryBot()) {
@@ -1675,7 +1677,7 @@ void Player::giveAll() {
 }
 
 void Player::equipForLevel(int highestMap) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (this->isFamiliar) {
 		this->familiarReturnsToPlayer(false);
@@ -1914,7 +1916,7 @@ void Player::equipForLevel(int highestMap) {
 }
 
 bool Player::addArmor(int n) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int stat = this->ce->getStat(2);
 	if (stat >= 200 && n > 0) {
@@ -1929,12 +1931,12 @@ bool Player::addArmor(int n) {
 }
 
 int Player::distFrom(Entity* entity) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	return entity->distFrom(app->canvas->destX, app->canvas->destY);
 }
 
 void Player::showAchievementMessage(int n) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	Text* smallBuffer = app->localization->getSmallBuffer();
 	Text* smallBuffer2 = app->localization->getSmallBuffer();
@@ -2003,7 +2005,7 @@ short Player::gradeToString(int n) {
 }
 
 int Player::levelGrade(bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int currentGrade = this->getCurrentGrade(app->canvas->loadMapID);
 	if (currentGrade != 0) {
@@ -2065,7 +2067,7 @@ bool Player::hasPurifyEffect() {
 }
 
 void Player::setFamiliar(short familiarType) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (app->canvas->state == Canvas::ST_AUTOMAP) {
 		return;
@@ -2114,7 +2116,7 @@ void Player::setFamiliar(short familiarType) {
 }
 
 short Player::unsetFamiliar(bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	app->hud->stopBrightenScreen();
 	app->hud->stopScreenSmack();
@@ -2191,7 +2193,7 @@ void Player::swapStatusEffects() {
 }
 
 void Player::familiarDied() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (app->combat->curAttacker != nullptr) {
 		int sprite = app->combat->curAttacker->getSprite();
@@ -2246,7 +2248,7 @@ void Player::familiarDied() {
 }
 
 void Player::explodeFamiliar(int n, int n2, int n3) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	app->combat->attackerWeaponId = (n3 == 2) ? 4 : 6;
 	int n4 = app->combat->attackerWeaponId * 9;
@@ -2260,7 +2262,7 @@ void Player::explodeFamiliar(int n, int n2, int n3) {
 }
 
 void Player::familiarReturnsToPlayer(bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	app->sound->playSound(1112, 0, 3, false);
 
 	this->unsetFamiliar(b);
@@ -2295,7 +2297,7 @@ bool Player::stealFamiliarsInventory() {
 }
 
 void Player::handleBotRemains(int n, int n2, int n3) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	int weaponsCopy = this->weaponsCopy;
 	short* inventoryCopy = this->inventoryCopy;
 	short* ammoCopy = this->ammoCopy;
@@ -2368,7 +2370,7 @@ void Player::forceFamiliarReturnDueToMonster() {
 }
 
 void Player::attemptToDeploySentryBot() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (app->game->activeMonsters != nullptr) {
 		Entity* activeMonsters = app->game->activeMonsters;
@@ -2411,7 +2413,7 @@ void Player::attemptToDeploySentryBot() {
 }
 
 void Player::attemptToDiscardFamiliar(int n) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if ((app->render->mapFlags[(app->canvas->viewY >> 6) * 32 + (app->canvas->viewX >> 6)] & 0x20) != 0x0) {
 		app->hud->addMessage((short)0, (short)221, 3);
@@ -2423,7 +2425,7 @@ void Player::attemptToDiscardFamiliar(int n) {
 }
 
 void Player::startSelfDestructDialog() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (app->canvas->state != Canvas::ST_AUTOMAP) {
 		this->attemptingToSelfDestructFamiliar = true;
@@ -2482,7 +2484,7 @@ void Player::setFamiliarType(short familiarType) {
 }
 
 void Player::calcViewMode() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	switch (this->familiarType) {
 		case 0: {
@@ -2503,7 +2505,7 @@ void Player::calcViewMode() {
 }
 
 void Player::enterTargetPractice(int n, int n2, int n3, ScriptThread* targetPracticeThread) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	this->inTargetPractice = true;
 	app->canvas->targetPracticeThread = targetPracticeThread;
@@ -2532,7 +2534,7 @@ void Player::enterTargetPractice(int n, int n2, int n3, ScriptThread* targetPrac
 }
 
 void Player::assessTargetPracticeShot(Entity* entity) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int sprite = entity->getSprite();
 	int n = app->canvas->zoomCollisionX - app->render->mapSprites[app->render->S_X + sprite];
@@ -2577,7 +2579,7 @@ void Player::assessTargetPracticeShot(Entity* entity) {
 }
 
 void Player::exitTargetPractice() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	this->inTargetPractice = false;
 	app->canvas->destAngle = (app->canvas->viewAngle = app->canvas->saveAngle);
@@ -2611,7 +2613,7 @@ void Player::exitTargetPractice() {
 }
 
 void Player::usedChainsaw(bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	this->chainsawStrengthBonusCount++;
 	if (b && (app->combat->crFlags & 0x2) != 0x0) {
@@ -2679,7 +2681,7 @@ void Player::stripInventoryForTargetPractice() {
 }
 
 void Player::restoreInventory() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if ((this->weapons & 0x1) != 0x0) {
 		this->currentWeaponCopy = this->ce->weapon;
@@ -2730,7 +2732,7 @@ void Player::restoreInventory() {
 }
 
 void Player::forceRemoveFromScopeZoom() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (app->canvas->isZoomedIn) {
 		app->canvas->zoomTurn = 0;

@@ -30,8 +30,9 @@ bool ParticleEmitter::startup() {
 }
 
 void ParticleEmitter::render(Graphics* graphics, int n) {
-	Applet* app = CAppContainer::getInstance()->app;
+
     ParticleSystem* systems = this->systems;
+    Applet* app = systems->app;
 
     int n2 = n;
     int i = systems->particleNext[n] & 0xFF;
@@ -148,7 +149,7 @@ ParticleSystem::~ParticleSystem() {
 }
 
 bool ParticleSystem::startup() {
-	Applet* app = CAppContainer::getInstance()->app;
+	this->app = CAppContainer::getInstance()->app;
 	printf("ParticleSystem::startup\n");
 
 	for (int i = 0; i < 4; i++) {
@@ -199,7 +200,7 @@ void ParticleSystem::freeSystem(int n) {
 }
 
 void ParticleSystem::renderSystems(Graphics* graphics) {
-    Applet* app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
 
     if (app->canvas->state == Canvas::ST_CAMERA) {
         this->clipRect[0] = app->canvas->cinRect[0];
@@ -226,7 +227,7 @@ void ParticleSystem::renderSystems(Graphics* graphics) {
 }
 
 void ParticleSystem::spawnMonsterBlood(Entity* entity, bool b) {
-    Applet* app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
 
     if (entity == nullptr) {
         return;
@@ -250,12 +251,12 @@ void ParticleSystem::spawnMonsterBlood(Entity* entity, bool b) {
 }
 
 void ParticleSystem::spawnParticles(int n, int n2, int n3) {
-    Applet* app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
     this->spawnParticles(n, n2, app->render->mapSprites[app->render->S_X + n3], app->render->mapSprites[app->render->S_Y + n3], app->render->mapSprites[app->render->S_Z + n3]);
 }
 
 void ParticleSystem::spawnParticles(int n, int color, int n2, int n3, int n4) {
-    Applet* app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
     int n5 = -64;
     int n6 = 64;
     int n7 = -64;

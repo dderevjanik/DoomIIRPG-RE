@@ -632,6 +632,7 @@ Input::~Input() {
 
 // Port: set default Binds
 void Input::init() {
+    this->app = CAppContainer::getInstance()->app;
     std::memcpy(keyMapping, keyMappingDefault, sizeof(keyMapping));
     std::memcpy(keyMappingTemp, keyMappingDefault, sizeof(keyMapping));
 
@@ -683,7 +684,7 @@ void Input::unBind(int* keyBinds, int index)
 void Input::setBind(int* keyBinds, int keycode) {
     int i;
 
-    // Examina si existe anteriormente, si es así, se desvinculará de la lista
+    // Examina si existe anteriormente, si es asï¿½, se desvincularï¿½ de la lista
     // Examines whether it exists previously, if so, it will be unbind from the list
     for (i = 0; i < KEYBINDS_MAX; i++) {
         if (keyBinds[i] == keycode) {
@@ -703,16 +704,16 @@ void Input::setBind(int* keyBinds, int keycode) {
 }
 
 void Input::setInputBind(int scancode) {
-    Applet* app = CAppContainer::getInstance()->app;
+
     int keyMapId = app->menuSystem->items[app->menuSystem->selectedIndex].param;
     this->setBind(keyMappingTemp[keyMapId].keyBinds, scancode);
 }
 
 void Input::handleEvents() noexcept {
-    Applet* app = CAppContainer::getInstance()->app;
+
 	SDL_Event sdlEvent;
     SDLGL* sdlGL = CAppContainer::getInstance()->sdlGL;
-    Canvas* canvas = CAppContainer::getInstance()->app->canvas;
+    Canvas* canvas = this->app->canvas;
 
     int winVidWidth = sdlGL->winVidWidth;
     int winVidHeight = sdlGL->winVidHeight;
@@ -724,7 +725,7 @@ void Input::handleEvents() noexcept {
         switch (sdlEvent.type) {
             case SDL_QUIT: {
                 printf("handleEvents::SDL_QUIT\n");
-                CAppContainer::getInstance()->app->shutdown();
+                this->app->shutdown();
             }   break;
 
             /*case SDL_WINDOWEVENT: {
@@ -768,8 +769,8 @@ void Input::handleEvents() noexcept {
                     }
 
                     if (scancode == SDL_SCANCODE_F1) {
-                        Canvas* canvas = CAppContainer::getInstance()->app->canvas;
-                        TinyGL* tinyGL = CAppContainer::getInstance()->app->tinyGL;
+                        Canvas* canvas = this->app->canvas;
+                        TinyGL* tinyGL = this->app->tinyGL;
                         _glesObj->isInit = !_glesObj->isInit;
 
                         if (canvas->state == Canvas::ST_CAMERA) {
@@ -778,7 +779,7 @@ void Input::handleEvents() noexcept {
                         else {
                             tinyGL->resetViewPort();
                         }
-                        CAppContainer::getInstance()->app->game->saveConfig();
+                        this->app->game->saveConfig();
                         break;
                     }
 
@@ -1097,7 +1098,7 @@ void Input::handleEvents() noexcept {
 // Should be called whenever inputs have been processed for a frame.
 //------------------------------------------------------------------------------------------------------------------------------------------
 void Input::consumeEvents() noexcept {
-    const Canvas* canvas = CAppContainer::getInstance()->app->canvas;
+    const Canvas* canvas = this->app->canvas;
     // Clear all events
     if (!canvas->keyDownCausedMove) {
         gKeyboardKeysJustPressed.clear();

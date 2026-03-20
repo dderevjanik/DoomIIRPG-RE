@@ -8,11 +8,15 @@ class InputStream;
 // Localization Class
 // -------------------
 
+class Applet;
+
 class Localization
 {
 private:
 
 public:
+	Applet* app;  // Set in startup(), replaces CAppContainer::getInstance()->app
+
 	static constexpr int MAXBUFFERS = 7;
 	static constexpr int MAXTEXT = 15;
 	static constexpr int MAX_STRING_ARGS = 50;

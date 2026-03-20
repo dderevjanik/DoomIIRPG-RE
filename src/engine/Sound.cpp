@@ -25,7 +25,7 @@ Sound::~Sound() {
 	}
 
 bool Sound::startup() {
-	Applet* app = CAppContainer::getInstance()->app;
+	this->app = CAppContainer::getInstance()->app;
 	printf("Sound::startup\n");
 
 	this->field_0x162 = 0;

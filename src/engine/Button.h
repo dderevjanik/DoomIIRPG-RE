@@ -23,11 +23,14 @@ public:
 // fmButton Class
 // ---------------
 
+class Applet;
+
 class fmButton
 {
 private:
 
 public:
+	Applet* app;  // Set lazily, replaces CAppContainer::getInstance()->app
 	fmButton* next;
 	int buttonID;
 	int selectedIndex;

@@ -20,7 +20,7 @@ Graphics::~Graphics() {
 }
 
 void Graphics::setGraphics() {
-	Canvas* canvas = CAppContainer::getInstance()->app->canvas;
+	Canvas* canvas = this->app->canvas;
 	printf("Graphics::setGraphics\n");
 
 	this->graphClipRect[0] = canvas->displayRect[0];
@@ -472,17 +472,17 @@ void Graphics::drawBevel(int color1, int color2, int x, int y, int w, int h) {
 }
 
 void Graphics::drawString(Text* text, int x, int y, int flags) {
-    Canvas* canvas = CAppContainer::getInstance()->app->canvas;
+    Canvas* canvas = this->app->canvas;
     this->drawString(canvas->imgFont, text, x, y, 16, flags, 0, text->length());
 }
 
 void Graphics::drawString(Text* text, int x, int y, int flags, int strBeg, int strEnd) {
-    Canvas* canvas = CAppContainer::getInstance()->app->canvas;
+    Canvas* canvas = this->app->canvas;
     this->drawString(canvas->imgFont, text, x, y, 16, flags, strBeg, strEnd);
 }
 
 void Graphics::drawString(Text* text, int x, int y, int h, int flags, int strBeg, int strEnd) {
-    Canvas* canvas = CAppContainer::getInstance()->app->canvas;
+    Canvas* canvas = this->app->canvas;
     this->drawString(canvas->imgFont, text, x, y, h, flags, strBeg, strEnd);
 }
 
@@ -577,7 +577,7 @@ void Graphics::drawString(Image* img, Text* text, int x, int y, int h, int flags
                 }
             }
         }
-        else if (char1 == ' ' || char1 == ' ') {
+        else if (char1 == ' ' || char1 == '\xa0') {
             if (rotateMode == 3) {
                 y -= 9;
             }
@@ -641,7 +641,7 @@ void Graphics::drawString(Image* img, Text* text, int x, int y, int h, int flags
 }
 
 void Graphics::drawChar(Image* img, char c, int x, int y, int rotateMode) {
-    Localization* loc = CAppContainer::getInstance()->app->localization;
+    Localization* loc = this->app->localization;
     int renderMode, index1, index2;
 
     loc->getCharIndices(c, &index1, &index2);
@@ -654,8 +654,8 @@ void Graphics::drawChar(Image* img, char c, int x, int y, int rotateMode) {
 
         // [GEC] Estas lineas no existen el codigo
         // pero son funcionales
-        if (CAppContainer::getInstance()->app->canvas->fontRenderMode != 0) { 
-            renderMode = CAppContainer::getInstance()->app->canvas->fontRenderMode;
+        if (this->app->canvas->fontRenderMode != 0) { 
+            renderMode = this->app->canvas->fontRenderMode;
         }
     }
     else {
@@ -669,7 +669,7 @@ void Graphics::drawChar(Image* img, char c, int x, int y, int rotateMode) {
 }
 
 void Graphics::drawBuffIcon(int texY, int posX, int posY, int flags) {
-    Canvas* canvas = CAppContainer::getInstance()->app->canvas;
+    Canvas* canvas = this->app->canvas;
     this->drawRegion(canvas->imgIcons_Buffs, 0, texY * 30, 30, 30, posX, posY, flags, 0, 0);
 }
 
@@ -678,7 +678,7 @@ void Graphics::drawCursor(int x, int y, int flags) {
 }
 
 void Graphics::drawCursor(int x, int y, int flags, bool b) {
-    Localization* loc = CAppContainer::getInstance()->app->localization;
+    Localization* loc = this->app->localization;
     Text* smallBuffer = loc->getSmallBuffer();
     smallBuffer->setLength(0);
     if (b) {
@@ -754,7 +754,7 @@ void Graphics::setScreenSpace(int x, int y, int w, int h) {
 }
 
 void Graphics::resetScreenSpace() {
-    Canvas* canvas = CAppContainer::getInstance()->app->canvas;
+    Canvas* canvas = this->app->canvas;
     this->setScreenSpace(canvas->displayRect);
 }
 
@@ -773,7 +773,7 @@ void Graphics::fade(int* rect, int alpha, int color) {
 
 
 void Graphics::drawPixelPortal(int* rect, int x, int y, uint32_t color) {
-    Applet* app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
     int screenWidth = app->tinyGL->screenWidth;
     int screenHeight = app->tinyGL->screenHeight;
 

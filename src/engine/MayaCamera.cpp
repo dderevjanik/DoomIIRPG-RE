@@ -15,6 +15,7 @@
 
 MayaCamera::MayaCamera() {
     //printf("MayaCamera::init\n");
+    this->app = nullptr;
     this->keyOffset = 0;
     this->numKeys = 0;
     this->curTween = 0;
@@ -34,7 +35,8 @@ MayaCamera::~MayaCamera() {
 }
 
 void MayaCamera::NextKey() {
-    Applet* app = CAppContainer::getInstance()->app;
+    if (!this->app) this->app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
 
     app->game->activeCameraTime = app->gameTime;
     app->game->activeCameraKey++;
@@ -44,7 +46,8 @@ void MayaCamera::NextKey() {
 }
 
 void MayaCamera::Update(int i, int i2) {
-    Applet* app = CAppContainer::getInstance()->app;
+    if (!this->app) this->app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
     Combat* combat = app->combat;
     Game* game = app->game;
 
@@ -159,7 +162,8 @@ int MayaCamera::getAngleDifference(int i, int i2) {
 }
 
 bool MayaCamera::hasTweens(int i) {
-    Applet* app = CAppContainer::getInstance()->app;
+    if (!this->app) this->app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
 
     for (int j = 0; j < 6; j++) {
         int16_t idx = app->game->mayaTweenIndices[i * 6 + j];
@@ -171,7 +175,8 @@ bool MayaCamera::hasTweens(int i) {
 }
 
 int MayaCamera::estNumTweens(int i) {
-    Applet* app = CAppContainer::getInstance()->app;
+    if (!this->app) this->app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
     if (i + 1 == app->game->totalMayaCameraKeys) {
         return 0;
     }
@@ -179,7 +184,8 @@ int MayaCamera::estNumTweens(int i) {
 }
 
 short* MayaCamera::getTweenData(int8_t* array, int i, int i2) {
-    Applet* app = CAppContainer::getInstance()->app;
+    if (!this->app) this->app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
 
     short* ofsMayaTween = app->game->ofsMayaTween;
     for (int j = 0; j < 6; j++) {
@@ -195,7 +201,8 @@ short* MayaCamera::getTweenData(int8_t* array, int i, int i2) {
 }
 
 short* MayaCamera::getKeyOfs(int16_t* array, int i) {
-    Applet* app = CAppContainer::getInstance()->app;
+    if (!this->app) this->app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
 
     if (this->inheritX) {
         this->keyOfs[0] = 0;
@@ -241,7 +248,8 @@ void MayaCamera::Interpolate(int16_t* array, int i) {
 }
 
 void MayaCamera::resetTweenBase(int i) {
-    Applet* app = CAppContainer::getInstance()->app;
+    if (!this->app) this->app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
 
     this->aggComponents[0] = app->game->mayaCameraKeys[app->game->OFS_MAYAKEY_X + i];
     this->aggComponents[1] = app->game->mayaCameraKeys[app->game->OFS_MAYAKEY_Y + i];
@@ -288,7 +296,8 @@ void MayaCamera::resetTweenBase(int i) {
 }
 
 void MayaCamera::updateTweenBase(int i, int i2) {
-    Applet* app = CAppContainer::getInstance()->app;
+    if (!this->app) this->app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
 
     int8_t* mayaCameraTweens = app->game->mayaCameraTweens;
     for (int j = 0; j < 6; ++j) {
@@ -300,7 +309,8 @@ void MayaCamera::updateTweenBase(int i, int i2) {
 }
 
 void MayaCamera::Render() {
-    Applet* app = CAppContainer::getInstance()->app;
+    if (!this->app) this->app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
 
     if (app->canvas->state == Canvas::ST_DIALOG) {
         app->render->render(this->x, this->y, this->z, this->yaw, this->pitch, this->roll, 290);
@@ -324,7 +334,8 @@ void MayaCamera::Render() {
 }
 
 void MayaCamera::Snap(int i) {
-    Applet* app = CAppContainer::getInstance()->app;
+    if (!this->app) this->app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
     Canvas* canvas = app->canvas;
     Game* game = app->game;
 

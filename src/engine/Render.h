@@ -6,6 +6,7 @@
 class Image;
 class gles;
 class Graphics;
+class Applet;
 class Entity;
 class TGLVert;
 
@@ -14,6 +15,8 @@ class Render
 private:
 
 public:
+	Applet* app; // Set in startup(), replaces CAppContainer::getInstance()->app
+
 	static constexpr int TEXELS_PER_FILE = 32768;
 	static constexpr int RENDER_NORMAL = 0;
 	static constexpr int RENDER_BLEND25 = 1;

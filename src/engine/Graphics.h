@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+class Applet;
 class IDIB;
 class Image;
 class Text;
@@ -10,8 +11,10 @@ class Text;
 class Graphics
 {
 private:
-	
+
 public:
+
+	Applet* app; // Set in startup(), replaces CAppContainer::getInstance()->app
 
 	static constexpr short ANCHORS_NONE = 0;
 	static constexpr short ANCHORS_HCENTER = 1;

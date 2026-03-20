@@ -27,14 +27,14 @@ HackingGame::~HackingGame() {
 }
 
 void HackingGame::playFromMainMenu() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int rnd = app->nextInt() % 3 + 3;
 	this->initGame(nullptr, rnd, (app->nextInt() % ((rnd * 10) - 15)) + 5);
 }
 
 void HackingGame::setupGlobalData() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	Canvas* canvas = app->canvas;
 
 	this->confirmationCursor = 0;
@@ -55,7 +55,7 @@ void HackingGame::initGame(ScriptThread* scriptThread, int i) {
 }
 
 void HackingGame::initGame(ScriptThread* scriptThread, int i, int i2) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	this->columnCount = std::max(3, std::min(i, 6));
 	this->callingThread = scriptThread;
@@ -100,7 +100,7 @@ void HackingGame::initGame(ScriptThread* scriptThread, int i, int i2) {
 }
 
 void  HackingGame::fillGameBoardRandomly(short array[5][6], int n, int n2, int n3) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	for (int i = 0; i < 5; ++i) {
 		for (int j = 0; j < 6; ++j) {
 			array[i][j] = 0;
@@ -131,7 +131,7 @@ void  HackingGame::fillGameBoardRandomly(short array[5][6], int n, int n2, int n
 }
 
 void HackingGame::fillGameBoardRandomly(short array[5][6], int n, int n2, int n3, int n4) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	for (int i = 0; i < 5; ++i) {
 		for (int j = 0; j < 6; ++j) {
 			array[i][j] = 0;
@@ -180,7 +180,7 @@ void HackingGame::fillGameBoardRandomly(short array[5][6], int n, int n2, int n3
 }
 
 void HackingGame::handleInput(int action) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (this->stateVars[1] == 0) {
 		//if (action == Enums::ACTION_AUTOMAP || action == Enums::ACTION_BACK) { // Old
@@ -344,7 +344,7 @@ void HackingGame::attemptToMove(short n) {
 }
 
 void HackingGame::updateGame(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	graphics->clipRect(0, 0, 480, 320);
 	if (this->stateVars[1] == 0) {
 		this->drawHelpScreen(graphics);
@@ -357,7 +357,7 @@ void HackingGame::updateGame(Graphics* graphics) {
 }
 
 void HackingGame::drawHelpScreen(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	Text* text;
 
 	app->canvas->drawMiniGameHelpScreen(graphics, 164, 165, this->imgHelpScreenAssets);
@@ -373,7 +373,7 @@ void HackingGame::drawHelpScreen(Graphics* graphics) {
 }
 
 void HackingGame::drawGameScreen(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	Text* smallBuffer;
 	int color;
 
@@ -510,7 +510,7 @@ void HackingGame::drawGameScreen(Graphics* graphics) {
 }
 
 void HackingGame::drawGoalTextAndBars(Graphics* graphics, Text* text) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int n = 335 - (5 + 9 * (this->columnCount - 1)) / 2;
 	text->setLength(0);
@@ -551,7 +551,7 @@ void HackingGame::drawGoalTextAndBars(Graphics* graphics, Text* text) {
 }
 
 void HackingGame::drawGamePieces(Graphics* graphics, int x, int y) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	for (int i = 0; i < 5; ++i) {
 		for (int j = 0; j < this->columnCount; ++j) {
@@ -597,7 +597,7 @@ void HackingGame::drawPiece(int i, int x, int y, Graphics* graphics) {
 }
 
 void HackingGame::forceWin() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	for (int i = 0; i < this->columnCount; ++i) {
 		for (int j = 0; j < 5; ++j) {
@@ -617,7 +617,7 @@ void HackingGame::forceWin() {
 }
 
 void HackingGame::endGame(int n) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	app->sound->playSound((n == 1) ? 1043 : 1040, '\0', 3, false);
 	if (!this->gamePlayedFromMainMenu) {

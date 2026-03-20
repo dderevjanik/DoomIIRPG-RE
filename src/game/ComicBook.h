@@ -4,11 +4,14 @@
 class Image;
 class Graphics;
 
+class Applet;
+
 class ComicBook
 {
 private:
 
 public:
+	Applet* app;  // Set lazily, replaces CAppContainer::getInstance()->app
 	int field_0x0;
 	int field_0x4;
 	int curX;

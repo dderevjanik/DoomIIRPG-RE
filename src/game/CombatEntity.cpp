@@ -17,6 +17,7 @@
 
 CombatEntity::CombatEntity() {
     //printf("CombatEntity::init\n");
+    this->app = nullptr;
     this->stats[1] = 0;
     this->stats[2] = 0;
     this->stats[3] = 0;
@@ -28,6 +29,7 @@ CombatEntity::CombatEntity() {
 
 CombatEntity::CombatEntity(int health, int armor, int defense, int strength, int accuracy, int agility) {
 	//printf("CombatEntity::init2\n");
+	this->app = nullptr;
 	this->setStat(1, health);
 	this->setStat(0, health);
 	this->setStat(2, armor);
@@ -128,7 +130,8 @@ void CombatEntity::saveState(OutputStream* outputStream, bool b) {
 }
 
 void CombatEntity::calcCombat(CombatEntity* combatEntity, Entity* entity, bool b, int n, int n2) {
-    Applet* app = CAppContainer::getInstance()->app;
+    if (!this->app) this->app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
 
     app->combat->crDamage = 0;
     app->combat->crArmorDamage = 0;
@@ -155,7 +158,8 @@ void CombatEntity::calcCombat(CombatEntity* combatEntity, Entity* entity, bool b
 }
 
 int CombatEntity::calcHit(CombatEntity* ce, CombatEntity* ce2, bool b, int i, bool b2) {
-    Applet* app = CAppContainer::getInstance()->app;
+    if (!this->app) this->app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
     int attackerWeapon = app->combat->attackerWeapon;
     int attackerWeaponId = app->combat->attackerWeaponId;
     Entity* curTarget = app->combat->curTarget;
@@ -298,7 +302,8 @@ int CombatEntity::calcHit(CombatEntity* ce, CombatEntity* ce2, bool b, int i, bo
 }
 
 int CombatEntity::calcDamage(CombatEntity* ce, Entity* entity, CombatEntity* ce2, bool b, int n) {
-    Applet* app = CAppContainer::getInstance()->app;
+    if (!this->app) this->app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
     int weapon = ce->weapon * 9;
     int dmgStrMin = app->combat->weapons[weapon + Combat::WEAPON_FIELD_STRMIN] & 0xFF;
     int dmgStrMax = app->combat->weapons[weapon + Combat::WEAPON_FIELD_STRMAX] & 0xFF;

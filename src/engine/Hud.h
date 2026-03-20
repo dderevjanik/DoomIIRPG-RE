@@ -6,12 +6,14 @@ class Text;
 class Entity;
 class fmButtonContainer;
 class Graphics;
+class Applet;
 
 class Hud
 {
 private:
 
 public:
+    Applet* app; // Set in startup(), replaces CAppContainer::getInstance()->app
     static constexpr int MSG_DISPLAY_TIME = 700;
     static constexpr int MSG_FLASH_TIME = 100;
     static constexpr int SCROLL_START_DELAY = 750;

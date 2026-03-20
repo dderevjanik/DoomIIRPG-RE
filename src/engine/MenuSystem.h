@@ -5,6 +5,7 @@
 #include "MenuItem.h"
 #include "MenuStrings.h"
 
+class Applet;
 class EntityDef;
 class Image;
 class MenuItem;
@@ -19,6 +20,8 @@ class MenuSystem
 private:
 
 public:
+	Applet* app; // Set in startup(), replaces CAppContainer::getInstance()->app
+
 	static constexpr int NO = 0;
 	static constexpr int YES = 1;
 

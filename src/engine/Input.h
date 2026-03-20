@@ -164,11 +164,15 @@ enum _AVKType {
 
 extern void controllerVibrate(int duration_ms) noexcept;
 
+class Applet;
+
 class Input
 {
 private:
 
 public:
+
+	Applet* app; // Set in init(), replaces CAppContainer::getInstance()->app
 
 	// Constructor
 	Input();

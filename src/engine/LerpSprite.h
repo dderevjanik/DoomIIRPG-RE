@@ -5,11 +5,14 @@ class ScriptThread;
 class OutputStream;
 class InputStream;
 
+class Applet;
+
 class LerpSprite
 {
 private:
 
 public:
+    Applet* app;  // Set lazily, replaces CAppContainer::getInstance()->app
     int touchMe;
     ScriptThread* thread;
     int travelTime;

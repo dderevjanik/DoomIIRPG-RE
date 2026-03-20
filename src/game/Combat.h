@@ -8,12 +8,14 @@ class ScriptThread;
 class CombatEntity;
 class EntityDef;
 class Text;
+class Applet;
 
 class Combat
 {
 private:
 
 public:
+	Applet* app; // Set in startup(), replaces CAppContainer::getInstance()->app
 	static constexpr int SEQ_ENDATTACK = 1;
 	static constexpr int OUTOFCOMBAT_TURNS = 4;
 	static constexpr int MAX_TILEDISTANCES = 16;

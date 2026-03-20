@@ -35,7 +35,8 @@ Game::Game() {
 Game::~Game() {}
 
 bool Game::startup() {
-	Applet* app = CAppContainer::getInstance()->app;
+	this->app = CAppContainer::getInstance()->app;
+	Applet* app = this->app;
 	printf("Game::startup\n");
 
 	this->entities = new Entity[275];
@@ -43,6 +44,10 @@ bool Game::startup() {
 
 	this->difficulty = 1;
 	this->cinematicWeapon = -1;
+
+	for (int i = 0; i < 275; i++) {
+		this->entities[i].app = app;
+	}
 
 	for (int i = 0; i < 20; i++) {
 		this->scriptThreads[i].app = app;
@@ -69,7 +74,7 @@ bool Game::startup() {
 }
 
 void Game::unlinkEntity(Entity* entity) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (entity == &this->entities[0]) {
 		app->Error(4); // ERR_BADUNLINKWORLD
@@ -92,7 +97,7 @@ void Game::unlinkEntity(Entity* entity) {
 }
 
 void Game::linkEntity(Entity* entity, int i, int i2) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	short linkIndex = (short)(i2 * 32 + i);
 
 	if (entity == &this->entities[0]) {
@@ -118,7 +123,7 @@ void Game::linkEntity(Entity* entity, int i, int i2) {
 }
 
 void Game::unlinkWorldEntity(int i, int i2) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	short linkIndex = (short)(i2 * 32 + i);
 	Entity* nextOnTile = this->entityDb[linkIndex];
@@ -148,7 +153,7 @@ void Game::unlinkWorldEntity(int i, int i2) {
 }
 
 void Game::linkWorldEntity(int i, int i2) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	short linkIndex = (short)(i2 * 32 + i);
 	Entity* nextOnTile = this->entityDb[linkIndex];
@@ -179,7 +184,7 @@ void Game::linkWorldEntity(int i, int i2) {
 }
 
 void Game::removeEntity(Entity* entity) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if ((entity->info & 0xFFFF) != 0x0) {
 		app->render->mapSpriteInfo[entity->getSprite()] |= 0x10000;
@@ -196,7 +201,7 @@ void Game::trace(int n, int n2, int n3, int n4, Entity* entity, int n5, int n6) 
 
 void Game::trace(int n, int n2, int n3, int traceCollisionX, int traceCollisionY, int traceCollisionZ, Entity* entity,
                  int n4, int n5, bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int* tracePoints = this->tracePoints;
 	int* traceBoundingBox = this->traceBoundingBox;
@@ -321,7 +326,7 @@ void Game::trace(int n, int n2, int n3, int traceCollisionX, int traceCollisionY
 }
 
 void Game::loadMapEntities() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	this->interpolatingMonsters = false;
 	this->monstersTurn = 0;
@@ -498,7 +503,7 @@ void Game::loadMapEntities() {
 }
 
 void Game::loadTableCamera(int i, int i2) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	this->cleanUpCamMemory();
 
@@ -573,7 +578,7 @@ void Game::setKeyOffsets() {
 }
 
 void Game::loadMayaCameras(InputStream* IS) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int keyOffset = 0;
 	int n = 0;
@@ -629,7 +634,7 @@ void Game::loadMayaCameras(InputStream* IS) {
 }
 
 void Game::unloadMapData() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	this->cinematicWeapon = -1;
 	this->activeSprites = 0;
@@ -688,7 +693,7 @@ bool Game::touchTile(int n, int n2, bool b) {
 }
 
 void Game::prepareMonsters() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int n = app->canvas->loadMapID - 1;
 	app->player->fillMonsterStats();
@@ -729,7 +734,7 @@ Entity* Game::findMapEntity(int n, int n2) {
 }
 
 Entity* Game::findMapEntity(int n, int n2, int n3) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if ((n3 & 0x2) != 0x0 && n >> 6 == app->canvas->destX >> 6 && n2 >> 6 == app->canvas->destY >> 6) {
 		return &this->entities[1];
@@ -747,7 +752,7 @@ void Game::activate(Entity* entity) {
 }
 
 void Game::activate(Entity* entity, bool b, bool b2, bool b3, bool b4) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	EntityMonster* monster = entity->monster;
 	if (((app->render->mapSpriteInfo[entity->getSprite()] & 0xFF00) >> 8 & 0xF0) == 16 && !app->render->shotsFired) {
@@ -844,7 +849,7 @@ void Game::deactivate(Entity* entity) {
 }
 
 void Game::UpdatePlayerVars() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	this->viewX = app->canvas->viewX;
 	this->viewY = app->canvas->viewY;
@@ -861,7 +866,7 @@ void Game::UpdatePlayerVars() {
 }
 
 void Game::monsterAI() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (this->disableAI) {
 		return;
@@ -904,7 +909,7 @@ void Game::monsterAI() {
 }
 
 void Game::monsterLerp() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	bool interpolatingMonsters = false;
 	int n = 0;
@@ -930,7 +935,7 @@ void Game::monsterLerp() {
 }
 
 void Game::spawnPlayer() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	int n;
 	int n2;
 	int mapSpawnDir;
@@ -996,7 +1001,7 @@ int Game::eventFlagForDirection(int n, int n2) {
 }
 
 void Game::givemap(int n, int n2, int n3, int n4) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	for (int i = 0; i < app->render->numLines; ++i) {
 		app->render->lineFlags[i >> 1] |= (uint8_t)(8 << ((i & 0x1) << 2));
@@ -1027,7 +1032,7 @@ bool Game::performDoorEvent(int n, Entity* entity, int n2, bool b) {
 }
 
 bool Game::performDoorEvent(int n, ScriptThread* scriptThread, Entity* watchLine, int n2, bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int sprite = watchLine->getSprite();
 	int n3 = app->render->mapSpriteInfo[sprite];
@@ -1136,7 +1141,7 @@ bool Game::performDoorEvent(int n, ScriptThread* scriptThread, Entity* watchLine
 }
 
 void Game::lerpSpriteAsDoor(int n, int n2, ScriptThread* scriptThread) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	LerpSprite* allocLerpSprite = this->allocLerpSprite(scriptThread, n, false);
 
@@ -1190,7 +1195,7 @@ void Game::updatePlayerDoors(Entity* entity, bool b) {
 }
 
 bool Game::CanCloseDoor(Entity* entity) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (app->player->isFamiliar) {
 		return false;
@@ -1212,7 +1217,7 @@ bool Game::CanCloseDoor(Entity* entity) {
 }
 
 void Game::advanceTurn() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	this->queueAdvanceTurn = false;
 	if (this->interpolatingMonsters) {
 		app->Error(95); // ERR_NONSNAPPEDMONSTERS
@@ -1266,7 +1271,7 @@ void Game::gsprite_clear(int n) {
 }
 
 GameSprite* Game::gsprite_alloc(int n, int n2, int n3) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int n4;
 	for (n4 = 0; n4 < 48 && (this->gsprites[n4].flags & 0x1) != 0x0; ++n4) {
@@ -1300,7 +1305,7 @@ GameSprite* Game::gsprite_alloc(int n, int n2, int n3) {
 }
 
 GameSprite* Game::gsprite_allocAnim(int n, int n2, int n3, int n4) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	GameSprite* gsprite_alloc = this->gsprite_alloc(n, 0, 66);
 	gsprite_alloc->numAnimFrames = 4;
@@ -1382,7 +1387,7 @@ GameSprite* Game::gsprite_allocAnim(int n, int n2, int n3, int n4) {
 }
 
 void Game::gsprite_destroy(GameSprite* gameSprite) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if ((gameSprite->flags & 0x2000) == 0x0) {
 		app->render->mapSpriteInfo[gameSprite->sprite] |= 0x10000;
@@ -1441,7 +1446,7 @@ void Game::snapGameSprites() {
 }
 
 void Game::gsprite_update(int n) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (this->activeSprites == 0) {
 		return;
@@ -1567,7 +1572,7 @@ void Game::gsprite_update(int n) {
 }
 
 void Game::saveWorldState(OutputStream* OS, bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	const char* name;
 
 	short* mapSprites = app->render->mapSprites;
@@ -1725,7 +1730,7 @@ void Game::saveWorldState(OutputStream* OS, bool b) {
 }
 
 void Game::loadWorldState() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	const char* name;
 	InputStream IS;
 
@@ -1745,7 +1750,7 @@ void Game::loadWorldState() {
 }
 
 bool Game::loadWorldState(InputStream* IS) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int mapCompileDate = IS->readInt();
 	if (app->render->mapCompileDate == mapCompileDate) {
@@ -2161,7 +2166,7 @@ static const char* keyBindingNames[KEY_MAPPIN_MAX] = {"move_forward", "move_back
                                                       "items_info",   "drinks",        "pda",         "bot_discard"};
 
 void Game::saveConfig() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	SDLGL* sdlGL = CAppContainer::getInstance()->sdlGL;
 	INIReader ini;
 
@@ -2239,7 +2244,7 @@ void Game::saveConfig() {
 }
 
 void Game::loadConfig() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	SDLGL* sdlGL = CAppContainer::getInstance()->sdlGL;
 	INIReader ini;
 
@@ -2340,7 +2345,7 @@ void Game::loadConfig() {
 
 void Game::saveState(int lastMapID, int loadMapID, int viewX, int viewY, int viewAngle, int viewPitch, int prevX,
                      int prevY, int saveX, int saveY, int saveZ, int saveAngle, int savePitch, int saveType) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	const char* name;
 	OutputStream OS;
 
@@ -2397,7 +2402,7 @@ void Game::saveState(int lastMapID, int loadMapID, int viewX, int viewY, int vie
 }
 
 void Game::saveLevelSnapshot() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	OutputStream OS;
 
 	const char* name = this->GetSaveFile(Game::FILE_NAME_BRIEFPLAYER, 0);
@@ -2422,7 +2427,7 @@ void Game::saveLevelSnapshot() {
 
 bool Game::savePlayerState(OutputStream* OS, int loadMapID, int viewX, int viewY, int viewAngle, int viewPitch,
                            int prevX, int prevY, int saveX, int saveY, int saveZ, int saveAngle, int savePitch) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	OS->writeShort(loadMapID);
 	OS->writeShort(viewX);
 	OS->writeShort(viewY);
@@ -2439,7 +2444,7 @@ bool Game::savePlayerState(OutputStream* OS, int loadMapID, int viewX, int viewY
 }
 
 bool Game::loadPlayerState(InputStream* IS) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	this->saveStateMap = IS->readShort();
 	app->canvas->viewX = (app->canvas->destX = IS->readShort());
 	app->canvas->viewY = (app->canvas->destY = IS->readShort());
@@ -2458,7 +2463,7 @@ bool Game::loadPlayerState(InputStream* IS) {
 }
 
 bool Game::loadState(int activeLoadType) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	const char* name;
 	InputStream IS;
 	bool rtn = false;
@@ -2537,7 +2542,7 @@ bool Game::hasSavedState() {
 }
 
 void Game::removeState(bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	char* namePath;
 
 	if (b) {
@@ -2592,7 +2597,7 @@ void Game::removeState(bool b) {
 }
 
 void Game::saveEmptyConfig() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	SDLGL* sdlGL = CAppContainer::getInstance()->sdlGL;
 	INIReader ini;
 
@@ -2687,7 +2692,7 @@ bool Game::canSnapMonsters() {
 }
 
 bool Game::snapMonsters(bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (this->animatingEffects != 0) {
 		for (int i = 0; i < 16; ++i) {
@@ -2747,13 +2752,13 @@ bool Game::snapMonsters(bool b) {
 }
 
 void Game::endMonstersTurn() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	app->canvas->startRotation(true);
 	this->monstersTurn = 0;
 }
 
 void Game::updateMonsters() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	this->monsterAI();
 	this->monsterLerp();
@@ -2771,7 +2776,7 @@ void Game::updateMonsters() {
 }
 
 void Game::setLineLocked(Entity* entity, bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int sprite = entity->getSprite();
 	int n = app->render->mapSpriteInfo[sprite] & 0xFF;
@@ -2799,7 +2804,7 @@ void Game::snapAllMovers() {
 }
 
 void Game::skipCinematic() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	bool allowSounds = app->sound->allowSounds;
 	app->sound->allowSounds = false;
@@ -2864,7 +2869,7 @@ void Game::updateBombs() {
 }
 
 int Game::setDynamite(int x, int y, bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int nextBombIndex = this->getNextBombIndex();
 	if (nextBombIndex == -1) {
@@ -2919,7 +2924,7 @@ Entity* Game::getFreeDropEnt() {
 }
 
 void Game::allocDynamite(int n, int n2, int n3, int n4, int n5, int n6) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	Entity* freeDropEnt = this->getFreeDropEnt();
 	freeDropEnt->def = app->entityDefManager->find(14, 6);
@@ -2942,7 +2947,7 @@ void Game::allocDynamite(int n, int n2, int n3, int n4, int n5, int n6) {
 }
 
 Entity* Game::spawnDropItem(int n, int n2, int n3, EntityDef* def, int param, bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	Entity* freeDropEnt = this->getFreeDropEnt();
 	freeDropEnt->def = def;
@@ -2976,7 +2981,7 @@ Entity* Game::spawnDropItem(int n, int n2, int n3, EntityDef* def, int param, bo
 }
 
 Entity* Game::spawnDropItem(int n, int n2, int n3, int n4, int n5, int n6, int n7, bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	EntityDef* find = app->entityDefManager->find(n4, n5, n6);
 	if (find != nullptr) {
@@ -2987,7 +2992,7 @@ Entity* Game::spawnDropItem(int n, int n2, int n3, int n4, int n5, int n6, int n
 }
 
 void Game::spawnDropItem(Entity* entity) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	bool b = entity->lootSet != nullptr;
 	bool b2;
@@ -3020,7 +3025,7 @@ void Game::spawnDropItem(Entity* entity) {
 }
 
 Entity* Game::spawnPlayerEntityCopy(int n, int n2) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int n3 = 72;
 	int n4 = 224;
@@ -3065,7 +3070,7 @@ Entity* Game::spawnPlayerEntityCopy(int n, int n2) {
 }
 
 Entity* Game::spawnSentryBotCorpse(int n, int n2, int n3, int n4, int n5) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int n6 = 19;
 	int n7 = 0;
@@ -3116,7 +3121,7 @@ Entity* Game::spawnSentryBotCorpse(int n, int n2, int n3, int n4, int n5) {
 }
 
 void Game::throwDropItem(int dstX, int dstY, int n, Entity* entity) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	LerpSprite* allocLerpSprite = this->allocLerpSprite(nullptr, entity->getSprite(), entity->def->eType != 6);
 	if (allocLerpSprite != nullptr) {
@@ -3151,7 +3156,7 @@ void Game::throwDropItem(int dstX, int dstY, int n, Entity* entity) {
 }
 
 int Game::updateLerpSprite(LerpSprite* lerpSprite) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int n = 0;
 	int n2 = lerpSprite->hSprite - 1;
@@ -3289,7 +3294,7 @@ void Game::snapLerpSprites(int n) {
 }
 
 void Game::updateLerpSprites() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	bool b = false;
 	bool b2 = false;
@@ -3328,7 +3333,7 @@ void Game::updateLerpSprites() {
 }
 
 LerpSprite* Game::allocLerpSprite(ScriptThread* thread, int n, bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	LerpSprite* lerpSprite = nullptr;
 	LerpSprite* lerpSprite2 = nullptr;
@@ -3381,7 +3386,7 @@ LerpSprite* Game::allocLerpSprite(ScriptThread* thread, int n, bool b) {
 }
 
 void Game::freeLerpSprite(LerpSprite* lerpSprite) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	Entity* entity = nullptr;
 	int sprite = lerpSprite->hSprite - 1;
 	int n2 = app->render->mapSpriteInfo[sprite] & 0xFF;
@@ -3546,7 +3551,7 @@ void Game::freeLerpSprite(LerpSprite* lerpSprite) {
 }
 
 void Game::runScriptThreads(int n) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (this->numScriptThreads == 0) {
 		return;
@@ -3570,7 +3575,7 @@ void Game::runScriptThreads(int n) {
 }
 
 ScriptThread* Game::allocScriptThread() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	for (int i = 0; i < 20; ++i) {
 		ScriptThread* scriptThread = &this->scriptThreads[i];
@@ -3586,7 +3591,7 @@ ScriptThread* Game::allocScriptThread() {
 }
 
 void Game::freeScriptThread(ScriptThread* scriptThread) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (!scriptThread->inuse) {
 		app->Error(102); // ERR_SCRIPTTHREAD_FREE
@@ -3605,7 +3610,7 @@ int Game::executeTile(int n, int n2, int n3) {
 }
 
 bool Game::doesScriptExist(int n, int n2, int n3) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (n < 0 || n >= 32 || n2 < 0 || n2 >= 32) {
 		return false;
@@ -3625,7 +3630,7 @@ bool Game::doesScriptExist(int n, int n2, int n3) {
 }
 
 int Game::executeTile(int n, int n2, int n3, bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	ScriptThread* allocScriptThread = this->allocScriptThread();
 	int n4;
@@ -3642,7 +3647,7 @@ int Game::executeTile(int n, int n2, int n3, bool b) {
 }
 
 int Game::executeStaticFunc(int n) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (n >= 12 || app->render->staticFuncs[n] == 65535) {
 		return 0;
@@ -3653,7 +3658,7 @@ int Game::executeStaticFunc(int n) {
 }
 
 int Game::queueStaticFunc(int n) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (n >= 12 || app->render->staticFuncs[n] == 65535) {
 		return 0;
@@ -3671,7 +3676,7 @@ int Game::getSaveVersion() {
 }
 
 void Game::loadEntityStates(InputStream* IS) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	for (short short1 = IS->readShort(), n = 0; n < short1; ++n) {
 		app->resource->readMarker(IS);
 		int index = IS->readInt();
@@ -3679,7 +3684,7 @@ void Game::loadEntityStates(InputStream* IS) {
 	}
 }
 void Game::saveEntityStates(OutputStream* OS, bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	int indices[Game::MAX_ENTITIES];
 
 	int16_t stateCount = 0;
@@ -3699,7 +3704,7 @@ void Game::saveEntityStates(OutputStream* OS, bool b) {
 }
 
 bool Game::tileObstructsAttack(int n, int n2) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int n3 = app->canvas->destX >> 6;
 	int n4 = app->canvas->destY >> 6;
@@ -3759,7 +3764,7 @@ bool Game::isInputBlockedByScript() {
 }
 
 void Game::updateScriptVars() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	this->scriptStateVars[0] = (short)app->player->statusEffects[33];
 	this->scriptStateVars[1] = (short)app->player->ce->getStat(0);
@@ -3771,7 +3776,7 @@ void Game::updateScriptVars() {
 }
 
 void Game::awardSecret(bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	app->hud->addMessage((short)119);
 	this->mapSecretsFound++;
@@ -3792,7 +3797,7 @@ void Game::awardSecret(bool b) {
 }
 
 void Game::addEntityDeathFunc(Entity* entity, int n) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int i;
 	for (i = 0; i < 64; ++i) {
@@ -3835,7 +3840,7 @@ void Game::executeEntityFunc(Entity* entity, bool throwAwayLoot) {
 }
 
 void Game::foundLoot(int n, int n2) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	this->foundLoot(app->render->mapSprites[app->render->S_X + n], app->render->mapSprites[app->render->S_Y + n],
 	                app->render->mapSprites[app->render->S_Z + n], n2);
 }
@@ -3849,7 +3854,7 @@ void Game::destroyedObject(int n) {
 }
 
 void Game::raiseCorpses() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	Entity* inactiveMonsters = this->inactiveMonsters;
 	int n = 0;
@@ -3893,7 +3898,7 @@ void Game::raiseCorpses() {
 }
 
 bool Game::isInFront(int n, int n2) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int n3 = 256 - (app->canvas->viewAngle & 0x3FF);
 	int n4 = (n << 6) + 32 - app->canvas->viewX;
@@ -4080,7 +4085,7 @@ char* Game::getProfileSaveFileName(const char* name) {
 }
 
 int Game::getMonsterSound(int eSubType, int param, int soundType) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	int monsterSoundResId = 0;
 	int rand = 0;
 

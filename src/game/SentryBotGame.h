@@ -5,6 +5,7 @@ class ScriptThread;
 class Image;
 class fmButtonContainer;
 class Graphics;
+class Applet;
 
 class SentryBotGame
 {
@@ -12,6 +13,7 @@ private:
 	static bool wasTouched;
 
 public:
+	Applet* app; // Set lazily, replaces CAppContainer::getInstance()->app
 	int touchMe;
 	ScriptThread* callingThread;
 	Image* imgHelpScreenAssets;

@@ -5,11 +5,14 @@
 
 class IDIB;
 
+class Applet;
+
 class Image
 {
 private:
 
 public:
+	Applet* app;  // Set lazily, replaces CAppContainer::getInstance()->app
 	IDIB* piDIB;
 	int width;
 	int height;

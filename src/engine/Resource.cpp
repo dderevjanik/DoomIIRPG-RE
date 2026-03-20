@@ -17,6 +17,7 @@ Resource::~Resource() {
 }
 
 bool Resource::startup() {
+	this->app = CAppContainer::getInstance()->app;
 	//printf("Resource::startup\n");
 
 	return false;
@@ -167,7 +168,7 @@ int* Resource::readFileIndex(InputStream *IS) {
 }
 
 int* Resource::loadFileIndex(char* fileName) {
-    Applet* app = CAppContainer::getInstance()->app;
+
     InputStream IS;
     //printf("loadFileIndex::init\n");
 
@@ -207,7 +208,7 @@ int* Resource::loadFileIndex(char* fileName) {
 }
 
 void Resource::initTableLoading() {
-    Applet* app = CAppContainer::getInstance()->app;
+
     InputStream IS;
 
     if (IS.loadFile(Resources::RES_TABLES_BIN_GZ, InputStream::LOADTYPE_RESOURCE) == false) {
@@ -223,7 +224,7 @@ void Resource::initTableLoading() {
 }
 
 void Resource::beginTableLoading() {
-    Applet* app = CAppContainer::getInstance()->app;
+
 
     if (this->prevIS.loadFile(Resources::RES_TABLES_BIN_GZ, InputStream::LOADTYPE_RESOURCE) == false) {
         app->Error("getResource(%s) failed\n", Resources::RES_TABLES_BIN_GZ);
@@ -234,7 +235,7 @@ void Resource::beginTableLoading() {
 }
 
 void Resource::seekTable(int index) {
-    Applet* app = CAppContainer::getInstance()->app;
+
 
     int offset = 0;
     if (index > 0) {

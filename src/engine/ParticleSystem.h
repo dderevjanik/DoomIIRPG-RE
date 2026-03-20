@@ -35,11 +35,15 @@ public:
 // ParticleSystem Class
 // ---------------------
 
+class Applet;
+
 class ParticleSystem
 {
 private:
 
 public:
+	Applet* app;  // Set in startup(), replaces CAppContainer::getInstance()->app
+
 	static constexpr uint32_t levelColors[] = { 0xFFFFFFFF, 0xFF3A332E, 0xFF626262, 0xFF7F7F7F, 0xFFD1CF11, 0xFFFD8918, 0xFF20B00D };
 	static constexpr int32_t rotationSequence[] = {0, 4, 2, 6};
 	static constexpr int GIB_BONE_MASK = 0x619;

@@ -27,6 +27,8 @@ VendingMachine::~VendingMachine() {
 bool VendingMachine::startup() {
 	printf("VendingMachine::startup\n");
 
+	this->app = CAppContainer::getInstance()->app;
+
 	return false;
 }
 
@@ -37,7 +39,7 @@ void VendingMachine::playFromMainMenu() {
 }
 
 void VendingMachine::initGame(ScriptThread* callingThread, int a, int a2) {
-    Applet* app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
     this->stateVars = app->canvas->stateVars;
     this->callingThread = callingThread;
     this->gamePlayedFromMainMenu = (this->callingThread == nullptr);
@@ -116,7 +118,7 @@ void VendingMachine::initGame(ScriptThread* callingThread, int a, int a2) {
 }
 
 void VendingMachine::returnFromBuying() {
-    Applet* app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
     app->canvas->setState(Canvas::ST_MINI_GAME);
     this->stateVars[0] = 4;
     this->stateVars[1] = 2;
@@ -134,7 +136,7 @@ bool VendingMachine::machineCanBeHacked() {
 }
 
 void VendingMachine::randomizeGame() {
-    Applet* app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
     this->correctSum = 0;
     for (int i = 0; i < 4; ++i) {
         this->solution[i] = app->nextInt() % 9 + 0;
@@ -187,7 +189,7 @@ void VendingMachine::handleInput(int action) {
 }
 
 void VendingMachine::handleInputForBasicVendingMachine(int action) {
-    Applet* app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
     if (this->machineCanBeHacked()) {
         if (action == Enums::ACTION_MENU /*Enums::ACTION_AUTOMAP*/ || action == Enums::ACTION_BACK) {
             this->endGame(2);
@@ -225,7 +227,7 @@ void VendingMachine::handleInputForBasicVendingMachine(int action) {
 }
 
 void VendingMachine::handleInputForHelpScreen(int action) {
-    Applet* app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
     if (action == Enums::ACTION_AUTOMAP) {
         this->endGame(2);
     }
@@ -260,7 +262,7 @@ void VendingMachine::handleInputForHelpScreen(int action) {
 }
 
 void VendingMachine::handleInputForGame(int action) {
-    Applet* app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
     if (this->stateVars[2] == 2) {
         if (action == Enums::ACTION_FIRE) {
             if (this->triesLeft == 0) {
@@ -391,7 +393,7 @@ void VendingMachine::updateHighLowState() {
 }
 
 void VendingMachine::updateGame(Graphics* graphics) {
-    Applet* app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
     graphics->clipRect(0, 0, app->canvas->screenRect[2], app->canvas->screenRect[3]);
     if (app->time - this->stateVars[3] > 100) {
         this->stateVars[3] = app->time;
@@ -419,7 +421,7 @@ void VendingMachine::updateGame(Graphics* graphics) {
 }
 
 void VendingMachine::drawGameResults(Graphics* graphics) {
-    Applet* app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
     Text* smallBuffer = app->localization->getSmallBuffer();
     smallBuffer->setLength(0);
     if (this->machineHasBeenHacked) {
@@ -467,7 +469,7 @@ void VendingMachine::drawGameResults(Graphics* graphics) {
 }
 
 void VendingMachine::drawMainScreen(Graphics* graphics) {
-    Applet* app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
 
     this->drawVendingMachineBackground(graphics, true);
     int n = 14;
@@ -600,7 +602,7 @@ void VendingMachine::drawMainScreen(Graphics* graphics) {
 }
 
 void VendingMachine::drawVendingMachineBackground(Graphics* graphics, bool b) {
-    Applet* app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
     int x, y;
     graphics->drawImage(this->imgVendingBG, 0, 0, 0, 0, 0);
     for (x = app->canvas->screenRect[0] + 200; x < app->canvas->screenRect[2]; x = x + 10) {
@@ -618,7 +620,7 @@ void VendingMachine::drawVendingMachineBackground(Graphics* graphics, bool b) {
 }
 
 void VendingMachine::drawHelpScreen(Graphics* graphics) {
-    Applet* app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
     app->canvas->drawMiniGameHelpScreen(graphics, 195, 196, this->imgHelpScreenAssets);
     Text* textBuff = app->localization->getSmallBuffer();
     textBuff->setLength(0);
@@ -632,7 +634,7 @@ void VendingMachine::drawHelpScreen(Graphics* graphics) {
 }
 
 void VendingMachine::drawGameScreen(Graphics* graphics) {
-    Applet* app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
 
     for (int i = 0; i < 4; i++) {
         this->playersGuess[i] = this->sliderPositions[i];
@@ -686,7 +688,7 @@ void VendingMachine::drawGameScreen(Graphics* graphics) {
 }
 
 void VendingMachine::drawGameTopBar(Graphics* graphics, Text* text) {
-    Applet* app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
 
     int y = app->canvas->screenRect[1];
     int x = app->canvas->screenRect[0] + 32;
@@ -731,7 +733,7 @@ void VendingMachine::drawGameTopBar(Graphics* graphics, Text* text) {
 }
 
 void VendingMachine::drawGameMiddleBar(Graphics* graphics, Text* text) {
-    Applet* app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
 
     int y = app->canvas->screenRect[1];
     int x = app->canvas->screenRect[0] + 32;
@@ -811,7 +813,7 @@ short VendingMachine::getDrinkPrice(int n) {
 }
 
 bool VendingMachine::buyDrink(int n) {
-    Applet* app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
     if (app->player->inventory[24] < this->currentItemPrice * this->currentItemQuantity) {
         return false;
     }
@@ -848,7 +850,7 @@ void VendingMachine::forceWin() {
 }
 
 void VendingMachine::endGame(int n) {
-    Applet* app = CAppContainer::getInstance()->app;
+    Applet* app = this->app;
     if (!this->gamePlayedFromMainMenu) {
         app->game->scriptStateVars[7] = (short)n;
     }

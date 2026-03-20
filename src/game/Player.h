@@ -12,6 +12,7 @@ class Text;
 class InputStream;
 class OutputStream;
 class Graphics;
+class Applet;
 class ScriptThread;
 
 class Player
@@ -19,6 +20,8 @@ class Player
 private:
 
 public:
+	Applet* app; // Set in startup(), replaces CAppContainer::getInstance()->app
+
 	static constexpr int EXPIRE_DURATION = 5;
 	static constexpr int MAX_DISPLAY_BUFFS = 6;
 	static constexpr int ICE_FOG_DIST = 1024;

@@ -16,11 +16,14 @@ class OutputStream;
 class InputStream;
 class EntityDef;
 
+class Applet;
+
 class Game
 {
 private:
 
 public:
+    Applet* app;  // Set in startup(), replaces CAppContainer::getInstance()->app
 
     static constexpr int32_t dropDirs[] { 64, 0, 64, 64, 0, 64, -64, 64, -64, 0, -64, -64, 0, -64, 64, -64 };
     static constexpr int MAX_GRID_ENTITIES = 9;

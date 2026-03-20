@@ -5,11 +5,14 @@ class InputStream;
 class OutputStream;
 class Entity;
 
+class Applet;
+
 class CombatEntity
 {
 private:
 
 public:
+	Applet* app;  // Set lazily, replaces CAppContainer::getInstance()->app
 	int touchMe;
 	int stats[8];
 	int weapon;

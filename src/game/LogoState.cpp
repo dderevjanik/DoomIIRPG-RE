@@ -20,7 +20,7 @@ void LogoState::onExit(Canvas* canvas) {
 }
 
 void LogoState::update(Canvas* canvas) {
-	Applet* app = CAppContainer::getInstance()->app;
+	Applet* app = canvas->app;
 
 	if (!app->sound->soundsLoaded) {
 		app->sound->cacheSounds();
@@ -87,7 +87,7 @@ void LogoState::render(Canvas* canvas, Graphics* graphics) {
 }
 
 bool LogoState::handleInput(Canvas* canvas, int key, int action) {
-	Applet* app = CAppContainer::getInstance()->app;
+	Applet* app = canvas->app;
 
 	if (key == 18) { // Back button
 		app->shutdown();

@@ -9,18 +9,18 @@
 #include "Button.h"
 
 void AutomapState::onEnter(Canvas* canvas) {
-	Applet* app = CAppContainer::getInstance()->app;
+	Applet* app = canvas->app;
 	canvas->automapDrawn = false;
 	canvas->automapTime = app->time;
 }
 
 void AutomapState::onExit(Canvas* canvas) {
-	Applet* app = CAppContainer::getInstance()->app;
+	Applet* app = canvas->app;
 	app->player->unpause(app->time - canvas->automapTime);
 }
 
 void AutomapState::update(Canvas* canvas) {
-	Applet* app = CAppContainer::getInstance()->app;
+	Applet* app = canvas->app;
 	app->game->updateLerpSprites();
 	if (!canvas->automapDrawn && app->game->animatingEffects == 0) {
 		canvas->updateView();
@@ -35,7 +35,7 @@ void AutomapState::update(Canvas* canvas) {
 }
 
 void AutomapState::render(Canvas* canvas, Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+	Applet* app = canvas->app;
 	canvas->drawAutomap(graphics, !canvas->automapDrawn);
 	canvas->m_softKeyButtons->Render(graphics);
 	app->hud->drawArrowControls(graphics);

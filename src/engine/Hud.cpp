@@ -29,7 +29,8 @@ Hud::~Hud() {
 }
 
 bool Hud::startup() {
-	Applet* app = CAppContainer::getInstance()->app;
+	this->app = CAppContainer::getInstance()->app;
+	Applet* app = this->app;
 	printf("Hud::startup\n");
 
 	for (int i = 0; i < Hud::MAX_MESSAGES; i++) {
@@ -99,7 +100,7 @@ bool Hud::startup() {
 }
 
 void Hud::shiftMsgs() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (this->messageFlags[0] & 0x2) {
 		app->canvas->invalidateRect();
@@ -120,7 +121,7 @@ void Hud::shiftMsgs() {
 }
 
 void Hud::calcMsgTime() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	this->msgTime = app->time;
 	int length = this->messages[0]->length();
@@ -148,7 +149,7 @@ void Hud::addMessage(short i, int i2) {
 }
 
 void Hud::addMessage(short i, short i2, int i3) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	Text* text = app->localization->getSmallBuffer();
 	app->localization->composeText(i, i2, text);
@@ -161,7 +162,7 @@ void Hud::addMessage(Text* text) {
 }
 
 void Hud::addMessage(Text* text, int flags) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (text == nullptr) {
 		return;
@@ -225,13 +226,13 @@ void Hud::finishMessageBuffer() {
 }
 
 bool Hud::isShiftingCenterMsg() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	return ((this->msgCount > 0) && ((app->time - this->msgTime) > this->msgDuration) && (this->messageFlags[0] & 0x2)) ? true : false;
 }
 
 void Hud::drawTopBar(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	Text* smallBuffer = app->localization->getSmallBuffer();
 	int n = 2;
@@ -394,7 +395,7 @@ void Hud::drawTopBar(Graphics* graphics) {
 }
 
 void Hud::drawImportantMessage(Graphics* graphics, Text* text, int color) {
-	Canvas* canvas = CAppContainer::getInstance()->app->canvas;
+	Canvas* canvas = this->app->canvas;
 
 	canvas->dialogRect[0] = canvas->viewRect[0];
 	canvas->dialogRect[1] = canvas->viewRect[1];
@@ -410,7 +411,7 @@ void Hud::drawImportantMessage(Graphics* graphics, Text* text, int color) {
 }
 
 void Hud::drawCenterMessage(Graphics* graphics, Text* text, int color) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int w = text->getStringWidth() + 8;
 	if (w > app->canvas->hudRect[2]) {
@@ -445,8 +446,8 @@ void Hud::drawCenterMessage(Graphics* graphics, Text* text, int color) {
 
 
 void Hud::drawCinematicText(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
-	Canvas* canvas = CAppContainer::getInstance()->app->canvas;
+
+	Canvas* canvas = this->app->canvas;
 
 	int scr_CX = canvas->SCR_CX;
 	int flags = 1;
@@ -491,7 +492,7 @@ void Hud::drawCinematicText(Graphics* graphics) {
 }
 
 void Hud::drawEffects(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (app->canvas->loadMapID >= 8 && app->tinyGL->fogRange < -1) {
 		int n = (1024 + (app->tinyGL->fogRange >> 4) << 8) / 1024;
@@ -533,7 +534,7 @@ void Hud::drawEffects(Graphics* graphics) {
 }
 
 void Hud::drawDamageVignette(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (app->time < this->damageTime && this->damageCount >= 0 && app->combat->totalDamage > 0) {
 		int n = 0;
@@ -583,14 +584,14 @@ void Hud::drawDamageVignette(Graphics* graphics) {
 }
 
 void Hud::smackScreen(int vScrollVelocity) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	app->render->vScrollVelocity = (vScrollVelocity * 90) / 100;
 	app->render->lastScrollChangeTime = app->time;
 }
 
 void Hud::stopScreenSmack() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	app->render->vScrollVelocity = 0;
 	app->render->screenVScrollOffset = 0;
@@ -598,7 +599,7 @@ void Hud::stopScreenSmack() {
 }
 
 void Hud::brightenScreen(int maxLocalBrightness, int brightnessInitialBoost) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	app->render->maxLocalBrightness = maxLocalBrightness;
 	app->render->brightenPPMaxReachedTime = 0;
@@ -608,7 +609,7 @@ void Hud::brightenScreen(int maxLocalBrightness, int brightnessInitialBoost) {
 }
 
 void Hud::stopBrightenScreen() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	app->render->maxLocalBrightness = 0;
 	app->render->brightenPPMaxReachedTime = 0;
@@ -618,14 +619,14 @@ void Hud::stopBrightenScreen() {
 }
 
 void Hud::drawOverlay(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	graphics->drawImage(app->hud->imgCockpitOverlay, app->canvas->cinRect[0], app->canvas->cinRect[1], 0, 0, 0);
 	graphics->drawImage(app->hud->imgCockpitOverlay, app->canvas->cinRect[2], app->canvas->cinRect[1], 24, 4, 0);
 }
 
 void Hud::drawHudOverdraw(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (app->player->isFamiliar) {
 		return;
@@ -634,7 +635,7 @@ void Hud::drawHudOverdraw(Graphics* graphics) {
 }
 
 void Hud::drawBottomBar(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	fmButton* bnt0 = this->m_hudButtons->GetButton(0);
 	fmButton* bnt1 = this->m_hudButtons->GetButton(1);
@@ -722,7 +723,7 @@ void Hud::drawBottomBar(Graphics* graphics) {
 
 void Hud::draw(Graphics* graphics) {
 	//printf("Hud::draw");
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	this->drawTime = app->upTimeMs;
 	if ((this->repaintFlags & 0x1) != 0x0) {
@@ -820,7 +821,7 @@ void Hud::draw(Graphics* graphics) {
 }
 
 void Hud::drawMonsterHealth(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	Entity* facingEntity = app->player->facingEntity;
 	if (facingEntity == nullptr || facingEntity->monster == nullptr) {
@@ -899,7 +900,7 @@ void Hud::drawMonsterHealth(Graphics* graphics) {
 }
 
 void Hud::showSpeechBubble(int i, int i2) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (this->bubbleText == nullptr) {
 		this->bubbleText = app->localization->getSmallBuffer();
@@ -933,7 +934,7 @@ void Hud::showSpeechBubble(int i, int i2) {
 
 void Hud::drawBubbleText(Graphics* graphics) {
 
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (this->bubbleText == nullptr) {
 		this->repaintFlags &= ~8;
@@ -1006,7 +1007,7 @@ void Hud::drawBubbleText(Graphics* graphics) {
 }
 
 void Hud::drawArrowControls(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	Image* imgDpad;
 
 	if (app->canvas->state != Canvas::ST_TREADMILL) {
@@ -1048,7 +1049,7 @@ void Hud::drawArrowControls(Graphics* graphics) {
 void Hud::drawWeapon(Graphics* graphics, int x, int y, int weapon, bool highlighted) {
 	int texY;
 	bool drawNumbers;
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	switch (weapon)
 	{
@@ -1128,7 +1129,7 @@ void Hud::drawNumbers(Graphics* graphics, int x, int y, int space, int num, int 
 	int v11;
 	int v12;
 	int v15;
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (num < 1000)
 	{
@@ -1153,7 +1154,7 @@ void Hud::drawNumbers(Graphics* graphics, int x, int y, int space, int num, int 
 }
 
 void Hud::drawCurrentKeys(Graphics* graphics, int x, int y) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	int v9;
 
 	Player* player = app->player;
@@ -1179,7 +1180,7 @@ void Hud::drawCurrentKeys(Graphics* graphics, int x, int y) {
 }
 
 void Hud::drawWeaponSelection(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int weapons = ~app->player->disabledWeapons & app->player->weapons;
 	int x = (app->canvas->screenRect[2] - 16 - 4 * this->imgWeaponNormal->width) / 2;
@@ -1232,7 +1233,7 @@ void Hud::handleUserMoved(int pressX, int pressY) {
 }
 
 void Hud::handleUserTouch(int pressX, int pressY, bool highlighted) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	int buttonID;
 
 	if (app->canvas->blockInputTime)
@@ -1363,7 +1364,7 @@ void Hud::handleUserTouch(int pressX, int pressY, bool highlighted) {
 }
 
 void Hud::update() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (this->m_hudButtons->GetButton(2)->drawButton && this->m_hudButtons->GetButton(2)->highlighted) {
 		if (this->weaponPressTime) {

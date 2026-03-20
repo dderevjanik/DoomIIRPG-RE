@@ -33,7 +33,8 @@ Render::Render() {
 Render::~Render() {}
 
 bool Render::startup() {
-	Applet* app = CAppContainer::getInstance()->app;
+	this->app = CAppContainer::getInstance()->app;
+
 	printf("Render::startup\n");
 
 	this->nodeIdxs = new short[Render::MAX_VISIBLE_NODES];
@@ -209,7 +210,7 @@ int Render::findEventIndex(int n) {
 }
 
 void Render::unloadMap() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	this->startFogLerp(32752, 32752, 0);
 	this->_gles->UnloadSkyMap();
@@ -413,7 +414,7 @@ void Render::RegisterMedia(int n) {
 }
 
 void Render::FinalizeMedia() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	InputStream IS;
 
 	app->canvas->updateLoadingBar(false);
@@ -580,7 +581,7 @@ void Render::FinalizeMedia() {
 }
 
 bool Render::beginLoadMap(int mapNameID) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	InputStream IS;
 
 	this->mapNameID = mapNameID;
@@ -883,7 +884,7 @@ bool Render::beginLoadMap(int mapNameID) {
 
 void Render::draw2DSprite(int tileNum, int frame, int x, int y, int flags, int renderMode, int renderFlags,
                           int scaleFactor) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	TinyGL* tinyGL = app->tinyGL;
 
 	TGLVert* vert1 = &tinyGL->cv[0];
@@ -970,7 +971,7 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 
 void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags, int renderMode, int scaleFactor,
                           int renderFlags, int palIndex) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	int n10 = scaleFactor;
 
 	if ((flags & 0x80000000) != 0x0) {
@@ -1202,7 +1203,7 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 }
 
 void Render::occludeSpriteLine(int n) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int n2 = this->mapSpriteInfo[n];
 	if (n2 < 0) {
@@ -1249,7 +1250,7 @@ void Render::occludeSpriteLine(int n) {
 }
 
 void Render::drawNodeLines(short n) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	short n2 = this->nodeChildOffset2[n];
 	for (int n3 = (n2 & 0x3FF) + (n2 >> 10 & 0x3F), i = n2 & 0x3FF; i < n3; ++i) {
@@ -1282,7 +1283,7 @@ bool Render::cullBoundingBox(int n, int n2, bool b) {
 }
 
 bool Render::cullBoundingBox(int n, int n2, int n3, int n4, bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (this->skipCull) {
 		return false;
@@ -1353,7 +1354,7 @@ bool Render::cullBoundingBox(int n, int n2, int n3, int n4, bool b) {
 }
 
 void Render::addSprite(short n) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if ((this->mapSpriteInfo[n] & 0x10000) != 0x0) {
 		return;
@@ -1451,7 +1452,7 @@ int Render::nodeClassifyPoint(int n, int n2, int n3, int n4) {
 }
 
 void Render::drawNodeGeometry(short n) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int iVar10;
 	int offset;
@@ -1565,7 +1566,7 @@ void Render::drawNodeGeometry(short n) {
 
 void Render::walkNode(short n) {
 	// printf("walkNode %d\viewPitch", viewPitch);
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (this->cullBoundingBox(
 	        (this->nodeBounds[(n << 2) + 0] & 0xFF) << 7, (this->nodeBounds[(n << 2) + 1] & 0xFF) << 7,
@@ -1880,7 +1881,7 @@ std::vector<Plane> subdivide(const Plane& plane, size_t iterations = 1) {
 }
 
 bool Render::renderStreamSpriteGL(TGLVert* array, int n) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	if (app->render->_gles->isInit) {
 		Plane p = {{{(float)array[0].x, (float)array[0].y, (float)array[0].z, (float)array[0].s, (float)array[0].t},
 		            {(float)array[1].x, (float)array[1].y, (float)array[1].z, (float)array[1].s, (float)array[1].t},
@@ -1910,7 +1911,7 @@ bool Render::renderStreamSpriteGL(TGLVert* array, int n) {
 }
 
 void Render::renderStreamSprite(int n) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	TGLVert* mv = app->tinyGL->mv;
 	int n2 = this->mapSpriteInfo[n];
@@ -1993,7 +1994,7 @@ void Render::renderStreamSprite(int n) {
 }
 
 void Render::renderSpriteObject(int n) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	// printf("renderSpriteObject %d\viewPitch", viewPitch);
 	unsigned int n2 = this->mapSpriteInfo[n];
 	if ((n2 & 0x10000) != 0x0) {
@@ -2217,7 +2218,7 @@ void Render::renderSpriteObject(int n) {
 }
 
 void Render::renderBSP() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	this->nodeCount = 0;
 	this->leafCount = 0;
@@ -2260,7 +2261,7 @@ void Render::renderBSP() {
 }
 
 void Render::loadPlayerFog() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	this->fogLerpStart = 0;
 	this->fogLerpTime = 0;
 	app->tinyGL->fogMin = this->playerFogMin;
@@ -2269,7 +2270,7 @@ void Render::loadPlayerFog() {
 }
 
 void Render::savePlayerFog() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	this->fogLerpStart = 0;
 	this->playerFogMin = app->tinyGL->fogMin;
 	this->playerFogRange = app->tinyGL->fogRange;
@@ -2277,7 +2278,7 @@ void Render::savePlayerFog() {
 }
 
 void Render::snapFogLerp() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	if (this->fogLerpTime != 0) {
 		this->fogLerpStart = 0;
 		this->fogLerpTime = 0;
@@ -2287,7 +2288,7 @@ void Render::snapFogLerp() {
 }
 
 void Render::startFogLerp(int n, int n2, int fogLerpTime) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	this->baseFogMin = app->tinyGL->fogMin;
 	this->baseFogRange = app->tinyGL->fogRange;
@@ -2339,7 +2340,7 @@ void Render::buildFogTable(int n, int n2, int n3) {
 }
 
 void Render::buildFogTables(int fogColor) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	app->tinyGL->fogColor = fogColor;
 
@@ -2374,7 +2375,7 @@ void Render::buildFogTables(int fogColor) {
 
 void Render::setupPalette(uint16_t* spanPalette, int renderMode, int renderFlags) {
 	// Pendiente
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	bool isMultiply = (renderFlags & Render::RENDER_FLAG_MULTYPLYSHIFT) ? true : false; // [GEC]
 
@@ -2532,7 +2533,7 @@ uint16_t* Render::getPalette(int n, int n2, int n3) {
 }
 
 void Render::setupTexture(int n, int n2, int renderMode, int renderFlags) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int n4 = this->mediaMappings[n] + n2;
 
@@ -2596,7 +2597,7 @@ void Render::setupTexture(int n, int n2, int renderMode, int renderFlags) {
 }
 
 void Render::drawSkyMap(int n2) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	uint8_t* p_skyMapTexels; // r4
 	uint16_t* FogPalette;    // r0
@@ -2687,7 +2688,7 @@ void Render::drawSkyMap(int n2) {
 }
 
 void Render::render(int viewX, int viewY, int viewZ, int viewAngle, int viewPitch, int viewRoll, int viewFov) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	// printf("Render::render\n");
 
@@ -3004,7 +3005,7 @@ int Render::getFadeFlags() {
 }
 
 void Render::startFade(int fadeDuration, int fadeFlags) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	this->fadeTime = app->upTimeMs;
 	this->fadeDuration = fadeDuration;
 	this->fadeFlags = fadeFlags;
@@ -3017,7 +3018,7 @@ void Render::endFade() {
 }
 
 bool Render::fadeScene(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	int fadeRect[4] = {0, 0, 480, 320};
 
 	int fadeDuration = app->upTimeMs - this->fadeTime;
@@ -3063,7 +3064,7 @@ bool Render::fadeScene(Graphics* graphics) {
 void Render::postProcessView(Graphics* graphics) {
 	static float update = 0.f;
 	static int y = 0;
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	// final int[] pixels = TinyGL.pixels;
 	int screenVScrollOffset = 0;
@@ -3162,7 +3163,7 @@ int Render::convertToGrayscale(int color) {
 }
 
 bool Render::checkPortalVisibility(int x, int y, int z) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	int n4 = 64 * this->sinTable[this->viewAngle & 0x3FF] >> 12;
 	int n5 = 64 * this->sinTable[this->viewAngle + 256 & 0x3FF] >> 12;
 	if (app->player->isFamiliar) {
@@ -3237,7 +3238,7 @@ bool Render::checkPortalVisibility(int x, int y, int z) {
 
 void Render::renderPortal() {
 	static float angle = 0.f;
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (this->portalState == Render::PORTAL_DNE) {
 		this->previousPortalState = Render::PORTAL_DNE;
@@ -3375,7 +3376,7 @@ void Render::renderPortal() {
 }
 
 void Render::fillWeaponRect(int n, int n2, int n3, int n4, int n5) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	int n6 = n2 * this->screenWidth + n;
 	int n7 = n6 + n3;
 	int i = n6;
@@ -3394,7 +3395,7 @@ void Render::fillWeaponRect(int n, int n2, int n3, int n4, int n5) {
 }
 
 void Render::drawRGB(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (app->hud->cockpitOverlayRaw) { // [GEC]
 		return;
@@ -3422,7 +3423,7 @@ void Render::drawRGB(Graphics* graphics) {
 }
 
 void Render::rockView(int rockViewDur, int x, int y, int z) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	this->rockViewDur = rockViewDur;
 	this->rockViewTime = app->upTimeMs;
 	this->rockViewX = x << 4;
@@ -3479,7 +3480,7 @@ bool Render::isZombie(int n) {
 }
 
 bool Render::hasGunFlare(int n) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	EntityDef* def = app->entityDefManager->lookup(n);
 	if (def)
 		return def->hasRenderFlag(EntityDef::RFLAG_GUN_FLARE);
@@ -3489,7 +3490,7 @@ bool Render::hasGunFlare(int n) {
 }
 
 bool Render::isFloater(int n) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	EntityDef* def = app->entityDefManager->lookup(n);
 	if (def)
 		return def->hasRenderFlag(EntityDef::RFLAG_FLOATER);
@@ -3498,7 +3499,7 @@ bool Render::isFloater(int n) {
 }
 
 bool Render::isSpecialBoss(int n) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	EntityDef* def = app->entityDefManager->lookup(n);
 	if (def)
 		return def->hasRenderFlag(EntityDef::RFLAG_SPECIAL_BOSS);
@@ -3508,7 +3509,7 @@ bool Render::isSpecialBoss(int n) {
 }
 
 void Render::renderFearEyes(Entity* entity, int frame, int x, int y, int z, int scaleFactor, bool flipH) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int anim = frame & Enums::MANIM_MASK;
 	uint8_t eSubType = entity->def->eSubType;
@@ -3570,7 +3571,7 @@ void Render::renderFearEyes(Entity* entity, int frame, int x, int y, int z, int 
 
 void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum, int flags, int renderMode,
                               int scaleFactor, int renderFlags) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	Entity* entity = &app->game->entities[this->mapSprites[this->S_ENT + n]];
 
@@ -3862,7 +3863,7 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 
 void Render::renderFloaterAnim(int n, int frame, int x, int y, int z, int tileNum, int flags, int renderMode,
                                int scaleFactor, int renderFlags) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	// Look up floater data from EntityDef
 	EntityDef* def = app->entityDefManager->lookup(tileNum);
@@ -3962,7 +3963,7 @@ void Render::renderFloaterAnim(int n, int frame, int x, int y, int z, int tileNu
 
 void Render::renderSpecialBossAnim(int n, int frame, int x, int y, int z, int tileNum, int flags, int renderMode,
                                    int scaleFactor, int renderFlags) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	// Look up special boss data from EntityDef
 	EntityDef* def = app->entityDefManager->lookup(tileNum);
@@ -4189,7 +4190,7 @@ void Render::renderSpecialBossAnim(int n, int frame, int x, int y, int z, int ti
 }
 
 void Render::handleMonsterIdleSounds(Entity* entity) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if ((this->monsterIdleTime[entity->def->eSubType] != 0) &&
 	    (this->monsterIdleTime[entity->def->eSubType] <= app->time)) {

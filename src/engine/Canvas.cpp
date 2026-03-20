@@ -47,7 +47,9 @@ void Canvas::registerStateHandler(int stateId, ICanvasState* handler) {
 bool Canvas::isLoaded;
 
 bool Canvas::startup() {
-	Applet* app = CAppContainer::getInstance()->app;
+	this->app = CAppContainer::getInstance()->app;
+	this->graphics.app = this->app;
+	Applet* app = this->app;
 	int viewWidth, viewHeight;
 	fmButton* button;
 
@@ -426,7 +428,7 @@ void Canvas::flushGraphics() {
 }
 
 void Canvas::backPaint(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	graphics->clearClipRect();
 
@@ -794,7 +796,7 @@ void Canvas::backPaint(Graphics* graphics) {
 }
 
 void Canvas::run() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	app->CalcAccelerometerAngles();
 
 	int upTimeMs = app->upTimeMs;
@@ -1055,19 +1057,19 @@ void Canvas::clearEvents(int ignoreFrameInput) {
 }
 
 void Canvas::loadRuntimeData() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	app->loadRuntimeImages();
 	//app->checkPeakMemory("after loadRuntimeData");
 }
 
 void Canvas::freeRuntimeData() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	app->freeRuntimeImages();
 }
 
 void Canvas::startShake(int i, int i2, int i3) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	SDLGL* sdlGL = CAppContainer::getInstance()->sdlGL;
 
 	if (app->game->skippingCinematic) {
@@ -1087,7 +1089,7 @@ void Canvas::startShake(int i, int i2, int i3) {
 }
 
 void Canvas::setState(int state) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	this->stateChanged = true;
 	for (int i = 0; i < 9; ++i) {
@@ -1317,7 +1319,7 @@ void Canvas::setAnimFrames(int animFrames) {
 }
 
 void Canvas::checkFacingEntity() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	if (!this->updateFacingEntity) {
 		return;
 	}
@@ -1447,7 +1449,7 @@ void Canvas::checkFacingEntity() {
 }
 
 void Canvas::finishMovement() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (this->gotoThread != nullptr && this->viewAngle == this->destAngle) {
 		this->gotoThread->run();
@@ -1484,7 +1486,7 @@ void Canvas::finishMovement() {
 }
 
 int Canvas::flagForWeapon(int i) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	bool weaponIsASentryBot = app->player->weaponIsASentryBot(i);
 	i = 1 << i;
 	if (weaponIsASentryBot && (!app->player->isFamiliar || (app->player->familiarType != 1 && app->player->familiarType != 3))) {
@@ -1511,7 +1513,7 @@ int Canvas::flagForFacingDir(int i) {
 }
 
 void Canvas::startRotation(bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int8_t b2 = Canvas::viewStepValues[((this->destAngle & 0x3FF) >> 7 << 1) + 0];
 	int8_t b3 = Canvas::viewStepValues[((this->destAngle & 0x3FF) >> 7 << 1) + 1];
@@ -1568,7 +1570,7 @@ void Canvas::startRotation(bool b) {
 }
 
 void Canvas::finishRotation(bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	this->viewSin = app->render->sinTable[this->destAngle & 0x3FF];
 	this->viewCos = app->render->sinTable[this->destAngle + 256 & 0x3FF];
@@ -1652,7 +1654,7 @@ int keys_codeActions[NUM_CODES] = {
 };
 
 int Canvas::getKeyAction(int i) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	int iVar1;
 
 	//printf("getKeyAction i %d\n", i);
@@ -1747,7 +1749,7 @@ int Canvas::getKeyAction(int i) {
 }
 
 bool Canvas::attemptMove(int n, int n2) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (this->renderOnly) {
 		this->destX = n;
@@ -1795,7 +1797,7 @@ bool Canvas::attemptMove(int n, int n2) {
 }
 
 void Canvas::loadState(int loadType, short n, short n2) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	this->loadType = loadType;
 	app->game->saveConfig();
 	this->setLoadingBarText(n, n2);
@@ -1809,7 +1811,7 @@ void Canvas::saveState(int saveType, short n, short n2) {
 }
 
 void Canvas::loadMap(int loadMapID, bool b, bool tm_NewGame) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (loadMapID > 0 && loadMapID < 11) {
 		bool b2 = false;
@@ -1834,7 +1836,7 @@ void Canvas::loadMap(int loadMapID, bool b, bool tm_NewGame) {
 }
 
 void Canvas::loadPrologueText() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	Text* text;
 
 	this->storyPage = 0;
@@ -1885,13 +1887,13 @@ void Canvas::loadPrologueText() {
 }
 
 void Canvas::loadEpilogueText() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	this->imgProlog = app->loadImage("prolog.bmp", true);
 	this->initScrollingText((short)0, (short)134, false, 32, 1, 1000);
 }
 
 void Canvas::setupCharacterSelection() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	app->beginImageLoading();
 	this->imgCharacter_select_stat_bar = app->loadImage("Character_select_stat_bar.bmp", true);
@@ -1919,7 +1921,7 @@ void Canvas::disposeIntro() {
 }
 
 void Canvas::disposeEpilogue() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	this->dialogBuffer->dispose();
 	this->dialogBuffer = nullptr;
 	app->sound->soundStop();
@@ -1928,7 +1930,7 @@ void Canvas::disposeEpilogue() {
 }
 
 void Canvas::loadMiniGameImages() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	app->beginImageLoading();
 	app->hackingGame->imgEnergyCore = app->loadImage("hackerBG.bmp", true);
@@ -1974,7 +1976,7 @@ void Canvas::drawScroll(Graphics* graphics, int n, int n2, int n3, int n4) { // 
 }
 
 void Canvas::initScrollingText(short i, short i2, bool dehyphenate, int spacingHeight, int numLines, int textMSLine) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (this->dialogBuffer == nullptr) {
 		this->dialogBuffer = app->localization->getLargeBuffer();
@@ -2000,7 +2002,7 @@ void Canvas::initScrollingText(short i, short i2, bool dehyphenate, int spacingH
 }
 
 void Canvas::drawCredits(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	Text* textBuff;
 
 	this->drawScrollingText(graphics);
@@ -2015,7 +2017,7 @@ void Canvas::drawCredits(Graphics* graphics) {
 }
 
 void Canvas::drawScrollingText(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int n = this->scrollingTextMSLine * ((this->scrollingTextSpacing << 16) >> 4) >> 16;
 	if (this->scrollingTextStart == -1) {
@@ -2055,7 +2057,7 @@ void Canvas::drawScrollingText(Graphics* graphics) {
 }
 
 void Canvas::handleDialogEvents(int key) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int action = this->getKeyAction(key);
 	if (action == Enums::ACTION_FIRE) {
@@ -2139,7 +2141,7 @@ void Canvas::handleDialogEvents(int key) {
 }
 
 bool Canvas::handlePlayingEvents(int key, int action) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	//printf("handlePlayingEvents %d, %d\n", key, action);
 
 	bool b = false;
@@ -2679,7 +2681,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 }
 
 bool Canvas::handleCinematicInput(int action) { // J2ME
-	Applet* app = CAppContainer::getInstance()->app;
+
 	if (action == Enums::ACTION_FIRE) {
 		app->game->executeTile(this->destX >> 6, this->destY >> 6, app->game->eventFlags[1], true);
 	}
@@ -2687,7 +2689,7 @@ bool Canvas::handleCinematicInput(int action) { // J2ME
 }
 
 bool Canvas::shouldFakeCombat(int n, int n2, int n3) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	bool b = false;
 	int n4 = app->player->ce->weapon * 9;
 	if (app->combat->weapons[n4 + 4] != 0) {
@@ -2705,7 +2707,7 @@ bool Canvas::shouldFakeCombat(int n, int n2, int n3) {
 }
 
 bool Canvas::endOfHandlePlayingEvent(int action, bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	if ((action == Enums::ACTION_STRAFELEFT || action == Enums::ACTION_STRAFERIGHT || action == Enums::ACTION_LEFT || action == Enums::ACTION_RIGHT) && (this->viewX != this->destX || this->viewY != this->destY || this->viewAngle != this->destAngle)) {
 		app->player->facingEntity = nullptr;
 	}
@@ -2713,7 +2715,7 @@ bool Canvas::endOfHandlePlayingEvent(int action, bool b) {
 }
 
 bool Canvas::handleEvent(int key) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int state = this->state;
 	int keyAction = this->getKeyAction(key);
@@ -3010,7 +3012,7 @@ bool Canvas::handleEvent(int key) {
 }
 
 void Canvas::runInputEvents() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	while (this->blockInputTime == 0) {
 		if (this->ignoreFrameInput > 0) {
@@ -3045,7 +3047,7 @@ void Canvas::runInputEvents() {
 }
 
 bool Canvas::loadMedia() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	printf("Canvas::loadMedia\n");
 
 	//printf("Canvas::isLoaded %d\n", Canvas::isLoaded);
@@ -3186,7 +3188,7 @@ bool Canvas::loadMedia() {
 }
 
 void Canvas::combatState() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	app->game->monsterLerp();
 	app->game->updateLerpSprites();
@@ -3254,7 +3256,7 @@ void Canvas::combatState() {
 }
 
 void Canvas::dialogState(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (this->dialogBuffer != nullptr && this->dialogBuffer->length() == 0) {
 		return;
@@ -3659,7 +3661,7 @@ void Canvas::dialogState(Graphics* graphics) {
 }
 
 void Canvas::automapState() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	app->game->updateLerpSprites();
 	if (!this->automapDrawn && app->game->animatingEffects == 0) {
 		this->updateView();
@@ -3674,7 +3676,7 @@ void Canvas::automapState() {
 }
 
 void Canvas::renderOnlyState() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (this->st_enabled) {
 		this->viewAngle = (this->viewAngle + this->animAngle & 0x3FF);
@@ -3746,7 +3748,7 @@ void Canvas::renderOnlyState() {
 }
 
 void Canvas::playingState() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (this->pushedWall && this->pushedTime <= app->gameTime) {
 		app->combat->shiftWeapon(false);
@@ -3786,7 +3788,7 @@ void Canvas::playingState() {
 }
 
 void Canvas::menuState() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	short n = -1;
 	int menu = app->menuSystem->menu;
@@ -3838,7 +3840,7 @@ void Canvas::menuState() {
 }
 
 void Canvas::dyingState() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	app->hud->repaintFlags = 32;
 	if (app->time < this->deathTime + 750) {
 		int n = (750 - (app->time - this->deathTime) << 16) / 750;
@@ -3863,7 +3865,7 @@ void Canvas::dyingState() {
 }
 
 void Canvas::familiarDyingState() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	app->hud->repaintFlags = 36;
 	// app->hud->repaintFlags |= 0x40; // J2ME
 	if (this->familiarSelfDestructed) {
@@ -3902,7 +3904,7 @@ void Canvas::familiarDyingState() {
 }
 
 void Canvas::logoState() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (!app->sound->soundsLoaded) {
 		app->sound->cacheSounds();
@@ -3997,7 +3999,7 @@ void Canvas::drawScrollBar(Graphics* graphics, int i, int i2, int i3, int i4, in
 }
 
 void Canvas::uncoverAutomap() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	if (!app->game->updateAutomap) {
 		return;
 	}
@@ -4025,7 +4027,7 @@ void Canvas::uncoverAutomap() {
 }
 
 void Canvas::drawAutomap(Graphics* graphics, bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	graphics->drawRegion(this->imgGameHelpBG, 0, 0, 480, 320, 0, 0, 0, 0, 0);
 
@@ -4309,7 +4311,7 @@ void Canvas::drawAutomap(Graphics* graphics, bool b) {
 }
 
 void Canvas::closeDialog(bool skipDialog) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	this->dialogClosing = true;
 	this->specialLootIcon = -1;
@@ -4389,7 +4391,7 @@ void Canvas::closeDialog(bool skipDialog) {
 }
 
 void Canvas::prepareDialog(Text* text, int dialogStyle, int dialogFlags) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	int i = 0;
 	int n = 0;
 	Text* smallBuffer = app->localization->getSmallBuffer();
@@ -4511,7 +4513,7 @@ void Canvas::startDialog(ScriptThread* scriptThread, short n, int n2, int n3) {
 }
 
 void Canvas::startDialog(ScriptThread* scriptThread, short n, short n2, int n3, int n4, bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	Text* largeBuffer = app->localization->getLargeBuffer();
 	app->localization->composeText(n, n2, largeBuffer);
@@ -4533,7 +4535,7 @@ void Canvas::startDialog(ScriptThread* dialogThread, Text* text, int n, int n2, 
 }
 
 void Canvas::renderScene(int viewX, int viewY, int viewZ, int viewAngle, int viewPitch, int viewRoll, int viewFov) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	{ // J2ME
 		//this->staleView = true;
@@ -4575,7 +4577,7 @@ void Canvas::startSpeedTest(bool b) {
 }
 
 void Canvas::backToMain(bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	this->loadMapID = 0;
 	app->freeRuntimeImages();
@@ -4612,7 +4614,7 @@ void Canvas::backToMain(bool b) {
 }
 
 void Canvas::drawPlayingSoftKeys() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (app->player->inTargetPractice) {
 		this->setLeftSoftKey((short)0, (short)30);
@@ -4650,7 +4652,7 @@ void Canvas::changeStoryPage(int i) {
 
 void Canvas::drawStory(Graphics* graphics)
 {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	Text* this_00;
 	Text* this_01;
@@ -4730,7 +4732,7 @@ int Canvas::getCharacterConstantByOrder(int i) {
 }
 
 void Canvas::drawCharacterSelection(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	fmButton* button;
 	Text* textBuff;
 	Image* img;
@@ -4862,7 +4864,7 @@ void Canvas::drawCharacterSelection(Graphics* graphics) {
 
 void Canvas::drawCharacterSelectionAvatar(int i, int x, int y, Graphics* graphics)
 {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	Image* troso, * legs;
 
 	switch (i) {
@@ -4888,7 +4890,7 @@ void Canvas::drawCharacterSelectionAvatar(int i, int x, int y, Graphics* graphic
 }
 
 void Canvas::drawCharacterSelectionStats(int i, Text* text, int x, int y, Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	int defense;
 	int strength;
 	int accuracy;
@@ -4976,7 +4978,7 @@ void Canvas::dequeueHelpDialog() {
 }
 
 void Canvas::dequeueHelpDialog(bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (this->numHelpMessages == 0) {
 		return;
@@ -5065,7 +5067,7 @@ void Canvas::enqueueHelpDialog(short n) {
 }
 
 bool Canvas::enqueueHelpDialog(short n, short n2, uint8_t b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (!app->player->enableHelp || this->state == Canvas::ST_DYING) {
 		return false;
@@ -5090,7 +5092,7 @@ bool Canvas::enqueueHelpDialog(Text* text) {
 }
 
 bool Canvas::enqueueHelpDialog(Text* text, int n) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (!app->player->enableHelp || this->state == Canvas::ST_DYING) {
 		return false;
@@ -5110,7 +5112,7 @@ bool Canvas::enqueueHelpDialog(Text* text, int n) {
 }
 
 void Canvas::enqueueHelpDialog(EntityDef* entityDef) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (!app->player->enableHelp || this->state == Canvas::ST_DYING) {
 		return;
@@ -5129,7 +5131,7 @@ void Canvas::enqueueHelpDialog(EntityDef* entityDef) {
 }
 
 void Canvas::updateView() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (app->time < this->shakeTime) {
 		this->shakeX = app->nextByte() % (this->shakeIntensity * 2) - this->shakeIntensity;
@@ -5342,12 +5344,12 @@ void Canvas::setSoftKeys(short n, short n2, short n3, short n4) {
 }
 
 void Canvas::checkHudEvents() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	//app->hud->hudEventsAvailable = (this->displaySoftKeys && (this->softKeyLeftID == 52 || this->softKeyRightID == 52)); // J2ME Only
 }
 
 void Canvas::drawSoftKeys(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	// J2ME Only
 }
 
@@ -5358,7 +5360,7 @@ void Canvas::setLoadingBarText(short loadingStringID, short loadingStringType) {
 }
 
 void Canvas::updateLoadingBar(bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	int uVar2;
 
 	if (b == false) {
@@ -5378,7 +5380,7 @@ void Canvas::updateLoadingBar(bool b) {
 }
 
 void Canvas::drawLoadingBar(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	Text* text;
 	int iVar1;
 	int iVar2;
@@ -5441,7 +5443,7 @@ void Canvas::drawLoadingBar(Graphics* graphics) {
 }
 
 void Canvas::unloadMedia() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	this->freeRuntimeData();
 	app->game->unloadMapData();
 	app->render->unloadMap();
@@ -5459,7 +5461,7 @@ int Canvas::getRecentLoadType() {
 }
 
 void Canvas::initZoom() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	this->zoomTime = 0;
 	this->zoomCurFOVPercent = 0;
 	this->zoomFOV = this->zoomDestFOV = 190;
@@ -5481,7 +5483,7 @@ void Canvas::initZoom() {
 }
 
 void Canvas::zoomOut() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	this->isZoomedIn = false;
 	this->viewAngle += this->zoomAngle;
 	int n = 255;
@@ -5497,7 +5499,7 @@ bool Canvas::handleZoomEvents(int key, int action) {
 }
 
 bool Canvas::handleZoomEvents(int key, int action, bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	if (!b && ((this->zoomTime != 0) || app->game->activePropogators != 0 || app->game->animatingEffects != 0 || !app->game->snapMonsters(false))) {
 		return true;
 	}
@@ -5518,26 +5520,26 @@ bool Canvas::handleZoomEvents(int key, int action, bool b) {
 		this->updateFacingEntity = true;
 		++this->zoomTurn;
 		CAppContainer::getInstance()->sdlGL->centerMouse(0, -22); // [GEC]
-		CAppContainer::getInstance()->app->StopAccelerometer(); // [GEC]
+		this->app->StopAccelerometer(); // [GEC]
 	}
 	else if (action == Enums::ACTION_LEFT) {
 		this->zoomAngle += n3;
 		this->updateFacingEntity = true;
 		++this->zoomTurn;
 		CAppContainer::getInstance()->sdlGL->centerMouse(0, -22); // [GEC]
-		CAppContainer::getInstance()->app->StopAccelerometer(); // [GEC]
+		this->app->StopAccelerometer(); // [GEC]
 	}
 	else if (action == Enums::ACTION_DOWN) {
 		this->zoomPitch -= n3;
 		++this->zoomTurn;
 		CAppContainer::getInstance()->sdlGL->centerMouse(0, -22); // [GEC]
-		CAppContainer::getInstance()->app->StopAccelerometer(); // [GEC]
+		this->app->StopAccelerometer(); // [GEC]
 	}
 	else if (action == Enums::ACTION_UP) {
 		this->zoomPitch += n3;
 		++this->zoomTurn;
 		CAppContainer::getInstance()->sdlGL->centerMouse(0, -22); // [GEC]
-		CAppContainer::getInstance()->app->StopAccelerometer(); // [GEC]
+		this->app->StopAccelerometer(); // [GEC]
 	}
 	else if (action == Enums::ACTION_PASSTURN) {
 		app->hud->addMessage((short)45);
@@ -5601,7 +5603,7 @@ bool Canvas::handleZoomEvents(int key, int action, bool b) {
 }
 
 void Canvas::handleCharacterSelectionInput(int key, int action) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	//printf("handleCharacterSelectionInput key %d, action %d\n", key, action);
 	if (this->stateVars[1]) {
 		if (this->stateVars[1] == 1) {
@@ -5711,7 +5713,7 @@ void Canvas::handleCharacterSelectionInput(int key, int action) {
 }
 
 void Canvas::handleStoryInput(int key, int action) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (action == Enums::ACTION_LEFT || action == Enums::ACTION_RIGHT) {
 		if (this->stateVars[0] != 2) {
@@ -5764,7 +5766,7 @@ void Canvas::handleStoryInput(int key, int action) {
 }
 
 void Canvas::lootingState() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	app->hud->repaintFlags |= 0x22;
 	this->repaintFlags |= (Canvas::REPAINT_HUD | Canvas::REPAINT_VIEW3D);
 	//app->hud->repaintFlags &= 0xFFFFFFBF; // J2ME
@@ -5814,7 +5816,7 @@ void Canvas::lootingState() {
 }
 
 void Canvas::handleLootingEvents(int action) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	if (this->crouchingForLoot && app->time > this->lootingTime + 500) {
 		int max = std::max(this->numPoolItems + ((this->lootPoolCredits != 0) ? 1 : 0) - 3, 0);
 		if (action == Enums::ACTION_FIRE) {
@@ -5848,7 +5850,7 @@ void Canvas::handleLootingEvents(int action) {
 }
 
 void Canvas::drawLootingMenu(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	if (this->crouchingForLoot && app->time > this->lootingTime + 500) {
 		int* dialogRect = this->dialogRect;
 		dialogRect[0] = this->viewRect[0] + 0;
@@ -5876,7 +5878,7 @@ void Canvas::drawLootingMenu(Graphics* graphics) {
 }
 
 void Canvas::poolLoot(int* array) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	Entity* entity = app->game->findMapEntity(array[0], array[1], 512);
 	this->lootText = app->localization->getLargeBuffer();
 	this->lootText->setLength(0);
@@ -6002,7 +6004,7 @@ void Canvas::poolLoot(int* array) {
 }
 
 void Canvas::giveLootPool() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	for (int i = 0; i < this->numPoolItems; ++i) {
 		int n = this->lootPool[i];
 		int n2 = n >> 12 & 0xF;
@@ -6029,7 +6031,7 @@ void Canvas::giveLootPool() {
 }
 
 bool Canvas::handleTreadmillEvents(int action) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	if (this->treadmillReturnCode != 0) {
 		return true;
 	}
@@ -6064,7 +6066,7 @@ bool Canvas::handleTreadmillEvents(int action) {
 }
 
 void Canvas::treadmillState() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	app->hud->repaintFlags |= 0x22;
 	this->repaintFlags |= (Canvas::REPAINT_HUD | Canvas::REPAINT_VIEW3D);
 	app->hud->repaintFlags &= 0xFFFFFFBF;
@@ -6126,7 +6128,7 @@ void Canvas::treadmillState() {
 }
 
 bool Canvas::treadmillFall() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	if (app->time > this->treadmillLastStepTime + 1000 + 500 + 500) {
 		this->viewX = this->destX;
 		this->viewY = this->destY;
@@ -6178,7 +6180,7 @@ bool Canvas::treadmillFall() {
 }
 
 void Canvas::drawTreadmillReadout(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	Text* smallBuffer = app->localization->getSmallBuffer();
 	app->localization->resetTextArgs();
 	app->localization->addTextArg(this->treadmillNumSteps * 2);
@@ -6189,7 +6191,7 @@ void Canvas::drawTreadmillReadout(Graphics* graphics) {
 }
 
 void Canvas::drawTargetPracticeScore(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	if (app->hud->msgCount != 0 && (app->hud->messageFlags[0] & 0x4) != 0x0) {
 		return;
 	}
@@ -6202,7 +6204,7 @@ void Canvas::drawTargetPracticeScore(Graphics* graphics) {
 }
 
 void Canvas::drawTravelMap(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (this->stateVars[5] == 1) {
 		this->drawStarFieldPage(graphics);
@@ -6360,7 +6362,7 @@ bool Canvas::drawDottedLine(Graphics* graphics) {
 }
 
 bool Canvas::drawMarsToMoonLinePlusSpaceShip(Graphics* graphics, int n) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	bool b = false;
 	int width = this->imgTravelPath->width;
@@ -6390,7 +6392,7 @@ int Canvas::yCoordOfSpaceShip(int n) {
 }
 
 bool Canvas::drawMoonToEarthLine(Graphics* graphics, int n, bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	bool b2 = false;
 	int height = this->imgTravelPath->height;
@@ -6421,7 +6423,7 @@ bool Canvas::drawMoonToEarthLine(Graphics* graphics, int n, bool b) {
 }
 
 bool Canvas::drawEarthToHellLine(Graphics* graphics, int n, bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	bool b2 = false;
 	int height = this->imgTravelPath->height;
@@ -6513,7 +6515,7 @@ void Canvas::handleTravelMapInput(int key, int action) {
 		this->stateVars[6] = 1;
 	}
 #else // J2ME/BREW
-	Applet* app = CAppContainer::getInstance()->app;
+
 	bool hasSavedState = app->game->hasSavedState();
 
 	if (action == Enums::ACTION_MENU) { // [GEC] skip all
@@ -6646,7 +6648,7 @@ bool Canvas::drawLocatorLines(Graphics* graphics, int n, bool b, bool b2) {
 }
 
 void Canvas::initTravelMap() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	this->TM_LoadLevelId = (short)std::max(1, std::min(this->loadMapID, 9));
 	this->TM_LastLevelId = ((getRecentLoadType() == 1 && !this->TM_NewGame) ? this->TM_LoadLevelId : ((short)std::max(0, std::min(this->lastMapID, 9))));
@@ -6777,7 +6779,7 @@ void Canvas::disposeTravelMap() {
 }
 
 void Canvas::drawStarFieldPage(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (app->upTimeMs - this->stateVars[0] > 5250) {
 		this->_field_0xf2c = 2u;
@@ -6800,7 +6802,7 @@ void Canvas::drawStarFieldPage(Graphics* graphics) {
 }
 
 void Canvas::drawStarField(Graphics* graphics, int x, int y) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	int upTimeMs; // r2
 	int result; // r0
 	int field_0xf20; // r2
@@ -6889,7 +6891,7 @@ LABEL_20:
 }
 
 void Canvas::runStarFieldFrame() {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int v1; // r11
 	int v2; // r3
@@ -7067,7 +7069,7 @@ void Canvas::runStarFieldFrame() {
 }
 
 void Canvas::playIntroMovie(Graphics* graphics) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (app->canvas->skipIntro != false) {
 		this->backToMain(true);
@@ -7172,7 +7174,7 @@ void Canvas::playIntroMovie(Graphics* graphics) {
 }
 
 void Canvas::exitIntroMovie(bool b) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	app->game->cleanUpCamMemory();
 
@@ -7213,7 +7215,7 @@ void Canvas::setBlendSpecialAlpha(float alpha) {
 }
 
 void Canvas::touchStart(int pressX, int pressY) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	this->touched = false;
 
 	if (this->state == Canvas::ST_MENU) {
@@ -7313,7 +7315,7 @@ void Canvas::touchStart(int pressX, int pressY) {
 }
 
 void Canvas::touchMove(int pressX, int pressY) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	fmSwipeArea::SwipeDir swDir;
 
 	//this->touched = true; // Old
@@ -7444,7 +7446,7 @@ void Canvas::touchMove(int pressX, int pressY) {
 }
 
 void Canvas::touchEnd(int pressX, int pressY) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	short sVar1;
 	int iVar3;
@@ -7693,7 +7695,7 @@ void Canvas::drawMiniGameHelpScreen(Graphics* graphics, int i, int i2, Image* im
 }
 
 void Canvas::drawMiniGameHelpText(Graphics* graphics, int i, int i2) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	int x;
 	Text* textBuff1;
@@ -7823,7 +7825,7 @@ void Canvas::disposeCharacterSelection() {
 
 bool Canvas::pitchIsControlled(int n, int n2, int n3) {
 
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	bool b = false;
 	for (int i = 0; i < Render::MAX_KEEP_PITCH_LEVEL_TILES; ++i) {
@@ -7839,7 +7841,7 @@ bool Canvas::pitchIsControlled(int n, int n2, int n3) {
 }
 
 int Canvas::touchToKey_Play(int pressX, int pressY) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	int result;
 
 	this->m_controlButton = 0;
@@ -7881,7 +7883,7 @@ int Canvas::touchToKey_Play(int pressX, int pressY) {
 }
 
 bool Canvas::startArmorRepair(ScriptThread* armorRepairThread) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 
 	if (app->player->showHelp((short)15, false)) {
 		return false;
@@ -7917,7 +7919,7 @@ void Canvas::endArmorRepair() {
 }
 
 void Canvas::drawTouchSoftkeyBar(Graphics* graphics, bool highlighted_Left, bool highlighted_Right) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	Text* SmallBuffer = app->localization->getSmallBuffer();
 
 	graphics->drawImage(app->menuSystem->imgGameMenuPanelbottom,
@@ -7958,7 +7960,7 @@ void Canvas::drawTouchSoftkeyBar(Graphics* graphics, bool highlighted_Left, bool
 }
 
 void Canvas::touchSwipe(int swDir) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	int iVar1;
 	int iVar2;
 
@@ -8017,7 +8019,7 @@ void Canvas::touchSwipe(int swDir) {
 }
 
 void Canvas::turnEntityIntoWaterSpout(Entity* entity) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	int sprite = entity->getSprite();
 	entity->def = app->entityDefManager->lookup(Enums::TILENUM_WATER_SPOUT);
 	entity->name = (short)(entity->def->name | 0x400);
@@ -8113,7 +8115,7 @@ void Canvas::setControlLayout() {
 }
 
 void Canvas::evaluateMiniGameResults(int n) {
-	Applet* app = CAppContainer::getInstance()->app;
+
 	if (n == 1) {
 		int modifyStat = app->player->modifyStat(7, 2);
 		app->localization->resetTextArgs();

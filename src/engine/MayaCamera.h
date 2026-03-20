@@ -3,11 +3,15 @@
 
 class ScriptThread;
 
+class Applet;
+
 class MayaCamera
 {
 private:
 
 public:
+	Applet* app;  // Set lazily, replaces CAppContainer::getInstance()->app
+
 	int keyOffset;
 	int numKeys;
 	int curTweenTime;
