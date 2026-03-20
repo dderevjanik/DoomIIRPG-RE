@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.22)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
-project(DoomIIRPG)
+project(DoomIIRPG VERSION 0.1.0)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_compile_options(
     -fsigned-char         # Force char to be signed

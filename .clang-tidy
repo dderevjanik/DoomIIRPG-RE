@@ -1,0 +1,12 @@
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-narrowing-conversions,
+  modernize-use-nullptr,
+  readability-redundant-declaration,
+  readability-duplicate-include,
+  misc-redundant-expression
+
+WarningsAsErrors: ''
+HeaderFilterRegex: 'src/.*\.h$'

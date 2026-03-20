@@ -1,0 +1,10 @@
+{
+  "name": "doom2rpg-re",
+  "version-string": "0.1.0",
+  "description": "Doom II RPG Reverse Engineering",
+  "dependencies": [
+    "sdl2",
+    "zlib",
+    "openal-soft"
+  ]
+}

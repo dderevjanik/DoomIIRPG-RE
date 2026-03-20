@@ -1,2 +1,35 @@
+# Build
 build/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+Makefile
+
+# Binaries
+*.o
+*.a
+*.so
+*.lib
+*.exe
+*.dll
+*.app/
+
+# Game assets (not redistributable)
 Doom 2 RPG.ipa
+Doom 2 RPG/
+Doom2rpg.app/
+*.bin
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*~
+*.user
+*.sln
+*.vcxproj*
+
+# OS
+.DS_Store
+Thumbs.db
