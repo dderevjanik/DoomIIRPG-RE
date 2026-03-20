@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DoomII RPG - Map Viewer</title>
+<style>
+:root {
+  --bg: #1a1a2e; --bg2: #16213e; --bg3: #0f3460;
+  --accent: #e94560; --text: #eee; --text-dim: #888; --border: #333;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Courier New', monospace; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+
+#sidebar {
+  width: 280px; min-width: 280px; background: var(--bg2);
+  border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden;
+}
+#sidebar-header { padding: 12px; border-bottom: 1px solid var(--border); background: var(--bg3); }
+#sidebar-header h2 { font-size: 14px; color: var(--accent); margin-bottom: 8px; }
+
+.section { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.section label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; display: block; margin-bottom: 4px; }
+
+button {
+  padding: 5px 10px; background: var(--bg3); color: var(--text); border: 1px solid var(--border);
+  border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 12px; width: 100%;
+}
+button:hover { background: var(--accent); }
+button.primary { background: var(--accent); border-color: var(--accent); }
+button.sm { width: auto; padding: 3px 8px; font-size: 11px; }
+select, input[type="text"] {
+  width: 100%; padding: 4px 6px; background: var(--bg); color: var(--text);
+  border: 1px solid var(--border); border-radius: 4px; font-family: inherit; font-size: 12px;
+}
+
+#map-list { flex: 1; overflow-y: auto; padding: 4px 0; }
+.map-entry {
+  padding: 6px 12px; cursor: pointer; font-size: 12px; border-left: 3px solid transparent;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.map-entry:hover { background: rgba(233,69,96,0.1); }
+.map-entry.selected { background: rgba(233,69,96,0.2); border-left-color: var(--accent); }
+.map-entry .mname { color: var(--text); }
+.map-entry .minfo { font-size: 10px; color: var(--text-dim); }
+
+#controls { padding: 10px 12px; border-top: 1px solid var(--border); font-size: 11px; }
+#controls label { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; color: var(--text-dim); }
+#controls input[type="checkbox"] { margin: 0; }
+#controls input[type="range"] { flex: 1; }
+
+/* Tile list */
+#tile-list { max-height: 200px; overflow-y: auto; }
+.tile-entry {
+  display: flex; align-items: center; gap: 6px; padding: 2px 4px; font-size: 10px; cursor: pointer;
+}
+.tile-entry:hover { background: rgba(233,69,96,0.1); }
+.tile-entry.hidden-tile { opacity: 0.3; }
+.tile-thumb { width: 24px; height: 24px; image-rendering: pixelated; border: 1px solid var(--border); }
+.tile-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tile-tris { color: var(--text-dim); }
+
+#main { flex: 1; display: flex; flex-direction: column; position: relative; }
+#canvas-wrap { flex: 1; position: relative; overflow: hidden; }
+#gl-canvas { width: 100%; height: 100%; display: block; }
+
+#hud {
+  position: absolute; top: 8px; left: 8px; font-size: 11px; color: var(--text-dim);
+  pointer-events: none; line-height: 1.6; text-shadow: 0 0 4px #000;
+}
+#minimap {
+  position: absolute; bottom: 8px; right: 8px; width: 160px; height: 160px;
+  border: 2px solid var(--border); background: rgba(0,0,0,0.7); image-rendering: pixelated;
+}
+
+#statusbar {
+  padding: 4px 16px; background: var(--bg3); border-top: 1px solid var(--border);
+  font-size: 11px; color: var(--text-dim); display: flex; justify-content: space-between;
+}
+
+#tex-loading {
+  position: absolute; bottom: 40px; left: 16px; font-size: 11px; color: var(--accent);
+  text-shadow: 0 0 4px #000; pointer-events: none;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+input[type="file"] { display: none; }
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <div id="sidebar-header">
+    <h2>DOOM II RPG - MAP VIEWER</h2>
+  </div>
+
+  <div class="section">
+    <label>Load Data</label>
+    <div style="display:flex; gap:4px; margin-bottom:4px;">
+      <button class="primary" onclick="document.getElementById('file-mapjson').click()">Load map JSON</button>
+      <input type="file" id="file-mapjson" accept=".json" multiple onchange="handleMapJsonFiles(event)">
+    </div>
+    <div style="display:flex; gap:4px;">
+      <button onclick="document.getElementById('file-tilejson').click()">Load tile_mapping</button>
+      <input type="file" id="file-tilejson" accept=".json" onchange="handleTileMapping(event)">
+    </div>
+    <div style="margin-top:4px;">
+      <label>Texture Directory</label>
+      <div style="display:flex; gap:4px;">
+        <input type="text" id="tex-path" value="../textures/media/" placeholder="path to texture PNGs">
+        <button class="sm" onclick="reloadTextures()">Set</button>
+      </div>
+    </div>
+    <div style="margin-top:4px;">
+      <button onclick="tryAutoLoad()" style="font-size:10px; background:var(--bg)">Auto-load from ../mapdata/</button>
+    </div>
+  </div>
+
+  <div id="map-list"></div>
+
+  <div class="section">
+    <label>Tile Textures <span id="tile-count" style="color:var(--accent)"></span></label>
+    <div style="display:flex; gap:4px; margin-bottom:4px;">
+      <button class="sm" onclick="showAllTiles()">Show All</button>
+      <button class="sm" onclick="hideAllTiles()">Hide All</button>
+    </div>
+    <div id="tile-list"></div>
+  </div>
+
+  <div id="controls">
+    <label><input type="checkbox" id="show-grid" checked onchange="render()"> Grid</label>
+    <label><input type="checkbox" id="show-wireframe" onchange="render()"> Wireframe Overlay</label>
+    <label><input type="checkbox" id="show-sprites" checked onchange="render()"> Sprite Markers</label>
+    <label><input type="checkbox" id="auto-rotate" onchange="toggleAutoRotate()"> Auto Rotate</label>
+    <label>FOV <input type="range" id="fov-slider" min="30" max="120" value="60" oninput="cam.fov=+this.value; render()"></label>
+    <label>Brightness <input type="range" id="brightness" min="50" max="200" value="100" oninput="render()"></label>
+    <div style="margin-top:6px; color:var(--text-dim); font-size:10px;">
+      LMB: Orbit | RMB: Pan | Scroll: Zoom<br>
+      R: Reset | F: Fit | T: Textures | W: Wire
+    </div>
+  </div>
+</div>
+
+<div id="main">
+  <div id="canvas-wrap">
+    <canvas id="gl-canvas"></canvas>
+    <div id="hud"></div>
+    <canvas id="minimap" width="160" height="160"></canvas>
+    <div id="tex-loading"></div>
+  </div>
+  <div id="statusbar">
+    <span id="status-left">Load map JSON and textures to view</span>
+    <span id="status-right"></span>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// WebGL
+// ============================================================
+const canvas = document.getElementById('gl-canvas');
+const gl = canvas.getContext('webgl', { antialias: true, alpha: false });
+gl.getExtension('OES_element_index_uint');
+
+const VS_TEX = `
+  attribute vec3 aPos;
+  attribute vec2 aUV;
+  uniform mat4 uMVP;
+  uniform float uBrightness;
+  varying vec2 vUV;
+  varying float vBright;
+  void main() {
+    vUV = aUV;
+    vBright = uBrightness;
+    gl_Position = uMVP * vec4(aPos, 1.0);
+    gl_PointSize = 4.0;
+  }
+`;
+const FS_TEX = `
+  precision mediump float;
+  varying vec2 vUV;
+  varying float vBright;
+  uniform sampler2D uTex;
+  uniform float uAlpha;
+  uniform bool uHasTex;
+  uniform vec3 uColor;
+  void main() {
+    vec3 c;
+    if (uHasTex) {
+      vec4 tc = texture2D(uTex, vUV);
+      if (tc.a < 0.1) discard;
+      c = tc.rgb * vBright;
+    } else {
+      c = uColor * vBright;
+    }
+    gl_FragColor = vec4(c, uAlpha);
+  }
+`;
+
+const VS_LINE = `
+  attribute vec3 aPos;
+  uniform mat4 uMVP;
+  void main() { gl_Position = uMVP * vec4(aPos, 1.0); gl_PointSize = 5.0; }
+`;
+const FS_LINE = `
+  precision mediump float;
+  uniform vec4 uLineColor;
+  void main() { gl_FragColor = uLineColor; }
+`;
+
+function createShader(src, type) {
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src);
+  gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(s));
+  return s;
+}
+function createProgram(vs, fs) {
+  const p = gl.createProgram();
+  gl.attachShader(p, createShader(vs, gl.VERTEX_SHADER));
+  gl.attachShader(p, createShader(fs, gl.FRAGMENT_SHADER));
+  gl.linkProgram(p);
+  return p;
+}
+
+const progTex = createProgram(VS_TEX, FS_TEX);
+const progLine = createProgram(VS_LINE, FS_LINE);
+
+// Texture program locations
+const tLoc = {
+  aPos: gl.getAttribLocation(progTex, 'aPos'),
+  aUV: gl.getAttribLocation(progTex, 'aUV'),
+  uMVP: gl.getUniformLocation(progTex, 'uMVP'),
+  uTex: gl.getUniformLocation(progTex, 'uTex'),
+  uAlpha: gl.getUniformLocation(progTex, 'uAlpha'),
+  uHasTex: gl.getUniformLocation(progTex, 'uHasTex'),
+  uColor: gl.getUniformLocation(progTex, 'uColor'),
+  uBrightness: gl.getUniformLocation(progTex, 'uBrightness'),
+};
+// Line program locations
+const lLoc = {
+  aPos: gl.getAttribLocation(progLine, 'aPos'),
+  uMVP: gl.getUniformLocation(progLine, 'uMVP'),
+  uLineColor: gl.getUniformLocation(progLine, 'uLineColor'),
+};
+
+gl.enable(gl.DEPTH_TEST);
+gl.enable(gl.BLEND);
+gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+gl.clearColor(0.08, 0.08, 0.1, 1.0);
+
+// ============================================================
+// Math
+// ============================================================
+function mat4Perspective(fov, aspect, near, far) {
+  const f = 1 / Math.tan(fov * Math.PI / 360), nf = 1 / (near - far);
+  const m = new Float32Array(16);
+  m[0] = f / aspect; m[5] = f; m[10] = (far + near) * nf; m[11] = -1; m[14] = 2 * far * near * nf;
+  return m;
+}
+function mat4LookAt(eye, center, up) {
+  const m = new Float32Array(16);
+  let zx=eye[0]-center[0], zy=eye[1]-center[1], zz=eye[2]-center[2];
+  let l=1/Math.sqrt(zx*zx+zy*zy+zz*zz); zx*=l; zy*=l; zz*=l;
+  let xx=up[1]*zz-up[2]*zy, xy=up[2]*zx-up[0]*zz, xz=up[0]*zy-up[1]*zx;
+  l=1/Math.sqrt(xx*xx+xy*xy+xz*xz); xx*=l; xy*=l; xz*=l;
+  let yx=zy*xz-zz*xy, yy=zz*xx-zx*xz, yz=zx*xy-zy*xx;
+  m[0]=xx;m[1]=yx;m[2]=zx;m[4]=xy;m[5]=yy;m[6]=zy;m[8]=xz;m[9]=yz;m[10]=zz;
+  m[12]=-(xx*eye[0]+xy*eye[1]+xz*eye[2]); m[13]=-(yx*eye[0]+yy*eye[1]+yz*eye[2]);
+  m[14]=-(zx*eye[0]+zy*eye[1]+zz*eye[2]); m[15]=1;
+  return m;
+}
+function mat4Mul(a, b) {
+  const r = new Float32Array(16);
+  for (let i=0;i<4;i++) for (let j=0;j<4;j++)
+    r[i*4+j]=a[j]*b[i*4]+a[4+j]*b[i*4+1]+a[8+j]*b[i*4+2]+a[12+j]*b[i*4+3];
+  return r;
+}
+
+// ============================================================
+// Camera
+// ============================================================
+let cam = { dist: 300, rotX: 45, rotY: -45, panX: 0, panY: 0, fov: 60, target: [0, 0, 0] };
+let autoRotating = false;
+
+function getCameraPos() {
+  const rx = cam.rotX * Math.PI / 180, ry = cam.rotY * Math.PI / 180;
+  return [
+    cam.target[0] + cam.dist * Math.cos(rx) * Math.sin(ry) + cam.panX,
+    cam.target[1] + cam.dist * Math.sin(rx) + cam.panY,
+    cam.target[2] + cam.dist * Math.cos(rx) * Math.cos(ry),
+  ];
+}
+function getMVP() {
+  const aspect = canvas.width / canvas.height;
+  const eye = getCameraPos();
+  const center = [cam.target[0] + cam.panX, cam.target[1] + cam.panY, cam.target[2]];
+  return mat4Mul(mat4Perspective(cam.fov, aspect, 0.1, 10000), mat4LookAt(eye, center, [0,1,0]));
+}
+function fitToMap() {
+  if (!currentMap) return;
+  const b = currentMap.bounds;
+  const cx=(b.minX+b.maxX)/2, cy=(b.minY+b.maxY)/2, cz=(b.minZ+b.maxZ)/2;
+  const size = Math.sqrt((b.maxX-b.minX)**2 + (b.maxY-b.minY)**2 + (b.maxZ-b.minZ)**2);
+  cam.target = [cx, cy, cz]; cam.dist = size * 0.8; cam.panX = 0; cam.panY = 0;
+  render();
+}
+function resetCamera() {
+  cam = { dist: 300, rotX: 45, rotY: -45, panX: 0, panY: 0, fov: 60, target: [0,0,0] };
+  fitToMap(); render();
+}
+
+// Mouse
+let dragging = false, dragBtn = 0, lastMouse = [0,0];
+canvas.addEventListener('mousedown', e => { dragging=true; dragBtn=e.button; lastMouse=[e.clientX,e.clientY]; e.preventDefault(); });
+window.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  const dx=e.clientX-lastMouse[0], dy=e.clientY-lastMouse[1]; lastMouse=[e.clientX,e.clientY];
+  if (dragBtn===0) { cam.rotY+=dx*0.5; cam.rotX+=dy*0.5; cam.rotX=Math.max(-89,Math.min(89,cam.rotX)); }
+  else if (dragBtn===2) { cam.panX-=dx*cam.dist*0.002; cam.panY+=dy*cam.dist*0.002; }
+  render();
+});
+window.addEventListener('mouseup', () => { dragging=false; });
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+canvas.addEventListener('wheel', e => { cam.dist*=e.deltaY>0?1.1:0.9; cam.dist=Math.max(1,Math.min(10000,cam.dist)); render(); e.preventDefault(); }, {passive:false});
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return;
+  switch(e.key.toLowerCase()) {
+    case 'r': resetCamera(); break;
+    case 'f': fitToMap(); break;
+    case 'w': document.getElementById('show-wireframe').checked=!document.getElementById('show-wireframe').checked; render(); break;
+    case 't': texturesEnabled=!texturesEnabled; render(); break;
+  }
+});
+function toggleAutoRotate() { autoRotating=document.getElementById('auto-rotate').checked; if(autoRotating) animLoop(); }
+function animLoop() { if(!autoRotating) return; cam.rotY+=0.5; render(); requestAnimationFrame(animLoop); }
+
+// ============================================================
+// Data
+// ============================================================
+let loadedMaps = {};
+let currentMap = null;
+let currentMapName = '';
+let tileMapping = {};    // tile_num -> { file, media_id, width, height }
+let texturePath = '../textures/media/';
+let glTextures = {};     // media_id -> WebGL texture
+let hiddenTiles = {};    // tile_num -> true (hidden)
+let texturesEnabled = true;
+
+// ============================================================
+// GPU buffers per tile group
+// ============================================================
+function buildMapGPU(mapData) {
+  const groups = {};
+  let minX=Infinity,minY=Infinity,minZ=Infinity;
+  let maxX=-Infinity,maxY=-Infinity,maxZ=-Infinity;
+  let totalTris = 0, totalVerts = 0;
+
+  for (const [tileStr, geo] of Object.entries(mapData.geometry)) {
+    const tile = parseInt(tileStr);
+    const verts = new Float32Array(geo.verts);
+    const uvs = new Float32Array(geo.uvs);
+    const indices = geo.indices;
+
+    // Bounds
+    for (let i = 0; i < verts.length; i += 3) {
+      minX=Math.min(minX,verts[i]); maxX=Math.max(maxX,verts[i]);
+      minY=Math.min(minY,verts[i+1]); maxY=Math.max(maxY,verts[i+1]);
+      minZ=Math.min(minZ,verts[i+2]); maxZ=Math.max(maxZ,verts[i+2]);
+    }
+
+    // Wire indices
+    const wireIdx = [];
+    for (let i = 0; i < indices.length; i += 3) {
+      wireIdx.push(indices[i],indices[i+1], indices[i+1],indices[i+2], indices[i+2],indices[i]);
+    }
+
+    const posBuf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
+
+    const uvBuf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, uvs, gl.STATIC_DRAW);
+
+    const idxArr = indices.length > 65535 ? new Uint32Array(indices) : new Uint16Array(indices);
+    const idxBuf = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, idxBuf);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, idxArr, gl.STATIC_DRAW);
+    const idxType = indices.length > 65535 ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT;
+
+    const wireArr = wireIdx.length > 65535 ? new Uint32Array(wireIdx) : new Uint16Array(wireIdx);
+    const wireBuf = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, wireBuf);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, wireArr, gl.STATIC_DRAW);
+    const wireType = wireIdx.length > 65535 ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT;
+
+    totalTris += indices.length / 3;
+    totalVerts += verts.length / 3;
+
+    groups[tile] = {
+      posBuf, uvBuf, idxBuf, idxType, idxCount: indices.length,
+      wireBuf, wireType, wireCount: wireIdx.length,
+      vertCount: verts.length / 3, triCount: indices.length / 3,
+    };
+  }
+
+  // Sprite markers
+  let spriteBuf = null, spriteCount = 0;
+  if (mapData.sprites && mapData.sprites.length > 0) {
+    const sv = [];
+    for (const s of mapData.sprites) {
+      const x = s.x / 128.0 * (1.0/128.0) * 128; // sprites use *8 coords
+      const y = s.y / 128.0 * (1.0/128.0) * 128;
+      // Place sprite markers at ground level (y=0)
+      sv.push(s.x / 16.0, 0.5, s.y / 16.0);
+    }
+    spriteBuf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, spriteBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(sv), gl.STATIC_DRAW);
+    spriteCount = mapData.sprites.length;
+  }
+
+  return {
+    groups, spriteBuf, spriteCount,
+    bounds: { minX, minY, minZ, maxX, maxY, maxZ },
+    totalTris, totalVerts,
+    sprites: mapData.sprites || [],
+    heightMap: mapData.height_map,
+    spawnIndex: mapData.spawn_index,
+  };
+}
+
+// ============================================================
+// Texture loading
+// ============================================================
+function loadTileTexture(tileNum) {
+  const info = tileMapping[tileNum];
+  if (!info) return null;
+  const mediaId = info.media_id;
+  if (glTextures[mediaId]) return glTextures[mediaId];
+  if (glTextures[mediaId] === false) return null; // failed
+
+  // Create placeholder
+  const tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([128,128,128,255]));
+  glTextures[mediaId] = tex;
+
+  // Load image
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+    render();
+    updateTexLoadingStatus();
+  };
+  img.onerror = () => { glTextures[mediaId] = false; updateTexLoadingStatus(); };
+  img.src = texturePath + info.file;
+
+  return tex;
+}
+
+let texLoadPending = 0;
+function updateTexLoadingStatus() {
+  const loaded = Object.values(glTextures).filter(v => v && v !== false).length;
+  const failed = Object.values(glTextures).filter(v => v === false).length;
+  const el = document.getElementById('tex-loading');
+  if (failed > 0) el.textContent = `Textures: ${loaded} loaded, ${failed} failed`;
+  else if (loaded > 0) el.textContent = `Textures: ${loaded} loaded`;
+  else el.textContent = '';
+}
+
+function reloadTextures() {
+  texturePath = document.getElementById('tex-path').value;
+  if (!texturePath.endsWith('/')) texturePath += '/';
+  // Clear existing textures
+  for (const id in glTextures) {
+    if (glTextures[id] && glTextures[id] !== false) gl.deleteTexture(glTextures[id]);
+  }
+  glTextures = {};
+  render();
+}
+
+// ============================================================
+// Grid helper
+// ============================================================
+let gridBuf = null, gridCount = 0;
+function buildGrid(size, step) {
+  const v = [];
+  for (let i = -size; i <= size; i += step) {
+    v.push(i,0,-size, i,0,size, -size,0,i, size,0,i);
+  }
+  gridBuf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, gridBuf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(v), gl.STATIC_DRAW);
+  gridCount = v.length / 3;
+}
+
+// ============================================================
+// Color from tile number (fallback when no texture)
+// ============================================================
+function tileColor(t) {
+  const r = ((t*37)%256)/255*0.6+0.2;
+  const g = ((t*73+100)%256)/255*0.6+0.2;
+  const b = ((t*113+50)%256)/255*0.6+0.2;
+  return [r, g, b];
+}
+
+// ============================================================
+// Rendering
+// ============================================================
+function resizeCanvas() {
+  const w = document.getElementById('canvas-wrap').clientWidth;
+  const h = document.getElementById('canvas-wrap').clientHeight;
+  if (canvas.width !== w || canvas.height !== h) { canvas.width=w; canvas.height=h; gl.viewport(0,0,w,h); }
+}
+
+function render() {
+  resizeCanvas();
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  const mvp = getMVP();
+  const brightness = parseFloat(document.getElementById('brightness').value) / 100;
+  const showWire = document.getElementById('show-wireframe').checked;
+  const showSprites = document.getElementById('show-sprites').checked;
+
+  // Grid
+  if (document.getElementById('show-grid').checked && gridBuf) {
+    gl.useProgram(progLine);
+    gl.uniformMatrix4fv(lLoc.uMVP, false, mvp);
+    gl.uniform4f(lLoc.uLineColor, 0.15, 0.15, 0.2, 0.4);
+    gl.enableVertexAttribArray(lLoc.aPos);
+    gl.bindBuffer(gl.ARRAY_BUFFER, gridBuf);
+    gl.vertexAttribPointer(lLoc.aPos, 3, gl.FLOAT, false, 0, 0);
+    gl.drawArrays(gl.LINES, 0, gridCount);
+    gl.disableVertexAttribArray(lLoc.aPos);
+  }
+
+  if (!currentMap) { updateHUD(); return; }
+
+  // Textured geometry
+  gl.useProgram(progTex);
+  gl.uniformMatrix4fv(tLoc.uMVP, false, mvp);
+  gl.uniform1f(tLoc.uBrightness, brightness);
+  gl.uniform1i(tLoc.uTex, 0);
+  gl.enableVertexAttribArray(tLoc.aPos);
+  gl.enableVertexAttribArray(tLoc.aUV);
+
+  for (const [tileStr, group] of Object.entries(currentMap.groups)) {
+    const tile = parseInt(tileStr);
+    if (hiddenTiles[tile]) continue;
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, group.posBuf);
+    gl.vertexAttribPointer(tLoc.aPos, 3, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, group.uvBuf);
+    gl.vertexAttribPointer(tLoc.aUV, 2, gl.FLOAT, false, 0, 0);
+
+    // Try to load and bind texture
+    let hasTex = false;
+    if (texturesEnabled && tileMapping[tile]) {
+      const tex = loadTileTexture(tile);
+      if (tex && tex !== false) {
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        hasTex = true;
+      }
+    }
+
+    gl.uniform1i(tLoc.uHasTex, hasTex ? 1 : 0);
+    if (!hasTex) {
+      const c = tileColor(tile);
+      gl.uniform3f(tLoc.uColor, c[0], c[1], c[2]);
+    }
+    gl.uniform1f(tLoc.uAlpha, 1.0);
+
+    // Draw solid
+    gl.enable(gl.POLYGON_OFFSET_FILL);
+    gl.polygonOffset(1, 1);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, group.idxBuf);
+    gl.drawElements(gl.TRIANGLES, group.idxCount, group.idxType, 0);
+    gl.disable(gl.POLYGON_OFFSET_FILL);
+
+    // Wireframe overlay
+    if (showWire) {
+      gl.uniform1i(tLoc.uHasTex, 0);
+      gl.uniform3f(tLoc.uColor, 0.0, 0.0, 0.0);
+      gl.uniform1f(tLoc.uAlpha, 0.25);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, group.wireBuf);
+      gl.drawElements(gl.LINES, group.wireCount, group.wireType, 0);
+    }
+  }
+
+  gl.disableVertexAttribArray(tLoc.aPos);
+  gl.disableVertexAttribArray(tLoc.aUV);
+
+  // Sprite markers
+  if (showSprites && currentMap.spriteBuf) {
+    gl.useProgram(progLine);
+    gl.uniformMatrix4fv(lLoc.uMVP, false, mvp);
+    gl.uniform4f(lLoc.uLineColor, 0.0, 1.0, 0.3, 0.8);
+    gl.enableVertexAttribArray(lLoc.aPos);
+    gl.bindBuffer(gl.ARRAY_BUFFER, currentMap.spriteBuf);
+    gl.vertexAttribPointer(lLoc.aPos, 3, gl.FLOAT, false, 0, 0);
+    gl.drawArrays(gl.POINTS, 0, currentMap.spriteCount);
+    gl.disableVertexAttribArray(lLoc.aPos);
+  }
+
+  updateHUD();
+  renderMinimap();
+}
+
+function updateHUD() {
+  const hud = document.getElementById('hud');
+  if (!currentMap) { hud.textContent = ''; return; }
+  const b = currentMap.bounds;
+  hud.innerHTML = `${currentMapName} | ${currentMap.totalTris} tris, ${currentMap.totalVerts} verts<br>`
+    + `Tiles: ${Object.keys(currentMap.groups).length} | Sprites: ${currentMap.spriteCount}<br>`
+    + `Bounds: [${b.minX.toFixed(0)}..${b.maxX.toFixed(0)}, ${b.minY.toFixed(0)}..${b.maxY.toFixed(0)}, ${b.minZ.toFixed(0)}..${b.maxZ.toFixed(0)}]`;
+}
+
+// ============================================================
+// Minimap
+// ============================================================
+function renderMinimap() {
+  if (!currentMap || !currentMap.heightMap) return;
+  const mc = document.getElementById('minimap');
+  const ctx = mc.getContext('2d');
+  ctx.clearRect(0, 0, 160, 160);
+  const hm = currentMap.heightMap;
+  const s = 5; // 32 * 5 = 160
+  for (let y = 0; y < 32; y++) {
+    for (let x = 0; x < 32; x++) {
+      const h = hm[y * 32 + x];
+      if (h > 0) {
+        const v = Math.min(255, h * 3 + 30);
+        ctx.fillStyle = `rgb(${v>>1},${v>>1},${v})`;
+        ctx.fillRect(x * s, y * s, s, s);
+      }
+    }
+  }
+  // Spawn point
+  if (currentMap.spawnIndex >= 0) {
+    const sx = (currentMap.spawnIndex % 32) * s + s/2;
+    const sy = Math.floor(currentMap.spawnIndex / 32) * s + s/2;
+    ctx.fillStyle = '#e94560';
+    ctx.beginPath();
+    ctx.arc(sx, sy, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+// ============================================================
+// Tile list UI
+// ============================================================
+function renderTileList() {
+  const list = document.getElementById('tile-list');
+  list.innerHTML = '';
+  if (!currentMap) return;
+
+  const tiles = Object.keys(currentMap.groups).map(Number).sort((a,b) => a-b);
+  document.getElementById('tile-count').textContent = `(${tiles.length})`;
+
+  for (const tile of tiles) {
+    const group = currentMap.groups[tile];
+    const info = tileMapping[tile];
+    const div = document.createElement('div');
+    div.className = 'tile-entry' + (hiddenTiles[tile] ? ' hidden-tile' : '');
+
+    let thumbHtml = '';
+    if (info) {
+      thumbHtml = `<img class="tile-thumb" src="${texturePath}${info.file}" onerror="this.style.display='none'">`;
+    } else {
+      const c = tileColor(tile);
+      const hex = '#' + [c[0],c[1],c[2]].map(v => Math.round(v*255).toString(16).padStart(2,'0')).join('');
+      thumbHtml = `<div class="tile-thumb" style="background:${hex}"></div>`;
+    }
+
+    div.innerHTML = `${thumbHtml}<span class="tile-name">tile ${tile}${info ? ' ' + info.file.replace(/^\d+_?/, '').replace('.png','') : ''}</span>`
+      + `<span class="tile-tris">${group.triCount}t</span>`;
+    div.onclick = () => { hiddenTiles[tile] = !hiddenTiles[tile]; div.classList.toggle('hidden-tile'); render(); };
+    list.appendChild(div);
+  }
+}
+
+function showAllTiles() { hiddenTiles = {}; renderTileList(); render(); }
+function hideAllTiles() {
+  if (!currentMap) return;
+  for (const t of Object.keys(currentMap.groups)) hiddenTiles[parseInt(t)] = true;
+  renderTileList(); render();
+}
+
+// ============================================================
+// Map loading
+// ============================================================
+function loadMapData(name, data) {
+  const gpuMap = buildMapGPU(data);
+  loadedMaps[name] = gpuMap;
+  selectMap(name);
+  renderMapList();
+}
+
+function selectMap(name) {
+  currentMap = loadedMaps[name];
+  currentMapName = name;
+  hiddenTiles = {};
+  fitToMap();
+  renderMapList();
+  renderTileList();
+  render();
+  document.getElementById('status-left').textContent = `${name} | ${currentMap.totalTris} tris, ${currentMap.totalVerts} verts`;
+}
+
+function renderMapList() {
+  const list = document.getElementById('map-list');
+  list.innerHTML = '';
+  for (const name of Object.keys(loadedMaps).sort()) {
+    const m = loadedMaps[name];
+    const div = document.createElement('div');
+    div.className = 'map-entry' + (name === currentMapName ? ' selected' : '');
+    div.innerHTML = `<span class="mname">${name}</span><span class="minfo">${m.totalTris}t ${Object.keys(m.groups).length}g</span>`;
+    div.onclick = () => selectMap(name);
+    list.appendChild(div);
+  }
+}
+
+// ============================================================
+// File I/O
+// ============================================================
+function handleMapJsonFiles(event) {
+  for (const file of event.target.files) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const data = JSON.parse(e.target.result);
+        loadMapData(file.name.replace('.json',''), data);
+      } catch(err) { console.error(err); alert('Error: ' + err.message); }
+    };
+    reader.readAsText(file);
+  }
+  event.target.value = '';
+}
+
+function handleTileMapping(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      tileMapping = {};
+      for (const [k, v] of Object.entries(data.tiles || {})) tileMapping[parseInt(k)] = v;
+      document.getElementById('status-right').textContent = `Tile mapping: ${Object.keys(tileMapping).length} tiles`;
+      // Clear cached textures
+      glTextures = {};
+      renderTileList();
+      render();
+    } catch(err) { alert('Error: ' + err.message); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+async function tryAutoLoad() {
+  const base = '../mapdata/';
+  texturePath = document.getElementById('tex-path').value;
+
+  // Load tile mapping first
+  try {
+    const resp = await fetch(base + 'tile_mapping.json');
+    if (resp.ok) {
+      const data = await resp.json();
+      tileMapping = {};
+      for (const [k, v] of Object.entries(data.tiles || {})) tileMapping[parseInt(k)] = v;
+      document.getElementById('status-right').textContent = `Tile mapping: ${Object.keys(tileMapping).length} tiles`;
+    }
+  } catch(e) {}
+
+  // Load all map files
+  const names = [];
+  for (let i = 0; i < 10; i++) names.push(`map0${i}`);
+  for (let i = 0; i < 10; i++) names.push(`model_000${i}`);
+
+  let loaded = 0;
+  for (const name of names) {
+    try {
+      const resp = await fetch(base + name + '.json');
+      if (resp.ok) {
+        const data = await resp.json();
+        loadMapData(name, data);
+        loaded++;
+      }
+    } catch(e) {}
+  }
+
+  if (loaded > 0) {
+    document.getElementById('status-left').textContent = `Auto-loaded ${loaded} maps`;
+  } else {
+    document.getElementById('status-left').textContent = 'No maps found. Run extract_maps.py first.';
+  }
+}
+
+// ============================================================
+// Init
+// ============================================================
+buildGrid(500, 50);
+resizeCanvas();
+render();
+window.addEventListener('resize', render);
+</script>
+</body>
+</html>

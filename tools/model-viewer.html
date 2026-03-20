@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DoomII RPG - Model Viewer</title>
+<style>
+:root {
+  --bg: #1a1a2e;
+  --bg2: #16213e;
+  --bg3: #0f3460;
+  --accent: #e94560;
+  --text: #eee;
+  --text-dim: #888;
+  --border: #333;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Courier New', monospace;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+#sidebar {
+  width: 260px;
+  min-width: 260px;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+#sidebar-header {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+}
+#sidebar-header h2 { font-size: 14px; color: var(--accent); margin-bottom: 8px; }
+
+.load-section {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.load-section label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; display: block; margin-bottom: 4px; }
+
+button {
+  padding: 5px 12px;
+  background: var(--bg3);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  width: 100%;
+}
+button:hover { background: var(--accent); }
+button.primary { background: var(--accent); border-color: var(--accent); }
+
+#file-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+.file-entry {
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  border-left: 3px solid transparent;
+}
+.file-entry:hover { background: rgba(233,69,96,0.1); }
+.file-entry.selected { background: rgba(233,69,96,0.2); border-left-color: var(--accent); }
+.file-entry .fname { color: var(--text); }
+.file-entry .finfo { font-size: 10px; color: var(--text-dim); }
+
+#controls {
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+}
+#controls label { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; color: var(--text-dim); }
+#controls input[type="checkbox"] { margin: 0; }
+#controls input[type="range"] { flex: 1; }
+#controls select {
+  width: 100%;
+  padding: 3px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+#main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+#canvas-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+#gl-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+#hud {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-size: 11px;
+  color: var(--text-dim);
+  pointer-events: none;
+  line-height: 1.6;
+}
+
+#statusbar {
+  padding: 4px 16px;
+  background: var(--bg3);
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-dim);
+  display: flex;
+  justify-content: space-between;
+}
+
+#drop-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(233,69,96,0.2);
+  border: 4px dashed var(--accent);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: var(--accent);
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+input[type="file"] { display: none; }
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <div id="sidebar-header">
+    <h2>DOOM II RPG - MODELS</h2>
+  </div>
+
+  <div class="load-section">
+    <label>Load Files</label>
+    <button class="primary" onclick="document.getElementById('file-bin').click()">Load .bin (raw)</button>
+    <input type="file" id="file-bin" accept=".bin" multiple onchange="handleBinFiles(event)">
+    <div style="height:4px"></div>
+    <button onclick="document.getElementById('file-obj').click()">Load .obj</button>
+    <input type="file" id="file-obj" accept=".obj" multiple onchange="handleObjFiles(event)">
+    <div style="height:4px"></div>
+    <button onclick="document.getElementById('file-json').click()">Load .json</button>
+    <input type="file" id="file-json" accept=".json" multiple onchange="handleJsonFiles(event)">
+    <div style="height:4px"></div>
+    <button onclick="tryAutoLoad()" style="font-size:10px; background:var(--bg)">Auto-load from ../models/</button>
+  </div>
+
+  <div id="file-list"></div>
+
+  <div id="controls">
+    <label>Render Mode
+      <select id="render-mode" onchange="setRenderMode(this.value)">
+        <option value="solid">Solid</option>
+        <option value="wireframe">Wireframe</option>
+        <option value="solid+wire" selected>Solid + Wire</option>
+        <option value="points">Points</option>
+      </select>
+    </label>
+    <label><input type="checkbox" id="show-axes" checked onchange="render()"> Show Axes</label>
+    <label><input type="checkbox" id="show-grid" checked onchange="render()"> Show Grid</label>
+    <label><input type="checkbox" id="auto-rotate" onchange="toggleAutoRotate()"> Auto Rotate</label>
+    <label>FOV <input type="range" id="fov-slider" min="30" max="120" value="60" oninput="setFov(this.value)"> <span id="fov-val">60</span></label>
+    <label>Point Size <input type="range" id="point-size" min="1" max="10" value="3" oninput="render()"></label>
+    <div style="margin-top:6px; color:var(--text-dim); font-size:10px;">
+      LMB: Orbit | RMB: Pan | Scroll: Zoom<br>
+      R: Reset | F: Fit | G: Grid | W: Wireframe
+    </div>
+  </div>
+</div>
+
+<div id="main">
+  <div id="canvas-wrap">
+    <canvas id="gl-canvas"></canvas>
+    <div id="hud"></div>
+  </div>
+  <div id="statusbar">
+    <span id="status-left">Drop .bin, .obj, or .json files to view</span>
+    <span id="status-right"></span>
+  </div>
+</div>
+
+<div id="drop-overlay">Drop files here</div>
+
+<script>
+// ============================================================
+// WebGL setup
+// ============================================================
+const canvas = document.getElementById('gl-canvas');
+const gl = canvas.getContext('webgl', { antialias: true, alpha: false });
+
+if (!gl) {
+  document.getElementById('status-left').textContent = 'WebGL not supported!';
+}
+
+// Shaders
+const VS = `
+  attribute vec3 aPos;
+  attribute vec3 aColor;
+  uniform mat4 uMVP;
+  uniform float uPointSize;
+  varying vec3 vColor;
+  void main() {
+    vColor = aColor;
+    gl_Position = uMVP * vec4(aPos, 1.0);
+    gl_PointSize = uPointSize;
+  }
+`;
+const FS = `
+  precision mediump float;
+  varying vec3 vColor;
+  uniform float uAlpha;
+  void main() {
+    gl_FragColor = vec4(vColor, uAlpha);
+  }
+`;
+
+function createShader(src, type) {
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src);
+  gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+    console.error(gl.getShaderInfoLog(s));
+    return null;
+  }
+  return s;
+}
+
+const prog = gl.createProgram();
+gl.attachShader(prog, createShader(VS, gl.VERTEX_SHADER));
+gl.attachShader(prog, createShader(FS, gl.FRAGMENT_SHADER));
+gl.linkProgram(prog);
+gl.useProgram(prog);
+
+const aPos = gl.getAttribLocation(prog, 'aPos');
+const aColor = gl.getAttribLocation(prog, 'aColor');
+const uMVP = gl.getUniformLocation(prog, 'uMVP');
+const uAlpha = gl.getUniformLocation(prog, 'uAlpha');
+const uPointSize = gl.getUniformLocation(prog, 'uPointSize');
+
+gl.enableVertexAttribArray(aPos);
+gl.enableVertexAttribArray(aColor);
+gl.enable(gl.DEPTH_TEST);
+gl.enable(gl.BLEND);
+gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+gl.clearColor(0.1, 0.1, 0.12, 1.0);
+
+// ============================================================
+// Math utilities
+// ============================================================
+function mat4Identity() { const m = new Float32Array(16); m[0]=m[5]=m[10]=m[15]=1; return m; }
+
+function mat4Perspective(fov, aspect, near, far) {
+  const f = 1.0 / Math.tan(fov * Math.PI / 360);
+  const nf = 1 / (near - far);
+  const m = new Float32Array(16);
+  m[0] = f / aspect; m[5] = f; m[10] = (far + near) * nf; m[11] = -1;
+  m[14] = 2 * far * near * nf;
+  return m;
+}
+
+function mat4LookAt(eye, center, up) {
+  const m = new Float32Array(16);
+  let zx = eye[0]-center[0], zy = eye[1]-center[1], zz = eye[2]-center[2];
+  let len = 1/Math.sqrt(zx*zx+zy*zy+zz*zz); zx*=len; zy*=len; zz*=len;
+  let xx = up[1]*zz-up[2]*zy, xy = up[2]*zx-up[0]*zz, xz = up[0]*zy-up[1]*zx;
+  len = 1/Math.sqrt(xx*xx+xy*xy+xz*xz); xx*=len; xy*=len; xz*=len;
+  let yx = zy*xz-zz*xy, yy = zz*xx-zx*xz, yz = zx*xy-zy*xx;
+  m[0]=xx; m[1]=yx; m[2]=zx;
+  m[4]=xy; m[5]=yy; m[6]=zy;
+  m[8]=xz; m[9]=yz; m[10]=zz;
+  m[12]=-(xx*eye[0]+xy*eye[1]+xz*eye[2]);
+  m[13]=-(yx*eye[0]+yy*eye[1]+yz*eye[2]);
+  m[14]=-(zx*eye[0]+zy*eye[1]+zz*eye[2]);
+  m[15]=1;
+  return m;
+}
+
+function mat4Mul(a, b) {
+  const r = new Float32Array(16);
+  for (let i = 0; i < 4; i++)
+    for (let j = 0; j < 4; j++)
+      r[i*4+j] = a[0*4+j]*b[i*4+0] + a[1*4+j]*b[i*4+1] + a[2*4+j]*b[i*4+2] + a[3*4+j]*b[i*4+3];
+  return r;
+}
+
+// ============================================================
+// Camera
+// ============================================================
+let cam = { dist: 200, rotX: 30, rotY: -45, panX: 0, panY: 0, fov: 60, target: [0, 0, 0] };
+let autoRotating = false;
+
+function getCameraPos() {
+  const rx = cam.rotX * Math.PI / 180;
+  const ry = cam.rotY * Math.PI / 180;
+  return [
+    cam.target[0] + cam.dist * Math.cos(rx) * Math.sin(ry) + cam.panX,
+    cam.target[1] + cam.dist * Math.sin(rx) + cam.panY,
+    cam.target[2] + cam.dist * Math.cos(rx) * Math.cos(ry),
+  ];
+}
+
+function getMVP() {
+  const aspect = canvas.width / canvas.height;
+  const proj = mat4Perspective(cam.fov, aspect, 0.1, 10000);
+  const eye = getCameraPos();
+  const center = [cam.target[0] + cam.panX, cam.target[1] + cam.panY, cam.target[2]];
+  const view = mat4LookAt(eye, center, [0, 1, 0]);
+  return mat4Mul(proj, view);
+}
+
+function setFov(v) {
+  cam.fov = parseInt(v);
+  document.getElementById('fov-val').textContent = v;
+  render();
+}
+
+function resetCamera() {
+  cam = { dist: 200, rotX: 30, rotY: -45, panX: 0, panY: 0, fov: cam.fov, target: [0, 0, 0] };
+  fitToModel();
+  render();
+}
+
+function fitToModel() {
+  if (!currentModel) return;
+  const b = currentModel.bounds;
+  const cx = (b.minX + b.maxX) / 2;
+  const cy = (b.minY + b.maxY) / 2;
+  const cz = (b.minZ + b.maxZ) / 2;
+  const dx = b.maxX - b.minX;
+  const dy = b.maxY - b.minY;
+  const dz = b.maxZ - b.minZ;
+  const size = Math.sqrt(dx*dx + dy*dy + dz*dz);
+  cam.target = [cx, cy, cz];
+  cam.dist = size * 1.2;
+  cam.panX = 0;
+  cam.panY = 0;
+  render();
+}
+
+// ============================================================
+// Mouse controls
+// ============================================================
+let dragging = false, dragBtn = 0, lastMouse = [0, 0];
+
+canvas.addEventListener('mousedown', (e) => {
+  dragging = true;
+  dragBtn = e.button;
+  lastMouse = [e.clientX, e.clientY];
+  e.preventDefault();
+});
+
+window.addEventListener('mousemove', (e) => {
+  if (!dragging) return;
+  const dx = e.clientX - lastMouse[0];
+  const dy = e.clientY - lastMouse[1];
+  lastMouse = [e.clientX, e.clientY];
+
+  if (dragBtn === 0) { // Left: orbit
+    cam.rotY += dx * 0.5;
+    cam.rotX += dy * 0.5;
+    cam.rotX = Math.max(-89, Math.min(89, cam.rotX));
+  } else if (dragBtn === 2) { // Right: pan
+    cam.panX -= dx * cam.dist * 0.002;
+    cam.panY += dy * cam.dist * 0.002;
+  }
+  render();
+});
+
+window.addEventListener('mouseup', () => { dragging = false; });
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+canvas.addEventListener('wheel', (e) => {
+  cam.dist *= e.deltaY > 0 ? 1.1 : 0.9;
+  cam.dist = Math.max(1, Math.min(10000, cam.dist));
+  render();
+  e.preventDefault();
+}, { passive: false });
+
+// Keyboard
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  switch(e.key.toLowerCase()) {
+    case 'r': resetCamera(); break;
+    case 'f': fitToModel(); break;
+    case 'g':
+      document.getElementById('show-grid').checked = !document.getElementById('show-grid').checked;
+      render(); break;
+    case 'w':
+      const sel = document.getElementById('render-mode');
+      sel.value = sel.value === 'wireframe' ? 'solid+wire' : 'wireframe';
+      render(); break;
+  }
+});
+
+function toggleAutoRotate() {
+  autoRotating = document.getElementById('auto-rotate').checked;
+  if (autoRotating) animateRotate();
+}
+
+function animateRotate() {
+  if (!autoRotating) return;
+  cam.rotY += 0.5;
+  render();
+  requestAnimationFrame(animateRotate);
+}
+
+// ============================================================
+// GPU buffer creation
+// ============================================================
+function createBuffer(data) {
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, data instanceof Float32Array ? data : new Float32Array(data), gl.STATIC_DRAW);
+  return buf;
+}
+
+function createIndexBuffer(data) {
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buf);
+  const arr = data.length > 65535 ? new Uint32Array(data) : new Uint16Array(data);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, arr, gl.STATIC_DRAW);
+  return { buf, type: data.length > 65535 ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT, count: data.length };
+}
+
+// ============================================================
+// Model data
+// ============================================================
+let loadedModels = {};
+let currentModel = null;
+let currentModelName = '';
+
+function buildGPUModel(verts, indices, colors) {
+  // Compute bounds
+  let minX=Infinity, minY=Infinity, minZ=Infinity;
+  let maxX=-Infinity, maxY=-Infinity, maxZ=-Infinity;
+  for (let i = 0; i < verts.length; i += 3) {
+    minX = Math.min(minX, verts[i]);   maxX = Math.max(maxX, verts[i]);
+    minY = Math.min(minY, verts[i+1]); maxY = Math.max(maxY, verts[i+1]);
+    minZ = Math.min(minZ, verts[i+2]); maxZ = Math.max(maxZ, verts[i+2]);
+  }
+
+  // Build wireframe indices from triangles
+  const wireIndices = [];
+  for (let i = 0; i < indices.length; i += 3) {
+    wireIndices.push(indices[i], indices[i+1]);
+    wireIndices.push(indices[i+1], indices[i+2]);
+    wireIndices.push(indices[i+2], indices[i]);
+  }
+
+  return {
+    posBuf: createBuffer(verts),
+    colorBuf: createBuffer(colors),
+    triBuf: createIndexBuffer(indices),
+    wireBuf: createIndexBuffer(wireIndices),
+    vertCount: verts.length / 3,
+    triCount: indices.length / 3,
+    bounds: { minX, minY, minZ, maxX, maxY, maxZ },
+  };
+}
+
+// ============================================================
+// Grid and axes helpers
+// ============================================================
+let gridBuf = null, gridCount = 0;
+let axesBuf = null;
+
+function buildGrid(size, step) {
+  const verts = [];
+  const colors = [];
+  for (let i = -size; i <= size; i += step) {
+    verts.push(i, 0, -size, i, 0, size);
+    verts.push(-size, 0, i, size, 0, i);
+    const c = i === 0 ? [0.3, 0.3, 0.3] : [0.15, 0.15, 0.18];
+    colors.push(...c, ...c, ...c, ...c);
+  }
+  gridBuf = { pos: createBuffer(verts), col: createBuffer(colors) };
+  gridCount = verts.length / 3;
+}
+
+function buildAxes(len) {
+  const verts = [0,0,0, len,0,0, 0,0,0, 0,len,0, 0,0,0, 0,0,len];
+  const colors = [1,0,0, 1,0,0, 0,1,0, 0,1,0, 0,0,1, 0,0,1];
+  axesBuf = { pos: createBuffer(verts), col: createBuffer(colors) };
+}
+
+// ============================================================
+// Rendering
+// ============================================================
+function resizeCanvas() {
+  const wrap = document.getElementById('canvas-wrap');
+  const w = wrap.clientWidth;
+  const h = wrap.clientHeight;
+  if (canvas.width !== w || canvas.height !== h) {
+    canvas.width = w;
+    canvas.height = h;
+    gl.viewport(0, 0, w, h);
+  }
+}
+
+function drawArrays(posBuf, colorBuf, mode, count, alpha) {
+  gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
+  gl.vertexAttribPointer(aPos, 3, gl.FLOAT, false, 0, 0);
+  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuf);
+  gl.vertexAttribPointer(aColor, 3, gl.FLOAT, false, 0, 0);
+  gl.uniform1f(uAlpha, alpha);
+  gl.drawArrays(mode, 0, count);
+}
+
+function drawElements(model, idxBuf, mode, alpha) {
+  gl.bindBuffer(gl.ARRAY_BUFFER, model.posBuf);
+  gl.vertexAttribPointer(aPos, 3, gl.FLOAT, false, 0, 0);
+  gl.bindBuffer(gl.ARRAY_BUFFER, model.colorBuf);
+  gl.vertexAttribPointer(aColor, 3, gl.FLOAT, false, 0, 0);
+  gl.uniform1f(uAlpha, alpha);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, idxBuf.buf);
+
+  // Use OES_element_index_uint for large models
+  if (idxBuf.type === gl.UNSIGNED_INT) {
+    const ext = gl.getExtension('OES_element_index_uint');
+    if (!ext) { console.warn('OES_element_index_uint not available'); return; }
+  }
+  gl.drawElements(mode, idxBuf.count, idxBuf.type, 0);
+}
+
+function render() {
+  resizeCanvas();
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+  const mvp = getMVP();
+  gl.uniformMatrix4fv(uMVP, false, mvp);
+  gl.uniform1f(uPointSize, parseFloat(document.getElementById('point-size').value));
+
+  const mode = document.getElementById('render-mode').value;
+
+  // Grid
+  if (document.getElementById('show-grid').checked && gridBuf) {
+    drawArrays(gridBuf.pos, gridBuf.col, gl.LINES, gridCount, 0.5);
+  }
+
+  // Axes
+  if (document.getElementById('show-axes').checked && axesBuf) {
+    gl.lineWidth(2);
+    drawArrays(axesBuf.pos, axesBuf.col, gl.LINES, 6, 1.0);
+    gl.lineWidth(1);
+  }
+
+  // Model
+  if (currentModel) {
+    if (mode === 'solid' || mode === 'solid+wire') {
+      gl.enable(gl.POLYGON_OFFSET_FILL);
+      gl.polygonOffset(1, 1);
+      drawElements(currentModel, currentModel.triBuf, gl.TRIANGLES, 1.0);
+      gl.disable(gl.POLYGON_OFFSET_FILL);
+    }
+    if (mode === 'wireframe' || mode === 'solid+wire') {
+      // Override colors for wireframe overlay
+      const wireAlpha = mode === 'solid+wire' ? 0.4 : 1.0;
+      drawElements(currentModel, currentModel.wireBuf, gl.LINES, wireAlpha);
+    }
+    if (mode === 'points') {
+      gl.bindBuffer(gl.ARRAY_BUFFER, currentModel.posBuf);
+      gl.vertexAttribPointer(aPos, 3, gl.FLOAT, false, 0, 0);
+      gl.bindBuffer(gl.ARRAY_BUFFER, currentModel.colorBuf);
+      gl.vertexAttribPointer(aColor, 3, gl.FLOAT, false, 0, 0);
+      gl.uniform1f(uAlpha, 1.0);
+      gl.drawArrays(gl.POINTS, 0, currentModel.vertCount);
+    }
+  }
+
+  // HUD
+  updateHUD();
+}
+
+function updateHUD() {
+  const hud = document.getElementById('hud');
+  if (!currentModel) { hud.textContent = ''; return; }
+  const b = currentModel.bounds;
+  hud.innerHTML = `
+    ${currentModelName}<br>
+    Verts: ${currentModel.vertCount} | Tris: ${currentModel.triCount}<br>
+    Bounds: [${b.minX.toFixed(1)}, ${b.minY.toFixed(1)}, ${b.minZ.toFixed(1)}]<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[${b.maxX.toFixed(1)}, ${b.maxY.toFixed(1)}, ${b.maxZ.toFixed(1)}]
+  `;
+}
+
+function setRenderMode(v) { render(); }
+
+// ============================================================
+// BIN parser (same as extract_models.py, in JS)
+// ============================================================
+const DEADBEEF = 0xDEADBEEF;
+const CAFEBABE = 0xCAFEBABE;
+const POLY_FLAG_VERTS_MASK = 7;
+const POLY_FLAG_AXIS_X = 0;
+const POLY_FLAG_AXIS_Y = 8;
+const POLY_FLAG_AXIS_Z = 16;
+const POLY_FLAG_AXIS_MASK = 24;
+const POLY_FLAG_SWAPXY = 64;
+const POLY_FLAG_UV_DELTAX = 128;
+
+function parseBinFile(buffer) {
+  const d = new DataView(buffer);
+  let pos = 0;
+  const u8 = () => { const v = d.getUint8(pos); pos++; return v; };
+  const i8 = () => { const v = d.getInt8(pos); pos++; return v; };
+  const u16 = () => { const v = d.getUint16(pos, true); pos+=2; return v; };
+  const i16 = () => { const v = d.getInt16(pos, true); pos+=2; return v; };
+  const u32 = () => { const v = d.getUint32(pos, true); pos+=4; return v; };
+
+  // Header
+  const version = u8();
+  if (version !== 3) throw new Error(`Bad version: ${version}`);
+  u32(); // compileDate
+  u16(); u8(); i8(); i8(); u8(); // spawn, flags, secrets, loot
+  const numNodes = u16();
+  const dataSizePolys = u16();
+  const numLines = u16();
+  const numNormals = u16();
+  const numNormalSprites = u16();
+  const numZSprites = i16();
+  i16(); i16(); u8(); i16(); // events, bytecode, cameras, cameraKeys
+  for (let i = 0; i < 6; i++) i16(); // mayaTweenOffsets
+
+  // Media section
+  if (u32() !== DEADBEEF) throw new Error('Missing DEADBEEF marker (media start)');
+  const mediaCount = u16();
+  const mediaIndices = [];
+  for (let i = 0; i < mediaCount; i++) mediaIndices.push(u16());
+  if (u32() !== DEADBEEF) throw new Error('Missing DEADBEEF marker (media end)');
+
+  // Normals
+  for (let i = 0; i < numNormals * 3; i++) i16();
+  if (u32() !== CAFEBABE) throw new Error('Missing CAFEBABE (normals)');
+
+  // Node offsets
+  const nodeOffsets = [];
+  for (let i = 0; i < numNodes; i++) nodeOffsets.push(i16());
+  if (u32() !== CAFEBABE) throw new Error('Missing CAFEBABE (nodeOffsets)');
+
+  // Node normal indices
+  for (let i = 0; i < numNodes; i++) u8();
+  if (u32() !== CAFEBABE) throw new Error('Missing CAFEBABE (nodeNormalIdxs)');
+
+  // Node child offsets
+  const nodeChildOffset1 = [];
+  for (let i = 0; i < numNodes; i++) nodeChildOffset1.push(i16());
+  for (let i = 0; i < numNodes; i++) i16(); // childOffset2
+  if (u32() !== CAFEBABE) throw new Error('Missing CAFEBABE (childOffsets)');
+
+  // Node bounds
+  pos += numNodes * 4;
+  if (u32() !== CAFEBABE) throw new Error('Missing CAFEBABE (bounds)');
+
+  // Node polygons
+  const polyStart = pos;
+  const nodePolys = new Uint8Array(buffer, polyStart, dataSizePolys);
+  pos += dataSizePolys;
+
+  // Extract geometry
+  return extractGeometry(nodePolys, nodeOffsets, nodeChildOffset1);
+}
+
+function extractGeometry(nodePolys, nodeOffsets, nodeChildOffset1) {
+  const verts = [];
+  const indices = [];
+  const colors = [];
+  const scale = 1.0 / 128.0;
+
+  // Color generation per media ref
+  function mediaColor(ref) {
+    const r = ((ref * 37) % 256) / 255;
+    const g = ((ref * 73 + 100) % 256) / 255;
+    const b = ((ref * 113 + 50) % 256) / 255;
+    return [r * 0.7 + 0.15, g * 0.7 + 0.15, b * 0.7 + 0.15];
+  }
+
+  for (let n = 0; n < nodeOffsets.length; n++) {
+    if ((nodeOffsets[n] & 0xFFFF) !== 0xFFFF) continue;
+    let offset = nodeChildOffset1[n] & 0xFFFF;
+    if (offset >= nodePolys.length) continue;
+
+    const meshCount = nodePolys[offset++];
+
+    for (let m = 0; m < meshCount; m++) {
+      if (offset + 6 > nodePolys.length) break;
+      const packed = nodePolys[offset + 4] | (nodePolys[offset + 5] << 8);
+      offset += 6;
+      const mediaRef = packed >> 7;
+      const polyCount = packed & 127;
+      const col = mediaColor(mediaRef);
+
+      for (let p = 0; p < polyCount; p++) {
+        if (offset >= nodePolys.length) break;
+        const polyFlags = nodePolys[offset++];
+        const numV = (polyFlags & POLY_FLAG_VERTS_MASK) + 2;
+        const swapXY = !!(polyFlags & POLY_FLAG_SWAPXY);
+
+        let pverts = [];
+        for (let k = 0; k < numV; k++) {
+          if (offset + 5 > nodePolys.length) break;
+          const x = (nodePolys[offset] & 0xFF) << 7;
+          const y = (nodePolys[offset+1] & 0xFF) << 7;
+          const z = (nodePolys[offset+2] & 0xFF) << 7;
+          offset += 5;
+          pverts.push({x, y, z});
+        }
+
+        // Expand 2-vert to quad
+        if (pverts.length === 2) {
+          const v0 = {...pverts[0]}, v1 = {...pverts[1]};
+          const v2 = {...v0}, v3 = {...v0};
+          const axis = polyFlags & POLY_FLAG_AXIS_MASK;
+          if (axis === POLY_FLAG_AXIS_X) { v2.x = v1.x; v3.x = v0.x; }
+          else if (axis === POLY_FLAG_AXIS_Y) { v2.y = v1.y; v3.y = v0.y; }
+          else if (axis === POLY_FLAG_AXIS_Z) { v2.z = v1.z; v3.z = v0.z; }
+          pverts = [v0, v1, v2, v3];
+        }
+
+        // Add to arrays
+        const base = verts.length / 3;
+        for (const v of pverts) {
+          if (swapXY) { verts.push(v.y * scale, v.z * scale, v.x * scale); }
+          else { verts.push(v.x * scale, v.z * scale, v.y * scale); }
+          colors.push(col[0], col[1], col[2]);
+        }
+        // Fan triangulation
+        for (let i = 1; i < pverts.length - 1; i++) {
+          indices.push(base, base + i, base + i + 1);
+        }
+      }
+    }
+  }
+
+  return { verts: new Float32Array(verts), indices, colors: new Float32Array(colors) };
+}
+
+// ============================================================
+// OBJ parser
+// ============================================================
+function parseObjFile(text) {
+  const positions = [];
+  const verts = [];
+  const colors = [];
+  const indices = [];
+  let currentColor = [0.7, 0.7, 0.7];
+
+  for (const line of text.split('\n')) {
+    const parts = line.trim().split(/\s+/);
+    if (parts[0] === 'v') {
+      positions.push([parseFloat(parts[1]), parseFloat(parts[2]), parseFloat(parts[3])]);
+    } else if (parts[0] === 'g' || parts[0] === 'usemtl') {
+      // Generate color from group/material name
+      let hash = 0;
+      const name = parts[1] || '';
+      for (let i = 0; i < name.length; i++) hash = ((hash << 5) - hash + name.charCodeAt(i)) | 0;
+      currentColor = [
+        ((hash & 0xFF) / 255) * 0.6 + 0.2,
+        (((hash >> 8) & 0xFF) / 255) * 0.6 + 0.2,
+        (((hash >> 16) & 0xFF) / 255) * 0.6 + 0.2,
+      ];
+    } else if (parts[0] === 'f') {
+      const faceVerts = [];
+      for (let i = 1; i < parts.length; i++) {
+        const vi = parseInt(parts[i].split('/')[0]) - 1;
+        if (vi >= 0 && vi < positions.length) {
+          const base = verts.length / 3;
+          verts.push(...positions[vi]);
+          colors.push(...currentColor);
+          faceVerts.push(base);
+        }
+      }
+      for (let i = 1; i < faceVerts.length - 1; i++) {
+        indices.push(faceVerts[0], faceVerts[i], faceVerts[i + 1]);
+      }
+    }
+  }
+
+  return { verts: new Float32Array(verts), indices, colors: new Float32Array(colors) };
+}
+
+// ============================================================
+// JSON parser (from extract_models.py output)
+// ============================================================
+function parseJsonModel(data) {
+  const verts = [];
+  const indices = [];
+  const colors = [];
+
+  function mediaColor(ref) {
+    const r = ((ref * 37) % 256) / 255;
+    const g = ((ref * 73 + 100) % 256) / 255;
+    const b = ((ref * 113 + 50) % 256) / 255;
+    return [r * 0.7 + 0.15, g * 0.7 + 0.15, b * 0.7 + 0.15];
+  }
+
+  for (const [ref, mesh] of Object.entries(data.meshes)) {
+    const col = mediaColor(parseInt(ref));
+    const baseVert = verts.length / 3;
+
+    for (let i = 0; i < mesh.vertices.length; i += 3) {
+      verts.push(mesh.vertices[i], mesh.vertices[i+1], mesh.vertices[i+2]);
+      colors.push(col[0], col[1], col[2]);
+    }
+
+    for (const idx of mesh.indices) {
+      indices.push(baseVert + idx);
+    }
+  }
+
+  return { verts: new Float32Array(verts), indices, colors: new Float32Array(colors) };
+}
+
+// ============================================================
+// File loading
+// ============================================================
+function loadModel(name, geom) {
+  const model = buildGPUModel(geom.verts, geom.indices, geom.colors);
+  loadedModels[name] = model;
+  selectModel(name);
+  renderFileList();
+}
+
+function selectModel(name) {
+  currentModel = loadedModels[name];
+  currentModelName = name;
+  fitToModel();
+  renderFileList();
+  document.getElementById('status-left').textContent = `${name} | ${currentModel.vertCount} verts, ${currentModel.triCount} tris`;
+  render();
+}
+
+function renderFileList() {
+  const list = document.getElementById('file-list');
+  list.innerHTML = '';
+  for (const name of Object.keys(loadedModels).sort()) {
+    const m = loadedModels[name];
+    const div = document.createElement('div');
+    div.className = 'file-entry' + (name === currentModelName ? ' selected' : '');
+    div.innerHTML = `<div class="fname">${name}</div><div class="finfo">${m.vertCount} verts, ${m.triCount} tris</div>`;
+    div.onclick = () => selectModel(name);
+    list.appendChild(div);
+  }
+}
+
+function handleBinFiles(event) {
+  for (const file of event.target.files) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const geom = parseBinFile(e.target.result);
+        const name = file.name.replace('.bin', '');
+        loadModel(name, geom);
+      } catch (err) {
+        console.error(`Error parsing ${file.name}:`, err);
+        document.getElementById('status-left').textContent = `Error: ${err.message}`;
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+  event.target.value = '';
+}
+
+function handleObjFiles(event) {
+  for (const file of event.target.files) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const geom = parseObjFile(e.target.result);
+        const name = file.name.replace('.obj', '');
+        loadModel(name, geom);
+      } catch (err) {
+        console.error(`Error parsing ${file.name}:`, err);
+        document.getElementById('status-left').textContent = `Error: ${err.message}`;
+      }
+    };
+    reader.readAsText(file);
+  }
+  event.target.value = '';
+}
+
+function handleJsonFiles(event) {
+  for (const file of event.target.files) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        const geom = parseJsonModel(data);
+        const name = file.name.replace('.json', '');
+        loadModel(name, geom);
+      } catch (err) {
+        console.error(`Error parsing ${file.name}:`, err);
+        document.getElementById('status-left').textContent = `Error: ${err.message}`;
+      }
+    };
+    reader.readAsText(file);
+  }
+  event.target.value = '';
+}
+
+// Drag and drop
+document.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  document.getElementById('drop-overlay').style.display = 'flex';
+});
+document.getElementById('drop-overlay').addEventListener('dragleave', () => {
+  document.getElementById('drop-overlay').style.display = 'none';
+});
+document.addEventListener('drop', (e) => {
+  e.preventDefault();
+  document.getElementById('drop-overlay').style.display = 'none';
+  for (const file of e.dataTransfer.files) {
+    if (file.name.endsWith('.bin')) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          loadModel(file.name.replace('.bin',''), parseBinFile(ev.target.result));
+        } catch(err) { console.error(err); }
+      };
+      reader.readAsArrayBuffer(file);
+    } else if (file.name.endsWith('.obj')) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          loadModel(file.name.replace('.obj',''), parseObjFile(ev.target.result));
+        } catch(err) { console.error(err); }
+      };
+      reader.readAsText(file);
+    } else if (file.name.endsWith('.json')) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const data = JSON.parse(ev.target.result);
+          loadModel(file.name.replace('.json',''), parseJsonModel(data));
+        } catch(err) { console.error(err); }
+      };
+      reader.readAsText(file);
+    }
+  }
+});
+
+// Auto-load from ../models/ directory
+async function tryAutoLoad() {
+  const files = [
+    'model_0000', 'model_0001', 'model_0002', 'model_0003', 'model_0004',
+    'model_0005', 'model_0006', 'model_0007', 'model_0008', 'model_0009',
+    'map00', 'map01', 'map02', 'map03', 'map04',
+    'map05', 'map06', 'map07', 'map08', 'map09',
+  ];
+  let loaded = 0;
+  for (const name of files) {
+    try {
+      const resp = await fetch(`../models/${name}.json`);
+      if (resp.ok) {
+        const data = await resp.json();
+        const geom = parseJsonModel(data);
+        loadModel(name, geom);
+        loaded++;
+      }
+    } catch(e) { /* skip */ }
+  }
+  if (loaded > 0) {
+    document.getElementById('status-left').textContent = `Auto-loaded ${loaded} models from ../models/`;
+  } else {
+    document.getElementById('status-left').textContent = 'No models found in ../models/. Use buttons or drag & drop.';
+  }
+}
+
+// ============================================================
+// Init
+// ============================================================
+function init() {
+  buildGrid(500, 50);
+  buildAxes(100);
+  resizeCanvas();
+  render();
+  window.addEventListener('resize', render);
+}
+
+init();
+</script>
+</body>
+</html>

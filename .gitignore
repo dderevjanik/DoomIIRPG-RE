@@ -20,7 +20,11 @@ Doom 2 RPG.ipa
 Doom 2 RPG/
 Doom2rpg.app/
 *.bin
+
+# Extracted assets
 textures/
+models/
+mapdata/
 
 # IDE
 .vscode/
