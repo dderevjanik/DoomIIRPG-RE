@@ -24,13 +24,13 @@
 #include "Utils.h"
 #include "Sound.h"
 #include "Span.h"
+#include "EntityDef.h"
 
 Render::Render() {
 	std::memset(this, 0, sizeof(Render));
 }
 
-Render::~Render() {
-}
+Render::~Render() {}
 
 bool Render::startup() {
 	Applet* app = CAppContainer::getInstance()->app;
@@ -166,7 +166,7 @@ bool Render::startup() {
 
 	this->imgPortal = app->loadImage("portal_image2.bmp", true);
 
-	// [GEC] New 
+	// [GEC] New
 	this->fixWaterAnim1 = false;
 	this->fixWaterAnim2 = false;
 	this->fixWaterAnim3 = false;
@@ -214,30 +214,46 @@ void Render::unloadMap() {
 	this->startFogLerp(32752, 32752, 0);
 	this->_gles->UnloadSkyMap();
 
-	if (this->mediaBounds) { delete this->mediaBounds; }
+	if (this->mediaBounds) {
+		delete this->mediaBounds;
+	}
 	this->mediaBounds = nullptr;
 
-	if (this->mediaMappings) { delete this->mediaMappings; }
+	if (this->mediaMappings) {
+		delete this->mediaMappings;
+	}
 	this->mediaMappings = nullptr;
 
-	if (this->mediaDimensions) { delete this->mediaDimensions; }
+	if (this->mediaDimensions) {
+		delete this->mediaDimensions;
+	}
 	this->mediaDimensions = nullptr;
 
-	if (this->mediaPalColors) { delete this->mediaPalColors; }
+	if (this->mediaPalColors) {
+		delete this->mediaPalColors;
+	}
 	this->mediaPalColors = nullptr;
 
-	if (this->mediaTexelSizes) { delete this->mediaTexelSizes; }
+	if (this->mediaTexelSizes) {
+		delete this->mediaTexelSizes;
+	}
 	this->mediaTexelSizes = nullptr;
 
-	if (this->mediaPalettesSizes) { delete this->mediaPalettesSizes; }
+	if (this->mediaPalettesSizes) {
+		delete this->mediaPalettesSizes;
+	}
 	this->mediaPalettesSizes = nullptr;
 
-	if (this->mediaTexelSizes2) { delete this->mediaTexelSizes2; }
+	if (this->mediaTexelSizes2) {
+		delete this->mediaTexelSizes2;
+	}
 	this->mediaTexelSizes2 = nullptr;
 
 	if (this->mediaTexels) {
 		for (int i = 0; i < 1024; i++) {
-			if (this->mediaTexels[i]) { delete this->mediaTexels[i]; }
+			if (this->mediaTexels[i]) {
+				delete this->mediaTexels[i];
+			}
 			this->mediaTexels[i] = nullptr;
 		}
 		delete this->mediaTexels;
@@ -247,76 +263,114 @@ void Render::unloadMap() {
 	if (this->mediaPalettes) {
 		for (int i = 0; i < 1024; i++) {
 			for (int j = 0; j < 16; j++) {
-				if (this->mediaPalettes[i][j]) { delete this->mediaPalettes[i][j]; }
+				if (this->mediaPalettes[i][j]) {
+					delete this->mediaPalettes[i][j];
+				}
 				this->mediaPalettes[i][j] = nullptr;
 			}
 			delete this->mediaPalettes[i];
 			this->mediaPalettes[i] = nullptr;
 		}
-		
+
 		delete this->mediaPalettes;
 	}
 	this->mediaPalettes = nullptr;
-	
-	if (this->normals) { delete this->normals; }
+
+	if (this->normals) {
+		delete this->normals;
+	}
 	this->normals = nullptr;
 
-	if (this->nodeNormalIdxs) { delete this->nodeNormalIdxs; }
+	if (this->nodeNormalIdxs) {
+		delete this->nodeNormalIdxs;
+	}
 	this->nodeNormalIdxs = nullptr;
 
-	if (this->nodeOffsets) { delete this->nodeOffsets; }
+	if (this->nodeOffsets) {
+		delete this->nodeOffsets;
+	}
 	this->nodeOffsets = nullptr;
 
-	if (this->nodeChildOffset1) { delete this->nodeChildOffset1; }
+	if (this->nodeChildOffset1) {
+		delete this->nodeChildOffset1;
+	}
 	this->nodeChildOffset1 = nullptr;
 
-	if (this->nodeChildOffset2) { delete this->nodeChildOffset2; }
+	if (this->nodeChildOffset2) {
+		delete this->nodeChildOffset2;
+	}
 	this->nodeChildOffset2 = nullptr;
 
-	if (this->nodeSprites) { delete this->nodeSprites; }
+	if (this->nodeSprites) {
+		delete this->nodeSprites;
+	}
 	this->nodeSprites = nullptr;
 
-	if (this->nodeBounds) { delete this->nodeBounds; }
+	if (this->nodeBounds) {
+		delete this->nodeBounds;
+	}
 	this->nodeBounds = nullptr;
 
-	if (this->nodePolys) { delete this->nodePolys; }
+	if (this->nodePolys) {
+		delete this->nodePolys;
+	}
 	this->nodePolys = nullptr;
 
-	if (this->lineFlags) { delete this->lineFlags; }
+	if (this->lineFlags) {
+		delete this->lineFlags;
+	}
 	this->lineFlags = nullptr;
 
-	if (this->lineXs) { delete this->lineXs; }
+	if (this->lineXs) {
+		delete this->lineXs;
+	}
 	this->lineXs = nullptr;
 
-	if (this->lineYs) { delete this->lineYs; }
+	if (this->lineYs) {
+		delete this->lineYs;
+	}
 	this->lineYs = nullptr;
 
-	if (this->heightMap) { delete this->heightMap; }
+	if (this->heightMap) {
+		delete this->heightMap;
+	}
 	this->heightMap = nullptr;
 
 	this->numMapSprites = 0;
-	if (this->mapSprites) { delete this->mapSprites; }
+	if (this->mapSprites) {
+		delete this->mapSprites;
+	}
 	this->mapSprites = nullptr;
 
-	if (this->mapSpriteInfo) { delete this->mapSpriteInfo; }
+	if (this->mapSpriteInfo) {
+		delete this->mapSpriteInfo;
+	}
 	this->mapSpriteInfo = nullptr;
 
 	this->numTileEvents = 0;
 	this->mapByteCodeSize = 0;
 	app->game->mapSecretsFound = 0;
 
-	if (this->tileEvents) { delete this->tileEvents; }
+	if (this->tileEvents) {
+		delete this->tileEvents;
+	}
 	this->tileEvents = nullptr;
 
-	if (this->mapByteCode) { delete this->mapByteCode; }
+	if (this->mapByteCode) {
+		delete this->mapByteCode;
+	}
 	this->mapByteCode = nullptr;
 
-	if (this->skyMapTexels) { delete this->skyMapTexels; }
+	if (this->skyMapTexels) {
+		delete this->skyMapTexels;
+	}
 	this->skyMapTexels = nullptr;
 
 	if (this->skyMapPalette) {
 		for (int i = 0; i < 16; i++) {
-			if(this->skyMapPalette[i]) { delete this->skyMapPalette[i]; }
+			if (this->skyMapPalette[i]) {
+				delete this->skyMapPalette[i];
+			}
 			this->skyMapPalette[i] = nullptr;
 		}
 		delete this->skyMapPalette;
@@ -403,7 +457,7 @@ void Render::FinalizeMedia() {
 		IS.data[266855] = 0;
 	}
 
-	//app->checkPeakMemory("Loading Palettes");
+	// app->checkPeakMemory("Loading Palettes");
 	int n5 = 0;
 	int n6 = 0;
 	for (int j = 0; j < 1024; ++j) {
@@ -413,7 +467,8 @@ void Render::FinalizeMedia() {
 		if (b3 && !b4) {
 			app->resource->read(&IS, n7 * 2);
 			for (int k = 0; k < n7; ++k) {
-				this->mediaPalettes[n5][0][k] = app->resource->shiftUShort(); // j2me only -> upSamplePixel(app->resource->shiftUShort());
+				this->mediaPalettes[n5][0][k] =
+				    app->resource->shiftUShort(); // j2me only -> upSamplePixel(app->resource->shiftUShort());
 			}
 			int n8 = (j | Render::MEDIA_FLAG_REFERENCE);
 			for (int l = j + 1; l < 1024; ++l) {
@@ -425,8 +480,7 @@ void Render::FinalizeMedia() {
 			++n5;
 			app->resource->readMarker(&IS, n6);
 			n6 += (2 * n7) + 4;
-		}
-		else if (!b4) {
+		} else if (!b4) {
 			app->resource->bufSkip(&IS, n7 * 2, true);
 			app->resource->readMarker(&IS, n6);
 			n6 += (2 * n7) + sizeof(uint32_t);
@@ -444,7 +498,7 @@ void Render::FinalizeMedia() {
 
 	IS.close();
 	app->canvas->updateLoadingBar(false);
-	//app->checkPeakMemory("Loading Texels");
+	// app->checkPeakMemory("Loading Texels");
 
 	for (int n13 = 0; n13 < 1024; ++n13) {
 		bool b5 = (this->mediaTexelSizes[n13] & Render::MEDIA_TEXELS_REGISTERED) != 0x0;
@@ -455,22 +509,22 @@ void Render::FinalizeMedia() {
 				IS.close();
 				/*String str = "/tex0";
 				if (m >= 10) {
-					str = "/tex";
+				    str = "/tex";
 				}
 				resourceAsStream2 = App.getResourceAsStream(str + m + ".bin");*/
 				if (!IS.loadFile(Resources::RES_NEWTEXEL_FILE_ARRAY[m], InputStream::LOADTYPE_RESOURCE)) {
 					app->Error("getResource(%s) failed\n", Resources::RES_NEWTEXEL_FILE_ARRAY[m]);
 				}
-				
+
 				n10 = m;
 				n11 = 0;
-				//Canvas.updateLoadingBar(false);
+				// Canvas.updateLoadingBar(false);
 			}
 
 			if (n11 != n12) {
 				app->resource->bufSkip(&IS, n12 - n11, true);
 			}
-			//printf("n14 %d\n", n14);
+			// printf("n14 %d\n", n14);
 			app->resource->readByteArray(&IS, this->mediaTexels[n9], 0, n14);
 
 			// [GEC]: Verifica los datos del sprite de agua animada
@@ -479,18 +533,15 @@ void Render::FinalizeMedia() {
 					if (checkFileMD5Hash(this->mediaTexels[n9], n14, 0x2AFCC8EDC9EA8610, 0xEA5458CBEBF345EC)) {
 						this->fixWaterAnim1 = true;
 					}
-				}
-				else if (n13 == 815) {
+				} else if (n13 == 815) {
 					if (checkFileMD5Hash(this->mediaTexels[n9], n14, 0x14F8BC466131E9AB, 0xFBEC94B21422E569)) {
 						this->fixWaterAnim2 = true;
 					}
-				}
-				else if (n13 == 816) {
+				} else if (n13 == 816) {
 					if (checkFileMD5Hash(this->mediaTexels[n9], n14, 0xB784065E177D596E, 0x23729441F971FEE7)) {
 						this->fixWaterAnim3 = true;
 					}
-				}
-				else if (n13 == 817) {
+				} else if (n13 == 817) {
 					if (checkFileMD5Hash(this->mediaTexels[n9], n14, 0x8A53E5E7CD062F73, 0xFAA5B42239006DC8)) {
 						this->fixWaterAnim4 = true;
 					}
@@ -504,13 +555,12 @@ void Render::FinalizeMedia() {
 				}
 			}
 			this->mediaTexelSizes[n13] = (0x40000000 | n9);
-			//printf("n9 %d\n", n9);
-			//printf("this->mediaTexelSizes[%d] %d\n", n13, this->mediaTexelSizes[n13]);
+			// printf("n9 %d\n", n9);
+			// printf("this->mediaTexelSizes[%d] %d\n", n13, this->mediaTexelSizes[n13]);
 			++n9;
 			app->resource->readMarker(&IS, n12);
 			n12 = (n11 = n12 + (n14 + sizeof(uint32_t)));
-		}
-		else if (!b6) {
+		} else if (!b6) {
 			n12 += n14 + sizeof(uint32_t);
 		}
 
@@ -565,9 +615,9 @@ bool Render::beginLoadMap(int mapNameID) {
 	this->mediaTexelSizes = new int[Render::MEDIA_MAX_IMAGES];
 	this->mediaTexelSizes2 = new int[Render::MEDIA_MAX_IMAGES];
 	this->mediaTexels = new uint8_t*[1024]();
-	this->mediaPalettes = new uint16_t **[1024]();
+	this->mediaPalettes = new uint16_t**[1024]();
 	for (int i = 0; i < 1024; ++i) {
-		this->mediaPalettes[i] = new uint16_t *[16]();
+		this->mediaPalettes[i] = new uint16_t*[16]();
 		for (int j = 0; j < 16; ++j) {
 			this->mediaPalettes[i][j] = nullptr;
 		}
@@ -582,13 +632,13 @@ bool Render::beginLoadMap(int mapNameID) {
 	app->resource->readIntArray(&IS, this->mediaTexelSizes, 0, Render::MEDIA_MAX_IMAGES);
 	IS.close();
 
-	this->mediaMappings[Enums::TILENUM_SKY_BOX] = (gles::MAX_MEDIA-1); // Readjust the index so it doesn't interfere with the fade texture.
+	this->mediaMappings[Enums::TILENUM_SKY_BOX] =
+	    (gles::MAX_MEDIA - 1); // Readjust the index so it doesn't interfere with the fade texture.
 
 	app->canvas->updateLoadingBar(false);
 
-	const char* mapFile = CAppContainer::getInstance()->customMapFile
-		? CAppContainer::getInstance()->customMapFile
-		: Resources::RES_MAP_FILE_ARRAY[(mapNameID - 1)];
+	const char* mapFile = CAppContainer::getInstance()->customMapFile ? CAppContainer::getInstance()->customMapFile
+	                                                                  : Resources::RES_MAP_FILE_ARRAY[(mapNameID - 1)];
 	IS.loadResource(mapFile);
 	app->resource->read(&IS, 42);
 	if (app->resource->shiftUByte() != 3) {
@@ -677,7 +727,6 @@ bool Render::beginLoadMap(int mapNameID) {
 	this->S_SCALEFACTOR = this->numSprites * 8;
 	this->SINFO_SORTZ = this->numSprites;
 
-
 	this->tileEvents = new int[this->numTileEvents * 2];
 	this->mapByteCode = new uint8_t[this->mapByteCodeSize];
 	app->game->mayaCameras = new MayaCamera[app->game->totalMayaCameras];
@@ -686,10 +735,10 @@ bool Render::beginLoadMap(int mapNameID) {
 	app->game->mayaTweenIndices = new short[app->game->totalMayaCameraKeys * 6];
 	app->game->setKeyOffsets();
 
-	//app->checkPeakMemory("Allocated memory for the map");
+	// app->checkPeakMemory("Allocated memory for the map");
 	IS.loadResource(mapFile);
 	app->canvas->updateLoadingBar(false);
-	//app->checkPeakMemory(, "Reading in final map data");
+	// app->checkPeakMemory(, "Reading in final map data");
 
 	app->resource->read(&IS, 42);
 	app->resource->readMarker(&IS, 0xDEADBEEF);
@@ -832,7 +881,8 @@ bool Render::beginLoadMap(int mapNameID) {
 	return true;
 }
 
-void Render::draw2DSprite(int tileNum, int frame, int x, int y, int flags, int renderMode, int renderFlags, int scaleFactor) {
+void Render::draw2DSprite(int tileNum, int frame, int x, int y, int flags, int renderMode, int renderFlags,
+                          int scaleFactor) {
 	Applet* app = CAppContainer::getInstance()->app;
 	TinyGL* tinyGL = app->tinyGL;
 
@@ -840,8 +890,9 @@ void Render::draw2DSprite(int tileNum, int frame, int x, int y, int flags, int r
 	TGLVert* vert2 = &tinyGL->cv[1];
 	TGLVert* vert3 = &tinyGL->cv[2];
 
-	//RENDER_FLAG_SCALE_WEAPON
-	if (renderFlags & Render::RENDER_FLAG_SCALE_WEAPON) {  // [GEC] Adjusted like this to match the scaleFactor on the GL version
+	// RENDER_FLAG_SCALE_WEAPON
+	if (renderFlags &
+	    Render::RENDER_FLAG_SCALE_WEAPON) { // [GEC] Adjusted like this to match the scaleFactor on the GL version
 		scaleFactor = (int)((float)scaleFactor * 1.35f);
 	}
 
@@ -878,7 +929,8 @@ void Render::draw2DSprite(int tileNum, int frame, int x, int y, int flags, int r
 
 	tinyGL->mv[0].x = tinyGL->viewX - ((int)(5 * ((tinyGL->view[2] & 0xFFFFFFE0) + (8 * (tinyGL->view[2] >> 5)))) >> 8);
 	tinyGL->mv[0].y = tinyGL->viewY - ((int)(5 * ((tinyGL->view[6] & 0xFFFFFFE0) + (8 * (tinyGL->view[6] >> 5)))) >> 8);
-	tinyGL->mv[0].z = tinyGL->viewZ - ((int)(5 * ((tinyGL->view[10] & 0xFFFFFFE0) + (8 * (tinyGL->view[10] >> 5)))) >> 8);
+	tinyGL->mv[0].z =
+	    tinyGL->viewZ - ((int)(5 * ((tinyGL->view[10] & 0xFFFFFFE0) + (8 * (tinyGL->view[10] >> 5)))) >> 8);
 
 	int v27 = ((x - tinyGL->viewportWidth / 2) << 15) / tinyGL->viewportWidth;
 	int v28 = (((y + v12) - tinyGL->viewportHeight / 2) << 15) / tinyGL->viewportWidth;
@@ -911,11 +963,13 @@ void Render::draw2DSprite(int tileNum, int frame, int x, int y, int flags, int r
 	}
 }
 
-void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags, int renderMode, int scaleFactor, int renderFlags) {
+void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags, int renderMode, int scaleFactor,
+                          int renderFlags) {
 	this->renderSprite(x, y, z, tileNum, frame, flags, renderMode, scaleFactor, renderFlags, -1);
 }
 
-void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags, int renderMode, int scaleFactor, int renderFlags, int palIndex) {
+void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags, int renderMode, int scaleFactor,
+                          int renderFlags, int palIndex) {
 	Applet* app = CAppContainer::getInstance()->app;
 	int n10 = scaleFactor;
 
@@ -940,8 +994,7 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 	int n16 = (n12 << 10) / app->tinyGL->tHeight;
 	if ((flags & 0x10100000) != 0x0) {
 		app->tinyGL->faceCull = TinyGL::CULL_NONE;
-	}
-	else {
+	} else {
 		app->tinyGL->faceCull = TinyGL::CULL_CCW;
 	}
 	if ((flags & 0x2F000000) == 0x0) {
@@ -953,8 +1006,7 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 		if (0x0 != (flags & 0x400000) || app->tinyGL->textureBaseSize == app->tinyGL->sWidth * app->tinyGL->tHeight) {
 			n19 = ((((n11 >> 2) << 4) + 7) * scaleFactor) / 0x10000;
 			n20 = ((((n12 >> 1) << 4) + 7) * scaleFactor) / 0x10000;
-		}
-		else {
+		} else {
 			n19 = (518 * scaleFactor) / 0x10000;
 			n20 = (1036 * scaleFactor) / 0x10000;
 			n15 = (n13 = 0);
@@ -982,9 +1034,9 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 
 		TGLVert* transform3DVerts = app->tinyGL->transform3DVerts(app->tinyGL->mv, n18);
 		if (0x0 != (flags & 0x400000) || app->tinyGL->textureBaseSize == app->tinyGL->sWidth * app->tinyGL->tHeight) {
-			app->tinyGL->ClipQuad(&transform3DVerts[0], &transform3DVerts[1], &transform3DVerts[2], &transform3DVerts[3]);
-		}
-		else {
+			app->tinyGL->ClipQuad(&transform3DVerts[0], &transform3DVerts[1], &transform3DVerts[2],
+			                      &transform3DVerts[3]);
+		} else {
 			TGLVert* tglVert2 = &transform3DVerts[0];
 			if (tglVert2->w + tglVert2->z < 0) {
 				return;
@@ -994,17 +1046,18 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 				if (palIndex >= 0) {
 					app->tinyGL->spanPalette = app->tinyGL->paletteBase[palIndex % 16];
 					this->setupPalette(app->tinyGL->spanPalette, renderMode, renderFlags);
+				} else {
+					this->setupPalette(app->tinyGL->getFogPalette(transform3DVerts[0].z << 16), renderMode,
+					                   renderFlags);
 				}
-				else {
-					this->setupPalette(app->tinyGL->getFogPalette(transform3DVerts[0].z << 16), renderMode, renderFlags);
-				}
-				if (!this->_gles->DrawWorldSpaceSpriteLine(&app->tinyGL->mv[0], &app->tinyGL->mv[1], &app->tinyGL->mv[2], flags)) {
-					app->tinyGL->drawClippedSpriteLine(&transform3DVerts[1], &transform3DVerts[0], &transform3DVerts[2], flags, true);
+				if (!this->_gles->DrawWorldSpaceSpriteLine(&app->tinyGL->mv[0], &app->tinyGL->mv[1],
+				                                           &app->tinyGL->mv[2], flags)) {
+					app->tinyGL->drawClippedSpriteLine(&transform3DVerts[1], &transform3DVerts[0], &transform3DVerts[2],
+					                                   flags, true);
 				}
 			}
 		}
-	}
-	else {
+	} else {
 
 		if (tileNum >= Enums::TILENUM_TERMINAL_TARGET && tileNum <= Enums::TILENUM_TERMINAL_HACKING) {
 			z -= 256;
@@ -1017,25 +1070,22 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 		int n23 = 0;
 		if ((flags & 0x4000000) != 0x0) {
 			n23 = 0;
-		}
-		else if ((flags & 0x1000000) != 0x0) {
+		} else if ((flags & 0x1000000) != 0x0) {
 			n23 = 2;
-		}
-		else if ((flags & 0x8000000) != 0x0) {
+		} else if ((flags & 0x8000000) != 0x0) {
 			n23 = 4;
-		}
-		else if ((flags & 0x2000000) != 0x0) {
+		} else if ((flags & 0x2000000) != 0x0) {
 			n23 = 6;
 		}
 		if ((app->tinyGL->textureBaseSize == app->tinyGL->sWidth * app->tinyGL->tHeight) ||
-			(tileNum == Enums::TILENUM_CLOSED_PORTAL_EYE) || (tileNum == Enums::TILENUM_EYE_PORTAL) || (tileNum == Enums::TILENUM_PORTAL_SOCKET)) {
+		    (tileNum == Enums::TILENUM_CLOSED_PORTAL_EYE) || (tileNum == Enums::TILENUM_EYE_PORTAL) ||
+		    (tileNum == Enums::TILENUM_PORTAL_SOCKET)) {
 			int n24;
 			int n25;
 			if (app->tinyGL->tHeight == 256 && app->tinyGL->sWidth == 256) {
 				n24 = 64;
 				n25 = 32;
-			}
-			else {
+			} else {
 				n24 = n12 >> 1;
 				n25 = n11 >> 2;
 			}
@@ -1044,8 +1094,7 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 			if ((flags & 0x20000000) == 0x0) {
 				z += app->tinyGL->tHeight - app->tinyGL->imageBounds[3] << 4;
 				z -= 16 * (scaleFactor / 2048);
-			}
-			else {
+			} else {
 				z -= 512;
 			}
 			const int* viewStepValues = Canvas::viewStepValues;
@@ -1056,14 +1105,14 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 			x <<= 4;
 			y <<= 4;
 			/*if (tileNum == Enums::TILENUM_GLASS && frame == 0) { // J2ME
-				if ((flags & 0x3000000) != 0x0) {
-					n13 += std::abs(x - this->viewX >> 2);
-					n15 -= std::abs(y - this->viewY >> 3);
-				}
-				else {
-					n13 += std::abs(y - this->viewY >> 2);
-					n15 -= std::abs(x - this->viewX >> 3);
-				}
+			    if ((flags & 0x3000000) != 0x0) {
+			        n13 += std::abs(x - this->viewX >> 2);
+			        n15 -= std::abs(y - this->viewY >> 3);
+			    }
+			    else {
+			        n13 += std::abs(y - this->viewY >> 2);
+			        n15 -= std::abs(x - this->viewX >> 3);
+			    }
 			}*/
 			if ((flags & 0x20000) != 0x0) {
 				n13 += n14;
@@ -1081,8 +1130,7 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 					n31 = (n10 * n31) / 65536;
 					n16 = (n10 * n16) / 65536;
 					n15 += n33 - n16 >> 1;
-				}
-				else {
+				} else {
 					int n34 = n14;
 					n30 = (n10 * n30) / 65536;
 					n14 = (n10 * n14) / 65536;
@@ -1090,7 +1138,8 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 				}
 			}
 
-			if (tileNum >= Enums::TILENUM_RED_DOOR_LOCKED && tileNum <= Enums::TILENUM_BLUE_DOOR_UNLOCKED) { // Slip Door
+			if (tileNum >= Enums::TILENUM_RED_DOOR_LOCKED &&
+			    tileNum <= Enums::TILENUM_BLUE_DOOR_UNLOCKED) { // Slip Door
 				int n35 = n16 >> 1;
 				int n36 = n31 >> 1;
 				int n37 = n32 >> 1;
@@ -1112,8 +1161,7 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 					app->tinyGL->swapXY = true;
 					app->tinyGL->drawModelVerts(app->tinyGL->mv, 4);
 				}
-			}
-			else if ((flags & 0x20000000) == 0x0) { // Wall 
+			} else if ((flags & 0x20000000) == 0x0) { // Wall
 				for (int l = 0; l < 4; ++l) {
 					int n42 = (l & 0x2) >> 1;
 					int n43 = (l & 0x1) ^ n42 ^ 0x1;
@@ -1127,8 +1175,7 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 				}
 				app->tinyGL->swapXY = true;
 				app->tinyGL->drawModelVerts(app->tinyGL->mv, 4);
-			}
-			else { // Plane
+			} else { // Plane
 				for (int n45 = 0; n45 < 4; n45++) {
 					int n46 = (n45 & 0x2) >> 1;
 					int n47 = (n45 & 0x1) ^ n46 ^ 0x1;
@@ -1143,8 +1190,7 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 					if (tileNum == Enums::TILENUM_FLAT_LAVA) {
 						tglVert5->s += (app->time / 8 & 0x3FF);
 						tglVert5->t += (app->time / 16 & 0x3FF);
-					}
-					else if (tileNum == Enums::TILENUM_FLAT_LAVA2) {
+					} else if (tileNum == Enums::TILENUM_FLAT_LAVA2) {
 						tglVert5->t += (app->time / 2 & 0x3FF);
 					}
 				}
@@ -1176,14 +1222,11 @@ void Render::occludeSpriteLine(int n) {
 	int n6 = 0;
 	if ((n2 & 0x4000000) != 0x0) {
 		n6 = 4;
-	}
-	else if ((n2 & 0x1000000) != 0x0) {
+	} else if ((n2 & 0x1000000) != 0x0) {
 		n6 = 6;
-	}
-	else if ((n2 & 0x8000000) != 0x0) {
+	} else if ((n2 & 0x8000000) != 0x0) {
 		n6 = 4;
-	}
-	else if ((n2 & 0x2000000) != 0x0) {
+	} else if ((n2 & 0x2000000) != 0x0) {
 		n6 = 6;
 	}
 
@@ -1199,8 +1242,7 @@ void Render::occludeSpriteLine(int n) {
 		app->tinyGL->projectVerts(transform2DVerts, 2);
 		if (transform2DVerts[0].x > transform2DVerts[1].x) {
 			app->tinyGL->occludeClippedLine(&transform2DVerts[1], &transform2DVerts[0]);
-		}
-		else {
+		} else {
 			app->tinyGL->occludeClippedLine(&transform2DVerts[0], &transform2DVerts[1]);
 		}
 	}
@@ -1224,12 +1266,12 @@ void Render::drawNodeLines(short n) {
 			TGLVert* transform2DVerts = app->tinyGL->transform2DVerts(app->tinyGL->mv, 2);
 			if (app->tinyGL->clipLine(transform2DVerts)) {
 				app->tinyGL->projectVerts(transform2DVerts, 2);
-				if (app->tinyGL->occludeClippedLine(&transform2DVerts[0], &transform2DVerts[1]) && app->game->updateAutomap) {
+				if (app->tinyGL->occludeClippedLine(&transform2DVerts[0], &transform2DVerts[1]) &&
+				    app->game->updateAutomap) {
 					this->lineFlags[i >> 1] |= (uint8_t)(8 << ((i & 0x1) << 2));
 				}
 			}
-		}
-		else if ((n4 & 0x7) == 0x6) {
+		} else if ((n4 & 0x7) == 0x6) {
 			this->lineFlags[i >> 1] |= (uint8_t)(8 << ((i & 0x1) << 2));
 		}
 	}
@@ -1245,7 +1287,8 @@ bool Render::cullBoundingBox(int n, int n2, int n3, int n4, bool b) {
 	if (this->skipCull) {
 		return false;
 	}
-	if (this->viewX >= n - TinyGL::CULL_EXTRA && this->viewX <= n3 + TinyGL::CULL_EXTRA && this->viewY >= n2 - TinyGL::CULL_EXTRA && this->viewY <= n4 + TinyGL::CULL_EXTRA) {
+	if (this->viewX >= n - TinyGL::CULL_EXTRA && this->viewX <= n3 + TinyGL::CULL_EXTRA &&
+	    this->viewY >= n2 - TinyGL::CULL_EXTRA && this->viewY <= n4 + TinyGL::CULL_EXTRA) {
 		return false;
 	}
 	TGLVert* tglVert = &app->tinyGL->mv[0];
@@ -1256,28 +1299,24 @@ bool Render::cullBoundingBox(int n, int n2, int n3, int n4, bool b) {
 			tglVert->y = n2;
 			tglVert2->x = n;
 			tglVert2->y = n4;
-		}
-		else if (this->viewY < n4) {
+		} else if (this->viewY < n4) {
 			tglVert->x = n;
 			tglVert->y = n2;
 			tglVert2->x = n;
 			tglVert2->y = n4;
-		}
-		else {
+		} else {
 			tglVert->x = n;
 			tglVert->y = n2;
 			tglVert2->x = n3;
 			tglVert2->y = n4;
 		}
-	}
-	else if (this->viewX < n3) {
+	} else if (this->viewX < n3) {
 		if (this->viewY < n2) {
 			tglVert->x = n3;
 			tglVert->y = n2;
 			tglVert2->x = n;
 			tglVert2->y = n2;
-		}
-		else {
+		} else {
 			if (this->viewY < n4) {
 				return false;
 			}
@@ -1286,20 +1325,17 @@ bool Render::cullBoundingBox(int n, int n2, int n3, int n4, bool b) {
 			tglVert2->x = n3;
 			tglVert2->y = n4;
 		}
-	}
-	else if (this->viewY < n2) {
+	} else if (this->viewY < n2) {
 		tglVert->x = n3;
 		tglVert->y = n4;
 		tglVert2->x = n;
 		tglVert2->y = n2;
-	}
-	else if (this->viewY < n4) {
+	} else if (this->viewY < n4) {
 		tglVert->x = n3;
 		tglVert->y = n4;
 		tglVert2->x = n3;
 		tglVert2->y = n2;
-	}
-	else {
+	} else {
 		tglVert->x = n;
 		tglVert->y = n4;
 		tglVert2->x = n3;
@@ -1330,38 +1366,29 @@ void Render::addSprite(short n) {
 	int n3;
 	if ((this->mapSpriteInfo[n] & 0x10000000) != 0x0) {
 		n3 = 0x7fffffff;
-	}
-	else {
+	} else {
 		short n4 = this->mapSprites[this->S_X + n];
 		short n5 = this->mapSprites[this->S_Y + n];
 		int* mvp = app->tinyGL->mvp;
 		n3 = (n4 * mvp[2] + n5 * mvp[6] + this->mapSprites[this->S_Z + n] * mvp[10] >> 14) + mvp[14];
 		if ((this->mapSpriteInfo[n] & 0x400000) != 0x0) {
 			n3 += 6;
-		}
-		else if (n2 == 240 || n2 == 246 || n2 == 245 || n2 == 247) {
+		} else if (n2 == 240 || n2 == 246 || n2 == 245 || n2 == 247) {
 			n3 = 0x80000000;
-		}
-		else if (0x0 != (this->mapSpriteInfo[n] & 0xF000000)) {
+		} else if (0x0 != (this->mapSpriteInfo[n] & 0xF000000)) {
 			n3 += 5;
-		}
-		else if (entity != nullptr && (entity->info & 0x1010000) != 0x0) {
+		} else if (entity != nullptr && (entity->info & 0x1010000) != 0x0) {
 			++n3;
-		}
-		else if (entity != nullptr && entity->def->eType == 2) {
+		} else if (entity != nullptr && entity->def->eType == 2) {
 			this->handleMonsterIdleSounds(entity);
 			--n3;
-		}
-		else if ((n2 >= 240 && n2 <= 244) || n2 == 241 || n2 == 255) {
+		} else if ((n2 >= 240 && n2 <= 244) || n2 == 241 || n2 == 255) {
 			n3 -= 3;
-		}
-		else if (n2 == 138 || n2 == 139 || n2 == 137) {
+		} else if (n2 == 138 || n2 == 139 || n2 == 137) {
 			n3 += 2;
-		}
-		else if (n2 == 152) {
+		} else if (n2 == 152) {
 			n3 += 5;
-		}
-		else if (n2 == 239) {
+		} else if (n2 == 239) {
 			n3 -= 3;
 		}
 	}
@@ -1372,14 +1399,16 @@ void Render::addSprite(short n) {
 	if (this->viewSprites == -1) {
 		this->mapSprites[this->S_VIEWNEXT + n] = -1;
 		this->viewSprites = n;
-	}
-	else if (n3 >= this->mapSpriteInfo[this->SINFO_SORTZ + this->viewSprites]) {
+	} else if (n3 >= this->mapSpriteInfo[this->SINFO_SORTZ + this->viewSprites]) {
 		this->mapSprites[this->S_VIEWNEXT + n] = this->viewSprites;
 		this->viewSprites = n;
-	}
-	else {
+	} else {
 		short viewSprites;
-		for (viewSprites = this->viewSprites; this->mapSprites[this->S_VIEWNEXT + viewSprites] != -1 && n3 < this->mapSpriteInfo[this->SINFO_SORTZ + this->mapSprites[this->S_VIEWNEXT + viewSprites]]; viewSprites = this->mapSprites[this->S_VIEWNEXT + viewSprites]) {}
+		for (viewSprites = this->viewSprites;
+		     this->mapSprites[this->S_VIEWNEXT + viewSprites] != -1 &&
+		     n3 < this->mapSpriteInfo[this->SINFO_SORTZ + this->mapSprites[this->S_VIEWNEXT + viewSprites]];
+		     viewSprites = this->mapSprites[this->S_VIEWNEXT + viewSprites]) {
+		}
 		this->mapSprites[this->S_VIEWNEXT + n] = this->mapSprites[this->S_VIEWNEXT + viewSprites];
 		this->mapSprites[this->S_VIEWNEXT + viewSprites] = n;
 	}
@@ -1417,7 +1446,8 @@ void Render::addNodeSprites(short n) {
 
 int Render::nodeClassifyPoint(int n, int n2, int n3, int n4) {
 	int n5 = (this->nodeNormalIdxs[n] & 0xFF) * 3;
-	return (((n2 * this->normals[n5]) + (n3 * this->normals[n5 + 1]) + (n4 * this->normals[n5 + 2])) >> 14) + (this->nodeOffsets[n] & 0xFFFF);
+	return (((n2 * this->normals[n5]) + (n3 * this->normals[n5 + 1]) + (n4 * this->normals[n5 + 2])) >> 14) +
+	       (this->nodeOffsets[n] & 0xFFFF);
 }
 
 void Render::drawNodeGeometry(short n) {
@@ -1444,14 +1474,12 @@ void Render::drawNodeGeometry(short n) {
 
 		if (uVar7 == Enums::TILENUM_HELL_HANDS) {
 			iVar10 = Render::RENDER_BLEND50;
-		}
-		else if ((uVar7 == Enums::TILENUM_FADE) || (uVar7 == Enums::TILENUM_SCORCH_MARK)) {
+		} else if ((uVar7 == Enums::TILENUM_FADE) || (uVar7 == Enums::TILENUM_SCORCH_MARK)) {
 			iVar10 = Render::RENDER_NORMAL;
 			if (!this->_gles->isInit) {
 				iVar10 = Render::RENDER_SUB; // [GEC] TinyGL Only like J2ME/BREW
 			}
-		}
-		else if ((uVar7 == Enums::TILENUM_FLAT_LAVA) || (uVar7 == Enums::TILENUM_FLAT_LAVA2)) {
+		} else if ((uVar7 == Enums::TILENUM_FLAT_LAVA) || (uVar7 == Enums::TILENUM_FLAT_LAVA2)) {
 			iVar10 = Render::RENDER_NORMAL;
 			app->tinyGL->faceCull = TinyGL::CULL_NONE;
 		}
@@ -1461,13 +1489,11 @@ void Render::drawNodeGeometry(short n) {
 			z = 2 * (this->sinTable[app->time / 2 & 0x3FF] - this->sinTable[256]) >> 14;
 			s = (app->time / 16 & 0x3FF);
 			t = (app->time / 32 & 0x3FF);
-		}
-		else if (uVar7 == Enums::TILENUM_FLAT_LAVA2) {
+		} else if (uVar7 == Enums::TILENUM_FLAT_LAVA2) {
 			z = 0;
 			s = 0;
 			t = (app->time / 4 & 0x3FF);
-		}
-		else {
+		} else {
 			z = 0;
 			s = 0;
 			t = 0;
@@ -1526,8 +1552,7 @@ void Render::drawNodeGeometry(short n) {
 				if ((polyFlags & Enums::POLY_FLAG_UV_DELTAX)) {
 					app->tinyGL->mv[1].s = app->tinyGL->mv[2].s;
 					app->tinyGL->mv[3].s = app->tinyGL->mv[0].s;
-				}
-				else {
+				} else {
 					app->tinyGL->mv[1].t = app->tinyGL->mv[2].t;
 					app->tinyGL->mv[3].t = app->tinyGL->mv[0].t;
 				}
@@ -1539,10 +1564,12 @@ void Render::drawNodeGeometry(short n) {
 }
 
 void Render::walkNode(short n) {
-	//printf("walkNode %d\viewPitch", viewPitch);
+	// printf("walkNode %d\viewPitch", viewPitch);
 	Applet* app = CAppContainer::getInstance()->app;
 
-	if (this->cullBoundingBox((this->nodeBounds[(n << 2) + 0] & 0xFF) << 7, (this->nodeBounds[(n << 2) + 1] & 0xFF) << 7, (this->nodeBounds[(n << 2) + 2] & 0xFF) << 7, (this->nodeBounds[(n << 2) + 3] & 0xFF) << 7, true)) {
+	if (this->cullBoundingBox(
+	        (this->nodeBounds[(n << 2) + 0] & 0xFF) << 7, (this->nodeBounds[(n << 2) + 1] & 0xFF) << 7,
+	        (this->nodeBounds[(n << 2) + 2] & 0xFF) << 7, (this->nodeBounds[(n << 2) + 3] & 0xFF) << 7, true)) {
 		return;
 	}
 	++this->nodeCount;
@@ -1578,8 +1605,7 @@ void Render::walkNode(short n) {
 	if (nodeClassifyPoint(n, this->viewX, this->viewY, this->viewZ) >= 0) {
 		walkNode(this->nodeChildOffset1[n]);
 		walkNode(this->nodeChildOffset2[n]);
-	}
-	else {
+	} else {
 		walkNode(this->nodeChildOffset2[n]);
 		walkNode(this->nodeChildOffset1[n]);
 	}
@@ -1638,16 +1664,14 @@ int Render::CapsuleToLineTrace(int* array, int n, int* array2) {
 		n9 = 1LL;
 		n11 = dot5;
 		n8 = dot3;
-	}
-	else {
+	} else {
 		n10 = dot2 * (int64_t)dot5 - dot3 * (int64_t)dot4;
 		n11 = dot * (int64_t)dot5 - dot2 * (int64_t)dot4;
 		if (n10 < 0LL) {
 			n10 = 0LL;
 			n11 = dot5;
 			n8 = dot3;
-		}
-		else if (n10 > n9) {
+		} else if (n10 > n9) {
 			n10 = n9;
 			n11 = dot5 + dot2;
 			n8 = dot3;
@@ -1657,24 +1681,19 @@ int Render::CapsuleToLineTrace(int* array, int n, int* array2) {
 		n11 = 0LL;
 		if (-dot4 < 0) {
 			n10 = 0LL;
-		}
-		else if (-dot4 > dot) {
+		} else if (-dot4 > dot) {
 			n10 = n9;
-		}
-		else {
+		} else {
 			n10 = -dot4;
 			n9 = dot;
 		}
-	}
-	else if (n11 > n8) {
+	} else if (n11 > n8) {
 		n11 = n8;
 		if (-dot4 + dot2 < 0) {
 			n10 = 0LL;
-		}
-		else if (-dot4 + dot2 > dot) {
+		} else if (-dot4 + dot2 > dot) {
 			n10 = n9;
-		}
-		else {
+		} else {
 			n10 = -dot4 + dot2;
 			n9 = dot;
 		}
@@ -1682,15 +1701,13 @@ int Render::CapsuleToLineTrace(int* array, int n, int* array2) {
 	int n12;
 	if (n10 == 0LL) {
 		n12 = 0;
-	}
-	else {
+	} else {
 		n12 = (int)((n10 << 16) / n9);
 	}
 	int n13;
 	if (n11 == 0LL) {
 		n13 = 0;
-	}
-	else {
+	} else {
 		n13 = (int)((n11 << 16) / n8);
 	}
 	int n14 = (n6 << 16) + n12 * n2 - n13 * n4 >> 16;
@@ -1734,7 +1751,9 @@ int Render::traceWorld(int n, int* array, int n2, int* array2, int n3) {
 				if (n7 == 5 && (n3 & 0x10) == 0x0 && (n3 & 0x800) == 0x0) {
 					continue;
 				}
-				if (n7 == 7 && (traceLine[0] - array[0]) * (traceLine[3] - traceLine[1]) + (traceLine[1] - array[1]) * -(traceLine[2] - traceLine[0]) <= 0) {
+				if (n7 == 7 && (traceLine[0] - array[0]) * (traceLine[3] - traceLine[1]) +
+				                       (traceLine[1] - array[1]) * -(traceLine[2] - traceLine[0]) <=
+				                   0) {
 					continue;
 				}
 				if (traceLine[0] > array2[2] && traceLine[2] > array2[2]) {
@@ -1764,8 +1783,7 @@ int Render::traceWorld(int n, int* array, int n2, int* array2, int n3) {
 			return this->traceWorld(this->nodeChildOffset2[n], array, n2, array2, n3);
 		}
 		return traceWorld;
-	}
-	else {
+	} else {
 		int traceWorld2 = traceWorld(this->nodeChildOffset2[n], array, n2, array2, n3);
 		if (traceWorld2 == 16384) {
 			return traceWorld(this->nodeChildOffset1[n], array, n2, array2, n3);
@@ -1773,7 +1791,6 @@ int Render::traceWorld(int n, int* array, int n2, int* array2, int n3) {
 		return traceWorld2;
 	}
 }
-
 
 #include <iostream>
 #include <array>
@@ -1784,57 +1801,55 @@ int Render::traceWorld(int n, int* array, int n2, int* array2, int n3) {
 using Position5 = std::array<float, 5>;
 using Plane = std::array<Position5, 4>;
 
-Position5& operator *= (Position5& pos, const float scale) {
-	for (auto& x : pos) x *= scale;
+Position5& operator*=(Position5& pos, const float scale) {
+	for (auto& x : pos)
+		x *= scale;
 	return pos;
 }
 
-Position5 operator * (const Position5& pos, const float scale) {
+Position5 operator*(const Position5& pos, const float scale) {
 	Position5 result = pos;
 	result *= scale;
 	return result;
 }
 
-Position5& operator += (Position5& left, const Position5& right) {
+Position5& operator+=(Position5& left, const Position5& right) {
 	for (size_t i = 0; i < 5; i++)
 		left[i] += right[i];
 
 	return left;
 }
 
-Position5 operator + (const Position5& left, const Position5& right) {
+Position5 operator+(const Position5& left, const Position5& right) {
 	Position5 result = left;
 	result += right;
 	return result;
 }
 
-Position5& operator -= (Position5& left, const Position5& right) {
+Position5& operator-=(Position5& left, const Position5& right) {
 	for (size_t i = 0; i < 5; i++)
 		left[i] -= right[i];
 
 	return left;
 }
 
-Position5 operator - (const Position5& left, const Position5& right) {
+Position5 operator-(const Position5& left, const Position5& right) {
 	Position5 result = left;
 	result -= right;
 	return result;
 }
 
-
 /* vertices by index in quad:
-	3---------2
-	|         |
-	|         |
-	|         |
-	0---------1
+    3---------2
+    |         |
+    |         |
+    |         |
+    0---------1
 */
-std::vector<Plane> subdivide(const Plane& plane, size_t iterations = 1)
-{
+std::vector<Plane> subdivide(const Plane& plane, size_t iterations = 1) {
 	if (iterations == 0) {
-		return{ plane };
-	}
-	else {
+		return {plane};
+	} else {
 		Position5 e1 = plane[1] - plane[0];
 		Position5 e2 = plane[2] - plane[3];
 		Position5 e3 = plane[3] - plane[0];
@@ -1849,16 +1864,11 @@ std::vector<Plane> subdivide(const Plane& plane, size_t iterations = 1)
 		Position5 p5 = e5 * 0.5f + p1;
 
 		std::vector<Plane> result{
-			{ plane[0], p1, p5, p3 },
-			{ p1, plane[1], p4, p5 },
-			{ p5, p4, plane[2], p2 },
-			{ p3, p5, p2, plane[3] }
-		};
+		    {plane[0], p1, p5, p3}, {p1, plane[1], p4, p5}, {p5, p4, plane[2], p2}, {p3, p5, p2, plane[3]}};
 
 		if (iterations == 1) {
 			return result;
-		}
-		else {
+		} else {
 			std::vector<Plane> result2;
 			for (auto& x : result) {
 				auto subplanes = subdivide(x, iterations - 1);
@@ -1872,18 +1882,16 @@ std::vector<Plane> subdivide(const Plane& plane, size_t iterations = 1)
 bool Render::renderStreamSpriteGL(TGLVert* array, int n) {
 	Applet* app = CAppContainer::getInstance()->app;
 	if (app->render->_gles->isInit) {
-		Plane p = { {
-			{(float)array[0].x, (float)array[0].y, (float)array[0].z, (float)array[0].s, (float)array[0].t},
-			{(float)array[1].x, (float)array[1].y, (float)array[1].z, (float)array[1].s, (float)array[1].t},
-			{(float)array[2].x, (float)array[2].y, (float)array[2].z, (float)array[2].s, (float)array[2].t},
-			{(float)array[3].x, (float)array[3].y, (float)array[3].z, (float)array[3].s, (float)array[3].t} } };
+		Plane p = {{{(float)array[0].x, (float)array[0].y, (float)array[0].z, (float)array[0].s, (float)array[0].t},
+		            {(float)array[1].x, (float)array[1].y, (float)array[1].z, (float)array[1].s, (float)array[1].t},
+		            {(float)array[2].x, (float)array[2].y, (float)array[2].z, (float)array[2].s, (float)array[2].t},
+		            {(float)array[3].x, (float)array[3].y, (float)array[3].z, (float)array[3].s, (float)array[3].t}}};
 
 		auto subd = subdivide(p, 3);
 
 		TGLVert quad[4];
 		int quadCnt = 0;
-		for (auto& plane : subd)
-		{
+		for (auto& plane : subd) {
 			for (auto& pos : plane) {
 				quad[quadCnt].x = (int)pos[0];
 				quad[quadCnt].y = (int)pos[1];
@@ -1927,21 +1935,18 @@ void Render::renderStreamSprite(int n) {
 			if (app->canvas->viewPitch < 0) {
 				n11 = 128;
 				n12 = 224;
-			}
-			else {
+			} else {
 				n11 = 176;
 				n12 = 320;
 			}
-		}
-		else {
+		} else {
 			n11 = 224;
 			n12 = 496;
 		}
 
 		n13 = -112;
 		n14 = 0;
-	}
-	else {
+	} else {
 		int sprite = app->game->entities[n3].getSprite();
 		mv[0].x = mv[1].x = this->mapSprites[this->S_X + sprite] << 4;
 		mv[0].y = mv[1].y = this->mapSprites[this->S_Y + sprite] << 4;
@@ -1964,7 +1969,7 @@ void Render::renderStreamSprite(int n) {
 	int n31 = (app->tinyGL->tHeight - app->tinyGL->imageBounds[3] << 10) / app->tinyGL->tHeight;
 	int n32 = (n28 << 10) / app->tinyGL->tHeight * 3;
 	int n33 = ((n27 / 2) << 4) * n7 / 65536;
-	int n34= ((n27 / 2) << 4) * n7 / 65536;
+	int n34 = ((n27 / 2) << 4) * n7 / 65536;
 
 	if (n33 < 0) {
 		n34 += 3;
@@ -1973,7 +1978,7 @@ void Render::renderStreamSprite(int n) {
 	int n35 = 0;
 	app->tinyGL->viewMtxMove(&mv[0], n12, n11 - (n34 / 4), (n35 / 4) + n13);
 	app->tinyGL->viewMtxMove(&mv[1], n12, n11 + (n34 / 4), n13);
-	app->tinyGL->viewMtxMove(&mv[2], 0,  (n33 * 2), (n35 * 2) + n14);
+	app->tinyGL->viewMtxMove(&mv[2], 0, (n33 * 2), (n35 * 2) + n14);
 	app->tinyGL->viewMtxMove(&mv[3], 0, -(n33 * 2), n14);
 	int n36 = n31 - (app->time * 3 & 0x3FF);
 	mv[3].s = mv[0].s = n29;
@@ -1989,7 +1994,7 @@ void Render::renderStreamSprite(int n) {
 
 void Render::renderSpriteObject(int n) {
 	Applet* app = CAppContainer::getInstance()->app;
-	//printf("renderSpriteObject %d\viewPitch", viewPitch);
+	// printf("renderSpriteObject %d\viewPitch", viewPitch);
 	unsigned int n2 = this->mapSpriteInfo[n];
 	if ((n2 & 0x10000) != 0x0) {
 		return;
@@ -2015,8 +2020,7 @@ void Render::renderSpriteObject(int n) {
 				return;
 			}
 			this->delayedSpriteBuffer[0] = -1;
-		}
-		else if ((n3 >= 239 && n3 <= 247) || (n3 >= 225 && n3 <= 231)) {
+		} else if ((n3 >= 239 && n3 <= 247) || (n3 >= 225 && n3 <= 231)) {
 			if (this->delayedSpriteBuffer[1] == -1) {
 				this->delayedSpriteBuffer[1] = n;
 				return;
@@ -2058,8 +2062,7 @@ void Render::renderSpriteObject(int n) {
 		entity = &app->game->entities[this->mapSprites[this->S_ENT + n]];
 		monster = entity->monster;
 		def = entity->def;
-	}
-	else {
+	} else {
 		entity = nullptr;
 		monster = nullptr;
 		def = nullptr;
@@ -2067,8 +2070,11 @@ void Render::renderSpriteObject(int n) {
 
 	if (entity != nullptr) {
 		if (monster != nullptr) {
-			if (!this->disableRenderActivate && app->game->activePropogators == 0 && app->game->animatingEffects == 0 && !(entity->info & 0x1050000) && !(monster->flags & Enums::MFLAG_NOACTIVATE) && !app->player->noclip && !app->game->disableAI) {
-				app->game->trace(app->canvas->viewX, app->canvas->viewY, app->canvas->viewZ, x, y, z >> 4, app->player->getPlayerEnt(), 5293, 2, true);
+			if (!this->disableRenderActivate && app->game->activePropogators == 0 && app->game->animatingEffects == 0 &&
+			    !(entity->info & 0x1050000) && !(monster->flags & Enums::MFLAG_NOACTIVATE) && !app->player->noclip &&
+			    !app->game->disableAI) {
+				app->game->trace(app->canvas->viewX, app->canvas->viewY, app->canvas->viewZ, x, y, z >> 4,
+				                 app->player->getPlayerEnt(), 5293, 2, true);
 				if (app->game->traceEntity == entity) {
 					app->game->activate(entity, true, true, true, false);
 				}
@@ -2079,12 +2085,10 @@ void Render::renderSpriteObject(int n) {
 			if (0x0 != (monsterEffects & 0x2)) {
 				n10 |= 0x20; // RENDER_FLAG_BLUESHIFT
 				renderMode = 0;
-			}
-			else if (0x0 != (monsterEffects & 0x8)) {
+			} else if (0x0 != (monsterEffects & 0x8)) {
 				n10 |= 0x80; // RENDER_FLAG_REDSHIFT
 				renderMode = 0;
-			}
-			else if (0x0 != (monsterEffects & 0x1)) {
+			} else if (0x0 != (monsterEffects & 0x1)) {
 				n10 |= 0x40; // RENDER_FLAG_GREENSHIFT
 				renderMode = 0;
 			}
@@ -2111,8 +2115,7 @@ void Render::renderSpriteObject(int n) {
 
 	if ((n2 & 0x400000) != 0x0) {
 		this->renderSprite(x, y, z, n3, n7, n2, renderMode, scaleFactor, n10);
-	}
-	else {
+	} else {
 		if (monster != nullptr) {
 			this->renderSpriteAnim(n, n7, x, y, z, n3, n2, renderMode, scaleFactor, n10);
 			return;
@@ -2121,8 +2124,7 @@ void Render::renderSpriteObject(int n) {
 			this->portalInView = true;
 			if (this->checkPortalVisibility(x, y, z)) {
 				n7 = 1;
-			}
-			else  {
+			} else {
 				n7 = 0;
 				int n12 = app->time / 1536 & 0x3;
 				n2 = (n2 ^ (n12 & 0x1) << 17 ^ (n12 & 0x2) >> 1 << 18);
@@ -2131,13 +2133,12 @@ void Render::renderSpriteObject(int n) {
 			if ((n2 & 0xF000000) == 0x0) {
 				z += 288;
 			}
-		}
-		else if (n3 == Enums::TILENUM_OBJ_TORCHIERE) {
+		} else if (n3 == Enums::TILENUM_OBJ_TORCHIERE) {
 			int zheight = ((10 * scaleFactor) / 65536) << 4;
 			n2 ^= (n7 & 0x1) << 17;
-			this->renderSprite(x, y, z + zheight, Enums::TILENUM_SFX_LIGHTGLOW1, 0, n2, Render::RENDER_ADD50, scaleFactor, n10);
-		}
-		else {
+			this->renderSprite(x, y, z + zheight, Enums::TILENUM_SFX_LIGHTGLOW1, 0, n2, Render::RENDER_ADD50,
+			                   scaleFactor, n10);
+		} else {
 			if (n3 == Enums::TILENUM_WATER_SPOUT) {
 				int n15 = app->time / 128;
 				this->renderSprite(x, y, z, n3, (n15 & 0x1), n2, renderMode, scaleFactor, n10);
@@ -2167,53 +2168,47 @@ void Render::renderSpriteObject(int n) {
 				if (app->canvas->legShotTime) {
 					if (app->canvas->legShotTime > app->time) {
 						this->renderSprite(x, y, z, 149, 0, n19, renderMode, scaleFactor, n10);
-					}
-					else {
+					} else {
 						app->canvas->legShotTime = 0;
 					}
-				}
-				else {
+				} else {
 					this->renderSprite(x, y, z, 149, 5, n19, renderMode, scaleFactor, n10);
 				}
 
 				if (app->canvas->bodyShotTime) {
 					if (app->canvas->bodyShotTime > app->time) {
 						this->renderSprite(x, y, z, 149, 2, n19, renderMode, scaleFactor, n10);
-					}
-					else {
+					} else {
 						app->canvas->bodyShotTime = 0;
 					}
-				}
-				else {
+				} else {
 					this->renderSprite(x, y, z, 149, 6, n19, renderMode, scaleFactor, n10);
 				}
 
 				if (app->canvas->headShotTime) {
 					if (app->canvas->headShotTime > app->time) {
 						this->renderSprite(x, y, z, 149, 3, n19, renderMode, scaleFactor, n10);
-					}
-					else {
+					} else {
 						app->canvas->headShotTime = 0;
 					}
-				}
-				else {
+				} else {
 					this->renderSprite(x, y, z, 149, 7, n19, renderMode, scaleFactor, n10);
 				}
 
 				this->renderSprite(x, y, z, n3, app->canvas->isZoomedIn ? 1 : 4, n19, renderMode, scaleFactor, n10);
 				return;
 			}
-			if (n3 == Enums::TILENUM_OBJ_CORPSE || n3 == Enums::TILENUM_OBJ_OTHER_CORPSE || n3 == Enums::TILENUM_OBJ_SCIENTIST_CORPSE) {
+			if (n3 == Enums::TILENUM_OBJ_CORPSE || n3 == Enums::TILENUM_OBJ_OTHER_CORPSE ||
+			    n3 == Enums::TILENUM_OBJ_SCIENTIST_CORPSE) {
 				if (entity->param == 0 && app->canvas->state != Canvas::ST_CAMERA && !entity->hasEmptyLootSet()) {
 					this->renderSprite(x, y, z, n3, n7, n2, 0, 18 * scaleFactor >> 4, 512);
 				}
-			}
-			else if ((n3 == Enums::TILENUM_MONSTER_SENTRY_BOT || n3 == Enums::TILENUM_MONSTER_RED_SENTRY_BOT) && entity != nullptr && entity->isDroppedEntity()) {
+			} else if ((n3 == Enums::TILENUM_MONSTER_SENTRY_BOT || n3 == Enums::TILENUM_MONSTER_RED_SENTRY_BOT) &&
+			           entity != nullptr && entity->isDroppedEntity()) {
 				if (entity->param == 0 && app->canvas->state != Canvas::ST_CAMERA) {
 					this->renderSprite(x, y, z, n3, n7, n2, 0, (18 * scaleFactor) >> 4, 512);
 				}
-			}
-			else if (n3 == Enums::TILENUM_TREADMILL_SIDE || n3 == Enums::TILENUM_SENTINEL_SPIKES_DUMMY) {
+			} else if (n3 == Enums::TILENUM_TREADMILL_SIDE || n3 == Enums::TILENUM_SENTINEL_SPIKES_DUMMY) {
 				return;
 			}
 		}
@@ -2246,11 +2241,12 @@ void Render::renderBSP() {
 		this->viewSprites = -1;
 		this->addNodeSprites(this->nodeIdxs[i]);
 		if (!this->skipSprites) {
-			for (short viewSprites = this->viewSprites; viewSprites != -1; viewSprites = this->mapSprites[this->S_VIEWNEXT + viewSprites]) {
+			for (short viewSprites = this->viewSprites; viewSprites != -1;
+			     viewSprites = this->mapSprites[this->S_VIEWNEXT + viewSprites]) {
 				++this->spriteCount;
 				this->renderSpriteObject(viewSprites);
 			}
-			//printf("this->spriteCount %d\viewPitch", this->spriteCount);
+			// printf("this->spriteCount %d\viewPitch", this->spriteCount);
 		}
 	}
 	for (int j = 0; j <= 1; j++) {
@@ -2303,8 +2299,7 @@ void Render::startFogLerp(int n, int n2, int fogLerpTime) {
 	if (fogLerpTime != 0) {
 		this->fogLerpStart = app->time;
 		this->fogLerpTime = fogLerpTime;
-	}
-	else {
+	} else {
 		this->fogLerpStart = 0;
 		this->fogLerpTime = 0;
 		app->tinyGL->fogMin = this->destFogMin;
@@ -2319,7 +2314,9 @@ void Render::buildFogTable() {
 	uint16_t* fogTableDest = this->fogTableDest;
 	for (int i = 0; i < this->fogTableBaseSize; i++) {
 		uint16_t dat = fogTableBase[i];
-		fogTableDest[i] = (((fogTableFrac >> 2) * ((dat & 0x07e0) >> 6)) & 0x07e0 | (((fogTableFrac >> 3) * (dat & 0xF81F)) >> 5) & 0xF81F) + fogTableColor;
+		fogTableDest[i] = (((fogTableFrac >> 2) * ((dat & 0x07e0) >> 6)) & 0x07e0 |
+		                   (((fogTableFrac >> 3) * (dat & 0xF81F)) >> 5) & 0xF81F) +
+		                  fogTableColor;
 	}
 }
 
@@ -2355,7 +2352,8 @@ void Render::buildFogTables(int fogColor) {
 	int n = (fogColor & 0xFF000000) >> 24 & 0xFF;
 	for (int i = 1; i < 16; ++i) {
 		int n2 = (i << 8) / 16 * n >> 8;
-		this->fogTableColor = Render::upSamplePixel((((app->tinyGL->fogColor & 0xFF00FF00) >> 8) * n2 & 0xFF00FF00) | ((app->tinyGL->fogColor & 0xFF00FF) * n2 >> 8 & 0xFF00FF));
+		this->fogTableColor = Render::upSamplePixel((((app->tinyGL->fogColor & 0xFF00FF00) >> 8) * n2 & 0xFF00FF00) |
+		                                            ((app->tinyGL->fogColor & 0xFF00FF) * n2 >> 8 & 0xFF00FF));
 		this->fogTableFrac = 256 - n2;
 		for (int j = 0; j < 1024; ++j) {
 			if (this->mediaPalettes[j][0] != nullptr) {
@@ -2385,30 +2383,30 @@ void Render::setupPalette(uint16_t* spanPalette, int renderMode, int renderFlags
 	if (renderFlags & 0x4) { // RENDER_FLAG_GREYSHIFT
 		for (int i = 0; i < app->tinyGL->paletteBaseSize; ++i) {
 			uint16_t n2 = spanPalette[i];
-			//int n3 = ((n2 & 0xFF) + (n2 >> 8 & 0xFF) + (n2 >> 16 & 0xFF)) / 3;
-			//array[i] = (n3 << 16 | n3 << 8 | n3);
+			// int n3 = ((n2 & 0xFF) + (n2 >> 8 & 0xFF) + (n2 >> 16 & 0xFF)) / 3;
+			// array[i] = (n3 << 16 | n3 << 8 | n3);
 
-			//int64_t v10 = 0x55555556 * (int64_t)(LOBYTE(*(uint16_t*)&spanPalette[i]) + HIBYTE(*(uint16_t*)&spanPalette[i]));
-			//array[i] = (uint16_t)((int)v10 << 8) | (uint16_t)v10;
+			// int64_t v10 = 0x55555556 * (int64_t)(LOBYTE(*(uint16_t*)&spanPalette[i]) +
+			// HIBYTE(*(uint16_t*)&spanPalette[i])); array[i] = (uint16_t)((int)v10 << 8) | (uint16_t)v10;
 
-			uint16_t grayColor = (((n2 & 0xf800) >> 10) + ((n2 >> 5) & 0x3f) + ((n2 & 0x1f) << 1)) / 3; //RGB
+			uint16_t grayColor = (((n2 & 0xf800) >> 10) + ((n2 >> 5) & 0x3f) + ((n2 & 0x1f) << 1)) / 3; // RGB
 			array[i] = ((grayColor >> 1) << 11) | (grayColor << 5) | (grayColor >> 1);
 		}
 		app->tinyGL->paletteBase = &app->tinyGL->scratchPalette;
 		app->tinyGL->spanPalette = array;
-	}
-	else if ((renderFlags & 0x1E8) != 0x0) { //(RENDER_FLAG_WHITESHIFT | RENDER_FLAG_BLUESHIFT | RENDER_FLAG_GREENSHIFT | RENDER_FLAG_REDSHIFT | RENDER_FLAG_BRIGHTREDSHIFT)
+	} else if ((renderFlags & 0x1E8) !=
+	           0x0) { //(RENDER_FLAG_WHITESHIFT | RENDER_FLAG_BLUESHIFT | RENDER_FLAG_GREENSHIFT | RENDER_FLAG_REDSHIFT
+		              //| RENDER_FLAG_BRIGHTREDSHIFT)
 		int n4 = 0;
 		switch (renderFlags & 0x1E8) {
-			case 8: { // RENDER_FLAG_WHITESHIFT
-					n4 = Render::RGB888ToRGB565(64, 64, 64); // 16904;
+			case 8: {                                    // RENDER_FLAG_WHITESHIFT
+				n4 = Render::RGB888ToRGB565(64, 64, 64); // 16904;
 				break;
 			}
 			case 32: { // RENDER_FLAG_BLUESHIFT
 				if (isMultiply) {
 					n4 = Render::RGB888ToRGB565(255, 255, 0); // color inverted 0x0000FF
-				}
-				else {
+				} else {
 					n4 = Render::RGB888ToRGB565(0, 0, 64); // 8;
 				}
 				break;
@@ -2416,8 +2414,7 @@ void Render::setupPalette(uint16_t* spanPalette, int renderMode, int renderFlags
 			case 64: { // RENDER_FLAG_GREENSHIFT
 				if (isMultiply) {
 					n4 = Render::RGB888ToRGB565(255, 0, 255); // color inverted 0x00FF00
-				}
-				else {
+				} else {
 					n4 = Render::RGB888ToRGB565(0, 64, 0); // 512;
 				}
 				break;
@@ -2425,13 +2422,12 @@ void Render::setupPalette(uint16_t* spanPalette, int renderMode, int renderFlags
 			case 128: { // RENDER_FLAG_REDSHIFT
 				if (isMultiply) {
 					n4 = Render::RGB888ToRGB565(0, 255, 255); // color inverted 0xFF0000
-				}
-				else {
+				} else {
 					n4 = Render::RGB888ToRGB565(64, 0, 0); // 16384;
 				}
 				break;
 			}
-			case 256: { // RENDER_FLAG_BRIGHTREDSHIFT
+			case 256: {                                 // RENDER_FLAG_BRIGHTREDSHIFT
 				n4 = Render::RGB888ToRGB565(128, 0, 0); // 32768; // Player Only
 				break;
 			}
@@ -2442,22 +2438,26 @@ void Render::setupPalette(uint16_t* spanPalette, int renderMode, int renderFlags
 				n5 = (spanPalette[j] | 0x10821) - (n4 & 0xFFFFF7DE);
 				n6 = n5 & 0x10820;
 				n7 = (n5 ^ n6) & n6 - (n6 >> 4);
-			}
-			else {
+			} else {
 				n5 = (spanPalette[j] & 0xF7DE) + (n4 & 0xffff);
 				n6 = (n5 & 0x10820);
 				n7 = (uint16_t)n5 ^ (uint16_t)n6;
-				if (n6 & 0x1f000) { n7 |= 0xF800; }
-				if (n6 & 0xfc0) { n7 |= 0x7E0; }
-				if (n6 & 0x3e) { n7 |= 0x1F; }
+				if (n6 & 0x1f000) {
+					n7 |= 0xF800;
+				}
+				if (n6 & 0xfc0) {
+					n7 |= 0x7E0;
+				}
+				if (n6 & 0x3e) {
+					n7 |= 0x1F;
+				}
 			}
-			
+
 			array[j] = n7;
 		}
 		app->tinyGL->paletteBase = &app->tinyGL->scratchPalette;
 		app->tinyGL->spanPalette = array;
-	}
-	else if ((renderFlags & 0x200) != 0x0) { // RENDER_FLAG_PULSATE
+	} else if ((renderFlags & 0x200) != 0x0) { // RENDER_FLAG_PULSATE
 		int n7 = app->time >> 2 & 0x1FF;
 		if ((n7 & 0x100) != 0x0) {
 			n7 = 511 - n7;
@@ -2469,8 +2469,7 @@ void Render::setupPalette(uint16_t* spanPalette, int renderMode, int renderFlags
 		}
 		app->tinyGL->paletteBase = &app->tinyGL->scratchPalette;
 		app->tinyGL->spanPalette = array;
-	}
-	else if (renderMode != 0) {
+	} else if (renderMode != 0) {
 		app->tinyGL->paletteBase = &app->tinyGL->scratchPalette;
 		app->tinyGL->spanPalette = array;
 		int n9 = 0;
@@ -2509,12 +2508,12 @@ void Render::setupPalette(uint16_t* spanPalette, int renderMode, int renderFlags
 			}
 		}
 		for (int n11 = 0; n11 < app->tinyGL->paletteBaseSize; ++n11) {
-			array[n11] = (spanPalette[n11] & n9) >> n10; 
+			array[n11] = (spanPalette[n11] & n9) >> n10;
 		}
 	}
 }
 
-int (*Render::getImageFrameBounds(int n, int n2, int n3, int n4))[4]{
+int (*Render::getImageFrameBounds(int n, int n2, int n3, int n4))[4] {
 	short n5 = this->mediaMappings[n];
 	this->temp[0] = n2 + n5 << 2;
 	this->temp[1] = n3 + n5 << 2;
@@ -2539,8 +2538,7 @@ void Render::setupTexture(int n, int n2, int renderMode, int renderFlags) {
 
 	if ((app->canvas->state == Canvas::ST_AUTOMAP) || (this->renderMode & 0x10) == 0x0) {
 		renderMode = 10;
-	}
-	else if ((this->renderMode & 0x20)) {
+	} else if ((this->renderMode & 0x20)) {
 		renderMode = 9;
 	}
 	if (this->_gles->isInit) { // New
@@ -2549,8 +2547,7 @@ void Render::setupTexture(int n, int n2, int renderMode, int renderFlags) {
 
 	if (n < 257 && n != 175 && n != 162 && n != 129 && n != 173 && n != 184) {
 		app->tinyGL->span = &this->_spanTrans[renderMode];
-	}
-	else {
+	} else {
 		app->tinyGL->span = &this->_spanTexture[renderMode];
 	}
 
@@ -2560,24 +2557,23 @@ void Render::setupTexture(int n, int n2, int renderMode, int renderFlags) {
 		app->tinyGL->textureBase = this->skyMapTexels;
 		app->tinyGL->paletteBase = this->skyMapPalette;
 		app->tinyGL->textureBaseSize = 256 * 256; // new
-		app->tinyGL->paletteBaseSize = 256; // new
-		app->tinyGL->mediaID = -1; // new
+		app->tinyGL->paletteBaseSize = 256;       // new
+		app->tinyGL->mediaID = -1;                // new
 		this->isSkyMap = true;
 		n5 = 8;
 		n6 = 8;
 
-	}
-	else {
+	} else {
 		app->tinyGL->textureBase = this->mediaTexels[this->mediaTexelSizes[n4] & 0x3FFF];
 		app->tinyGL->paletteBase = this->mediaPalettes[this->mediaPalColors[n4] & 0x3FFF];
-		app->tinyGL->textureBaseSize = this->mediaTexelSizes2[this->mediaTexelSizes[n4] & 0x3FFF]; // [GEC] new
+		app->tinyGL->textureBaseSize = this->mediaTexelSizes2[this->mediaTexelSizes[n4] & 0x3FFF];  // [GEC] new
 		app->tinyGL->paletteBaseSize = this->mediaPalettesSizes[this->mediaPalColors[n4] & 0x3FFF]; // [GEC] new
-		app->tinyGL->mediaID = n4; // new
+		app->tinyGL->mediaID = n4;                                                                  // new
 
 		// [GEC] new
 		app->tinyGL->paletteTransparentMask = -1;
 		for (int i = 0; i < app->tinyGL->paletteBaseSize; i++) {
-			if(app->tinyGL->paletteBase[0][i] == 0xF81F) {
+			if (app->tinyGL->paletteBase[0][i] == 0xF81F) {
 				app->tinyGL->paletteTransparentMask = i;
 			}
 		}
@@ -2603,15 +2599,15 @@ void Render::drawSkyMap(int n2) {
 	Applet* app = CAppContainer::getInstance()->app;
 
 	uint8_t* p_skyMapTexels; // r4
-	uint16_t* FogPalette; // r0
-	int16_t v7; // r2
-	int16_t v9; // r12
-	int v11; // lr
-	int v12; // r5
-	int v13; // r12
-	uint16_t* pixels; // r1
-	int v15; // r3
-	int v16; // r3
+	uint16_t* FogPalette;    // r0
+	int16_t v7;              // r2
+	int16_t v9;              // r12
+	int v11;                 // lr
+	int v12;                 // r5
+	int v13;                 // r12
+	uint16_t* pixels;        // r1
+	int v15;                 // r3
+	int v16;                 // r3
 
 	p_skyMapTexels = this->skyMapTexels;
 	app->tinyGL->paletteBase = this->skyMapPalette;
@@ -2693,11 +2689,11 @@ void Render::drawSkyMap(int n2) {
 void Render::render(int viewX, int viewY, int viewZ, int viewAngle, int viewPitch, int viewRoll, int viewFov) {
 	Applet* app = CAppContainer::getInstance()->app;
 
-	//printf("Render::render\n");
+	// printf("Render::render\n");
 
 	// Original BREW version
-	//this->skyMapX = ((1023 - viewAngle) / 4) << 3;
-	//this->skyMapY = (((256 - this->screenHeight) / 2) << 3) + (((1023 - viewPitch) / 2) << 3);
+	// this->skyMapX = ((1023 - viewAngle) / 4) << 3;
+	// this->skyMapY = (((256 - this->screenHeight) / 2) << 3) + (((1023 - viewPitch) / 2) << 3);
 
 	// [GEC] It is adjusted like this to be consistent with the IOS version
 	this->skyMapX = ((1023 - (viewAngle & 0x3FF))) << 3;
@@ -2714,7 +2710,8 @@ void Render::render(int viewX, int viewY, int viewZ, int viewAngle, int viewPitc
 		this->dizzyTime = app->time;
 	}
 	if (this->destDizzy != this->baseDizzy && this->dizzyTime + 2048 > app->time) {
-		max = this->baseDizzy + ((this->destDizzy - this->baseDizzy) * ((app->time - this->dizzyTime << 16) / 2048) >> 16);
+		max = this->baseDizzy +
+		      ((this->destDizzy - this->baseDizzy) * ((app->time - this->dizzyTime << 16) / 2048) >> 16);
 	}
 	int n7 = (max << 8) / 30;
 	if (app->canvas->state == Canvas::ST_CAMERA || app->menuSystem->menu == Menus::MENU_LEVEL_STATS) {
@@ -2722,8 +2719,7 @@ void Render::render(int viewX, int viewY, int viewZ, int viewAngle, int viewPitc
 	}
 	if (app->game->scriptStateVars[6] != 0) {
 		n6 = 8;
-	}
-	else if (n7 != 0) {
+	} else if (n7 != 0) {
 		n6 = 8 * n7 >> 8;
 	}
 	if (n6 != 0) {
@@ -2771,7 +2767,7 @@ void Render::render(int viewX, int viewY, int viewZ, int viewAngle, int viewPitc
 		if (curTarget && ((curTarget->def->eType == 2) || (curTarget->def->eType == 3))) {
 			int sprite = curTarget->getSprite();
 			viewX = (-(32 * this->viewCos) >> 12) + (app->render->mapSprites[this->S_X + sprite] << 4);
-			viewY = ( (32 * this->viewSin) >> 12) + (app->render->mapSprites[this->S_Y + sprite] << 4);
+			viewY = ((32 * this->viewSin) >> 12) + (app->render->mapSprites[this->S_Y + sprite] << 4);
 			viewZ = (4 + app->render->mapSprites[sprite + this->S_Z + sprite]) << 4;
 			viewPitch = 0;
 		}
@@ -2790,8 +2786,7 @@ void Render::render(int viewX, int viewY, int viewZ, int viewAngle, int viewPitc
 			if (app->tinyGL->fogRange == 0) {
 				app->tinyGL->fogRange = 1;
 			}
-		}
-		else {
+		} else {
 			this->fogLerpTime = 0;
 			app->tinyGL->fogMin = this->destFogMin;
 			app->tinyGL->fogRange = this->destFogRange;
@@ -2801,19 +2796,17 @@ void Render::render(int viewX, int viewY, int viewZ, int viewAngle, int viewPitc
 		app->tinyGL->columnScale[i] = TinyGL::COLUMN_SCALE_INIT;
 	}
 
-	//app->game->scriptStateVars[5] = 1; // IOS
+	// app->game->scriptStateVars[5] = 1; // IOS
 
 	this->clearColorBuffer = app->upTimeMs;
 	if (app->canvas->state != Canvas::ST_AUTOMAP) {
 		if ((this->renderMode & 0x20) != 0x0) {
 			app->tinyGL->clearColorBuffer(0xFFFF00FF);
-		}
-		else if (this->skyMapTexels != nullptr && app->game->scriptStateVars[5] != 0 && !(this->renderMode & 0x20)) {
+		} else if (this->skyMapTexels != nullptr && app->game->scriptStateVars[5] != 0 && !(this->renderMode & 0x20)) {
 			if (!this->_gles->DrawSkyMap()) {
 				this->drawSkyMap((this->skyMapX >> 3) + ((this->skyMapY >> 3) << 8));
 			}
-		}
-		else {
+		} else {
 			int fogColor = 0;
 			if (app->tinyGL->fogRange > 1) {
 				fogColor = app->tinyGL->fogColor;
@@ -2847,10 +2840,11 @@ void Render::unlinkSprite(int n, int n2, int n3) {
 		short n4 = this->mapSprites[this->S_NODE + n];
 		if (this->nodeSprites[n4] == n) {
 			this->nodeSprites[n4] = this->mapSprites[this->S_NODENEXT + n];
-		}
-		else {
+		} else {
 			short n5;
-			for (n5 = this->nodeSprites[n4]; n5 != -1 && this->mapSprites[this->S_NODENEXT + n5] != n; n5 = this->mapSprites[this->S_NODENEXT + n5]) {}
+			for (n5 = this->nodeSprites[n4]; n5 != -1 && this->mapSprites[this->S_NODENEXT + n5] != n;
+			     n5 = this->mapSprites[this->S_NODENEXT + n5]) {
+			}
 			if (n5 != -1) {
 				this->mapSprites[this->S_NODENEXT + n5] = this->mapSprites[this->S_NODENEXT + n];
 			}
@@ -2859,7 +2853,8 @@ void Render::unlinkSprite(int n, int n2, int n3) {
 }
 
 void Render::relinkSprite(int n) {
-	relinkSprite(n, this->mapSprites[this->S_X + n] << 4, this->mapSprites[this->S_Y + n] << 4, this->mapSprites[this->S_Z + n] << 4);
+	relinkSprite(n, this->mapSprites[this->S_X + n] << 4, this->mapSprites[this->S_Y + n] << 4,
+	             this->mapSprites[this->S_Z + n] << 4);
 }
 
 void Render::relinkSprite(int n, int n2, int n3, int n4) {
@@ -2867,10 +2862,11 @@ void Render::relinkSprite(int n, int n2, int n3, int n4) {
 		short n5 = this->mapSprites[this->S_NODE + n];
 		if (this->nodeSprites[n5] == n) {
 			this->nodeSprites[n5] = this->mapSprites[this->S_NODENEXT + n];
-		}
-		else {
+		} else {
 			short n6;
-			for (n6 = this->nodeSprites[n5]; n6 != -1 && this->mapSprites[this->S_NODENEXT + n6] != n; n6 = this->mapSprites[this->S_NODENEXT + n6]) {}
+			for (n6 = this->nodeSprites[n5]; n6 != -1 && this->mapSprites[this->S_NODENEXT + n6] != n;
+			     n6 = this->mapSprites[this->S_NODENEXT + n6]) {
+			}
 			if (n6 != -1) {
 				this->mapSprites[this->S_NODENEXT + n6] = this->mapSprites[this->S_NODENEXT + n];
 			}
@@ -2898,19 +2894,16 @@ short Render::getNodeForPoint(int n, int n2, int n3, int n4) {
 		if (nodeClassifyPoint == 0 && b) {
 			if ((n4 & 0x9000000) != 0x0) {
 				n5 = this->nodeChildOffset1[n5];
-			}
-			else {
+			} else {
 				n5 = this->nodeChildOffset2[n5];
 			}
-		}
-		else {
+		} else {
 			if (!b2 && nodeClassifyPoint > -128 && nodeClassifyPoint < 128) {
 				return n5;
 			}
 			if (nodeClassifyPoint > 0) {
 				n5 = this->nodeChildOffset1[n5];
-			}
-			else {
+			} else {
 				n5 = this->nodeChildOffset2[n5];
 			}
 		}
@@ -2956,26 +2949,19 @@ void Render::postProcessSprites() {
 		}
 		if (n3 == 479) {
 			mapSprites[this->S_RENDERMODE + i] = 0;
-		}
-		else if (n3 == 208 || n3 == 234 || n3 == 130 || n3 == 242) {
+		} else if (n3 == 208 || n3 == 234 || n3 == 130 || n3 == 242) {
 			mapSprites[this->S_RENDERMODE + i] = 3;
-		}
-		else if (n3 == 178) {
+		} else if (n3 == 178) {
 			mapSprites[this->S_RENDERMODE + i] = 3;
-		}
-		else if (n3 == 236) {
+		} else if (n3 == 236) {
 			mapSprites[this->S_RENDERMODE + i] = 3;
-		}
-		else if (n3 == 212) {
+		} else if (n3 == 212) {
 			mapSprites[this->S_RENDERMODE + i] = 7;
-		}
-		else if (n3 == 161) {
+		} else if (n3 == 161) {
 			mapSprites[this->S_RENDERMODE + i] = 2;
-		}
-		else if (n3 == 244) {
+		} else if (n3 == 244) {
 			mapSprites[this->S_RENDERMODE + i] = 4;
-		}
-		else {
+		} else {
 			mapSprites[this->S_RENDERMODE + i] = 0;
 		}
 		this->relinkSprite(i);
@@ -3022,7 +3008,7 @@ void Render::startFade(int fadeDuration, int fadeFlags) {
 	this->fadeTime = app->upTimeMs;
 	this->fadeDuration = fadeDuration;
 	this->fadeFlags = fadeFlags;
-	//printf("startFade\n");
+	// printf("startFade\n");
 }
 
 void Render::endFade() {
@@ -3059,7 +3045,7 @@ bool Render::fadeScene(Graphics* graphics) {
 			return true;
 		}
 		if ((this->fadeFlags & Render::FADE_FLAG_FADEOUT) != 0x0) {
-			//this->fadeAll(255); // J2ME
+			// this->fadeAll(255); // J2ME
 			graphics->fade(fadeRect, 0, 0x00000000);
 			return true;
 		}
@@ -3070,7 +3056,7 @@ bool Render::fadeScene(Graphics* graphics) {
 	}
 	graphics->fade(fadeRect, alpha, 0x00000000);
 
-	//this->fadeAll(alpha);  // J2ME
+	// this->fadeAll(alpha);  // J2ME
 	return true;
 }
 
@@ -3079,7 +3065,7 @@ void Render::postProcessView(Graphics* graphics) {
 	static int y = 0;
 	Applet* app = CAppContainer::getInstance()->app;
 
-	//final int[] pixels = TinyGL.pixels;
+	// final int[] pixels = TinyGL.pixels;
 	int screenVScrollOffset = 0;
 	if (this->vScrollVelocity != 0) {
 		int screenVScrollOffset2 = this->screenVScrollOffset;
@@ -3088,15 +3074,14 @@ void Render::postProcessView(Graphics* graphics) {
 			if (app->tinyGL->viewportHeight - screenVScrollOffset2 <= 15 || screenVScrollOffset2 <= 15) {
 				screenVScrollOffset2 = 0;
 				this->vScrollVelocity = 0;
-			}
-			else {
+			} else {
 				this->vScrollVelocity = std::max(this->vScrollVelocity + n, -30);
 			}
-		}
-		else {
+		} else {
 			this->vScrollVelocity += n;
 		}
-		screenVScrollOffset = (screenVScrollOffset2 + this->vScrollVelocity + app->tinyGL->viewportHeight) % app->tinyGL->viewportHeight;
+		screenVScrollOffset =
+		    (screenVScrollOffset2 + this->vScrollVelocity + app->tinyGL->viewportHeight) % app->tinyGL->viewportHeight;
 	}
 	this->lastScrollChangeTime = app->time;
 	this->screenVScrollOffset = screenVScrollOffset;
@@ -3105,27 +3090,24 @@ void Render::postProcessView(Graphics* graphics) {
 	if (this->brightenPostProcess) {
 		if (this->brightenPPMaxReachedTime != 0 && app->time > this->brightenPPMaxReachedTime + 500 + 500) {
 			app->hud->stopBrightenScreen();
-		}
-		else {
+		} else {
 			int n2;
 			if (this->brightenPPMaxReachedTime == 0) {
 				n2 = (app->time - this->brightenPostProcessBeginTime >> 4 & 0x7F) + this->brightnessInitialBoost;
 				if (n2 >= this->maxLocalBrightness) {
 					this->brightenPPMaxReachedTime = app->time;
 				}
-			}
-			else if (app->time < this->brightenPPMaxReachedTime + 500) {
+			} else if (app->time < this->brightenPPMaxReachedTime + 500) {
 				n2 = this->maxLocalBrightness;
-			}
-			else {
-				n2 = std::min(this->brightenPPMaxReachedTime + 500 + 500 - app->time >> 4 & 0x7F, this->maxLocalBrightness);
+			} else {
+				n2 = std::min(this->brightenPPMaxReachedTime + 500 + 500 - app->time >> 4 & 0x7F,
+				              this->maxLocalBrightness);
 			}
 			max = std::max((n2 * n2 << 10) / 127 >> 5, 32);
 		}
 	}
 
-	if (app->player->isFamiliar)
-	{
+	if (app->player->isFamiliar) {
 		if (this->brightenPostProcess) {
 			graphics->FMGL_fillRect(0, 0, 480, 320, 1.0, 1.0, 1.0, (float)max / 2226.0);
 		}
@@ -3133,13 +3115,12 @@ void Render::postProcessView(Graphics* graphics) {
 		y = (y + 1) % 30;
 		float alpha = sin(update) * 0.0500000007 + 0.349999994;
 		if ((uint16_t)(app->player->familiarType - 1) > 1u) {
-			graphics->FMGL_fillRect(0, 0, 480, 256/*320*/, 1.0, 0.0, 0.0, alpha);
-		}
-		else {
-			graphics->FMGL_fillRect(0, 0, 480, 256/*320*/, 0.0, 1.0, 0.0, alpha);
+			graphics->FMGL_fillRect(0, 0, 480, 256 /*320*/, 1.0, 0.0, 0.0, alpha);
+		} else {
+			graphics->FMGL_fillRect(0, 0, 480, 256 /*320*/, 0.0, 1.0, 0.0, alpha);
 		}
 		for (int i = 0; i < 256 /*300*/; i += 10) {
-			graphics->FMGL_fillRect( 0, i + (y / 3), 480, 5, 0.0, 0.0, 0.0, 0.15);
+			graphics->FMGL_fillRect(0, i + (y / 3), 480, 5, 0.0, 0.0, 0.0, 0.15);
 		}
 	}
 
@@ -3202,9 +3183,9 @@ bool Render::checkPortalVisibility(int x, int y, int z) {
 			return false;
 		}
 		return true;
-	}
-	else {
-		app->game->trace(app->canvas->viewX, app->canvas->viewY, app->canvas->viewZ, x, y, z >> 4, app->player->getPlayerEnt(), 5293, 25, true);
+	} else {
+		app->game->trace(app->canvas->viewX, app->canvas->viewY, app->canvas->viewZ, x, y, z >> 4,
+		                 app->player->getPlayerEnt(), 5293, 25, true);
 		if (app->game->traceFracs[0] != 0x3FFF) {
 			this->portalScripted = false;
 			this->portalState = Render::PORTAL_DNE;
@@ -3226,7 +3207,8 @@ bool Render::checkPortalVisibility(int x, int y, int z) {
 		tglVert3->z = tglVert->z;
 		TGLVert* transform3DVerts = app->tinyGL->transform3DVerts(app->tinyGL->mv, 3);
 		int tz = transform3DVerts[0].z;
-		if (transform3DVerts[0].w + transform3DVerts[0].z < 0 || transform3DVerts[1].w + transform3DVerts[1].z < 0 || transform3DVerts[2].w + transform3DVerts[2].z < 0) {
+		if (transform3DVerts[0].w + transform3DVerts[0].z < 0 || transform3DVerts[1].w + transform3DVerts[1].z < 0 ||
+		    transform3DVerts[2].w + transform3DVerts[2].z < 0) {
 			this->portalScripted = false;
 			this->portalState = Render::PORTAL_DNE;
 			return false;
@@ -3257,7 +3239,6 @@ void Render::renderPortal() {
 	static float angle = 0.f;
 	Applet* app = CAppContainer::getInstance()->app;
 
-	
 	if (this->portalState == Render::PORTAL_DNE) {
 		this->previousPortalState = Render::PORTAL_DNE;
 		return;
@@ -3267,8 +3248,8 @@ void Render::renderPortal() {
 			this->portalSpinTime = app->time + 500;
 			this->previousPortalState = Render::PORTAL_SPINNING_UP;
 		}
-	}
-	else if (this->portalState == Render::PORTAL_SPINNING_DOWN && this->previousPortalState != Render::PORTAL_SPINNING_DOWN) {
+	} else if (this->portalState == Render::PORTAL_SPINNING_DOWN &&
+	           this->previousPortalState != Render::PORTAL_SPINNING_DOWN) {
 		this->portalSpinTime = app->time + 500;
 		this->previousPortalState = Render::PORTAL_SPINNING_DOWN;
 	}
@@ -3282,11 +3263,9 @@ void Render::renderPortal() {
 			if (this->portalState == Render::PORTAL_SPINNING_UP) {
 				this->portalState = Render::PORTAL_SPINNING;
 			}
-		}
-		else if (this->portalState == Render::PORTAL_SPINNING_UP) {
+		} else if (this->portalState == Render::PORTAL_SPINNING_UP) {
 			this->portalScale = (this->portalScale * (500 - n2)) / 500;
-		}
-		else {
+		} else {
 			this->portalScale = (this->portalScale * n2) / 500;
 		}
 	}
@@ -3308,21 +3287,20 @@ void Render::renderPortal() {
 		float sinAng = sinf((float)((float)(angle * 5.0f) * 3.14f) / 360.0f);
 		float scale = pScale * (float)((float)(sinAng * 0.1f) + 1.0f);
 
-		this->_gles->DrawPortalTexture(this->imgPortal, 0, 0, imgPortal->width, imgPortal->height,
-			(float)((float)this->portalCX + (float)((float)(scale * (float)imgPortal->width) * -0.5f)),
-			(float)((float)this->portalCY + (float)((float)(scale * (float)imgPortal->height) * -0.5f)),
-			scale,
-			angle,
-			0);
+		this->_gles->DrawPortalTexture(
+		    this->imgPortal, 0, 0, imgPortal->width, imgPortal->height,
+		    (float)((float)this->portalCX + (float)((float)(scale * (float)imgPortal->width) * -0.5f)),
+		    (float)((float)this->portalCY + (float)((float)(scale * (float)imgPortal->height) * -0.5f)), scale, angle,
+		    0);
 
-		this->_gles->DrawPortalTexture(this->imgPortal, 0, 0, imgPortal->width, imgPortal->height,
-			(float)((float)this->portalCX + (float)((float)((float)((float)(pScale + pScale) - scale) * (float)imgPortal->width) * -0.5f)),
-			(float)((float)this->portalCY + (float)((float)((float)((float)(pScale + pScale) - scale) * (float)imgPortal->height) * -0.5f)),
-			(float)(pScale + pScale) - scale,
-			-angle,
-			1);
-	}
-	else { // TnyGL Version restored from J2ME/BREW
+		this->_gles->DrawPortalTexture(
+		    this->imgPortal, 0, 0, imgPortal->width, imgPortal->height,
+		    (float)((float)this->portalCX +
+		            (float)((float)((float)((float)(pScale + pScale) - scale) * (float)imgPortal->width) * -0.5f)),
+		    (float)((float)this->portalCY +
+		            (float)((float)((float)((float)(pScale + pScale) - scale) * (float)imgPortal->height) * -0.5f)),
+		    (float)(pScale + pScale) - scale, -angle, 1);
+	} else { // TnyGL Version restored from J2ME/BREW
 		int n = 10;
 		int max = std::max(Render::portalMaxRadius * this->portalScale >> n, 1);
 		int portalCX = this->portalCX;
@@ -3332,7 +3310,10 @@ void Render::renderPortal() {
 		int n5 = 9 * this->portalScale >> n;
 		int n6 = 6 * this->portalScale >> n;
 		int max2 = std::max(((8 * this->portalScale) >> n), 1);
-		int n7 = 100 * (16 / max2); // Old (8 / max2); // [GEC] Prevents it from spinning too fast / Evita que gire demasiado rapido
+		int n7 =
+		    100 *
+		    (16 /
+		     max2); // Old (8 / max2); // [GEC] Prevents it from spinning too fast / Evita que gire demasiado rapido
 		int n8 = this->currentPortalMod >> 1;
 		for (int i = portalCY - n3 - n8; i < portalCY + n3 + n8; ++i) {
 			for (int j = portalCX - n3 - n8; j < portalCX + n3 + n8; ++j) {
@@ -3350,8 +3331,7 @@ void Render::renderPortal() {
 				int n13;
 				if (k < -max || k > max) {
 					n13 = 0xAFB06E00;
-				}
-				else {
+				} else {
 					n13 = ((160 * (65536 - n12) >> 16) + 15 << 24 | 0xB00000 | 55 * n12 >> 16 << 8);
 				}
 				for (int l = 0; l < 8; ++l) {
@@ -3380,16 +3360,13 @@ void Render::renderPortal() {
 				if (this->currentPortalMod >= max2) {
 					this->portalModIncreasing = false;
 					this->currentPortalMod = max2 - 1;
-				}
-				else {
+				} else {
 					++this->currentPortalMod;
 				}
-			}
-			else if (this->currentPortalMod <= 0) {
+			} else if (this->currentPortalMod <= 0) {
 				this->portalModIncreasing = true;
 				++this->currentPortalMod;
-			}
-			else {
+			} else {
 				--this->currentPortalMod;
 			}
 			this->nextPortalFrame = app->time + n7;
@@ -3502,15 +3479,32 @@ bool Render::isZombie(int n) {
 }
 
 bool Render::hasGunFlare(int n) {
-	return isMancubus(n) || isRevenant(n) || isSentryBot(n) || n == Enums::TILENUM_BOSS_CYBERDEMON || n == Enums::TILENUM_BOSS_MASTERMIND;
+	Applet* app = CAppContainer::getInstance()->app;
+	EntityDef* def = app->entityDefManager->lookup(n);
+	if (def)
+		return def->hasRenderFlag(EntityDef::RFLAG_GUN_FLARE);
+	// Fallback for unknown tiles
+	return isMancubus(n) || isRevenant(n) || isSentryBot(n) || n == Enums::TILENUM_BOSS_CYBERDEMON ||
+	       n == Enums::TILENUM_BOSS_MASTERMIND;
 }
 
 bool Render::isFloater(int n) {
+	Applet* app = CAppContainer::getInstance()->app;
+	EntityDef* def = app->entityDefManager->lookup(n);
+	if (def)
+		return def->hasRenderFlag(EntityDef::RFLAG_FLOATER);
+	// Fallback for unknown tiles
 	return isSentinel(n) || isLostSoul(n) || isCacodemon(n);
 }
 
 bool Render::isSpecialBoss(int n) {
-	return n == Enums::TILENUM_BOSS_MASTERMIND || n == Enums::TILENUM_MONSTER_ARACHNOTRON || n == Enums::TILENUM_BOSS_PINKY || (n >= Enums::TILENUM_BOSS_VIOS && n <= Enums::TILENUM_BOSS_VIOS5);
+	Applet* app = CAppContainer::getInstance()->app;
+	EntityDef* def = app->entityDefManager->lookup(n);
+	if (def)
+		return def->hasRenderFlag(EntityDef::RFLAG_SPECIAL_BOSS);
+	// Fallback for unknown tiles
+	return n == Enums::TILENUM_BOSS_MASTERMIND || n == Enums::TILENUM_MONSTER_ARACHNOTRON ||
+	       n == Enums::TILENUM_BOSS_PINKY || (n >= Enums::TILENUM_BOSS_VIOS && n <= Enums::TILENUM_BOSS_VIOS5);
 }
 
 void Render::renderFearEyes(Entity* entity, int frame, int x, int y, int z, int scaleFactor, bool flipH) {
@@ -3520,7 +3514,8 @@ void Render::renderFearEyes(Entity* entity, int frame, int x, int y, int z, int 
 	uint8_t eSubType = entity->def->eSubType;
 	frame &= Enums::MFRAME_MASK;
 
-	if ((anim != 0 && anim != 32) || entity->monster == nullptr || (1 << eSubType & Enums::FEAR_IMMUNE_MONSTERS) != 0x0 || entity->monster->goalType != 4) {
+	if ((anim != 0 && anim != 32) || entity->monster == nullptr ||
+	    (1 << eSubType & Enums::FEAR_IMMUNE_MONSTERS) != 0x0 || entity->monster->goalType != 4) {
 		return;
 	}
 
@@ -3530,10 +3525,10 @@ void Render::renderFearEyes(Entity* entity, int frame, int x, int y, int z, int 
 	if (anim == 0) {
 		int n10 = app->time + entity->getSprite() * 1337;
 		int n11;
-		if (eSubType == Enums::MONSTER_CACODEMON || eSubType == Enums::MONSTER_SENTINEL || eSubType == Enums::MONSTER_LOST_SOUL) {
+		if (eSubType == Enums::MONSTER_CACODEMON || eSubType == Enums::MONSTER_SENTINEL ||
+		    eSubType == Enums::MONSTER_LOST_SOUL) {
 			n11 = (n10 / 512 & 0x1) << 4;
-		}
-		else {
+		} else {
 			n11 = (n10 / 1024 & 0x1) * 26;
 		}
 		if ((entity->info & 0x20000000) != 0x0) {
@@ -3543,74 +3538,71 @@ void Render::renderFearEyes(Entity* entity, int frame, int x, int y, int z, int 
 	}
 	if (eSubType == Enums::MONSTER_LOST_SOUL) {
 		eyeZ += 192;
-	}
-	else if (eSubType == Enums::MONSTER_REVENANT) {
+	} else if (eSubType == Enums::MONSTER_REVENANT) {
 		eyeZ += ((anim == 0) ? 12 : 10) << 4;
-	}
-	else if (anim == 0 && eSubType == Enums::MONSTER_ARCH_VILE) {
+	} else if (anim == 0 && eSubType == Enums::MONSTER_ARCH_VILE) {
 		eyeZ += 48;
 	}
 	switch (eSubType) {
-	case Enums::MONSTER_ARCH_VILE: {
-		eyeL = -3;
-		eyeR = 3;
-		eyeZ += 403;
-		break;
-	}
-	case Enums::MONSTER_SAW_GOBLIN: {
-		eyeL = -3;
-		eyeR = 3;
-		eyeZ += 388;
-		break;
-	}
-	case Enums::MONSTER_IMP: {
-		eyeL = -3; // old eyeL = -3;
-		eyeR = 3;
-		eyeZ += 294;
-		break;
-	}
-	case Enums::MONSTER_LOST_SOUL: {
-		eyeL = -4; // old eyeL = -6;
-		eyeR = 4;
-		eyeZ -= 192;
-		break;
-	}
-	case Enums::MONSTER_MANCUBUS: {
-		eyeL = -3;
-		eyeR = 3;
-		eyeZ += 280;
-		break;
-	}
-	case Enums::MONSTER_PINKY: {
-		eyeL = -5;
-		eyeR = 5; // eyeR = 4;
-		eyeZ += 35; // eyeZ += 45;
-		break;
-	}
-	case Enums::MONSTER_CACODEMON: {
-		eyeZ += 32;
-		eyeL = 0;
-		eyeR = -1;
-		break;
-	}
-	case Enums::MONSTER_REVENANT: {
-		if (flipH) { // Old line code, wrong -> if (app->canvas->loadMapID == 8) {
+		case Enums::MONSTER_ARCH_VILE: {
+			eyeL = -3;
+			eyeR = 3;
+			eyeZ += 403;
+			break;
+		}
+		case Enums::MONSTER_SAW_GOBLIN: {
+			eyeL = -3;
+			eyeR = 3;
+			eyeZ += 388;
+			break;
+		}
+		case Enums::MONSTER_IMP: {
+			eyeL = -3; // old eyeL = -3;
+			eyeR = 3;
+			eyeZ += 294;
+			break;
+		}
+		case Enums::MONSTER_LOST_SOUL: {
+			eyeL = -4; // old eyeL = -6;
+			eyeR = 4;
+			eyeZ -= 192;
+			break;
+		}
+		case Enums::MONSTER_MANCUBUS: {
+			eyeL = -3;
+			eyeR = 3;
+			eyeZ += 280;
+			break;
+		}
+		case Enums::MONSTER_PINKY: {
 			eyeL = -5;
-			eyeR = 2;
+			eyeR = 5;   // eyeR = 4;
+			eyeZ += 35; // eyeZ += 45;
+			break;
 		}
-		else {
-			eyeL = -2;
-			eyeR = 5;
+		case Enums::MONSTER_CACODEMON: {
+			eyeZ += 32;
+			eyeL = 0;
+			eyeR = -1;
+			break;
 		}
-		eyeZ += 324;
-		break;
-	}
-	case Enums::MONSTER_SENTINEL: {
-		eyeL = -1;
-		eyeR = 4;
-		eyeZ += 274;
-		break;
-	}
+		case Enums::MONSTER_REVENANT: {
+			if (flipH) { // Old line code, wrong -> if (app->canvas->loadMapID == 8) {
+				eyeL = -5;
+				eyeR = 2;
+			} else {
+				eyeL = -2;
+				eyeR = 5;
+			}
+			eyeZ += 324;
+			break;
+		}
+		case Enums::MONSTER_SENTINEL: {
+			eyeL = -1;
+			eyeR = 4;
+			eyeZ += 274;
+			break;
+		}
 	}
 	if (flipH) {
 		int tmp = eyeL;
@@ -3620,23 +3612,26 @@ void Render::renderFearEyes(Entity* entity, int frame, int x, int y, int z, int 
 	int scaleEyeL = eyeL * scaleFactor / 65536;
 	int scaleEyeR = eyeR * scaleFactor / 65536;
 	int scaleEyeZ = eyeZ * scaleFactor / 65536;
-	this->renderSprite(x + (scaleEyeL * this->viewRightStepX >> 6), y + (scaleEyeL * this->viewRightStepY >> 6), z + scaleEyeZ, 251, 0, 0, 0, scaleFactor, 0);
+	this->renderSprite(x + (scaleEyeL * this->viewRightStepX >> 6), y + (scaleEyeL * this->viewRightStepY >> 6),
+	                   z + scaleEyeZ, 251, 0, 0, 0, scaleFactor, 0);
 	if (eSubType != Enums::MONSTER_CACODEMON) {
-		this->renderSprite(x + (scaleEyeR * this->viewRightStepX >> 6), y + (scaleEyeR * this->viewRightStepY >> 6), z + scaleEyeZ, 251, 0, 0, 0, scaleFactor, 0);
+		this->renderSprite(x + (scaleEyeR * this->viewRightStepX >> 6), y + (scaleEyeR * this->viewRightStepY >> 6),
+		                   z + scaleEyeZ, 251, 0, 0, 0, scaleFactor, 0);
 	}
 }
 
-void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum, int flags, int renderMode, int scaleFactor, int renderFlags) {
+void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum, int flags, int renderMode,
+                              int scaleFactor, int renderFlags) {
 	Applet* app = CAppContainer::getInstance()->app;
 
 	Entity* entity = &app->game->entities[this->mapSprites[this->S_ENT + n]];
 
 	if (tileNum == Enums::TILENUM_BOSS_CYBERDEMON && scaleFactor > 0x10000) {
-		//printf("scaleFactor %x\viewPitch", scaleFactor);
+		// printf("scaleFactor %x\viewPitch", scaleFactor);
 		int64_t v16 = 7 * scaleFactor;
 		int64_t v13 = (uint64_t)(v16 * (int64_t)0x38E38E39) >> 32;
 		scaleFactor = (int)((v13 >> 1) - (v16 >> 31));
-		//printf("->scaleFactor %x\viewPitch", scaleFactor);
+		// printf("->scaleFactor %x\viewPitch", scaleFactor);
 	}
 
 	if (this->isFloater(tileNum)) {
@@ -3657,8 +3652,7 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 	if ((entity->monster != nullptr && (entity->monster->flags & 0x4000) != 0x0) || this->isNPC(tileNum)) {
 		n13 = z;
 		min = 0;
-	}
-	else {
+	} else {
 		n13 = (this->getHeight(x, y) + 32) << 4;
 		min = std::min(std::max(z - n13, 0), 256);
 	}
@@ -3669,207 +3663,211 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 	int n18 = 0;
 	int n19 = 1;
 
-	//anim = Enums::MANIM_SLAP;
-	//frame = (app->time) / 1024 & 0x1;
+	// anim = Enums::MANIM_SLAP;
+	// frame = (app->time) / 1024 & 0x1;
 
 	switch (anim) {
-	case Enums::MANIM_IDLE_BACK: {
-		n12 = 4;
-	}
-	case Enums::MANIM_IDLE: {
-		int n20 = (app->time + n * 1337) / 1024 & 0x1;
-		if ((entity->info & 0x20000000) != 0x0) {
-			n20 = 0;
+		case Enums::MANIM_IDLE_BACK: {
+			n12 = 4;
 		}
-		int n21 = n20 * 26;
-
-		// Shadow
-		this->renderSprite(x, y, n13, Enums::TILENUM_SHADOW, 0, flags, renderMode, n14, renderFlags);
-		// Legs
-		this->renderSprite(x, y, z, tileNum, n12, flags, renderMode, scaleFactor, renderFlags);
-
-		if (this->isRevenant(tileNum) && anim == Enums::MANIM_IDLE) {
-			n15 = -30;
-		}
-
-		if ((tileNum == Enums::TILENUM_NPC_RILEY_OCONNOR) || 
-			(tileNum == Enums::TILENUM_NPC_CIVILIAN2) ||
-			(tileNum == Enums::TILENUM_NPC_SCIENTIST)) {
-			if (anim == Enums::MANIM_IDLE) {
-				n15 = -18;
+		case Enums::MANIM_IDLE: {
+			int n20 = (app->time + n * 1337) / 1024 & 0x1;
+			if ((entity->info & 0x20000000) != 0x0) {
+				n20 = 0;
 			}
-		}
+			int n21 = n20 * 26;
 
-		if (this->isArchVile(tileNum) && anim == Enums::MANIM_IDLE) {
-			n15 = -36;
-		}
+			// Shadow
+			this->renderSprite(x, y, n13, Enums::TILENUM_SHADOW, 0, flags, renderMode, n14, renderFlags);
+			// Legs
+			this->renderSprite(x, y, z, tileNum, n12, flags, renderMode, scaleFactor, renderFlags);
 
-		if (tileNum == Enums::TILENUM_BOSS_CYBERDEMON && anim == Enums::MANIM_IDLE) { // [GEC]
-			n16 = -15;
-		}
-
-		if (tileNum == Enums::TILENUM_BOSS_CYBERDEMON) {
-			n15 = -30;
-		}
-
-		// Torso
-		this->renderSprite(x + (n17 * this->viewRightStepX >> 6), y + (n17 * this->viewRightStepY >> 6), (z + n21) + n15, tileNum, n12 + 2, flags, renderMode, scaleFactor, renderFlags);
-		
-		// Head
-		if ((tileNum == Enums::TILENUM_MONSTER_SENTRY_BOT) || (tileNum == Enums::TILENUM_MONSTER_RED_SENTRY_BOT)) {
-			flags ^= (((app->time + n * 1337) / 2048) & 0x1) << 17; // Flip Head
-			this->renderSprite(x + (n17 * this->viewRightStepX >> 6), y + (n17 * this->viewRightStepY >> 6), (z + n21) + n16, tileNum, n12 + 3, flags, renderMode, scaleFactor, renderFlags);
-			break;
-		}
-		if (n19 != 0 && (!this->isPinky(tileNum) || anim != Enums::MANIM_IDLE_BACK)) {
 			if (this->isRevenant(tileNum) && anim == Enums::MANIM_IDLE) {
-				n16 = 140;
+				n15 = -30;
 			}
-			else if (this->isArchVile(tileNum) && anim == Enums::MANIM_IDLE) {
-				n16 = 109;
+
+			if ((tileNum == Enums::TILENUM_NPC_RILEY_OCONNOR) || (tileNum == Enums::TILENUM_NPC_CIVILIAN2) ||
+			    (tileNum == Enums::TILENUM_NPC_SCIENTIST)) {
+				if (anim == Enums::MANIM_IDLE) {
+					n15 = -18;
+				}
 			}
-			else if ((tileNum == Enums::TILENUM_NPC_RILEY_OCONNOR) && anim == Enums::MANIM_IDLE) {
-				n16 = -32;
+
+			if (this->isArchVile(tileNum) && anim == Enums::MANIM_IDLE) {
+				n15 = -36;
 			}
-			else if (this->isRevenant(tileNum) && anim == Enums::MANIM_IDLE) {
-				n16 = 8;
+
+			if (tileNum == Enums::TILENUM_BOSS_CYBERDEMON && anim == Enums::MANIM_IDLE) { // [GEC]
+				n16 = -15;
 			}
-			this->renderSprite(x + (n17 * this->viewRightStepX >> 6), y + (n17 * this->viewRightStepY >> 6), (z + n21) + n16, tileNum, n12 + 3, flags, renderMode, scaleFactor, renderFlags);
+
+			if (tileNum == Enums::TILENUM_BOSS_CYBERDEMON) {
+				n15 = -30;
+			}
+
+			// Torso
+			this->renderSprite(x + (n17 * this->viewRightStepX >> 6), y + (n17 * this->viewRightStepY >> 6),
+			                   (z + n21) + n15, tileNum, n12 + 2, flags, renderMode, scaleFactor, renderFlags);
+
+			// Head
+			if ((tileNum == Enums::TILENUM_MONSTER_SENTRY_BOT) || (tileNum == Enums::TILENUM_MONSTER_RED_SENTRY_BOT)) {
+				flags ^= (((app->time + n * 1337) / 2048) & 0x1) << 17; // Flip Head
+				this->renderSprite(x + (n17 * this->viewRightStepX >> 6), y + (n17 * this->viewRightStepY >> 6),
+				                   (z + n21) + n16, tileNum, n12 + 3, flags, renderMode, scaleFactor, renderFlags);
+				break;
+			}
+			if (n19 != 0 && (!this->isPinky(tileNum) || anim != Enums::MANIM_IDLE_BACK)) {
+				if (this->isRevenant(tileNum) && anim == Enums::MANIM_IDLE) {
+					n16 = 140;
+				} else if (this->isArchVile(tileNum) && anim == Enums::MANIM_IDLE) {
+					n16 = 109;
+				} else if ((tileNum == Enums::TILENUM_NPC_RILEY_OCONNOR) && anim == Enums::MANIM_IDLE) {
+					n16 = -32;
+				} else if (this->isRevenant(tileNum) && anim == Enums::MANIM_IDLE) {
+					n16 = 8;
+				}
+				this->renderSprite(x + (n17 * this->viewRightStepX >> 6), y + (n17 * this->viewRightStepY >> 6),
+				                   (z + n21) + n16, tileNum, n12 + 3, flags, renderMode, scaleFactor, renderFlags);
+				break;
+			}
 			break;
 		}
-		break;
-	}
-	case Enums::MANIM_WALK_BACK: {
-		n12 = 4;
-	}
-	case Enums::MANIM_WALK_FRONT: {
-		int n22 = ((frame & 0x2) >> 1 ^ 0x1) << 17;
-		// Shadow
-		this->renderSprite(x, y, n13, Enums::TILENUM_SHADOW, 0, flags, renderMode, n14, renderFlags);
-		// Legs
-		this->renderSprite(x, y, z, tileNum, n12 + (frame & 0x1), flags ^ n22, renderMode, scaleFactor, renderFlags);
-		int n23 = frame & 0x1;
-		if ((frame & 0x2) == 0x0) {
-			n23 = -n23;
+		case Enums::MANIM_WALK_BACK: {
+			n12 = 4;
 		}
-		x += n23 * this->viewRightStepX >> 6;
-		y += n23 * this->viewRightStepY >> 6;
+		case Enums::MANIM_WALK_FRONT: {
+			int n22 = ((frame & 0x2) >> 1 ^ 0x1) << 17;
+			// Shadow
+			this->renderSprite(x, y, n13, Enums::TILENUM_SHADOW, 0, flags, renderMode, n14, renderFlags);
+			// Legs
+			this->renderSprite(x, y, z, tileNum, n12 + (frame & 0x1), flags ^ n22, renderMode, scaleFactor,
+			                   renderFlags);
+			int n23 = frame & 0x1;
+			if ((frame & 0x2) == 0x0) {
+				n23 = -n23;
+			}
+			x += n23 * this->viewRightStepX >> 6;
+			y += n23 * this->viewRightStepY >> 6;
 
-		if (this->isArchVile(tileNum)) {
-			n15 = -36;
-		}
-		// Torso
-		this->renderSprite(x + (n17 * this->viewRightStepX >> 6), y + (n17 * this->viewRightStepY >> 6), z + n15 + ((frame & 0x1) << 4), tileNum, n12 + 2, ((this->isNPC(tileNum) && tileNum != Enums::TILENUM_NPC_SARGE) || this->isArchVile(tileNum)) ? n22 : flags, renderMode, scaleFactor, renderFlags);
-		
-		// Head
-		if ((tileNum == Enums::TILENUM_MONSTER_SENTRY_BOT) || (tileNum == Enums::TILENUM_MONSTER_RED_SENTRY_BOT)) {
-			flags ^= ((app->time + n * 1337) / 1024 & 0x1) << 17; // Flip Head
-		}
-		if (n19 != 0 && (!this->isPinky(tileNum) || anim != Enums::MANIM_WALK_BACK)) {
-			if (this->isRevenant(tileNum) && anim == Enums::MANIM_WALK_FRONT) {
-				n16 = 160;
+			if (this->isArchVile(tileNum)) {
+				n15 = -36;
 			}
-			else if (this->isArchVile(tileNum)) {
-				n16 = 109;
+			// Torso
+			this->renderSprite(
+			    x + (n17 * this->viewRightStepX >> 6), y + (n17 * this->viewRightStepY >> 6),
+			    z + n15 + ((frame & 0x1) << 4), tileNum, n12 + 2,
+			    ((this->isNPC(tileNum) && tileNum != Enums::TILENUM_NPC_SARGE) || this->isArchVile(tileNum)) ? n22
+			                                                                                                 : flags,
+			    renderMode, scaleFactor, renderFlags);
+
+			// Head
+			if ((tileNum == Enums::TILENUM_MONSTER_SENTRY_BOT) || (tileNum == Enums::TILENUM_MONSTER_RED_SENTRY_BOT)) {
+				flags ^= ((app->time + n * 1337) / 1024 & 0x1) << 17; // Flip Head
 			}
-			this->renderSprite(x + (n18 * this->viewRightStepX >> 6), y + (n18 * this->viewRightStepY >> 6), z + n16 + ((frame & 0x1) << 4), tileNum, n12 + 3, flags, renderMode, scaleFactor, renderFlags);
+			if (n19 != 0 && (!this->isPinky(tileNum) || anim != Enums::MANIM_WALK_BACK)) {
+				if (this->isRevenant(tileNum) && anim == Enums::MANIM_WALK_FRONT) {
+					n16 = 160;
+				} else if (this->isArchVile(tileNum)) {
+					n16 = 109;
+				}
+				this->renderSprite(x + (n18 * this->viewRightStepX >> 6), y + (n18 * this->viewRightStepY >> 6),
+				                   z + n16 + ((frame & 0x1) << 4), tileNum, n12 + 3, flags, renderMode, scaleFactor,
+				                   renderFlags);
+				break;
+			}
 			break;
 		}
-		break;
-	}
-	case Enums::MANIM_ATTACK1:
-	case Enums::MANIM_ATTACK2: {
-		int n24 = 0;
-		int n25 = flags;
-		if (this->isZombie(tileNum) && frame == 1) {
-			n25 ^= 0x20000;
-		}
-		int n26;
-		if (anim == Enums::MANIM_ATTACK1) {
-			n26 = 8;
-		}
-		else {
-			n26 = 10;
-		}
-		// Shadow
-		this->renderSprite(x, y, n13, Enums::TILENUM_SHADOW, 0, flags, renderMode, n14, renderFlags);
-		if (tileNum > Enums::TILENUM_LAST_MONSTER) {
-			this->renderSprite(x, y, z, tileNum, n26, flags, renderMode, scaleFactor, renderFlags);
-			break;
-		}
-		if (this->isPinky(tileNum)) {
-			int n27 = n26;
-			int n28 = 2;
-			this->renderSprite(x, y, z, tileNum, n24, flags ^ 0x20000, renderMode, scaleFactor, renderFlags);
-			this->renderSprite(x + (n17 * this->viewRightStepX >> 6), y + ((n17 * this->viewRightStepY) >> 6), z, tileNum, n28, flags, renderMode, scaleFactor, renderFlags);
-			this->renderSprite(x + (n18 * this->viewRightStepX >> 6), y + ((n18 * this->viewRightStepY) >> 6), z, tileNum, n27 + (frame & 0x1), flags, renderMode, scaleFactor, renderFlags);
-			break;
-		}
+		case Enums::MANIM_ATTACK1:
+		case Enums::MANIM_ATTACK2: {
+			int n24 = 0;
+			int n25 = flags;
+			if (this->isZombie(tileNum) && frame == 1) {
+				n25 ^= 0x20000;
+			}
+			int n26;
+			if (anim == Enums::MANIM_ATTACK1) {
+				n26 = 8;
+			} else {
+				n26 = 10;
+			}
+			// Shadow
+			this->renderSprite(x, y, n13, Enums::TILENUM_SHADOW, 0, flags, renderMode, n14, renderFlags);
+			if (tileNum > Enums::TILENUM_LAST_MONSTER) {
+				this->renderSprite(x, y, z, tileNum, n26, flags, renderMode, scaleFactor, renderFlags);
+				break;
+			}
+			if (this->isPinky(tileNum)) {
+				int n27 = n26;
+				int n28 = 2;
+				this->renderSprite(x, y, z, tileNum, n24, flags ^ 0x20000, renderMode, scaleFactor, renderFlags);
+				this->renderSprite(x + (n17 * this->viewRightStepX >> 6), y + ((n17 * this->viewRightStepY) >> 6), z,
+				                   tileNum, n28, flags, renderMode, scaleFactor, renderFlags);
+				this->renderSprite(x + (n18 * this->viewRightStepX >> 6), y + ((n18 * this->viewRightStepY) >> 6), z,
+				                   tileNum, n27 + (frame & 0x1), flags, renderMode, scaleFactor, renderFlags);
+				break;
+			}
 
-		int n27;
-		if (tileNum != Enums::TILENUM_BOSS_CYBERDEMON || n25 == 0x20000) {
-			n27 = 0;
-		}
-		else {
-			n27 = -3;
-		}
+			int n27;
+			if (tileNum != Enums::TILENUM_BOSS_CYBERDEMON || n25 == 0x20000) {
+				n27 = 0;
+			} else {
+				n27 = -3;
+			}
 
-		// Legs
-		this->renderSprite(x + ((n27 * this->viewRightStepX) >> 6), y + ((n27 * this->viewRightStepY) >> 6), z, tileNum, n24, n25 ^ 0x20000, renderMode, scaleFactor, renderFlags);
+			// Legs
+			this->renderSprite(x + ((n27 * this->viewRightStepX) >> 6), y + ((n27 * this->viewRightStepY) >> 6), z,
+			                   tileNum, n24, n25 ^ 0x20000, renderMode, scaleFactor, renderFlags);
 
-		if (this->isArchVile(tileNum)) {
-			if (frame == 0) {
-				n15 = 288;
+			if (this->isArchVile(tileNum)) {
+				if (frame == 0) {
+					n15 = 288;
+				}
+				n19 = 0;
+			} else if (this->isChainsawGoblin(tileNum)) {
+				if (frame == 0) {
+					n15 = 96;
+				} else if (frame == 1) {
+					n15 = -100;
+				}
+			} else if (this->isRevenant(tileNum) && (anim == Enums::MANIM_ATTACK2)) { //[GEC]
+				if (frame == 0) {
+					n15 = 130;
+				}
 			}
-			n19 = 0;
-		}
-		else if (this->isChainsawGoblin(tileNum)) {
-			if (frame == 0) {
-				n15 = 96;
-			}
-			else if (frame == 1) {
-				n15 = -100;
-			}
-		}
-		else if (this->isRevenant(tileNum) && (anim == Enums::MANIM_ATTACK2)) { //[GEC]
-			if (frame == 0) {
-				n15 = 130;
-			}
-		}
 
-		if (frame == 1 && (!this->hasGunFlare(tileNum) || (this->isRevenant(tileNum) && anim == Enums::MANIM_ATTACK2))) {
-			++n26;
-		}
-		// Torso
-		this->renderSprite(x + (n17 * this->viewRightStepX >> 6), y + (n17 * this->viewRightStepY >> 6), z + n15, tileNum, n26, flags, renderMode, scaleFactor, renderFlags);
-		
-		bool b = (flags & 0x20000) != 0x0;
+			if (frame == 1 &&
+			    (!this->hasGunFlare(tileNum) || (this->isRevenant(tileNum) && anim == Enums::MANIM_ATTACK2))) {
+				++n26;
+			}
+			// Torso
+			this->renderSprite(x + (n17 * this->viewRightStepX >> 6), y + (n17 * this->viewRightStepY >> 6), z + n15,
+			                   tileNum, n26, flags, renderMode, scaleFactor, renderFlags);
 
-		// [GEC] No muestra las cabezas para los siguientes sprites, ya que el torzo contine la cabeza incluida
-		// Mancubus
-		// Revenant
-		bool renderHead = true;
-		{
-			if (this->isMancubus(tileNum)) {
-				renderHead = false;
+			bool b = (flags & 0x20000) != 0x0;
+
+			// [GEC] No muestra las cabezas para los siguientes sprites, ya que el torzo contine la cabeza incluida
+			// Mancubus
+			// Revenant
+			bool renderHead = true;
+			{
+				if (this->isMancubus(tileNum)) {
+					renderHead = false;
+				}
+				if (this->isRevenant(tileNum) && (anim == Enums::MANIM_ATTACK2)) {
+					renderHead = false;
+				}
 			}
-			if (this->isRevenant(tileNum) && (anim == Enums::MANIM_ATTACK2)) {
-				renderHead = false;
-			}
-		}
-		
-		if (n19 != 0 && !this->isZombie(tileNum) && !this->isImp(tileNum) && renderHead) {
-			int n29 = 3;
-			if (this->isRevenant(tileNum)) {
-				n18 = 2;
-				n16 = 20; // [GEC]
-			}
-			else if (this->isMancubus(tileNum)) {
-				n18 = 7;
-				n16 = -112;
-			}
-			else if (this->isChainsawGoblin(tileNum)) {
-#if 0 //J2ME
+
+			if (n19 != 0 && !this->isZombie(tileNum) && !this->isImp(tileNum) && renderHead) {
+				int n29 = 3;
+				if (this->isRevenant(tileNum)) {
+					n18 = 2;
+					n16 = 20; // [GEC]
+				} else if (this->isMancubus(tileNum)) {
+					n18 = 7;
+					n16 = -112;
+				} else if (this->isChainsawGoblin(tileNum)) {
+#if 0 // J2ME
 				if (frame == 0) {
 					n16 = 96;
 				}
@@ -3877,102 +3875,108 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 					n16 = 16;
 				}
 #else
-				n16 = 16;
+					n16 = 16;
 
-				if (frame == 0) { //[GEC]
-					n18 = 2;
-					n16 = 17;
-				}
+					if (frame == 0) { //[GEC]
+						n18 = 2;
+						n16 = 17;
+					}
 #endif
-			}
-			if (b) {
-				n18 = -n18;
-			}
-
-
-			// head
-			this->renderSprite(x + (n18 * this->viewRightStepX >> 6), y + (n18 * this->viewRightStepY >> 6), z + n16, tileNum, n29, flags, renderMode, scaleFactor, renderFlags);
-		}
-		if (frame == 1 && this->hasGunFlare(tileNum) && (!this->isRevenant(tileNum) || anim != Enums::MANIM_ATTACK2)) {
-			int n30 = 0;
-			int n31 = 0;
-			int n32 = 0;
-			if (this->isMancubus(tileNum)) {
-				int n33 = -24 * this->viewRightStepX >> 6;
-				int n34 = -24 * this->viewRightStepY >> 6;
-				int n35 = 160;
-				if ((flags & 0x20000) != 0x0) {
-					n33 = -n33;
-					n34 = -n34;
 				}
-				// Flash
-				this->renderSprite(x + n33, y + n34, z + n35, tileNum, n26 + 1, (app->player->totalMoves + app->combat->animLoopCount & 0x3) << 17, 4, scaleFactor / 3, renderFlags);
-				n30 = (22 * this->viewRightStepX) >> 6;
-				n31 = (22 * this->viewRightStepY) >> 6;
-				n32 = 128;
-			}
-			else if (this->isRevenant(tileNum)) {
-				int n36 = -9 * this->viewRightStepX >> 6;
-				int n37 = -9 * this->viewRightStepY >> 6;
-				int n38 = 736;
-				if ((flags & 0x20000) != 0x0) {
-					n36 = -n36;
-					n37 = -n37;
+				if (b) {
+					n18 = -n18;
 				}
+
+				// head
+				this->renderSprite(x + (n18 * this->viewRightStepX >> 6), y + (n18 * this->viewRightStepY >> 6),
+				                   z + n16, tileNum, n29, flags, renderMode, scaleFactor, renderFlags);
+			}
+			if (frame == 1 && this->hasGunFlare(tileNum) &&
+			    (!this->isRevenant(tileNum) || anim != Enums::MANIM_ATTACK2)) {
+				int n30 = 0;
+				int n31 = 0;
+				int n32 = 0;
+				if (this->isMancubus(tileNum)) {
+					int n33 = -24 * this->viewRightStepX >> 6;
+					int n34 = -24 * this->viewRightStepY >> 6;
+					int n35 = 160;
+					if ((flags & 0x20000) != 0x0) {
+						n33 = -n33;
+						n34 = -n34;
+					}
+					// Flash
+					this->renderSprite(x + n33, y + n34, z + n35, tileNum, n26 + 1,
+					                   (app->player->totalMoves + app->combat->animLoopCount & 0x3) << 17, 4,
+					                   scaleFactor / 3, renderFlags);
+					n30 = (22 * this->viewRightStepX) >> 6;
+					n31 = (22 * this->viewRightStepY) >> 6;
+					n32 = 128;
+				} else if (this->isRevenant(tileNum)) {
+					int n36 = -9 * this->viewRightStepX >> 6;
+					int n37 = -9 * this->viewRightStepY >> 6;
+					int n38 = 736;
+					if ((flags & 0x20000) != 0x0) {
+						n36 = -n36;
+						n37 = -n37;
+					}
+					// Flash
+					this->renderSprite(x + n36, y + n37, z + n38, tileNum, n26 + 1,
+					                   (app->player->totalMoves + app->combat->animLoopCount & 0x3) << 17, 4,
+					                   scaleFactor / 3, renderFlags);
+					n30 = 15 * this->viewRightStepX >> 6;
+					n31 = 15 * this->viewRightStepY >> 6;
+					n32 = 736;
+				} else if (this->isSentryBot(tileNum)) {
+					n32 = -64;
+				} else if (tileNum == Enums::TILENUM_BOSS_CYBERDEMON) {
+					n30 = 14 * this->viewRightStepX >> 6;
+					n31 = 14 * this->viewRightStepY >> 6;
+					n32 = 352;
+				}
+				if (b) {
+					n30 = -n30;
+					n31 = -n31;
+				}
+				x += n30;
+				y += n31;
+				z += n32;
 				// Flash
-				this->renderSprite(x + n36, y + n37, z + n38, tileNum, n26 + 1, (app->player->totalMoves + app->combat->animLoopCount & 0x3) << 17, 4, scaleFactor / 3, renderFlags);
-				n30 = 15 * this->viewRightStepX >> 6;
-				n31 = 15 * this->viewRightStepY >> 6;
-				n32 = 736;
+				this->renderSprite(x, y, z, tileNum, n26 + 1,
+				                   (app->player->totalMoves + app->combat->animLoopCount & 0x3) << 17, 4,
+				                   scaleFactor / 3, renderFlags);
+				break;
 			}
-			else if (this->isSentryBot(tileNum)) {
-				n32 = -64;
-			}
-			else if (tileNum == Enums::TILENUM_BOSS_CYBERDEMON) {
-				n30 = 14 * this->viewRightStepX >> 6;
-				n31 = 14 * this->viewRightStepY >> 6;
-				n32 = 352;
-			}
-			if (b) {
-				n30 = -n30;
-				n31 = -n31;
-			}
-			x += n30;
-			y += n31;
-			z += n32;
-			// Flash
-			this->renderSprite(x, y, z, tileNum, n26 + 1, (app->player->totalMoves + app->combat->animLoopCount & 0x3) << 17, 4, scaleFactor / 3, renderFlags);
 			break;
 		}
-		break;
-	}
-	case Enums::MANIM_PAIN:
-	case Enums::MANIM_SLAP: {
-		this->renderSprite(x, y, n13, Enums::TILENUM_SHADOW, 0, flags, renderMode, n14, renderFlags);
-		this->renderSprite(x, y, z + n15, tileNum, 12, flags, renderMode, scaleFactor, renderFlags);
-		break;
-	}
-	case Enums::MANIM_DEAD: {
-		if (entity->monster != nullptr && (entity->monster->flags & 0x800) == 0x0 && app->canvas->state != 18 && !entity->hasEmptyLootSet()) {
-			this->renderSprite(x, y, z, tileNum, 13, flags, 0, (18 * scaleFactor) >> 4, 512);
+		case Enums::MANIM_PAIN:
+		case Enums::MANIM_SLAP: {
+			this->renderSprite(x, y, n13, Enums::TILENUM_SHADOW, 0, flags, renderMode, n14, renderFlags);
+			this->renderSprite(x, y, z + n15, tileNum, 12, flags, renderMode, scaleFactor, renderFlags);
+			break;
 		}
-		this->renderSprite(x, y, z, tileNum, 13, flags, renderMode, scaleFactor, renderFlags);
-		break;
-	}
-	case Enums::MANIM_NPC_BACK_ACTION: {
-		this->renderSprite(x, y, n13, Enums::TILENUM_SHADOW, 0, flags, renderMode, n14, renderFlags);
-		this->renderSprite(x, y, z, tileNum, 8 + frame, flags, renderMode, scaleFactor, renderFlags);
-		break;
-	}
-	case Enums::MANIM_NPC_TALK: {
-		this->renderSprite(x, y, z, tileNum, frame, flags, renderMode, scaleFactor, renderFlags);
-		break;
-	}
+		case Enums::MANIM_DEAD: {
+			if (entity->monster != nullptr && (entity->monster->flags & 0x800) == 0x0 && app->canvas->state != 18 &&
+			    !entity->hasEmptyLootSet()) {
+				this->renderSprite(x, y, z, tileNum, 13, flags, 0, (18 * scaleFactor) >> 4, 512);
+			}
+			this->renderSprite(x, y, z, tileNum, 13, flags, renderMode, scaleFactor, renderFlags);
+			break;
+		}
+		case Enums::MANIM_NPC_BACK_ACTION: {
+			this->renderSprite(x, y, n13, Enums::TILENUM_SHADOW, 0, flags, renderMode, n14, renderFlags);
+			this->renderSprite(x, y, z, tileNum, 8 + frame, flags, renderMode, scaleFactor, renderFlags);
+			break;
+		}
+		case Enums::MANIM_NPC_TALK: {
+			this->renderSprite(x, y, z, tileNum, frame, flags, renderMode, scaleFactor, renderFlags);
+			break;
+		}
 	}
 	this->renderFearEyes(entity, anim, x, y, z, scaleFactor, (flags & Enums::SPRITE_FLAG_FLIP_HORIZONTAL));
 }
 
-void Render::renderFloaterAnim(int n, int frame, int x, int y, int z, int tileNum, int flags, int renderMode, int scaleFactor, int renderFlags) {
+void Render::renderFloaterAnim(int n, int frame, int x, int y, int z, int tileNum, int flags, int renderMode,
+                               int scaleFactor, int renderFlags) {
 	Applet* app = CAppContainer::getInstance()->app;
 
 	int anim = frame & Enums::MANIM_MASK;
@@ -3986,17 +3990,61 @@ void Render::renderFloaterAnim(int n, int frame, int x, int y, int z, int tileNu
 	if (this->isSentinel(tileNum)) {
 		frame = 2;
 		switch (anim) {
+			case Enums::MANIM_IDLE_BACK:
+			case Enums::MANIM_WALK_BACK: {
+				frame = 6;
+			}
+			case Enums::MANIM_IDLE:
+			case Enums::MANIM_WALK_FRONT:
+			case Enums::MANIM_DODGE: {
+				int n14 = (app->time + n * 1337) / 512 & 0x1;
+				int zPos = -11; // [GEC]
+				this->renderSprite(x, y, z + (n14 << 4), tileNum, frame, flags, renderMode, scaleFactor,
+				                   renderFlags); // Torzo
+				this->renderSprite(x, y, z + (n14 << 4) + zPos, tileNum, ++frame, flags, renderMode, scaleFactor,
+				                   renderFlags); // Head
+				break;
+			}
+			case Enums::MANIM_ATTACK2: {
+				n13 = 2;
+			}
+			case Enums::MANIM_ATTACK1: {
+				this->renderSprite(x, y, z, tileNum, 8 + n13 + (n12 & 0x1), flags, renderMode, scaleFactor,
+				                   renderFlags);
+				break;
+			}
+			case Enums::MANIM_PAIN: {
+				this->renderSprite(x, y, z, tileNum, 12, flags, renderMode, scaleFactor, renderFlags);
+				break;
+			}
+			case Enums::MANIM_DEAD: {
+				Entity* entity = &app->game->entities[this->mapSprites[this->S_ENT + n]];
+				if (entity->monster != nullptr && (entity->monster->flags & 0x800) == 0x0 && app->canvas->state != 18 &&
+				    !entity->hasEmptyLootSet()) {
+					this->renderSprite(x, y, z, tileNum, 13, flags, 0, 17 * scaleFactor >> 4, 512);
+				}
+				this->renderSprite(x, y, z, tileNum, 13, flags, renderMode, scaleFactor, renderFlags);
+				break;
+			}
+		}
+		return;
+	}
+	switch (anim) {
 		case Enums::MANIM_IDLE_BACK:
 		case Enums::MANIM_WALK_BACK: {
-			frame = 6;
+			frame = 4;
 		}
 		case Enums::MANIM_IDLE:
-		case Enums::MANIM_WALK_FRONT:
-		case Enums::MANIM_DODGE: {
-			int n14 = (app->time + n * 1337) / 512 & 0x1;
-			int zPos = -11; // [GEC]
-			this->renderSprite(x, y, z + (n14 << 4), tileNum, frame, flags, renderMode, scaleFactor, renderFlags); // Torzo
-			this->renderSprite(x, y, z + (n14 << 4) + zPos, tileNum, ++frame, flags, renderMode, scaleFactor, renderFlags); // Head
+		case Enums::MANIM_WALK_FRONT: {
+			int n15 = (app->time + n * 1337) / 512 & 0x1;
+			if (n15 != 0 && lostSoul) {
+				++frame;
+			}
+			this->renderSprite(x, y, z + (n15 << 4), tileNum, frame, flags, renderMode, scaleFactor, renderFlags);
+			if (anim == 16 && !lostSoul) {
+				this->renderSprite(x, y, z, tileNum, 7, flags & 0xFFFDFFFF, renderMode, scaleFactor, renderFlags);
+				break;
+			}
 			break;
 		}
 		case Enums::MANIM_ATTACK2: {
@@ -4011,60 +4059,21 @@ void Render::renderFloaterAnim(int n, int frame, int x, int y, int z, int tileNu
 			break;
 		}
 		case Enums::MANIM_DEAD: {
-			Entity *entity = &app->game->entities[this->mapSprites[this->S_ENT + n]];
-			if (entity->monster != nullptr && (entity->monster->flags & 0x800) == 0x0 && app->canvas->state != 18 && !entity->hasEmptyLootSet()) {
-				this->renderSprite(x, y, z, tileNum, 13, flags, 0, 17 * scaleFactor >> 4, 512);
-			}
 			this->renderSprite(x, y, z, tileNum, 13, flags, renderMode, scaleFactor, renderFlags);
 			break;
 		}
-		}
-		return;
-	}
-	switch (anim) {
-	case Enums::MANIM_IDLE_BACK:
-	case Enums::MANIM_WALK_BACK: {
-		frame = 4;
-	}
-	case Enums::MANIM_IDLE:
-	case Enums::MANIM_WALK_FRONT: {
-		int n15 = (app->time + n * 1337) / 512 & 0x1;
-		if (n15 != 0 && lostSoul) {
-			++frame;
-		}
-		this->renderSprite(x, y, z + (n15 << 4), tileNum, frame, flags, renderMode, scaleFactor, renderFlags);
-		if (anim == 16 && !lostSoul) {
-			this->renderSprite(x, y, z, tileNum, 7, flags & 0xFFFDFFFF, renderMode, scaleFactor, renderFlags);
-			break;
-		}
-		break;
-	}
-	case Enums::MANIM_ATTACK2: {
-		n13 = 2;
-	}
-	case Enums::MANIM_ATTACK1: {
-		this->renderSprite(x, y, z, tileNum, 8 + n13 + (n12 & 0x1), flags, renderMode, scaleFactor, renderFlags);
-		break;
-	}
-	case Enums::MANIM_PAIN: {
-		this->renderSprite(x, y, z, tileNum, 12, flags, renderMode, scaleFactor, renderFlags);
-		break;
-	}
-	case Enums::MANIM_DEAD: {
-		this->renderSprite(x, y, z, tileNum, 13, flags, renderMode, scaleFactor, renderFlags);
-		break;
-	}
 	}
 }
 
-void Render::renderSpecialBossAnim(int n, int frame, int x, int y, int z, int tileNum, int flags, int renderMode, int scaleFactor, int renderFlags) {
+void Render::renderSpecialBossAnim(int n, int frame, int x, int y, int z, int tileNum, int flags, int renderMode,
+                                   int scaleFactor, int renderFlags) {
 	Applet* app = CAppContainer::getInstance()->app;
 
 	int anim = frame & Enums::MANIM_MASK;
 	frame &= Enums::MFRAME_MASK;
 
-	//anim = Enums::MANIM_IDLE;
-	//frame = (app->time) / 1024 & 0x1;
+	// anim = Enums::MANIM_IDLE;
+	// frame = (app->time) / 1024 & 0x1;
 
 	int n12 = 0;
 	int n13 = (app->time + n * 1337) / 1024 & 0x1;
@@ -4075,15 +4084,15 @@ void Render::renderSpecialBossAnim(int n, int frame, int x, int y, int z, int ti
 	if (entity->monster != nullptr && (entity->monster->flags & 0x4000) != 0x0) {
 		n15 = z;
 		min = 32;
-	}
-	else {
+	} else {
 		n15 = this->getHeight(x, y) + 32 << 4;
 		min = std::min(std::max(32 - (z - n15), 0), 32);
 	}
 	int n16 = 65536 * min / 32;
 	if (tileNum == Enums::TILENUM_BOSS_PINKY) {
 		if (anim == Enums::MANIM_DEAD) {
-			if (entity->monster != nullptr && (entity->monster->flags & 0x800) == 0x0 && app->canvas->state != 18 && !entity->hasEmptyLootSet()) {
+			if (entity->monster != nullptr && (entity->monster->flags & 0x800) == 0x0 && app->canvas->state != 18 &&
+			    !entity->hasEmptyLootSet()) {
 				this->renderSprite(x, y, z, tileNum, 13, flags, 0, 17 * scaleFactor >> 4, 512);
 			}
 			this->renderSprite(x, y, z, tileNum, 13, flags, renderMode, scaleFactor, renderFlags);
@@ -4092,57 +4101,55 @@ void Render::renderSpecialBossAnim(int n, int frame, int x, int y, int z, int ti
 		int n17 = 3;
 		if (anim == Enums::MANIM_ATTACK1 || anim == Enums::MANIM_ATTACK2) {
 			n17 = 8;
-		}
-		else if (anim == Enums::MANIM_PAIN) {
+		} else if (anim == Enums::MANIM_PAIN) {
 			n17 = 12;
 		}
 		this->renderSprite(x, y, n15, 232, 0, flags, renderMode, n16, renderFlags);
 		this->renderSprite(x, y, z, tileNum, 0 + n13, flags, renderMode, scaleFactor, renderFlags);
 		this->renderSprite(x, y, z + n14 + 384, tileNum, 2, flags, renderMode, scaleFactor, renderFlags);
 		this->renderSprite(x, y, z + n14 + 384, tileNum, n17, flags, renderMode, scaleFactor, renderFlags);
-	}
-	else if (tileNum >= Enums::TILENUM_BOSS_VIOS && tileNum <= Enums::TILENUM_BOSS_VIOS5) {
+	} else if (tileNum >= Enums::TILENUM_BOSS_VIOS && tileNum <= Enums::TILENUM_BOSS_VIOS5) {
 		renderMode = 3;
 		if (app->game->angryVIOS) {
 			renderFlags |= 0x80;
 		}
 		switch (anim) {
-		case Enums::MANIM_IDLE:
-		case Enums::MANIM_IDLE_BACK: {
-			this->renderSprite(x, y, z, tileNum, 0, flags, renderMode, scaleFactor, renderFlags);
-			this->renderSprite(x, y, z + n14, tileNum, 2, flags, renderMode, scaleFactor, renderFlags);
-			this->renderSprite(x, y, z + n14, tileNum, 3, flags, renderMode, scaleFactor, renderFlags);
-			break;
-		}
-		case Enums::MANIM_WALK_FRONT:
-		case Enums::MANIM_WALK_BACK: {
-			this->renderSprite(x, y, z, tileNum, 0 + (frame & 0x1), flags ^ (frame & 0x2) >> 1 << 17, renderMode, scaleFactor, renderFlags);
-			int n18 = frame & 0x1;
-			if ((frame & 0x2) == 0x0) {
-				n18 = -n18;
+			case Enums::MANIM_IDLE:
+			case Enums::MANIM_IDLE_BACK: {
+				this->renderSprite(x, y, z, tileNum, 0, flags, renderMode, scaleFactor, renderFlags);
+				this->renderSprite(x, y, z + n14, tileNum, 2, flags, renderMode, scaleFactor, renderFlags);
+				this->renderSprite(x, y, z + n14, tileNum, 3, flags, renderMode, scaleFactor, renderFlags);
+				break;
 			}
-			x += n18 * this->viewRightStepX >> 6;
-			y += n18 * this->viewRightStepY >> 6;
-			this->renderSprite(x, y, z, tileNum, 2, flags, renderMode, scaleFactor, renderFlags);
-			this->renderSprite(x, y, z, tileNum, 3, flags, renderMode, scaleFactor, renderFlags);
-			break;
+			case Enums::MANIM_WALK_FRONT:
+			case Enums::MANIM_WALK_BACK: {
+				this->renderSprite(x, y, z, tileNum, 0 + (frame & 0x1), flags ^ (frame & 0x2) >> 1 << 17, renderMode,
+				                   scaleFactor, renderFlags);
+				int n18 = frame & 0x1;
+				if ((frame & 0x2) == 0x0) {
+					n18 = -n18;
+				}
+				x += n18 * this->viewRightStepX >> 6;
+				y += n18 * this->viewRightStepY >> 6;
+				this->renderSprite(x, y, z, tileNum, 2, flags, renderMode, scaleFactor, renderFlags);
+				this->renderSprite(x, y, z, tileNum, 3, flags, renderMode, scaleFactor, renderFlags);
+				break;
+			}
+			case Enums::MANIM_ATTACK1:
+			case Enums::MANIM_ATTACK2: {
+				this->renderSprite(x, y, z, tileNum, 0, flags, renderMode, scaleFactor, renderFlags);
+				this->renderSprite(x, y, z, tileNum, 8 + (frame & 0x1), flags, renderMode, scaleFactor, renderFlags);
+				break;
+			}
+			case Enums::MANIM_PAIN: {
+				renderMode = 5;
+				this->renderSprite(x, y, z, tileNum, 0, flags, renderMode, scaleFactor, renderFlags);
+				this->renderSprite(x, y, z, tileNum, 2, flags, renderMode, scaleFactor, renderFlags);
+				this->renderSprite(x, y, z, tileNum, 3, flags, renderMode, scaleFactor, renderFlags);
+				break;
+			}
 		}
-		case Enums::MANIM_ATTACK1:
-		case Enums::MANIM_ATTACK2: {
-			this->renderSprite(x, y, z, tileNum, 0, flags, renderMode, scaleFactor, renderFlags);
-			this->renderSprite(x, y, z, tileNum, 8 + (frame & 0x1), flags, renderMode, scaleFactor, renderFlags);
-			break;
-		}
-		case Enums::MANIM_PAIN: {
-			renderMode = 5;
-			this->renderSprite(x, y, z, tileNum, 0, flags, renderMode, scaleFactor, renderFlags);
-			this->renderSprite(x, y, z, tileNum, 2, flags, renderMode, scaleFactor, renderFlags);
-			this->renderSprite(x, y, z, tileNum, 3, flags, renderMode, scaleFactor, renderFlags);
-			break;
-		}
-		}
-	}
-	else if (tileNum == Enums::TILENUM_BOSS_MASTERMIND || tileNum == Enums::TILENUM_MONSTER_ARACHNOTRON) {
+	} else if (tileNum == Enums::TILENUM_BOSS_MASTERMIND || tileNum == Enums::TILENUM_MONSTER_ARACHNOTRON) {
 		bool b = tileNum == Enums::TILENUM_BOSS_MASTERMIND;
 		int n19 = b ? -44 : -29;
 		int n20 = 6;
@@ -4152,7 +4159,8 @@ void Render::renderSpecialBossAnim(int n, int frame, int x, int y, int z, int ti
 			case Enums::MANIM_IDLE_BACK: {
 				n14 = b ? n14 + 35 : (n14 / 2) + 50; // [GEC] ajusta el torzo para que se vea mejor
 				this->renderSprite(x, y, n15, 232, 0, flags, renderMode, n16, renderFlags); // Shadow
-				this->renderSprite(x, y, z + n14, tileNum, n12 + 3, flags, renderMode, scaleFactor, renderFlags); // Torzo
+				this->renderSprite(x, y, z + n14, tileNum, n12 + 3, flags, renderMode, scaleFactor,
+				                   renderFlags); // Torzo
 				break;
 			}
 			case Enums::MANIM_WALK_FRONT:
@@ -4161,36 +4169,48 @@ void Render::renderSpecialBossAnim(int n, int frame, int x, int y, int z, int ti
 				int n21 = 0;
 				if (frame == 0) {
 					--n21;
-				}
-				else if (frame == 2) {
+				} else if (frame == 2) {
 					++n21;
 				}
 
 				int zTorzo = b ? 35 : 50; // [GEC] ajusta el torzo para que se vea mejor
 				// Torzo
-				this->renderSprite(x + (n21 * this->viewRightStepX >> 6), y + (n21 * this->viewRightStepY >> 6), z + zTorzo, tileNum, n12 + 3, flags, renderMode, scaleFactor, renderFlags);
-				
+				this->renderSprite(x + (n21 * this->viewRightStepX >> 6), y + (n21 * this->viewRightStepY >> 6),
+				                   z + zTorzo, tileNum, n12 + 3, flags, renderMode, scaleFactor, renderFlags);
+
 				// Legs
 				switch (frame) {
 					case 0: {
-						this->renderSprite(x + (n19 * this->viewRightStepX >> 6), y + (n19 * this->viewRightStepY >> 6), z + (n20 - 1 << 4), tileNum, n12, flags, renderMode, scaleFactor, renderFlags);
+						this->renderSprite(x + (n19 * this->viewRightStepX >> 6), y + (n19 * this->viewRightStepY >> 6),
+						                   z + (n20 - 1 << 4), tileNum, n12, flags, renderMode, scaleFactor,
+						                   renderFlags);
 						int n22 = -n19;
 						flags ^= 0x20000;
-						this->renderSprite(x + ((n22 - 1) * this->viewRightStepX >> 6), y + ((n22 - 1) * this->viewRightStepY >> 6), z + (n20 << 4), tileNum, n12 + 2, flags, renderMode, scaleFactor, renderFlags);
+						this->renderSprite(x + ((n22 - 1) * this->viewRightStepX >> 6),
+						                   y + ((n22 - 1) * this->viewRightStepY >> 6), z + (n20 << 4), tileNum,
+						                   n12 + 2, flags, renderMode, scaleFactor, renderFlags);
 						return;
 					}
 					case 1: {
-						this->renderSprite(x + ((n19 + 1) * this->viewRightStepX >> 6), y + ((n19 + 1) * this->viewRightStepY >> 6), z + (n20 - 1 << 4), tileNum, n12, flags, renderMode, scaleFactor, renderFlags);
+						this->renderSprite(x + ((n19 + 1) * this->viewRightStepX >> 6),
+						                   y + ((n19 + 1) * this->viewRightStepY >> 6), z + (n20 - 1 << 4), tileNum,
+						                   n12, flags, renderMode, scaleFactor, renderFlags);
 						int n23 = -n19;
 						flags ^= 0x20000;
-						this->renderSprite(x + (n23 * this->viewRightStepX >> 6), y + (n23 * this->viewRightStepY >> 6), z + (n20 << 4), tileNum, n12 + 1, flags, renderMode, scaleFactor, renderFlags);
+						this->renderSprite(x + (n23 * this->viewRightStepX >> 6), y + (n23 * this->viewRightStepY >> 6),
+						                   z + (n20 << 4), tileNum, n12 + 1, flags, renderMode, scaleFactor,
+						                   renderFlags);
 						return;
 					}
 					case 2: {
-						this->renderSprite(x + ((n19 + 1) * this->viewRightStepX >> 6), y + ((n19 + 1) * this->viewRightStepY >> 6), z + (n20 << 4), tileNum, n12 + 1, flags, renderMode, scaleFactor, renderFlags);
+						this->renderSprite(x + ((n19 + 1) * this->viewRightStepX >> 6),
+						                   y + ((n19 + 1) * this->viewRightStepY >> 6), z + (n20 << 4), tileNum,
+						                   n12 + 1, flags, renderMode, scaleFactor, renderFlags);
 						int n24 = -n19;
 						flags ^= 0x20000;
-						this->renderSprite(x + (n24 * this->viewRightStepX >> 6), y + (n24 * this->viewRightStepY >> 6), z + (n20 - 1 << 4), tileNum, n12, flags, renderMode, scaleFactor, renderFlags);
+						this->renderSprite(x + (n24 * this->viewRightStepX >> 6), y + (n24 * this->viewRightStepY >> 6),
+						                   z + (n20 - 1 << 4), tileNum, n12, flags, renderMode, scaleFactor,
+						                   renderFlags);
 						return;
 					}
 					default: {
@@ -4203,22 +4223,25 @@ void Render::renderSpecialBossAnim(int n, int frame, int x, int y, int z, int ti
 			case Enums::MANIM_ATTACK2: {
 				int zTorzo = b ? 40 : 50; // [GEC] ajusta el torzo para que se vea mejor
 				this->renderSprite(x, y, n15, 232, 0, flags, renderMode, n16, renderFlags); // Shadow
-				this->renderSprite(x, y, z + zTorzo, tileNum, n12 + 3, flags, renderMode, scaleFactor, renderFlags); // Torzo
-				this->renderSprite(x, y, z + zTorzo, tileNum, n12 + 8, flags, renderMode, scaleFactor, renderFlags); // Head Attack
-				if (frame == 1 && b) { // Flash
+				this->renderSprite(x, y, z + zTorzo, tileNum, n12 + 3, flags, renderMode, scaleFactor,
+				                   renderFlags); // Torzo
+				this->renderSprite(x, y, z + zTorzo, tileNum, n12 + 8, flags, renderMode, scaleFactor,
+				                   renderFlags); // Head Attack
+				if (frame == 1 && b) {           // Flash
 					int n25;
 					int n26;
-					int pos = 0;// Old-> 2;
+					int pos = 0; // Old-> 2;
 					zTorzo += 10;
 					if ((flags & 0x20000) != 0x0) {
 						n25 = x - (pos * this->viewRightStepX >> 6);
 						n26 = y - (pos * this->viewRightStepY >> 6);
-					}
-					else {
+					} else {
 						n25 = x + (pos * this->viewRightStepX >> 6);
 						n26 = y + (pos * this->viewRightStepY >> 6);
 					}
-					this->renderSprite(n25, n26, z + 288 + zTorzo, tileNum, n12 + 9, (app->player->totalMoves + app->combat->animLoopCount & 0x3) << 17, 4, scaleFactor / 3, renderFlags);
+					this->renderSprite(n25, n26, z + 288 + zTorzo, tileNum, n12 + 9,
+					                   (app->player->totalMoves + app->combat->animLoopCount & 0x3) << 17, 4,
+					                   scaleFactor / 3, renderFlags);
 					break;
 				}
 				break;
@@ -4226,17 +4249,23 @@ void Render::renderSpecialBossAnim(int n, int frame, int x, int y, int z, int ti
 			case Enums::MANIM_PAIN: {
 				int zTorzo = b ? 70 : 100; // [GEC] ajusta el torzo para que se vea mejor
 				this->renderSprite(x, y, n15, 232, 0, flags, renderMode, n16, renderFlags); // Shadow
-				this->renderSprite(x, y, z + zTorzo, tileNum, n12 + 12, flags, renderMode, scaleFactor, renderFlags); // Torzo
-				int zLegs = b ? 100 : 70; // [GEC] ajusta el torzo para que se vea mejor
-				this->renderSprite(x + ((n19 + 3) * this->viewRightStepX >> 6), y + ((n19 + 3) * this->viewRightStepY >> 6), z + (n20 + 4 << 4) + zLegs, tileNum, n12 + 1, flags, renderMode, scaleFactor, renderFlags);
+				this->renderSprite(x, y, z + zTorzo, tileNum, n12 + 12, flags, renderMode, scaleFactor,
+				                   renderFlags); // Torzo
+				int zLegs = b ? 100 : 70;        // [GEC] ajusta el torzo para que se vea mejor
+				this->renderSprite(x + ((n19 + 3) * this->viewRightStepX >> 6),
+				                   y + ((n19 + 3) * this->viewRightStepY >> 6), z + (n20 + 4 << 4) + zLegs, tileNum,
+				                   n12 + 1, flags, renderMode, scaleFactor, renderFlags);
 				int n27 = -n19;
 				int pos = b ? 2 : 1; // [GEC] ajusta el torzo para que se vea mejor
 				flags ^= 0x20000;
-				this->renderSprite(x + ((n27 + pos/* - 1*/) * this->viewRightStepX >> 6), y + ((n27 + pos/* - 1*/) * this->viewRightStepY >> 6), z + (n20 + 3 << 4), tileNum, n12, flags, renderMode, scaleFactor, renderFlags);
+				this->renderSprite(x + ((n27 + pos /* - 1*/) * this->viewRightStepX >> 6),
+				                   y + ((n27 + pos /* - 1*/) * this->viewRightStepY >> 6), z + (n20 + 3 << 4), tileNum,
+				                   n12, flags, renderMode, scaleFactor, renderFlags);
 				return;
 			}
 			case Enums::MANIM_DEAD: {
-				if (entity->monster != nullptr && (entity->monster->flags & 0x800) == 0x0 && app->canvas->state != 18 && !entity->hasEmptyLootSet()) {
+				if (entity->monster != nullptr && (entity->monster->flags & 0x800) == 0x0 && app->canvas->state != 18 &&
+				    !entity->hasEmptyLootSet()) {
 					this->renderSprite(x, y, z, tileNum, 13, flags, 0, 17 * scaleFactor >> 4, 512);
 				}
 				this->renderSprite(x, y, z, tileNum, 13, flags, renderMode, scaleFactor, renderFlags);
@@ -4244,32 +4273,34 @@ void Render::renderSpecialBossAnim(int n, int frame, int x, int y, int z, int ti
 			}
 		}
 		// Legs
-		this->renderSprite(x + (n19 * this->viewRightStepX >> 6), y + (n19 * this->viewRightStepY >> 6), z + (n20 << 4), tileNum, n12 + 2, flags, renderMode, scaleFactor, renderFlags);
+		this->renderSprite(x + (n19 * this->viewRightStepX >> 6), y + (n19 * this->viewRightStepY >> 6), z + (n20 << 4),
+		                   tileNum, n12 + 2, flags, renderMode, scaleFactor, renderFlags);
 		int n28 = -n19;
 		flags ^= 0x20000;
-		this->renderSprite(x + ((n28 - 1) * this->viewRightStepX >> 6), y + ((n28 - 1) * this->viewRightStepY >> 6), z + (n20 - 1 << 4), tileNum, n12, flags, renderMode, scaleFactor, renderFlags);
+		this->renderSprite(x + ((n28 - 1) * this->viewRightStepX >> 6), y + ((n28 - 1) * this->viewRightStepY >> 6),
+		                   z + (n20 - 1 << 4), tileNum, n12, flags, renderMode, scaleFactor, renderFlags);
 	}
 }
 
 void Render::handleMonsterIdleSounds(Entity* entity) {
 	Applet* app = CAppContainer::getInstance()->app;
 
-	if ((this->monsterIdleTime[entity->def->eSubType] != 0) && (this->monsterIdleTime[entity->def->eSubType] <= app->time)) {
+	if ((this->monsterIdleTime[entity->def->eSubType] != 0) &&
+	    (this->monsterIdleTime[entity->def->eSubType] <= app->time)) {
 		if (entity->distFrom(app->canvas->viewX, app->canvas->viewY) < app->combat->tileDistances[3]) {
-			int MonsterSound = app->game->getMonsterSound(entity->def->eSubType, (char)entity->def->parm, Enums::MSOUND_IDLE);
+			int MonsterSound =
+			    app->game->getMonsterSound(entity->def->eSubType, (char)entity->def->parm, Enums::MSOUND_IDLE);
 			app->sound->playSound(MonsterSound, 0, 1, 0);
 		}
 		this->monsterIdleTime[entity->def->eSubType] = ((app->nextByte() % 10) * 1000) + app->time + 6000;
 	}
 }
 
-
 //--------------------
-void DrawBitmap(short* buffer, int buffW, int buffH, int x, int y, int w, int h)
-{
+void DrawBitmap(short* buffer, int buffW, int buffH, int x, int y, int w, int h) {
 	static GLuint textureName = -1;
 	float vp[12]; // [sp+18h] [bp-68h] BYREF
-	float st[8]; // [sp+48h] [bp-38h] BYREF
+	float st[8];  // [sp+48h] [bp-38h] BYREF
 
 	PFNGLACTIVETEXTUREPROC glActiveTexture = (PFNGLACTIVETEXTUREPROC)SDL_GL_GetProcAddress("glActiveTexture");
 
@@ -4321,35 +4352,49 @@ void Render::Render3dScene(void) {
 	int h = CAppContainer::getInstance()->sdlGL->vidHeight;
 	SDL_GL_GetDrawableSize(CAppContainer::getInstance()->sdlGL->window, &cx, &cy);
 	if (w != cx || h != cy) {
-		w = cx; h = cy;
+		w = cx;
+		h = cy;
 	}
 	glViewport(0, 0, (GLsizei)w, (GLsizei)h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glOrtho(0.0, Applet::IOS_WIDTH, Applet::IOS_HEIGHT, 0.0, -1.0, 1.0);
-	//glRotatef(90.0, 0.0, 0.0, 1.0);
-	//glTranslatef(0.0, -320.0, 0.0);
+	// glRotatef(90.0, 0.0, 0.0, 1.0);
+	// glTranslatef(0.0, -320.0, 0.0);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	//DrawBitmap(backBuffer, 480, 320, 0, 21, 480, 320); // <- Old
+	// DrawBitmap(backBuffer, 480, 320, 0, 21, 480, 320); // <- Old
 	DrawBitmap(backBuffer, 480, 320, 0, 0, 480, 320);
 }
 
 void Render::fixTexels(int offset, int i, int mediaID, int* rowHeight) { // [GEC] New
 	if (mediaID == 814 && this->fixWaterAnim1) {
-		if (offset == 5614 && (i & 1) == 0) { *rowHeight = 16; }
-	}
-	else if (mediaID == 815 && this->fixWaterAnim2) {
-		if (offset == 7521 && (i & 1) == 0) { *rowHeight = 16; }
-		if (offset == 7522 && (i & 1) == 1) { *rowHeight = 18; }
-		if (offset == 7542 && (i & 1) == 1) { *rowHeight = 0; }
-	}
-	else if (mediaID == 816 && this->fixWaterAnim3) {
-		if (offset == 7397 && (i & 1) == 0) { *rowHeight = 16; }
-		if (offset == 7397 && (i & 1) == 1) { *rowHeight = 17; }
-		if (offset == 7415 && (i & 1) == 0) { *rowHeight = 0; }
-	}
-	else if (mediaID == 817 && this->fixWaterAnim4) {
-		if (offset == 6889 && (i & 1) == 1) { *rowHeight = 17; }
+		if (offset == 5614 && (i & 1) == 0) {
+			*rowHeight = 16;
+		}
+	} else if (mediaID == 815 && this->fixWaterAnim2) {
+		if (offset == 7521 && (i & 1) == 0) {
+			*rowHeight = 16;
+		}
+		if (offset == 7522 && (i & 1) == 1) {
+			*rowHeight = 18;
+		}
+		if (offset == 7542 && (i & 1) == 1) {
+			*rowHeight = 0;
+		}
+	} else if (mediaID == 816 && this->fixWaterAnim3) {
+		if (offset == 7397 && (i & 1) == 0) {
+			*rowHeight = 16;
+		}
+		if (offset == 7397 && (i & 1) == 1) {
+			*rowHeight = 17;
+		}
+		if (offset == 7415 && (i & 1) == 0) {
+			*rowHeight = 0;
+		}
+	} else if (mediaID == 817 && this->fixWaterAnim4) {
+		if (offset == 6889 && (i & 1) == 1) {
+			*rowHeight = 17;
+		}
 	}
 }

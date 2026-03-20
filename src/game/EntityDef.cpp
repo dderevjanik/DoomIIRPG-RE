@@ -14,21 +14,21 @@
 // --- Entity type name tables ---
 
 static const char* entityTypeNames[] = {
-	"world",              // 0  ET_WORLD
-	"player",             // 1  ET_PLAYER
-	"monster",            // 2  ET_MONSTER
-	"npc",                // 3  ET_NPC
-	"playerclip",         // 4  ET_PLAYERCLIP
-	"door",               // 5  ET_DOOR
-	"item",               // 6  ET_ITEM
-	"decor",              // 7  ET_DECOR
-	"env_damage",         // 8  ET_ENV_DAMAGE
-	"corpse",             // 9  ET_CORPSE
-	"attack_interactive", // 10 ET_ATTACK_INTERACTIVE
-	"monsterblock_item",  // 11 ET_MONSTERBLOCK_ITEM
-	"spritewall",         // 12 ET_SPRITEWALL
-	"nonobstructing_spritewall", // 13 ET_NONOBSTRUCTING_SPRITEWALL
-	"decor_noclip"        // 14 ET_DECOR_NOCLIP
+    "world",                     // 0  ET_WORLD
+    "player",                    // 1  ET_PLAYER
+    "monster",                   // 2  ET_MONSTER
+    "npc",                       // 3  ET_NPC
+    "playerclip",                // 4  ET_PLAYERCLIP
+    "door",                      // 5  ET_DOOR
+    "item",                      // 6  ET_ITEM
+    "decor",                     // 7  ET_DECOR
+    "env_damage",                // 8  ET_ENV_DAMAGE
+    "corpse",                    // 9  ET_CORPSE
+    "attack_interactive",        // 10 ET_ATTACK_INTERACTIVE
+    "monsterblock_item",         // 11 ET_MONSTERBLOCK_ITEM
+    "spritewall",                // 12 ET_SPRITEWALL
+    "nonobstructing_spritewall", // 13 ET_NONOBSTRUCTING_SPRITEWALL
+    "decor_noclip"               // 14 ET_DECOR_NOCLIP
 };
 static const int numEntityTypes = Enums::ET_MAX;
 
@@ -46,7 +46,41 @@ static int entityTypeFromString(const std::string& str) {
 		}
 	}
 	// Fallback: try parsing as integer
-	try { return std::stoi(str); } catch (...) { return 0; }
+	try {
+		return std::stoi(str);
+	} catch (...) {
+		return 0;
+	}
+}
+
+// Auto-compute render flags from tile index (for backward compat with binary data and INI defaults)
+static uint32_t computeRenderFlags(int16_t tileIndex) {
+	uint32_t flags = EntityDef::RFLAG_NONE;
+	int n = tileIndex;
+
+	// Floaters: Sentinel (44-46), Lost Soul (29-31), Cacodemon (41-43)
+	if ((n >= Enums::TILENUM_MONSTER_SENTINEL && n <= Enums::TILENUM_MONSTER_SENTINEL3) ||
+	    (n >= Enums::TILENUM_MONSTER_LOST_SOUL && n <= Enums::TILENUM_MONSTER_LOST_SOUL3) ||
+	    (n >= Enums::TILENUM_MONSTER_CACODEMON && n <= Enums::TILENUM_MONSTER_CACODEMON3)) {
+		flags |= EntityDef::RFLAG_FLOATER;
+	}
+
+	// Gun flare: Mancubus (38-40), Revenant (35-37), Sentry Bot (19), Red Sentry Bot (18),
+	//            Cyberdemon (54), Mastermind (57)
+	if ((n >= Enums::TILENUM_MONSTER_MANCUBUS && n <= Enums::TILENUM_MONSTER_MANCUBUS3) ||
+	    (n >= Enums::TILENUM_MONSTER_REVENANT && n <= Enums::TILENUM_MONSTER_REVENANT3) ||
+	    n == Enums::TILENUM_MONSTER_SENTRY_BOT || n == Enums::TILENUM_MONSTER_RED_SENTRY_BOT ||
+	    n == Enums::TILENUM_BOSS_CYBERDEMON || n == Enums::TILENUM_BOSS_MASTERMIND) {
+		flags |= EntityDef::RFLAG_GUN_FLARE;
+	}
+
+	// Special boss: Mastermind (57), Arachnotron (53), Boss Pinky (56), VIOS (58-62)
+	if (n == Enums::TILENUM_BOSS_MASTERMIND || n == Enums::TILENUM_MONSTER_ARACHNOTRON ||
+	    n == Enums::TILENUM_BOSS_PINKY || (n >= Enums::TILENUM_BOSS_VIOS && n <= Enums::TILENUM_BOSS_VIOS5)) {
+		flags |= EntityDef::RFLAG_SPECIAL_BOSS;
+	}
+
+	return flags;
 }
 
 // -----------------------
@@ -57,8 +91,7 @@ EntityDefManager::EntityDefManager() {
 	std::memset(this, 0, sizeof(EntityDefManager));
 }
 
-EntityDefManager::~EntityDefManager() {
-}
+EntityDefManager::~EntityDefManager() {}
 
 bool EntityDefManager::startup() {
 	printf("EntityDefManager::startup\n");
@@ -101,6 +134,11 @@ bool EntityDefManager::loadFromBinary() {
 		this->list[i].description = (int16_t)app->resource->shiftUByte();
 	}
 
+	// Auto-compute render flags from tile indices (backward compat with binary data)
+	for (int i = 0; i < this->numDefs; i++) {
+		this->list[i].renderFlags = computeRenderFlags(this->list[i].tileIndex);
+	}
+
 	IS.~InputStream();
 	printf("EntityDefManager: loaded %d entities from entities.bin\n", this->numDefs);
 	return true;
@@ -135,6 +173,19 @@ bool EntityDefManager::loadFromINI(const char* path) {
 		this->list[i].name = (int16_t)ini.getInt(section, "name", 0);
 		this->list[i].longName = (int16_t)ini.getInt(section, "long_name", 0);
 		this->list[i].description = (int16_t)ini.getInt(section, "description", 0);
+
+		// Load render flags from INI, fall back to auto-computed defaults
+		uint32_t defaultFlags = computeRenderFlags(this->list[i].tileIndex);
+		this->list[i].renderFlags = EntityDef::RFLAG_NONE;
+		if (ini.getBool(section, "is_floater", (defaultFlags & EntityDef::RFLAG_FLOATER) != 0)) {
+			this->list[i].renderFlags |= EntityDef::RFLAG_FLOATER;
+		}
+		if (ini.getBool(section, "has_gun_flare", (defaultFlags & EntityDef::RFLAG_GUN_FLARE) != 0)) {
+			this->list[i].renderFlags |= EntityDef::RFLAG_GUN_FLARE;
+		}
+		if (ini.getBool(section, "is_special_boss", (defaultFlags & EntityDef::RFLAG_SPECIAL_BOSS) != 0)) {
+			this->list[i].renderFlags |= EntityDef::RFLAG_SPECIAL_BOSS;
+		}
 	}
 
 	printf("EntityDefManager: loaded %d entities from %s\n", this->numDefs, path);
@@ -158,6 +209,17 @@ void EntityDefManager::exportToINI(const char* path) {
 		ini.setInt(section, "name", this->list[i].name);
 		ini.setInt(section, "long_name", this->list[i].longName);
 		ini.setInt(section, "description", this->list[i].description);
+
+		// Export render flags
+		if (this->list[i].renderFlags & EntityDef::RFLAG_FLOATER) {
+			ini.setBool(section, "is_floater", true);
+		}
+		if (this->list[i].renderFlags & EntityDef::RFLAG_GUN_FLARE) {
+			ini.setBool(section, "has_gun_flare", true);
+		}
+		if (this->list[i].renderFlags & EntityDef::RFLAG_SPECIAL_BOSS) {
+			ini.setBool(section, "is_special_boss", true);
+		}
 	}
 
 	if (!ini.save(path)) {
@@ -173,7 +235,8 @@ EntityDef* EntityDefManager::find(int eType, int eSubType) {
 
 EntityDef* EntityDefManager::find(int eType, int eSubType, int parm) {
 	for (int i = 0; i < this->numDefs; i++) {
-		if (this->list[i].eType == eType && this->list[i].eSubType == eSubType && (parm == -1 || this->list[i].parm == parm)) {
+		if (this->list[i].eType == eType && this->list[i].eSubType == eSubType &&
+		    (parm == -1 || this->list[i].parm == parm)) {
 			return &this->list[i];
 		}
 	}
@@ -188,7 +251,6 @@ EntityDef* EntityDefManager::lookup(int tileIndex) {
 	}
 	return nullptr;
 }
-
 
 // ----------------
 // EntityDef Class

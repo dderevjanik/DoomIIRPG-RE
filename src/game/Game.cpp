@@ -1,6 +1,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <cstdio>
+#include <sys/stat.h>
 
 #include "CAppContainer.h"
 #include "App.h"
@@ -31,8 +32,7 @@ Game::Game() {
 	std::memset(this, 0, sizeof(Game));
 }
 
-Game::~Game() {
-}
+Game::~Game() {}
 
 bool Game::startup() {
 	Applet* app = CAppContainer::getInstance()->app;
@@ -68,8 +68,7 @@ bool Game::startup() {
 	return true;
 }
 
-void Game::unlinkEntity(Entity* entity)
-{
+void Game::unlinkEntity(Entity* entity) {
 	Applet* app = CAppContainer::getInstance()->app;
 
 	if (entity == &this->entities[0]) {
@@ -79,8 +78,7 @@ void Game::unlinkEntity(Entity* entity)
 
 	if (entity == this->entityDb[entity->linkIndex]) {
 		this->entityDb[entity->linkIndex] = entity->nextOnTile;
-	}
-	else if (entity->prevOnTile != nullptr) {
+	} else if (entity->prevOnTile != nullptr) {
 		entity->prevOnTile->nextOnTile = entity->nextOnTile;
 	}
 
@@ -107,7 +105,7 @@ void Game::linkEntity(Entity* entity, int i, int i2) {
 		return;
 	}
 
-	Entity *nextOnTile = this->entityDb[linkIndex];
+	Entity* nextOnTile = this->entityDb[linkIndex];
 	if (nextOnTile != nullptr) {
 		nextOnTile->prevOnTile = entity;
 	}
@@ -168,8 +166,7 @@ void Game::linkWorldEntity(int i, int i2) {
 
 	if (nextEntity == nullptr) {
 		this->entityDb[linkIndex] = entity;
-	}
-	else {
+	} else {
 		nextEntity->nextOnTile = entity;
 	}
 
@@ -197,7 +194,8 @@ void Game::trace(int n, int n2, int n3, int n4, Entity* entity, int n5, int n6) 
 	this->trace(n, n2, -1, n3, n4, -1, entity, n5, n6, false);
 }
 
-void Game::trace(int n, int n2, int n3, int traceCollisionX, int traceCollisionY, int traceCollisionZ, Entity* entity, int n4, int n5, bool b) {
+void Game::trace(int n, int n2, int n3, int traceCollisionX, int traceCollisionY, int traceCollisionZ, Entity* entity,
+                 int n4, int n5, bool b) {
 	Applet* app = CAppContainer::getInstance()->app;
 
 	int* tracePoints = this->tracePoints;
@@ -230,19 +228,16 @@ void Game::trace(int n, int n2, int n3, int traceCollisionX, int traceCollisionY
 									destX = 32 + (nextOnTile->monster->goalX << 6);
 									destY = 32 + (nextOnTile->monster->goalY << 6);
 									destZ = app->render->mapSprites[app->render->S_Z + sprite];
-								}
-								else {
+								} else {
 									destX = app->render->mapSprites[app->render->S_X + sprite];
 									destY = app->render->mapSprites[app->render->S_Y + sprite];
 									destZ = app->render->mapSprites[app->render->S_Z + sprite];
 								}
-							}
-							else if (nextOnTile->def->eType == 1) {
+							} else if (nextOnTile->def->eType == 1) {
 								destX = app->canvas->destX;
 								destY = app->canvas->destY;
 								destZ = app->canvas->destZ;
-							}
-							else {
+							} else {
 								destX = app->render->mapSprites[app->render->S_X + sprite];
 								destY = app->render->mapSprites[app->render->S_Y + sprite];
 								destZ = app->render->mapSprites[app->render->S_Z + sprite];
@@ -253,8 +248,7 @@ void Game::trace(int n, int n2, int n3, int traceCollisionX, int traceCollisionY
 								if (0x0 != (app->render->mapSpriteInfo[sprite] & 0x3000000)) {
 									destX -= 32;
 									n6 += 32;
-								}
-								else {
+								} else {
 									destY -= 32;
 									n7 += 32;
 								}
@@ -262,18 +256,19 @@ void Game::trace(int n, int n2, int n3, int traceCollisionX, int traceCollisionY
 								app->render->traceLine[1] = destY;
 								app->render->traceLine[2] = n6;
 								app->render->traceLine[3] = n7;
-								int capsuleToLineTrace = app->render->CapsuleToLineTrace(tracePoints, n5 * n5, app->render->traceLine);
+								int capsuleToLineTrace =
+								    app->render->CapsuleToLineTrace(tracePoints, n5 * n5, app->render->traceLine);
 								if (capsuleToLineTrace < 16384) {
 									traceFracs[this->numTraceEntities] = capsuleToLineTrace;
 									traceEntities[this->numTraceEntities++] = nextOnTile;
 								}
-							}
-							else {
+							} else {
 								int n8 = 625;
 								if (nextOnTile->def->eType == 8) {
 									n8 = 256;
 								}
-								int capsuleToCircleTrace = app->render->CapsuleToCircleTrace(tracePoints, n5 * n5, destX, destY, n8);
+								int capsuleToCircleTrace =
+								    app->render->CapsuleToCircleTrace(tracePoints, n5 * n5, destX, destY, n8);
 								if (capsuleToCircleTrace < 16384) {
 									if (n3 >= 0 && traceCollisionZ >= 0 && b) {
 										int n9 = n3 + ((traceCollisionZ - n3) * capsuleToCircleTrace >> 14) - destZ;
@@ -281,8 +276,7 @@ void Game::trace(int n, int n2, int n3, int traceCollisionX, int traceCollisionY
 											traceFracs[this->numTraceEntities] = capsuleToCircleTrace;
 											traceEntities[this->numTraceEntities++] = nextOnTile;
 										}
-									}
-									else {
+									} else {
 										traceFracs[this->numTraceEntities] = capsuleToCircleTrace;
 										traceEntities[this->numTraceEntities++] = nextOnTile;
 									}
@@ -303,8 +297,7 @@ void Game::trace(int n, int n2, int n3, int traceCollisionX, int traceCollisionY
 			this->traceCollisionX = n + ((traceWorld * (traceCollisionX - n)) >> 14);
 			this->traceCollisionY = n2 + ((traceWorld * (traceCollisionY - n2)) >> 14);
 			this->traceCollisionZ = n3 + ((traceWorld * (traceCollisionZ - n3)) >> 14);
-		}
-		else {
+		} else {
 			this->traceCollisionX = traceCollisionX;
 			this->traceCollisionY = traceCollisionY;
 			this->traceCollisionZ = traceCollisionZ;
@@ -398,8 +391,7 @@ void Game::loadMapEntities() {
 		}
 		if ((app->render->mapSpriteInfo[n5] & 0x200000) != 0x0) {
 			app->render->mapSpriteInfo[n5] &= 0xFFDFFFFF;
-		}
-		else {
+		} else {
 			int n15 = app->render->mapSprites[app->render->S_X + n5];
 			int n16 = app->render->mapSprites[app->render->S_Y + n5];
 			EntityDef* lookup = app->entityDefManager->lookup(n6);
@@ -409,14 +401,11 @@ void Game::loadMapEntities() {
 			if ((app->render->mapSpriteInfo[n5] & 0xF000000) != 0x0 && ((n15 & 0x3F) == 0x0 || (n16 & 0x3F) == 0x0)) {
 				if ((app->render->mapSpriteInfo[n5] & 0x4000000) != 0x0) {
 					++n15;
-				}
-				else if ((app->render->mapSpriteInfo[n5] & 0x2000000) != 0x0) {
+				} else if ((app->render->mapSpriteInfo[n5] & 0x2000000) != 0x0) {
 					++n16;
-				}
-				else if ((app->render->mapSpriteInfo[n5] & 0x1000000) != 0x0) {
+				} else if ((app->render->mapSpriteInfo[n5] & 0x1000000) != 0x0) {
 					--n16;
-				}
-				else if ((app->render->mapSpriteInfo[n5] & 0x8000000) != 0x0) {
+				} else if ((app->render->mapSpriteInfo[n5] & 0x8000000) != 0x0) {
 					--n15;
 				}
 			}
@@ -443,10 +432,11 @@ void Game::loadMapEntities() {
 					entity3->info |= 0x40000;
 					this->deactivate(entity3);
 
-					app->sound->cacheCombatSound(this->getMonsterSound(lookup->eSubType, lookup->parm, Enums::MSOUND_ATTACK1));
-					app->sound->cacheCombatSound(this->getMonsterSound(lookup->eSubType, lookup->parm, Enums::MSOUND_ATTACK2));
-				}
-				else if (entity3->def->eType == 10 && entity3->def->eSubType != 3 && entity3->def->eSubType != 2) {
+					app->sound->cacheCombatSound(
+					    this->getMonsterSound(lookup->eSubType, lookup->parm, Enums::MSOUND_ATTACK1));
+					app->sound->cacheCombatSound(
+					    this->getMonsterSound(lookup->eSubType, lookup->parm, Enums::MSOUND_ATTACK2));
+				} else if (entity3->def->eType == 10 && entity3->def->eSubType != 3 && entity3->def->eSubType != 2) {
 					this->numDestroyableObj++;
 				}
 				entity3->initspawn();
@@ -458,8 +448,7 @@ void Game::loadMapEntities() {
 					app->render->mapSpriteInfo[n5] |= 0x10000;
 				}
 				++n4;
-			}
-			else if ((app->render->mapSpriteInfo[n5] & 0x800000) != 0x0) {
+			} else if ((app->render->mapSpriteInfo[n5] & 0x800000) != 0x0) {
 				if (this->numEntities == 275) {
 					app->Error(35); // ERR_MAX_ENTITIES
 					return;
@@ -468,8 +457,7 @@ void Game::loadMapEntities() {
 				entity5->info = (n5 + 1 & 0xFFFF);
 				if (n6 == 166 || n6 == 168) {
 					entity5->def = find2;
-				}
-				else {
+				} else {
 					entity5->def = find;
 				}
 				entity5->name = (short)(entity5->def->name | 0x400);
@@ -688,7 +676,7 @@ void Game::unloadMapData() {
 bool Game::touchTile(int n, int n2, bool b) {
 	bool b2 = false;
 	Entity* nextOnTile;
-	//printf("touchTile %d, %d\n", n, n2);
+	// printf("touchTile %d, %d\n", n, n2);
 	for (Entity* mapEntity = this->findMapEntity(n, n2); mapEntity != nullptr; mapEntity = nextOnTile) {
 		nextOnTile = mapEntity->nextOnTile;
 		if (b || mapEntity->def->eType == Enums::ET_ENV_DAMAGE) {
@@ -704,7 +692,8 @@ void Game::prepareMonsters() {
 
 	int n = app->canvas->loadMapID - 1;
 	app->player->fillMonsterStats();
-	if (!this->isLoaded && 0x0 != (app->player->completedLevels & 1 << n) && app->player->monsterStats[0] == app->player->monsterStats[1]) {
+	if (!this->isLoaded && 0x0 != (app->player->completedLevels & 1 << n) &&
+	    app->player->monsterStats[0] == app->player->monsterStats[1]) {
 		int n2 = 0;
 		int n3 = app->player->monsterStats[1];
 		int n4 = n3 - app->player->monsterStats[0];
@@ -713,10 +702,13 @@ void Game::prepareMonsters() {
 			if (entity->monster != nullptr) {
 				int sprite = entity->getSprite();
 				EntityMonster* monster = entity->monster;
-				if (0x0 != (entity->info & 0x1010000) && 0x0 == (monster->flags & 0x90) && n4 < n3 / 2 && n2 < 8 && app->nextByte() <= 100) {
+				if (0x0 != (entity->info & 0x1010000) && 0x0 == (monster->flags & 0x90) && n4 < n3 / 2 && n2 < 8 &&
+				    app->nextByte() <= 100) {
 					Render* render = app->render;
-					if (this->findMapEntity(render->mapSprites[render->S_X + sprite], render->mapSprites[render->S_Y + sprite], 15535) == nullptr) {
-						entity->resurrect(render->mapSprites[render->S_X + sprite], render->mapSprites[render->S_Y + sprite], 32);
+					if (this->findMapEntity(render->mapSprites[render->S_X + sprite],
+					                        render->mapSprites[render->S_Y + sprite], 15535) == nullptr) {
+						entity->resurrect(render->mapSprites[render->S_X + sprite],
+						                  render->mapSprites[render->S_Y + sprite], 32);
 						entity->info &= 0xFFBFFFFF;
 						++n4;
 						++n2;
@@ -776,8 +768,7 @@ void Game::activate(Entity* entity, bool b, bool b2, bool b3, bool b4) {
 	if (monster->nextOnList != nullptr) {
 		if (entity == this->inactiveMonsters && monster->nextOnList == this->inactiveMonsters) {
 			this->inactiveMonsters = nullptr;
-		}
-		else {
+		} else {
 			if (entity == this->inactiveMonsters) {
 				this->inactiveMonsters = monster->nextOnList;
 			}
@@ -789,8 +780,7 @@ void Game::activate(Entity* entity, bool b, bool b2, bool b3, bool b4) {
 		monster->nextOnList = entity;
 		monster->prevOnList = entity;
 		this->activeMonsters = entity;
-	}
-	else {
+	} else {
 		monster->prevOnList = this->activeMonsters->monster->prevOnList;
 		monster->nextOnList = this->activeMonsters;
 		this->activeMonsters->monster->prevOnList->monster->nextOnList = entity;
@@ -831,8 +821,7 @@ void Game::deactivate(Entity* entity) {
 	if (monster->nextOnList != nullptr) {
 		if (entity == this->activeMonsters && monster->nextOnList == this->activeMonsters) {
 			this->activeMonsters = nullptr;
-		}
-		else {
+		} else {
 			if (entity == this->activeMonsters) {
 				this->activeMonsters = monster->nextOnList;
 			}
@@ -845,8 +834,7 @@ void Game::deactivate(Entity* entity) {
 		monster->nextOnList = entity;
 		entityMonster->prevOnList = entity;
 		this->inactiveMonsters = entity;
-	}
-	else {
+	} else {
 		monster->prevOnList = this->inactiveMonsters->monster->prevOnList;
 		monster->nextOnList = this->inactiveMonsters;
 		this->inactiveMonsters->monster->prevOnList->monster->nextOnList = entity;
@@ -888,7 +876,8 @@ void Game::monsterAI() {
 		Entity* activeMonsters = this->activeMonsters;
 		do {
 			Entity* nextOnList = activeMonsters->monster->nextOnList;
-			if (0x0 == (activeMonsters->monster->monsterEffects & 0x2) && (this->monstersTurn == 1 || (this->monstersTurn == 2 && activeMonsters->isHasteResistant()))) {
+			if (0x0 == (activeMonsters->monster->monsterEffects & 0x2) &&
+			    (this->monstersTurn == 1 || (this->monstersTurn == 2 && activeMonsters->isHasteResistant()))) {
 				activeMonsters->aiThink(false);
 				if ((activeMonsters->monster->goalFlags & 0x1) != 0x0) {
 					i = 1;
@@ -899,7 +888,8 @@ void Game::monsterAI() {
 		while (i != 0) {
 			i = 0;
 			Entity* nextAttacker;
-			for (Entity* combatMonsters = this->combatMonsters; combatMonsters != nullptr; combatMonsters = nextAttacker) {
+			for (Entity* combatMonsters = this->combatMonsters; combatMonsters != nullptr;
+			     combatMonsters = nextAttacker) {
 				nextAttacker = combatMonsters->monster->nextAttacker;
 				if (!combatMonsters->aiIsAttackValid()) {
 					combatMonsters->undoAttack();
@@ -949,14 +939,12 @@ void Game::spawnPlayer() {
 			n = 3;
 			n2 = 15;
 			mapSpawnDir = 6;
-		}
-		else {
+		} else {
 			n = app->render->mapSpawnIndex % 32;
 			n2 = app->render->mapSpawnIndex / 32;
 			mapSpawnDir = app->render->mapSpawnDir;
 		}
-	}
-	else {
+	} else {
 		n = (this->spawnParam & 0x1F);
 		n2 = (this->spawnParam >> 5 & 0x1F);
 		mapSpawnDir = (this->spawnParam >> 10 & 0xFF);
@@ -986,29 +974,22 @@ int Game::eventFlagForDirection(int n, int n2) {
 	if (n > 0) {
 		if (n2 < 0) {
 			n3 = 32;
-		}
-		else if (n2 > 0) {
+		} else if (n2 > 0) {
 			n3 = 2048;
-		}
-		else {
+		} else {
 			n3 = 16;
 		}
-	}
-	else if (n < 0) {
+	} else if (n < 0) {
 		if (n2 < 0) {
 			n3 = 128;
-		}
-		else if (n2 > 0) {
+		} else if (n2 > 0) {
 			n3 = 512;
-		}
-		else {
+		} else {
 			n3 = 256;
 		}
-	}
-	else if (n2 > 0) {
+	} else if (n2 > 0) {
 		n3 = 1024;
-	}
-	else {
+	} else {
 		n3 = 64;
 	}
 	return n3;
@@ -1068,7 +1049,8 @@ bool Game::performDoorEvent(int n, ScriptThread* scriptThread, Entity* watchLine
 		return false;
 	}
 	if (b2 && b3) {
-		for (Entity* entity = this->findMapEntity(watchLine->linkIndex % 32 << 6, watchLine->linkIndex / 32 << 6); entity != nullptr; entity = entity->nextOnTile) {
+		for (Entity* entity = this->findMapEntity(watchLine->linkIndex % 32 << 6, watchLine->linkIndex / 32 << 6);
+		     entity != nullptr; entity = entity->nextOnTile) {
 			if (entity->def->eType == 2 && entity->def->eSubType != 17) {
 				this->watchLine = watchLine;
 				return false;
@@ -1084,8 +1066,7 @@ bool Game::performDoorEvent(int n, ScriptThread* scriptThread, Entity* watchLine
 	if (b) {
 		this->secretActive = true;
 		allocLerpSprite->flags |= Enums::LS_FLAG_SECRET_OPEN;
-	}
-	else {
+	} else {
 		allocLerpSprite->flags |= Enums::LS_FLAG_DOOROPEN;
 		app->render->mapSpriteInfo[sprite] |= 0x80000000;
 	}
@@ -1093,8 +1074,9 @@ bool Game::performDoorEvent(int n, ScriptThread* scriptThread, Entity* watchLine
 	allocLerpSprite->dstX = allocLerpSprite->srcX = app->render->mapSprites[app->render->S_X + sprite];
 	allocLerpSprite->dstY = allocLerpSprite->srcY = app->render->mapSprites[app->render->S_Y + sprite];
 	allocLerpSprite->dstZ = allocLerpSprite->srcZ = app->render->mapSprites[app->render->S_Z + sprite];
-	allocLerpSprite->dstScale = allocLerpSprite->srcScale = app->render->mapSprites[app->render->S_SCALEFACTOR + sprite];
-	
+	allocLerpSprite->dstScale = allocLerpSprite->srcScale =
+	    app->render->mapSprites[app->render->S_SCALEFACTOR + sprite];
+
 	int n10 = 32;
 	if (n == 1) {
 		n10 = -n10;
@@ -1103,25 +1085,20 @@ bool Game::performDoorEvent(int n, ScriptThread* scriptThread, Entity* watchLine
 		if (b) {
 			if ((n3 & 0x1000000) != 0x0) {
 				allocLerpSprite->dstY += n10;
-			}
-			else {
+			} else {
 				allocLerpSprite->dstY -= n10;
 			}
-		}
-		else if ((watchLine->def->parm & 0x1) == 0x0) {
+		} else if ((watchLine->def->parm & 0x1) == 0x0) {
 			allocLerpSprite->dstX += n10;
 		}
-	}
-	else if (0x0 != (n3 & 0xC000000)) {
+	} else if (0x0 != (n3 & 0xC000000)) {
 		if (b) {
 			if ((n3 & 0x8000000) != 0x0) {
 				allocLerpSprite->dstX += n10;
-			}
-			else {
+			} else {
 				allocLerpSprite->dstX -= n10;
 			}
-		}
-		else if ((watchLine->def->parm & 0x1) == 0x0) {
+		} else if ((watchLine->def->parm & 0x1) == 0x0) {
 			allocLerpSprite->dstY += n10;
 		}
 	}
@@ -1136,8 +1113,7 @@ bool Game::performDoorEvent(int n, ScriptThread* scriptThread, Entity* watchLine
 			this->updatePlayerDoors(watchLine, false);
 		}
 		app->sound->playSound(1028, 0, 3, 0);
-	}
-	else if (n == 0 && !b) {
+	} else if (n == 0 && !b) {
 		if (b3) {
 			this->updatePlayerDoors(watchLine, true);
 		}
@@ -1151,7 +1127,9 @@ bool Game::performDoorEvent(int n, ScriptThread* scriptThread, Entity* watchLine
 	if (b3 && !(allocLerpSprite->flags & Enums::LS_FLAG_DOORCLOSE)) {
 		app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | 0x100);
 	}
-	if (n2 == 0 || app->canvas->state == Canvas::ST_AUTOMAP || (n2 == 2 && app->render->cullBoundingBox(allocLerpSprite->srcX + allocLerpSprite->dstX >> 1, allocLerpSprite->srcY + allocLerpSprite->dstY >> 1, true))) {
+	if (n2 == 0 || app->canvas->state == Canvas::ST_AUTOMAP ||
+	    (n2 == 2 && app->render->cullBoundingBox(allocLerpSprite->srcX + allocLerpSprite->dstX >> 1,
+	                                             allocLerpSprite->srcY + allocLerpSprite->dstY >> 1, true))) {
 		this->snapLerpSprites(sprite);
 	}
 	return true;
@@ -1178,8 +1156,7 @@ void Game::lerpSpriteAsDoor(int n, int n2, ScriptThread* scriptThread) {
 	if (0x0 != (n3 & 0x3000000)) {
 
 		allocLerpSprite->dstX += n4;
-	}
-	else if (0x0 != (n3 & 0xC000000)) {
+	} else if (0x0 != (n3 & 0xC000000)) {
 		allocLerpSprite->dstY += n4;
 	}
 	allocLerpSprite->startTime = app->gameTime;
@@ -1206,8 +1183,7 @@ void Game::updatePlayerDoors(Entity* entity, bool b) {
 	if (b2) {
 		if (b) {
 			this->openDoors[i] = entity;
-		}
-		else {
+		} else {
 			this->openDoors[i] = nullptr;
 		}
 	}
@@ -1229,8 +1205,7 @@ bool Game::CanCloseDoor(Entity* entity) {
 	int n4 = 64;
 	if ((app->render->mapSpriteInfo[sprite] & 0x3000000) == 0x0) {
 		n4 = 0;
-	}
-	else {
+	} else {
 		n3 = 0;
 	}
 	return ((this->findMapEntity(n + n3, n2 + n4, 6) == nullptr) && (findMapEntity(n - n3, n2 - n4, 6) == nullptr));
@@ -1248,8 +1223,7 @@ void Game::advanceTurn() {
 		if (app->player->statusEffects[20] % 2 == 0) {
 			b = true;
 		}
-	}
-	else {
+	} else {
 		b = true;
 	}
 	app->canvas->pushedWall = false;
@@ -1257,8 +1231,7 @@ void Game::advanceTurn() {
 	this->updateBombs();
 	if (b) {
 		this->monstersTurn = 1;
-	}
-	else {
+	} else {
 		this->monstersTurn = 2;
 	}
 	this->monstersUpdated = false;
@@ -1296,7 +1269,8 @@ GameSprite* Game::gsprite_alloc(int n, int n2, int n3) {
 	Applet* app = CAppContainer::getInstance()->app;
 
 	int n4;
-	for (n4 = 0; n4 < 48 && (this->gsprites[n4].flags & 0x1) != 0x0; ++n4) {}
+	for (n4 = 0; n4 < 48 && (this->gsprites[n4].flags & 0x1) != 0x0; ++n4) {
+	}
 	if (n4 == 48) {
 		app->Error(34); // ERR_MAX_CUSTOMSPRITES
 		return nullptr;
@@ -1332,7 +1306,7 @@ GameSprite* Game::gsprite_allocAnim(int n, int n2, int n3, int n4) {
 	gsprite_alloc->numAnimFrames = 4;
 	gsprite_alloc->pos[3] = n2;
 	gsprite_alloc->pos[0] = n2;
-	app->render->mapSprites[app->render->S_X + gsprite_alloc->sprite] = n2; 
+	app->render->mapSprites[app->render->S_X + gsprite_alloc->sprite] = n2;
 	gsprite_alloc->pos[4] = n3;
 	gsprite_alloc->pos[1] = n3;
 	app->render->mapSprites[app->render->S_Y + gsprite_alloc->sprite] = n3;
@@ -1343,59 +1317,65 @@ GameSprite* Game::gsprite_allocAnim(int n, int n2, int n3, int n4) {
 	gsprite_alloc->startScale = 64;
 	gsprite_alloc->duration = 200 * gsprite_alloc->numAnimFrames;
 	switch (n) {
-	case 241: { // TILENUM_POOF
-		app->render->mapSprites[app->render->S_RENDERMODE + gsprite_alloc->sprite] = 4;
-		break;
-	}
-	case 234: { // TILENUM_ANIM_FIRE
-		app->render->mapSprites[app->render->S_RENDERMODE + gsprite_alloc->sprite] = 3;
-		app->render->mapSprites[app->render->S_SCALEFACTOR + gsprite_alloc->sprite] = 48;
-		app->render->mapSprites[app->render->S_Z + gsprite_alloc->sprite] = (short)(app->render->getHeight(n2, n3) + 32);
-		if ((app->nextInt() & 0x1) != 0x0) {
-			app->render->mapSpriteInfo[gsprite_alloc->sprite] |= 0x20000;
+		case 241: { // TILENUM_POOF
+			app->render->mapSprites[app->render->S_RENDERMODE + gsprite_alloc->sprite] = 4;
 			break;
 		}
-		app->render->mapSpriteInfo[gsprite_alloc->sprite] &= 0xFFFDFFFF;
-		break;
-	}
-	case 242: { // TILENUM_FIRE_BALL
-		app->render->mapSprites[app->render->S_RENDERMODE + gsprite_alloc->sprite] = 3;
-		break;
-	}
-	case 208: { // TILENUM_FOG_GRAY
-		gsprite_alloc->numAnimFrames = 1;
-		gsprite_alloc->duration = 400;
-		break;
-	}
-	case 245: // TILENUM_MONSTER_CLAW
-	case 246: // TILENUM_MONSTER_BITE
-	case 247: { // TILENUM_MONSTER_BLUNT_TRAUMA
-		gsprite_alloc->duration = 200;
-		gsprite_alloc->flags |= 0x1002;
-		gsprite_alloc->numAnimFrames = 1;
-		gsprite_alloc->pos[0] = -6;
-		gsprite_alloc->pos[3] = -6;
-		gsprite_alloc->pos[1] = 0;
-		gsprite_alloc->pos[4] = 0;
-		gsprite_alloc->vel[2] = 0;
-		gsprite_alloc->vel[1] = 0;
-		gsprite_alloc->vel[0] = 0;
-		gsprite_alloc->pos[5] -= (short)app->canvas->viewZ;
-		gsprite_alloc->pos[2] = gsprite_alloc->pos[5];
-		app->render->mapSprites[app->render->S_X + gsprite_alloc->sprite] = (short)(app->canvas->viewX + app->canvas->viewStepX + (this->viewStepX >> 6) * gsprite_alloc->pos[0] + (this->viewRightStepX >> 6) * gsprite_alloc->pos[1]);
-		app->render->mapSprites[app->render->S_Y + gsprite_alloc->sprite] = (short)(app->canvas->viewY + app->canvas->viewStepY + (this->viewStepY >> 6) * gsprite_alloc->pos[0] + (this->viewRightStepY >> 6) * gsprite_alloc->pos[1]);
-		app->render->mapSprites[app->render->S_Z + gsprite_alloc->sprite] = (short)(app->canvas->viewZ + gsprite_alloc->pos[2]);
-		break;
-	}
-	case 252: { // TILENUM_ACID_SPIT
-		gsprite_alloc->numAnimFrames = 2;
-		break;
-	}
-	case 170: { // TILENUM_SENTINEL_SPIKES
-		gsprite_alloc->numAnimFrames = 1;
-		gsprite_alloc->duration = 200;
-		break;
-	}
+		case 234: { // TILENUM_ANIM_FIRE
+			app->render->mapSprites[app->render->S_RENDERMODE + gsprite_alloc->sprite] = 3;
+			app->render->mapSprites[app->render->S_SCALEFACTOR + gsprite_alloc->sprite] = 48;
+			app->render->mapSprites[app->render->S_Z + gsprite_alloc->sprite] =
+			    (short)(app->render->getHeight(n2, n3) + 32);
+			if ((app->nextInt() & 0x1) != 0x0) {
+				app->render->mapSpriteInfo[gsprite_alloc->sprite] |= 0x20000;
+				break;
+			}
+			app->render->mapSpriteInfo[gsprite_alloc->sprite] &= 0xFFFDFFFF;
+			break;
+		}
+		case 242: { // TILENUM_FIRE_BALL
+			app->render->mapSprites[app->render->S_RENDERMODE + gsprite_alloc->sprite] = 3;
+			break;
+		}
+		case 208: { // TILENUM_FOG_GRAY
+			gsprite_alloc->numAnimFrames = 1;
+			gsprite_alloc->duration = 400;
+			break;
+		}
+		case 245:   // TILENUM_MONSTER_CLAW
+		case 246:   // TILENUM_MONSTER_BITE
+		case 247: { // TILENUM_MONSTER_BLUNT_TRAUMA
+			gsprite_alloc->duration = 200;
+			gsprite_alloc->flags |= 0x1002;
+			gsprite_alloc->numAnimFrames = 1;
+			gsprite_alloc->pos[0] = -6;
+			gsprite_alloc->pos[3] = -6;
+			gsprite_alloc->pos[1] = 0;
+			gsprite_alloc->pos[4] = 0;
+			gsprite_alloc->vel[2] = 0;
+			gsprite_alloc->vel[1] = 0;
+			gsprite_alloc->vel[0] = 0;
+			gsprite_alloc->pos[5] -= (short)app->canvas->viewZ;
+			gsprite_alloc->pos[2] = gsprite_alloc->pos[5];
+			app->render->mapSprites[app->render->S_X + gsprite_alloc->sprite] =
+			    (short)(app->canvas->viewX + app->canvas->viewStepX + (this->viewStepX >> 6) * gsprite_alloc->pos[0] +
+			            (this->viewRightStepX >> 6) * gsprite_alloc->pos[1]);
+			app->render->mapSprites[app->render->S_Y + gsprite_alloc->sprite] =
+			    (short)(app->canvas->viewY + app->canvas->viewStepY + (this->viewStepY >> 6) * gsprite_alloc->pos[0] +
+			            (this->viewRightStepY >> 6) * gsprite_alloc->pos[1]);
+			app->render->mapSprites[app->render->S_Z + gsprite_alloc->sprite] =
+			    (short)(app->canvas->viewZ + gsprite_alloc->pos[2]);
+			break;
+		}
+		case 252: { // TILENUM_ACID_SPIT
+			gsprite_alloc->numAnimFrames = 2;
+			break;
+		}
+		case 170: { // TILENUM_SENTINEL_SPIKES
+			gsprite_alloc->numAnimFrames = 1;
+			gsprite_alloc->duration = 200;
+			break;
+		}
 	}
 	app->render->relinkSprite(gsprite_alloc->sprite);
 	return gsprite_alloc;
@@ -1406,15 +1386,13 @@ void Game::gsprite_destroy(GameSprite* gameSprite) {
 
 	if ((gameSprite->flags & 0x2000) == 0x0) {
 		app->render->mapSpriteInfo[gameSprite->sprite] |= 0x10000;
-	}
-	else if ((gameSprite->flags & 0x8000) == 0x0) {
+	} else if ((gameSprite->flags & 0x8000) == 0x0) {
 		app->render->mapSpriteInfo[gameSprite->sprite] &= 0xFFFFFEFF;
 		app->render->mapSprites[app->render->S_X + gameSprite->sprite] = gameSprite->pos[3];
 		app->render->mapSprites[app->render->S_Y + gameSprite->sprite] = gameSprite->pos[4];
 		if ((gameSprite->flags & 0x4000) == 0x0) {
 			app->render->mapSprites[app->render->S_Z + gameSprite->sprite] = gameSprite->pos[5];
-		}
-		else {
+		} else {
 			app->render->mapSprites[app->render->S_Z + gameSprite->sprite] = gameSprite->pos[2];
 		}
 		app->render->relinkSprite(gameSprite->sprite);
@@ -1428,30 +1406,30 @@ void Game::gsprite_destroy(GameSprite* gameSprite) {
 			gameSprite->pos[0] = app->render->mapSprites[app->render->S_X + gameSprite->sprite];
 			gameSprite->pos[1] = app->render->mapSprites[app->render->S_Y + gameSprite->sprite];
 			gameSprite->pos[2] = app->render->mapSprites[app->render->S_Z + gameSprite->sprite];
-			gameSprite->pos[5] = (short)(app->render->getHeight(app->render->mapSprites[app->render->S_X + gameSprite->sprite], app->render->mapSprites[app->render->S_Y + gameSprite->sprite]) + 32);
+			gameSprite->pos[5] =
+			    (short)(app->render->getHeight(app->render->mapSprites[app->render->S_X + gameSprite->sprite],
+			                                   app->render->mapSprites[app->render->S_Y + gameSprite->sprite]) +
+			            32);
 			gameSprite->time = app->time;
 			gameSprite->duration = 250;
 			if (gameSprite->vel[0] > 0) {
 				gameSprite->pos[3] -= 31;
 				gameSprite->vel[0] = -31000 / gameSprite->duration;
-			}
-			else if (gameSprite->vel[0] < 0) {
+			} else if (gameSprite->vel[0] < 0) {
 				gameSprite->pos[3] += 31;
 				gameSprite->vel[0] = 31000 / gameSprite->duration;
 			}
 			if (gameSprite->vel[1] > 0) {
 				gameSprite->pos[4] -= 31;
 				gameSprite->vel[1] = -31000 / gameSprite->duration;
-			}
-			else if (gameSprite->vel[1] < 0) {
+			} else if (gameSprite->vel[1] < 0) {
 				gameSprite->pos[4] += 31;
 				gameSprite->vel[1] = 31000 / gameSprite->duration;
 			}
 			gameSprite->vel[2] = (gameSprite->pos[5] - gameSprite->pos[2]) * 1000 / gameSprite->duration;
 			this->activeSprites++;
 		}
-	}
-	else if ((gameSprite->flags & 0x800) != 0x0) {
+	} else if ((gameSprite->flags & 0x800) != 0x0) {
 		app->render->unlinkSprite(gameSprite->sprite);
 	}
 }
@@ -1481,18 +1459,18 @@ void Game::gsprite_update(int n) {
 					this->activePropogators++;
 				}
 				this->activeSprites++;
-			}
-			else if ((gameSprite->flags & 0x200) == 0x0 && n2 >= gameSprite->duration) {
+			} else if ((gameSprite->flags & 0x200) == 0x0 && n2 >= gameSprite->duration) {
 				if ((gameSprite->flags & 0x8) == 0x0) {
 					app->canvas->invalidateRect();
 				}
 				this->gsprite_destroy(gameSprite);
-			}
-			else {
+			} else {
 				this->activeSprites++;
 				b = true;
 				if (0x0 != (gameSprite->flags & 0x40)) {
-					app->render->mapSpriteInfo[gameSprite->sprite] = ((app->render->mapSpriteInfo[gameSprite->sprite] & 0xFFFF00FF) | n2 / 200 % gameSprite->numAnimFrames << 8);
+					app->render->mapSpriteInfo[gameSprite->sprite] =
+					    ((app->render->mapSpriteInfo[gameSprite->sprite] & 0xFFFF00FF) |
+					     n2 / 200 % gameSprite->numAnimFrames << 8);
 				}
 				if (0x0 != (gameSprite->flags & 0x1000)) {
 					int n3 = app->render->mapSprites[app->render->S_X + gameSprite->sprite] >> 6;
@@ -1501,55 +1479,68 @@ void Game::gsprite_update(int n) {
 					short n6 = (short)(app->canvas->viewY + this->viewStepY);
 					if (0x0 != (gameSprite->flags & 0x2)) {
 						if (n2 > gameSprite->duration) {
-							app->render->mapSprites[app->render->S_X + gameSprite->sprite] = (short)(n5 + (this->viewStepX >> 6) * gameSprite->pos[3] + (this->viewRightStepX >> 6) * gameSprite->pos[4]);
-							app->render->mapSprites[app->render->S_Y + gameSprite->sprite] = (short)(n6 + (this->viewStepY >> 6) * gameSprite->pos[3] + (this->viewRightStepY >> 6) * gameSprite->pos[4]);
-							app->render->mapSprites[app->render->S_Z + gameSprite->sprite] = (short)(app->canvas->viewZ + gameSprite->pos[5]);
+							app->render->mapSprites[app->render->S_X + gameSprite->sprite] =
+							    (short)(n5 + (this->viewStepX >> 6) * gameSprite->pos[3] +
+							            (this->viewRightStepX >> 6) * gameSprite->pos[4]);
+							app->render->mapSprites[app->render->S_Y + gameSprite->sprite] =
+							    (short)(n6 + (this->viewStepY >> 6) * gameSprite->pos[3] +
+							            (this->viewRightStepY >> 6) * gameSprite->pos[4]);
+							app->render->mapSprites[app->render->S_Z + gameSprite->sprite] =
+							    (short)(app->canvas->viewZ + gameSprite->pos[5]);
 							gameSprite->flags &= 0xFFFFFFFD;
-						}
-						else {
+						} else {
 							int n7 = gameSprite->pos[0] + gameSprite->vel[0] * n2 / 1000;
 							int n8 = gameSprite->pos[1] + gameSprite->vel[1] * n2 / 1000;
-							app->render->mapSprites[app->render->S_X + gameSprite->sprite] = (short)(n5 + (this->viewStepX >> 6) * n7 + (this->viewRightStepX >> 6) * n8);
-							app->render->mapSprites[app->render->S_Y + gameSprite->sprite] = (short)(n6 + (this->viewStepY >> 6) * n7 + (this->viewRightStepY >> 6) * n8);
-							app->render->mapSprites[app->render->S_Z + gameSprite->sprite] = (short)(app->canvas->viewZ + gameSprite->pos[2] + gameSprite->vel[2] * n2 / 1000);
+							app->render->mapSprites[app->render->S_X + gameSprite->sprite] =
+							    (short)(n5 + (this->viewStepX >> 6) * n7 + (this->viewRightStepX >> 6) * n8);
+							app->render->mapSprites[app->render->S_Y + gameSprite->sprite] =
+							    (short)(n6 + (this->viewStepY >> 6) * n7 + (this->viewRightStepY >> 6) * n8);
+							app->render->mapSprites[app->render->S_Z + gameSprite->sprite] =
+							    (short)(app->canvas->viewZ + gameSprite->pos[2] + gameSprite->vel[2] * n2 / 1000);
 						}
 						this->activePropogators++;
-					}
-					else {
+					} else {
 						app->render->mapSprites[app->render->S_X + gameSprite->sprite] = n5;
 						app->render->mapSprites[app->render->S_Y + gameSprite->sprite] = n6;
 						app->render->mapSprites[app->render->S_Z + gameSprite->sprite] = (short)app->canvas->viewZ;
 					}
-					if (0x0 == (gameSprite->flags & 0x4) && (n3 != app->render->mapSprites[app->render->S_X + gameSprite->sprite] >> 6 || n4 != app->render->mapSprites[app->render->S_Y + gameSprite->sprite] >> 6)) {
+					if (0x0 == (gameSprite->flags & 0x4) &&
+					    (n3 != app->render->mapSprites[app->render->S_X + gameSprite->sprite] >> 6 ||
+					     n4 != app->render->mapSprites[app->render->S_Y + gameSprite->sprite] >> 6)) {
 						if (0x0 != (gameSprite->flags & 0x1000)) {
-							app->render->relinkSprite(gameSprite->sprite, app->canvas->destX << 4, app->canvas->destY << 4, app->canvas->destZ << 4);
-						}
-						else {
+							app->render->relinkSprite(gameSprite->sprite, app->canvas->destX << 4,
+							                          app->canvas->destY << 4, app->canvas->destZ << 4);
+						} else {
 							app->render->relinkSprite(gameSprite->sprite);
 						}
 					}
-				}
-				else if (0x0 != (gameSprite->flags & 0x2)) {
+				} else if (0x0 != (gameSprite->flags & 0x2)) {
 					this->activePropogators++;
 					if (n2 >= gameSprite->duration) {
 						app->render->mapSprites[app->render->S_X + gameSprite->sprite] = gameSprite->pos[3];
 						app->render->mapSprites[app->render->S_Y + gameSprite->sprite] = gameSprite->pos[4];
 						if ((gameSprite->flags & 0x4000) == 0x0) {
 							app->render->mapSprites[app->render->S_Z + gameSprite->sprite] = gameSprite->pos[5];
-						}
-						else if ((gameSprite->flags & 0x8000) == 0x0) {
+						} else if ((gameSprite->flags & 0x8000) == 0x0) {
 							app->render->mapSprites[app->render->S_Z + gameSprite->sprite] = gameSprite->pos[2];
 						}
 						gameSprite->flags &= 0xFFFFFFFD;
-					}
-					else {
-						app->render->mapSprites[app->render->S_X + gameSprite->sprite] = (short)(gameSprite->pos[0] + gameSprite->vel[0] * n2 / 1000);
-						app->render->mapSprites[app->render->S_Y + gameSprite->sprite] = (short)(gameSprite->pos[1] + gameSprite->vel[1] * n2 / 1000);
+					} else {
+						app->render->mapSprites[app->render->S_X + gameSprite->sprite] =
+						    (short)(gameSprite->pos[0] + gameSprite->vel[0] * n2 / 1000);
+						app->render->mapSprites[app->render->S_Y + gameSprite->sprite] =
+						    (short)(gameSprite->pos[1] + gameSprite->vel[1] * n2 / 1000);
 						if ((gameSprite->flags & 0x4000) == 0x0) {
-							app->render->mapSprites[app->render->S_Z + gameSprite->sprite] = (short)(gameSprite->pos[2] + gameSprite->vel[2] * n2 / 1000);
-						}
-						else {
-							app->render->mapSprites[app->render->S_Z + gameSprite->sprite] = (short)(gameSprite->pos[2] + ((app->render->sinTable[(n2 << 16) / (gameSprite->duration << 8) << 1 & 0x3FF] >> 8) * (gameSprite->pos[5] - gameSprite->pos[2] << 8) >> 16));
+							app->render->mapSprites[app->render->S_Z + gameSprite->sprite] =
+							    (short)(gameSprite->pos[2] + gameSprite->vel[2] * n2 / 1000);
+						} else {
+							app->render->mapSprites[app->render->S_Z + gameSprite->sprite] =
+							    (short)(gameSprite->pos[2] +
+							            ((app->render
+							                  ->sinTable[(n2 << 16) / (gameSprite->duration << 8) << 1 & 0x3FF] >>
+							              8) *
+							                 (gameSprite->pos[5] - gameSprite->pos[2] << 8) >>
+							             16));
 						}
 						if (0x0 == (gameSprite->flags & 0x4)) {
 							app->render->relinkSprite(gameSprite->sprite);
@@ -1558,11 +1549,12 @@ void Game::gsprite_update(int n) {
 				}
 				if (0x0 != (gameSprite->flags & 0x400)) {
 					if (n2 > gameSprite->duration) {
-						app->render->mapSprites[app->render->S_SCALEFACTOR + gameSprite->sprite] = gameSprite->destScale;
+						app->render->mapSprites[app->render->S_SCALEFACTOR + gameSprite->sprite] =
+						    gameSprite->destScale;
 						gameSprite->flags &= 0xFFFFFBFF;
-					}
-					else {
-						app->render->mapSprites[app->render->S_SCALEFACTOR + gameSprite->sprite] = (uint8_t)(gameSprite->startScale + gameSprite->scaleStep * n2 / 1000);
+					} else {
+						app->render->mapSprites[app->render->S_SCALEFACTOR + gameSprite->sprite] =
+						    (uint8_t)(gameSprite->startScale + gameSprite->scaleStep * n2 / 1000);
 					}
 				}
 			}
@@ -1600,8 +1592,7 @@ void Game::saveWorldState(OutputStream* OS, bool b) {
 	for (int i = 0; i < 4; ++i) {
 		if (!b) {
 			OS->writeShort(this->placedBombs[i]);
-		}
-		else {
+		} else {
 			OS->writeShort(0);
 		}
 	}
@@ -1720,8 +1711,7 @@ void Game::saveWorldState(OutputStream* OS, bool b) {
 	OS->writeByte((uint8_t)(app->render->useCaldexHack ? 1 : 0));
 	if (this->watchLine == nullptr) {
 		OS->writeShort(-1);
-	}
-	else {
+	} else {
 		OS->writeShort(this->watchLine->getIndex());
 	}
 	int numMallocsForVIOS = this->numMallocsForVIOS;
@@ -1745,8 +1735,7 @@ void Game::loadWorldState() {
 
 	if (this->activeLoadType == 1) {
 		name = this->GetSaveFile(Game::FILE_NAME_FULLWORLD, 0);
-	}
-	else {
+	} else {
 		name = this->GetSaveFile(Game::FILE_NAME_BRIEFWORLD, app->canvas->loadMapID - 1);
 	}
 
@@ -1808,15 +1797,13 @@ bool Game::loadWorldState(InputStream* IS) {
 			for (int l = 0; l < 8; ++l, ++k) {
 				if ((byte3 & 1 << l) != 0x0) {
 					app->render->mapSpriteInfo[k] |= 0x10000;
-				}
-				else {
+				} else {
 					app->render->mapSpriteInfo[k] &= ~0x10000;
 				}
 				++l;
 				if ((byte3 & 1 << l) != 0x0) {
 					app->render->mapSpriteInfo[k] |= 0x200000;
-				}
-				else {
+				} else {
 					app->render->mapSpriteInfo[k] &= ~0x200000;
 				}
 			}
@@ -1843,7 +1830,8 @@ bool Game::loadWorldState(InputStream* IS) {
 		int n12 = IS->readInt();
 		for (int n13 = 0; n13 < numTileEvents; ++n13) {
 			int n14 = n13 % 32;
-			app->render->tileEvents[n13 * 2 + 1] = ((app->render->tileEvents[n13 * 2 + 1] & 0xFFF7FFFF) | (n12 >> n14 & 0x1) << 19);
+			app->render->tileEvents[n13 * 2 + 1] =
+			    ((app->render->tileEvents[n13 * 2 + 1] & 0xFFF7FFFF) | (n12 >> n14 & 0x1) << 19);
 			if (n14 == 31 && n13 < numTileEvents - 1) {
 				n12 = IS->readInt();
 			}
@@ -1854,8 +1842,7 @@ bool Game::loadWorldState(InputStream* IS) {
 			LerpSprite* lerpSprite = &this->lerpSprites[n15];
 			if (n15 < this->numLerpSprites) {
 				lerpSprite->loadState(IS);
-			}
-			else {
+			} else {
 				lerpSprite->hSprite = 0;
 			}
 		}
@@ -1866,8 +1853,7 @@ bool Game::loadWorldState(InputStream* IS) {
 			scriptThread->loadState(IS);
 			if (scriptThread->stackPtr > 0) {
 				scriptThread->inuse = true;
-			}
-			else {
+			} else {
 				scriptThread->inuse = false;
 			}
 		}
@@ -1900,9 +1886,7 @@ bool Game::loadWorldState(InputStream* IS) {
 		app->hud->playerHealthChangeTime = 0;
 		this->prepareMonsters();
 		return true;
-	}
-	else
-	{
+	} else {
 		if (mapCompileDate) {
 			this->spawnParam = 0;
 		}
@@ -1913,8 +1897,8 @@ bool Game::loadWorldState(InputStream* IS) {
 
 // --- Human-readable config helpers ---
 
-static const char* difficultyNames[] = { "normal", "difficult", nullptr, "nightmare" };
-static const int difficultyValues[] = { 1, 2, 0, 4 };
+static const char* difficultyNames[] = {"normal", "difficult", nullptr, "nightmare"};
+static const int difficultyValues[] = {1, 2, 0, 4};
 static const int numDifficulties = 4;
 
 static const char* difficultyToString(int difficulty) {
@@ -1935,7 +1919,7 @@ static int difficultyFromString(const std::string& str) {
 	return 1;
 }
 
-static const char* languageNames[] = { "english", "french", "german", "italian", "spanish" };
+static const char* languageNames[] = {"english", "french", "german", "italian", "spanish"};
 static const int numLanguages = 5;
 
 static const char* languageToString(int lang) {
@@ -1954,7 +1938,7 @@ static int languageFromString(const std::string& str) {
 	return 0;
 }
 
-static const char* windowModeNames[] = { "windowed", "borderless", "fullscreen" };
+static const char* windowModeNames[] = {"windowed", "borderless", "fullscreen"};
 static const int numWindowModes = 3;
 
 static const char* windowModeToString(int mode) {
@@ -1973,7 +1957,7 @@ static int windowModeFromString(const std::string& str) {
 	return 0;
 }
 
-static const char* controlLayoutNames[] = { "chevrons", "arrows", "classic" };
+static const char* controlLayoutNames[] = {"chevrons", "arrows", "classic"};
 static const int numControlLayouts = 3;
 
 static const char* controlLayoutToString(int layout) {
@@ -2020,41 +2004,71 @@ static const char* scancodeToName(int code) {
 	if (code & IS_MOUSE_BUTTON) {
 		int btn = code & ~IS_MOUSE_BUTTON;
 		switch (btn) {
-			case 1: return "mouse_left";
-			case 2: return "mouse_middle";
-			case 3: return "mouse_right";
-			case 4: return "mouse_x1";
-			case 5: return "mouse_x2";
-			default: return "mouse_unknown";
+			case 1:
+				return "mouse_left";
+			case 2:
+				return "mouse_middle";
+			case 3:
+				return "mouse_right";
+			case 4:
+				return "mouse_x1";
+			case 5:
+				return "mouse_x2";
+			default:
+				return "mouse_unknown";
 		}
 	}
 	if (code & IS_CONTROLLER_BUTTON) {
 		int btn = code & ~IS_CONTROLLER_BUTTON;
 		switch (btn) {
-			case (int)GamepadInput::BTN_A: return "pad_a";
-			case (int)GamepadInput::BTN_B: return "pad_b";
-			case (int)GamepadInput::BTN_X: return "pad_x";
-			case (int)GamepadInput::BTN_Y: return "pad_y";
-			case (int)GamepadInput::BTN_BACK: return "pad_back";
-			case (int)GamepadInput::BTN_GUIDE: return "pad_guide";
-			case (int)GamepadInput::BTN_START: return "pad_start";
-			case (int)GamepadInput::BTN_LEFT_STICK: return "pad_leftstick";
-			case (int)GamepadInput::BTN_RIGHT_STICK: return "pad_rightstick";
-			case (int)GamepadInput::BTN_LEFT_SHOULDER: return "pad_leftshoulder";
-			case (int)GamepadInput::BTN_RIGHT_SHOULDER: return "pad_rightshoulder";
-			case (int)GamepadInput::BTN_DPAD_UP: return "pad_dpad_up";
-			case (int)GamepadInput::BTN_DPAD_DOWN: return "pad_dpad_down";
-			case (int)GamepadInput::BTN_DPAD_LEFT: return "pad_dpad_left";
-			case (int)GamepadInput::BTN_DPAD_RIGHT: return "pad_dpad_right";
-			case (int)GamepadInput::BTN_LAXIS_UP: return "pad_laxis_up";
-			case (int)GamepadInput::BTN_LAXIS_DOWN: return "pad_laxis_down";
-			case (int)GamepadInput::BTN_LAXIS_LEFT: return "pad_laxis_left";
-			case (int)GamepadInput::BTN_LAXIS_RIGHT: return "pad_laxis_right";
-			case (int)GamepadInput::BTN_RAXIS_UP: return "pad_raxis_up";
-			case (int)GamepadInput::BTN_RAXIS_DOWN: return "pad_raxis_down";
-			case (int)GamepadInput::BTN_RAXIS_LEFT: return "pad_raxis_left";
-			case (int)GamepadInput::BTN_RAXIS_RIGHT: return "pad_raxis_right";
-			default: return "pad_unknown";
+			case (int)GamepadInput::BTN_A:
+				return "pad_a";
+			case (int)GamepadInput::BTN_B:
+				return "pad_b";
+			case (int)GamepadInput::BTN_X:
+				return "pad_x";
+			case (int)GamepadInput::BTN_Y:
+				return "pad_y";
+			case (int)GamepadInput::BTN_BACK:
+				return "pad_back";
+			case (int)GamepadInput::BTN_GUIDE:
+				return "pad_guide";
+			case (int)GamepadInput::BTN_START:
+				return "pad_start";
+			case (int)GamepadInput::BTN_LEFT_STICK:
+				return "pad_leftstick";
+			case (int)GamepadInput::BTN_RIGHT_STICK:
+				return "pad_rightstick";
+			case (int)GamepadInput::BTN_LEFT_SHOULDER:
+				return "pad_leftshoulder";
+			case (int)GamepadInput::BTN_RIGHT_SHOULDER:
+				return "pad_rightshoulder";
+			case (int)GamepadInput::BTN_DPAD_UP:
+				return "pad_dpad_up";
+			case (int)GamepadInput::BTN_DPAD_DOWN:
+				return "pad_dpad_down";
+			case (int)GamepadInput::BTN_DPAD_LEFT:
+				return "pad_dpad_left";
+			case (int)GamepadInput::BTN_DPAD_RIGHT:
+				return "pad_dpad_right";
+			case (int)GamepadInput::BTN_LAXIS_UP:
+				return "pad_laxis_up";
+			case (int)GamepadInput::BTN_LAXIS_DOWN:
+				return "pad_laxis_down";
+			case (int)GamepadInput::BTN_LAXIS_LEFT:
+				return "pad_laxis_left";
+			case (int)GamepadInput::BTN_LAXIS_RIGHT:
+				return "pad_laxis_right";
+			case (int)GamepadInput::BTN_RAXIS_UP:
+				return "pad_raxis_up";
+			case (int)GamepadInput::BTN_RAXIS_DOWN:
+				return "pad_raxis_down";
+			case (int)GamepadInput::BTN_RAXIS_LEFT:
+				return "pad_raxis_left";
+			case (int)GamepadInput::BTN_RAXIS_RIGHT:
+				return "pad_raxis_right";
+			default:
+				return "pad_unknown";
 		}
 	}
 	// SDL scancode — use SDL_GetScancodeName
@@ -2070,35 +2084,63 @@ static int scancodeFromName(const std::string& name) {
 		return -1;
 	}
 	// Mouse buttons
-	if (name == "mouse_left") return IS_MOUSE_BUTTON | 1;
-	if (name == "mouse_middle") return IS_MOUSE_BUTTON | 2;
-	if (name == "mouse_right") return IS_MOUSE_BUTTON | 3;
-	if (name == "mouse_x1") return IS_MOUSE_BUTTON | 4;
-	if (name == "mouse_x2") return IS_MOUSE_BUTTON | 5;
+	if (name == "mouse_left")
+		return IS_MOUSE_BUTTON | 1;
+	if (name == "mouse_middle")
+		return IS_MOUSE_BUTTON | 2;
+	if (name == "mouse_right")
+		return IS_MOUSE_BUTTON | 3;
+	if (name == "mouse_x1")
+		return IS_MOUSE_BUTTON | 4;
+	if (name == "mouse_x2")
+		return IS_MOUSE_BUTTON | 5;
 	// Controller buttons
-	if (name == "pad_a") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_A;
-	if (name == "pad_b") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_B;
-	if (name == "pad_x") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_X;
-	if (name == "pad_y") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_Y;
-	if (name == "pad_back") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_BACK;
-	if (name == "pad_guide") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_GUIDE;
-	if (name == "pad_start") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_START;
-	if (name == "pad_leftstick") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LEFT_STICK;
-	if (name == "pad_rightstick") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RIGHT_STICK;
-	if (name == "pad_leftshoulder") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LEFT_SHOULDER;
-	if (name == "pad_rightshoulder") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RIGHT_SHOULDER;
-	if (name == "pad_dpad_up") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_DPAD_UP;
-	if (name == "pad_dpad_down") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_DPAD_DOWN;
-	if (name == "pad_dpad_left") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_DPAD_LEFT;
-	if (name == "pad_dpad_right") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_DPAD_RIGHT;
-	if (name == "pad_laxis_up") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LAXIS_UP;
-	if (name == "pad_laxis_down") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LAXIS_DOWN;
-	if (name == "pad_laxis_left") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LAXIS_LEFT;
-	if (name == "pad_laxis_right") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LAXIS_RIGHT;
-	if (name == "pad_raxis_up") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RAXIS_UP;
-	if (name == "pad_raxis_down") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RAXIS_DOWN;
-	if (name == "pad_raxis_left") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RAXIS_LEFT;
-	if (name == "pad_raxis_right") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RAXIS_RIGHT;
+	if (name == "pad_a")
+		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_A;
+	if (name == "pad_b")
+		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_B;
+	if (name == "pad_x")
+		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_X;
+	if (name == "pad_y")
+		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_Y;
+	if (name == "pad_back")
+		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_BACK;
+	if (name == "pad_guide")
+		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_GUIDE;
+	if (name == "pad_start")
+		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_START;
+	if (name == "pad_leftstick")
+		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LEFT_STICK;
+	if (name == "pad_rightstick")
+		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RIGHT_STICK;
+	if (name == "pad_leftshoulder")
+		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LEFT_SHOULDER;
+	if (name == "pad_rightshoulder")
+		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RIGHT_SHOULDER;
+	if (name == "pad_dpad_up")
+		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_DPAD_UP;
+	if (name == "pad_dpad_down")
+		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_DPAD_DOWN;
+	if (name == "pad_dpad_left")
+		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_DPAD_LEFT;
+	if (name == "pad_dpad_right")
+		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_DPAD_RIGHT;
+	if (name == "pad_laxis_up")
+		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LAXIS_UP;
+	if (name == "pad_laxis_down")
+		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LAXIS_DOWN;
+	if (name == "pad_laxis_left")
+		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LAXIS_LEFT;
+	if (name == "pad_laxis_right")
+		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LAXIS_RIGHT;
+	if (name == "pad_raxis_up")
+		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RAXIS_UP;
+	if (name == "pad_raxis_down")
+		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RAXIS_DOWN;
+	if (name == "pad_raxis_left")
+		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RAXIS_LEFT;
+	if (name == "pad_raxis_right")
+		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RAXIS_RIGHT;
 	// SDL scancode by name
 	SDL_Scancode sc = SDL_GetScancodeFromName(name.c_str());
 	if (sc != SDL_SCANCODE_UNKNOWN) {
@@ -2113,24 +2155,10 @@ static int scancodeFromName(const std::string& name) {
 }
 
 // Key binding action names for INI file
-static const char* keyBindingNames[KEY_MAPPIN_MAX] = {
-	"move_forward",
-	"move_backward",
-	"turn_left",
-	"turn_right",
-	"strafe_left",
-	"strafe_right",
-	"next_weapon",
-	"prev_weapon",
-	"action",
-	"pass_turn",
-	"automap",
-	"menu",
-	"items_info",
-	"drinks",
-	"pda",
-	"bot_discard"
-};
+static const char* keyBindingNames[KEY_MAPPIN_MAX] = {"move_forward", "move_backward", "turn_left",   "turn_right",
+                                                      "strafe_left",  "strafe_right",  "next_weapon", "prev_weapon",
+                                                      "action",       "pass_turn",     "automap",     "menu",
+                                                      "items_info",   "drinks",        "pda",         "bot_discard"};
 
 void Game::saveConfig() {
 	Applet* app = CAppContainer::getInstance()->app;
@@ -2259,8 +2287,7 @@ void Game::loadConfig() {
 	int animFrames = ini.getInt("Display", "anim_frames", 8);
 	if (animFrames < 2) {
 		animFrames = 2;
-	}
-	else if (animFrames > 64) {
+	} else if (animFrames > 64) {
 		animFrames = 64;
 	}
 	app->canvas->setAnimFrames(animFrames);
@@ -2300,7 +2327,8 @@ void Game::loadConfig() {
 
 	// [KeyBindings]
 	for (int i = 0; i < KEY_MAPPIN_MAX; i++) {
-		std::vector<std::string> bindNames = ini.getStringArray("KeyBindings", keyBindingNames[i], KEYBINDS_MAX, "none");
+		std::vector<std::string> bindNames =
+		    ini.getStringArray("KeyBindings", keyBindingNames[i], KEYBINDS_MAX, "none");
 		for (int j = 0; j < KEYBINDS_MAX; j++) {
 			keyMapping[i].keyBinds[j] = scancodeFromName(bindNames[j]);
 		}
@@ -2310,7 +2338,8 @@ void Game::loadConfig() {
 	app->sound->updateVolume();
 }
 
-void Game::saveState(int lastMapID, int loadMapID, int viewX, int viewY, int viewAngle, int viewPitch, int prevX, int prevY, int saveX, int saveY, int saveZ, int saveAngle, int savePitch, int saveType) {
+void Game::saveState(int lastMapID, int loadMapID, int viewX, int viewY, int viewAngle, int viewPitch, int prevX,
+                     int prevY, int saveX, int saveY, int saveZ, int saveAngle, int savePitch, int saveType) {
 	Applet* app = CAppContainer::getInstance()->app;
 	const char* name;
 	OutputStream OS;
@@ -2330,20 +2359,19 @@ void Game::saveState(int lastMapID, int loadMapID, int viewX, int viewY, int vie
 		app->canvas->updateLoadingBar(false);
 		if (briefSave) {
 			name = this->GetSaveFile(Game::FILE_NAME_BRIEFPLAYER, 0);
-		}
-		else {
+		} else {
 			name = this->GetSaveFile(Game::FILE_NAME_FULLPLAYER, 0);
 		}
 
 		if (OS.openFile(name, 1)) {
-			if (!this->savePlayerState(&OS, loadMapID, viewX, viewY, viewAngle, viewPitch, prevX, prevY, saveX, saveY, saveZ, saveAngle, savePitch)) {
+			if (!this->savePlayerState(&OS, loadMapID, viewX, viewY, viewAngle, viewPitch, prevX, prevY, saveX, saveY,
+			                           saveZ, saveAngle, savePitch)) {
 				OS.~OutputStream();
 				OS.close();
 				return;
 			}
 			OS.close();
-		}
-		else {
+		} else {
 			app->Error("saveState: failed to open player file");
 		}
 	}
@@ -2352,15 +2380,13 @@ void Game::saveState(int lastMapID, int loadMapID, int viewX, int viewY, int vie
 		app->canvas->updateLoadingBar(false);
 		if (briefSave) {
 			name = this->GetSaveFile(Game::FILE_NAME_BRIEFWORLD, (lastMapID - 1));
-		}
-		else {
+		} else {
 			name = this->GetSaveFile(Game::FILE_NAME_FULLWORLD, 0);
 		}
 		if (OS.openFile(name, 1)) {
 			this->saveWorldState(&OS, briefSave);
 			OS.close();
-		}
-		else {
+		} else {
 			app->Error("saveState: failed to open world file");
 		}
 	}
@@ -2375,24 +2401,12 @@ void Game::saveLevelSnapshot() {
 	OutputStream OS;
 
 	const char* name = this->GetSaveFile(Game::FILE_NAME_BRIEFPLAYER, 0);
-	if (OS.openFile(name, 1))
-	{
+	if (OS.openFile(name, 1)) {
 		app->canvas->updateLoadingBar(false);
-		if (this->savePlayerState(
-			&OS,
-			app->canvas->loadMapID,
-			app->canvas->viewX,
-			app->canvas->viewY,
-			app->canvas->viewAngle,
-			app->canvas->viewPitch,
-			app->canvas->viewX,
-			app->canvas->viewY,
-			app->canvas->viewX,
-			app->canvas->viewY,
-			app->canvas->viewZ,
-			app->canvas->saveAngle,
-			app->canvas->savePitch))
-		{
+		if (this->savePlayerState(&OS, app->canvas->loadMapID, app->canvas->viewX, app->canvas->viewY,
+		                          app->canvas->viewAngle, app->canvas->viewPitch, app->canvas->viewX,
+		                          app->canvas->viewY, app->canvas->viewX, app->canvas->viewY, app->canvas->viewZ,
+		                          app->canvas->saveAngle, app->canvas->savePitch)) {
 			OS.close();
 			const char* name = this->GetSaveFile(Game::FILE_NAME_BRIEFWORLD, app->canvas->loadMapID - 1);
 			if (OS.openFile(name, 1)) {
@@ -2406,7 +2420,8 @@ void Game::saveLevelSnapshot() {
 	OS.~OutputStream();
 }
 
-bool Game::savePlayerState(OutputStream* OS, int loadMapID, int viewX, int viewY, int viewAngle, int viewPitch, int prevX, int prevY, int saveX, int saveY, int saveZ, int saveAngle, int savePitch) {
+bool Game::savePlayerState(OutputStream* OS, int loadMapID, int viewX, int viewY, int viewAngle, int viewPitch,
+                           int prevX, int prevY, int saveX, int saveY, int saveZ, int saveAngle, int savePitch) {
 	Applet* app = CAppContainer::getInstance()->app;
 	OS->writeShort(loadMapID);
 	OS->writeShort(viewX);
@@ -2450,8 +2465,7 @@ bool Game::loadState(int activeLoadType) {
 
 	if (activeLoadType == 1) {
 		name = this->GetSaveFile(Game::FILE_NAME_FULLPLAYER, 0);
-	}
-	else if (activeLoadType == 2) {
+	} else if (activeLoadType == 2) {
 		app->player->currentLevelDeaths = 0;
 		name = this->GetSaveFile(Game::FILE_NAME_BRIEFPLAYER, 0);
 	}
@@ -2460,15 +2474,15 @@ bool Game::loadState(int activeLoadType) {
 		if (this->loadPlayerState(&IS)) {
 			this->activeLoadType = activeLoadType;
 			if (app->canvas->viewX != 0 && app->canvas->viewY != 0) {
-				this->spawnParam = ((app->canvas->viewX >> 6 & 0x1F) | (app->canvas->viewY >> 6 & 0x1F) << 5 | (app->canvas->viewAngle & 0x3FF) >> 7 << 10);
+				this->spawnParam = ((app->canvas->viewX >> 6 & 0x1F) | (app->canvas->viewY >> 6 & 0x1F) << 5 |
+				                    (app->canvas->viewAngle & 0x3FF) >> 7 << 10);
 			}
 			app->canvas->loadMap(this->saveStateMap, false, false);
 			this->isSaved = false;
 			this->isLoaded = true;
 			rtn = true;
 		}
-	}
-	else {
+	} else {
 		app->Error("loadState: failed to open player file");
 	}
 
@@ -2487,11 +2501,13 @@ bool Game::hasConfig() {
 	return false;
 }
 
-bool Game::hasElement(const char* name){
+bool Game::hasElement(const char* name) {
 	if (name != nullptr) {
 		char* namePath = this->getProfileSaveFileName(name);
 		FILE* file = std::fopen(namePath, "rb");
-		if (namePath) {delete[] namePath;}
+		if (namePath) {
+			delete[] namePath;
+		}
 		if (file != nullptr) {
 			std::fclose(file);
 			return true;
@@ -2503,14 +2519,13 @@ bool Game::hasElement(const char* name){
 bool Game::hasSavedState() {
 	if (this->hasConfig()) {
 		bool v3 = false;
-		for (int i = 0; i < 10; i++)
-		{
+		for (int i = 0; i < 10; i++) {
 			if (this->hasElement(this->GetSaveFile(Game::FILE_NAME_BRIEFWORLD, i))) {
 				v3 = true;
 			}
 		}
 		if (this->hasElement(this->GetSaveFile(Game::FILE_NAME_BRIEFPLAYER, 0))) {
-			if (this->hasElement(this->GetSaveFile(Game::FILE_NAME_FULLPLAYER, 0))){
+			if (this->hasElement(this->GetSaveFile(Game::FILE_NAME_FULLPLAYER, 0))) {
 				if (v3) {
 					return true;
 				}
@@ -2537,7 +2552,9 @@ void Game::removeState(bool b) {
 
 	namePath = this->getProfileSaveFileName(this->GetSaveFile(Game::FILE_NAME_FULLWORLD, 0));
 	std::remove(namePath);
-	if (namePath) { delete[] namePath; }
+	if (namePath) {
+		delete[] namePath;
+	}
 
 	if (b) {
 		app->canvas->updateLoadingBar(false);
@@ -2545,7 +2562,9 @@ void Game::removeState(bool b) {
 
 	namePath = this->getProfileSaveFileName(this->GetSaveFile(Game::FILE_NAME_FULLPLAYER, 0));
 	std::remove(namePath);
-	if (namePath) { delete[] namePath; }
+	if (namePath) {
+		delete[] namePath;
+	}
 
 	if (b) {
 		app->canvas->updateLoadingBar(false);
@@ -2553,7 +2572,9 @@ void Game::removeState(bool b) {
 
 	namePath = this->getProfileSaveFileName(this->GetSaveFile(Game::FILE_NAME_BRIEFPLAYER, 0));
 	std::remove(namePath);
-	if (namePath) { delete[] namePath; }
+	if (namePath) {
+		delete[] namePath;
+	}
 
 	if (b) {
 		app->canvas->updateLoadingBar(false);
@@ -2561,7 +2582,9 @@ void Game::removeState(bool b) {
 	for (int i = 0; i < 10; i++) {
 		namePath = this->getProfileSaveFileName(this->GetSaveFile(Game::FILE_NAME_BRIEFWORLD, i));
 		std::remove(namePath);
-		if (namePath) { delete[] namePath; }
+		if (namePath) {
+			delete[] namePath;
+		}
 		if (b) {
 			app->canvas->updateLoadingBar(false);
 		}
@@ -2695,8 +2718,7 @@ bool Game::snapMonsters(bool b) {
 				activeMonsters = nextOnList;
 			} while (activeMonsters != this->activeMonsters);
 			this->interpolatingMonsters = false;
-		}
-		else if (activeMonsters == nullptr) {
+		} else if (activeMonsters == nullptr) {
 			this->interpolatingMonsters = false;
 		}
 		app->canvas->updateFacingEntity = true;
@@ -2739,8 +2761,7 @@ void Game::updateMonsters() {
 		app->canvas->updateFacingEntity = true;
 		if (this->combatMonsters != nullptr) {
 			app->combat->performAttack(this->combatMonsters, this->combatMonsters->monster->target, 0, 0, false);
-		}
-		else {
+		} else {
 			this->endMonstersTurn();
 			if (!this->isCameraActive() && app->canvas->blockInputTime == 0) {
 				app->canvas->drawPlayingSoftKeys();
@@ -2757,8 +2778,7 @@ void Game::setLineLocked(Entity* entity, bool b) {
 	int n2;
 	if (b) {
 		n2 = (n & 0xFFFFFFFE);
-	}
-	else {
+	} else {
 		n2 = (n | 0x1);
 	}
 	app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFFFF00) | n2);
@@ -2766,8 +2786,7 @@ void Game::setLineLocked(Entity* entity, bool b) {
 	if (entity->def->name == (entity->name & 0x3FF)) {
 		entity->def = app->entityDefManager->lookup(n2);
 		entity->name = (short)(entity->def->name | 0x400);
-	}
-	else {
+	} else {
 		entity->def = app->entityDefManager->lookup(n2);
 	}
 }
@@ -2837,8 +2856,7 @@ void Game::updateBombs() {
 					entity->pain(1, nullptr);
 				}
 				this->placedBombs[i] = 0;
-			}
-			else {
+			} else {
 				entity->param = ((entity->param & 0xFFFFFF00) | n);
 			}
 		}
@@ -2855,32 +2873,32 @@ int Game::setDynamite(int x, int y, bool b) {
 	int flags = 0;
 	if (!b) {
 		switch (this->destAngle & 0x3FF) {
-		case Enums::ANGLE_EAST: {
-			flags |= Enums::SPRITE_FLAG_WEST;
-			x--;
-			break;
+			case Enums::ANGLE_EAST: {
+				flags |= Enums::SPRITE_FLAG_WEST;
+				x--;
+				break;
+			}
+			case Enums::ANGLE_NORTH: {
+				flags |= Enums::SPRITE_FLAG_SOUTH;
+				y++;
+				break;
+			}
+			case Enums::ANGLE_WEST: {
+				flags |= Enums::SPRITE_FLAG_EAST;
+				x++;
+				break;
+			}
+			case Enums::ANGLE_SOUTH: {
+				flags |= Enums::SPRITE_FLAG_NORTH;
+				y--;
+				break;
+			}
 		}
-		case Enums::ANGLE_NORTH: {
-			flags |= Enums::SPRITE_FLAG_SOUTH;
-			y++;
-			break;
-		}
-		case Enums::ANGLE_WEST: {
-			flags |= Enums::SPRITE_FLAG_EAST;
-			x++;
-			break;
-		}
-		case Enums::ANGLE_SOUTH: {
-			flags |= Enums::SPRITE_FLAG_NORTH;
-			y--;
-			break;
-		}
-		}
-	}
-	else {
+	} else {
 		flags |= (Enums::SPRITE_FLAG_TWO_SIDED | Enums::SPRITE_FLAG_HIDDEN);
 	}
-	this->allocDynamite((short)x, (short)y, (short)(app->render->getHeight(x, y) + (b ? 31 : 32)), flags, nextBombIndex, 0);
+	this->allocDynamite((short)x, (short)y, (short)(app->render->getHeight(x, y) + (b ? 31 : 32)), flags, nextBombIndex,
+	                    0);
 	return nextBombIndex;
 }
 
@@ -2888,8 +2906,12 @@ Entity* Game::getFreeDropEnt() {
 	int dropIndex = this->dropIndex;
 	int lastDropEntIndex = this->firstDropIndex + dropIndex;
 	if ((this->entities[lastDropEntIndex].info & 0x100000) != 0x0) {
-		for (dropIndex = (dropIndex + 1) % 16; dropIndex != this->dropIndex && (this->entities[lastDropEntIndex].info & 0x100000) != 0x0; dropIndex = (dropIndex + 1) % 16, lastDropEntIndex = this->firstDropIndex + dropIndex) {}
-		if (this->dropIndex == dropIndex) {}
+		for (dropIndex = (dropIndex + 1) % 16;
+		     dropIndex != this->dropIndex && (this->entities[lastDropEntIndex].info & 0x100000) != 0x0;
+		     dropIndex = (dropIndex + 1) % 16, lastDropEntIndex = this->firstDropIndex + dropIndex) {
+		}
+		if (this->dropIndex == dropIndex) {
+		}
 	}
 	this->dropIndex = (dropIndex + 1) % 16;
 	this->lastDropEntIndex = lastDropEntIndex;
@@ -2971,8 +2993,7 @@ void Game::spawnDropItem(Entity* entity) {
 	bool b2;
 	if (entity->monster == nullptr) {
 		b2 = (b & entity->param == 0);
-	}
-	else {
+	} else {
 		b2 = (b & (entity->monster->flags & 0x800) == 0x0);
 	}
 	if (b2) {
@@ -2986,10 +3007,11 @@ void Game::spawnDropItem(Entity* entity) {
 				if (find != nullptr) {
 					if (find->tileIndex != 0) {
 						int sprite = entity->getSprite();
-						this->spawnDropItem(app->render->mapSprites[app->render->S_X + sprite], app->render->mapSprites[app->render->S_Y + sprite], find->tileIndex, find, n4, false);
+						this->spawnDropItem(app->render->mapSprites[app->render->S_X + sprite],
+						                    app->render->mapSprites[app->render->S_Y + sprite], find->tileIndex, find,
+						                    n4, false);
 					}
-				}
-				else {
+				} else {
 					app->Error("Cannot find a def for the dropItem.", 117); // ERR_ENT_LOOTSET
 				}
 			}
@@ -3003,21 +3025,21 @@ Entity* Game::spawnPlayerEntityCopy(int n, int n2) {
 	int n3 = 72;
 	int n4 = 224;
 	switch (app->player->characterChoice) {
-	case 1: {
-		n3 = 68;
-		n4 = 224;
-		break;
-	}
-	case 3: {
-		n3 = 66;
-		n4 = 225;
-		break;
-	}
-	case 2: {
-		n3 = 72;
-		n4 = 226;
-		break;
-	}
+		case 1: {
+			n3 = 68;
+			n4 = 224;
+			break;
+		}
+		case 3: {
+			n3 = 66;
+			n4 = 225;
+			break;
+		}
+		case 2: {
+			n3 = 72;
+			n4 = 226;
+			break;
+		}
 	}
 	Entity* freeDropEnt = this->getFreeDropEnt();
 	freeDropEnt->def = app->entityDefManager->lookup(n3);
@@ -3048,18 +3070,18 @@ Entity* Game::spawnSentryBotCorpse(int n, int n2, int n3, int n4, int n5) {
 	int n6 = 19;
 	int n7 = 0;
 	switch (n3) {
-	case 3:
-	case 4: {
-		n6 = 19;
-		n7 = 0;
-		break;
-	}
-	case 5:
-	case 6: {
-		n6 = 18;
-		n7 = 1;
-		break;
-	}
+		case 3:
+		case 4: {
+			n6 = 19;
+			n7 = 0;
+			break;
+		}
+		case 5:
+		case 6: {
+			n6 = 18;
+			n7 = 1;
+			break;
+		}
 	}
 	Entity* freeDropEnt = this->getFreeDropEnt();
 	freeDropEnt->def = app->entityDefManager->find(9, 11, n7);
@@ -3068,8 +3090,7 @@ Entity* Game::spawnSentryBotCorpse(int n, int n2, int n3, int n4, int n5) {
 	freeDropEnt->param = 0;
 	if (n3 == 3 || n3 == 5) {
 		freeDropEnt->addToLootSet(2, 1, 10);
-	}
-	else {
+	} else {
 		freeDropEnt->addToLootSet(0, 12, 1);
 	}
 	freeDropEnt->addToLootSet(0, 16, n4);
@@ -3107,7 +3128,8 @@ void Game::throwDropItem(int dstX, int dstY, int n, Entity* entity) {
 		allocLerpSprite->dstZ = allocLerpSprite->srcZ;
 		allocLerpSprite->height = 48;
 		allocLerpSprite->flags |= (Enums::LS_FLAG_ASYNC | Enums::LS_FLAG_PARABOLA);
-		allocLerpSprite->srcScale = allocLerpSprite->dstScale = app->render->mapSprites[app->render->S_SCALEFACTOR + entity->getSprite()];
+		allocLerpSprite->srcScale = allocLerpSprite->dstScale =
+		    app->render->mapSprites[app->render->S_SCALEFACTOR + entity->getSprite()];
 		allocLerpSprite->startTime = app->gameTime;
 		allocLerpSprite->travelTime = 850;
 		int n3 = app->nextByte() & 0x7;
@@ -3119,7 +3141,8 @@ void Game::throwDropItem(int dstX, int dstY, int n, Entity* entity) {
 			if (this->traceEntity == nullptr && (this->baseVisitedTiles[dstY >> 6] & 1 << (dstX >> 6)) == 0x0) {
 				allocLerpSprite->dstX = dstX;
 				allocLerpSprite->dstY = dstY;
-				allocLerpSprite->dstZ = (short)(app->render->getHeight(allocLerpSprite->dstX, allocLerpSprite->dstY) + 32);
+				allocLerpSprite->dstZ =
+				    (short)(app->render->getHeight(allocLerpSprite->dstX, allocLerpSprite->dstY) + 32);
 				break;
 			}
 			n3 = (n3 + 1 & 0x7);
@@ -3151,10 +3174,14 @@ int Game::updateLerpSprite(LerpSprite* lerpSprite) {
 	if (lerpSprite->travelTime != 0) {
 		n8 = (n5 << 16) / (lerpSprite->travelTime << 8);
 	}
-	app->render->mapSprites[app->render->S_X + n2] = (short)(lerpSprite->srcX + (n8 * (lerpSprite->dstX - lerpSprite->srcX << 8) >> 16));
-	app->render->mapSprites[app->render->S_Y + n2] = (short)(lerpSprite->srcY + (n8 * (lerpSprite->dstY - lerpSprite->srcY << 8) >> 16));
-	app->render->mapSprites[app->render->S_SCALEFACTOR + n2] = (uint8_t)(lerpSprite->srcScale + (n8 * (lerpSprite->dstScale - lerpSprite->srcScale << 8) >> 16));
-	app->render->mapSprites[app->render->S_Z + n2] = (short)(lerpSprite->srcZ + (n8 * (lerpSprite->dstZ - lerpSprite->srcZ << 8) >> 16));
+	app->render->mapSprites[app->render->S_X + n2] =
+	    (short)(lerpSprite->srcX + (n8 * (lerpSprite->dstX - lerpSprite->srcX << 8) >> 16));
+	app->render->mapSprites[app->render->S_Y + n2] =
+	    (short)(lerpSprite->srcY + (n8 * (lerpSprite->dstY - lerpSprite->srcY << 8) >> 16));
+	app->render->mapSprites[app->render->S_SCALEFACTOR + n2] =
+	    (uint8_t)(lerpSprite->srcScale + (n8 * (lerpSprite->dstScale - lerpSprite->srcScale << 8) >> 16));
+	app->render->mapSprites[app->render->S_Z + n2] =
+	    (short)(lerpSprite->srcZ + (n8 * (lerpSprite->dstZ - lerpSprite->srcZ << 8) >> 16));
 	if ((lerpSprite->flags & Enums::LS_FLAG_PARABOLA) != 0x0) {
 		int n9 = n8 << 1;
 		if ((lerpSprite->flags & Enums::LS_FLAG_TRUNC) != 0x0) {
@@ -3162,11 +3189,12 @@ int Game::updateLerpSprite(LerpSprite* lerpSprite) {
 		}
 		int n10 = app->render->sinTable[n9 & 0x3FF] >> 8;
 		if (!(lerpSprite->flags & Enums::LS_FLAG_S_NORELINK)) {
-			app->render->relinkSprite(n2, app->render->mapSprites[app->render->S_X + n2] << 4, app->render->mapSprites[app->render->S_Y + n2] << 4, app->render->mapSprites[app->render->S_Z + n2] << 4);
+			app->render->relinkSprite(n2, app->render->mapSprites[app->render->S_X + n2] << 4,
+			                          app->render->mapSprites[app->render->S_Y + n2] << 4,
+			                          app->render->mapSprites[app->render->S_Z + n2] << 4);
 		}
 		app->render->mapSprites[app->render->S_Z + n2] += (short)(n10 * (lerpSprite->height << 8) >> 16);
-	}
-	else if (!(lerpSprite->flags & Enums::LS_FLAG_S_NORELINK)) {
+	} else if (!(lerpSprite->flags & Enums::LS_FLAG_S_NORELINK)) {
 		app->render->relinkSprite(n2);
 	}
 	int n12 = app->render->mapSprites[app->render->S_X + n2] >> 6;
@@ -3180,47 +3208,49 @@ int Game::updateLerpSprite(LerpSprite* lerpSprite) {
 			int n17 = lerpSprite->dstX - lerpSprite->srcX;
 			int n18 = lerpSprite->dstY - lerpSprite->srcY;
 
-			if ((anim == Enums::MANIM_IDLE || anim == Enums::MANIM_WALK_FRONT || 
-				(anim == Enums::MANIM_WALK_BACK && (lerpSprite->flags & Enums::LS_FLAG_AUTO_FACE) != 0x0)) && (n17 | n18) != 0x0) {
+			if ((anim == Enums::MANIM_IDLE || anim == Enums::MANIM_WALK_FRONT ||
+			     (anim == Enums::MANIM_WALK_BACK && (lerpSprite->flags & Enums::LS_FLAG_AUTO_FACE) != 0x0)) &&
+			    (n17 | n18) != 0x0) {
 				int abs = std::abs((app->render->viewAngle & 0x3FF) - this->VecToDir(n17, n18, true));
-				if (app->combat->WorldDistToTileDist(std::max((lerpSprite->dstX - lerpSprite->srcX) * (lerpSprite->dstX - lerpSprite->srcX), (lerpSprite->dstY - lerpSprite->srcY) * (lerpSprite->dstY - lerpSprite->srcY))) > 1 && abs < 256) {
+				if (app->combat->WorldDistToTileDist(
+				        std::max((lerpSprite->dstX - lerpSprite->srcX) * (lerpSprite->dstX - lerpSprite->srcX),
+				                 (lerpSprite->dstY - lerpSprite->srcY) * (lerpSprite->dstY - lerpSprite->srcY))) > 1 &&
+				    abs < 256) {
 					anim = Enums::MANIM_WALK_BACK;
 					lerpSprite->flags |= Enums::LS_FLAG_AUTO_FACE;
-				}
-				else {
+				} else {
 					anim = Enums::MANIM_WALK_FRONT;
 				}
-			}
-			else if (anim == Enums::MANIM_IDLE_BACK) {
+			} else if (anim == Enums::MANIM_IDLE_BACK) {
 				anim = Enums::MANIM_WALK_BACK;
 			}
 
 			if (anim == Enums::MANIM_WALK_FRONT || anim == Enums::MANIM_WALK_BACK) {
 
-				if (entity->def->eType == Enums::ET_MONSTER)
-				{
-					if (entity->def->eSubType == Enums::BOSS_CYBERDEMON || entity->def->eSubType == Enums::BOSS_MASTERMIND)
-					{
-						if ((1 + (n8 * lerpSprite->dist >> 12) & 0x3) >> 1 != ((((app->render->mapSpriteInfo[n2]) & 0xFF00) >> 8) & 3) >> 1) {
+				if (entity->def->eType == Enums::ET_MONSTER) {
+					if (entity->def->eSubType == Enums::BOSS_CYBERDEMON ||
+					    entity->def->eSubType == Enums::BOSS_MASTERMIND) {
+						if ((1 + (n8 * lerpSprite->dist >> 12) & 0x3) >> 1 !=
+						    ((((app->render->mapSpriteInfo[n2]) & 0xFF00) >> 8) & 3) >> 1) {
 							if (entity->def->eSubType == Enums::BOSS_CYBERDEMON) {
 								app->sound->playSound(1047, 0, true, 0);
-							}
-							else if (entity->def->eSubType == Enums::BOSS_MASTERMIND) {
+							} else if (entity->def->eSubType == Enums::BOSS_MASTERMIND) {
 								app->sound->playSound(1003, 0, true, 0);
-							}
-							else {
+							} else {
 								app->sound->playSound((int8_t)(Enums::MSOUND_NONE), 0, true, 0);
 							}
 						}
 					}
 				}
 
-				app->render->mapSpriteInfo[n2] = ((app->render->mapSpriteInfo[n2] & 0xFFFF00FF) | ((1 + (n8 * lerpSprite->dist >> 12) & 0x3) | anim) << 8);
+				app->render->mapSpriteInfo[n2] = ((app->render->mapSpriteInfo[n2] & 0xFFFF00FF) |
+				                                  ((1 + (n8 * lerpSprite->dist >> 12) & 0x3) | anim) << 8);
 			}
 		}
 		if (!(lerpSprite->flags & Enums::LS_FLAG_ENT_NORELINK) && (n12 != n14 || n13 != n15)) {
 			this->unlinkEntity(entity);
-			this->linkEntity(entity, app->render->mapSprites[app->render->S_X + n2] >> 6, app->render->mapSprites[app->render->S_Y + n2] >> 6);
+			this->linkEntity(entity, app->render->mapSprites[app->render->S_X + n2] >> 6,
+			                 app->render->mapSprites[app->render->S_Y + n2] >> 6);
 			n |= 0x2;
 		}
 	}
@@ -3241,7 +3271,8 @@ void Game::snapLerpSprites(int n) {
 			if (n == -1 || lerpSprite->hSprite == n + 1) {
 				if (lerpSprite->thread != nullptr && !(lerpSprite->flags & Enums::LS_FLAG_ASYNC)) {
 					int n2;
-					for (n2 = 0; n2 < this->numCallThreads && this->callThreads[n2] != lerpSprite->thread; ++n2) {}
+					for (n2 = 0; n2 < this->numCallThreads && this->callThreads[n2] != lerpSprite->thread; ++n2) {
+					}
 					if (n2 == this->numCallThreads) {
 						this->callThreads[this->numCallThreads++] = lerpSprite->thread;
 					}
@@ -3272,7 +3303,8 @@ void Game::updateLerpSprites() {
 				int updateLerpSprite = this->updateLerpSprite(lerpSprite);
 				if (0x0 != (updateLerpSprite & 0x1) && !(flags & Enums::LS_FLAG_ASYNC) && nullptr != thread) {
 					int n;
-					for (n = 0; n < this->numCallThreads && this->callThreads[n] != thread; ++n) {}
+					for (n = 0; n < this->numCallThreads && this->callThreads[n] != thread; ++n) {
+					}
 					if (n == this->numCallThreads) {
 						this->callThreads[this->numCallThreads++] = thread;
 					}
@@ -3316,8 +3348,7 @@ LerpSprite* Game::allocLerpSprite(ScriptThread* thread, int n, bool b) {
 		lerpSprite->hSprite = n + 1;
 		lerpSprite->thread = thread;
 		this->numLerpSprites++;
-	}
-	else {
+	} else {
 		if ((lerpSprite->flags & Enums::LS_FLAG_ANIMATING_EFFECT) != 0x0) {
 			this->animatingEffects--;
 		}
@@ -3330,8 +3361,7 @@ LerpSprite* Game::allocLerpSprite(ScriptThread* thread, int n, bool b) {
 			int n3 = (app->render->mapSpriteInfo[n2] & 0xFF00) >> 8 & 0xF0;
 			if (n3 == 32 || (lerpSprite->flags & Enums::LS_FLAG_AUTO_FACE) != 0x0) {
 				n3 = 0;
-			}
-			else if (n3 == 48) {
+			} else if (n3 == 48) {
 				n3 = 16;
 			}
 			app->render->mapSpriteInfo[n2] = ((app->render->mapSpriteInfo[n2] & 0xFFFF00FF) | n3 << 8);
@@ -3380,16 +3410,17 @@ void Game::freeLerpSprite(LerpSprite* lerpSprite) {
 			int n5 = (app->render->mapSpriteInfo[sprite] & 0xFF00) >> 8 & 0xF0;
 			if ((n5 == 16 || n5 == 48) && !(lerpSprite->flags & Enums::LS_FLAG_AUTO_FACE)) {
 				app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | 0x1000);
-			}
-			else {
+			} else {
 				app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | 0x0);
 			}
 		}
 		int n6 = entity->linkIndex % 32;
 		int n7 = entity->linkIndex / 32;
-		if (!(lerpSprite->flags & Enums::LS_FLAG_ENT_NORELINK) && ((entity->info & 0x100000) == 0x0 || n3 != n6 || n4 != n7)) {
+		if (!(lerpSprite->flags & Enums::LS_FLAG_ENT_NORELINK) &&
+		    ((entity->info & 0x100000) == 0x0 || n3 != n6 || n4 != n7)) {
 			this->unlinkEntity(entity);
-			this->linkEntity(entity, app->render->mapSprites[app->render->S_X + sprite] >> 6, app->render->mapSprites[app->render->S_Y + sprite] >> 6);
+			this->linkEntity(entity, app->render->mapSprites[app->render->S_X + sprite] >> 6,
+			                 app->render->mapSprites[app->render->S_Y + sprite] >> 6);
 		}
 	}
 	if ((lerpSprite->flags & Enums::LS_FLAG_DOORCLOSE) != 0x0) {
@@ -3398,8 +3429,7 @@ void Game::freeLerpSprite(LerpSprite* lerpSprite) {
 		app->canvas->updateFacingEntity = true;
 		app->canvas->automapDrawn = false;
 		app->render->mapSpriteInfo[sprite] &= 0x7fffffff;
-	}
-	else if ((lerpSprite->flags & Enums::LS_FLAG_DOOROPEN) || (lerpSprite->flags & Enums::LS_FLAG_SECRET_HIDE)) {
+	} else if ((lerpSprite->flags & Enums::LS_FLAG_DOOROPEN) || (lerpSprite->flags & Enums::LS_FLAG_SECRET_HIDE)) {
 		app->canvas->updateFacingEntity = true;
 		this->secretActive = false;
 		app->canvas->automapDrawn = false;
@@ -3407,8 +3437,7 @@ void Game::freeLerpSprite(LerpSprite* lerpSprite) {
 		if (entity->def->eType != Enums::ET_DOOR) {
 			app->render->mapSpriteInfo[sprite] |= Enums::SPRITE_FLAG_HIDDEN;
 		}
-	}
-	else {
+	} else {
 		if ((lerpSprite->flags & Enums::LS_MASK_CHICKEN_BOUNCE) == Enums::LS_MASK_CHICKEN_BOUNCE) {
 			int sx = lerpSprite->srcX - lerpSprite->dstX;
 			int sy = lerpSprite->srcY - lerpSprite->dstY;
@@ -3427,8 +3456,7 @@ void Game::freeLerpSprite(LerpSprite* lerpSprite) {
 			if ((lerpSprite->dstX & 0x3F) == 32 && (lerpSprite->dstY & 0x3F) == 32) {
 				dx = sx * 64;
 				dy = sy * 64;
-			}
-			else {
+			} else {
 				dx = sx * 31;
 				dy = sy * 31;
 			}
@@ -3489,13 +3517,13 @@ void Game::freeLerpSprite(LerpSprite* lerpSprite) {
 			if ((entity->monster->goalFlags & 0x1) != 0x0) {
 				entity->aiFinishLerp();
 			}
-			if (app->player->isFamiliar && entity->distFrom(app->canvas->saveX, app->canvas->saveY) <= app->combat->tileDistances[0]) {
-				int*calcPosition = entity->calcPosition();
+			if (app->player->isFamiliar &&
+			    entity->distFrom(app->canvas->saveX, app->canvas->saveY) <= app->combat->tileDistances[0]) {
+				int* calcPosition = entity->calcPosition();
 				if (calcPosition[0] - app->canvas->saveX == 0 ^ calcPosition[1] - app->canvas->saveY == 0) {
 					if (app->canvas->state == Canvas::ST_CAMERA) {
 						app->player->unsetFamiliarOnceOutOfCinematic = true;
-					}
-					else {
+					} else {
 						app->player->forceFamiliarReturnDueToMonster();
 					}
 				}
@@ -3509,8 +3537,7 @@ void Game::freeLerpSprite(LerpSprite* lerpSprite) {
 						entity->monster->monsterEffects |= 0x60008;
 						entity->monster->monsterEffects &= 0xFFFFE1FD;
 					}
-				}
-				else {
+				} else {
 					entity->pain(5, mapEntity);
 				}
 			}
@@ -3588,7 +3615,8 @@ bool Game::doesScriptExist(int n, int n2, int n3) {
 		for (int i = app->render->findEventIndex(n4); i != -1; i = app->render->getNextEventIndex()) {
 			int n5 = app->render->tileEvents[i + 1];
 			int n6 = n5 & n3;
-			if ((n5 & 0x80000) == 0x0 && (n6 & 0xF) != 0x0 && (n6 & 0xFF0) != 0x0 && (((n5 & 0x7000) == 0x0 && (n3 & 0x7000) == 0x0) || (n6 & 0x7000) != 0x0)) {
+			if ((n5 & 0x80000) == 0x0 && (n6 & 0xF) != 0x0 && (n6 & 0xFF0) != 0x0 &&
+			    (((n5 & 0x7000) == 0x0 && (n3 & 0x7000) == 0x0) || (n6 & 0x7000) != 0x0)) {
 				return true;
 			}
 		}
@@ -3604,8 +3632,7 @@ int Game::executeTile(int n, int n2, int n3, bool b) {
 	if (app->canvas->state == Canvas::ST_DIALOG) {
 		n4 = allocScriptThread->queueTile(n, n2, n3, b);
 		allocScriptThread->unpauseTime = 0;
-	}
-	else {
+	} else {
 		n4 = allocScriptThread->executeTile(n, n2, n3, b);
 	}
 	if (n4 != 2) {
@@ -3690,8 +3717,7 @@ bool Game::tileObstructsAttack(int n, int n2) {
 				if (n5 < n3) {
 					n7 = n5;
 					n8 = n3;
-				}
-				else if (n5 > n3) {
+				} else if (n5 > n3) {
 					n7 = n3;
 					n8 = n5;
 				}
@@ -3705,8 +3731,7 @@ bool Game::tileObstructsAttack(int n, int n2) {
 				if (n6 < n4) {
 					n9 = n6;
 					n10 = n4;
-				}
-				else if (n6 > n4) {
+				} else if (n6 > n4) {
 					n9 = n4;
 					n10 = n6;
 				}
@@ -3753,16 +3778,15 @@ void Game::awardSecret(bool b) {
 
 	if (b) {
 		app->sound->playSound(1103, 0, 3, 0);
-	}
-	else {
+	} else {
 		app->sound->playSound(1020, 0, 3, 0);
 	}
 
-	if (this->mapSecretsFound == this->totalSecrets && (app->player->foundSecretsLevels & 1 << app->canvas->loadMapID - 1) == 0x0) {
+	if (this->mapSecretsFound == this->totalSecrets &&
+	    (app->player->foundSecretsLevels & 1 << app->canvas->loadMapID - 1) == 0x0) {
 		app->player->showAchievementMessage(1);
 		app->player->foundSecretsLevels |= 1 << app->canvas->loadMapID - 1;
-	}
-	else {
+	} else {
 		app->player->addXP(5);
 	}
 }
@@ -3787,7 +3811,8 @@ void Game::addEntityDeathFunc(Entity* entity, int n) {
 void Game::removeEntityFunc(Entity* entity) {
 	int sprite;
 	int n;
-	for (sprite = entity->getSprite(), n = 0; n < 64 && this->entityDeathFunctions[n * 2] != sprite; ++n) {}
+	for (sprite = entity->getSprite(), n = 0; n < 64 && this->entityDeathFunctions[n * 2] != sprite; ++n) {
+	}
 	if (n != 64) {
 		this->entityDeathFunctions[n * 2 + 0] = -1;
 		this->entityDeathFunctions[n * 2 + 1] = -1;
@@ -3798,7 +3823,8 @@ void Game::removeEntityFunc(Entity* entity) {
 void Game::executeEntityFunc(Entity* entity, bool throwAwayLoot) {
 	int sprite;
 	int n;
-	for (sprite = entity->getSprite(), n = 0; n < 64 && this->entityDeathFunctions[n * 2] != sprite; ++n) {}
+	for (sprite = entity->getSprite(), n = 0; n < 64 && this->entityDeathFunctions[n * 2] != sprite; ++n) {
+	}
 	if (n != 64) {
 		ScriptThread* allocScriptThread = this->allocScriptThread();
 		allocScriptThread->throwAwayLoot = throwAwayLoot;
@@ -3810,7 +3836,8 @@ void Game::executeEntityFunc(Entity* entity, bool throwAwayLoot) {
 
 void Game::foundLoot(int n, int n2) {
 	Applet* app = CAppContainer::getInstance()->app;
-	this->foundLoot(app->render->mapSprites[app->render->S_X + n], app->render->mapSprites[app->render->S_Y + n], app->render->mapSprites[app->render->S_Z + n], n2);
+	this->foundLoot(app->render->mapSprites[app->render->S_X + n], app->render->mapSprites[app->render->S_Y + n],
+	                app->render->mapSprites[app->render->S_Z + n], n2);
 }
 
 void Game::foundLoot(int n, int n2, int n3, int n4) {
@@ -3830,7 +3857,12 @@ void Game::raiseCorpses() {
 		do {
 			Entity* nextOnList = inactiveMonsters->monster->nextOnList;
 			int sprite = inactiveMonsters->getSprite();
-			if ((inactiveMonsters->info & 0x10000) == 0x0 && (inactiveMonsters->info & 0x8000000) == 0x0 && (inactiveMonsters->info & 0x1000000) != 0x0 && !inactiveMonsters->isBoss() && (inactiveMonsters->monster->flags & 0x40) == 0x0 && this->findMapEntity(app->render->mapSprites[app->render->S_X + sprite], app->render->mapSprites[app->render->S_Y + sprite], 15535) == nullptr && (this->difficulty != 4 || 0x0 == (inactiveMonsters->monster->monsterEffects & 0x4))) {
+			if ((inactiveMonsters->info & 0x10000) == 0x0 && (inactiveMonsters->info & 0x8000000) == 0x0 &&
+			    (inactiveMonsters->info & 0x1000000) != 0x0 && !inactiveMonsters->isBoss() &&
+			    (inactiveMonsters->monster->flags & 0x40) == 0x0 &&
+			    this->findMapEntity(app->render->mapSprites[app->render->S_X + sprite],
+			                        app->render->mapSprites[app->render->S_Y + sprite], 15535) == nullptr &&
+			    (this->difficulty != 4 || 0x0 == (inactiveMonsters->monster->monsterEffects & 0x4))) {
 				this->gridEntities[n++] = inactiveMonsters;
 				if (n == 9) {
 					break;
@@ -3842,15 +3874,20 @@ void Game::raiseCorpses() {
 			Entity* entity = this->gridEntities[i];
 			entity->info |= 0x8000000;
 			int sprite = entity->getSprite();
-			entity->resurrect(app->render->mapSprites[app->render->S_X + sprite], app->render->mapSprites[app->render->S_Y + sprite], app->render->mapSprites[app->render->S_Z + sprite]);
+			entity->resurrect(app->render->mapSprites[app->render->S_X + sprite],
+			                  app->render->mapSprites[app->render->S_Y + sprite],
+			                  app->render->mapSprites[app->render->S_Z + sprite]);
 			activate(entity, false, false, true, true);
-			GameSprite* gameSprite = gsprite_allocAnim(241, app->render->mapSprites[app->render->S_X + sprite], app->render->mapSprites[app->render->S_Y + sprite], app->render->mapSprites[app->render->S_Z + sprite] - 20);
+			GameSprite* gameSprite = gsprite_allocAnim(241, app->render->mapSprites[app->render->S_X + sprite],
+			                                           app->render->mapSprites[app->render->S_Y + sprite],
+			                                           app->render->mapSprites[app->render->S_Z + sprite] - 20);
 			gameSprite->flags |= 0x400;
 			gameSprite->startScale = 64;
 			gameSprite->destScale = 96;
 			gameSprite->scaleStep = 40;
 			int* calcPosition = entity->calcPosition();
-			app->particleSystem->spawnParticles(1, -3355444, calcPosition[0], calcPosition[1], app->render->getHeight(calcPosition[0], calcPosition[1]) + 48);
+			app->particleSystem->spawnParticles(1, -3355444, calcPosition[0], calcPosition[1],
+			                                    app->render->getHeight(calcPosition[0], calcPosition[1]) + 48);
 		}
 	}
 }
@@ -3873,29 +3910,23 @@ int Game::VecToDir(int n, int n2, bool b) {
 	int n4 = b ? 7 : 0;
 	if (n <= -32) {
 		n3 = 4;
-	}
-	else if (n >= 32) {
+	} else if (n >= 32) {
 		n3 = 0;
 	}
 	if (n2 >= 32) {
 		if (n3 == 4) {
 			n3 = 5;
-		}
-		else if (n3 == 0) {
+		} else if (n3 == 0) {
 			n3 = 7;
-		}
-		else {
+		} else {
 			n3 = 6;
 		}
-	}
-	else if (n2 <= -32) {
+	} else if (n2 <= -32) {
 		if (n3 == 4) {
 			n3 = 3;
-		}
-		else if (n3 == 0) {
+		} else if (n3 == 0) {
 			n3 = 1;
-		}
-		else {
+		} else {
 			n3 = 2;
 		}
 	}
@@ -3964,8 +3995,7 @@ void Game::cleanUpCamMemory() {
 
 const char* Game::GetSaveFile(int i, int i2) {
 	const char* name;
-	switch (i)
-	{
+	switch (i) {
 		case 0: // SDFWORLD
 			name = "FWORLD";
 			break;
@@ -3979,8 +4009,7 @@ const char* Game::GetSaveFile(int i, int i2) {
 			name = "FULLPLAYER";
 			break;
 		case 4: // SDBWORLD
-			switch (i2)
-			{
+			switch (i2) {
 				case 0:
 					name = "SB_1";
 					break;
@@ -4025,8 +4054,17 @@ const char* Game::GetSaveFile(int i, int i2) {
 }
 
 char* Game::getProfileSaveFileName(const char* name) {
-	if (name != nullptr)
-	{
+	if (name != nullptr) {
+		// Ensure save directory exists
+		struct stat sb;
+		if (stat(dir, &sb) != 0) {
+#ifdef _WIN32
+			_mkdir(dir);
+#else
+			mkdir(dir, 0755);
+#endif
+		}
+
 		int len1 = std::strlen(dir);
 		int len2 = std::strlen(name);
 		char* namePath = new char[len1 + len2 + 200];
@@ -4034,14 +4072,11 @@ char* Game::getProfileSaveFileName(const char* name) {
 		std::strcat(namePath, "/");
 		std::strcat(namePath, name);
 		return namePath;
-	}
-	else
-	{
+	} else {
 		puts("getProfileSaveFileName2: ERROR -> filename is NULL! ");
 		return nullptr;
 	}
 }
-
 
 int Game::getMonsterSound(int eSubType, int param, int soundType) {
 	Applet* app = CAppContainer::getInstance()->app;
@@ -4051,7 +4086,7 @@ int Game::getMonsterSound(int eSubType, int param, int soundType) {
 	if (soundType == Enums::MSOUND_ALERT1) {
 		rand = app->nextByte() % 3;
 	}
-	
+
 	if ((eSubType == Enums::MONSTER_PINKY) && (param == 0)) {
 		switch (soundType) {
 			case Enums::MSOUND_ALERT1:
@@ -4073,12 +4108,9 @@ int Game::getMonsterSound(int eSubType, int param, int soundType) {
 				monsterSoundResId = 1083; // "Pinky_small_death.wav",
 				break;
 		}
-	}
-	else
-	{
+	} else {
 		if ((eSubType == Enums::BOSS_MASTERMIND) && (param == 1)) {
-			switch (soundType)
-			{
+			switch (soundType) {
 				case Enums::MSOUND_ALERT1:
 				case Enums::MSOUND_ALERT2:
 				case Enums::MSOUND_ALERT3:
@@ -4098,8 +4130,7 @@ int Game::getMonsterSound(int eSubType, int param, int soundType) {
 					monsterSoundResId = 1115; // "SpiderMastermind_death.wav"
 					break;
 			}
-		}
-		else {
+		} else {
 		getMonsterSound:
 			monsterSoundResId = this->monsterSounds[(eSubType * Enums::MSOUND_TYPES) + soundType + rand];
 			if (this->monsterSounds[(eSubType * Enums::MSOUND_TYPES) + soundType + rand] != Enums::MSOUND_NONE) {
@@ -4113,7 +4144,7 @@ int Game::getMonsterSound(int eSubType, int param, int soundType) {
 	}
 
 	if ((eSubType == Enums::MONSTER_ZOMBIE) && (soundType == Enums::MSOUND_DEATH)) {
-		monsterSoundResId = (std::rand() % 3) + 1139; // "zombie_death1.wav", "zombie_death2.wav", "zombie_death3.wav" 
+		monsterSoundResId = (std::rand() % 3) + 1139; // "zombie_death1.wav", "zombie_death2.wav", "zombie_death3.wav"
 	}
 
 	return monsterSoundResId;

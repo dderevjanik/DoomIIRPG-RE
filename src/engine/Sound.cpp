@@ -17,10 +17,11 @@ Sound::~Sound() {
 	this->openAL_Close();
 }
 
-#define OpenAL_ERROR(id)		\
-	error = alGetError();		\
-	if (error != AL_NO_ERROR) {	\
-		printf("OpenAL error: %s, file: %s [%d]\n", alGetString(error) , "/Users/greghodges/doom2rpg/trunk/Doom2rpg_iphone/xcode/Classes/Sound.cpp", id);	\
+#define OpenAL_ERROR(id)                                                                                               \
+	error = alGetError();                                                                                              \
+	if (error != AL_NO_ERROR) {                                                                                        \
+		printf("OpenAL error: %s, file: %s [%d]\n", alGetString(error),                                                \
+		       "/Users/greghodges/doom2rpg/trunk/Doom2rpg_iphone/xcode/Classes/Sound.cpp", id);                        \
 	}
 
 bool Sound::startup() {
@@ -39,6 +40,12 @@ bool Sound::startup() {
 	this->soundsLoaded = false;
 	this->alContext = nullptr;
 
+	// Load sound definitions from sounds.ini, fall back to hardcoded defaults
+	if (!Sounds::loadFromINI("sounds.ini")) {
+		printf("Sound: sounds.ini not found, using built-in defaults\n");
+		Sounds::loadDefaults();
+	}
+
 	for (int i = 0; i < 10; i++) {
 		this->channel[i].resID = -1;
 		this->channel[i].priority = 1;
@@ -55,8 +62,7 @@ void Sound::openAL_Init() {
 	alGetError();
 	if (alcGetCurrentContext()) {
 		puts("WARNING! Trying to init OpenAL, but we already have a context!");
-	}
-	else {
+	} else {
 		this->alDevice = alcOpenDevice(nullptr);
 		OpenAL_ERROR(522);
 
@@ -67,14 +73,13 @@ void Sound::openAL_Init() {
 			if (context) {
 				alcMakeContextCurrent(context);
 				this->alContext = context;
-			}
-			else {
+			} else {
 				alcCloseDevice(this->alDevice);
 			}
 		}
 		OpenAL_ERROR(540);
 
-		//this->openAL_SetSystemVolume(100);
+		// this->openAL_SetSystemVolume(100);
 		alListener3i(AL_POSITION, 0, 0, 0);
 		alListener3i(AL_VELOCITY, 0, 0, 0);
 		OpenAL_ERROR(546);
@@ -147,8 +152,7 @@ bool Sound::openAL_GetALFormat(AudioStreamBasicDescription aStreamBD, ALenum* fo
 		if (aStreamBD.mBitsPerChannel == 8) {
 			if (aStreamBD.mChannelsPerFrame == 1) {
 				*format = AL_FORMAT_MONO8;
-			}
-			else {
+			} else {
 				*format = AL_FORMAT_STEREO8;
 			}
 			return true;
@@ -156,8 +160,7 @@ bool Sound::openAL_GetALFormat(AudioStreamBasicDescription aStreamBD, ALenum* fo
 		if (aStreamBD.mBitsPerChannel == 16) {
 			if (aStreamBD.mChannelsPerFrame == 1) {
 				*format = AL_FORMAT_MONO16;
-			}
-			else {
+			} else {
 				*format = AL_FORMAT_STEREO16;
 			}
 			return true;
@@ -180,11 +183,16 @@ void Sound::openAL_LoadSound(int resID, Sound::SoundStream* channel) {
 	int index = (uint16_t)(resID - 1000);
 	OpenAL_ERROR(596);
 
-	printf("Loading sound...\nName: %s\nResourceID: %d\nAL buffer: %d\n", Sounds::RESOURCE_FILE_NAMES[index], resID, channel->bufferId);
-	if (this->openAL_LoadWAVFromFile(channel->bufferId, Sounds::RESOURCE_FILE_NAMES[index])) {
-		OpenAL_ERROR(606);
+	const char* fileName = Sounds::getFileName(index);
+	if (!fileName) {
+		this->app->Error("Sound index %d out of range\n!", index);
+		return;
 	}
-	else {
+
+	printf("Loading sound...\nName: %s\nResourceID: %d\nAL buffer: %d\n", fileName, resID, channel->bufferId);
+	if (this->openAL_LoadWAVFromFile(channel->bufferId, fileName)) {
+		OpenAL_ERROR(606);
+	} else {
 		this->app->Error("Sound resource not found\n!");
 	}
 }
@@ -207,7 +215,8 @@ bool Sound::openAL_LoadWAVFromFile(ALuint bufferId, const char* fileName) {
 	return false;
 }
 
-bool Sound::openAL_LoadAudioFileData(const char* fileName, ALenum* format, ALvoid** data, ALsizei* size, ALsizei* freq) {
+bool Sound::openAL_LoadAudioFileData(const char* fileName, ALenum* format, ALvoid** data, ALsizei* size,
+                                     ALsizei* freq) {
 	InputStream IS;
 	AudioStreamBasicDescription outPropertyData;
 	char buffer[4];
@@ -240,15 +249,15 @@ bool Sound::openAL_LoadAudioFileData(const char* fileName, ALenum* format, ALvoi
 		}
 
 		outPropertyData.mFormatID = 'lpcm';
-		outPropertyData.mChannelsPerFrame = IS.readShort(); // Get number of channels. 
-		outPropertyData.mSampleRate = IS.readInt(); // Get sampler rate. 
-		IS.readInt(); // Block Align
-		IS.readShort(); // ByteRate
-		outPropertyData.mBitsPerChannel = IS.readShort(); // Get Bits Per Sample.
-		if (chunklength == 18) { // SpiderMastermind_sight.wav use chunklength 18
+		outPropertyData.mChannelsPerFrame = IS.readShort(); // Get number of channels.
+		outPropertyData.mSampleRate = IS.readInt();         // Get sampler rate.
+		IS.readInt();                                       // Block Align
+		IS.readShort();                                     // ByteRate
+		outPropertyData.mBitsPerChannel = IS.readShort();   // Get Bits Per Sample.
+		if (chunklength == 18) {                            // SpiderMastermind_sight.wav use chunklength 18
 			IS.readShort();
 		}
-		IS.readInt(); // "data" chunk. 
+		IS.readInt();         // "data" chunk.
 		*size = IS.readInt(); // Get size of the data.
 
 		*data = (ALvoid*)std::malloc(*size);
@@ -294,7 +303,6 @@ bool Sound::openAL_LoadAllSounds() {
 	return false;
 }
 
-
 bool Sound::cacheSounds() {
 	if (this->openAL_LoadAllSounds()) {
 		this->updateVolume();
@@ -306,23 +314,23 @@ bool Sound::cacheSounds() {
 void Sound::playSound(int16_t resID, uint8_t flags, int priority, bool a5) {
 	ALenum error;
 
-	int v5; // r5
-	bool v7; // zf
-	bool v9; // zf
-	int v10; // r10
-	int v12; // r6
-	int v14; // r1
-	int v15; // r2
-	int v17; // r6
-	int musicVolume; // r2
-	ALenum v20; // r0
-	const ALchar* v21; // r0
-	int soundFxVolume; // r2
-	ALenum Error; // r0
+	int v5;               // r5
+	bool v7;              // zf
+	bool v9;              // zf
+	int v10;              // r10
+	int v12;              // r6
+	int v14;              // r1
+	int v15;              // r2
+	int v17;              // r6
+	int musicVolume;      // r2
+	ALenum v20;           // r0
+	const ALchar* v21;    // r0
+	int soundFxVolume;    // r2
+	ALenum Error;         // r0
 	const ALchar* String; // r0
-	int v26; // r2
-	ALuint v28; // r1
-	int FreeSlot; // [sp+8h] [bp-1Ch]
+	int v26;              // r2
+	ALuint v28;           // r1
+	int FreeSlot;         // [sp+8h] [bp-1Ch]
 
 	SoundStream* channel;
 
@@ -331,43 +339,34 @@ void Sound::playSound(int16_t resID, uint8_t flags, int priority, bool a5) {
 	if (resID != -1)
 		v7 = resID == 255;
 
-	if (!v7)
-	{
+	if (!v7) {
 		v9 = resID == 1255;
 		if (resID != 1255)
 			v9 = this->field_0x10 == 0;
-		if (!v9 && !this->field_0x4)
-		{
-			if ((unsigned int)(resID - 1067) <= 4)
-			{
+		if (!v9 && !this->field_0x4) {
+			if ((unsigned int)(resID - 1067) <= 4) {
 				if (!this->allowMusics /* || isUserMusicOn()*/)
 					return;
-			}
-			else if (!this->allowSounds)
-			{
+			} else if (!this->allowSounds) {
 				return;
 			}
 			if (this->resID == v5)
 				return;
 			FreeSlot = -1;
 			for (v12 = 0; v12 < 10; v12++) {
-				if (this->channel[v12].resID == v5)
-				{
+				if (this->channel[v12].resID == v5) {
 					v14 = 0;
-					while (this->channel[v14].resID != v5)
-					{
+					while (this->channel[v14].resID != v5) {
 						++v14;
 						if (v14 == 10)
 							goto LABEL_19;
 					}
-					if (!this->openAL_IsPlaying(this->channel[v14].sourceId))
-					{
+					if (!this->openAL_IsPlaying(this->channel[v14].sourceId)) {
 					LABEL_19:
 						v10 = v12;
 						goto LABEL_29;
 					}
-					if (priority == 6)
-					{
+					if (priority == 6) {
 						v10 = v12;
 						if (v12 != -1 && this->openAL_IsPlaying(this->channel[v12].sourceId))
 							return;
@@ -377,24 +376,20 @@ void Sound::playSound(int16_t resID, uint8_t flags, int priority, bool a5) {
 				if (FreeSlot == -1) {
 					if (this->channel[v12].resID == -1) {
 						FreeSlot = v12;
-					}
-					else {
+					} else {
 						FreeSlot = -1;
 					}
 				}
 			}
 
-
 			v10 = -1;
 		LABEL_29:
-			if (priority == 6 || (flags & 1) != 0)
-			{
+			if (priority == 6 || (flags & 1) != 0) {
 			LABEL_31:
 				if (v10 != -1 && this->openAL_IsPlaying(this->channel[v10].sourceId))
 					return;
 			}
-			if ((flags & 2) != 0)
-			{
+			if ((flags & 2) != 0) {
 				for (v17 = 0; v17 < 10; v17++) {
 					alSourceStop(this->channel[v17].sourceId);
 					this->channel[v17].priority = 1;
@@ -402,11 +397,8 @@ void Sound::playSound(int16_t resID, uint8_t flags, int priority, bool a5) {
 				}
 			}
 
-
-			if (v10 == -1)
-			{
-				if (FreeSlot == -1)
-				{
+			if (v10 == -1) {
+				if (FreeSlot == -1) {
 					FreeSlot = this->getFreeSlot(priority);
 					if (FreeSlot == -1)
 						return;
@@ -424,9 +416,7 @@ void Sound::playSound(int16_t resID, uint8_t flags, int priority, bool a5) {
 					soundFxVolume = this->musicVolume;
 				this->openAL_SetVolume(channel->sourceId, soundFxVolume);
 				OpenAL_ERROR(258);
-			}
-			else
-			{
+			} else {
 				channel = &this->channel[v10];
 				if ((unsigned int)(channel->resID - 1067) > 4)
 					musicVolume = this->soundFxVolume;
@@ -441,21 +431,18 @@ void Sound::playSound(int16_t resID, uint8_t flags, int priority, bool a5) {
 	}
 }
 
-
 int Sound::getFreeSlot(int a2) {
-	int v4; // r5
-	int v6; // r11
-	int v7; // r10
+	int v4;       // r5
+	int v6;       // r11
+	int v7;       // r10
 	int priority; // r3
-	bool v9; // cc
+	bool v9;      // cc
 
 	v4 = 0;
 	v6 = -1;
 	v7 = 6;
-	while (this->channel[v4].resID != -1
-		&& (this->openAL_IsPlaying(this->channel[v4].sourceId)
-			|| this->openAL_IsPaused(this->channel[v4].sourceId)))
-	{
+	while (this->channel[v4].resID != -1 &&
+	       (this->openAL_IsPlaying(this->channel[v4].sourceId) || this->openAL_IsPaused(this->channel[v4].sourceId))) {
 		priority = this->channel[v4].priority;
 		v9 = priority < a2;
 		if (priority < a2)
@@ -484,16 +471,14 @@ void Sound::stopSound(int resID, bool fadeOut) {
 	for (int i = 0; i < 10; i++) {
 		if (this->channel[i].resID == resID) {
 			if (fadeOut) {
-				if (!this->channel[i].fadeInProgress)
-				{
+				if (!this->channel[i].fadeInProgress) {
 					if ((unsigned int)((int16_t)resID - 1067) > 4)
 						volume = this->soundFxVolume;
 					else
 						volume = this->musicVolume;
 					this->channel[i].StartFade(volume, 0, 500);
 				}
-			}
-			else {
+			} else {
 				alSourceStop(this->channel[i].sourceId);
 				this->channel[i].priority = 1;
 				this->channel[i].fadeInProgress = false;
@@ -519,8 +504,7 @@ void Sound::updateVolume() {
 			if (!this->channel[i].fadeInProgress) {
 				if ((unsigned int)(this->channel[i].resID - 1067) > 4) {
 					volume = this->soundFxVolume;
-				}
-				else {
+				} else {
 					volume = this->musicVolume;
 				}
 				this->openAL_SetVolume(this->channel[i].sourceId, volume);
