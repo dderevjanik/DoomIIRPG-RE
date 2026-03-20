@@ -236,6 +236,93 @@ static EntityDef::BodyPartData computeDefaultBodyParts(uint8_t eType, uint8_t eS
 	return d;
 }
 
+// Auto-compute default floater rendering data from monster subtype
+static EntityDef::FloaterData computeDefaultFloater(uint8_t eSubType) {
+	EntityDef::FloaterData d;
+	switch (eSubType) {
+		case Enums::MONSTER_SENTINEL:
+			d.type = EntityDef::FloaterData::FLOATER_MULTIPART;
+			d.backViewFrame = 6;
+			d.idleFrontFrame = 2;
+			d.headZOffset = -11;
+			d.hasDeadLoot = true;
+			break;
+		case Enums::MONSTER_LOST_SOUL:
+			d.zOffset = 192;
+			d.hasIdleFrameIncrement = true;
+			break;
+		case Enums::MONSTER_CACODEMON:
+			d.hasBackExtraSprite = true;
+			d.backExtraSpriteIdx = 7;
+			break;
+		default:
+			break;
+	}
+	return d;
+}
+
+// Auto-compute default special boss rendering data from tile index and subtype
+static EntityDef::SpecialBossData computeDefaultSpecialBoss(int16_t tileIndex, uint8_t eSubType) {
+	EntityDef::SpecialBossData d;
+	if (tileIndex == Enums::TILENUM_BOSS_PINKY) {
+		d.type = EntityDef::SpecialBossData::BOSS_MULTIPART;
+		d.torsoZ = 384;
+		d.idleSpriteIdx = 3;
+		d.attackSpriteIdx = 8;
+		d.painSpriteIdx = 12;
+	} else if (tileIndex >= Enums::TILENUM_BOSS_VIOS && tileIndex <= Enums::TILENUM_BOSS_VIOS5) {
+		d.type = EntityDef::SpecialBossData::BOSS_ETHEREAL;
+		d.renderModeOverride = 3;
+		d.painRenderMode = 5;
+	} else if (tileIndex == Enums::TILENUM_BOSS_MASTERMIND) {
+		d.type = EntityDef::SpecialBossData::BOSS_SPIDER;
+		d.legLateral = -44;
+		d.legBaseZ = 6;
+		d.idleTorsoZ = 35;
+		d.idleBobDiv = 1;
+		d.idleTorsoZBase = 0;
+		d.walkTorsoZ = 35;
+		d.attackTorsoZ = 40;
+		d.painTorsoZ = 70;
+		d.painLegsZ = 100;
+		d.painLegPos = 2;
+		d.hasAttackFlare = true;
+		d.flareZOffset = 288;
+		d.flareLateralPos = 0;
+		d.flareTorsoZExtra = 10;
+	} else if (tileIndex == Enums::TILENUM_MONSTER_ARACHNOTRON) {
+		d.type = EntityDef::SpecialBossData::BOSS_SPIDER;
+		d.legLateral = -29;
+		d.legBaseZ = 6;
+		d.idleTorsoZ = 50;
+		d.idleBobDiv = 2;
+		d.idleTorsoZBase = 50;
+		d.walkTorsoZ = 50;
+		d.attackTorsoZ = 50;
+		d.painTorsoZ = 100;
+		d.painLegsZ = 70;
+		d.painLegPos = 1;
+		d.hasAttackFlare = false;
+	}
+	return d;
+}
+
+// Auto-compute default sprite anim overrides
+static EntityDef::SpriteAnimData computeDefaultSpriteAnim(int16_t tileIndex, uint8_t eSubType) {
+	EntityDef::SpriteAnimData d;
+	if (tileIndex == Enums::TILENUM_BOSS_CYBERDEMON) {
+		d.clampScale = true;
+		d.attackLegOffset = -3;
+		d.attackLegOffsetOnFlip = true;
+	} else if (eSubType == Enums::MONSTER_SAW_GOBLIN) {
+		d.hasFrameDependentHead = true;
+		d.headZFrame0 = 17;
+		d.headXFrame0 = 2;
+		d.headZFrame1 = 16;
+	}
+	return d;
+}
+
 // -----------------------
 // EntityDefManager Class
 // -----------------------
@@ -293,6 +380,9 @@ bool EntityDefManager::loadFromBinary() {
 		this->list[i].fearEyes = computeDefaultFearEyes(this->list[i].eSubType);
 		this->list[i].gunFlare = computeDefaultGunFlare(this->list[i].eSubType);
 		this->list[i].bodyParts = computeDefaultBodyParts(this->list[i].eType, this->list[i].eSubType);
+		this->list[i].floater = computeDefaultFloater(this->list[i].eSubType);
+		this->list[i].specialBoss = computeDefaultSpecialBoss(this->list[i].tileIndex, this->list[i].eSubType);
+		this->list[i].spriteAnim = computeDefaultSpriteAnim(this->list[i].tileIndex, this->list[i].eSubType);
 	}
 
 	IS.~InputStream();
@@ -381,6 +471,54 @@ bool EntityDefManager::loadFromINI(const char* path) {
 		this->list[i].bodyParts.noHeadOnMancAtk = ini.getBool(section, "no_head_on_manc_atk", defBody.noHeadOnMancAtk);
 		this->list[i].bodyParts.attackRevAtk2TorsoZ =
 		    (int16_t)ini.getInt(section, "attack_rev_atk2_torso_z", defBody.attackRevAtk2TorsoZ);
+
+		// Load floater rendering data, falling back to auto-computed defaults
+		EntityDef::FloaterData defFloat = computeDefaultFloater(this->list[i].eSubType);
+		int floaterType = ini.getInt(section, "floater_type", (int)defFloat.type);
+		this->list[i].floater.type = (EntityDef::FloaterData::Type)floaterType;
+		this->list[i].floater.zOffset = (int16_t)ini.getInt(section, "floater_z_offset", defFloat.zOffset);
+		this->list[i].floater.hasIdleFrameIncrement = ini.getBool(section, "floater_idle_frame_inc", defFloat.hasIdleFrameIncrement);
+		this->list[i].floater.hasBackExtraSprite = ini.getBool(section, "floater_back_extra_sprite", defFloat.hasBackExtraSprite);
+		this->list[i].floater.backExtraSpriteIdx = (int8_t)ini.getInt(section, "floater_back_extra_idx", defFloat.backExtraSpriteIdx);
+		this->list[i].floater.backViewFrame = (int8_t)ini.getInt(section, "floater_back_view_frame", defFloat.backViewFrame);
+		this->list[i].floater.idleFrontFrame = (int8_t)ini.getInt(section, "floater_idle_front_frame", defFloat.idleFrontFrame);
+		this->list[i].floater.headZOffset = (int16_t)ini.getInt(section, "floater_head_z", defFloat.headZOffset);
+		this->list[i].floater.hasDeadLoot = ini.getBool(section, "floater_dead_loot", defFloat.hasDeadLoot);
+
+		// Load special boss rendering data, falling back to auto-computed defaults
+		EntityDef::SpecialBossData defBoss = computeDefaultSpecialBoss(this->list[i].tileIndex, this->list[i].eSubType);
+		int bossType = ini.getInt(section, "boss_type", (int)defBoss.type);
+		this->list[i].specialBoss.type = (EntityDef::SpecialBossData::Type)bossType;
+		this->list[i].specialBoss.torsoZ = (int16_t)ini.getInt(section, "boss_torso_z", defBoss.torsoZ);
+		this->list[i].specialBoss.idleSpriteIdx = (int8_t)ini.getInt(section, "boss_idle_sprite", defBoss.idleSpriteIdx);
+		this->list[i].specialBoss.attackSpriteIdx = (int8_t)ini.getInt(section, "boss_attack_sprite", defBoss.attackSpriteIdx);
+		this->list[i].specialBoss.painSpriteIdx = (int8_t)ini.getInt(section, "boss_pain_sprite", defBoss.painSpriteIdx);
+		this->list[i].specialBoss.renderModeOverride = (int8_t)ini.getInt(section, "boss_render_mode", defBoss.renderModeOverride);
+		this->list[i].specialBoss.painRenderMode = (int8_t)ini.getInt(section, "boss_pain_render_mode", defBoss.painRenderMode);
+		this->list[i].specialBoss.legLateral = (int16_t)ini.getInt(section, "boss_leg_lateral", defBoss.legLateral);
+		this->list[i].specialBoss.legBaseZ = (int16_t)ini.getInt(section, "boss_leg_base_z", defBoss.legBaseZ);
+		this->list[i].specialBoss.idleTorsoZ = (int16_t)ini.getInt(section, "boss_idle_torso_z", defBoss.idleTorsoZ);
+		this->list[i].specialBoss.idleBobDiv = (int8_t)ini.getInt(section, "boss_idle_bob_div", defBoss.idleBobDiv);
+		this->list[i].specialBoss.idleTorsoZBase = (int16_t)ini.getInt(section, "boss_idle_torso_z_base", defBoss.idleTorsoZBase);
+		this->list[i].specialBoss.walkTorsoZ = (int16_t)ini.getInt(section, "boss_walk_torso_z", defBoss.walkTorsoZ);
+		this->list[i].specialBoss.attackTorsoZ = (int16_t)ini.getInt(section, "boss_attack_torso_z", defBoss.attackTorsoZ);
+		this->list[i].specialBoss.painTorsoZ = (int16_t)ini.getInt(section, "boss_pain_torso_z", defBoss.painTorsoZ);
+		this->list[i].specialBoss.painLegsZ = (int16_t)ini.getInt(section, "boss_pain_legs_z", defBoss.painLegsZ);
+		this->list[i].specialBoss.painLegPos = (int8_t)ini.getInt(section, "boss_pain_leg_pos", defBoss.painLegPos);
+		this->list[i].specialBoss.hasAttackFlare = ini.getBool(section, "boss_attack_flare", defBoss.hasAttackFlare);
+		this->list[i].specialBoss.flareZOffset = (int16_t)ini.getInt(section, "boss_flare_z", defBoss.flareZOffset);
+		this->list[i].specialBoss.flareLateralPos = (int8_t)ini.getInt(section, "boss_flare_lateral", defBoss.flareLateralPos);
+		this->list[i].specialBoss.flareTorsoZExtra = (int16_t)ini.getInt(section, "boss_flare_torso_z_extra", defBoss.flareTorsoZExtra);
+
+		// Load sprite anim overrides, falling back to auto-computed defaults
+		EntityDef::SpriteAnimData defAnim = computeDefaultSpriteAnim(this->list[i].tileIndex, this->list[i].eSubType);
+		this->list[i].spriteAnim.clampScale = ini.getBool(section, "anim_clamp_scale", defAnim.clampScale);
+		this->list[i].spriteAnim.attackLegOffset = (int8_t)ini.getInt(section, "anim_attack_leg_offset", defAnim.attackLegOffset);
+		this->list[i].spriteAnim.attackLegOffsetOnFlip = ini.getBool(section, "anim_attack_leg_on_flip", defAnim.attackLegOffsetOnFlip);
+		this->list[i].spriteAnim.hasFrameDependentHead = ini.getBool(section, "anim_frame_dep_head", defAnim.hasFrameDependentHead);
+		this->list[i].spriteAnim.headZFrame0 = (int16_t)ini.getInt(section, "anim_head_z_f0", defAnim.headZFrame0);
+		this->list[i].spriteAnim.headXFrame0 = (int8_t)ini.getInt(section, "anim_head_x_f0", defAnim.headXFrame0);
+		this->list[i].spriteAnim.headZFrame1 = (int16_t)ini.getInt(section, "anim_head_z_f1", defAnim.headZFrame1);
 	}
 
 	printf("EntityDefManager: loaded %d entities from %s\n", this->numDefs, path);
@@ -472,6 +610,72 @@ void EntityDefManager::exportToINI(const char* path) {
 				ini.setBool(section, "no_head_on_manc_atk", true);
 			if (bp.attackRevAtk2TorsoZ)
 				ini.setInt(section, "attack_rev_atk2_torso_z", bp.attackRevAtk2TorsoZ);
+		}
+
+		// Export floater data for floater entities
+		if (this->list[i].renderFlags & EntityDef::RFLAG_FLOATER) {
+			const auto& fl = this->list[i].floater;
+			ini.setInt(section, "floater_type", (int)fl.type);
+			if (fl.zOffset)
+				ini.setInt(section, "floater_z_offset", fl.zOffset);
+			if (fl.hasIdleFrameIncrement)
+				ini.setBool(section, "floater_idle_frame_inc", true);
+			if (fl.hasBackExtraSprite) {
+				ini.setBool(section, "floater_back_extra_sprite", true);
+				ini.setInt(section, "floater_back_extra_idx", fl.backExtraSpriteIdx);
+			}
+			ini.setInt(section, "floater_back_view_frame", fl.backViewFrame);
+			if (fl.type == EntityDef::FloaterData::FLOATER_MULTIPART) {
+				ini.setInt(section, "floater_idle_front_frame", fl.idleFrontFrame);
+				ini.setInt(section, "floater_head_z", fl.headZOffset);
+				ini.setBool(section, "floater_dead_loot", fl.hasDeadLoot);
+			}
+		}
+
+		// Export special boss data for special boss entities
+		if (this->list[i].renderFlags & EntityDef::RFLAG_SPECIAL_BOSS) {
+			const auto& sb = this->list[i].specialBoss;
+			ini.setInt(section, "boss_type", (int)sb.type);
+			if (sb.type == EntityDef::SpecialBossData::BOSS_MULTIPART) {
+				ini.setInt(section, "boss_torso_z", sb.torsoZ);
+				ini.setInt(section, "boss_idle_sprite", sb.idleSpriteIdx);
+				ini.setInt(section, "boss_attack_sprite", sb.attackSpriteIdx);
+				ini.setInt(section, "boss_pain_sprite", sb.painSpriteIdx);
+			} else if (sb.type == EntityDef::SpecialBossData::BOSS_ETHEREAL) {
+				ini.setInt(section, "boss_render_mode", sb.renderModeOverride);
+				ini.setInt(section, "boss_pain_render_mode", sb.painRenderMode);
+			} else if (sb.type == EntityDef::SpecialBossData::BOSS_SPIDER) {
+				ini.setInt(section, "boss_leg_lateral", sb.legLateral);
+				ini.setInt(section, "boss_leg_base_z", sb.legBaseZ);
+				ini.setInt(section, "boss_idle_torso_z", sb.idleTorsoZ);
+				ini.setInt(section, "boss_idle_bob_div", sb.idleBobDiv);
+				ini.setInt(section, "boss_idle_torso_z_base", sb.idleTorsoZBase);
+				ini.setInt(section, "boss_walk_torso_z", sb.walkTorsoZ);
+				ini.setInt(section, "boss_attack_torso_z", sb.attackTorsoZ);
+				ini.setInt(section, "boss_pain_torso_z", sb.painTorsoZ);
+				ini.setInt(section, "boss_pain_legs_z", sb.painLegsZ);
+				ini.setInt(section, "boss_pain_leg_pos", sb.painLegPos);
+				ini.setBool(section, "boss_attack_flare", sb.hasAttackFlare);
+				if (sb.hasAttackFlare) {
+					ini.setInt(section, "boss_flare_z", sb.flareZOffset);
+					ini.setInt(section, "boss_flare_lateral", sb.flareLateralPos);
+					ini.setInt(section, "boss_flare_torso_z_extra", sb.flareTorsoZExtra);
+				}
+			}
+		}
+
+		// Export sprite anim overrides
+		const auto& sa = this->list[i].spriteAnim;
+		if (sa.clampScale) {
+			ini.setBool(section, "anim_clamp_scale", true);
+			ini.setInt(section, "anim_attack_leg_offset", sa.attackLegOffset);
+			ini.setBool(section, "anim_attack_leg_on_flip", sa.attackLegOffsetOnFlip);
+		}
+		if (sa.hasFrameDependentHead) {
+			ini.setBool(section, "anim_frame_dep_head", true);
+			ini.setInt(section, "anim_head_z_f0", sa.headZFrame0);
+			ini.setInt(section, "anim_head_x_f0", sa.headXFrame0);
+			ini.setInt(section, "anim_head_z_f1", sa.headZFrame1);
 		}
 	}
 

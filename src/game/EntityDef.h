@@ -62,6 +62,64 @@ class EntityDef {
 		int16_t flash2Z = 0;    // Second (dual) or single flash Z offset
 	};
 
+	// Floater rendering data (used by Render::renderFloaterAnim)
+	struct FloaterData {
+		// Type discriminator: 0=simple (Cacodemon/LostSoul), 1=multipart (Sentinel)
+		enum Type : uint8_t { FLOATER_SIMPLE = 0, FLOATER_MULTIPART = 1 };
+		Type type = FLOATER_SIMPLE;
+		int16_t zOffset = 0;               // Z offset added always (LostSoul: 192)
+		bool hasIdleFrameIncrement = false; // Alternate frame on idle bob (LostSoul)
+		bool hasBackExtraSprite = false;    // Render extra sprite on back walk (Cacodemon)
+		int8_t backExtraSpriteIdx = 7;     // Which sprite for back extra render
+		int8_t backViewFrame = 4;          // Start frame for back views (4 for simple, 6 for multipart)
+		// Multipart (Sentinel) specific:
+		int8_t idleFrontFrame = 2;         // Start frame for idle/walk front
+		int16_t headZOffset = -11;         // Head Z relative to torso
+		bool hasDeadLoot = false;          // Show loot indicator on dead
+	};
+
+	// Special boss rendering data (used by Render::renderSpecialBossAnim)
+	struct SpecialBossData {
+		// Type discriminator
+		enum Type : uint8_t { BOSS_MULTIPART = 0, BOSS_ETHEREAL = 1, BOSS_SPIDER = 2 };
+		Type type = BOSS_MULTIPART;
+		// Multipart (Boss Pinky): shadow + legs + torso + head
+		int16_t torsoZ = 384;             // Torso/head Z offset above legs
+		int8_t idleSpriteIdx = 3;         // Sprite index for idle head
+		int8_t attackSpriteIdx = 8;       // Sprite index for attack
+		int8_t painSpriteIdx = 12;        // Sprite index for pain
+		// Ethereal (VIOS): additive multi-sprite rendering
+		int8_t renderModeOverride = 3;    // Render mode (3=additive)
+		int8_t painRenderMode = 5;        // Render mode during pain
+		// Spider (Mastermind/Arachnotron): shadow + torso + articulated legs
+		int16_t legLateral = -44;         // Leg lateral offset from center
+		int16_t legBaseZ = 6;             // Base leg Z (shifted <<4)
+		int16_t idleTorsoZ = 35;          // Torso Z during idle
+		int8_t idleBobDiv = 1;            // Bob divisor (1=full, 2=half bob amplitude)
+		int16_t idleTorsoZBase = 0;       // Added to bob result (Arachnotron: 50)
+		int16_t walkTorsoZ = 35;          // Torso Z during walk
+		int16_t attackTorsoZ = 40;        // Torso Z during attack
+		int16_t painTorsoZ = 70;          // Torso Z during pain
+		int16_t painLegsZ = 100;          // Legs Z during pain
+		int8_t painLegPos = 2;            // Leg positioning offset during pain
+		bool hasAttackFlare = false;      // Has gun flare on attack frame 1
+		int16_t flareZOffset = 288;       // Gun flare Z offset
+		int8_t flareLateralPos = 0;       // Gun flare lateral position
+		int16_t flareTorsoZExtra = 10;    // Extra Z added to torso for flare positioning
+	};
+
+	// Render data for Cyberdemon/ChainsawGoblin specific checks in renderSpriteAnim
+	struct SpriteAnimData {
+		bool clampScale = false;          // Clamp scale factor (Cyberdemon: scaleFactor * 7/9)
+		int8_t attackLegOffset = 0;       // Leg lateral offset during attack (Cyberdemon: -3)
+		bool attackLegOffsetOnFlip = false; // Only apply leg offset when not flipped (Cyberdemon)
+		// ChainsawGoblin frame-dependent head offsets:
+		bool hasFrameDependentHead = false;
+		int16_t headZFrame0 = 17;         // Head Z on attack frame 0
+		int8_t headXFrame0 = 2;           // Head lateral on attack frame 0
+		int16_t headZFrame1 = 16;         // Head Z on attack frame 1+
+	};
+
 	// Body part offsets for idle/walk/attack rendering
 	struct BodyPartData {
 		int16_t idleTorsoZ = 0;          // Torso Z offset during idle (e.g. Revenant -30, ArchVile -36)
@@ -88,10 +146,13 @@ class EntityDef {
 	uint8_t eSubType;
 	uint8_t parm;
 	uint8_t touchMe;
-	uint32_t renderFlags;   // Bitmask of RFLAG_* constants
-	FearEyeData fearEyes;   // Fear eye rendering offsets
-	GunFlareData gunFlare;  // Gun flare rendering offsets
-	BodyPartData bodyParts; // Body part rendering offsets
+	uint32_t renderFlags;       // Bitmask of RFLAG_* constants
+	FearEyeData fearEyes;       // Fear eye rendering offsets
+	GunFlareData gunFlare;      // Gun flare rendering offsets
+	BodyPartData bodyParts;     // Body part rendering offsets
+	FloaterData floater;        // Floater rendering offsets
+	SpecialBossData specialBoss; // Special boss rendering offsets
+	SpriteAnimData spriteAnim;  // Sprite anim overrides (Cyberdemon/ChainsawGoblin)
 
 	// Constructor
 	EntityDef();

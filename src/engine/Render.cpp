@@ -3574,12 +3574,12 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 
 	Entity* entity = &app->game->entities[this->mapSprites[this->S_ENT + n]];
 
-	if (tileNum == Enums::TILENUM_BOSS_CYBERDEMON && scaleFactor > 0x10000) {
-		// printf("scaleFactor %x\viewPitch", scaleFactor);
+	// Scale clamping from data (Cyberdemon: reduces scale by 7/9 when close up)
+	EntityDef* animDef = app->entityDefManager->lookup(tileNum);
+	if (animDef && animDef->spriteAnim.clampScale && scaleFactor > 0x10000) {
 		int64_t v16 = 7 * scaleFactor;
 		int64_t v13 = (uint64_t)(v16 * (int64_t)0x38E38E39) >> 32;
 		scaleFactor = (int)((v13 >> 1) - (v16 >> 31));
-		// printf("->scaleFactor %x\viewPitch", scaleFactor);
 	}
 
 	if (this->isFloater(tileNum)) {
@@ -3727,11 +3727,11 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 				break;
 			}
 
-			int n27;
-			if (tileNum != Enums::TILENUM_BOSS_CYBERDEMON || n25 == 0x20000) {
-				n27 = 0;
-			} else {
-				n27 = -3;
+			int n27 = 0;
+			if (animDef && animDef->spriteAnim.attackLegOffset != 0) {
+				if (!animDef->spriteAnim.attackLegOffsetOnFlip || n25 != 0x20000) {
+					n27 = animDef->spriteAnim.attackLegOffset;
+				}
 			}
 
 			// Legs
@@ -3778,12 +3778,12 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 				int n29 = 3;
 				n18 = bp.attackHeadX;
 				n16 = bp.attackHeadZ;
-				if (this->isChainsawGoblin(tileNum)) {
-					// ChainsawGoblin has frame-dependent head offsets
-					n16 = 16;
+				if (animDef && animDef->spriteAnim.hasFrameDependentHead) {
+					// Frame-dependent head offsets (ChainsawGoblin)
+					n16 = animDef->spriteAnim.headZFrame1;
 					if (frame == 0) {
-						n18 = 2;
-						n16 = 17;
+						n18 = animDef->spriteAnim.headXFrame0;
+						n16 = animDef->spriteAnim.headZFrame0;
 					}
 				}
 				if (b) {
@@ -3864,30 +3864,35 @@ void Render::renderFloaterAnim(int n, int frame, int x, int y, int z, int tileNu
                                int scaleFactor, int renderFlags) {
 	Applet* app = CAppContainer::getInstance()->app;
 
+	// Look up floater data from EntityDef
+	EntityDef* def = app->entityDefManager->lookup(tileNum);
+	EntityDef::FloaterData fl;
+	if (def) {
+		fl = def->floater;
+	}
+
 	int anim = frame & Enums::MANIM_MASK;
 	int n12 = frame;
 	frame = 0;
-	bool lostSoul = this->isLostSoul(tileNum);
-	if (lostSoul) {
-		z += 192;
-	}
+	z += fl.zOffset;
 	int n13 = 0;
-	if (this->isSentinel(tileNum)) {
-		frame = 2;
+
+	if (fl.type == EntityDef::FloaterData::FLOATER_MULTIPART) {
+		// Multi-part floater (Sentinel): torso + head as separate sprites
+		frame = fl.idleFrontFrame;
 		switch (anim) {
 			case Enums::MANIM_IDLE_BACK:
 			case Enums::MANIM_WALK_BACK: {
-				frame = 6;
+				frame = fl.backViewFrame;
 			}
 			case Enums::MANIM_IDLE:
 			case Enums::MANIM_WALK_FRONT:
 			case Enums::MANIM_DODGE: {
 				int n14 = (app->time + n * 1337) / 512 & 0x1;
-				int zPos = -11; // [GEC]
 				this->renderSprite(x, y, z + (n14 << 4), tileNum, frame, flags, renderMode, scaleFactor,
-				                   renderFlags); // Torzo
-				this->renderSprite(x, y, z + (n14 << 4) + zPos, tileNum, ++frame, flags, renderMode, scaleFactor,
-				                   renderFlags); // Head
+				                   renderFlags); // Torso
+				this->renderSprite(x, y, z + (n14 << 4) + fl.headZOffset, tileNum, ++frame, flags, renderMode,
+				                   scaleFactor, renderFlags); // Head
 				break;
 			}
 			case Enums::MANIM_ATTACK2: {
@@ -3903,10 +3908,12 @@ void Render::renderFloaterAnim(int n, int frame, int x, int y, int z, int tileNu
 				break;
 			}
 			case Enums::MANIM_DEAD: {
-				Entity* entity = &app->game->entities[this->mapSprites[this->S_ENT + n]];
-				if (entity->monster != nullptr && (entity->monster->flags & 0x800) == 0x0 && app->canvas->state != 18 &&
-				    !entity->hasEmptyLootSet()) {
-					this->renderSprite(x, y, z, tileNum, 13, flags, 0, 17 * scaleFactor >> 4, 512);
+				if (fl.hasDeadLoot) {
+					Entity* entity = &app->game->entities[this->mapSprites[this->S_ENT + n]];
+					if (entity->monster != nullptr && (entity->monster->flags & 0x800) == 0x0 &&
+					    app->canvas->state != 18 && !entity->hasEmptyLootSet()) {
+						this->renderSprite(x, y, z, tileNum, 13, flags, 0, 17 * scaleFactor >> 4, 512);
+					}
 				}
 				this->renderSprite(x, y, z, tileNum, 13, flags, renderMode, scaleFactor, renderFlags);
 				break;
@@ -3914,20 +3921,23 @@ void Render::renderFloaterAnim(int n, int frame, int x, int y, int z, int tileNu
 		}
 		return;
 	}
+
+	// Simple floater (Cacodemon/LostSoul): single sprite with optional extras
 	switch (anim) {
 		case Enums::MANIM_IDLE_BACK:
 		case Enums::MANIM_WALK_BACK: {
-			frame = 4;
+			frame = fl.backViewFrame;
 		}
 		case Enums::MANIM_IDLE:
 		case Enums::MANIM_WALK_FRONT: {
 			int n15 = (app->time + n * 1337) / 512 & 0x1;
-			if (n15 != 0 && lostSoul) {
+			if (n15 != 0 && fl.hasIdleFrameIncrement) {
 				++frame;
 			}
 			this->renderSprite(x, y, z + (n15 << 4), tileNum, frame, flags, renderMode, scaleFactor, renderFlags);
-			if (anim == 16 && !lostSoul) {
-				this->renderSprite(x, y, z, tileNum, 7, flags & 0xFFFDFFFF, renderMode, scaleFactor, renderFlags);
+			if (anim == Enums::MANIM_WALK_BACK && fl.hasBackExtraSprite) {
+				this->renderSprite(x, y, z, tileNum, fl.backExtraSpriteIdx, flags & 0xFFFDFFFF, renderMode,
+				                   scaleFactor, renderFlags);
 				break;
 			}
 			break;
@@ -3954,11 +3964,15 @@ void Render::renderSpecialBossAnim(int n, int frame, int x, int y, int z, int ti
                                    int scaleFactor, int renderFlags) {
 	Applet* app = CAppContainer::getInstance()->app;
 
+	// Look up special boss data from EntityDef
+	EntityDef* def = app->entityDefManager->lookup(tileNum);
+	EntityDef::SpecialBossData sb;
+	if (def) {
+		sb = def->specialBoss;
+	}
+
 	int anim = frame & Enums::MANIM_MASK;
 	frame &= Enums::MFRAME_MASK;
-
-	// anim = Enums::MANIM_IDLE;
-	// frame = (app->time) / 1024 & 0x1;
 
 	int n12 = 0;
 	int n13 = (app->time + n * 1337) / 1024 & 0x1;
@@ -3974,7 +3988,9 @@ void Render::renderSpecialBossAnim(int n, int frame, int x, int y, int z, int ti
 		min = std::min(std::max(32 - (z - n15), 0), 32);
 	}
 	int n16 = 65536 * min / 32;
-	if (tileNum == Enums::TILENUM_BOSS_PINKY) {
+
+	if (sb.type == EntityDef::SpecialBossData::BOSS_MULTIPART) {
+		// Multi-part boss (Boss Pinky): shadow + legs + torso + head
 		if (anim == Enums::MANIM_DEAD) {
 			if (entity->monster != nullptr && (entity->monster->flags & 0x800) == 0x0 && app->canvas->state != 18 &&
 			    !entity->hasEmptyLootSet()) {
@@ -3983,18 +3999,22 @@ void Render::renderSpecialBossAnim(int n, int frame, int x, int y, int z, int ti
 			this->renderSprite(x, y, z, tileNum, 13, flags, renderMode, scaleFactor, renderFlags);
 			return;
 		}
-		int n17 = 3;
+		int headSprite = sb.idleSpriteIdx;
 		if (anim == Enums::MANIM_ATTACK1 || anim == Enums::MANIM_ATTACK2) {
-			n17 = 8;
+			headSprite = sb.attackSpriteIdx;
 		} else if (anim == Enums::MANIM_PAIN) {
-			n17 = 12;
+			headSprite = sb.painSpriteIdx;
 		}
-		this->renderSprite(x, y, n15, 232, 0, flags, renderMode, n16, renderFlags);
-		this->renderSprite(x, y, z, tileNum, 0 + n13, flags, renderMode, scaleFactor, renderFlags);
-		this->renderSprite(x, y, z + n14 + 384, tileNum, 2, flags, renderMode, scaleFactor, renderFlags);
-		this->renderSprite(x, y, z + n14 + 384, tileNum, n17, flags, renderMode, scaleFactor, renderFlags);
-	} else if (tileNum >= Enums::TILENUM_BOSS_VIOS && tileNum <= Enums::TILENUM_BOSS_VIOS5) {
-		renderMode = 3;
+		this->renderSprite(x, y, n15, 232, 0, flags, renderMode, n16, renderFlags);         // Shadow
+		this->renderSprite(x, y, z, tileNum, 0 + n13, flags, renderMode, scaleFactor, renderFlags); // Legs
+		this->renderSprite(x, y, z + n14 + sb.torsoZ, tileNum, 2, flags, renderMode, scaleFactor,
+		                   renderFlags); // Torso
+		this->renderSprite(x, y, z + n14 + sb.torsoZ, tileNum, headSprite, flags, renderMode, scaleFactor,
+		                   renderFlags); // Head
+
+	} else if (sb.type == EntityDef::SpecialBossData::BOSS_ETHEREAL) {
+		// Ethereal boss (VIOS): additive multi-sprite rendering
+		renderMode = sb.renderModeOverride;
 		if (app->game->angryVIOS) {
 			renderFlags |= 0x80;
 		}
@@ -4027,25 +4047,29 @@ void Render::renderSpecialBossAnim(int n, int frame, int x, int y, int z, int ti
 				break;
 			}
 			case Enums::MANIM_PAIN: {
-				renderMode = 5;
+				renderMode = sb.painRenderMode;
 				this->renderSprite(x, y, z, tileNum, 0, flags, renderMode, scaleFactor, renderFlags);
 				this->renderSprite(x, y, z, tileNum, 2, flags, renderMode, scaleFactor, renderFlags);
 				this->renderSprite(x, y, z, tileNum, 3, flags, renderMode, scaleFactor, renderFlags);
 				break;
 			}
 		}
-	} else if (tileNum == Enums::TILENUM_BOSS_MASTERMIND || tileNum == Enums::TILENUM_MONSTER_ARACHNOTRON) {
-		bool b = tileNum == Enums::TILENUM_BOSS_MASTERMIND;
-		int n19 = b ? -44 : -29;
-		int n20 = 6;
+
+	} else if (sb.type == EntityDef::SpecialBossData::BOSS_SPIDER) {
+		// Spider boss (Mastermind/Arachnotron): shadow + torso + articulated legs
+		int legLat = sb.legLateral;
+		int legZ = sb.legBaseZ;
 		flags &= 0xFFFDFFFF;
 		switch (anim) {
 			case Enums::MANIM_IDLE:
 			case Enums::MANIM_IDLE_BACK: {
-				n14 = b ? n14 + 35 : (n14 / 2) + 50; // [GEC] ajusta el torzo para que se vea mejor
+				int torsoZ = (sb.idleBobDiv > 1 ? n14 / sb.idleBobDiv : n14) + sb.idleTorsoZBase;
+				if (sb.idleBobDiv == 1) {
+					torsoZ = n14 + sb.idleTorsoZ;
+				}
 				this->renderSprite(x, y, n15, 232, 0, flags, renderMode, n16, renderFlags); // Shadow
-				this->renderSprite(x, y, z + n14, tileNum, n12 + 3, flags, renderMode, scaleFactor,
-				                   renderFlags); // Torzo
+				this->renderSprite(x, y, z + torsoZ, tileNum, n12 + 3, flags, renderMode, scaleFactor,
+				                   renderFlags); // Torso
 				break;
 			}
 			case Enums::MANIM_WALK_FRONT:
@@ -4058,44 +4082,43 @@ void Render::renderSpecialBossAnim(int n, int frame, int x, int y, int z, int ti
 					++n21;
 				}
 
-				int zTorzo = b ? 35 : 50; // [GEC] ajusta el torzo para que se vea mejor
-				// Torzo
+				// Torso
 				this->renderSprite(x + (n21 * this->viewRightStepX >> 6), y + (n21 * this->viewRightStepY >> 6),
-				                   z + zTorzo, tileNum, n12 + 3, flags, renderMode, scaleFactor, renderFlags);
+				                   z + sb.walkTorsoZ, tileNum, n12 + 3, flags, renderMode, scaleFactor, renderFlags);
 
-				// Legs
+				// Legs (frame-dependent positioning with alternating flip)
 				switch (frame) {
 					case 0: {
-						this->renderSprite(x + (n19 * this->viewRightStepX >> 6), y + (n19 * this->viewRightStepY >> 6),
-						                   z + (n20 - 1 << 4), tileNum, n12, flags, renderMode, scaleFactor,
-						                   renderFlags);
-						int n22 = -n19;
+						this->renderSprite(x + (legLat * this->viewRightStepX >> 6),
+						                   y + (legLat * this->viewRightStepY >> 6), z + (legZ - 1 << 4), tileNum,
+						                   n12, flags, renderMode, scaleFactor, renderFlags);
+						int rLeg = -legLat;
 						flags ^= 0x20000;
-						this->renderSprite(x + ((n22 - 1) * this->viewRightStepX >> 6),
-						                   y + ((n22 - 1) * this->viewRightStepY >> 6), z + (n20 << 4), tileNum,
+						this->renderSprite(x + ((rLeg - 1) * this->viewRightStepX >> 6),
+						                   y + ((rLeg - 1) * this->viewRightStepY >> 6), z + (legZ << 4), tileNum,
 						                   n12 + 2, flags, renderMode, scaleFactor, renderFlags);
 						return;
 					}
 					case 1: {
-						this->renderSprite(x + ((n19 + 1) * this->viewRightStepX >> 6),
-						                   y + ((n19 + 1) * this->viewRightStepY >> 6), z + (n20 - 1 << 4), tileNum,
-						                   n12, flags, renderMode, scaleFactor, renderFlags);
-						int n23 = -n19;
+						this->renderSprite(x + ((legLat + 1) * this->viewRightStepX >> 6),
+						                   y + ((legLat + 1) * this->viewRightStepY >> 6), z + (legZ - 1 << 4),
+						                   tileNum, n12, flags, renderMode, scaleFactor, renderFlags);
+						int rLeg = -legLat;
 						flags ^= 0x20000;
-						this->renderSprite(x + (n23 * this->viewRightStepX >> 6), y + (n23 * this->viewRightStepY >> 6),
-						                   z + (n20 << 4), tileNum, n12 + 1, flags, renderMode, scaleFactor,
-						                   renderFlags);
+						this->renderSprite(x + (rLeg * this->viewRightStepX >> 6),
+						                   y + (rLeg * this->viewRightStepY >> 6), z + (legZ << 4), tileNum,
+						                   n12 + 1, flags, renderMode, scaleFactor, renderFlags);
 						return;
 					}
 					case 2: {
-						this->renderSprite(x + ((n19 + 1) * this->viewRightStepX >> 6),
-						                   y + ((n19 + 1) * this->viewRightStepY >> 6), z + (n20 << 4), tileNum,
+						this->renderSprite(x + ((legLat + 1) * this->viewRightStepX >> 6),
+						                   y + ((legLat + 1) * this->viewRightStepY >> 6), z + (legZ << 4), tileNum,
 						                   n12 + 1, flags, renderMode, scaleFactor, renderFlags);
-						int n24 = -n19;
+						int rLeg = -legLat;
 						flags ^= 0x20000;
-						this->renderSprite(x + (n24 * this->viewRightStepX >> 6), y + (n24 * this->viewRightStepY >> 6),
-						                   z + (n20 - 1 << 4), tileNum, n12, flags, renderMode, scaleFactor,
-						                   renderFlags);
+						this->renderSprite(x + (rLeg * this->viewRightStepX >> 6),
+						                   y + (rLeg * this->viewRightStepY >> 6), z + (legZ - 1 << 4), tileNum,
+						                   n12, flags, renderMode, scaleFactor, renderFlags);
 						return;
 					}
 					default: {
@@ -4106,17 +4129,16 @@ void Render::renderSpecialBossAnim(int n, int frame, int x, int y, int z, int ti
 			}
 			case Enums::MANIM_ATTACK1:
 			case Enums::MANIM_ATTACK2: {
-				int zTorzo = b ? 40 : 50; // [GEC] ajusta el torzo para que se vea mejor
 				this->renderSprite(x, y, n15, 232, 0, flags, renderMode, n16, renderFlags); // Shadow
-				this->renderSprite(x, y, z + zTorzo, tileNum, n12 + 3, flags, renderMode, scaleFactor,
-				                   renderFlags); // Torzo
-				this->renderSprite(x, y, z + zTorzo, tileNum, n12 + 8, flags, renderMode, scaleFactor,
+				this->renderSprite(x, y, z + sb.attackTorsoZ, tileNum, n12 + 3, flags, renderMode, scaleFactor,
+				                   renderFlags); // Torso
+				this->renderSprite(x, y, z + sb.attackTorsoZ, tileNum, n12 + 8, flags, renderMode, scaleFactor,
 				                   renderFlags); // Head Attack
-				if (frame == 1 && b) {           // Flash
+				if (frame == 1 && sb.hasAttackFlare) {
 					int n25;
 					int n26;
-					int pos = 0; // Old-> 2;
-					zTorzo += 10;
+					int pos = sb.flareLateralPos;
+					int flareZ = sb.attackTorsoZ + sb.flareTorsoZExtra;
 					if ((flags & 0x20000) != 0x0) {
 						n25 = x - (pos * this->viewRightStepX >> 6);
 						n26 = y - (pos * this->viewRightStepY >> 6);
@@ -4124,7 +4146,7 @@ void Render::renderSpecialBossAnim(int n, int frame, int x, int y, int z, int ti
 						n25 = x + (pos * this->viewRightStepX >> 6);
 						n26 = y + (pos * this->viewRightStepY >> 6);
 					}
-					this->renderSprite(n25, n26, z + 288 + zTorzo, tileNum, n12 + 9,
+					this->renderSprite(n25, n26, z + sb.flareZOffset + flareZ, tileNum, n12 + 9,
 					                   (app->player->totalMoves + app->combat->animLoopCount & 0x3) << 17, 4,
 					                   scaleFactor / 3, renderFlags);
 					break;
@@ -4132,20 +4154,18 @@ void Render::renderSpecialBossAnim(int n, int frame, int x, int y, int z, int ti
 				break;
 			}
 			case Enums::MANIM_PAIN: {
-				int zTorzo = b ? 70 : 100; // [GEC] ajusta el torzo para que se vea mejor
 				this->renderSprite(x, y, n15, 232, 0, flags, renderMode, n16, renderFlags); // Shadow
-				this->renderSprite(x, y, z + zTorzo, tileNum, n12 + 12, flags, renderMode, scaleFactor,
-				                   renderFlags); // Torzo
-				int zLegs = b ? 100 : 70;        // [GEC] ajusta el torzo para que se vea mejor
-				this->renderSprite(x + ((n19 + 3) * this->viewRightStepX >> 6),
-				                   y + ((n19 + 3) * this->viewRightStepY >> 6), z + (n20 + 4 << 4) + zLegs, tileNum,
-				                   n12 + 1, flags, renderMode, scaleFactor, renderFlags);
-				int n27 = -n19;
-				int pos = b ? 2 : 1; // [GEC] ajusta el torzo para que se vea mejor
+				this->renderSprite(x, y, z + sb.painTorsoZ, tileNum, n12 + 12, flags, renderMode, scaleFactor,
+				                   renderFlags); // Torso
+				this->renderSprite(x + ((legLat + 3) * this->viewRightStepX >> 6),
+				                   y + ((legLat + 3) * this->viewRightStepY >> 6),
+				                   z + (legZ + 4 << 4) + sb.painLegsZ, tileNum, n12 + 1, flags, renderMode,
+				                   scaleFactor, renderFlags);
+				int rLeg = -legLat;
 				flags ^= 0x20000;
-				this->renderSprite(x + ((n27 + pos /* - 1*/) * this->viewRightStepX >> 6),
-				                   y + ((n27 + pos /* - 1*/) * this->viewRightStepY >> 6), z + (n20 + 3 << 4), tileNum,
-				                   n12, flags, renderMode, scaleFactor, renderFlags);
+				this->renderSprite(x + ((rLeg + sb.painLegPos) * this->viewRightStepX >> 6),
+				                   y + ((rLeg + sb.painLegPos) * this->viewRightStepY >> 6), z + (legZ + 3 << 4),
+				                   tileNum, n12, flags, renderMode, scaleFactor, renderFlags);
 				return;
 			}
 			case Enums::MANIM_DEAD: {
@@ -4157,13 +4177,14 @@ void Render::renderSpecialBossAnim(int n, int frame, int x, int y, int z, int ti
 				return;
 			}
 		}
-		// Legs
-		this->renderSprite(x + (n19 * this->viewRightStepX >> 6), y + (n19 * this->viewRightStepY >> 6), z + (n20 << 4),
-		                   tileNum, n12 + 2, flags, renderMode, scaleFactor, renderFlags);
-		int n28 = -n19;
+		// Default legs (idle fallthrough)
+		this->renderSprite(x + (legLat * this->viewRightStepX >> 6), y + (legLat * this->viewRightStepY >> 6),
+		                   z + (legZ << 4), tileNum, n12 + 2, flags, renderMode, scaleFactor, renderFlags);
+		int rLeg = -legLat;
 		flags ^= 0x20000;
-		this->renderSprite(x + ((n28 - 1) * this->viewRightStepX >> 6), y + ((n28 - 1) * this->viewRightStepY >> 6),
-		                   z + (n20 - 1 << 4), tileNum, n12, flags, renderMode, scaleFactor, renderFlags);
+		this->renderSprite(x + ((rLeg - 1) * this->viewRightStepX >> 6),
+		                   y + ((rLeg - 1) * this->viewRightStepY >> 6), z + (legZ - 1 << 4), tileNum, n12, flags,
+		                   renderMode, scaleFactor, renderFlags);
 	}
 }
 
