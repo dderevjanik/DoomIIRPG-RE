@@ -189,7 +189,7 @@ void gles::BeginFrame(int x, int y, int w, int h, int* mtxView, int* mtxProjecti
 	this->fogStart = ((float)this->tinyGL->fogMin) * this->fogScale;
 	this->fogEnd = ((((float)this->tinyGL->fogRange) / this->fogColor[3]) + (float)this->tinyGL->fogMin) * this->fogScale;
 
-	if ((this->fogEnd > 0.499f) && (canvas->loadMapID == 2)) {
+	if ((this->fogEnd > 0.499f) && CAppContainer::getInstance()->gameConfig.isFogDisabled(canvas->loadMapID)) {
 		this->fogStart = 9999.f;
 		this->fogEnd = 10000.f;
 	}

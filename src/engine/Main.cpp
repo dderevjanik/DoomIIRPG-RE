@@ -87,6 +87,22 @@ int main(int argc, char* args[]) {
 			gc.saveDir = gameIni.getString("Game", "save_dir", gc.saveDir.c_str());
 			gc.ipaPrefix = gameIni.getString("Game", "ipa_prefix", gc.ipaPrefix.c_str());
 			gc.entryMap = gameIni.getString("Game", "entry_map", gc.entryMap.c_str());
+
+			// Parse no_fog_maps: comma-separated list of map IDs (e.g. "2,5")
+			std::string noFogStr = gameIni.getString("Game", "no_fog_maps", "");
+			if (!noFogStr.empty()) {
+				size_t pos = 0;
+				while (pos < noFogStr.size()) {
+					size_t comma = noFogStr.find(',', pos);
+					if (comma == std::string::npos) comma = noFogStr.size();
+					std::string token = noFogStr.substr(pos, comma - pos);
+					if (!token.empty()) {
+						gc.noFogMaps.push_back(std::stoi(token));
+					}
+					pos = comma + 1;
+				}
+			}
+
 			printf("Game: %s (save: %s)\n", gc.name.c_str(), gc.saveDir.c_str());
 		}
 	}

@@ -1,6 +1,7 @@
 #ifndef __CAPPCONTAINER_H__
 #define __CAPPCONTAINER_H__
 #include <string>
+#include <vector>
 #include "App.h"
 
 class ZipFile;
@@ -15,6 +16,14 @@ struct GameConfig {
 	std::string saveDir = "Doom2rpg.app";
 	std::string ipaPrefix = "Payload/Doom2rpg.app/Packages/";
 	std::string entryMap = "map00";
+	std::vector<int> noFogMaps;  // Map IDs where fog is disabled (e.g. outdoor maps)
+
+	bool isFogDisabled(int mapID) const {
+		for (int id : noFogMaps) {
+			if (id == mapID) return true;
+		}
+		return false;
+	}
 };
 
 class CAppContainer {
