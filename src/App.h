@@ -123,6 +123,7 @@ public:
 	void Error(const char* fmt, ...);
 	void Error(int id);
 	void loadTables();
+	bool loadTablesFromINI(const char* path);
 
 	void loadRuntimeImages();
 	void freeRuntimeImages();

@@ -1,6 +1,7 @@
 #include <stdexcept>
 #include <cstdio>
 #include <algorithm>
+#include <sstream>
 
 #include "SDLGL.h"
 #include "ZipFile.h"
@@ -28,6 +29,9 @@
 #include "JavaStream.h"
 #include "Image.h"
 #include "Graphics.h"
+#include "INIReader.h"
+#include "Input.h"
+#include "Enums.h"
 
 Applet::Applet() {
 	std::memset(this, 0, sizeof(Applet));
@@ -405,6 +409,19 @@ void Applet::endImageLoading() {
 }
 
 void Applet::loadTables() {
+	// Try loading from tables.ini in CWD first
+	FILE* f = std::fopen("tables.ini", "rb");
+	if (f) {
+		std::fclose(f);
+		printf("Applet::loadTables: loading from tables.ini\n");
+		if (this->loadTablesFromINI("tables.ini")) {
+			return;
+		}
+		printf("Applet::loadTables: tables.ini failed, falling back to tables.bin\n");
+	}
+
+	printf("Applet::loadTables: loading from tables.bin (resource pack)\n");
+
 	int count01, count02, count03, count04, count05, count06, count07;
 	int count08, count09, count10, count11, count12, count13, count14;
 
@@ -455,9 +472,286 @@ void Applet::loadTables() {
 	this->resource->loadByteTable((int8_t*)this->game->monsterSounds, 13);
 	this->resource->finishTableLoading();
 
-	//for (int i = 0; i < count14; i++) {
-	//	printf("data[%d] = %d\n", i, (uint8_t)this->game->monsterSounds[i]);
-	//}
+	printf("Applet::loadTables: loaded 14 tables from tables.bin\n");
+}
+
+// --- Helpers for tables.ini parsing ---
+
+static const char* tblWeaponNames[] = {
+	"assault_rifle", "chainsaw", "holy_water_pistol", "shooting_sentry_bot",
+	"exploding_sentry_bot", "red_shooting_sentry_bot", "red_exploding_sentry_bot",
+	"super_shotgun", "chaingun", "assault_rifle_with_scope", "plasma_gun",
+	"rocket_launcher", "bfg", "soul_cube", "item",
+	"m_bite", "m_claw", "m_punch", "m_charge", "m_flesh_throw",
+	"m_fireball", "m_plasma", "m_floor_strike", "m_fire", "m_machine_gun",
+	"m_chain_gun", "m_rockets", "m_acid_spit", "m_plasma_gun",
+	"m_vios_plasma", "m_vios_lightning", "m_vios_poison"
+};
+static const int numTblWeaponNames = 32;
+
+static int weaponNameToIndex(const std::string& name) {
+	for (int i = 0; i < numTblWeaponNames; i++) {
+		if (name == tblWeaponNames[i]) return i;
+	}
+	try { return std::stoi(name); } catch (...) { return 0; }
+}
+
+static int projTypeFromName(const std::string& name) {
+	if (name == "none") return -1;
+	if (name == "bullet") return 0;
+	if (name == "melee") return 1;
+	if (name == "water") return 2;
+	if (name == "plasma") return 3;
+	if (name == "rocket") return 4;
+	if (name == "bfg") return 5;
+	if (name == "flesh") return 6;
+	if (name == "fire") return 7;
+	if (name == "caco_plasma") return 8;
+	if (name == "thorns") return 9;
+	if (name == "acid") return 10;
+	if (name == "electric") return 11;
+	if (name == "soul_cube") return 12;
+	if (name == "item") return 13;
+	try { return std::stoi(name); } catch (...) { return -1; }
+}
+
+static std::vector<int> parseIntList(const std::string& str) {
+	std::vector<int> result;
+	std::stringstream ss(str);
+	std::string item;
+	while (std::getline(ss, item, ',')) {
+		// trim
+		size_t start = item.find_first_not_of(" \t");
+		if (start == std::string::npos) { result.push_back(0); continue; }
+		item = item.substr(start);
+		try { result.push_back(std::stoi(item)); } catch (...) { result.push_back(0); }
+	}
+	return result;
+}
+
+bool Applet::loadTablesFromINI(const char* path) {
+	INIReader ini;
+	if (!ini.load(path)) {
+		return false;
+	}
+
+	// === Weapons (table 2) ===
+	int numWeapons = ini.getInt("Weapons", "count", 0);
+	int weaponBytes = numWeapons * 9;
+	this->combat->weapons = new int8_t[weaponBytes];
+	std::memset(this->combat->weapons, 0, weaponBytes);
+	for (int w = 0; w < numWeapons; w++) {
+		char section[32];
+		snprintf(section, sizeof(section), "Weapon_%d", w);
+		int base = w * 9;
+		this->combat->weapons[base + 0] = (int8_t)ini.getInt(section, "str_min", 0);
+		this->combat->weapons[base + 1] = (int8_t)ini.getInt(section, "str_max", 0);
+		this->combat->weapons[base + 2] = (int8_t)ini.getInt(section, "range_min", 0);
+		this->combat->weapons[base + 3] = (int8_t)ini.getInt(section, "range_max", 0);
+		this->combat->weapons[base + 4] = (int8_t)ini.getInt(section, "ammo_type", 0);
+		this->combat->weapons[base + 5] = (int8_t)ini.getInt(section, "ammo_usage", 0);
+		this->combat->weapons[base + 6] = (int8_t)projTypeFromName(ini.getString(section, "proj_type", "none"));
+		this->combat->weapons[base + 7] = (int8_t)ini.getInt(section, "num_shots", 1);
+		this->combat->weapons[base + 8] = (int8_t)ini.getInt(section, "shot_hold", 0);
+	}
+
+	// === WeaponInfo (table 1) ===
+	int numWpInfo = ini.getInt("WeaponInfo", "count", 0);
+	int wpinfoBytes = numWpInfo * 6;
+	this->combat->wpinfo = new int8_t[wpinfoBytes];
+	std::memset(this->combat->wpinfo, 0, wpinfoBytes);
+	for (int w = 0; w < numWpInfo; w++) {
+		char section[32];
+		snprintf(section, sizeof(section), "WeaponInfo_%d", w);
+		int base = w * 6;
+		this->combat->wpinfo[base + 0] = (int8_t)ini.getInt(section, "idle_x", 0);
+		this->combat->wpinfo[base + 1] = (int8_t)ini.getInt(section, "idle_y", 0);
+		this->combat->wpinfo[base + 2] = (int8_t)ini.getInt(section, "attack_x", 0);
+		this->combat->wpinfo[base + 3] = (int8_t)ini.getInt(section, "attack_y", 0);
+		this->combat->wpinfo[base + 4] = (int8_t)ini.getInt(section, "flash_x", 0);
+		this->combat->wpinfo[base + 5] = (int8_t)ini.getInt(section, "flash_y", 0);
+	}
+
+	// === MonsterAttacks (table 0) ===
+	int numMonsterAttacks = ini.getInt("MonsterAttacks", "count", 0);
+	int maShorts = numMonsterAttacks * 9;
+	this->combat->monsterAttacks = new short[maShorts];
+	std::memset(this->combat->monsterAttacks, 0, maShorts * sizeof(short));
+	for (int m = 0; m < numMonsterAttacks; m++) {
+		char section[32];
+		snprintf(section, sizeof(section), "MonsterAttack_%d", m);
+		int base = m * 9;
+		for (int p = 0; p < 3; p++) {
+			char key[32];
+			snprintf(key, sizeof(key), "parm%d_attack1", p);
+			this->combat->monsterAttacks[base + p * 3 + 0] = (short)weaponNameToIndex(ini.getString(section, key, "0"));
+			snprintf(key, sizeof(key), "parm%d_attack2", p);
+			this->combat->monsterAttacks[base + p * 3 + 1] = (short)weaponNameToIndex(ini.getString(section, key, "0"));
+			snprintf(key, sizeof(key), "parm%d_chance", p);
+			this->combat->monsterAttacks[base + p * 3 + 2] = (short)ini.getInt(section, key, 0);
+		}
+	}
+
+	// === MonsterStats (table 3) ===
+	int monsterStatsCount = ini.getInt("MonsterStats", "count", 0);
+	this->combat->monsterStats = new int8_t[monsterStatsCount];
+	{
+		std::vector<int> vals = parseIntList(ini.getString("MonsterStats", "data", ""));
+		for (int i = 0; i < monsterStatsCount && i < (int)vals.size(); i++) {
+			this->combat->monsterStats[i] = (int8_t)vals[i];
+		}
+	}
+
+	// === CombatMasks (table 4) ===
+	int combatMasksCount = ini.getInt("CombatMasks", "count", 0);
+	this->combat->tableCombatMasks = new int32_t[combatMasksCount];
+	for (int i = 0; i < combatMasksCount; i++) {
+		char key[16];
+		snprintf(key, sizeof(key), "mask_%d", i);
+		std::string val = ini.getString("CombatMasks", key, "0");
+		if (val.substr(0, 2) == "0x" || val.substr(0, 2) == "0X") {
+			this->combat->tableCombatMasks[i] = (int32_t)std::stoul(val, nullptr, 16);
+		} else {
+			this->combat->tableCombatMasks[i] = (int32_t)std::stoi(val);
+		}
+	}
+
+	// === KeysNumeric (table 5) ===
+	int keysNumericCount = ini.getInt("KeysNumeric", "count", 0);
+	this->canvas->keys_numeric = new int8_t[keysNumericCount];
+	{
+		std::vector<int> vals = parseIntList(ini.getString("KeysNumeric", "data", ""));
+		for (int i = 0; i < keysNumericCount && i < (int)vals.size(); i++) {
+			this->canvas->keys_numeric[i] = (int8_t)vals[i];
+		}
+	}
+
+	// === OSCCycle (table 6) ===
+	int oscCycleCount = ini.getInt("OSCCycle", "count", 0);
+	this->canvas->OSC_CYCLE = new int8_t[oscCycleCount];
+	{
+		std::vector<int> vals = parseIntList(ini.getString("OSCCycle", "data", ""));
+		for (int i = 0; i < oscCycleCount && i < (int)vals.size(); i++) {
+			this->canvas->OSC_CYCLE[i] = (int8_t)vals[i];
+		}
+	}
+
+	// === LevelNames (table 7) ===
+	int levelNamesCount = ini.getInt("LevelNames", "count", 0);
+	this->game->levelNames = new int16_t[levelNamesCount];
+	for (int i = 0; i < levelNamesCount; i++) {
+		char key[16];
+		snprintf(key, sizeof(key), "level_%d", i);
+		this->game->levelNames[i] = (int16_t)ini.getInt("LevelNames", key, 0);
+	}
+	this->game->levelNamesCount = levelNamesCount;
+
+	// === MonsterColors (table 8) ===
+	int monsterColorsCount = ini.getInt("MonsterColors", "count", 0);
+	this->particleSystem->monsterColors = new uint8_t[monsterColorsCount];
+	std::memset(this->particleSystem->monsterColors, 0, monsterColorsCount);
+	{
+		// Parse "name = r,g,b" entries
+		// We need to iterate keys; use the known monster names
+		static const char* monsterNames[] = {
+			"zombie", "zombie_commando", "lost_soul", "imp", "sawcubus", "pinky"
+		};
+		int idx = 0;
+		for (int i = 0; i < 6 && idx + 2 < monsterColorsCount; i++) {
+			std::string val = ini.getString("MonsterColors", monsterNames[i], "");
+			if (!val.empty()) {
+				std::vector<int> rgb = parseIntList(val);
+				if (rgb.size() >= 3) {
+					this->particleSystem->monsterColors[idx + 0] = (uint8_t)rgb[0];
+					this->particleSystem->monsterColors[idx + 1] = (uint8_t)rgb[1];
+					this->particleSystem->monsterColors[idx + 2] = (uint8_t)rgb[2];
+				}
+			}
+			idx += 3;
+		}
+	}
+
+	// === SinTable (table 9) ===
+	int sinTableCount = ini.getInt("SinTable", "count", 0);
+	this->render->sinTable = new int32_t[sinTableCount];
+	{
+		std::vector<int> vals = parseIntList(ini.getString("SinTable", "data", ""));
+		for (int i = 0; i < sinTableCount && i < (int)vals.size(); i++) {
+			this->render->sinTable[i] = (int32_t)vals[i];
+		}
+	}
+
+	// === EnergyDrinkData (table 10) ===
+	int energyDrinkCount = ini.getInt("EnergyDrinkData", "count", 0);
+	this->vendingMachine->energyDrinkData = new int16_t[energyDrinkCount];
+	{
+		std::vector<int> vals = parseIntList(ini.getString("EnergyDrinkData", "data", ""));
+		for (int i = 0; i < energyDrinkCount && i < (int)vals.size(); i++) {
+			this->vendingMachine->energyDrinkData[i] = (int16_t)vals[i];
+		}
+	}
+
+	// === MonsterWeakness (table 11) ===
+	int monsterWeaknessCount = ini.getInt("MonsterWeakness", "count", 0);
+	this->combat->monsterWeakness = new int8_t[monsterWeaknessCount];
+	std::memset(this->combat->monsterWeakness, 0, monsterWeaknessCount);
+	{
+		// Parse named entries, fall back to indexed
+		static const char* monsterNames[] = {
+			"zombie", "zombie_commando", "lost_soul", "imp", "sawcubus", "pinky",
+			"cacodemon", "sentinel", "mancubus", "revenant", "arch_vile", "sentry_bot",
+			"cyberdemon", "mastermind", "phantom", "archvile_ghost",
+			"belphegor", "apollyon"
+		};
+		for (int i = 0; i < 18 && i < monsterWeaknessCount; i++) {
+			if (ini.hasKey("MonsterWeakness", monsterNames[i])) {
+				this->combat->monsterWeakness[i] = (int8_t)ini.getInt("MonsterWeakness", monsterNames[i], 0);
+			}
+		}
+		// For entries beyond named monsters, try monster_N
+		for (int i = 18; i < monsterWeaknessCount; i++) {
+			char key[32];
+			snprintf(key, sizeof(key), "monster_%d", i);
+			if (ini.hasKey("MonsterWeakness", key)) {
+				this->combat->monsterWeakness[i] = (int8_t)ini.getInt("MonsterWeakness", key, 0);
+			}
+		}
+	}
+
+	// === MovieEffects (table 12) ===
+	int movieEffectsCount = ini.getInt("MovieEffects", "count", 0);
+	this->canvas->movieEffects = new int32_t[movieEffectsCount];
+	{
+		std::vector<int> vals = parseIntList(ini.getString("MovieEffects", "data", ""));
+		for (int i = 0; i < movieEffectsCount && i < (int)vals.size(); i++) {
+			this->canvas->movieEffects[i] = (int32_t)vals[i];
+		}
+	}
+
+	// === MonsterSounds (table 13) ===
+	int numMonsterSounds = ini.getInt("MonsterSounds", "count", 0);
+	int msoundBytes = numMonsterSounds * 8;
+	this->game->monsterSounds = new uint8_t[msoundBytes];
+	std::memset(this->game->monsterSounds, 255, msoundBytes);  // default to "none" (255)
+	{
+		static const char* msoundFields[] = { "alert1", "alert2", "alert3", "attack1", "attack2", "idle", "pain", "death" };
+		for (int m = 0; m < numMonsterSounds; m++) {
+			char section[32];
+			snprintf(section, sizeof(section), "MonsterSound_%d", m);
+			int base = m * 8;
+			for (int f = 0; f < 8; f++) {
+				std::string val = ini.getString(section, msoundFields[f], "none");
+				if (val == "none") {
+					this->game->monsterSounds[base + f] = 255;
+				} else {
+					this->game->monsterSounds[base + f] = (uint8_t)std::atoi(val.c_str());
+				}
+			}
+		}
+	}
+
+	printf("Applet::loadTables: loaded 14 tables from %s\n", path);
+	return true;
 }
 
 void Applet::loadRuntimeImages() {
