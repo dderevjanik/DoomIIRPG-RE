@@ -1,11 +1,14 @@
 #include <stdexcept>
 #include <algorithm>
+#include <string>
+#include <cstdio>
 
 #include "CAppContainer.h"
 #include "App.h"
 #include "Text.h"
 #include "JavaStream.h"
 #include "Resource.h"
+#include "INIReader.h"
 
 // --------------------
 // Localization Class
@@ -47,6 +50,21 @@ bool Localization::startup() {
 	this->textCount[13] = 15;
 	this->textCount[14] = 3;
 
+	// Try loading from strings.ini in CWD first
+	FILE* f = std::fopen("strings.ini", "rb");
+	if (f) {
+		std::fclose(f);
+		printf("Localization: loading from strings.ini\n");
+		if (!this->loadFromINI("strings.ini")) {
+			CAppContainer::getInstance()->app->Error("Failed to load strings.ini\n");
+			return false;
+		}
+		this->resetTextArgs();
+		return true;
+	}
+
+	printf("Localization: loading from strings.idx + stringsXX.bin (resource pack)\n");
+
 	this->beginTextLoading();
 	for (int i = 0; i < Localization::MAXTEXT; i++) {
 		this->textSizes[i]= std::max(this->textSizes[i], this->textIndex[(i * 3) + 2]);
@@ -68,6 +86,122 @@ bool Localization::startup() {
 
 	this->resetTextArgs();
 	return true;
+}
+
+// --- Helper to unescape INI string values ---
+static std::string unescapeString(const std::string& s) {
+	std::string result;
+	result.reserve(s.size());
+	for (size_t i = 0; i < s.size(); i++) {
+		if (s[i] == '\\' && i + 1 < s.size()) {
+			char next = s[i + 1];
+			if (next == 'n') { result += '\n'; i++; }
+			else if (next == 'r') { result += '\r'; i++; }
+			else if (next == 't') { result += '\t'; i++; }
+			else if (next == 'x' && i + 3 < s.size()) {
+				// \xHH hex escape
+				char hex[3] = { s[i + 2], s[i + 3], 0 };
+				result += (char)std::strtol(hex, nullptr, 16);
+				i += 3;
+			} else {
+				result += s[i]; // keep backslash for unknown escapes
+			}
+		} else {
+			result += s[i];
+		}
+	}
+	return result;
+}
+
+bool Localization::loadFromINI(const char* path) {
+	INIReader* ini = new INIReader();
+	if (!ini->load(path)) {
+		delete ini;
+		return false;
+	}
+
+	this->useINI = true;
+	this->iniData = ini;
+	this->defaultLanguage = 0;
+
+	// Load initial groups (0, 1, 3, 14) — same as binary startup
+	int initialGroups[] = { 0, 1, 3, 14 };
+	for (int g = 0; g < 4; g++) {
+		this->loadGroupFromINI(this->defaultLanguage, initialGroups[g]);
+	}
+
+	printf("Localization: loaded strings from %s\n", path);
+	return true;
+}
+
+void Localization::loadGroupFromINI(int language, int group) {
+	if (!this->iniData) return;
+	INIReader* ini = (INIReader*)this->iniData;
+
+	char section[32];
+	snprintf(section, sizeof(section), "Lang_%d_Group_%d", language, group);
+
+	int count = ini->getInt(section, "count", 0);
+	if (count <= 0) {
+		// Empty group — allocate minimal buffers
+		this->textSizes[group] = 1;
+		if (!this->text[group]) {
+			this->text[group] = new char[1];
+			this->text[group][0] = '\0';
+		}
+		if (!this->textMap[group]) {
+			this->textMap[group] = new uint16_t[this->textCount[group]];
+			for (int i = 0; i < this->textCount[group]; i++) {
+				this->textMap[group][i] = 0;
+			}
+		}
+		return;
+	}
+
+	// First pass: compute total buffer size needed
+	int totalSize = 0;
+	for (int i = 0; i < count; i++) {
+		char key[16];
+		snprintf(key, sizeof(key), "%d", i);
+		std::string val = ini->getString(section, key, "");
+		std::string unescaped = unescapeString(val);
+		totalSize += (int)unescaped.size() + 1; // +1 for null terminator
+	}
+
+	// Allocate buffers
+	if (this->text[group]) {
+		delete[] this->text[group];
+	}
+	if (this->textMap[group]) {
+		delete[] this->textMap[group];
+	}
+
+	this->textSizes[group] = totalSize;
+	this->text[group] = new char[totalSize];
+	this->textMap[group] = new uint16_t[this->textCount[group]];
+
+	// Initialize textMap to point to offset 0 (empty string fallback)
+	for (int i = 0; i < this->textCount[group]; i++) {
+		this->textMap[group][i] = 0;
+	}
+
+	// Second pass: fill buffer and build textMap
+	int offset = 0;
+	for (int i = 0; i < count; i++) {
+		char key[16];
+		snprintf(key, sizeof(key), "%d", i);
+		std::string val = ini->getString(section, key, "");
+		std::string unescaped = unescapeString(val);
+
+		if (i < this->textCount[group]) {
+			this->textMap[group][i] = (uint16_t)offset;
+		}
+
+		std::memcpy(this->text[group] + offset, unescaped.c_str(), unescaped.size());
+		offset += (int)unescaped.size();
+		this->text[group][offset] = '\0';
+		offset++;
+	}
 }
 
 bool Localization::isSpace(char c) {
@@ -143,6 +277,14 @@ void Localization::unloadText(int index) {
 void Localization::setLanguage(int language) {
 
 	this->defaultLanguage = language;
+	if (this->useINI) {
+		for (int i = 0; i < (Localization::MAXTEXT); ++i) {
+			if (this->text[i] != nullptr) {
+				this->loadGroupFromINI(this->defaultLanguage, i);
+			}
+		}
+		return;
+	}
 	this->beginTextLoading();
 	for (int i = 0; i < (Localization::MAXTEXT); ++i) {
 		if (this->text[i] != nullptr) {
@@ -213,6 +355,10 @@ void Localization::loadTextFromIndex(int i, int textLastType) {
 
 void Localization::loadText(int index)
 {
+	if (this->useINI) {
+		this->loadGroupFromINI(this->defaultLanguage, index);
+		return;
+	}
 	this->allocateText(index);
 	this->beginTextLoading();
 	this->loadTextFromIndex(this->defaultLanguage, index);
