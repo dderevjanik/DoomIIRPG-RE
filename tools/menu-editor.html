@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DoomII RPG - Menu Editor</title>
+<style>
+:root {
+  --bg: #1a1a2e;
+  --bg2: #16213e;
+  --bg3: #0f3460;
+  --accent: #e94560;
+  --accent2: #533483;
+  --text: #eee;
+  --text-dim: #888;
+  --border: #333;
+  --success: #4caf50;
+  --warn: #ff9800;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Courier New', monospace;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Sidebar */
+#sidebar {
+  width: 280px;
+  min-width: 280px;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+#sidebar-header {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+}
+#sidebar-header h2 {
+  font-size: 14px;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+#menu-search {
+  width: 100%;
+  padding: 6px 8px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 12px;
+}
+#menu-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+.menu-entry {
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  border-left: 3px solid transparent;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.menu-entry:hover { background: rgba(233,69,96,0.1); }
+.menu-entry.selected {
+  background: rgba(233,69,96,0.2);
+  border-left-color: var(--accent);
+}
+.menu-entry .menu-idx { color: var(--text-dim); font-size: 11px; }
+.menu-entry .menu-name { color: var(--text); }
+.menu-entry .menu-type {
+  font-size: 10px;
+  color: var(--accent2);
+  background: rgba(83,52,131,0.3);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+/* Main area */
+#main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Toolbar */
+#toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+  flex-wrap: wrap;
+}
+.toolbar-group {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.toolbar-group label {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-right: 2px;
+}
+button {
+  padding: 5px 12px;
+  background: var(--bg3);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+}
+button:hover { background: var(--accent); }
+button.primary { background: var(--accent); border-color: var(--accent); }
+button.primary:hover { background: #c73350; }
+button.success { background: var(--success); border-color: var(--success); }
+button.success:hover { background: #388e3c; }
+select, input[type="number"], input[type="text"] {
+  padding: 4px 6px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 12px;
+}
+select { min-width: 100px; }
+input[type="number"] { width: 60px; }
+
+/* Content */
+#content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* Editor panel */
+#editor-panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+#editor-panel h3 {
+  color: var(--accent);
+  margin-bottom: 12px;
+  font-size: 16px;
+}
+
+/* Menu header fields */
+.menu-header-fields {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--bg2);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.field-group label {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+/* Items table */
+#items-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+#items-table th {
+  text-align: left;
+  padding: 6px 8px;
+  background: var(--bg3);
+  color: var(--text-dim);
+  font-size: 11px;
+  text-transform: uppercase;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+#items-table td {
+  padding: 4px 8px;
+  border-bottom: 1px solid rgba(51,51,51,0.5);
+  vertical-align: middle;
+}
+#items-table tr:hover { background: rgba(233,69,96,0.05); }
+#items-table tr.selected-item { background: rgba(233,69,96,0.15); }
+#items-table input, #items-table select {
+  width: 100%;
+  padding: 3px 5px;
+  font-size: 11px;
+}
+#items-table input[type="number"] { width: 55px; }
+.string-preview {
+  color: var(--text-dim);
+  font-size: 10px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+  margin-top: 2px;
+}
+.flags-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+.flag-tag {
+  font-size: 9px;
+  padding: 1px 4px;
+  border-radius: 2px;
+  background: rgba(83,52,131,0.4);
+  color: #b39ddb;
+  cursor: pointer;
+}
+.flag-tag:hover { background: rgba(83,52,131,0.7); }
+.item-actions {
+  display: flex;
+  gap: 4px;
+}
+.item-actions button {
+  padding: 2px 6px;
+  font-size: 10px;
+}
+.btn-del { color: var(--accent); }
+.btn-up, .btn-down { color: var(--text-dim); }
+
+/* Preview panel */
+#preview-panel {
+  width: 320px;
+  min-width: 320px;
+  background: var(--bg2);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+#preview-header {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-dim);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+#preview-canvas-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow: auto;
+}
+#preview-canvas {
+  background: #000;
+  border: 2px solid var(--border);
+  image-rendering: pixelated;
+}
+
+/* Flags popup */
+#flags-popup {
+  display: none;
+  position: fixed;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px;
+  z-index: 100;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  min-width: 180px;
+}
+#flags-popup label {
+  display: block;
+  padding: 3px 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+#flags-popup label:hover { background: rgba(233,69,96,0.1); }
+#flags-popup input[type="checkbox"] { margin-right: 6px; }
+
+/* Status bar */
+#statusbar {
+  padding: 4px 16px;
+  background: var(--bg3);
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-dim);
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Loading overlay */
+#loading {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  flex-direction: column;
+  gap: 12px;
+}
+#loading h2 { color: var(--accent); }
+#loading p { color: var(--text-dim); font-size: 13px; }
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #555; }
+
+/* Empty state */
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-dim);
+  font-size: 14px;
+}
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <div id="sidebar-header">
+    <h2>DOOM II RPG - MENUS</h2>
+    <input type="text" id="menu-search" placeholder="Search menus...">
+  </div>
+  <div id="menu-list"></div>
+  <div style="padding:8px; border-top:1px solid var(--border); display:flex; gap:4px;">
+    <button onclick="addMenu()" style="flex:1;">+ Add Menu</button>
+  </div>
+</div>
+
+<div id="main">
+  <div id="toolbar">
+    <div class="toolbar-group">
+      <button class="primary" onclick="openMenusIni()">Load menus.ini</button>
+      <button onclick="openStringsIni()">Load strings.ini</button>
+      <input type="file" id="file-menus" accept=".ini" style="display:none" onchange="handleMenusFile(event)">
+      <input type="file" id="file-strings" accept=".ini" style="display:none" onchange="handleStringsFile(event)">
+    </div>
+    <div class="toolbar-group" style="margin-left: auto;">
+      <button class="success" onclick="downloadMenusIni()">Save menus.ini</button>
+      <button onclick="exportJSON()">Export JSON</button>
+      <button onclick="importJSON()">Import JSON</button>
+      <input type="file" id="file-json" accept=".json" style="display:none" onchange="handleJSONFile(event)">
+    </div>
+  </div>
+
+  <div id="content">
+    <div id="editor-panel">
+      <div class="empty-state" id="empty-state">Load menus.ini to start editing</div>
+      <div id="editor-content" style="display:none;">
+        <h3 id="editor-title">Menu</h3>
+        <div class="menu-header-fields">
+          <div class="field-group">
+            <label>Menu Index</label>
+            <input type="number" id="f-menu-idx" readonly style="background:#111;">
+          </div>
+          <div class="field-group">
+            <label>Menu ID</label>
+            <input type="number" id="f-menu-id" onchange="updateMenuField('menu_id', this.value)">
+          </div>
+          <div class="field-group">
+            <label>Type</label>
+            <select id="f-menu-type" onchange="updateMenuField('type', this.value)">
+              <option value="default">default (0)</option>
+              <option value="list">list (1)</option>
+              <option value="confirm">confirm (2)</option>
+              <option value="confirm2">confirm2 (3)</option>
+              <option value="main">main (4)</option>
+              <option value="help">help (5)</option>
+              <option value="vcenter">vcenter (6)</option>
+              <option value="notebook">notebook (7)</option>
+              <option value="main_list">main_list (8)</option>
+              <option value="vending_machine">vending_machine (9)</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>Items</label>
+            <input type="number" id="f-item-count" readonly style="background:#111;">
+          </div>
+          <div class="field-group" style="align-self:flex-end;">
+            <button onclick="deleteMenu()">Delete Menu</button>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-size:13px; color:var(--text-dim);">ITEMS</span>
+          <button onclick="addItem()">+ Add Item</button>
+        </div>
+        <table id="items-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>String ID</th>
+              <th>Text</th>
+              <th>Flags</th>
+              <th>Action</th>
+              <th>Param</th>
+              <th>Help Str</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="items-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="preview-panel">
+      <div id="preview-header">
+        <span>PREVIEW</span>
+        <label style="font-size:11px;"><input type="checkbox" id="preview-live" checked> Live</label>
+      </div>
+      <div id="preview-canvas-wrap">
+        <canvas id="preview-canvas" width="320" height="480"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div id="statusbar">
+    <span id="status-left">No file loaded</span>
+    <span id="status-right"></span>
+  </div>
+</div>
+
+<div id="flags-popup"></div>
+
+<div id="loading" style="display:none;">
+  <h2>DOOM II RPG</h2>
+  <p>Loading...</p>
+</div>
+
+<script>
+// ============================================================
+// Data
+// ============================================================
+let menus = [];
+let menuStrings = {}; // group -> index -> string
+let allStrings = {};  // flat: groupIdx_strIdx -> string
+let selectedMenuIdx = -1;
+let assetsPath = '../textures/bmp/';
+let loadedImages = {};
+let dirty = false;
+
+const MENU_TYPES = ['default','list','confirm','confirm2','main','help','vcenter','notebook','main_list','vending_machine'];
+
+const ACTIONS = [
+  'none','goto','back','load','save','delete','newgame_setup','newgame','changestate',
+  'changestate','difficulty','returntogame','morevending','scroll','sniper_scope',
+  'control_vibrate','control_volume','control_sfx_volume','control_music',
+  'control_sensitivity','control_tilt_move','control_tilt_aim',
+  'control_touch_move','control_show_touch_arrows','control_tilt_deadzone',
+  'control_flip','control_layout','minigame','goto_level_menu',
+  'resolve_drink','resolve_drink_use','resolve_drink_cancel',
+  'comic_book','nanodrinkmenu','use_nanodrink','update_menu',
+  'backtwo',
+  'ranking_normal','ranking_difficult','ranking_nightmare',
+  'set_grading_type','unlock_epilogue',
+  'debug_stats','debug_give_weapon','debug_noclip','debug_show_location',
+  'debug_toggle_ai','debug_complete_level','debug_give_xp',
+  'debug_give_armor','debug_give_health','debug_font',
+  'debug_kill_all','debug_unlock_all','debug_give_drinks',
+  'debug_spawn_entity','debug_overhead_map','giveall',
+  'debug_dog_mode','debug_show_framerate','debug_test_level',
+  'debug_disable_fog','debug_memories','godmode',
+  'debug_notarget','debug_give_keys','debug_play_movie',
+  'debug_timescale','debug_animation','debug_player_entity',
+  'debug_cycle_entity','debug_next_level','debug_prev_level'
+];
+
+const FLAGS = {
+  'normal': 0x0000,
+  'noselect': 0x0001,
+  'nodehyphenate': 0x0002,
+  'disabled': 0x0004,
+  'align_center': 0x0008,
+  'showdetails': 0x0020,
+  'divider': 0x0040,
+  'selector': 0x0080,
+  'block_text': 0x0100,
+  'highlight': 0x0200,
+  'checked': 0x0400,
+  'right_arrow': 0x2000,
+  'left_arrow': 0x4000,
+  'hidden': 0x8000
+};
+
+const FLAG_NAMES = Object.keys(FLAGS).filter(f => f !== 'normal');
+
+// ============================================================
+// INI Parser
+// ============================================================
+function parseINI(text) {
+  const result = {};
+  let currentSection = null;
+  for (const rawLine of text.split('\n')) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith(';')) continue;
+    const secMatch = line.match(/^\[(.+)\]$/);
+    if (secMatch) {
+      currentSection = secMatch[1];
+      result[currentSection] = {};
+      continue;
+    }
+    if (currentSection) {
+      const eqIdx = line.indexOf('=');
+      if (eqIdx !== -1) {
+        const key = line.substring(0, eqIdx).trim();
+        const val = line.substring(eqIdx + 1).trim();
+        result[currentSection][key] = val;
+      }
+    }
+  }
+  return result;
+}
+
+// ============================================================
+// Menu INI loading
+// ============================================================
+function loadMenusFromINI(text) {
+  const ini = parseINI(text);
+  const menusSection = ini['Menus'];
+  if (!menusSection) { alert('Invalid menus.ini: missing [Menus] section'); return; }
+  const count = parseInt(menusSection.count || '0');
+  menus = [];
+
+  for (let i = 0; i < count; i++) {
+    const sec = ini[`Menu_${i}`];
+    if (!sec) continue;
+    const menu = {
+      menu_id: parseInt(sec.menu_id || '0'),
+      type: sec.type || 'default',
+      items: []
+    };
+    const itemCount = parseInt(sec.item_count || '0');
+    for (let j = 0; j < itemCount; j++) {
+      const itemSec = ini[`Menu_${i}_Item_${j}`];
+      if (!itemSec) continue;
+      menu.items.push({
+        string_id: parseInt(itemSec.string_id || '0'),
+        flags: itemSec.flags || 'normal',
+        action: itemSec.action || 'none',
+        param: parseInt(itemSec.param || '0'),
+        help_string: itemSec.help_string !== undefined ? parseInt(itemSec.help_string) : null
+      });
+    }
+    menus.push(menu);
+  }
+
+  dirty = false;
+  renderMenuList();
+  if (menus.length > 0) selectMenu(0);
+  updateStatus();
+}
+
+// ============================================================
+// Strings INI loading
+// ============================================================
+function loadStringsFromINI(text) {
+  const ini = parseINI(text);
+  menuStrings = {};
+  allStrings = {};
+
+  // Find all Lang_0_Group_N sections
+  for (const section in ini) {
+    const m = section.match(/^Lang_0_Group_(\d+)$/);
+    if (!m) continue;
+    const groupIdx = parseInt(m[1]);
+    const data = ini[section];
+    const groupStrings = {};
+    for (const key in data) {
+      if (key === 'count') continue;
+      const idx = parseInt(key);
+      if (!isNaN(idx)) {
+        groupStrings[idx] = data[key];
+        allStrings[`${groupIdx}_${idx}`] = data[key];
+      }
+    }
+    menuStrings[groupIdx] = groupStrings;
+  }
+
+  renderMenuList();
+  if (selectedMenuIdx >= 0) renderEditor();
+  updateStatus();
+}
+
+function getMenuString(stringId) {
+  // Menu strings are in group 3
+  if (menuStrings[3] && menuStrings[3][stringId] !== undefined) {
+    return cleanString(menuStrings[3][stringId]);
+  }
+  return null;
+}
+
+function cleanString(s) {
+  if (!s) return '';
+  // Remove soft hyphens, replace | with newline for display
+  return s.replace(/-/g, '').replace(/\|/g, ' / ').replace(/\\x[0-9a-fA-F]{2}/g, '').trim();
+}
+
+// ============================================================
+// Menu list rendering
+// ============================================================
+function renderMenuList() {
+  const list = document.getElementById('menu-list');
+  const search = document.getElementById('menu-search').value.toLowerCase();
+  list.innerHTML = '';
+
+  menus.forEach((menu, idx) => {
+    const strText = getMenuString(menu.items[0]?.string_id) || '';
+    const label = `Menu_${idx} (id:${menu.menu_id})`;
+    if (search && !label.toLowerCase().includes(search) && !strText.toLowerCase().includes(search) && !menu.type.includes(search)) return;
+
+    const div = document.createElement('div');
+    div.className = 'menu-entry' + (idx === selectedMenuIdx ? ' selected' : '');
+    div.innerHTML = `
+      <span>
+        <span class="menu-idx">${idx}</span>
+        <span class="menu-name">id:${menu.menu_id}</span>
+      </span>
+      <span class="menu-type">${menu.type}</span>
+    `;
+    div.onclick = () => selectMenu(idx);
+    list.appendChild(div);
+  });
+}
+
+document.getElementById('menu-search').addEventListener('input', renderMenuList);
+
+// ============================================================
+// Menu selection and editor
+// ============================================================
+function selectMenu(idx) {
+  selectedMenuIdx = idx;
+  renderMenuList();
+  renderEditor();
+  renderPreview();
+}
+
+function renderEditor() {
+  if (selectedMenuIdx < 0 || selectedMenuIdx >= menus.length) return;
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('editor-content').style.display = 'block';
+
+  const menu = menus[selectedMenuIdx];
+  document.getElementById('editor-title').textContent = `Menu_${selectedMenuIdx} (id: ${menu.menu_id})`;
+  document.getElementById('f-menu-idx').value = selectedMenuIdx;
+  document.getElementById('f-menu-id').value = menu.menu_id;
+  document.getElementById('f-menu-type').value = menu.type;
+  document.getElementById('f-item-count').value = menu.items.length;
+
+  renderItems();
+}
+
+function renderItems() {
+  const menu = menus[selectedMenuIdx];
+  const tbody = document.getElementById('items-body');
+  tbody.innerHTML = '';
+
+  menu.items.forEach((item, i) => {
+    const tr = document.createElement('tr');
+    const strText = getMenuString(item.string_id);
+    const flagsList = parseFlagsToList(item.flags);
+    const helpText = item.help_string !== null ? getMenuString(item.help_string) : null;
+
+    tr.innerHTML = `
+      <td style="color:var(--text-dim);">${i}</td>
+      <td>
+        <input type="number" value="${item.string_id}" min="0" max="65535"
+          onchange="updateItem(${i}, 'string_id', parseInt(this.value))">
+        <span class="string-preview">${strText || ''}</span>
+      </td>
+      <td style="max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text);">
+        ${strText || '<em style="color:var(--text-dim)">empty</em>'}
+      </td>
+      <td>
+        <div class="flags-cell" onclick="showFlagsPopup(event, ${i})">
+          ${flagsList.length === 0 || (flagsList.length === 1 && flagsList[0] === 'normal')
+            ? '<span class="flag-tag" style="opacity:0.4">normal</span>'
+            : flagsList.map(f => `<span class="flag-tag">${f}</span>`).join('')}
+        </div>
+      </td>
+      <td>
+        <select onchange="updateItem(${i}, 'action', this.value)">
+          ${ACTIONS.map(a => `<option value="${a}" ${a === item.action ? 'selected' : ''}>${a}</option>`).join('')}
+        </select>
+      </td>
+      <td>
+        <input type="number" value="${item.param}" min="0" max="255"
+          onchange="updateItem(${i}, 'param', parseInt(this.value))">
+      </td>
+      <td>
+        <input type="number" value="${item.help_string !== null ? item.help_string : ''}" min="0" max="65535"
+          placeholder="-"
+          onchange="updateItem(${i}, 'help_string', this.value === '' ? null : parseInt(this.value))">
+        ${helpText ? `<span class="string-preview">${helpText}</span>` : ''}
+      </td>
+      <td>
+        <div class="item-actions">
+          <button class="btn-up" onclick="moveItem(${i}, -1)" ${i === 0 ? 'disabled' : ''} title="Move up">&#9650;</button>
+          <button class="btn-down" onclick="moveItem(${i}, 1)" ${i === menu.items.length - 1 ? 'disabled' : ''} title="Move down">&#9660;</button>
+          <button class="btn-del" onclick="deleteItem(${i})" title="Delete">&#10005;</button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ============================================================
+// Flags handling
+// ============================================================
+function parseFlagsToList(flagsStr) {
+  if (typeof flagsStr === 'number') {
+    const result = [];
+    for (const [name, val] of Object.entries(FLAGS)) {
+      if (name === 'normal') continue;
+      if (flagsStr & val) result.push(name);
+    }
+    return result.length ? result : ['normal'];
+  }
+  return flagsStr.split(',').map(s => s.trim()).filter(Boolean);
+}
+
+function flagsListToString(list) {
+  const filtered = list.filter(f => f !== 'normal');
+  return filtered.length ? filtered.join(',') : 'normal';
+}
+
+function showFlagsPopup(event, itemIdx) {
+  event.stopPropagation();
+  const popup = document.getElementById('flags-popup');
+  const item = menus[selectedMenuIdx].items[itemIdx];
+  const current = parseFlagsToList(item.flags);
+
+  popup.innerHTML = FLAG_NAMES.map(f => `
+    <label>
+      <input type="checkbox" value="${f}" ${current.includes(f) ? 'checked' : ''}
+        onchange="toggleFlag(${itemIdx}, '${f}', this.checked)">
+      ${f}
+    </label>
+  `).join('');
+
+  popup.style.display = 'block';
+  popup.style.left = Math.min(event.clientX, window.innerWidth - 200) + 'px';
+  popup.style.top = Math.min(event.clientY, window.innerHeight - 300) + 'px';
+}
+
+function toggleFlag(itemIdx, flag, checked) {
+  const item = menus[selectedMenuIdx].items[itemIdx];
+  let current = parseFlagsToList(item.flags).filter(f => f !== 'normal');
+  if (checked && !current.includes(flag)) current.push(flag);
+  if (!checked) current = current.filter(f => f !== flag);
+  item.flags = flagsListToString(current);
+  markDirty();
+  renderItems();
+  renderPreview();
+}
+
+document.addEventListener('click', () => {
+  document.getElementById('flags-popup').style.display = 'none';
+});
+
+// ============================================================
+// Item editing
+// ============================================================
+function updateMenuField(field, value) {
+  if (selectedMenuIdx < 0) return;
+  if (field === 'menu_id') menus[selectedMenuIdx].menu_id = parseInt(value);
+  else if (field === 'type') menus[selectedMenuIdx].type = value;
+  markDirty();
+  renderMenuList();
+  renderPreview();
+}
+
+function updateItem(itemIdx, field, value) {
+  if (selectedMenuIdx < 0) return;
+  menus[selectedMenuIdx].items[itemIdx][field] = value;
+  markDirty();
+  renderItems();
+  renderPreview();
+}
+
+function addItem() {
+  if (selectedMenuIdx < 0) return;
+  menus[selectedMenuIdx].items.push({
+    string_id: 0,
+    flags: 'normal',
+    action: 'none',
+    param: 0,
+    help_string: null
+  });
+  markDirty();
+  document.getElementById('f-item-count').value = menus[selectedMenuIdx].items.length;
+  renderItems();
+  renderPreview();
+}
+
+function deleteItem(itemIdx) {
+  if (selectedMenuIdx < 0) return;
+  menus[selectedMenuIdx].items.splice(itemIdx, 1);
+  markDirty();
+  document.getElementById('f-item-count').value = menus[selectedMenuIdx].items.length;
+  renderItems();
+  renderPreview();
+}
+
+function moveItem(itemIdx, direction) {
+  if (selectedMenuIdx < 0) return;
+  const items = menus[selectedMenuIdx].items;
+  const newIdx = itemIdx + direction;
+  if (newIdx < 0 || newIdx >= items.length) return;
+  [items[itemIdx], items[newIdx]] = [items[newIdx], items[itemIdx]];
+  markDirty();
+  renderItems();
+  renderPreview();
+}
+
+function addMenu() {
+  const newMenu = {
+    menu_id: menus.length > 0 ? Math.max(...menus.map(m => m.menu_id)) + 1 : 1,
+    type: 'default',
+    items: []
+  };
+  menus.push(newMenu);
+  markDirty();
+  renderMenuList();
+  selectMenu(menus.length - 1);
+}
+
+function deleteMenu() {
+  if (selectedMenuIdx < 0) return;
+  if (!confirm(`Delete Menu_${selectedMenuIdx} (id:${menus[selectedMenuIdx].menu_id})?`)) return;
+  menus.splice(selectedMenuIdx, 1);
+  markDirty();
+  if (selectedMenuIdx >= menus.length) selectedMenuIdx = menus.length - 1;
+  renderMenuList();
+  if (selectedMenuIdx >= 0) renderEditor();
+  else {
+    document.getElementById('empty-state').style.display = '';
+    document.getElementById('editor-content').style.display = 'none';
+  }
+  renderPreview();
+}
+
+// ============================================================
+// Preview rendering
+// ============================================================
+function renderPreview() {
+  if (!document.getElementById('preview-live').checked) return;
+  const canvas = document.getElementById('preview-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = 320, H = 480;
+  canvas.width = W;
+  canvas.height = H;
+
+  // Background
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, W, H);
+
+  if (selectedMenuIdx < 0 || selectedMenuIdx >= menus.length) return;
+  const menu = menus[selectedMenuIdx];
+
+  // Draw menu type header
+  ctx.fillStyle = '#c00';
+  ctx.fillRect(0, 0, W, 28);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 12px Courier New';
+  ctx.textAlign = 'center';
+  ctx.fillText(`Menu_${selectedMenuIdx} [${menu.type}] id:${menu.menu_id}`, W / 2, 18);
+
+  const isCenter = ['main', 'vcenter', 'main_list'].includes(menu.type);
+  const isList = ['list', 'main_list', 'vending_machine'].includes(menu.type);
+
+  // Item rendering
+  const startY = isCenter ? Math.max(40, (H - menu.items.length * 28) / 2) : 40;
+  const itemHeight = isList ? 24 : 28;
+
+  ctx.font = '13px Courier New';
+
+  menu.items.forEach((item, i) => {
+    const y = startY + i * itemHeight;
+    if (y > H - 10) return;
+
+    const flags = parseFlagsToList(item.flags);
+    const text = getMenuString(item.string_id) || `[${item.string_id}]`;
+    const centered = isCenter || flags.includes('align_center');
+    const disabled = flags.includes('disabled');
+    const noselect = flags.includes('noselect');
+    const divider = flags.includes('divider');
+    const highlight = flags.includes('highlight');
+    const hidden = flags.includes('hidden');
+    const blockText = flags.includes('block_text');
+    const hasLeftArrow = flags.includes('left_arrow');
+    const hasRightArrow = flags.includes('right_arrow');
+
+    if (hidden) return;
+
+    // Selection highlight for selectable items
+    if (!noselect && !disabled && !divider && i === 0) {
+      ctx.fillStyle = 'rgba(200, 0, 0, 0.3)';
+      ctx.fillRect(4, y - 12, W - 8, itemHeight - 2);
+    }
+
+    // Divider line
+    if (divider) {
+      ctx.strokeStyle = '#444';
+      ctx.beginPath();
+      ctx.moveTo(10, y - 4);
+      ctx.lineTo(W - 10, y - 4);
+      ctx.stroke();
+    }
+
+    // Text color
+    if (disabled) ctx.fillStyle = '#555';
+    else if (highlight) ctx.fillStyle = '#ff0';
+    else if (noselect) ctx.fillStyle = '#888';
+    else ctx.fillStyle = '#fff';
+
+    // Text
+    ctx.textAlign = centered ? 'center' : 'left';
+    const tx = centered ? W / 2 : (isList ? 16 : 12);
+    ctx.fillText(text, tx, y);
+
+    // Arrows
+    if (hasLeftArrow) {
+      ctx.fillStyle = '#c00';
+      ctx.fillText('\u25C0', 12, y);
+    }
+    if (hasRightArrow) {
+      ctx.fillStyle = '#c00';
+      ctx.fillText('\u25B6', W - 20, y);
+    }
+
+    // Action label
+    if (item.action !== 'none') {
+      ctx.fillStyle = '#555';
+      ctx.font = '9px Courier New';
+      ctx.textAlign = 'right';
+      ctx.fillText(`${item.action}(${item.param})`, W - 6, y);
+      ctx.font = '13px Courier New';
+    }
+
+    // Help string indicator
+    if (item.help_string !== null) {
+      ctx.fillStyle = '#335';
+      const helpText = getMenuString(item.help_string) || '';
+      if (helpText && isList) {
+        ctx.fillRect(0, H - 40, W, 40);
+        ctx.fillStyle = '#88a';
+        ctx.font = '10px Courier New';
+        ctx.textAlign = 'center';
+        ctx.fillText(helpText.substring(0, 45), W / 2, H - 20);
+        ctx.font = '13px Courier New';
+      }
+    }
+  });
+
+  // Border frame
+  ctx.strokeStyle = '#c00';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(1, 1, W - 2, H - 2);
+}
+
+// ============================================================
+// INI export
+// ============================================================
+function generateMenusINI() {
+  let out = '';
+  out += '; menus.ini - Generated by DoomIIRPG Menu Editor\n';
+  out += '; Human-readable menu definitions for DoomIIRPG\n';
+  out += ';\n';
+  out += '; Menu types: default=0, list=1, confirm=2, confirm2=3, main=4,\n';
+  out += ';             help=5, vcenter=6, notebook=7, main_list=8, vending_machine=9\n';
+  out += ';\n';
+  out += '; Item flags: normal=0, noselect=1, nodehyphenate=2, disabled=4,\n';
+  out += ';             align_center=8, showdetails=32, divider=64, selector=128,\n';
+  out += ';             block_text=256, highlight=512, checked=1024,\n';
+  out += ';             right_arrow=8192, left_arrow=16384, hidden=32768\n';
+  out += ';\n';
+  out += '; String IDs reference FILE_MENUSTRINGS group (Strings::FILE_MENUSTRINGS = 3)\n';
+  out += '\n';
+  out += '[Menus]\n';
+  out += `count = ${menus.length}\n`;
+  out += '\n';
+
+  menus.forEach((menu, i) => {
+    out += `[Menu_${i}]\n`;
+    out += `menu_id = ${menu.menu_id}\n`;
+    out += `type = ${menu.type}\n`;
+    out += `item_count = ${menu.items.length}\n`;
+    out += '\n';
+
+    menu.items.forEach((item, j) => {
+      out += `[Menu_${i}_Item_${j}]\n`;
+      out += `string_id = ${item.string_id}\n`;
+      out += `flags = ${item.flags}\n`;
+      out += `action = ${item.action}\n`;
+      out += `param = ${item.param}\n`;
+      if (item.help_string !== null) {
+        out += `help_string = ${item.help_string}\n`;
+      }
+      out += '\n';
+    });
+  });
+
+  return out;
+}
+
+// ============================================================
+// File I/O
+// ============================================================
+function openMenusIni() { document.getElementById('file-menus').click(); }
+function openStringsIni() { document.getElementById('file-strings').click(); }
+
+function handleMenusFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    loadMenusFromINI(e.target.result);
+    document.getElementById('status-left').textContent = `Loaded: ${file.name} (${menus.length} menus)`;
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function handleStringsFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    loadStringsFromINI(e.target.result);
+    const strCount = menuStrings[3] ? Object.keys(menuStrings[3]).length : 0;
+    document.getElementById('status-right').textContent = `Strings: ${strCount} menu strings loaded`;
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function downloadMenusIni() {
+  if (menus.length === 0) { alert('No menus to save'); return; }
+  const content = generateMenusINI();
+  const blob = new Blob([content], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'menus.ini';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  dirty = false;
+  updateStatus();
+}
+
+function exportJSON() {
+  if (menus.length === 0) { alert('No menus to export'); return; }
+  const blob = new Blob([JSON.stringify(menus, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'menus.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importJSON() { document.getElementById('file-json').click(); }
+
+function handleJSONFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      menus = JSON.parse(e.target.result);
+      dirty = true;
+      renderMenuList();
+      if (menus.length > 0) selectMenu(0);
+      updateStatus();
+      document.getElementById('status-left').textContent = `Imported: ${file.name} (${menus.length} menus)`;
+    } catch (err) {
+      alert('Invalid JSON: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ============================================================
+// Try auto-loading files relative to this HTML
+// ============================================================
+async function tryAutoLoad() {
+  // Try to load menus.ini and strings.ini from parent directory
+  try {
+    const menusResp = await fetch('../menus.ini');
+    if (menusResp.ok) {
+      const text = await menusResp.text();
+      loadMenusFromINI(text);
+      document.getElementById('status-left').textContent = `Auto-loaded: menus.ini (${menus.length} menus)`;
+    }
+  } catch (e) { /* not available */ }
+
+  try {
+    const strResp = await fetch('../strings.ini');
+    if (strResp.ok) {
+      const text = await strResp.text();
+      loadStringsFromINI(text);
+      const strCount = menuStrings[3] ? Object.keys(menuStrings[3]).length : 0;
+      document.getElementById('status-right').textContent = `Strings: ${strCount} menu strings loaded`;
+    }
+  } catch (e) { /* not available */ }
+}
+
+// ============================================================
+// Utilities
+// ============================================================
+function markDirty() {
+  dirty = true;
+  updateStatus();
+}
+
+function updateStatus() {
+  const left = document.getElementById('status-left');
+  if (dirty) left.textContent = (left.textContent.replace(' [modified]', '') + ' [modified]');
+}
+
+// Warn before leaving with unsaved changes
+window.addEventListener('beforeunload', (e) => {
+  if (dirty) { e.preventDefault(); e.returnValue = ''; }
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    downloadMenusIni();
+  }
+});
+
+// ============================================================
+// Init
+// ============================================================
+tryAutoLoad();
+</script>
+</body>
+</html>
