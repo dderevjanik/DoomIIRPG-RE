@@ -1,6 +1,7 @@
 #include <stdexcept>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <SDL.h>
 #include "SDLGL.h"
@@ -28,9 +29,29 @@ void drawView(SDLGL* sdlGL);
 int main(int argc, char* args[]) {
 
     int		UpTime = 0;
-    
+
+    const char* ipaPath = "Doom 2 RPG.ipa";
+    const char* gameDir = ".";
+
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(args[i], "--ipa") == 0 && i + 1 < argc) {
+            ipaPath = args[++i];
+        } else if (strcmp(args[i], "--gamedir") == 0 && i + 1 < argc) {
+            gameDir = args[++i];
+        }
+    }
+
+    // Change working directory to gamedir so .ini files are found there
+    if (strcmp(gameDir, ".") != 0) {
+        if (chdir(gameDir) != 0) {
+            printf("Error: cannot change to gamedir '%s'\n", gameDir);
+            return 1;
+        }
+        printf("Working directory: %s\n", gameDir);
+    }
+
     ZipFile zipFile;
-    zipFile.openZipFile("Doom 2 RPG.ipa");
+    zipFile.openZipFile(ipaPath);
 
     VFS vfs;
     // Mount filesystem directory first (higher priority) for modding/loose files

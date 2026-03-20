@@ -1,6 +1,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <string>
+#include <vector>
 
 #include "CAppContainer.h"
 #include "INIReader.h"
@@ -457,45 +458,35 @@ bool MenuSystem::loadMenusFromBinary() {
 }
 
 bool MenuSystem::loadMenusFromINI(const char* path) {
-	INIReader ini;
-	if (!ini.load(path)) {
+	INIReader* ini = new INIReader();
+	if (!ini->load(path)) {
+		delete ini;
 		return false;
 	}
 
-	int count = ini.getInt("Menus", "count", 0);
+	int count = ini->getInt("Menus", "count", 0);
 	if (count <= 0) {
 		printf("MenuSystem: menus.ini has invalid count\n");
+		delete ini;
 		return false;
 	}
 
 	this->menuDataCount = (uint32_t)count;
+	this->menuData = new uint32_t[count];
 
-	// First pass: count total items to size menuItems array
-	int totalItemWords = 0;
-	for (int i = 0; i < count; i++) {
-		char section[32];
-		snprintf(section, sizeof(section), "Menu_%d", i);
-		int itemCount = ini.getInt(section, "item_count", 0);
-		totalItemWords += itemCount * 2;
-	}
-
-	this->menuItemsCount = (uint32_t)totalItemWords;
-	this->menuData = new uint32_t[this->menuDataCount];
-	this->menuItems = new uint32_t[this->menuItemsCount];
-
-	// Second pass: populate arrays
+	// Single pass: collect items into a vector, then copy to array
+	std::vector<uint32_t> itemWords;
 	int itemOffset = 0;
+
 	for (int i = 0; i < count; i++) {
 		char section[32];
 		snprintf(section, sizeof(section), "Menu_%d", i);
 
-		int menuId = ini.getInt(section, "menu_id", 0);
-		int menuType = menuTypeFromString(ini.getString(section, "type", "default"));
-		int itemCount = ini.getInt(section, "item_count", 0);
+		int menuId = ini->getInt(section, "menu_id", 0);
+		int menuType = menuTypeFromString(ini->getString(section, "type", "default"));
+		int itemCount = ini->getInt(section, "item_count", 0);
 
-		// Handle negative menu IDs (stored as unsigned byte)
 		uint8_t storedId = (uint8_t)(menuId & 0xFF);
-
 		int endOffset = itemOffset + itemCount * 2;
 		this->menuData[i] = (uint32_t)storedId
 			| (uint32_t)((endOffset & 0xFFFF) << 8)
@@ -505,21 +496,25 @@ bool MenuSystem::loadMenusFromINI(const char* path) {
 			char itemSection[48];
 			snprintf(itemSection, sizeof(itemSection), "Menu_%d_Item_%d", i, j);
 
-			int stringId = ini.getInt(itemSection, "string_id", 0);
-			int flags = flagsFromString(ini.getString(itemSection, "flags", "normal"));
-			int action = actionFromString(ini.getString(itemSection, "action", "none"));
-			int param = ini.getInt(itemSection, "param", 0);
-			int helpString = ini.getInt(itemSection, "help_string", 0);
+			int stringId = ini->getInt(itemSection, "string_id", 0);
+			int flags = flagsFromString(ini->getString(itemSection, "flags", "normal"));
+			int action = actionFromString(ini->getString(itemSection, "action", "none"));
+			int param = ini->getInt(itemSection, "param", 0);
+			int helpString = ini->getInt(itemSection, "help_string", 0);
 
-			// Pack into the two uint32 format
-			this->menuItems[itemOffset] = (uint32_t)((stringId & 0xFFFF) << 16) | (uint32_t)(flags & 0xFFFF);
-			this->menuItems[itemOffset + 1] = (uint32_t)((helpString & 0xFFFF) << 16)
+			itemWords.push_back((uint32_t)((stringId & 0xFFFF) << 16) | (uint32_t)(flags & 0xFFFF));
+			itemWords.push_back((uint32_t)((helpString & 0xFFFF) << 16)
 				| (uint32_t)((action & 0xFF) << 8)
-				| (uint32_t)(param & 0xFF);
+				| (uint32_t)(param & 0xFF));
 			itemOffset += 2;
 		}
 	}
 
+	this->menuItemsCount = (uint32_t)itemWords.size();
+	this->menuItems = new uint32_t[itemWords.size() > 0 ? itemWords.size() : 1];
+	std::memcpy(this->menuItems, itemWords.data(), itemWords.size() * sizeof(uint32_t));
+
+	delete ini;
 	printf("MenuSystem: loaded %d menus, %d item words from %s\n", this->menuDataCount, this->menuItemsCount, path);
 	return true;
 }

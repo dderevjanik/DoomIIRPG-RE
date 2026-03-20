@@ -24,8 +24,8 @@ Localization::~Localization() {
 bool Localization::startup() {
 	printf("Localization::startup\n");
 
-	this->text = new char* [Localization::MAXTEXT];
-	this->textMap =  new uint16_t* [Localization::MAXTEXT];
+	this->text = new char* [Localization::MAXTEXT]();
+	this->textMap =  new uint16_t* [Localization::MAXTEXT]();
 	this->dynamicArgs = new Text(1024);
 	this->scratchBuffers[0] = new Text(2048);
 	this->scratchBuffers[1] = new Text(2048);
@@ -158,14 +158,15 @@ void Localization::loadGroupFromINI(int language, int group) {
 		return;
 	}
 
-	// First pass: compute total buffer size needed
+	// Collect all strings in a single pass
+	std::string* strings = new std::string[count];
 	int totalSize = 0;
 	for (int i = 0; i < count; i++) {
 		char key[16];
 		snprintf(key, sizeof(key), "%d", i);
 		std::string val = ini->getString(section, key, "");
-		std::string unescaped = unescapeString(val);
-		totalSize += (int)unescaped.size() + 1; // +1 for null terminator
+		strings[i] = unescapeString(val);
+		totalSize += (int)strings[i].size() + 1;
 	}
 
 	// Allocate buffers
@@ -185,23 +186,18 @@ void Localization::loadGroupFromINI(int language, int group) {
 		this->textMap[group][i] = 0;
 	}
 
-	// Second pass: fill buffer and build textMap
+	// Fill buffer and build textMap from collected strings
 	int offset = 0;
 	for (int i = 0; i < count; i++) {
-		char key[16];
-		snprintf(key, sizeof(key), "%d", i);
-		std::string val = ini->getString(section, key, "");
-		std::string unescaped = unescapeString(val);
-
 		if (i < this->textCount[group]) {
 			this->textMap[group][i] = (uint16_t)offset;
 		}
-
-		std::memcpy(this->text[group] + offset, unescaped.c_str(), unescaped.size());
-		offset += (int)unescaped.size();
+		std::memcpy(this->text[group] + offset, strings[i].c_str(), strings[i].size());
+		offset += (int)strings[i].size();
 		this->text[group][offset] = '\0';
 		offset++;
 	}
+	delete[] strings;
 }
 
 bool Localization::isSpace(char c) {
