@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include "App.h"
+#include "OpcodeRegistry.h"
 
 class ZipFile;
 class VFS;
@@ -33,8 +34,9 @@ class CAppContainer {
 	SDLGL* sdlGL;     // New
 	ZipFile* zipFile; // New
 	VFS* vfs;
-	GameConfig gameConfig;     // Loaded from game.ini
-	const char* customMapFile; // --map override
+	GameConfig gameConfig;         // Loaded from game.ini
+	OpcodeRegistry opcodeRegistry; // Extension script opcodes (128-254)
+	const char* customMapFile;     // --map override
 	static CAppContainer* getInstance();
 	static int m_cheatEntry;
 	float MoveX, MoveY, MoveAng;

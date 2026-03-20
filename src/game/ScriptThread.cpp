@@ -1,6 +1,7 @@
 #include <stdexcept>
 
 #include "CAppContainer.h"
+#include "OpcodeRegistry.h"
 #include "ScriptThread.h"
 #include "JavaStream.h"
 #include "Game.h"
@@ -2032,7 +2033,16 @@ uint32_t ScriptThread::run() {
             }
 
             default: {
-                app->Error("Cannot handle event: %d", mapByteCode[this->IP]);
+                // Check extension opcode registry (128-254)
+                uint8_t opcode = mapByteCode[this->IP];
+                OpcodeHandler handler = CAppContainer::getInstance()->opcodeRegistry.getHandler(opcode);
+                if (handler) {
+                    int result = handler(this);
+                    if (result == 1) return 1;  // Done
+                    if (result == 2) { n = 2; } // Paused
+                } else {
+                    app->Error("Cannot handle event: %d", opcode);
+                }
                 break;
             }
         }
