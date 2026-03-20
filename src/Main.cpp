@@ -5,6 +5,7 @@
 #include <SDL.h>
 #include "SDLGL.h"
 #include "ZipFile.h"
+#include "VFS.h"
 
 #include "CAppContainer.h"
 #include "App.h"
@@ -31,13 +32,19 @@ int main(int argc, char* args[]) {
     ZipFile zipFile;
     zipFile.openZipFile("Doom 2 RPG.ipa");
 
+    VFS vfs;
+    // Mount filesystem directory first (higher priority) for modding/loose files
+    vfs.mountDir("basedata", 100);
+    // Mount the .ipa zip with the internal package prefix
+    vfs.mountZip(&zipFile, "Payload/Doom2rpg.app/Packages/", 0);
+
 	SDLGL sdlGL;
 	sdlGL.Initialize();
 
     Input input;
     input.init(); // [GEC] Port: set default Binds
 
-    CAppContainer::getInstance()->Construct(&sdlGL, &zipFile);
+    CAppContainer::getInstance()->Construct(&sdlGL, &zipFile, &vfs);
     sdlGL.updateVideo(); // [GEC]
 
     SDL_Event ev;

@@ -295,3 +295,12 @@ uint8_t* ZipFile::readZipFileEntry(const char* name, int* sizep) {
 
 	return nullptr;
 }
+
+bool ZipFile::hasEntry(const char* name) {
+	for (int i = 0; i < this->entry_count; i++) {
+		if (!SDL_strcasecmp(name, this->entry[i].name)) {
+			return true;
+		}
+	}
+	return false;
+}

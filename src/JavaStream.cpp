@@ -5,6 +5,7 @@
 #include "CAppContainer.h"
 #include "App.h"
 #include "ZipFile.h"
+#include "VFS.h"
 
 namespace {
     template<typename T>
@@ -73,21 +74,16 @@ bool InputStream::loadFile(const char* fileName, int loadType) {
 	this->cursor = 0;
 
 	if (loadType == LT_RESOURCE) {
-		strncpy(namePath, "Payload/Doom2rpg.app/Packages/", sizeof(namePath));
-		strncat(namePath, fileName, sizeof(namePath));
-		//printf("namePath %s\n", namePath);
-
-		this->data = CAppContainer::getInstance()->zipFile->readZipFileEntry(namePath, &this->fileSize);
+		VFS* vfs = CAppContainer::getInstance()->vfs;
+		this->data = vfs->readFile(fileName, &this->fileSize);
 		if (this->data) {
 			return true;
 		}
 	}
 	else if (loadType == LT_SOUND_RESOURCE) { // [GEC]
-		strncpy(namePath, "Payload/Doom2rpg.app/Packages/sounds2/", sizeof(namePath));
-		strncat(namePath, fileName, sizeof(namePath));
-		//printf("namePath %s\n", namePath);
-
-		this->data = CAppContainer::getInstance()->zipFile->readZipFileEntry(namePath, &this->fileSize);
+		VFS* vfs = CAppContainer::getInstance()->vfs;
+		std::snprintf(namePath, sizeof(namePath), "sounds2/%s", fileName);
+		this->data = vfs->readFile(namePath, &this->fileSize);
 		if (this->data) {
 			return true;
 		}

@@ -38,6 +38,7 @@ public:
 	void openZipFile(const char* name);
 	void closeZipFile();
 	uint8_t* readZipFileEntry(const char* name, int* sizep);
+	bool hasEntry(const char* name);
 };
 
 #endif

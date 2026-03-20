@@ -3,6 +3,7 @@
 #include "App.h"
 
 class ZipFile;
+class VFS;
 class SDLGL;
 class Applet;
 
@@ -14,6 +15,7 @@ public:
 	Applet* app;
 	SDLGL* sdlGL; // New
 	ZipFile* zipFile; // New
+	VFS* vfs;
 	static CAppContainer* getInstance();
 	static int m_cheatEntry;
 	float MoveX, MoveY, MoveAng;
@@ -36,7 +38,7 @@ public:
 	void TestCheatEntry(float pressX, float pressY);
 	bool testCheatCode(int code);
 	void UpdateAccelerometer(float x, float y, float z, bool useMouse);
-	void Construct(SDLGL* sdlGL, ZipFile* zipFile);
+	void Construct(SDLGL* sdlGL, ZipFile* zipFile, VFS* vfs);
 
 };
 
