@@ -39,6 +39,10 @@ public:
     std::vector<int> getIntArray(const char* section, const char* key, int count, int defaultVal) const;
     void setIntArray(const char* section, const char* key, const int* values, int count);
 
+    // Get comma-separated strings (for human-readable key bindings)
+    std::vector<std::string> getStringArray(const char* section, const char* key, int count, const char* defaultVal) const;
+    void setStringArray(const char* section, const char* key, const std::vector<std::string>& values);
+
 private:
     // Section -> (Key -> Value)
     std::map<std::string, std::map<std::string, std::string>> data;

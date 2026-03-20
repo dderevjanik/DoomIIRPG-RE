@@ -207,3 +207,38 @@ void INIReader::setIntArray(const char* section, const char* key, const int* val
     }
     getOrCreateSection(section)[key] = ss.str();
 }
+
+std::vector<std::string> INIReader::getStringArray(const char* section, const char* key, int count, const char* defaultVal) const {
+    std::vector<std::string> result(count, defaultVal);
+
+    auto sectionIt = data.find(section);
+    if (sectionIt == data.end()) {
+        return result;
+    }
+
+    auto keyIt = sectionIt->second.find(key);
+    if (keyIt == sectionIt->second.end()) {
+        return result;
+    }
+
+    std::stringstream ss(keyIt->second);
+    std::string item;
+    int index = 0;
+
+    while (std::getline(ss, item, ',') && index < count) {
+        result[index++] = trim(item);
+    }
+
+    return result;
+}
+
+void INIReader::setStringArray(const char* section, const char* key, const std::vector<std::string>& values) {
+    std::stringstream ss;
+    for (size_t i = 0; i < values.size(); i++) {
+        if (i > 0) {
+            ss << ",";
+        }
+        ss << values[i];
+    }
+    getOrCreateSection(section)[key] = ss.str();
+}

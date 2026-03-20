@@ -1911,6 +1911,207 @@ bool Game::loadWorldState(InputStream* IS) {
 	}
 }
 
+// --- Human-readable config helpers ---
+
+static const char* difficultyNames[] = { "normal", "difficult", nullptr, "nightmare" };
+static const int difficultyValues[] = { 1, 2, 0, 4 };
+static const int numDifficulties = 4;
+
+static const char* difficultyToString(int difficulty) {
+	for (int i = 0; i < numDifficulties; i++) {
+		if (difficultyValues[i] == difficulty && difficultyNames[i]) {
+			return difficultyNames[i];
+		}
+	}
+	return "normal";
+}
+
+static int difficultyFromString(const std::string& str) {
+	for (int i = 0; i < numDifficulties; i++) {
+		if (difficultyNames[i] && str == difficultyNames[i]) {
+			return difficultyValues[i];
+		}
+	}
+	return 1;
+}
+
+static const char* languageNames[] = { "english", "french", "german", "italian", "spanish" };
+static const int numLanguages = 5;
+
+static const char* languageToString(int lang) {
+	if (lang >= 0 && lang < numLanguages) {
+		return languageNames[lang];
+	}
+	return "english";
+}
+
+static int languageFromString(const std::string& str) {
+	for (int i = 0; i < numLanguages; i++) {
+		if (str == languageNames[i]) {
+			return i;
+		}
+	}
+	return 0;
+}
+
+static const char* windowModeNames[] = { "windowed", "borderless", "fullscreen" };
+static const int numWindowModes = 3;
+
+static const char* windowModeToString(int mode) {
+	if (mode >= 0 && mode < numWindowModes) {
+		return windowModeNames[mode];
+	}
+	return "windowed";
+}
+
+static int windowModeFromString(const std::string& str) {
+	for (int i = 0; i < numWindowModes; i++) {
+		if (str == windowModeNames[i]) {
+			return i;
+		}
+	}
+	return 0;
+}
+
+static const char* controlLayoutNames[] = { "chevrons", "arrows", "classic" };
+static const int numControlLayouts = 3;
+
+static const char* controlLayoutToString(int layout) {
+	if (layout >= 0 && layout < numControlLayouts) {
+		return controlLayoutNames[layout];
+	}
+	return "chevrons";
+}
+
+static int controlLayoutFromString(const std::string& str) {
+	for (int i = 0; i < numControlLayouts; i++) {
+		if (str == controlLayoutNames[i]) {
+			return i;
+		}
+	}
+	return 0;
+}
+
+static std::string resolutionToString(int index) {
+	if (index >= 0 && index < 18) {
+		char buf[32];
+		snprintf(buf, sizeof(buf), "%dx%d", sdlResVideoModes[index].width, sdlResVideoModes[index].height);
+		return buf;
+	}
+	return "480x320";
+}
+
+static int resolutionFromString(const std::string& str) {
+	int w = 0, h = 0;
+	if (sscanf(str.c_str(), "%dx%d", &w, &h) == 2) {
+		for (int i = 0; i < 18; i++) {
+			if (sdlResVideoModes[i].width == w && sdlResVideoModes[i].height == h) {
+				return i;
+			}
+		}
+	}
+	return 0;
+}
+
+static const char* scancodeToName(int code) {
+	if (code == -1) {
+		return "none";
+	}
+	if (code & IS_MOUSE_BUTTON) {
+		int btn = code & ~IS_MOUSE_BUTTON;
+		switch (btn) {
+			case 1: return "mouse_left";
+			case 2: return "mouse_middle";
+			case 3: return "mouse_right";
+			case 4: return "mouse_x1";
+			case 5: return "mouse_x2";
+			default: return "mouse_unknown";
+		}
+	}
+	if (code & IS_CONTROLLER_BUTTON) {
+		int btn = code & ~IS_CONTROLLER_BUTTON;
+		switch (btn) {
+			case (int)GamepadInput::BTN_A: return "pad_a";
+			case (int)GamepadInput::BTN_B: return "pad_b";
+			case (int)GamepadInput::BTN_X: return "pad_x";
+			case (int)GamepadInput::BTN_Y: return "pad_y";
+			case (int)GamepadInput::BTN_BACK: return "pad_back";
+			case (int)GamepadInput::BTN_GUIDE: return "pad_guide";
+			case (int)GamepadInput::BTN_START: return "pad_start";
+			case (int)GamepadInput::BTN_LEFT_STICK: return "pad_leftstick";
+			case (int)GamepadInput::BTN_RIGHT_STICK: return "pad_rightstick";
+			case (int)GamepadInput::BTN_LEFT_SHOULDER: return "pad_leftshoulder";
+			case (int)GamepadInput::BTN_RIGHT_SHOULDER: return "pad_rightshoulder";
+			case (int)GamepadInput::BTN_DPAD_UP: return "pad_dpad_up";
+			case (int)GamepadInput::BTN_DPAD_DOWN: return "pad_dpad_down";
+			case (int)GamepadInput::BTN_DPAD_LEFT: return "pad_dpad_left";
+			case (int)GamepadInput::BTN_DPAD_RIGHT: return "pad_dpad_right";
+			case (int)GamepadInput::BTN_LAXIS_UP: return "pad_laxis_up";
+			case (int)GamepadInput::BTN_LAXIS_DOWN: return "pad_laxis_down";
+			case (int)GamepadInput::BTN_LAXIS_LEFT: return "pad_laxis_left";
+			case (int)GamepadInput::BTN_LAXIS_RIGHT: return "pad_laxis_right";
+			case (int)GamepadInput::BTN_RAXIS_UP: return "pad_raxis_up";
+			case (int)GamepadInput::BTN_RAXIS_DOWN: return "pad_raxis_down";
+			case (int)GamepadInput::BTN_RAXIS_LEFT: return "pad_raxis_left";
+			case (int)GamepadInput::BTN_RAXIS_RIGHT: return "pad_raxis_right";
+			default: return "pad_unknown";
+		}
+	}
+	// SDL scancode — use SDL_GetScancodeName
+	const char* name = SDL_GetScancodeName((SDL_Scancode)code);
+	if (name && name[0] != '\0') {
+		return name;
+	}
+	return "unknown";
+}
+
+static int scancodeFromName(const std::string& name) {
+	if (name == "none" || name == "-1") {
+		return -1;
+	}
+	// Mouse buttons
+	if (name == "mouse_left") return IS_MOUSE_BUTTON | 1;
+	if (name == "mouse_middle") return IS_MOUSE_BUTTON | 2;
+	if (name == "mouse_right") return IS_MOUSE_BUTTON | 3;
+	if (name == "mouse_x1") return IS_MOUSE_BUTTON | 4;
+	if (name == "mouse_x2") return IS_MOUSE_BUTTON | 5;
+	// Controller buttons
+	if (name == "pad_a") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_A;
+	if (name == "pad_b") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_B;
+	if (name == "pad_x") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_X;
+	if (name == "pad_y") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_Y;
+	if (name == "pad_back") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_BACK;
+	if (name == "pad_guide") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_GUIDE;
+	if (name == "pad_start") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_START;
+	if (name == "pad_leftstick") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LEFT_STICK;
+	if (name == "pad_rightstick") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RIGHT_STICK;
+	if (name == "pad_leftshoulder") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LEFT_SHOULDER;
+	if (name == "pad_rightshoulder") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RIGHT_SHOULDER;
+	if (name == "pad_dpad_up") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_DPAD_UP;
+	if (name == "pad_dpad_down") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_DPAD_DOWN;
+	if (name == "pad_dpad_left") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_DPAD_LEFT;
+	if (name == "pad_dpad_right") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_DPAD_RIGHT;
+	if (name == "pad_laxis_up") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LAXIS_UP;
+	if (name == "pad_laxis_down") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LAXIS_DOWN;
+	if (name == "pad_laxis_left") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LAXIS_LEFT;
+	if (name == "pad_laxis_right") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LAXIS_RIGHT;
+	if (name == "pad_raxis_up") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RAXIS_UP;
+	if (name == "pad_raxis_down") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RAXIS_DOWN;
+	if (name == "pad_raxis_left") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RAXIS_LEFT;
+	if (name == "pad_raxis_right") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RAXIS_RIGHT;
+	// SDL scancode by name
+	SDL_Scancode sc = SDL_GetScancodeFromName(name.c_str());
+	if (sc != SDL_SCANCODE_UNKNOWN) {
+		return (int)sc;
+	}
+	// Try parsing as integer for backward compatibility
+	try {
+		return std::stoi(name);
+	} catch (...) {
+		return -1;
+	}
+}
+
 // Key binding action names for INI file
 static const char* keyBindingNames[KEY_MAPPIN_MAX] = {
 	"move_forward",
@@ -1938,8 +2139,8 @@ void Game::saveConfig() {
 
 	// [General]
 	ini.setInt("General", "version", 11);
-	ini.setInt("General", "difficulty", this->difficulty);
-	ini.setInt("General", "language", app->localization->defaultLanguage);
+	ini.setString("General", "difficulty", difficultyToString(this->difficulty));
+	ini.setString("General", "language", languageToString(app->localization->defaultLanguage));
 
 	// [Sound]
 	ini.setBool("Sound", "enabled", app->sound->allowSounds);
@@ -1949,15 +2150,15 @@ void Game::saveConfig() {
 	// [Controls]
 	ini.setBool("Controls", "vibrate_enabled", app->canvas->vibrateEnabled);
 	ini.setInt("Controls", "vibration_intensity", gVibrationIntensity);
-	ini.setInt("Controls", "control_layout", app->canvas->m_controlLayout);
+	ini.setString("Controls", "control_layout", controlLayoutToString(app->canvas->m_controlLayout));
 	ini.setInt("Controls", "control_alpha", app->canvas->m_controlAlpha);
 	ini.setBool("Controls", "flip_controls", app->canvas->isFlipControls);
 	ini.setInt("Controls", "dead_zone", gDeadZone);
 
 	// [Display]
-	ini.setInt("Display", "window_mode", sdlGL->windowMode);
+	ini.setString("Display", "window_mode", windowModeToString(sdlGL->windowMode));
 	ini.setBool("Display", "vsync", sdlGL->vSync);
-	ini.setInt("Display", "resolution_index", sdlGL->resolutionIndex);
+	ini.setString("Display", "resolution", resolutionToString(sdlGL->resolutionIndex).c_str());
 	ini.setInt("Display", "anim_frames", app->canvas->animFrames);
 	ini.setBool("Display", "gles_init", _glesObj->isInit);
 
@@ -1996,7 +2197,11 @@ void Game::saveConfig() {
 
 	// [KeyBindings]
 	for (int i = 0; i < KEY_MAPPIN_MAX; i++) {
-		ini.setIntArray("KeyBindings", keyBindingNames[i], keyMapping[i].keyBinds, KEYBINDS_MAX);
+		std::vector<std::string> bindNames;
+		for (int j = 0; j < KEYBINDS_MAX; j++) {
+			bindNames.push_back(scancodeToName(keyMapping[i].keyBinds[j]));
+		}
+		ini.setStringArray("KeyBindings", keyBindingNames[i], bindNames);
 	}
 
 	const char* name = this->getProfileSaveFileName("config.ini");
@@ -2024,8 +2229,8 @@ void Game::loadConfig() {
 	}
 
 	// [General]
-	this->difficulty = ini.getInt("General", "difficulty", 1);
-	int lang = ini.getInt("General", "language", 0);
+	this->difficulty = difficultyFromString(ini.getString("General", "difficulty", "normal"));
+	int lang = languageFromString(ini.getString("General", "language", "english"));
 	if (lang != app->localization->defaultLanguage) {
 		app->localization->setLanguage(lang);
 	}
@@ -2039,7 +2244,7 @@ void Game::loadConfig() {
 	// [Controls]
 	app->canvas->vibrateEnabled = ini.getBool("Controls", "vibrate_enabled", true);
 	gVibrationIntensity = ini.getInt("Controls", "vibration_intensity", 100);
-	app->canvas->m_controlLayout = ini.getInt("Controls", "control_layout", 0);
+	app->canvas->m_controlLayout = controlLayoutFromString(ini.getString("Controls", "control_layout", "chevrons"));
 	if (app->canvas->m_controlLayout > 2) {
 		app->canvas->m_controlLayout = 0;
 	}
@@ -2048,9 +2253,9 @@ void Game::loadConfig() {
 	gDeadZone = ini.getInt("Controls", "dead_zone", 8000);
 
 	// [Display]
-	sdlGL->windowMode = ini.getInt("Display", "window_mode", 0);
+	sdlGL->windowMode = windowModeFromString(ini.getString("Display", "window_mode", "windowed"));
 	sdlGL->vSync = ini.getBool("Display", "vsync", true);
-	sdlGL->resolutionIndex = ini.getInt("Display", "resolution_index", 0);
+	sdlGL->resolutionIndex = resolutionFromString(ini.getString("Display", "resolution", "480x320"));
 	int animFrames = ini.getInt("Display", "anim_frames", 8);
 	if (animFrames < 2) {
 		animFrames = 2;
@@ -2095,9 +2300,9 @@ void Game::loadConfig() {
 
 	// [KeyBindings]
 	for (int i = 0; i < KEY_MAPPIN_MAX; i++) {
-		std::vector<int> binds = ini.getIntArray("KeyBindings", keyBindingNames[i], KEYBINDS_MAX, -1);
+		std::vector<std::string> bindNames = ini.getStringArray("KeyBindings", keyBindingNames[i], KEYBINDS_MAX, "none");
 		for (int j = 0; j < KEYBINDS_MAX; j++) {
-			keyMapping[i].keyBinds[j] = binds[j];
+			keyMapping[i].keyBinds[j] = scancodeFromName(bindNames[j]);
 		}
 	}
 
@@ -2368,10 +2573,10 @@ void Game::saveEmptyConfig() {
 	SDLGL* sdlGL = CAppContainer::getInstance()->sdlGL;
 	INIReader ini;
 
-	// [General] - reset difficulty to 1, keep language
+	// [General] - reset difficulty to normal, keep language
 	ini.setInt("General", "version", 11);
-	ini.setInt("General", "difficulty", 1);
-	ini.setInt("General", "language", app->localization->defaultLanguage);
+	ini.setString("General", "difficulty", "normal");
+	ini.setString("General", "language", languageToString(app->localization->defaultLanguage));
 
 	// [Sound] - keep current settings
 	ini.setBool("Sound", "enabled", app->sound->allowSounds);
@@ -2381,15 +2586,15 @@ void Game::saveEmptyConfig() {
 	// [Controls] - keep current settings
 	ini.setBool("Controls", "vibrate_enabled", app->canvas->vibrateEnabled);
 	ini.setInt("Controls", "vibration_intensity", gVibrationIntensity);
-	ini.setInt("Controls", "control_layout", app->canvas->m_controlLayout);
+	ini.setString("Controls", "control_layout", controlLayoutToString(app->canvas->m_controlLayout));
 	ini.setInt("Controls", "control_alpha", app->canvas->m_controlAlpha);
 	ini.setBool("Controls", "flip_controls", app->canvas->isFlipControls);
 	ini.setInt("Controls", "dead_zone", gDeadZone);
 
 	// [Display] - keep current settings
-	ini.setInt("Display", "window_mode", sdlGL->windowMode);
+	ini.setString("Display", "window_mode", windowModeToString(sdlGL->windowMode));
 	ini.setBool("Display", "vsync", sdlGL->vSync);
-	ini.setInt("Display", "resolution_index", sdlGL->resolutionIndex);
+	ini.setString("Display", "resolution", resolutionToString(sdlGL->resolutionIndex).c_str());
 	ini.setInt("Display", "anim_frames", app->canvas->animFrames);
 	ini.setBool("Display", "gles_init", _glesObj->isInit);
 
@@ -2428,7 +2633,11 @@ void Game::saveEmptyConfig() {
 
 	// [KeyBindings] - keep current key mappings
 	for (int i = 0; i < KEY_MAPPIN_MAX; i++) {
-		ini.setIntArray("KeyBindings", keyBindingNames[i], keyMapping[i].keyBinds, KEYBINDS_MAX);
+		std::vector<std::string> bindNames;
+		for (int j = 0; j < KEYBINDS_MAX; j++) {
+			bindNames.push_back(scancodeToName(keyMapping[i].keyBinds[j]));
+		}
+		ini.setStringArray("KeyBindings", keyBindingNames[i], bindNames);
 	}
 
 	const char* name = this->getProfileSaveFileName("config.ini");
