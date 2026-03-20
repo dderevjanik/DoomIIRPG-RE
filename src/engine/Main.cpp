@@ -14,6 +14,8 @@
 
 #include "CAppContainer.h"
 #include "App.h"
+#include "IGameModule.h"
+#include "DoomIIRPGGame.h"
 #include "Image.h"
 #include "Resource.h"
 #include "Render.h"
@@ -129,7 +131,11 @@ int main(int argc, char* args[]) {
 	Input input;
 	input.init(); // [GEC] Port: set default Binds
 
-	CAppContainer::getInstance()->Construct(&sdlGL, &zipFile, &vfs);
+	// Set up the game module — custom games would provide their own IGameModule here
+	DoomIIRPGGame doom2rpgModule;
+
+	CAppContainer::getInstance()->Construct(&sdlGL, &zipFile, &vfs, &doom2rpgModule);
+
 	if (customMap) {
 		CAppContainer::getInstance()->customMapFile = customMap;
 		printf("Custom map: %s\n", customMap);

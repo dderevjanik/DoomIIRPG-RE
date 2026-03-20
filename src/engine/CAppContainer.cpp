@@ -180,13 +180,16 @@ void CAppContainer::UpdateAccelerometer(float x, float y, float z, bool useMouse
 	}
 }
 
-void CAppContainer::Construct(SDLGL* sdlGL, ZipFile* zipFile, VFS* vfs) {
+void CAppContainer::Construct(SDLGL* sdlGL, ZipFile* zipFile, VFS* vfs, IGameModule* gameModule) {
 	printf("CAppContainer::Construct\n");
 	this->sdlGL = sdlGL; // New
 	this->zipFile = zipFile; // New
 	this->vfs = vfs;
 
 	this->app = new Applet();
+	if (gameModule) {
+		this->app->setGameModule(gameModule);
+	}
 	this->app->startup();
 	this->app->game->hasSeenIntro = true;
 }

@@ -9,6 +9,7 @@ class ZipFile;
 class VFS;
 class SDLGL;
 class Applet;
+class IGameModule;
 
 // Game-level configuration loaded from game.ini
 struct GameConfig {
@@ -59,7 +60,7 @@ class CAppContainer {
 	void TestCheatEntry(float pressX, float pressY);
 	bool testCheatCode(int code);
 	void UpdateAccelerometer(float x, float y, float z, bool useMouse);
-	void Construct(SDLGL* sdlGL, ZipFile* zipFile, VFS* vfs);
+	void Construct(SDLGL* sdlGL, ZipFile* zipFile, VFS* vfs, IGameModule* gameModule = nullptr);
 };
 
 #endif

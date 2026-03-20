@@ -10,6 +10,7 @@ class SDLGL;
 class ZipFile;
 class IDIB;
 class Image;
+class IGameModule;
 
 class Localization;
 class Resource;
@@ -103,6 +104,7 @@ public:
 	VendingMachine* vendingMachine;
 	ComicBook* comicBook;
 	//-------------------------
+	IGameModule* gameModule;
 	Image* testImg;
 	int seed;
 
@@ -111,6 +113,7 @@ public:
 	// Destructor
 	~Applet();
 
+	void setGameModule(IGameModule* module);
 	bool startup();
 	void loadConfig();
 

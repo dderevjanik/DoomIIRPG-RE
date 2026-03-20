@@ -8,6 +8,7 @@
 
 #include "CAppContainer.h"
 #include "App.h"
+#include "IGameModule.h"
 #include "IDIB.h"
 #include "Text.h"
 #include "Resource.h"
@@ -38,6 +39,10 @@ Applet::Applet() {
 }
 
 Applet::~Applet() {}
+
+void Applet::setGameModule(IGameModule* module) {
+	this->gameModule = module;
+}
 
 bool Applet::startup() {
 	printf("Applet::startup\n");
@@ -80,23 +85,24 @@ bool Applet::startup() {
 	this->upTimeMs = 0;
 	this->field_0x7c = 0;
 	this->field_0x80 = 0;
+	// Engine subsystems
 	this->canvas = new Canvas;
 	this->resource = new Resource;
 	this->localization = new Localization;
 	this->render = new Render;
 	this->tinyGL = new TinyGL;
-	this->game = new Game;
 	this->menuSystem = new MenuSystem;
-	this->player = new Player;
 	this->sound = new Sound;
-	this->combat = new Combat;
 	this->hud = new Hud;
-	this->entityDefManager = new EntityDefManager;
 	this->particleSystem = new ParticleSystem;
-	this->hackingGame = new HackingGame;
-	this->sentryBotGame = new SentryBotGame;
-	this->vendingMachine = new VendingMachine;
-	this->comicBook = new ComicBook;
+
+	// Game objects — created by the active game module
+	if (this->gameModule) {
+		printf("Applet: creating game objects via %s module\n", this->gameModule->getName());
+		this->gameModule->createGameObjects(this);
+	} else {
+		this->Error("No game module set. Call setGameModule() before startup().");
+	}
 
 	Applet::loadConfig();
 	// this->moreGames = getStartupVarBool("More_Games", false);
@@ -105,60 +111,51 @@ bool Applet::startup() {
 	this->gameTime = this->upTimeMs;
 	this->startupMemory = Applet::MAXMEMORY;
 
-	if (this->canvas->startup()) {
-		this->testImg = Applet::loadImage("cockpit.bmp", true);
-
-		this->canvas->loadMiniGameImages();
-		if (this->localization->startup()) {
-			if (this->render->startup()) {
-				this->resource->initTableLoading();
-				this->loadTables();
-
-				if (this->tinyGL->startup(this->render->screenWidth, this->render->screenHeight)) {
-					if (this->entityDefManager->startup()) {
-						if (this->player->startup()) {
-							if (this->menuSystem->startup()) {
-								if (this->sound->startup()) {
-									if (this->game->startup()) {
-										if (this->particleSystem->startup()) {
-											if (this->combat->startup()) {
-
-												this->game->loadConfig();
-												if (this->canvas->isFlipControls != false) {
-													this->canvas->isFlipControls = false;
-													this->canvas->flipControls();
-												}
-
-												this->canvas->setControlLayout();
-												this->canvas->clearEvents(1);
-												this->canvas->setState(Canvas::ST_LOGO);
-												this->canvas->graphics.backBuffer = this->backBuffer;
-												this->canvas->graphics.graphClipRect[0] = 0;
-												this->canvas->graphics.graphClipRect[1] = 0;
-												this->canvas->graphics.graphClipRect[2] = this->backBuffer->width;
-												this->canvas->graphics.graphClipRect[3] = this->backBuffer->height;
-
-												this->accelerationIndex = 0;
-												this->field_0x290 = false;
-												this->field_0x291 = '\0';
-												// this->accelStart();
-												printf("**** Startup took %i ms\n", this->upTimeMs - time);
-												printf("**** Fragment size %i ms\n", 0);
-
-												return true;
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
+	// Engine subsystem startup
+	if (!this->canvas->startup()) { printf("error fatal: canvas\n"); return false; }
+	this->testImg = Applet::loadImage("cockpit.bmp", true);
+	this->canvas->loadMiniGameImages();
+	if (!this->localization->startup()) { printf("error fatal: localization\n"); return false; }
+	if (!this->render->startup()) { printf("error fatal: render\n"); return false; }
+	this->resource->initTableLoading();
+	this->loadTables();
+	if (!this->tinyGL->startup(this->render->screenWidth, this->render->screenHeight)) {
+		printf("error fatal: tinyGL\n"); return false;
 	}
-	printf("error faltal:\n");
-	return false;
+
+	// Game module startup (EntityDefManager -> Player -> Game -> Combat)
+	if (!this->gameModule->startup(this)) { printf("error fatal: game module\n"); return false; }
+
+	// Remaining engine subsystems that depend on game objects
+	if (!this->menuSystem->startup()) { printf("error fatal: menuSystem\n"); return false; }
+	if (!this->sound->startup()) { printf("error fatal: sound\n"); return false; }
+	if (!this->particleSystem->startup()) { printf("error fatal: particleSystem\n"); return false; }
+
+	// Game module post-startup
+	this->gameModule->loadConfig(this);
+	this->gameModule->registerOpcodes(this);
+
+	if (this->canvas->isFlipControls != false) {
+		this->canvas->isFlipControls = false;
+		this->canvas->flipControls();
+	}
+
+	this->canvas->setControlLayout();
+	this->canvas->clearEvents(1);
+	this->canvas->setState(Canvas::ST_LOGO);
+	this->canvas->graphics.backBuffer = this->backBuffer;
+	this->canvas->graphics.graphClipRect[0] = 0;
+	this->canvas->graphics.graphClipRect[1] = 0;
+	this->canvas->graphics.graphClipRect[2] = this->backBuffer->width;
+	this->canvas->graphics.graphClipRect[3] = this->backBuffer->height;
+
+	this->accelerationIndex = 0;
+	this->field_0x290 = false;
+	this->field_0x291 = '\0';
+	printf("**** Startup took %i ms\n", this->upTimeMs - time);
+	printf("**** Fragment size %i ms\n", 0);
+
+	return true;
 }
 
 void Applet::loadConfig() {}
