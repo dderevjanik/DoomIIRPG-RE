@@ -22,6 +22,11 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     CXX_EXTENSIONS OFF
 )
 
+target_include_directories(${PROJECT_NAME} PRIVATE
+	${CMAKE_CURRENT_SOURCE_DIR}/engine
+	${CMAKE_CURRENT_SOURCE_DIR}/game
+)
+
 target_link_libraries(${PROJECT_NAME}
 	SDL2::SDL2
 	ZLIB::ZLIB
