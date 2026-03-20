@@ -1,7 +1,9 @@
 #include <stdexcept>
 #include <algorithm>
+#include <string>
 
 #include "CAppContainer.h"
+#include "INIReader.h"
 #include "App.h"
 #include "Hud.h"
 #include "Game.h"
@@ -40,37 +42,23 @@ MenuSystem::~MenuSystem() {
 
 bool MenuSystem::startup() {
 	Applet* app = CAppContainer::getInstance()->app;
-	InputStream IS;
 	printf("MenuSystem::startup\n");
 
-	if (IS.loadResource(Resources::RES_MENUS_BIN_GZ)) {
-		app->resource->read(&IS, sizeof(int));
-		this->menuDataCount = (uint32_t)app->resource->shortAt(0);
-		this->menuItemsCount = (uint32_t)app->resource->shortAt(2);
-
-		this->menuData = new uint32_t[this->menuDataCount];
-		this->menuItems = new uint32_t[this->menuItemsCount];
-
-		int n = 0;
-		int n2 = 0;
-		int n3;
-		do {
-			n3 = (((this->menuDataCount << 2) - n2 > Resource::IO_SIZE) ? Resource::IO_SIZE : ((this->menuDataCount << 2) - n2));
-			app->resource->read(&IS, n3);
-			for (int i = 4; i <= n3; i += 4) {
-				this->menuData[n++] = app->resource->shiftInt();
-			}
-		} while ((n2 += n3) < this->menuDataCount << 2);
-
-		n = 0;
-		n2 = 0;
-		do {
-			n3 = (((this->menuItemsCount << 2) - n2 > Resource::IO_SIZE) ? Resource::IO_SIZE : ((this->menuItemsCount << 2) - n2));
-			app->resource->read(&IS, n3);
-			for (int i = 4; i <= n3; i += 4) {
-				this->menuItems[n++] = app->resource->shiftInt();
-			}
-		} while ((n2 += n3) < this->menuItemsCount << 2);
+	// Try loading from menus.ini in CWD first
+	FILE* f = std::fopen("menus.ini", "rb");
+	if (f) {
+		std::fclose(f);
+		printf("MenuSystem: loading from menus.ini\n");
+		if (!this->loadMenusFromINI("menus.ini")) {
+			app->Error("Failed to load menus.ini\n");
+			return false;
+		}
+	} else {
+		// Fall back to binary from resource pack
+		printf("MenuSystem: loading from menus.bin (resource pack)\n");
+		if (!this->loadMenusFromBinary()) {
+			return false;
+		}
 	}
 
 	this->numItems = 0;
@@ -260,8 +248,327 @@ bool MenuSystem::startup() {
 	btnVendingArrowDownGlow->highlightRenderMode = 0;
 	this->m_vendingButtons->AddButton(btnVendingArrowDownGlow);
 
-	IS.~InputStream();
 	return true;
+}
+
+// --- Menu type name tables ---
+static const char* menuTypeNames[] = {
+	"default", "list", "confirm", "confirm2", "main",
+	"help", "vcenter", "notebook", "main_list", "vending_machine"
+};
+static const int numMenuTypes = 10;
+
+static int menuTypeFromString(const std::string& str) {
+	for (int i = 0; i < numMenuTypes; i++) {
+		if (str == menuTypeNames[i]) return i;
+	}
+	try { return std::stoi(str); } catch (...) { return 0; }
+}
+
+static const char* menuTypeToString(int type) {
+	if (type >= 0 && type < numMenuTypes) return menuTypeNames[type];
+	return "default";
+}
+
+// --- Action name tables ---
+struct ActionEntry { int id; const char* name; };
+static const ActionEntry actionTable[] = {
+	{0, "none"}, {1, "goto"}, {2, "back"}, {3, "load"}, {4, "save"},
+	{5, "backtomain"}, {6, "togsound"}, {7, "newgame"}, {8, "exit"},
+	{9, "changestate"}, {10, "difficulty"}, {11, "returntogame"},
+	{12, "restartlevel"}, {13, "savequit"}, {14, "offersuccess"},
+	{15, "changesfxvolume"}, {16, "showdetails"}, {17, "changemap"},
+	{18, "useitemweapon"}, {19, "select_language"}, {20, "useitemsyring"},
+	{21, "useitemother"}, {22, "continue"}, {23, "main_special"},
+	{24, "confirmuse"}, {25, "saveexit"}, {26, "backtwo"}, {27, "minigame"},
+	{28, "confirmbuy"}, {29, "buydrink"}, {30, "buysnack"},
+	{33, "return_to_player"}, {35, "flip_controls"}, {36, "control_layout"},
+	{37, "changemusicvolume"}, {38, "changealpha"}, {39, "change_vid_mode"},
+	{40, "tog_vsync"}, {41, "change_resolution"}, {42, "apply_changes"},
+	{43, "set_binding"}, {44, "default_bindings"}, {45, "tog_vibration"},
+	{46, "change_vibration_intensity"}, {47, "change_deadzone"}, {48, "tog_tinygl"},
+	{100, "debug"}, {102, "giveall"}, {103, "givemap"}, {104, "noclip"},
+	{105, "disableai"}, {106, "nohelp"}, {107, "godmode"}, {108, "showlocation"},
+	{109, "rframes"}, {110, "rspeeds"}, {111, "rskipflats"}, {112, "rskipcull"},
+	{114, "rskipbsp"}, {115, "rskiplines"}, {116, "rskipsprites"},
+	{117, "ronlyrender"}, {118, "rskipdecals"}, {119, "rskip2dstretch"},
+	{120, "driving_mode"}, {121, "render_mode"}, {122, "equipformap"},
+	{123, "oneshot"}, {124, "debug_font"}, {125, "sys_test"},
+	{126, "skip_minigames"}, {127, "show_heap"},
+};
+static const int numActions = sizeof(actionTable) / sizeof(actionTable[0]);
+
+static int actionFromString(const std::string& str) {
+	for (int i = 0; i < numActions; i++) {
+		if (str == actionTable[i].name) return actionTable[i].id;
+	}
+	try { return std::stoi(str); } catch (...) { return 0; }
+}
+
+static const char* actionToString(int id) {
+	for (int i = 0; i < numActions; i++) {
+		if (actionTable[i].id == id) return actionTable[i].name;
+	}
+	return "none";
+}
+
+// --- Flag name tables ---
+struct FlagEntry { int bit; const char* name; };
+static const FlagEntry flagTable[] = {
+	{0x0001, "noselect"}, {0x0002, "nodehyphenate"}, {0x0004, "disabled"},
+	{0x0008, "align_center"}, {0x0020, "showdetails"}, {0x0040, "divider"},
+	{0x0080, "selector"}, {0x0100, "block_text"}, {0x0200, "highlight"},
+	{0x0400, "checked"}, {0x2000, "right_arrow"}, {0x4000, "left_arrow"},
+	{0x8000, "hidden"},
+};
+static const int numFlags = sizeof(flagTable) / sizeof(flagTable[0]);
+
+static int flagsFromString(const std::string& str) {
+	if (str == "normal" || str == "0") return 0;
+	int result = 0;
+	size_t start = 0;
+	while (start < str.size()) {
+		size_t end = str.find(',', start);
+		if (end == std::string::npos) end = str.size();
+		std::string token = str.substr(start, end - start);
+		// trim
+		while (!token.empty() && token[0] == ' ') token.erase(0, 1);
+		while (!token.empty() && token.back() == ' ') token.pop_back();
+		bool found = false;
+		for (int i = 0; i < numFlags; i++) {
+			if (token == flagTable[i].name) { result |= flagTable[i].bit; found = true; break; }
+		}
+		if (!found) {
+			try { result |= std::stoi(token, nullptr, 0); } catch (...) {}
+		}
+		start = end + 1;
+	}
+	return result;
+}
+
+static std::string flagsToString(int flags) {
+	if (flags == 0) return "normal";
+	std::string result;
+	for (int i = 0; i < numFlags; i++) {
+		if (flags & flagTable[i].bit) {
+			if (!result.empty()) result += ",";
+			result += flagTable[i].name;
+		}
+	}
+	return result.empty() ? "normal" : result;
+}
+
+// --- Menu name tables (for comments in export) ---
+struct MenuNameEntry { int id; const char* name; };
+static const MenuNameEntry menuNameTable[] = {
+	{-6, "MENU_MAIN_CONTROLLER"}, {-5, "MENU_MAIN_BINDINGS"},
+	{-4, "MENU_MAIN_CONTROLS"}, {-3, "MENU_MAIN_OPTIONS_SOUND"},
+	{-2, "MENU_MAIN_OPTIONS_VIDEO"}, {-1, "MENU_MAIN_OPTIONS_INPUT"},
+	{0, "MENU_NONE"}, {1, "MENU_LEVEL_STATS"}, {2, "MENU_DRAWSWORLD"},
+	{3, "MENU_MAIN"}, {4, "MENU_MAIN_HELP"}, {5, "MENU_MAIN_ARMORHELP"},
+	{6, "MENU_MAIN_EFFECTHELP"}, {7, "MENU_MAIN_ITEMHELP"},
+	{8, "MENU_MAIN_ABOUT"}, {9, "MENU_MAIN_GENERAL"},
+	{10, "MENU_MAIN_MOVE"}, {11, "MENU_MAIN_ATTACK"},
+	{12, "MENU_MAIN_SNIPER"}, {13, "MENU_MAIN_EXIT"},
+	{14, "MENU_MAIN_CONFIRMNEW"}, {15, "MENU_MAIN_CONFIRMNEW2"},
+	{16, "MENU_MAIN_DIFFICULTY"}, {17, "MENU_MAIN_OPTIONS"},
+	{18, "MENU_MAIN_MINIGAME"}, {19, "MENU_MAIN_MORE_GAMES"},
+	{20, "MENU_MAIN_HACKER_HELP"}, {21, "MENU_MAIN_MATRIX_SKIP_HELP"},
+	{22, "MENU_MAIN_POWER_UP_HELP"}, {23, "MENU_SELECT_LANGUAGE"},
+	{24, "MENU_END_RANKING"}, {25, "MENU_ENABLE_SOUNDS"},
+	{26, "MENU_END_"}, {27, "MENU_END_FINALQUIT"},
+	{28, "MENU_INHERIT_BACKMENU"}, {29, "MENU_INGAME"},
+	{30, "MENU_INGAME_STATUS"}, {31, "MENU_INGAME_PLAYER"},
+	{32, "MENU_INGAME_LEVEL"}, {33, "MENU_INGAME_GRADES"},
+	{35, "MENU_INGAME_OPTIONS"}, {36, "MENU_INGAME_LANGUAGE"},
+	{37, "MENU_INGAME_HELP"}, {38, "MENU_INGAME_GENERAL"},
+	{39, "MENU_INGAME_MOVE"}, {40, "MENU_INGAME_ATTACK"},
+	{41, "MENU_INGAME_SNIPER"}, {42, "MENU_INGAME_EXIT"},
+	{43, "MENU_INGAME_ARMORHELP"}, {44, "MENU_INGAME_EFFECTHELP"},
+	{45, "MENU_INGAME_ITEMHELP"}, {46, "MENU_INGAME_QUESTLOG"},
+	{47, "MENU_INGAME_RECIPES"}, {48, "MENU_INGAME_SAVE"},
+	{49, "MENU_INGAME_LOAD"}, {50, "MENU_INGAME_LOADNOSAVE"},
+	{51, "MENU_INGAME_DEAD"}, {52, "MENU_INGAME_RESTARTLVL"},
+	{53, "MENU_INGAME_SAVEQUIT"}, {57, "MENU_INGAME_KICKING"},
+	{58, "MENU_INGAME_SPECIAL_EXIT"}, {59, "MENU_INGAME_HACKER_HELP"},
+	{60, "MENU_INGAME_MATRIX_SKIP_HELP"}, {61, "MENU_INGAME_POWER_UP_HELP"},
+	{62, "MENU_INGAME_CONTROLS"}, {65, "MENU_DEBUG"},
+	{66, "MENU_DEBUG_MAPS"}, {67, "MENU_DEBUG_STATS"},
+	{68, "MENU_DEBUG_CHEATS"}, {69, "MENU_DEVELOPER_VARS"},
+	{70, "MENU_DEBUG_SYS"}, {71, "MENU_SHOWDETAILS"},
+	{72, "MENU_ITEMS"}, {73, "MENU_ITEMS_WEAPONS"},
+	{75, "MENU_ITEMS_DRINKS"}, {77, "MENU_ITEMS_CONFIRM"},
+	{79, "MENU_ITEMS_HEALTHMSG"}, {80, "MENU_ITEMS_ARMORMSG"},
+	{81, "MENU_ITEMS_SYRINGEMSG"}, {82, "MENU_ITEMS_HOLY_WATER_MAX"},
+	{83, "MENU_VENDING_MACHINE"}, {84, "MENU_VENDING_MACHINE_DRINKS"},
+	{85, "MENU_VENDING_MACHINE_SNACKS"}, {86, "MENU_VENDING_MACHINE_CONFIRM"},
+	{87, "MENU_VENDING_MACHINE_CANT_BUY"}, {88, "MENU_VENDING_MACHINE_DETAILS"},
+	{89, "MENU_COMIC_BOOK"},
+};
+static const int numMenuNames = sizeof(menuNameTable) / sizeof(menuNameTable[0]);
+
+static const char* menuIdToName(int id) {
+	for (int i = 0; i < numMenuNames; i++) {
+		if (menuNameTable[i].id == id) return menuNameTable[i].name;
+	}
+	return "MENU_UNKNOWN";
+}
+
+bool MenuSystem::loadMenusFromBinary() {
+	Applet* app = CAppContainer::getInstance()->app;
+	InputStream IS;
+
+	if (!IS.loadResource(Resources::RES_MENUS_BIN_GZ)) {
+		app->Error("Failed to load menus.bin\n");
+		return false;
+	}
+
+	app->resource->read(&IS, sizeof(int));
+	this->menuDataCount = (uint32_t)app->resource->shortAt(0);
+	this->menuItemsCount = (uint32_t)app->resource->shortAt(2);
+
+	this->menuData = new uint32_t[this->menuDataCount];
+	this->menuItems = new uint32_t[this->menuItemsCount];
+
+	int n = 0;
+	int n2 = 0;
+	int n3;
+	do {
+		n3 = (((this->menuDataCount << 2) - n2 > Resource::IO_SIZE) ? Resource::IO_SIZE : ((this->menuDataCount << 2) - n2));
+		app->resource->read(&IS, n3);
+		for (int i = 4; i <= n3; i += 4) {
+			this->menuData[n++] = app->resource->shiftInt();
+		}
+	} while ((n2 += n3) < this->menuDataCount << 2);
+
+	n = 0;
+	n2 = 0;
+	do {
+		n3 = (((this->menuItemsCount << 2) - n2 > Resource::IO_SIZE) ? Resource::IO_SIZE : ((this->menuItemsCount << 2) - n2));
+		app->resource->read(&IS, n3);
+		for (int i = 4; i <= n3; i += 4) {
+			this->menuItems[n++] = app->resource->shiftInt();
+		}
+	} while ((n2 += n3) < this->menuItemsCount << 2);
+
+	IS.~InputStream();
+	printf("MenuSystem: loaded %d menus, %d item words from menus.bin\n", this->menuDataCount, this->menuItemsCount);
+	return true;
+}
+
+bool MenuSystem::loadMenusFromINI(const char* path) {
+	INIReader ini;
+	if (!ini.load(path)) {
+		return false;
+	}
+
+	int count = ini.getInt("Menus", "count", 0);
+	if (count <= 0) {
+		printf("MenuSystem: menus.ini has invalid count\n");
+		return false;
+	}
+
+	this->menuDataCount = (uint32_t)count;
+
+	// First pass: count total items to size menuItems array
+	int totalItemWords = 0;
+	for (int i = 0; i < count; i++) {
+		char section[32];
+		snprintf(section, sizeof(section), "Menu_%d", i);
+		int itemCount = ini.getInt(section, "item_count", 0);
+		totalItemWords += itemCount * 2;
+	}
+
+	this->menuItemsCount = (uint32_t)totalItemWords;
+	this->menuData = new uint32_t[this->menuDataCount];
+	this->menuItems = new uint32_t[this->menuItemsCount];
+
+	// Second pass: populate arrays
+	int itemOffset = 0;
+	for (int i = 0; i < count; i++) {
+		char section[32];
+		snprintf(section, sizeof(section), "Menu_%d", i);
+
+		int menuId = ini.getInt(section, "menu_id", 0);
+		int menuType = menuTypeFromString(ini.getString(section, "type", "default"));
+		int itemCount = ini.getInt(section, "item_count", 0);
+
+		// Handle negative menu IDs (stored as unsigned byte)
+		uint8_t storedId = (uint8_t)(menuId & 0xFF);
+
+		int endOffset = itemOffset + itemCount * 2;
+		this->menuData[i] = (uint32_t)storedId
+			| (uint32_t)((endOffset & 0xFFFF) << 8)
+			| (uint32_t)((menuType & 0xFF) << 24);
+
+		for (int j = 0; j < itemCount; j++) {
+			char itemSection[48];
+			snprintf(itemSection, sizeof(itemSection), "Menu_%d_Item_%d", i, j);
+
+			int stringId = ini.getInt(itemSection, "string_id", 0);
+			int flags = flagsFromString(ini.getString(itemSection, "flags", "normal"));
+			int action = actionFromString(ini.getString(itemSection, "action", "none"));
+			int param = ini.getInt(itemSection, "param", 0);
+			int helpString = ini.getInt(itemSection, "help_string", 0);
+
+			// Pack into the two uint32 format
+			this->menuItems[itemOffset] = (uint32_t)((stringId & 0xFFFF) << 16) | (uint32_t)(flags & 0xFFFF);
+			this->menuItems[itemOffset + 1] = (uint32_t)((helpString & 0xFFFF) << 16)
+				| (uint32_t)((action & 0xFF) << 8)
+				| (uint32_t)(param & 0xFF);
+			itemOffset += 2;
+		}
+	}
+
+	printf("MenuSystem: loaded %d menus, %d item words from %s\n", this->menuDataCount, this->menuItemsCount, path);
+	return true;
+}
+
+void MenuSystem::exportMenusToINI(const char* path) {
+	INIReader ini;
+	ini.setInt("Menus", "count", this->menuDataCount);
+
+	int prevEnd = 0;
+	for (uint32_t i = 0; i < this->menuDataCount; i++) {
+		char section[32];
+		snprintf(section, sizeof(section), "Menu_%d", i);
+
+		uint32_t md = this->menuData[i];
+		int mid = md & 0xFF;
+		int signedId = (mid >= 250) ? (mid - 256) : mid;
+		int itemEnd = (md & 0xFFFF00) >> 8;
+		int mtype = (md & 0xFF000000) >> 24;
+		int numItems = (itemEnd - prevEnd) / 2;
+
+		ini.setInt(section, "menu_id", signedId);
+		ini.setString(section, "type", menuTypeToString(mtype));
+		ini.setInt(section, "item_count", numItems);
+
+		for (int j = 0; j < numItems; j++) {
+			char itemSection[48];
+			snprintf(itemSection, sizeof(itemSection), "Menu_%d_Item_%d", i, j);
+
+			int idx = prevEnd + j * 2;
+			uint32_t w0 = this->menuItems[idx];
+			uint32_t w1 = this->menuItems[idx + 1];
+
+			ini.setInt(itemSection, "string_id", (w0 >> 16) & 0xFFFF);
+			ini.setString(itemSection, "flags", flagsToString(w0 & 0xFFFF).c_str());
+			ini.setString(itemSection, "action", actionToString((w1 >> 8) & 0xFF));
+			ini.setInt(itemSection, "param", w1 & 0xFF);
+			int helpStr = (w1 >> 16) & 0xFFFF;
+			if (helpStr != 0) {
+				ini.setInt(itemSection, "help_string", helpStr);
+			}
+		}
+		prevEnd = itemEnd;
+	}
+
+	if (!ini.save(path)) {
+		printf("MenuSystem: failed to export to %s\n", path);
+	} else {
+		printf("MenuSystem: exported %d menus to %s\n", this->menuDataCount, path);
+	}
 }
 
 void MenuSystem::buildDivider(Text* text, int i) {
@@ -473,14 +780,14 @@ void MenuSystem::moveDir(int n) { // J2ME
 		int begY1 = 0;
 		int begY2 = 0;
 
-		for (int i = 0; i < numItems; i++) { // Ajusta la posición si es necesario
+		for (int i = 0; i < numItems; i++) { // Ajusta la posiciï¿½n si es necesario
 			if (!(this->items[i].flags & 0x8001)) {
 				endItem = i;
 			}
 		}
 
 		//printf("endItem %d\n", endItem);
-		for (int i = 0; i < numItems; i++) { // Ajusta la posición si es necesario
+		for (int i = 0; i < numItems; i++) { // Ajusta la posiciï¿½n si es necesario
 			if (!(this->items[i].flags & 0x8001)) {
 				begItem = i;
 				break;
@@ -511,7 +818,7 @@ void MenuSystem::moveDir(int n) { // J2ME
 			int y2 = 0;
 
 			if (this->selectedIndex == this->scrollIndex) {
-				for (int i = 0; i < this->selectedIndex; i++) { // Ajusta la posición si es necesario
+				for (int i = 0; i < this->selectedIndex; i++) { // Ajusta la posiciï¿½n si es necesario
 					if (!(this->items[i].flags & 0x8000)) {
 						y1 += this->getMenuItemHeight2(i);
 						y2 += iVar2;
@@ -528,7 +835,7 @@ void MenuSystem::moveDir(int n) { // J2ME
 				this->m_scrollBar->field_0x48_ = std::min(this->m_scrollBar->field_0x48_, maxScroll2);
 			}
 
-			if (this->selectedIndex == begItem) {  // Ajusta la posición si es necesario
+			if (this->selectedIndex == begItem) {  // Ajusta la posiciï¿½n si es necesario
 				this->scrollIndex = 0;
 				this->m_scrollBar->field_0x44_ -= begY1;
 				this->m_scrollBar->field_0x48_ -= begY2;
@@ -4839,7 +5146,7 @@ void MenuSystem::handleUserMoved(int x, int y) {
 			return;
 		}
 
-		// [GEC] Hasta que este fuera del limite del rectangulo, permitirá el desplasamiento de los items del menu
+		// [GEC] Hasta que este fuera del limite del rectangulo, permitirï¿½ el desplasamiento de los items del menu
 		const int begMouseX = (int)(gBegMouseX * Applet::IOS_WIDTH);
 		const int begMouseY = (int)(gBegMouseY * Applet::IOS_HEIGHT);
 		if (pointInRectangle(x, y, begMouseX - 3, begMouseY - 3, 6, 6)) {
