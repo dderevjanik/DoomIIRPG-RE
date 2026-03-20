@@ -1,6 +1,8 @@
 #ifndef __GRAPHICS_H__
 #define __GRAPHICS_H__
 
+#include <stdint.h>
+
 class IDIB;
 class Image;
 class Text;

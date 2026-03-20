@@ -29,12 +29,19 @@
 #include "Utils.h"
 #include "Menus.h"
 #include "Input.h"
+#include "ICanvasState.h"
 
 Canvas::Canvas() {
 	std::memset(this, 0, sizeof(Canvas));
 }
 
 Canvas::~Canvas() {
+}
+
+void Canvas::registerStateHandler(int stateId, ICanvasState* handler) {
+	if (stateId >= 0 && stateId < MAX_STATE_ID) {
+		stateHandlers[stateId] = handler;
+	}
 }
 
 bool Canvas::isLoaded;
@@ -460,7 +467,11 @@ void Canvas::backPaint(Graphics* graphics) {
 		this->drawTargetPracticeScore(graphics);
 	}
 
-	if (this->state == Canvas::ST_INTRO_MOVIE) {
+	// Dispatch render to registered state handler if available
+	if (this->state >= 0 && this->state < MAX_STATE_ID && stateHandlers[this->state]) {
+		stateHandlers[this->state]->render(this, graphics);
+	}
+	else if (this->state == Canvas::ST_INTRO_MOVIE) {
 		this->playIntroMovie(graphics);
 	}
 	else if (this->state == Canvas::ST_CHARACTER_SELECTION) {
@@ -842,7 +853,11 @@ void Canvas::run() {
 	app->game->updateAutomap = false;
 	//printf("this->state %d\n", this->state);
 
-	if (this->state == Canvas::ST_PLAYING) {
+	// Dispatch to registered state handler if available
+	if (this->state >= 0 && this->state < MAX_STATE_ID && stateHandlers[this->state]) {
+		stateHandlers[this->state]->update(this);
+	}
+	else if (this->state == Canvas::ST_PLAYING) {
 
 		if (this->m_controlButton) {
 			this->handleEvent(this->m_controlButton->buttonID);
@@ -1081,7 +1096,11 @@ void Canvas::setState(int state) {
 	this->m_controlButtonIsTouched = false;
 	this->m_controlButton = 0;
 
-	if (this->state == Canvas::ST_AUTOMAP) {
+	// Skip inline exit cleanup for states with registered handlers (handled by onExit)
+	if (this->state >= 0 && this->state < MAX_STATE_ID && stateHandlers[this->state]) {
+		// onExit will be called below
+	}
+	else if (this->state == Canvas::ST_AUTOMAP) {
 		app->player->unpause(app->time - this->automapTime);
 	}
 	else if (this->state == Canvas::ST_MENU) {
@@ -1102,12 +1121,20 @@ void Canvas::setState(int state) {
 	else if (this->state == Canvas::ST_INTER_CAMERA) {
 	}
 
+	// Call onExit for registered state handler
+	if (this->state >= 0 && this->state < MAX_STATE_ID && stateHandlers[this->state]) {
+		stateHandlers[this->state]->onExit(this);
+	}
 
 	this->oldState = this->state;
 	this->state = state;
 
 	//printf("state %d\n", state);
-	if (state == Canvas::ST_COMBAT) {
+	// Skip inline enter setup for states with registered handlers (handled by onEnter)
+	if (state >= 0 && state < MAX_STATE_ID && stateHandlers[state]) {
+		// onEnter will be called at the end of setState
+	}
+	else if (state == Canvas::ST_COMBAT) {
 		app->hud->repaintFlags = 47;
 		this->repaintFlags |= Canvas::REPAINT_HUD;
 		this->clearSoftKeys();
@@ -1275,6 +1302,11 @@ void Canvas::setState(int state) {
 		app->hud->repaintFlags = 24;
 		this->clearSoftKeys();
 		app->tinyGL->setViewport(this->cinRect[0], this->cinRect[1], this->cinRect[2], this->cinRect[3]);
+	}
+
+	// Call onEnter for registered state handler
+	if (state >= 0 && state < MAX_STATE_ID && stateHandlers[state]) {
+		stateHandlers[state]->onEnter(this);
 	}
 }
 
@@ -2693,6 +2725,11 @@ bool Canvas::handleEvent(int key) {
 
 	if (key == 26)
 		return true;
+
+	// Dispatch input to registered state handler if available
+	if (state >= 0 && state < MAX_STATE_ID && stateHandlers[state]) {
+		return stateHandlers[state]->handleInput(this, key, keyAction);
+	}
 
 	if (key == 18) {
 		switch (state)

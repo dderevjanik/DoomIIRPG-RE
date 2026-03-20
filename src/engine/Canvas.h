@@ -3,6 +3,7 @@
 
 #include "Graphics.h"
 
+class ICanvasState;
 class Image;
 class Text;
 class Entity;
@@ -430,6 +431,14 @@ public:
 	int _field_0xf2c;
 	int miniGameHelpScrollPosition;
 	int helpTextNumberOfLines;
+
+	// State object registry — states with ICanvasState implementations are dispatched through them
+	// Max state ID is ST_LOGO = 26, so 32 slots is enough
+	static constexpr int MAX_STATE_ID = 32;
+	ICanvasState* stateHandlers[MAX_STATE_ID];
+
+	// Register a state handler (Canvas does NOT own the pointer)
+	void registerStateHandler(int stateId, ICanvasState* handler);
 
 	// Constructor
 	Canvas();

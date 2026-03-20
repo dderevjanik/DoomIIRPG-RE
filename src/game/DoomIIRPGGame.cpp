@@ -9,6 +9,7 @@
 #include "SentryBotGame.h"
 #include "VendingMachine.h"
 #include "ComicBook.h"
+#include "Canvas.h"
 
 void DoomIIRPGGame::createGameObjects(Applet* app) {
 	printf("DoomIIRPGGame::createGameObjects\n");
@@ -28,6 +29,12 @@ bool DoomIIRPGGame::startup(Applet* app) {
 	if (!app->player->startup()) return false;
 	if (!app->game->startup()) return false;
 	if (!app->combat->startup()) return false;
+
+	// Register canvas state handlers
+	app->canvas->registerStateHandler(Canvas::ST_LOGO, &logoState);
+	app->canvas->registerStateHandler(Canvas::ST_CREDITS, &creditsState);
+	app->canvas->registerStateHandler(Canvas::ST_AUTOMAP, &automapState);
+
 	return true;
 }
 
