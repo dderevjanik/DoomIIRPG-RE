@@ -156,57 +156,6 @@ short Resource::shiftCoord() {
     return (short)((this->ioBuffer[this->cursor++] & 0xFF) * 8);
 }
 
-int* Resource::readFileIndex(InputStream *IS) {
-    this->read(IS, sizeof(int));
-    int shiftInt = this->shiftInt();
-    int* array = new int[shiftInt];
-    this->read(IS, shiftInt * sizeof(int));
-    for (int i = 0; i < shiftInt; ++i) {
-        array[i] = this->shiftInt();
-    }
-    return array;
-}
-
-int* Resource::loadFileIndex(char* fileName) {
-
-    InputStream IS;
-    //printf("loadFileIndex::init\n");
-
-    if (IS.loadFile(fileName, InputStream::LOADTYPE_RESOURCE) == false) {
-        app->Error("getResource(%s) failed\n", fileName);
-    }
-
-    this->read(&IS, sizeof(int16_t));
-
-    short count = this->shiftShort();
-    int* array = new int[count * 3];
-    int n3 = (5 * (Resource::IO_SIZE / 5));
-    short n4 = 0;
-    do {
-        int n5 = (count - n4) * 5;
-        int n6 = (n5 > n3) ? n3 : n5;
-        this->read(&IS, n6);
-        for (int i = 0; i < n6; i += 5) {
-            uint8_t _shiftByte = this->shiftByte();
-            int _shiftInt = this->shiftInt();
-            if (_shiftInt != 0) {
-                array[(n4 * 3) - 1] = _shiftInt - array[(n4 * 3) - 2];
-            }
-            if (_shiftByte != 0xff) {
-                array[(n4 * 3) + 0] = _shiftByte;
-                array[(n4 * 3) + 1] = _shiftInt;
-                ++n4;
-            }
-        }
-    } while (n4 != count);
-    this->read(&IS, 5);
-    this->shiftByte();
-    array[(n4 * 3) - 1] = this->shiftInt() - array[(n4 * 3) - 2];
-    IS.close();
-    IS.~InputStream();
-    return array;
-}
-
 void Resource::initTableLoading() {
 
     InputStream IS;

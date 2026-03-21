@@ -2,7 +2,6 @@
 #define __TEXT_H__
 
 class Text;
-class InputStream;
 
 // -------------------
 // Localization Class
@@ -48,13 +47,7 @@ public:
 	int textCount[Localization::MAXTEXT];
 	char** text;
 	uint16_t** textMap;
-	int* textIndex;
-	int textLastType;
-	int textCurChunk;
-	int textCurOffset;
-	InputStream* textChunkStream;
-	bool useYAML;
-	void* yamlData; // YAML::Node* when useYAML is true
+	void* yamlData; // YAML::Node* for string data
 
 	// Constructor
 	Localization();
@@ -72,12 +65,8 @@ public:
 	Text* getFatalErrorBuffer();
 	Text* getLargeBuffer();
 	void freeAllBuffers();
-	void allocateText(int index);
 	void unloadText(int index);
 	void setLanguage(int language);
-	void beginTextLoading();
-	void finishTextLoading();
-	void loadTextFromIndex(int i, int textLastType);
 	void loadText(int index);
 	void resetTextArgs();
 	void addTextArg(char c);

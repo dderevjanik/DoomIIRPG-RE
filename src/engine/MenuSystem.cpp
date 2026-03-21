@@ -1708,28 +1708,19 @@ void MenuSystem::initMenu(int menu) {
 				this->addItem(this->getLastArgString(), MenuSystem::EMPTY_TEXT, flags, 2, 0, MenuSystem::EMPTY_TEXT);
 			}
 
-			app->localization->beginTextLoading();
 			//for (int l = 0; l < 5; ++l) {
 			for (int l = 0; l < 1; ++l) {
-				app->localization->loadTextFromIndex(l, 14);
+				app->localization->loadGroupFromYAML(l, 14);
 				textbuff->setLength(0);
 				app->localization->composeText((short)14, (short)0, textbuff);
 				if (this->type == 1) {
 					textbuff->trim();
 				}
 				textbuff->dehyphenate();
-				/*if (this->type == 4) {
-					while (textbuff->length() < 8) {
-						textbuff->append(' ');
-					}
-				}*/
 				app->localization->addTextArg(textbuff);
 				this->addItem(this->getLastArgString(), MenuSystem::EMPTY_TEXT, flags, 19, l, MenuSystem::EMPTY_TEXT);
 			}
-			app->localization->finishTextLoading();
-			app->localization->beginTextLoading();
-			app->localization->loadTextFromIndex(app->localization->defaultLanguage, 14);
-			app->localization->finishTextLoading();
+			app->localization->loadGroupFromYAML(app->localization->defaultLanguage, 14);
 			break;
 		}
 		case Menus::MENU_END_RANKING: {

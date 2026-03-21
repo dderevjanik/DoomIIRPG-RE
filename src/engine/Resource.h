@@ -10,9 +10,7 @@ class Resources
 public:
     static constexpr char* RES_LOGO_BMP_GZ = "logo.bmp";
     static constexpr char* RES_LOGO2_BMP_GZ = "logo2.bmp";
-    static constexpr char* RES_STRINGS_IDX_GZ = "strings.idx";
     static constexpr char* RES_TABLES_BIN_GZ = "tables.bin";
-    static constexpr char* RES_STRINGS_ARRAY[] = { "strings00.bin", "strings01.bin", "strings02.bin" };
     static constexpr char* RES_NEWMAPPINGS_BIN_GZ = "newMappings.bin";
     static constexpr char* RES_MAP_FILE_ARRAY[] = { "map00.bin" , "map01.bin", "map02.bin", "map03.bin", "map04.bin", "map05.bin", "map06.bin", "map07.bin", "map08.bin", "map09.bin"};
     static constexpr char* RES_NEWPALETTES_BIN_GZ = "newPalettes.bin";
@@ -72,8 +70,6 @@ public:
     int shiftUShort();
     int shiftInt();
     short shiftCoord();
-    int* readFileIndex(InputStream* IS);
-    int* loadFileIndex(char* fileName);
     void initTableLoading();
     void beginTableLoading();
     void seekTable(int index);

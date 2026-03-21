@@ -6,8 +6,6 @@
 #include "CAppContainer.h"
 #include "App.h"
 #include "Text.h"
-#include "JavaStream.h"
-#include "Resource.h"
 #include <yaml-cpp/yaml.h>
 
 // --------------------
@@ -95,7 +93,6 @@ bool Localization::loadFromYAML(const char* path) {
 		return false;
 	}
 
-	this->useYAML = true;
 	this->yamlData = root;
 	this->defaultLanguage = 0;
 
@@ -234,11 +231,6 @@ void Localization::freeAllBuffers() {
 	}
 }
 
-void Localization::allocateText(int index) {
-	this->text[index] = new char[this->textSizes[index]];
-	this->textMap[index] = new uint16_t[this->textCount[index]];
-}
-
 void Localization::unloadText(int index) {
 	if (this->text[index]) {
 		delete this->text[index];
@@ -254,92 +246,17 @@ void Localization::unloadText(int index) {
 void Localization::setLanguage(int language) {
 
 	this->defaultLanguage = language;
-	if (this->useYAML) {
-		for (int i = 0; i < (Localization::MAXTEXT); ++i) {
-			if (this->text[i] != nullptr) {
-				this->loadGroupFromYAML(this->defaultLanguage, i);
-			}
-		}
-		return;
-	}
-	this->beginTextLoading();
 	for (int i = 0; i < (Localization::MAXTEXT); ++i) {
 		if (this->text[i] != nullptr) {
-			this->loadTextFromIndex(this->defaultLanguage, i);
-		}
-	}
-	this->finishTextLoading();
-}
-
-void Localization::beginTextLoading() {
-
-
-	this->textIndex = app->resource->loadFileIndex(Resources::RES_STRINGS_IDX_GZ);
-	this->textLastType = -1;
-	this->textCurChunk = -1;
-	this->textChunkStream = new InputStream();
-}
-
-void Localization::finishTextLoading() {
-
-	if (this->textIndex != nullptr) {
-		delete[] this->textIndex;
-	}
-	this->textIndex = nullptr;
-
-	this->textChunkStream->close();
-	if (this->textChunkStream != nullptr) {
-		this->textChunkStream->~InputStream();
-		delete this->textChunkStream;
-	}
-	this->textChunkStream = nullptr;
-}
-
-void Localization::loadTextFromIndex(int i, int textLastType) {
-
-
-	if (textLastType < this->textLastType) {
-		app->Error(87); // ERR_STRINGTABLE
-	}
-
-	this->textLastType = textLastType;
-	int n2 = this->textIndex[(textLastType + i * Localization::MAXTEXT) * 3];
-	int n3 = this->textIndex[(textLastType + i * Localization::MAXTEXT) * 3 + 1];
-	int n4 = this->textIndex[(textLastType + i * Localization::MAXTEXT) * 3 + 2];
-	if (this->textCurChunk != n2) {
-		this->textChunkStream->loadFile(Resources::RES_STRINGS_ARRAY[n2], InputStream::LOADTYPE_RESOURCE);
-		this->textCurOffset = 0;
-		this->textCurChunk = n2;
-	}
-	if (n3 != this->textCurOffset) {
-		app->resource->bufSkip(this->textChunkStream, n3 - this->textCurOffset, false);
-		this->textCurOffset += n3 - this->textCurOffset;
-	}
-
-	app->resource->readByteArray(this->textChunkStream, (uint8_t*)this->text[textLastType], 0, n4);
-	this->textCurOffset += n4;
-
-	uint16_t* textMap = this->textMap[textLastType];
-	char* text = this->text[textLastType];
-	int j = 0;
-	textMap[j++] = 0;
-	for (int i = 0; i < n4; ++i) {
-		if (text[i] == 0) {
-			textMap[j++] = (short)(i + 1);
+			this->loadGroupFromYAML(this->defaultLanguage, i);
 		}
 	}
 }
+
 
 void Localization::loadText(int index)
 {
-	if (this->useYAML) {
-		this->loadGroupFromYAML(this->defaultLanguage, index);
-		return;
-	}
-	this->allocateText(index);
-	this->beginTextLoading();
-	this->loadTextFromIndex(this->defaultLanguage, index);
-	this->finishTextLoading();
+	this->loadGroupFromYAML(this->defaultLanguage, index);
 }
 
 void Localization::resetTextArgs()
