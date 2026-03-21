@@ -4,6 +4,9 @@
 #include <string.h>
 #include <string>
 #include <unistd.h>
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#endif
 
 #include <SDL.h>
 #include "SDLGL.h"
@@ -62,6 +65,72 @@ int main(int argc, char* args[]) {
 			gameDirStr = "games/doom2rpg";
 			gameDir = gameDirStr.c_str();
 			printf("Auto-detected game directory: %s\n", gameDir);
+		} else if (access("Doom 2 RPG.ipa", F_OK) == 0) {
+			// IPA found but not yet converted — run converter automatically
+			printf("Found 'Doom 2 RPG.ipa' but no converted assets.\n");
+			printf("Running doom2rpg-convert to extract game assets...\n");
+
+			// Find converter next to engine binary, or fall back to PATH
+			std::string converterCmd;
+			std::string selfDir;
+			{
+				// Try to find converter next to this executable
+				char selfPath[4096] = {};
+#ifdef __APPLE__
+				uint32_t selfPathSize = sizeof(selfPath);
+				if (_NSGetExecutablePath(selfPath, &selfPathSize) == 0) {
+					char* slash = strrchr(selfPath, '/');
+					if (slash) {
+						selfDir = std::string(selfPath, slash - selfPath + 1);
+					}
+				}
+#elif defined(__linux__)
+				ssize_t len = readlink("/proc/self/exe", selfPath, sizeof(selfPath) - 1);
+				if (len > 0) {
+					selfPath[len] = '\0';
+					char* slash = strrchr(selfPath, '/');
+					if (slash) {
+						selfDir = std::string(selfPath, slash - selfPath + 1);
+					}
+				}
+#endif
+			}
+
+			if (!selfDir.empty()) {
+				// Check same directory, then converter/ sibling
+				std::string candidates[] = {
+					selfDir + "doom2rpg-convert",
+					selfDir + "converter/doom2rpg-convert",
+				};
+				for (const auto& c : candidates) {
+					if (access(c.c_str(), X_OK) == 0) {
+						converterCmd = "\"" + c + "\"";
+						break;
+					}
+				}
+			}
+			if (converterCmd.empty()) {
+				converterCmd = "doom2rpg-convert";
+			}
+
+			std::string cmd = converterCmd + " --ipa \"Doom 2 RPG.ipa\" --output games/doom2rpg";
+			printf("  %s\n", cmd.c_str());
+			int ret = system(cmd.c_str());
+			if (ret != 0) {
+				printf("Error: converter failed (exit code %d).\n", ret);
+				printf("You can also run it manually:\n  %s\n", cmd.c_str());
+				return 1;
+			}
+
+			// Re-check after conversion
+			if (access("games/doom2rpg/game.yaml", F_OK) == 0) {
+				gameDirStr = "games/doom2rpg";
+				gameDir = gameDirStr.c_str();
+				printf("Auto-conversion complete. Game directory: %s\n", gameDir);
+			} else {
+				printf("Error: conversion ran but game.yaml not found.\n");
+				return 1;
+			}
 		}
 	}
 
