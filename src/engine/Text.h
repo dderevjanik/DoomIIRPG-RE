@@ -53,8 +53,8 @@ public:
 	int textCurChunk;
 	int textCurOffset;
 	InputStream* textChunkStream;
-	bool useINI;
-	void* iniData; // INIReader* when useINI is true
+	bool useYAML;
+	void* yamlData; // YAML::Node* when useYAML is true
 
 	// Constructor
 	Localization();
@@ -62,8 +62,8 @@ public:
 	~Localization();
 
 	bool startup();
-	bool loadFromINI(const char* path);
-	void loadGroupFromINI(int language, int group);
+	bool loadFromYAML(const char* path);
+	void loadGroupFromYAML(int language, int group);
 	static bool isSpace(char c);
 	static bool isDigit(char c);
 	static char toLower(char c);

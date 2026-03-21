@@ -10,7 +10,7 @@
 #include "SDLGL.h"
 #include "ZipFile.h"
 #include "VFS.h"
-#include "INIReader.h"
+#include <yaml-cpp/yaml.h>
 
 #include "CAppContainer.h"
 #include "App.h"
@@ -55,11 +55,19 @@ int main(int argc, char* args[]) {
 	}
 
 	// --game <name> is sugar for --gamedir games/<name>
+	// Default to doom2rpg if no game/gamedir specified
 	std::string gameDirStr;
 	if (gameName) {
 		gameDirStr = std::string("games/") + gameName;
 		gameDir = gameDirStr.c_str();
 		printf("Game: %s (directory: %s)\n", gameName, gameDir);
+	} else if (strcmp(gameDir, ".") == 0) {
+		// Auto-detect: if games/doom2rpg exists, use it
+		if (access("games/doom2rpg/game.yaml", F_OK) == 0) {
+			gameDirStr = "games/doom2rpg";
+			gameDir = gameDirStr.c_str();
+			printf("Auto-detected game directory: %s\n", gameDir);
+		}
 	}
 
 	// Resolve IPA path to absolute before any chdir
@@ -79,33 +87,28 @@ int main(int argc, char* args[]) {
 		printf("Working directory: %s\n", gameDir);
 	}
 
-	// Load game.ini early (before VFS) for game name, save dir, and IPA prefix
+	// Load game.yaml early (before VFS) for game name, save dir, etc.
 	{
-		INIReader gameIni;
-		if (gameIni.load("game.ini")) {
-			GameConfig& gc = CAppContainer::getInstance()->gameConfig;
-			gc.name = gameIni.getString("Game", "name", gc.name.c_str());
-			gc.windowTitle = gameIni.getString("Game", "window_title", gc.name.c_str());
-			gc.saveDir = gameIni.getString("Game", "save_dir", gc.saveDir.c_str());
-			gc.ipaPrefix = gameIni.getString("Game", "ipa_prefix", gc.ipaPrefix.c_str());
-			gc.entryMap = gameIni.getString("Game", "entry_map", gc.entryMap.c_str());
+		try {
+			YAML::Node config = YAML::LoadFile("game.yaml");
+			if (YAML::Node game = config["game"]) {
+				GameConfig& gc = CAppContainer::getInstance()->gameConfig;
+				if (game["name"]) gc.name = game["name"].as<std::string>();
+				if (game["window_title"]) gc.windowTitle = game["window_title"].as<std::string>();
+				else gc.windowTitle = gc.name;
+				if (game["save_dir"]) gc.saveDir = game["save_dir"].as<std::string>();
+				if (game["entry_map"]) gc.entryMap = game["entry_map"].as<std::string>();
 
-			// Parse no_fog_maps: comma-separated list of map IDs (e.g. "2,5")
-			std::string noFogStr = gameIni.getString("Game", "no_fog_maps", "");
-			if (!noFogStr.empty()) {
-				size_t pos = 0;
-				while (pos < noFogStr.size()) {
-					size_t comma = noFogStr.find(',', pos);
-					if (comma == std::string::npos) comma = noFogStr.size();
-					std::string token = noFogStr.substr(pos, comma - pos);
-					if (!token.empty()) {
-						gc.noFogMaps.push_back(std::stoi(token));
+				if (game["no_fog_maps"]) {
+					for (const auto& id : game["no_fog_maps"]) {
+						gc.noFogMaps.push_back(id.as<int>());
 					}
-					pos = comma + 1;
 				}
-			}
 
-			printf("Game: %s (save: %s)\n", gc.name.c_str(), gc.saveDir.c_str());
+				printf("Game: %s (save: %s)\n", gc.name.c_str(), gc.saveDir.c_str());
+			}
+		} catch (const YAML::Exception& e) {
+			printf("Warning: could not load game.yaml: %s\n", e.what());
 		}
 	}
 

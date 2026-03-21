@@ -1,41 +1,32 @@
 #include "Sounds.h"
-#include "INIReader.h"
+#include <yaml-cpp/yaml.h>
 #include <cstdio>
 
 // Static member definition
 std::vector<std::string> Sounds::soundFileNames;
 
-bool Sounds::loadFromINI(const char* path) {
-	INIReader ini;
-
-	if (!ini.load(path)) {
-		return false;
-	}
-
-	int count = ini.getInt("Sounds", "count", 0);
-	if (count <= 0) {
-		printf("sounds.ini: invalid count\n");
-		return false;
-	}
-
-	soundFileNames.clear();
-	soundFileNames.reserve(count + 1);
-
-	for (int i = 0; i <= count; i++) {
-		char section[32];
-		snprintf(section, sizeof(section), "Sound_%d", i);
-
-		std::string file = ini.getString(section, "file", "");
-		if (file.empty()) {
-			printf("sounds.ini: missing file for %s\n", section);
-			soundFileNames.push_back("");
-		} else {
-			soundFileNames.push_back(file);
+bool Sounds::loadFromYAML(const char* path) {
+	try {
+		YAML::Node config = YAML::LoadFile(path);
+		YAML::Node sounds = config["sounds"];
+		if (!sounds || !sounds.IsSequence()) {
+			printf("sounds.yaml: missing or invalid 'sounds' array\n");
+			return false;
 		}
-	}
 
-	printf("Sounds: loaded %d sound definitions from %s\n", (int)soundFileNames.size(), path);
-	return true;
+		soundFileNames.clear();
+		soundFileNames.reserve(sounds.size());
+
+		for (const auto& entry : sounds) {
+			soundFileNames.push_back(entry.as<std::string>(""));
+		}
+
+		printf("Sounds: loaded %d sound definitions from %s\n", (int)soundFileNames.size(), path);
+		return true;
+	} catch (const YAML::Exception& e) {
+		printf("sounds.yaml: %s\n", e.what());
+		return false;
+	}
 }
 
 void Sounds::loadDefaults() {

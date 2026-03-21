@@ -14,7 +14,7 @@
 #include "TinyGL.h"
 #include "JavaStream.h"
 #include "Sound.h"
-#include "INIReader.h"
+#include <yaml-cpp/yaml.h>
 
 Player::Player() {
 	std::memset(this, 0, sizeof(Player));
@@ -448,23 +448,24 @@ bool Player::addHealth(int i, bool b) {
 void Player::setStatsAccordingToCharacterChoice() {
 	int n = 0;
 
-	// Try loading from characters.ini first
-	INIReader ini;
-	if (ini.load("characters.ini")) {
-		char section[32];
-		snprintf(section, sizeof(section), "Character_%d", this->characterChoice);
-
-		if (ini.hasSection(section)) {
-			this->baseCe->setStat(Enums::STAT_DEFENSE, ini.getInt(section, "defense", 8));
-			this->baseCe->setStat(Enums::STAT_STRENGTH, ini.getInt(section, "strength", 8));
-			this->baseCe->setStat(Enums::STAT_ACCURACY, ini.getInt(section, "accuracy", 90));
-			this->baseCe->setStat(Enums::STAT_AGILITY, ini.getInt(section, "agility", 6));
-			this->baseCe->setStat(Enums::STAT_IQ, ini.getInt(section, "iq", 100));
-			n = ini.getInt(section, "credits", 0);
-			this->give(0, 24, n, true);
-			return;
+	// Try loading from characters.yaml first
+	try {
+		YAML::Node config = YAML::LoadFile("characters.yaml");
+		if (YAML::Node chars = config["characters"]) {
+			int idx = this->characterChoice - 1; // characterChoice is 1-based
+			if (idx >= 0 && idx < (int)chars.size()) {
+				YAML::Node c = chars[idx];
+				this->baseCe->setStat(Enums::STAT_DEFENSE, c["defense"].as<int>(8));
+				this->baseCe->setStat(Enums::STAT_STRENGTH, c["strength"].as<int>(8));
+				this->baseCe->setStat(Enums::STAT_ACCURACY, c["accuracy"].as<int>(90));
+				this->baseCe->setStat(Enums::STAT_AGILITY, c["agility"].as<int>(6));
+				this->baseCe->setStat(Enums::STAT_IQ, c["iq"].as<int>(100));
+				n = c["credits"].as<int>(0);
+				this->give(0, 24, n, true);
+				return;
+			}
 		}
-	}
+	} catch (const YAML::Exception&) {}
 
 	// Fallback to hardcoded defaults
 	switch (this->characterChoice) {

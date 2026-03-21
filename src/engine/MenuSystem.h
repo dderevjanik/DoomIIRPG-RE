@@ -253,7 +253,7 @@ public:
 
 	bool startup();
 	bool loadMenusFromBinary();
-	bool loadMenusFromINI(const char* path);
+	bool loadMenusFromYAML(const char* path);
 	void exportMenusToINI(const char* path);
     void buildDivider(Text* text, int i);
     bool enterDigit(int i);

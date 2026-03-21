@@ -9,9 +9,9 @@ class Sounds {
 	// Runtime-loaded sound filenames (populated from sounds.ini)
 	static std::vector<std::string> soundFileNames;
 
-	// Load sound definitions from sounds.ini
+	// Load sound definitions from sounds.yaml
 	// Returns true if loaded successfully, false to fall back to defaults
-	static bool loadFromINI(const char* path);
+	static bool loadFromYAML(const char* path);
 
 	// Initialize with default built-in sounds (fallback when no INI exists)
 	static void loadDefaults();

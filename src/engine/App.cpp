@@ -30,7 +30,7 @@
 #include "JavaStream.h"
 #include "Image.h"
 #include "Graphics.h"
-#include "INIReader.h"
+#include <yaml-cpp/yaml.h>
 #include "Input.h"
 #include "Enums.h"
 
@@ -395,15 +395,15 @@ void Applet::beginImageLoading() {}
 void Applet::endImageLoading() {}
 
 void Applet::loadTables() {
-	// Try loading from tables.ini in CWD first
-	FILE* f = std::fopen("tables.ini", "rb");
+	// Try loading from tables.yaml in CWD first
+	FILE* f = std::fopen("tables.yaml", "rb");
 	if (f) {
 		std::fclose(f);
-		printf("Applet::loadTables: loading from tables.ini\n");
-		if (this->loadTablesFromINI("tables.ini")) {
+		printf("Applet::loadTables: loading from tables.yaml\n");
+		if (this->loadTablesFromYAML("tables.yaml")) {
 			return;
 		}
-		printf("Applet::loadTables: tables.ini failed, falling back to tables.bin\n");
+		printf("Applet::loadTables: tables.yaml failed, falling back to tables.bin\n");
 	}
 
 	printf("Applet::loadTables: loading from tables.bin (resource pack)\n");
@@ -568,215 +568,215 @@ static std::vector<int> parseIntList(const std::string& str) {
 	return result;
 }
 
-bool Applet::loadTablesFromINI(const char* path) {
-	INIReader ini;
-	if (!ini.load(path)) {
+bool Applet::loadTablesFromYAML(const char* path) {
+	YAML::Node config;
+	try {
+		config = YAML::LoadFile(path);
+	} catch (const YAML::Exception&) {
 		return false;
 	}
 
-	// === Weapons (table 2) ===
-	int numWeapons = ini.getInt("Weapons", "count", 0);
-	int weaponBytes = numWeapons * 9;
-	this->combat->weapons = new int8_t[weaponBytes];
-	std::memset(this->combat->weapons, 0, weaponBytes);
-	for (int w = 0; w < numWeapons; w++) {
-		char section[32];
-		snprintf(section, sizeof(section), "Weapon_%d", w);
-		int base = w * 9;
-		this->combat->weapons[base + 0] = (int8_t)ini.getInt(section, "str_min", 0);
-		this->combat->weapons[base + 1] = (int8_t)ini.getInt(section, "str_max", 0);
-		this->combat->weapons[base + 2] = (int8_t)ini.getInt(section, "range_min", 0);
-		this->combat->weapons[base + 3] = (int8_t)ini.getInt(section, "range_max", 0);
-		this->combat->weapons[base + 4] = (int8_t)ini.getInt(section, "ammo_type", 0);
-		this->combat->weapons[base + 5] = (int8_t)ini.getInt(section, "ammo_usage", 0);
-		this->combat->weapons[base + 6] = (int8_t)projTypeFromName(ini.getString(section, "proj_type", "none"));
-		this->combat->weapons[base + 7] = (int8_t)ini.getInt(section, "num_shots", 1);
-		this->combat->weapons[base + 8] = (int8_t)ini.getInt(section, "shot_hold", 0);
-	}
-
-	// === WeaponInfo (table 1) ===
-	int numWpInfo = ini.getInt("WeaponInfo", "count", 0);
-	int wpinfoBytes = numWpInfo * 6;
-	this->combat->wpinfo = new int8_t[wpinfoBytes];
-	std::memset(this->combat->wpinfo, 0, wpinfoBytes);
-	for (int w = 0; w < numWpInfo; w++) {
-		char section[32];
-		snprintf(section, sizeof(section), "WeaponInfo_%d", w);
-		int base = w * 6;
-		this->combat->wpinfo[base + 0] = (int8_t)ini.getInt(section, "idle_x", 0);
-		this->combat->wpinfo[base + 1] = (int8_t)ini.getInt(section, "idle_y", 0);
-		this->combat->wpinfo[base + 2] = (int8_t)ini.getInt(section, "attack_x", 0);
-		this->combat->wpinfo[base + 3] = (int8_t)ini.getInt(section, "attack_y", 0);
-		this->combat->wpinfo[base + 4] = (int8_t)ini.getInt(section, "flash_x", 0);
-		this->combat->wpinfo[base + 5] = (int8_t)ini.getInt(section, "flash_y", 0);
-	}
-
-	// === MonsterAttacks (table 0) ===
-	int numMonsterAttacks = ini.getInt("MonsterAttacks", "count", 0);
-	int maShorts = numMonsterAttacks * 9;
-	this->combat->monsterAttacks = new short[maShorts];
-	std::memset(this->combat->monsterAttacks, 0, maShorts * sizeof(short));
-	for (int m = 0; m < numMonsterAttacks; m++) {
-		char section[32];
-		snprintf(section, sizeof(section), "MonsterAttack_%d", m);
-		int base = m * 9;
-		for (int p = 0; p < 3; p++) {
-			char key[32];
-			snprintf(key, sizeof(key), "parm%d_attack1", p);
-			this->combat->monsterAttacks[base + p * 3 + 0] = (short)weaponNameToIndex(ini.getString(section, key, "0"));
-			snprintf(key, sizeof(key), "parm%d_attack2", p);
-			this->combat->monsterAttacks[base + p * 3 + 1] = (short)weaponNameToIndex(ini.getString(section, key, "0"));
-			snprintf(key, sizeof(key), "parm%d_chance", p);
-			this->combat->monsterAttacks[base + p * 3 + 2] = (short)ini.getInt(section, key, 0);
+	// === Weapons ===
+	if (YAML::Node weapons = config["weapons"]) {
+		int numWeapons = (int)weapons.size();
+		int weaponBytes = numWeapons * 9;
+		this->combat->weapons = new int8_t[weaponBytes];
+		std::memset(this->combat->weapons, 0, weaponBytes);
+		for (int w = 0; w < numWeapons; w++) {
+			YAML::Node wp = weapons[w];
+			int base = w * 9;
+			this->combat->weapons[base + 0] = (int8_t)wp["str_min"].as<int>(0);
+			this->combat->weapons[base + 1] = (int8_t)wp["str_max"].as<int>(0);
+			this->combat->weapons[base + 2] = (int8_t)wp["range_min"].as<int>(0);
+			this->combat->weapons[base + 3] = (int8_t)wp["range_max"].as<int>(0);
+			this->combat->weapons[base + 4] = (int8_t)wp["ammo_type"].as<int>(0);
+			this->combat->weapons[base + 5] = (int8_t)wp["ammo_usage"].as<int>(0);
+			this->combat->weapons[base + 6] = (int8_t)projTypeFromName(wp["proj_type"].as<std::string>("none").c_str());
+			this->combat->weapons[base + 7] = (int8_t)wp["num_shots"].as<int>(1);
+			this->combat->weapons[base + 8] = (int8_t)wp["shot_hold"].as<int>(0);
 		}
 	}
 
-	// === MonsterStats (table 3) ===
-	int monsterStatsCount = ini.getInt("MonsterStats", "count", 0);
-	this->combat->monsterStats = new int8_t[monsterStatsCount];
-	{
-		std::vector<int> vals = parseIntList(ini.getString("MonsterStats", "data", ""));
-		for (int i = 0; i < monsterStatsCount && i < (int)vals.size(); i++) {
-			this->combat->monsterStats[i] = (int8_t)vals[i];
+	// === WeaponInfo ===
+	if (YAML::Node wpinfos = config["weapon_info"]) {
+		int numWpInfo = (int)wpinfos.size();
+		int wpinfoBytes = numWpInfo * 6;
+		this->combat->wpinfo = new int8_t[wpinfoBytes];
+		std::memset(this->combat->wpinfo, 0, wpinfoBytes);
+		for (int w = 0; w < numWpInfo; w++) {
+			YAML::Node wi = wpinfos[w];
+			int base = w * 6;
+			this->combat->wpinfo[base + 0] = (int8_t)wi["idle_x"].as<int>(0);
+			this->combat->wpinfo[base + 1] = (int8_t)wi["idle_y"].as<int>(0);
+			this->combat->wpinfo[base + 2] = (int8_t)wi["attack_x"].as<int>(0);
+			this->combat->wpinfo[base + 3] = (int8_t)wi["attack_y"].as<int>(0);
+			this->combat->wpinfo[base + 4] = (int8_t)wi["flash_x"].as<int>(0);
+			this->combat->wpinfo[base + 5] = (int8_t)wi["flash_y"].as<int>(0);
 		}
 	}
 
-	// === CombatMasks (table 4) ===
-	int combatMasksCount = ini.getInt("CombatMasks", "count", 0);
-	this->combat->tableCombatMasks = new int32_t[combatMasksCount];
-	for (int i = 0; i < combatMasksCount; i++) {
-		char key[16];
-		snprintf(key, sizeof(key), "mask_%d", i);
-		std::string val = ini.getString("CombatMasks", key, "0");
-		if (val.substr(0, 2) == "0x" || val.substr(0, 2) == "0X") {
-			this->combat->tableCombatMasks[i] = (int32_t)std::stoul(val, nullptr, 16);
-		} else {
-			this->combat->tableCombatMasks[i] = (int32_t)std::stoi(val);
+	// === MonsterAttacks ===
+	if (YAML::Node attacks = config["monster_attacks"]) {
+		int numMonsterAttacks = (int)attacks.size();
+		int maShorts = numMonsterAttacks * 9;
+		this->combat->monsterAttacks = new short[maShorts];
+		std::memset(this->combat->monsterAttacks, 0, maShorts * sizeof(short));
+		for (int m = 0; m < numMonsterAttacks; m++) {
+			YAML::Node ma = attacks[m];
+			int base = m * 9;
+			for (int p = 0; p < 3; p++) {
+				std::string a1key = "parm" + std::to_string(p) + "_attack1";
+				std::string a2key = "parm" + std::to_string(p) + "_attack2";
+				std::string chkey = "parm" + std::to_string(p) + "_chance";
+				this->combat->monsterAttacks[base + p * 3 + 0] = (short)weaponNameToIndex(ma[a1key].as<std::string>("0").c_str());
+				this->combat->monsterAttacks[base + p * 3 + 1] = (short)weaponNameToIndex(ma[a2key].as<std::string>("0").c_str());
+				this->combat->monsterAttacks[base + p * 3 + 2] = (short)ma[chkey].as<int>(0);
+			}
 		}
 	}
 
-	// === KeysNumeric (table 5) ===
-	int keysNumericCount = ini.getInt("KeysNumeric", "count", 0);
-	this->canvas->keys_numeric = new int8_t[keysNumericCount];
-	{
-		std::vector<int> vals = parseIntList(ini.getString("KeysNumeric", "data", ""));
-		for (int i = 0; i < keysNumericCount && i < (int)vals.size(); i++) {
-			this->canvas->keys_numeric[i] = (int8_t)vals[i];
+	// === MonsterStats ===
+	if (YAML::Node ms = config["monster_stats"]) {
+		YAML::Node data = ms["data"];
+		if (data && data.IsSequence()) {
+			int count = (int)data.size();
+			this->combat->monsterStats = new int8_t[count];
+			for (int i = 0; i < count; i++) {
+				this->combat->monsterStats[i] = (int8_t)data[i].as<int>(0);
+			}
 		}
 	}
 
-	// === OSCCycle (table 6) ===
-	int oscCycleCount = ini.getInt("OSCCycle", "count", 0);
-	this->canvas->OSC_CYCLE = new int8_t[oscCycleCount];
-	{
-		std::vector<int> vals = parseIntList(ini.getString("OSCCycle", "data", ""));
-		for (int i = 0; i < oscCycleCount && i < (int)vals.size(); i++) {
-			this->canvas->OSC_CYCLE[i] = (int8_t)vals[i];
+	// === CombatMasks ===
+	if (YAML::Node masks = config["combat_masks"]) {
+		int count = (int)masks.size();
+		this->combat->tableCombatMasks = new int32_t[count];
+		for (int i = 0; i < count; i++) {
+			std::string val = masks[i].as<std::string>("0");
+			if (val.substr(0, 2) == "0x" || val.substr(0, 2) == "0X") {
+				this->combat->tableCombatMasks[i] = (int32_t)std::stoul(val, nullptr, 16);
+			} else {
+				this->combat->tableCombatMasks[i] = (int32_t)std::stoi(val);
+			}
 		}
 	}
 
-	// === LevelNames (table 7) ===
-	int levelNamesCount = ini.getInt("LevelNames", "count", 0);
-	this->game->levelNames = new int16_t[levelNamesCount];
-	for (int i = 0; i < levelNamesCount; i++) {
-		char key[16];
-		snprintf(key, sizeof(key), "level_%d", i);
-		this->game->levelNames[i] = (int16_t)ini.getInt("LevelNames", key, 0);
+	// === KeysNumeric ===
+	if (YAML::Node kn = config["keys_numeric"]) {
+		YAML::Node data = kn["data"];
+		if (data && data.IsSequence()) {
+			int count = (int)data.size();
+			this->canvas->keys_numeric = new int8_t[count];
+			for (int i = 0; i < count; i++) {
+				this->canvas->keys_numeric[i] = (int8_t)data[i].as<int>(0);
+			}
+		}
 	}
-	this->game->levelNamesCount = levelNamesCount;
 
-	// === MonsterColors (table 8) ===
-	int monsterColorsCount = ini.getInt("MonsterColors", "count", 0);
-	this->particleSystem->monsterColors = new uint8_t[monsterColorsCount];
-	std::memset(this->particleSystem->monsterColors, 0, monsterColorsCount);
-	{
-		// Parse "name = r,g,b" entries
-		// We need to iterate keys; use the known monster names
+	// === OSCCycle ===
+	if (YAML::Node osc = config["osc_cycle"]) {
+		YAML::Node data = osc["data"];
+		if (data && data.IsSequence()) {
+			int count = (int)data.size();
+			this->canvas->OSC_CYCLE = new int8_t[count];
+			for (int i = 0; i < count; i++) {
+				this->canvas->OSC_CYCLE[i] = (int8_t)data[i].as<int>(0);
+			}
+		}
+	}
+
+	// === LevelNames ===
+	if (YAML::Node ln = config["level_names"]) {
+		int count = (int)ln.size();
+		this->game->levelNames = new int16_t[count];
+		for (int i = 0; i < count; i++) {
+			this->game->levelNames[i] = (int16_t)ln[i].as<int>(0);
+		}
+		this->game->levelNamesCount = count;
+	}
+
+	// === MonsterColors ===
+	if (YAML::Node mc = config["monster_colors"]) {
 		static const char* monsterNames[] = {"zombie", "zombie_commando", "lost_soul", "imp", "sawcubus", "pinky"};
+		int count = 6 * 3;
+		this->particleSystem->monsterColors = new uint8_t[count];
+		std::memset(this->particleSystem->monsterColors, 0, count);
 		int idx = 0;
-		for (int i = 0; i < 6 && idx + 2 < monsterColorsCount; i++) {
-			std::string val = ini.getString("MonsterColors", monsterNames[i], "");
-			if (!val.empty()) {
-				std::vector<int> rgb = parseIntList(val);
-				if (rgb.size() >= 3) {
-					this->particleSystem->monsterColors[idx + 0] = (uint8_t)rgb[0];
-					this->particleSystem->monsterColors[idx + 1] = (uint8_t)rgb[1];
-					this->particleSystem->monsterColors[idx + 2] = (uint8_t)rgb[2];
+		for (int i = 0; i < 6; i++) {
+			if (YAML::Node rgb = mc[monsterNames[i]]) {
+				if (rgb.IsSequence() && rgb.size() >= 3) {
+					this->particleSystem->monsterColors[idx + 0] = (uint8_t)rgb[0].as<int>(0);
+					this->particleSystem->monsterColors[idx + 1] = (uint8_t)rgb[1].as<int>(0);
+					this->particleSystem->monsterColors[idx + 2] = (uint8_t)rgb[2].as<int>(0);
 				}
 			}
 			idx += 3;
 		}
 	}
 
-	// === SinTable (table 9) ===
-	int sinTableCount = ini.getInt("SinTable", "count", 0);
-	this->render->sinTable = new int32_t[sinTableCount];
-	{
-		std::vector<int> vals = parseIntList(ini.getString("SinTable", "data", ""));
-		for (int i = 0; i < sinTableCount && i < (int)vals.size(); i++) {
-			this->render->sinTable[i] = (int32_t)vals[i];
+	// === SinTable ===
+	if (YAML::Node st = config["sin_table"]) {
+		YAML::Node data = st["data"];
+		if (data && data.IsSequence()) {
+			int count = (int)data.size();
+			this->render->sinTable = new int32_t[count];
+			for (int i = 0; i < count; i++) {
+				this->render->sinTable[i] = (int32_t)data[i].as<int>(0);
+			}
 		}
 	}
 
-	// === EnergyDrinkData (table 10) ===
-	int energyDrinkCount = ini.getInt("EnergyDrinkData", "count", 0);
-	this->vendingMachine->energyDrinkData = new int16_t[energyDrinkCount];
-	{
-		std::vector<int> vals = parseIntList(ini.getString("EnergyDrinkData", "data", ""));
-		for (int i = 0; i < energyDrinkCount && i < (int)vals.size(); i++) {
-			this->vendingMachine->energyDrinkData[i] = (int16_t)vals[i];
+	// === EnergyDrinkData ===
+	if (YAML::Node ed = config["energy_drink_data"]) {
+		YAML::Node data = ed["data"];
+		if (data && data.IsSequence()) {
+			int count = (int)data.size();
+			this->vendingMachine->energyDrinkData = new int16_t[count];
+			for (int i = 0; i < count; i++) {
+				this->vendingMachine->energyDrinkData[i] = (int16_t)data[i].as<int>(0);
+			}
 		}
 	}
 
-	// === MonsterWeakness (table 11) ===
-	int monsterWeaknessCount = ini.getInt("MonsterWeakness", "count", 0);
-	this->combat->monsterWeakness = new int8_t[monsterWeaknessCount];
-	std::memset(this->combat->monsterWeakness, 0, monsterWeaknessCount);
-	{
-		// Parse named entries, fall back to indexed
+	// === MonsterWeakness ===
+	if (YAML::Node mw = config["monster_weakness"]) {
 		static const char* monsterNames[] = {
 		    "zombie",   "zombie_commando", "lost_soul", "imp",       "sawcubus",   "pinky",      "cacodemon",
 		    "sentinel", "mancubus",        "revenant",  "arch_vile", "sentry_bot", "cyberdemon", "mastermind",
 		    "phantom",  "archvile_ghost",  "belphegor", "apollyon"};
-		for (int i = 0; i < 18 && i < monsterWeaknessCount; i++) {
-			if (ini.hasKey("MonsterWeakness", monsterNames[i])) {
-				this->combat->monsterWeakness[i] = (int8_t)ini.getInt("MonsterWeakness", monsterNames[i], 0);
-			}
+		int count = 18;
+		this->combat->monsterWeakness = new int8_t[count];
+		std::memset(this->combat->monsterWeakness, 0, count);
+		for (int i = 0; i < count; i++) {
+			this->combat->monsterWeakness[i] = (int8_t)mw[monsterNames[i]].as<int>(0);
 		}
-		// For entries beyond named monsters, try monster_N
-		for (int i = 18; i < monsterWeaknessCount; i++) {
-			char key[32];
-			snprintf(key, sizeof(key), "monster_%d", i);
-			if (ini.hasKey("MonsterWeakness", key)) {
-				this->combat->monsterWeakness[i] = (int8_t)ini.getInt("MonsterWeakness", key, 0);
+	}
+
+	// === MovieEffects ===
+	if (YAML::Node me = config["movie_effects"]) {
+		YAML::Node data = me["data"];
+		if (data && data.IsSequence()) {
+			int count = (int)data.size();
+			this->canvas->movieEffects = new int32_t[count];
+			for (int i = 0; i < count; i++) {
+				this->canvas->movieEffects[i] = (int32_t)data[i].as<int>(0);
 			}
 		}
 	}
 
-	// === MovieEffects (table 12) ===
-	int movieEffectsCount = ini.getInt("MovieEffects", "count", 0);
-	this->canvas->movieEffects = new int32_t[movieEffectsCount];
-	{
-		std::vector<int> vals = parseIntList(ini.getString("MovieEffects", "data", ""));
-		for (int i = 0; i < movieEffectsCount && i < (int)vals.size(); i++) {
-			this->canvas->movieEffects[i] = (int32_t)vals[i];
-		}
-	}
-
-	// === MonsterSounds (table 13) ===
-	int numMonsterSounds = ini.getInt("MonsterSounds", "count", 0);
-	int msoundBytes = numMonsterSounds * 8;
-	this->game->monsterSounds = new uint8_t[msoundBytes];
-	std::memset(this->game->monsterSounds, 255, msoundBytes); // default to "none" (255)
-	{
-		static const char* msoundFields[] = {"alert1",  "alert2", "alert3", "attack1",
-		                                     "attack2", "idle",   "pain",   "death"};
+	// === MonsterSounds ===
+	if (YAML::Node msounds = config["monster_sounds"]) {
+		int numMonsterSounds = (int)msounds.size();
+		int msoundBytes = numMonsterSounds * 8;
+		this->game->monsterSounds = new uint8_t[msoundBytes];
+		std::memset(this->game->monsterSounds, 255, msoundBytes);
+		static const char* msoundFields[] = {"alert1", "alert2", "alert3", "attack1",
+		                                     "attack2", "idle", "pain", "death"};
 		for (int m = 0; m < numMonsterSounds; m++) {
-			char section[32];
-			snprintf(section, sizeof(section), "MonsterSound_%d", m);
+			YAML::Node ms = msounds[m];
 			int base = m * 8;
 			for (int f = 0; f < 8; f++) {
-				std::string val = ini.getString(section, msoundFields[f], "none");
+				std::string val = ms[msoundFields[f]].as<std::string>("none");
 				if (val == "none") {
 					this->game->monsterSounds[base + f] = 255;
 				} else {

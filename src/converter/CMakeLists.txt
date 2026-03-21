@@ -19,4 +19,5 @@ target_include_directories(${CONVERTER_TGT_NAME} PRIVATE
 target_link_libraries(${CONVERTER_TGT_NAME}
 	SDL2::SDL2
 	ZLIB::ZLIB
+	yaml-cpp::yaml-cpp
 )

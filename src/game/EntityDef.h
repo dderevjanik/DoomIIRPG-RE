@@ -13,7 +13,7 @@ class EntityDefManager {
 	int numDefs;
 
 	bool loadFromBinary();
-	bool loadFromINI(const char* path);
+	bool loadFromYAML(const char* path);
 
   public:
 	// Constructor

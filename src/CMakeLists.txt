@@ -32,7 +32,8 @@ target_link_libraries(${PROJECT_NAME}
 	ZLIB::ZLIB
 	OpenAL::OpenAL
 	OpenGL::GL
-	${HASH_LIBRARY_TGT_NAME})
+	${HASH_LIBRARY_TGT_NAME}
+	yaml-cpp::yaml-cpp)
 
 # Converter tool
 add_subdirectory(converter)

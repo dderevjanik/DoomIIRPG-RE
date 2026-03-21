@@ -8,7 +8,7 @@
 #include "Text.h"
 #include "JavaStream.h"
 #include "Resource.h"
-#include "INIReader.h"
+#include <yaml-cpp/yaml.h>
 
 // --------------------
 // Localization Class
@@ -51,13 +51,13 @@ bool Localization::startup() {
 	this->textCount[13] = 15;
 	this->textCount[14] = 3;
 
-	// Try loading from strings.ini in CWD first
-	FILE* f = std::fopen("strings.ini", "rb");
+	// Try loading from strings.yaml in CWD first
+	FILE* f = std::fopen("strings.yaml", "rb");
 	if (f) {
 		std::fclose(f);
-		printf("Localization: loading from strings.ini\n");
-		if (!this->loadFromINI("strings.ini")) {
-			this->app->Error("Failed to load strings.ini\n");
+		printf("Localization: loading from strings.yaml\n");
+		if (!this->loadFromYAML("strings.yaml")) {
+			this->app->Error("Failed to load strings.yaml\n");
 			return false;
 		}
 		this->resetTextArgs();
@@ -114,35 +114,46 @@ static std::string unescapeString(const std::string& s) {
 	return result;
 }
 
-bool Localization::loadFromINI(const char* path) {
-	INIReader* ini = new INIReader();
-	if (!ini->load(path)) {
-		delete ini;
+bool Localization::loadFromYAML(const char* path) {
+	YAML::Node* root = new YAML::Node();
+	try {
+		*root = YAML::LoadFile(path);
+	} catch (const YAML::Exception& e) {
+		printf("Localization: failed to load %s: %s\n", path, e.what());
+		delete root;
 		return false;
 	}
 
-	this->useINI = true;
-	this->iniData = ini;
+	this->useYAML = true;
+	this->yamlData = root;
 	this->defaultLanguage = 0;
 
 	// Load initial groups (0, 1, 3, 14) — same as binary startup
 	int initialGroups[] = { 0, 1, 3, 14 };
 	for (int g = 0; g < 4; g++) {
-		this->loadGroupFromINI(this->defaultLanguage, initialGroups[g]);
+		this->loadGroupFromYAML(this->defaultLanguage, initialGroups[g]);
 	}
 
 	printf("Localization: loaded strings from %s\n", path);
 	return true;
 }
 
-void Localization::loadGroupFromINI(int language, int group) {
-	if (!this->iniData) return;
-	INIReader* ini = (INIReader*)this->iniData;
+void Localization::loadGroupFromYAML(int language, int group) {
+	if (!this->yamlData) return;
+	YAML::Node* root = (YAML::Node*)this->yamlData;
+	YAML::Node strings = (*root)["strings"];
+	if (!strings || !strings.IsSequence()) return;
 
-	char section[32];
-	snprintf(section, sizeof(section), "Lang_%d_Group_%d", language, group);
+	// Find the matching language/group entry
+	YAML::Node values;
+	for (const auto& entry : strings) {
+		if (entry["language"].as<int>(-1) == language && entry["group"].as<int>(-1) == group) {
+			values = entry["values"];
+			break;
+		}
+	}
 
-	int count = ini->getInt(section, "count", 0);
+	int count = values && values.IsSequence() ? (int)values.size() : 0;
 	if (count <= 0) {
 		// Empty group — allocate minimal buffers
 		this->textSizes[group] = 1;
@@ -160,14 +171,12 @@ void Localization::loadGroupFromINI(int language, int group) {
 	}
 
 	// Collect all strings in a single pass
-	std::string* strings = new std::string[count];
+	std::string* strs = new std::string[count];
 	int totalSize = 0;
 	for (int i = 0; i < count; i++) {
-		char key[16];
-		snprintf(key, sizeof(key), "%d", i);
-		std::string val = ini->getString(section, key, "");
-		strings[i] = unescapeString(val);
-		totalSize += (int)strings[i].size() + 1;
+		std::string val = values[i].as<std::string>("");
+		strs[i] = unescapeString(val);
+		totalSize += (int)strs[i].size() + 1;
 	}
 
 	// Allocate buffers
@@ -193,12 +202,12 @@ void Localization::loadGroupFromINI(int language, int group) {
 		if (i < this->textCount[group]) {
 			this->textMap[group][i] = (uint16_t)offset;
 		}
-		std::memcpy(this->text[group] + offset, strings[i].c_str(), strings[i].size());
-		offset += (int)strings[i].size();
+		std::memcpy(this->text[group] + offset, strs[i].c_str(), strs[i].size());
+		offset += (int)strs[i].size();
 		this->text[group][offset] = '\0';
 		offset++;
 	}
-	delete[] strings;
+	delete[] strs;
 }
 
 bool Localization::isSpace(char c) {
@@ -274,10 +283,10 @@ void Localization::unloadText(int index) {
 void Localization::setLanguage(int language) {
 
 	this->defaultLanguage = language;
-	if (this->useINI) {
+	if (this->useYAML) {
 		for (int i = 0; i < (Localization::MAXTEXT); ++i) {
 			if (this->text[i] != nullptr) {
-				this->loadGroupFromINI(this->defaultLanguage, i);
+				this->loadGroupFromYAML(this->defaultLanguage, i);
 			}
 		}
 		return;
@@ -352,8 +361,8 @@ void Localization::loadTextFromIndex(int i, int textLastType) {
 
 void Localization::loadText(int index)
 {
-	if (this->useINI) {
-		this->loadGroupFromINI(this->defaultLanguage, index);
+	if (this->useYAML) {
+		this->loadGroupFromYAML(this->defaultLanguage, index);
 		return;
 	}
 	this->allocateText(index);

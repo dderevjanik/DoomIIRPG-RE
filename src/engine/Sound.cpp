@@ -40,9 +40,9 @@ bool Sound::startup() {
 	this->soundsLoaded = false;
 	this->alContext = nullptr;
 
-	// Load sound definitions from sounds.ini, fall back to hardcoded defaults
-	if (!Sounds::loadFromINI("sounds.ini")) {
-		printf("Sound: sounds.ini not found, using built-in defaults\n");
+	// Load sound definitions from sounds.yaml, fall back to hardcoded defaults
+	if (!Sounds::loadFromYAML("sounds.yaml")) {
+		printf("Sound: sounds.yaml not found, using built-in defaults\n");
 		Sounds::loadDefaults();
 	}
 

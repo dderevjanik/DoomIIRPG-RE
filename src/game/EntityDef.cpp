@@ -9,6 +9,7 @@
 #include "Enums.h"
 #include "JavaStream.h"
 #include "Resource.h"
+#include <yaml-cpp/yaml.h>
 #include "INIReader.h"
 
 // --- Entity type name tables ---
@@ -338,12 +339,12 @@ bool EntityDefManager::startup() {
 
 	this->numDefs = 0;
 
-	// Try loading from entities.ini in CWD first
-	FILE* f = std::fopen("entities.ini", "rb");
+	// Try loading from entities.yaml in CWD first
+	FILE* f = std::fopen("entities.yaml", "rb");
 	if (f) {
 		std::fclose(f);
-		printf("EntityDefManager: loading from entities.ini\n");
-		return this->loadFromINI("entities.ini");
+		printf("EntityDefManager: loading from entities.yaml\n");
+		return this->loadFromYAML("entities.yaml");
 	}
 
 	// Fall back to binary from resource pack
@@ -390,135 +391,132 @@ bool EntityDefManager::loadFromBinary() {
 	return true;
 }
 
-bool EntityDefManager::loadFromINI(const char* path) {
+bool EntityDefManager::loadFromYAML(const char* path) {
 	Applet* app = CAppContainer::getInstance()->app;
-	INIReader ini;
 
-	if (!ini.load(path)) {
-		app->Error("Failed to load %s\n", path);
+	YAML::Node config;
+	try {
+		config = YAML::LoadFile(path);
+	} catch (const YAML::Exception& e) {
+		app->Error("Failed to load %s: %s\n", path, e.what());
 		return false;
 	}
 
-	int count = ini.getInt("Entities", "count", 0);
-	if (count <= 0) {
-		app->Error("entities.ini: invalid count\n");
+	YAML::Node entities = config["entities"];
+	if (!entities || !entities.IsSequence() || entities.size() == 0) {
+		app->Error("entities.yaml: missing or empty 'entities' array\n");
 		return false;
 	}
 
+	int count = (int)entities.size();
 	this->numDefs = count;
 	this->list = new EntityDef[count];
 
 	for (int i = 0; i < count; i++) {
-		char section[32];
-		snprintf(section, sizeof(section), "Entity_%d", i);
+		YAML::Node e = entities[i];
 
-		this->list[i].tileIndex = (int16_t)ini.getInt(section, "tile_index", 0);
-		this->list[i].eType = (uint8_t)entityTypeFromString(ini.getString(section, "type", "world"));
-		this->list[i].eSubType = (uint8_t)ini.getInt(section, "subtype", 0);
-		this->list[i].parm = (uint8_t)ini.getInt(section, "parm", 0);
-		this->list[i].name = (int16_t)ini.getInt(section, "name", 0);
-		this->list[i].longName = (int16_t)ini.getInt(section, "long_name", 0);
-		this->list[i].description = (int16_t)ini.getInt(section, "description", 0);
+		this->list[i].tileIndex = (int16_t)e["tile_index"].as<int>(0);
+		this->list[i].eType = (uint8_t)entityTypeFromString(e["type"].as<std::string>("world").c_str());
+		this->list[i].eSubType = (uint8_t)e["subtype"].as<int>(0);
+		this->list[i].parm = (uint8_t)e["parm"].as<int>(0);
+		this->list[i].name = (int16_t)e["name"].as<int>(0);
+		this->list[i].longName = (int16_t)e["long_name"].as<int>(0);
+		this->list[i].description = (int16_t)e["description"].as<int>(0);
 
-		// Load render flags from INI, fall back to auto-computed defaults
+		// Load render flags, fall back to auto-computed defaults
 		uint32_t defaultFlags = computeRenderFlags(this->list[i].tileIndex);
 		this->list[i].renderFlags = EntityDef::RFLAG_NONE;
-		if (ini.getBool(section, "is_floater", (defaultFlags & EntityDef::RFLAG_FLOATER) != 0)) {
+		if (e["is_floater"].as<bool>((defaultFlags & EntityDef::RFLAG_FLOATER) != 0)) {
 			this->list[i].renderFlags |= EntityDef::RFLAG_FLOATER;
 		}
-		if (ini.getBool(section, "has_gun_flare", (defaultFlags & EntityDef::RFLAG_GUN_FLARE) != 0)) {
+		if (e["has_gun_flare"].as<bool>((defaultFlags & EntityDef::RFLAG_GUN_FLARE) != 0)) {
 			this->list[i].renderFlags |= EntityDef::RFLAG_GUN_FLARE;
 		}
-		if (ini.getBool(section, "is_special_boss", (defaultFlags & EntityDef::RFLAG_SPECIAL_BOSS) != 0)) {
+		if (e["is_special_boss"].as<bool>((defaultFlags & EntityDef::RFLAG_SPECIAL_BOSS) != 0)) {
 			this->list[i].renderFlags |= EntityDef::RFLAG_SPECIAL_BOSS;
 		}
 
-		// Load fear eye offsets, falling back to auto-computed defaults from eSubType
+		// Fear eye offsets
 		EntityDef::FearEyeData defEyes = computeDefaultFearEyes(this->list[i].eSubType);
-		this->list[i].fearEyes.eyeL = (int8_t)ini.getInt(section, "fear_eye_l", defEyes.eyeL);
-		this->list[i].fearEyes.eyeR = (int8_t)ini.getInt(section, "fear_eye_r", defEyes.eyeR);
-		this->list[i].fearEyes.zAdd = (int16_t)ini.getInt(section, "fear_eye_z_add", defEyes.zAdd);
-		this->list[i].fearEyes.zAlwaysPre = (int16_t)ini.getInt(section, "fear_eye_z_always", defEyes.zAlwaysPre);
-		this->list[i].fearEyes.zIdlePre = (int16_t)ini.getInt(section, "fear_eye_z_idle", defEyes.zIdlePre);
-		this->list[i].fearEyes.singleEye = ini.getBool(section, "fear_single_eye", defEyes.singleEye);
-		this->list[i].fearEyes.eyeLFlip = (int8_t)ini.getInt(section, "fear_eye_l_flip", defEyes.eyeLFlip);
-		this->list[i].fearEyes.eyeRFlip = (int8_t)ini.getInt(section, "fear_eye_r_flip", defEyes.eyeRFlip);
+		this->list[i].fearEyes.eyeL = (int8_t)e["fear_eye_l"].as<int>(defEyes.eyeL);
+		this->list[i].fearEyes.eyeR = (int8_t)e["fear_eye_r"].as<int>(defEyes.eyeR);
+		this->list[i].fearEyes.zAdd = (int16_t)e["fear_eye_z_add"].as<int>(defEyes.zAdd);
+		this->list[i].fearEyes.zAlwaysPre = (int16_t)e["fear_eye_z_always"].as<int>(defEyes.zAlwaysPre);
+		this->list[i].fearEyes.zIdlePre = (int16_t)e["fear_eye_z_idle"].as<int>(defEyes.zIdlePre);
+		this->list[i].fearEyes.singleEye = e["fear_single_eye"].as<bool>(defEyes.singleEye);
+		this->list[i].fearEyes.eyeLFlip = (int8_t)e["fear_eye_l_flip"].as<int>(defEyes.eyeLFlip);
+		this->list[i].fearEyes.eyeRFlip = (int8_t)e["fear_eye_r_flip"].as<int>(defEyes.eyeRFlip);
 
-		// Load gun flare offsets, falling back to auto-computed defaults from eSubType
+		// Gun flare offsets
 		EntityDef::GunFlareData defFlare = computeDefaultGunFlare(this->list[i].eSubType);
-		this->list[i].gunFlare.dualFlare = ini.getBool(section, "gun_flare_dual", defFlare.dualFlare);
-		this->list[i].gunFlare.flash1X = (int8_t)ini.getInt(section, "gun_flare1_x", defFlare.flash1X);
-		this->list[i].gunFlare.flash1Z = (int16_t)ini.getInt(section, "gun_flare1_z", defFlare.flash1Z);
-		this->list[i].gunFlare.flash2X = (int8_t)ini.getInt(section, "gun_flare2_x", defFlare.flash2X);
-		this->list[i].gunFlare.flash2Z = (int16_t)ini.getInt(section, "gun_flare2_z", defFlare.flash2Z);
+		this->list[i].gunFlare.dualFlare = e["gun_flare_dual"].as<bool>(defFlare.dualFlare);
+		this->list[i].gunFlare.flash1X = (int8_t)e["gun_flare1_x"].as<int>(defFlare.flash1X);
+		this->list[i].gunFlare.flash1Z = (int16_t)e["gun_flare1_z"].as<int>(defFlare.flash1Z);
+		this->list[i].gunFlare.flash2X = (int8_t)e["gun_flare2_x"].as<int>(defFlare.flash2X);
+		this->list[i].gunFlare.flash2Z = (int16_t)e["gun_flare2_z"].as<int>(defFlare.flash2Z);
 
-		// Load body part offsets, falling back to auto-computed defaults
+		// Body part offsets
 		EntityDef::BodyPartData defBody = computeDefaultBodyParts(this->list[i].eType, this->list[i].eSubType);
-		this->list[i].bodyParts.idleTorsoZ = (int16_t)ini.getInt(section, "idle_torso_z", defBody.idleTorsoZ);
-		this->list[i].bodyParts.idleHeadZ = (int16_t)ini.getInt(section, "idle_head_z", defBody.idleHeadZ);
-		this->list[i].bodyParts.walkTorsoZ = (int16_t)ini.getInt(section, "walk_torso_z", defBody.walkTorsoZ);
-		this->list[i].bodyParts.walkHeadZ = (int16_t)ini.getInt(section, "walk_head_z", defBody.walkHeadZ);
-		this->list[i].bodyParts.attackTorsoZF0 =
-		    (int16_t)ini.getInt(section, "attack_torso_z_f0", defBody.attackTorsoZF0);
-		this->list[i].bodyParts.attackTorsoZF1 =
-		    (int16_t)ini.getInt(section, "attack_torso_z_f1", defBody.attackTorsoZF1);
-		this->list[i].bodyParts.attackHeadZ = (int16_t)ini.getInt(section, "attack_head_z", defBody.attackHeadZ);
-		this->list[i].bodyParts.attackHeadX = (int8_t)ini.getInt(section, "attack_head_x", defBody.attackHeadX);
-		this->list[i].bodyParts.noHeadOnBack = ini.getBool(section, "no_head_on_back", defBody.noHeadOnBack);
-		this->list[i].bodyParts.sentryHeadFlip = ini.getBool(section, "sentry_head_flip", defBody.sentryHeadFlip);
-		this->list[i].bodyParts.flipTorsoWalk = ini.getBool(section, "flip_torso_walk", defBody.flipTorsoWalk);
-		this->list[i].bodyParts.noHeadOnAttack = ini.getBool(section, "no_head_on_attack", defBody.noHeadOnAttack);
-		this->list[i].bodyParts.noHeadOnMancAtk = ini.getBool(section, "no_head_on_manc_atk", defBody.noHeadOnMancAtk);
-		this->list[i].bodyParts.attackRevAtk2TorsoZ =
-		    (int16_t)ini.getInt(section, "attack_rev_atk2_torso_z", defBody.attackRevAtk2TorsoZ);
+		this->list[i].bodyParts.idleTorsoZ = (int16_t)e["idle_torso_z"].as<int>(defBody.idleTorsoZ);
+		this->list[i].bodyParts.idleHeadZ = (int16_t)e["idle_head_z"].as<int>(defBody.idleHeadZ);
+		this->list[i].bodyParts.walkTorsoZ = (int16_t)e["walk_torso_z"].as<int>(defBody.walkTorsoZ);
+		this->list[i].bodyParts.walkHeadZ = (int16_t)e["walk_head_z"].as<int>(defBody.walkHeadZ);
+		this->list[i].bodyParts.attackTorsoZF0 = (int16_t)e["attack_torso_z_f0"].as<int>(defBody.attackTorsoZF0);
+		this->list[i].bodyParts.attackTorsoZF1 = (int16_t)e["attack_torso_z_f1"].as<int>(defBody.attackTorsoZF1);
+		this->list[i].bodyParts.attackHeadZ = (int16_t)e["attack_head_z"].as<int>(defBody.attackHeadZ);
+		this->list[i].bodyParts.attackHeadX = (int8_t)e["attack_head_x"].as<int>(defBody.attackHeadX);
+		this->list[i].bodyParts.noHeadOnBack = e["no_head_on_back"].as<bool>(defBody.noHeadOnBack);
+		this->list[i].bodyParts.sentryHeadFlip = e["sentry_head_flip"].as<bool>(defBody.sentryHeadFlip);
+		this->list[i].bodyParts.flipTorsoWalk = e["flip_torso_walk"].as<bool>(defBody.flipTorsoWalk);
+		this->list[i].bodyParts.noHeadOnAttack = e["no_head_on_attack"].as<bool>(defBody.noHeadOnAttack);
+		this->list[i].bodyParts.noHeadOnMancAtk = e["no_head_on_manc_atk"].as<bool>(defBody.noHeadOnMancAtk);
+		this->list[i].bodyParts.attackRevAtk2TorsoZ = (int16_t)e["attack_rev_atk2_torso_z"].as<int>(defBody.attackRevAtk2TorsoZ);
 
-		// Load floater rendering data, falling back to auto-computed defaults
+		// Floater rendering data
 		EntityDef::FloaterData defFloat = computeDefaultFloater(this->list[i].eSubType);
-		int floaterType = ini.getInt(section, "floater_type", (int)defFloat.type);
-		this->list[i].floater.type = (EntityDef::FloaterData::Type)floaterType;
-		this->list[i].floater.zOffset = (int16_t)ini.getInt(section, "floater_z_offset", defFloat.zOffset);
-		this->list[i].floater.hasIdleFrameIncrement = ini.getBool(section, "floater_idle_frame_inc", defFloat.hasIdleFrameIncrement);
-		this->list[i].floater.hasBackExtraSprite = ini.getBool(section, "floater_back_extra_sprite", defFloat.hasBackExtraSprite);
-		this->list[i].floater.backExtraSpriteIdx = (int8_t)ini.getInt(section, "floater_back_extra_idx", defFloat.backExtraSpriteIdx);
-		this->list[i].floater.backViewFrame = (int8_t)ini.getInt(section, "floater_back_view_frame", defFloat.backViewFrame);
-		this->list[i].floater.idleFrontFrame = (int8_t)ini.getInt(section, "floater_idle_front_frame", defFloat.idleFrontFrame);
-		this->list[i].floater.headZOffset = (int16_t)ini.getInt(section, "floater_head_z", defFloat.headZOffset);
-		this->list[i].floater.hasDeadLoot = ini.getBool(section, "floater_dead_loot", defFloat.hasDeadLoot);
+		this->list[i].floater.type = (EntityDef::FloaterData::Type)e["floater_type"].as<int>((int)defFloat.type);
+		this->list[i].floater.zOffset = (int16_t)e["floater_z_offset"].as<int>(defFloat.zOffset);
+		this->list[i].floater.hasIdleFrameIncrement = e["floater_idle_frame_inc"].as<bool>(defFloat.hasIdleFrameIncrement);
+		this->list[i].floater.hasBackExtraSprite = e["floater_back_extra_sprite"].as<bool>(defFloat.hasBackExtraSprite);
+		this->list[i].floater.backExtraSpriteIdx = (int8_t)e["floater_back_extra_idx"].as<int>(defFloat.backExtraSpriteIdx);
+		this->list[i].floater.backViewFrame = (int8_t)e["floater_back_view_frame"].as<int>(defFloat.backViewFrame);
+		this->list[i].floater.idleFrontFrame = (int8_t)e["floater_idle_front_frame"].as<int>(defFloat.idleFrontFrame);
+		this->list[i].floater.headZOffset = (int16_t)e["floater_head_z"].as<int>(defFloat.headZOffset);
+		this->list[i].floater.hasDeadLoot = e["floater_dead_loot"].as<bool>(defFloat.hasDeadLoot);
 
-		// Load special boss rendering data, falling back to auto-computed defaults
+		// Special boss rendering data
 		EntityDef::SpecialBossData defBoss = computeDefaultSpecialBoss(this->list[i].tileIndex, this->list[i].eSubType);
-		int bossType = ini.getInt(section, "boss_type", (int)defBoss.type);
-		this->list[i].specialBoss.type = (EntityDef::SpecialBossData::Type)bossType;
-		this->list[i].specialBoss.torsoZ = (int16_t)ini.getInt(section, "boss_torso_z", defBoss.torsoZ);
-		this->list[i].specialBoss.idleSpriteIdx = (int8_t)ini.getInt(section, "boss_idle_sprite", defBoss.idleSpriteIdx);
-		this->list[i].specialBoss.attackSpriteIdx = (int8_t)ini.getInt(section, "boss_attack_sprite", defBoss.attackSpriteIdx);
-		this->list[i].specialBoss.painSpriteIdx = (int8_t)ini.getInt(section, "boss_pain_sprite", defBoss.painSpriteIdx);
-		this->list[i].specialBoss.renderModeOverride = (int8_t)ini.getInt(section, "boss_render_mode", defBoss.renderModeOverride);
-		this->list[i].specialBoss.painRenderMode = (int8_t)ini.getInt(section, "boss_pain_render_mode", defBoss.painRenderMode);
-		this->list[i].specialBoss.legLateral = (int16_t)ini.getInt(section, "boss_leg_lateral", defBoss.legLateral);
-		this->list[i].specialBoss.legBaseZ = (int16_t)ini.getInt(section, "boss_leg_base_z", defBoss.legBaseZ);
-		this->list[i].specialBoss.idleTorsoZ = (int16_t)ini.getInt(section, "boss_idle_torso_z", defBoss.idleTorsoZ);
-		this->list[i].specialBoss.idleBobDiv = (int8_t)ini.getInt(section, "boss_idle_bob_div", defBoss.idleBobDiv);
-		this->list[i].specialBoss.idleTorsoZBase = (int16_t)ini.getInt(section, "boss_idle_torso_z_base", defBoss.idleTorsoZBase);
-		this->list[i].specialBoss.walkTorsoZ = (int16_t)ini.getInt(section, "boss_walk_torso_z", defBoss.walkTorsoZ);
-		this->list[i].specialBoss.attackTorsoZ = (int16_t)ini.getInt(section, "boss_attack_torso_z", defBoss.attackTorsoZ);
-		this->list[i].specialBoss.painTorsoZ = (int16_t)ini.getInt(section, "boss_pain_torso_z", defBoss.painTorsoZ);
-		this->list[i].specialBoss.painLegsZ = (int16_t)ini.getInt(section, "boss_pain_legs_z", defBoss.painLegsZ);
-		this->list[i].specialBoss.painLegPos = (int8_t)ini.getInt(section, "boss_pain_leg_pos", defBoss.painLegPos);
-		this->list[i].specialBoss.hasAttackFlare = ini.getBool(section, "boss_attack_flare", defBoss.hasAttackFlare);
-		this->list[i].specialBoss.flareZOffset = (int16_t)ini.getInt(section, "boss_flare_z", defBoss.flareZOffset);
-		this->list[i].specialBoss.flareLateralPos = (int8_t)ini.getInt(section, "boss_flare_lateral", defBoss.flareLateralPos);
-		this->list[i].specialBoss.flareTorsoZExtra = (int16_t)ini.getInt(section, "boss_flare_torso_z_extra", defBoss.flareTorsoZExtra);
+		this->list[i].specialBoss.type = (EntityDef::SpecialBossData::Type)e["boss_type"].as<int>((int)defBoss.type);
+		this->list[i].specialBoss.torsoZ = (int16_t)e["boss_torso_z"].as<int>(defBoss.torsoZ);
+		this->list[i].specialBoss.idleSpriteIdx = (int8_t)e["boss_idle_sprite"].as<int>(defBoss.idleSpriteIdx);
+		this->list[i].specialBoss.attackSpriteIdx = (int8_t)e["boss_attack_sprite"].as<int>(defBoss.attackSpriteIdx);
+		this->list[i].specialBoss.painSpriteIdx = (int8_t)e["boss_pain_sprite"].as<int>(defBoss.painSpriteIdx);
+		this->list[i].specialBoss.renderModeOverride = (int8_t)e["boss_render_mode"].as<int>(defBoss.renderModeOverride);
+		this->list[i].specialBoss.painRenderMode = (int8_t)e["boss_pain_render_mode"].as<int>(defBoss.painRenderMode);
+		this->list[i].specialBoss.legLateral = (int16_t)e["boss_leg_lateral"].as<int>(defBoss.legLateral);
+		this->list[i].specialBoss.legBaseZ = (int16_t)e["boss_leg_base_z"].as<int>(defBoss.legBaseZ);
+		this->list[i].specialBoss.idleTorsoZ = (int16_t)e["boss_idle_torso_z"].as<int>(defBoss.idleTorsoZ);
+		this->list[i].specialBoss.idleBobDiv = (int8_t)e["boss_idle_bob_div"].as<int>(defBoss.idleBobDiv);
+		this->list[i].specialBoss.idleTorsoZBase = (int16_t)e["boss_idle_torso_z_base"].as<int>(defBoss.idleTorsoZBase);
+		this->list[i].specialBoss.walkTorsoZ = (int16_t)e["boss_walk_torso_z"].as<int>(defBoss.walkTorsoZ);
+		this->list[i].specialBoss.attackTorsoZ = (int16_t)e["boss_attack_torso_z"].as<int>(defBoss.attackTorsoZ);
+		this->list[i].specialBoss.painTorsoZ = (int16_t)e["boss_pain_torso_z"].as<int>(defBoss.painTorsoZ);
+		this->list[i].specialBoss.painLegsZ = (int16_t)e["boss_pain_legs_z"].as<int>(defBoss.painLegsZ);
+		this->list[i].specialBoss.painLegPos = (int8_t)e["boss_pain_leg_pos"].as<int>(defBoss.painLegPos);
+		this->list[i].specialBoss.hasAttackFlare = e["boss_attack_flare"].as<bool>(defBoss.hasAttackFlare);
+		this->list[i].specialBoss.flareZOffset = (int16_t)e["boss_flare_z"].as<int>(defBoss.flareZOffset);
+		this->list[i].specialBoss.flareLateralPos = (int8_t)e["boss_flare_lateral"].as<int>(defBoss.flareLateralPos);
+		this->list[i].specialBoss.flareTorsoZExtra = (int16_t)e["boss_flare_torso_z_extra"].as<int>(defBoss.flareTorsoZExtra);
 
-		// Load sprite anim overrides, falling back to auto-computed defaults
+		// Sprite anim overrides
 		EntityDef::SpriteAnimData defAnim = computeDefaultSpriteAnim(this->list[i].tileIndex, this->list[i].eSubType);
-		this->list[i].spriteAnim.clampScale = ini.getBool(section, "anim_clamp_scale", defAnim.clampScale);
-		this->list[i].spriteAnim.attackLegOffset = (int8_t)ini.getInt(section, "anim_attack_leg_offset", defAnim.attackLegOffset);
-		this->list[i].spriteAnim.attackLegOffsetOnFlip = ini.getBool(section, "anim_attack_leg_on_flip", defAnim.attackLegOffsetOnFlip);
-		this->list[i].spriteAnim.hasFrameDependentHead = ini.getBool(section, "anim_frame_dep_head", defAnim.hasFrameDependentHead);
-		this->list[i].spriteAnim.headZFrame0 = (int16_t)ini.getInt(section, "anim_head_z_f0", defAnim.headZFrame0);
-		this->list[i].spriteAnim.headXFrame0 = (int8_t)ini.getInt(section, "anim_head_x_f0", defAnim.headXFrame0);
-		this->list[i].spriteAnim.headZFrame1 = (int16_t)ini.getInt(section, "anim_head_z_f1", defAnim.headZFrame1);
+		this->list[i].spriteAnim.clampScale = e["anim_clamp_scale"].as<bool>(defAnim.clampScale);
+		this->list[i].spriteAnim.attackLegOffset = (int8_t)e["anim_attack_leg_offset"].as<int>(defAnim.attackLegOffset);
+		this->list[i].spriteAnim.attackLegOffsetOnFlip = e["anim_attack_leg_on_flip"].as<bool>(defAnim.attackLegOffsetOnFlip);
+		this->list[i].spriteAnim.hasFrameDependentHead = e["anim_frame_dep_head"].as<bool>(defAnim.hasFrameDependentHead);
+		this->list[i].spriteAnim.headZFrame0 = (int16_t)e["anim_head_z_f0"].as<int>(defAnim.headZFrame0);
+		this->list[i].spriteAnim.headXFrame0 = (int8_t)e["anim_head_x_f0"].as<int>(defAnim.headXFrame0);
+		this->list[i].spriteAnim.headZFrame1 = (int16_t)e["anim_head_z_f1"].as<int>(defAnim.headZFrame1);
 	}
 
 	printf("EntityDefManager: loaded %d entities from %s\n", this->numDefs, path);

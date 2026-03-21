@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "CAppContainer.h"
+#include <yaml-cpp/yaml.h>
 #include "INIReader.h"
 #include "App.h"
 #include "Hud.h"
@@ -46,13 +47,13 @@ bool MenuSystem::startup() {
 	Applet* app = this->app;
 	printf("MenuSystem::startup\n");
 
-	// Try loading from menus.ini in CWD first
-	FILE* f = std::fopen("menus.ini", "rb");
+	// Try loading from menus.yaml in CWD first
+	FILE* f = std::fopen("menus.yaml", "rb");
 	if (f) {
 		std::fclose(f);
-		printf("MenuSystem: loading from menus.ini\n");
-		if (!this->loadMenusFromINI("menus.ini")) {
-			app->Error("Failed to load menus.ini\n");
+		printf("MenuSystem: loading from menus.yaml\n");
+		if (!this->loadMenusFromYAML("menus.yaml")) {
+			app->Error("Failed to load menus.yaml\n");
 			return false;
 		}
 	} else {
@@ -458,34 +459,36 @@ bool MenuSystem::loadMenusFromBinary() {
 	return true;
 }
 
-bool MenuSystem::loadMenusFromINI(const char* path) {
-	INIReader* ini = new INIReader();
-	if (!ini->load(path)) {
-		delete ini;
+bool MenuSystem::loadMenusFromYAML(const char* path) {
+	YAML::Node config;
+	try {
+		config = YAML::LoadFile(path);
+	} catch (const YAML::Exception& e) {
+		printf("MenuSystem: failed to load %s: %s\n", path, e.what());
 		return false;
 	}
 
-	int count = ini->getInt("Menus", "count", 0);
-	if (count <= 0) {
-		printf("MenuSystem: menus.ini has invalid count\n");
-		delete ini;
+	YAML::Node menus = config["menus"];
+	if (!menus || !menus.IsSequence() || menus.size() == 0) {
+		printf("MenuSystem: menus.yaml has missing or empty 'menus' array\n");
 		return false;
 	}
 
+	int count = (int)menus.size();
 	this->menuDataCount = (uint32_t)count;
 	this->menuData = new uint32_t[count];
 
-	// Single pass: collect items into a vector, then copy to array
 	std::vector<uint32_t> itemWords;
 	int itemOffset = 0;
 
 	for (int i = 0; i < count; i++) {
-		char section[32];
-		snprintf(section, sizeof(section), "Menu_%d", i);
+		YAML::Node menu = menus[i];
 
-		int menuId = ini->getInt(section, "menu_id", 0);
-		int menuType = menuTypeFromString(ini->getString(section, "type", "default"));
-		int itemCount = ini->getInt(section, "item_count", 0);
+		int menuId = menu["menu_id"].as<int>(0);
+		int menuType = menuTypeFromString(menu["type"].as<std::string>("default").c_str());
+
+		YAML::Node items = menu["items"];
+		int itemCount = (items && items.IsSequence()) ? (int)items.size() : 0;
 
 		uint8_t storedId = (uint8_t)(menuId & 0xFF);
 		int endOffset = itemOffset + itemCount * 2;
@@ -494,14 +497,13 @@ bool MenuSystem::loadMenusFromINI(const char* path) {
 			| (uint32_t)((menuType & 0xFF) << 24);
 
 		for (int j = 0; j < itemCount; j++) {
-			char itemSection[48];
-			snprintf(itemSection, sizeof(itemSection), "Menu_%d_Item_%d", i, j);
+			YAML::Node item = items[j];
 
-			int stringId = ini->getInt(itemSection, "string_id", 0);
-			int flags = flagsFromString(ini->getString(itemSection, "flags", "normal"));
-			int action = actionFromString(ini->getString(itemSection, "action", "none"));
-			int param = ini->getInt(itemSection, "param", 0);
-			int helpString = ini->getInt(itemSection, "help_string", 0);
+			int stringId = item["string_id"].as<int>(0);
+			int flags = flagsFromString(item["flags"].as<std::string>("normal").c_str());
+			int action = actionFromString(item["action"].as<std::string>("none").c_str());
+			int param = item["param"].as<int>(0);
+			int helpString = item["help_string"].as<int>(0);
 
 			itemWords.push_back((uint32_t)((stringId & 0xFFFF) << 16) | (uint32_t)(flags & 0xFFFF));
 			itemWords.push_back((uint32_t)((helpString & 0xFFFF) << 16)
@@ -515,7 +517,6 @@ bool MenuSystem::loadMenusFromINI(const char* path) {
 	this->menuItems = new uint32_t[itemWords.size() > 0 ? itemWords.size() : 1];
 	std::memcpy(this->menuItems, itemWords.data(), itemWords.size() * sizeof(uint32_t));
 
-	delete ini;
 	printf("MenuSystem: loaded %d menus, %d item words from %s\n", this->menuDataCount, this->menuItemsCount, path);
 	return true;
 }
