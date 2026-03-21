@@ -1,14 +1,14 @@
 file(GLOB_RECURSE HEADER_FILES
-	"*.hpp"
-	"*.h")
+	"engine/*.hpp" "engine/*.h"
+	"game/*.hpp" "game/*.h")
 
 file(GLOB_RECURSE SOURCE_FILES
-	"*.cpp"
-	"*.c")
+	"engine/*.cpp" "engine/*.c"
+	"game/*.cpp" "game/*.c")
 
 file(GLOB_RECURSE RESOURCES_FILES
-	"*.rc"
-	"*.ico")
+	"engine/*.rc" "engine/*.ico"
+	"game/*.rc" "game/*.ico")
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} PREFIX "Header Files" FILES ${HEADER_FILES})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} PREFIX "Source Files" FILES ${SOURCE_FILES})
@@ -33,3 +33,6 @@ target_link_libraries(${PROJECT_NAME}
 	OpenAL::OpenAL
 	OpenGL::GL
 	${HASH_LIBRARY_TGT_NAME})
+
+# Converter tool
+add_subdirectory(converter)
