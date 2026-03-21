@@ -1,6 +1,4 @@
-# Sound resource definitions
-# Maps sound index to WAV filename
-# Sound IDs start at 1000, index = resID - 1000
+# Sound resource definitions  # Maps sound index to WAV filename  # Sound IDs start at 1000, index = resID - 1000
 
 sounds:
   - Arachnotron_active.wav
@@ -147,4 +145,3 @@ sounds:
   - zombie_death3.wav
   - zombie_sight1.wav
   - zombie_sight2.wav
-  - zombie_sight3.wav

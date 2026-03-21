@@ -1,1521 +1,1331 @@
-# Entity definitions
-# 190 entities with type, rendering, and animation data
+# Entity definitions  # 190 entities with type, rendering, and animation data
 
 entities:
-  - # Entity 0
-    tile_index: 0
+# Entity 0
+  - tile_index: 0
     type: corpse
     subtype: 15
     parm: 0
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 1
-    tile_index: 0
+    description: 159  # Entity 1
+  - tile_index: 0
     type: corpse
     subtype: 15
     parm: 1
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 2
-    tile_index: 0
+    description: 159  # Entity 2
+  - tile_index: 0
     type: corpse
     subtype: 15
     parm: 2
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 3
-    tile_index: 0
+    description: 159  # Entity 3
+  - tile_index: 0
     type: corpse
     subtype: 15
     parm: 3
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 4
-    tile_index: 0
+    description: 159  # Entity 4
+  - tile_index: 0
     type: corpse
     subtype: 15
     parm: 4
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 5
-    tile_index: 0
+    description: 159  # Entity 5
+  - tile_index: 0
     type: corpse
     subtype: 11
     parm: 0
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 6
-    tile_index: 0
+    description: 159  # Entity 6
+  - tile_index: 0
     type: corpse
     subtype: 11
     parm: 1
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 7
-    tile_index: 0
+    description: 159  # Entity 7
+  - tile_index: 0
     type: corpse
     subtype: 0
     parm: 0
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 8
-    tile_index: 0
+    description: 159  # Entity 8
+  - tile_index: 0
     type: corpse
     subtype: 0
     parm: 1
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 9
-    tile_index: 0
+    description: 159  # Entity 9
+  - tile_index: 0
     type: corpse
     subtype: 0
     parm: 2
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 10
-    tile_index: 0
+    description: 159  # Entity 10
+  - tile_index: 0
     type: corpse
     subtype: 3
     parm: 0
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 11
-    tile_index: 0
+    description: 159  # Entity 11
+  - tile_index: 0
     type: corpse
     subtype: 3
     parm: 1
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 12
-    tile_index: 0
+    description: 159  # Entity 12
+  - tile_index: 0
     type: corpse
     subtype: 3
     parm: 2
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 13
-    tile_index: 0
+    description: 159  # Entity 13
+  - tile_index: 0
     type: corpse
     subtype: 4
     parm: 0
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 14
-    tile_index: 0
+    description: 159  # Entity 14
+  - tile_index: 0
     type: corpse
     subtype: 4
     parm: 1
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 15
-    tile_index: 0
+    description: 159  # Entity 15
+  - tile_index: 0
     type: corpse
     subtype: 4
     parm: 2
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 16
-    tile_index: 0
+    description: 159  # Entity 16
+  - tile_index: 0
     type: corpse
     subtype: 5
     parm: 0
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 17
-    tile_index: 0
+    description: 159  # Entity 17
+  - tile_index: 0
     type: corpse
     subtype: 5
     parm: 1
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 18
-    tile_index: 0
+    description: 159  # Entity 18
+  - tile_index: 0
     type: corpse
     subtype: 5
     parm: 2
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 19
-    tile_index: 0
+    description: 159  # Entity 19
+  - tile_index: 0
     type: corpse
     subtype: 8
     parm: 0
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 20
-    tile_index: 0
+    description: 159  # Entity 20
+  - tile_index: 0
     type: corpse
     subtype: 8
     parm: 1
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 21
-    tile_index: 0
+    description: 159  # Entity 21
+  - tile_index: 0
     type: corpse
     subtype: 8
     parm: 2
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 22
-    tile_index: 0
+    description: 159  # Entity 22
+  - tile_index: 0
     type: corpse
     subtype: 6
     parm: 0
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 23
-    tile_index: 0
+    description: 159  # Entity 23
+  - tile_index: 0
     type: corpse
     subtype: 6
     parm: 1
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 24
-    tile_index: 0
+    description: 159  # Entity 24
+  - tile_index: 0
     type: corpse
     subtype: 6
     parm: 2
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 25
-    tile_index: 0
+    description: 159  # Entity 25
+  - tile_index: 0
     type: corpse
     subtype: 7
     parm: 0
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 26
-    tile_index: 0
+    description: 159  # Entity 26
+  - tile_index: 0
     type: corpse
     subtype: 7
     parm: 1
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 27
-    tile_index: 0
+    description: 159  # Entity 27
+  - tile_index: 0
     type: corpse
     subtype: 7
     parm: 2
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 28
-    tile_index: 0
+    description: 159  # Entity 28
+  - tile_index: 0
     type: corpse
     subtype: 2
     parm: 0
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 29
-    tile_index: 0
+    description: 159  # Entity 29
+  - tile_index: 0
     type: corpse
     subtype: 2
     parm: 1
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 30
-    tile_index: 0
+    description: 159  # Entity 30
+  - tile_index: 0
     type: corpse
     subtype: 2
     parm: 2
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 31
-    tile_index: 0
+    description: 159  # Entity 31
+  - tile_index: 0
     type: corpse
     subtype: 10
     parm: 0
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 32
-    tile_index: 0
+    description: 159  # Entity 32
+  - tile_index: 0
     type: corpse
     subtype: 10
     parm: 1
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 33
-    tile_index: 0
+    description: 159  # Entity 33
+  - tile_index: 0
     type: corpse
     subtype: 10
     parm: 2
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 34
-    tile_index: 0
+    description: 159  # Entity 34
+  - tile_index: 0
     type: corpse
     subtype: 9
     parm: 0
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 35
-    tile_index: 0
+    description: 159  # Entity 35
+  - tile_index: 0
     type: corpse
     subtype: 9
     parm: 1
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 36
-    tile_index: 0
+    description: 159  # Entity 36
+  - tile_index: 0
     type: corpse
     subtype: 9
     parm: 2
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 37
-    tile_index: 0
+    description: 159  # Entity 37
+  - tile_index: 0
     type: corpse
     subtype: 14
     parm: 0
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 38
-    tile_index: 0
+    description: 159  # Entity 38
+  - tile_index: 0
     type: corpse
     subtype: 12
     parm: 0
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 39
-    tile_index: 0
+    description: 159  # Entity 39
+  - tile_index: 0
     type: corpse
     subtype: 13
     parm: 0
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 40
-    tile_index: 0
+    description: 159  # Entity 40
+  - tile_index: 0
     type: corpse
     subtype: 14
     parm: 1
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 41
-    tile_index: 0
+    description: 159  # Entity 41
+  - tile_index: 0
     type: item
     subtype: 0
     parm: 13
     name: 76
     long_name: 76
-    description: 77
-  - # Entity 42
-    tile_index: 0
+    description: 77  # Entity 42
+  - tile_index: 0
     type: item
     subtype: 2
     parm: 6
     name: 88
     long_name: 88
-    description: 89
-  - # Entity 43
-    tile_index: 0
+    description: 89  # Entity 43
+  - tile_index: 0
     type: item
     subtype: 0
     parm: 8
     name: 93
     long_name: 94
-    description: 95
-  - # Entity 44
-    tile_index: 0
+    description: 95  # Entity 44
+  - tile_index: 0
     type: item
     subtype: 0
     parm: 6
     name: 96
     long_name: 97
-    description: 98
-  - # Entity 45
-    tile_index: 0
+    description: 98  # Entity 45
+  - tile_index: 0
     type: item
     subtype: 0
     parm: 1
     name: 99
     long_name: 100
-    description: 101
-  - # Entity 46
-    tile_index: 0
+    description: 101  # Entity 46
+  - tile_index: 0
     type: item
     subtype: 0
     parm: 3
     name: 119
     long_name: 120
-    description: 121
-  - # Entity 47
-    tile_index: 0
+    description: 121  # Entity 47
+  - tile_index: 0
     type: item
     subtype: 0
     parm: 2
     name: 102
     long_name: 103
-    description: 104
-  - # Entity 48
-    tile_index: 0
+    description: 104  # Entity 48
+  - tile_index: 0
     type: item
     subtype: 0
     parm: 9
     name: 105
     long_name: 106
-    description: 107
-  - # Entity 49
-    tile_index: 0
+    description: 107  # Entity 49
+  - tile_index: 0
     type: item
     subtype: 0
     parm: 7
     name: 108
     long_name: 109
-    description: 110
-  - # Entity 50
-    tile_index: 0
+    description: 110  # Entity 50
+  - tile_index: 0
     type: item
     subtype: 0
     parm: 0
     name: 111
     long_name: 112
-    description: 113
-  - # Entity 51
-    tile_index: 0
+    description: 113  # Entity 51
+  - tile_index: 0
     type: item
     subtype: 0
     parm: 5
     name: 114
     long_name: 115
-    description: 116
-  - # Entity 52
-    tile_index: 0
+    description: 116  # Entity 52
+  - tile_index: 0
     type: item
     subtype: 0
     parm: 10
     name: 117
     long_name: 117
-    description: 118
-  - # Entity 53
-    tile_index: 0
+    description: 118  # Entity 53
+  - tile_index: 0
     type: item
     subtype: 0
     parm: 4
     name: 122
     long_name: 123
-    description: 124
-  - # Entity 54
-    tile_index: 0
+    description: 124  # Entity 54
+  - tile_index: 0
     type: item
     subtype: 0
     parm: 16
     name: 145
     long_name: 145
-    description: 146
-  - # Entity 55
-    tile_index: 0
+    description: 146  # Entity 55
+  - tile_index: 0
     type: item
     subtype: 0
     parm: 22
     name: 86
     long_name: 86
-    description: 87
-  - # Entity 56
-    tile_index: 0
+    description: 87  # Entity 56
+  - tile_index: 0
     type: item
     subtype: 0
     parm: 25
     name: 157
     long_name: 157
-    description: 158
-  - # Entity 57
-    tile_index: 1
+    description: 158  # Entity 57
+  - tile_index: 1
     type: item
     subtype: 1
     parm: 0
     name: 0
     long_name: 0
-    description: 1
-  - # Entity 58
-    tile_index: 2
+    description: 1  # Entity 58
+  - tile_index: 2
     type: item
     subtype: 1
     parm: 1
     name: 2
     long_name: 2
-    description: 3
-  - # Entity 59
-    tile_index: 3
+    description: 3  # Entity 59
+  - tile_index: 3
     type: item
     subtype: 1
     parm: 2
     name: 4
     long_name: 4
-    description: 5
-  - # Entity 60
-    tile_index: 4
+    description: 5  # Entity 60
+  - tile_index: 4
     type: item
     subtype: 1
     parm: 3
     name: 6
     long_name: 7
-    description: 8
-  - # Entity 61
-    tile_index: 5
+    description: 8  # Entity 61
+  - tile_index: 5
     type: item
     subtype: 1
     parm: 4
     name: 9
     long_name: 10
-    description: 11
-  - # Entity 62
-    tile_index: 6
+    description: 11  # Entity 62
+  - tile_index: 6
     type: item
     subtype: 1
     parm: 7
     name: 12
     long_name: 12
-    description: 13
-  - # Entity 63
-    tile_index: 7
+    description: 13  # Entity 63
+  - tile_index: 7
     type: item
     subtype: 1
     parm: 8
     name: 14
     long_name: 14
-    description: 15
-  - # Entity 64
-    tile_index: 8
+    description: 15  # Entity 64
+  - tile_index: 8
     type: item
     subtype: 1
     parm: 9
     name: 16
     long_name: 17
-    description: 18
-  - # Entity 65
-    tile_index: 9
+    description: 18  # Entity 65
+  - tile_index: 9
     type: item
     subtype: 1
     parm: 10
     name: 19
     long_name: 19
-    description: 20
-  - # Entity 66
-    tile_index: 10
+    description: 20  # Entity 66
+  - tile_index: 10
     type: item
     subtype: 1
     parm: 11
     name: 21
     long_name: 21
-    description: 22
-  - # Entity 67
-    tile_index: 11
+    description: 22  # Entity 67
+  - tile_index: 11
     type: item
     subtype: 1
     parm: 12
     name: 23
     long_name: 23
-    description: 24
-  - # Entity 68
-    tile_index: 12
+    description: 24  # Entity 68
+  - tile_index: 12
     type: item
     subtype: 1
     parm: 13
     name: 25
     long_name: 25
-    description: 26
-  - # Entity 69
-    tile_index: 13
+    description: 26  # Entity 69
+  - tile_index: 13
     type: item
     subtype: 1
     parm: 5
     name: 6
     long_name: 7
-    description: 8
-  - # Entity 70
-    tile_index: 14
+    description: 8  # Entity 70
+  - tile_index: 14
     type: item
     subtype: 1
     parm: 6
     name: 9
     long_name: 10
-    description: 11
-  - # Entity 71
-    tile_index: 15
+    description: 11  # Entity 71
+  - tile_index: 15
     type: item
     subtype: 1
     parm: 14
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 72
-    tile_index: 18
+    description: 159  # Entity 72
+  - tile_index: 18
     type: monster
     subtype: 11
     parm: 1
     name: 29
     long_name: 29
-    description: 159
-  - # Entity 73
-    tile_index: 19
+    description: 159  # Entity 73
+  - tile_index: 19
     type: monster
     subtype: 11
     parm: 0
     name: 28
     long_name: 28
-    description: 159
-  - # Entity 74
-    tile_index: 20
+    description: 159  # Entity 74
+  - tile_index: 20
     type: monster
     subtype: 0
     parm: 0
     name: 30
     long_name: 30
-    description: 159
-  - # Entity 75
-    tile_index: 21
+    description: 159  # Entity 75
+  - tile_index: 21
     type: monster
     subtype: 0
     parm: 1
     name: 31
     long_name: 31
-    description: 159
-  - # Entity 76
-    tile_index: 22
+    description: 159  # Entity 76
+  - tile_index: 22
     type: monster
     subtype: 0
     parm: 2
     name: 32
     long_name: 32
-    description: 159
-  - # Entity 77
-    tile_index: 23
+    description: 159  # Entity 77
+  - tile_index: 23
     type: monster
     subtype: 3
     parm: 0
     name: 33
     long_name: 33
-    description: 159
-  - # Entity 78
-    tile_index: 24
+    description: 159  # Entity 78
+  - tile_index: 24
     type: monster
     subtype: 3
     parm: 1
     name: 34
     long_name: 34
-    description: 159
-  - # Entity 79
-    tile_index: 25
+    description: 159  # Entity 79
+  - tile_index: 25
     type: monster
     subtype: 3
     parm: 2
     name: 35
     long_name: 35
-    description: 159
-  - # Entity 80
-    tile_index: 26
+    description: 159  # Entity 80
+  - tile_index: 26
     type: monster
     subtype: 4
     parm: 0
     name: 36
     long_name: 36
-    description: 159
-  - # Entity 81
-    tile_index: 27
+    description: 159  # Entity 81
+  - tile_index: 27
     type: monster
     subtype: 4
     parm: 1
     name: 37
     long_name: 37
-    description: 159
-  - # Entity 82
-    tile_index: 28
+    description: 159  # Entity 82
+  - tile_index: 28
     type: monster
     subtype: 4
     parm: 2
     name: 38
     long_name: 38
-    description: 159
-  - # Entity 83
-    tile_index: 29
+    description: 159  # Entity 83
+  - tile_index: 29
     type: monster
     subtype: 2
     parm: 0
     name: 54
     long_name: 54
-    description: 159
-  - # Entity 84
-    tile_index: 30
+    description: 159  # Entity 84
+  - tile_index: 30
     type: monster
     subtype: 2
     parm: 1
     name: 55
     long_name: 55
-    description: 159
-  - # Entity 85
-    tile_index: 31
+    description: 159  # Entity 85
+  - tile_index: 31
     type: monster
     subtype: 2
     parm: 2
     name: 56
     long_name: 56
-    description: 159
-  - # Entity 86
-    tile_index: 32
+    description: 159  # Entity 86
+  - tile_index: 32
     type: monster
     subtype: 5
     parm: 0
     name: 39
     long_name: 39
-    description: 159
-  - # Entity 87
-    tile_index: 33
+    description: 159  # Entity 87
+  - tile_index: 33
     type: monster
     subtype: 5
     parm: 1
     name: 40
     long_name: 40
-    description: 159
-  - # Entity 88
-    tile_index: 34
+    description: 159  # Entity 88
+  - tile_index: 34
     type: monster
     subtype: 5
     parm: 2
     name: 41
     long_name: 41
-    description: 159
-  - # Entity 89
-    tile_index: 35
+    description: 159  # Entity 89
+  - tile_index: 35
     type: monster
     subtype: 9
     parm: 0
     name: 60
     long_name: 60
-    description: 159
-  - # Entity 90
-    tile_index: 36
+    description: 159  # Entity 90
+  - tile_index: 36
     type: monster
     subtype: 9
     parm: 1
     name: 61
     long_name: 61
-    description: 159
-  - # Entity 91
-    tile_index: 37
+    description: 159  # Entity 91
+  - tile_index: 37
     type: monster
     subtype: 9
     parm: 2
     name: 62
     long_name: 62
-    description: 159
-  - # Entity 92
-    tile_index: 38
+    description: 159  # Entity 92
+  - tile_index: 38
     type: monster
     subtype: 8
     parm: 0
     name: 42
     long_name: 42
-    description: 159
-  - # Entity 93
-    tile_index: 39
+    description: 159  # Entity 93
+  - tile_index: 39
     type: monster
     subtype: 8
     parm: 1
     name: 43
     long_name: 43
-    description: 159
-  - # Entity 94
-    tile_index: 40
+    description: 159  # Entity 94
+  - tile_index: 40
     type: monster
     subtype: 8
     parm: 2
     name: 44
     long_name: 44
-    description: 159
-  - # Entity 95
-    tile_index: 41
+    description: 159  # Entity 95
+  - tile_index: 41
     type: monster
     subtype: 6
     parm: 0
     name: 45
     long_name: 45
-    description: 159
-  - # Entity 96
-    tile_index: 42
+    description: 159  # Entity 96
+  - tile_index: 42
     type: monster
     subtype: 6
     parm: 1
     name: 46
     long_name: 46
-    description: 159
-  - # Entity 97
-    tile_index: 43
+    description: 159  # Entity 97
+  - tile_index: 43
     type: monster
     subtype: 6
     parm: 2
     name: 47
     long_name: 47
-    description: 159
-  - # Entity 98
-    tile_index: 44
+    description: 159  # Entity 98
+  - tile_index: 44
     type: monster
     subtype: 7
     parm: 0
     name: 48
     long_name: 48
-    description: 159
-  - # Entity 99
-    tile_index: 45
+    description: 159  # Entity 99
+  - tile_index: 45
     type: monster
     subtype: 7
     parm: 1
     name: 49
     long_name: 49
-    description: 159
-  - # Entity 100
-    tile_index: 46
+    description: 159  # Entity 100
+  - tile_index: 46
     type: monster
     subtype: 7
     parm: 2
     name: 50
     long_name: 50
-    description: 159
-  - # Entity 101
-    tile_index: 50
+    description: 159  # Entity 101
+  - tile_index: 50
     type: monster
     subtype: 10
     parm: 0
     name: 57
     long_name: 57
-    description: 159
-  - # Entity 102
-    tile_index: 51
+    description: 159  # Entity 102
+  - tile_index: 51
     type: monster
     subtype: 10
     parm: 1
     name: 58
     long_name: 58
-    description: 159
-  - # Entity 103
-    tile_index: 52
+    description: 159  # Entity 103
+  - tile_index: 52
     type: monster
     subtype: 10
     parm: 2
     name: 59
     long_name: 59
-    description: 159
-  - # Entity 104
-    tile_index: 53
+    description: 159  # Entity 104
+  - tile_index: 53
     type: monster
     subtype: 14
     parm: 0
     name: 63
     long_name: 63
-    description: 159
-  - # Entity 105
-    tile_index: 54
+    description: 159  # Entity 105
+  - tile_index: 54
     type: monster
     subtype: 12
     parm: 0
     name: 64
     long_name: 64
-    description: 159
-  - # Entity 106
-    tile_index: 56
+    description: 159  # Entity 106
+  - tile_index: 56
     type: monster
     subtype: 13
     parm: 0
     name: 65
     long_name: 65
-    description: 159
-  - # Entity 107
-    tile_index: 57
+    description: 159  # Entity 107
+  - tile_index: 57
     type: monster
     subtype: 14
     parm: 1
     name: 66
     long_name: 66
-    description: 159
-  - # Entity 108
-    tile_index: 58
+    description: 159  # Entity 108
+  - tile_index: 58
     type: monster
     subtype: 15
     parm: 0
     name: 67
     long_name: 67
-    description: 159
-  - # Entity 109
-    tile_index: 59
+    description: 159  # Entity 109
+  - tile_index: 59
     type: monster
     subtype: 15
     parm: 1
     name: 67
     long_name: 67
-    description: 159
-  - # Entity 110
-    tile_index: 60
+    description: 159  # Entity 110
+  - tile_index: 60
     type: monster
     subtype: 15
     parm: 2
     name: 67
     long_name: 67
-    description: 159
-  - # Entity 111
-    tile_index: 61
+    description: 159  # Entity 111
+  - tile_index: 61
     type: monster
     subtype: 15
     parm: 3
     name: 67
     long_name: 67
-    description: 159
-  - # Entity 112
-    tile_index: 62
+    description: 159  # Entity 112
+  - tile_index: 62
     type: monster
     subtype: 15
     parm: 4
     name: 67
     long_name: 67
-    description: 159
-  - # Entity 113
-    tile_index: 66
+    description: 159  # Entity 113
+  - tile_index: 66
     type: npc
     subtype: 0
     parm: 0
     name: 173
     long_name: 159
-    description: 159
-  - # Entity 114
-    tile_index: 68
+    description: 159  # Entity 114
+  - tile_index: 68
     type: npc
     subtype: 1
     parm: 0
     name: 174
     long_name: 159
-    description: 159
-  - # Entity 115
-    tile_index: 69
+    description: 159  # Entity 115
+  - tile_index: 69
     type: npc
     subtype: 2
     parm: 0
     name: 175
     long_name: 159
-    description: 159
-  - # Entity 116
-    tile_index: 71
+    description: 159  # Entity 116
+  - tile_index: 71
     type: npc
     subtype: 3
     parm: 0
     name: 176
     long_name: 159
-    description: 159
-  - # Entity 117
-    tile_index: 72
+    description: 159  # Entity 117
+  - tile_index: 72
     type: npc
     subtype: 4
     parm: 0
     name: 177
     long_name: 159
-    description: 159
-  - # Entity 118
-    tile_index: 73
+    description: 159  # Entity 118
+  - tile_index: 73
     type: npc
     subtype: 5
     parm: 0
     name: 179
     long_name: 159
-    description: 159
-  - # Entity 119
-    tile_index: 74
+    description: 159  # Entity 119
+  - tile_index: 74
     type: npc
     subtype: 6
     parm: 0
     name: 179
     long_name: 159
-    description: 159
-  - # Entity 120
-    tile_index: 75
+    description: 159  # Entity 120
+  - tile_index: 75
     type: npc
     subtype: 7
     parm: 0
     name: 180
     long_name: 159
-    description: 159
-  - # Entity 121
-    tile_index: 76
+    description: 159  # Entity 121
+  - tile_index: 76
     type: npc
     subtype: 8
     parm: 0
     name: 181
     long_name: 159
-    description: 159
-  - # Entity 122
-    tile_index: 77
+    description: 159  # Entity 122
+  - tile_index: 77
     type: npc
     subtype: 9
     parm: 0
     name: 176
     long_name: 159
-    description: 159
-  - # Entity 123
-    tile_index: 85
+    description: 159  # Entity 123
+  - tile_index: 85
     type: item
     subtype: 2
     parm: 1
     name: 78
     long_name: 78
-    description: 79
-  - # Entity 124
-    tile_index: 86
+    description: 79  # Entity 124
+  - tile_index: 86
     type: item
     subtype: 2
     parm: 2
     name: 80
     long_name: 80
-    description: 81
-  - # Entity 125
-    tile_index: 88
+    description: 81  # Entity 125
+  - tile_index: 88
     type: item
     subtype: 2
     parm: 5
     name: 82
     long_name: 82
-    description: 83
-  - # Entity 126
-    tile_index: 89
+    description: 83  # Entity 126
+  - tile_index: 89
     type: item
     subtype: 2
     parm: 4
     name: 84
     long_name: 84
-    description: 85
-  - # Entity 127
-    tile_index: 90
+    description: 85  # Entity 127
+  - tile_index: 90
     type: item
     subtype: 2
     parm: 3
     name: 86
     long_name: 86
-    description: 87
-  - # Entity 128
-    tile_index: 107
+    description: 87  # Entity 128
+  - tile_index: 107
     type: item
     subtype: 0
     parm: 24
     name: 157
     long_name: 157
-    description: 158
-  - # Entity 129
-    tile_index: 110
+    description: 158  # Entity 129
+  - tile_index: 110
     type: item
     subtype: 0
     parm: 19
     name: 68
     long_name: 68
-    description: 69
-  - # Entity 130
-    tile_index: 111
+    description: 69  # Entity 130
+  - tile_index: 111
     type: item
     subtype: 0
     parm: 20
     name: 70
     long_name: 70
-    description: 71
-  - # Entity 131
-    tile_index: 112
+    description: 71  # Entity 131
+  - tile_index: 112
     type: item
     subtype: 0
     parm: 11
     name: 72
     long_name: 72
-    description: 73
-  - # Entity 132
-    tile_index: 113
+    description: 73  # Entity 132
+  - tile_index: 113
     type: item
     subtype: 0
     parm: 23
     name: 90
     long_name: 90
-    description: 159
-  - # Entity 133
-    tile_index: 114
+    description: 159  # Entity 133
+  - tile_index: 114
     type: item
     subtype: 0
     parm: 23
     name: 90
     long_name: 90
-    description: 159
-  - # Entity 134
-    tile_index: 115
+    description: 159  # Entity 134
+  - tile_index: 115
     type: item
     subtype: 0
     parm: 23
     name: 91
     long_name: 91
-    description: 92
-  - # Entity 135
-    tile_index: 116
+    description: 92  # Entity 135
+  - tile_index: 116
     type: item
     subtype: 0
     parm: 17
     name: 147
     long_name: 147
-    description: 148
-  - # Entity 136
-    tile_index: 117
+    description: 148  # Entity 136
+  - tile_index: 117
     type: item
     subtype: 3
     parm: 0
     name: 149
     long_name: 159
-    description: 159
-  - # Entity 137
-    tile_index: 119
+    description: 159  # Entity 137
+  - tile_index: 119
     type: item
     subtype: 0
     parm: 12
     name: 74
     long_name: 74
-    description: 75
-  - # Entity 138
-    tile_index: 121
+    description: 75  # Entity 138
+  - tile_index: 121
     type: attack_interactive
     subtype: 0
     parm: 1
     name: 128
     long_name: 159
-    description: 159
-  - # Entity 139
-    tile_index: 123
+    description: 159  # Entity 139
+  - tile_index: 123
     type: attack_interactive
     subtype: 3
     parm: 3
     name: 131
     long_name: 131
-    description: 144
-  - # Entity 140
-    tile_index: 125
+    description: 144  # Entity 140
+  - tile_index: 125
     type: decor
     subtype: 0
     parm: 1
     name: 165
     long_name: 165
-    description: 159
-  - # Entity 141
-    tile_index: 127
+    description: 159  # Entity 141
+  - tile_index: 127
     type: attack_interactive
     subtype: 3
     parm: 3
     name: 132
     long_name: 132
-    description: 144
-  - # Entity 142
-    tile_index: 130
+    description: 144  # Entity 142
+  - tile_index: 130
     type: env_damage
     subtype: 1
     parm: 0
     name: 130
     long_name: 159
-    description: 159
-  - # Entity 143
-    tile_index: 131
+    description: 159  # Entity 143
+  - tile_index: 131
     type: decor_noclip
     subtype: 8
     parm: 1
     name: 166
     long_name: 166
-    description: 159
-  - # Entity 144
-    tile_index: 133
+    description: 159  # Entity 144
+  - tile_index: 133
     type: decor
     subtype: 0
     parm: 1
     name: 170
     long_name: 170
-    description: 159
-  - # Entity 145
-    tile_index: 134
+    description: 159  # Entity 145
+  - tile_index: 134
     type: decor_noclip
     subtype: 7
     parm: 1
     name: 133
     long_name: 133
-    description: 159
-  - # Entity 146
-    tile_index: 135
+    description: 159  # Entity 146
+  - tile_index: 135
     type: attack_interactive
     subtype: 0
     parm: 1
     name: 134
     long_name: 159
-    description: 159
-  - # Entity 147
-    tile_index: 136
+    description: 159  # Entity 147
+  - tile_index: 136
     type: decor
     subtype: 0
     parm: 0
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 148
-    tile_index: 137
+    description: 159  # Entity 148
+  - tile_index: 137
     type: corpse
     subtype: 17
     parm: 2
     name: 135
     long_name: 135
-    description: 159
-  - # Entity 149
-    tile_index: 138
+    description: 159  # Entity 149
+  - tile_index: 138
     type: corpse
     subtype: 17
     parm: 0
     name: 135
     long_name: 135
-    description: 159
-  - # Entity 150
-    tile_index: 139
+    description: 159  # Entity 150
+  - tile_index: 139
     type: corpse
     subtype: 17
     parm: 1
     name: 135
     long_name: 135
-    description: 159
-  - # Entity 151
-    tile_index: 140
+    description: 159  # Entity 151
+  - tile_index: 140
     type: env_damage
     subtype: 0
     parm: 0
     name: 27
     long_name: 27
-    description: 159
-  - # Entity 152
-    tile_index: 141
+    description: 159  # Entity 152
+  - tile_index: 141
     type: decor_noclip
     subtype: 0
     parm: 0
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 153
-    tile_index: 142
+    description: 159  # Entity 153
+  - tile_index: 142
     type: decor_noclip
     subtype: 0
     parm: 0
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 154
-    tile_index: 143
+    description: 159  # Entity 154
+  - tile_index: 143
     type: decor_noclip
     subtype: 0
     parm: 0
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 155
-    tile_index: 147
+    description: 159  # Entity 155
+  - tile_index: 147
     type: decor
     subtype: 0
     parm: 1
     name: 172
     long_name: 172
-    description: 159
-  - # Entity 156
-    tile_index: 149
+    description: 159  # Entity 156
+  - tile_index: 149
     type: decor
     subtype: 0
     parm: 0
     name: 167
     long_name: 159
-    description: 159
-  - # Entity 157
-    tile_index: 150
+    description: 159  # Entity 157
+  - tile_index: 150
     type: decor
     subtype: 0
     parm: 1
     name: 160
     long_name: 160
-    description: 159
-  - # Entity 158
-    tile_index: 152
+    description: 159  # Entity 158
+  - tile_index: 152
     type: attack_interactive
     subtype: 2
     parm: 0
     name: 136
     long_name: 159
-    description: 159
-  - # Entity 159
-    tile_index: 153
+    description: 159  # Entity 159
+  - tile_index: 153
     type: decor
     subtype: 0
     parm: 1
     name: 126
     long_name: 126
-    description: 159
-  - # Entity 160
-    tile_index: 154
+    description: 159  # Entity 160
+  - tile_index: 154
     type: decor
     subtype: 0
     parm: 1
     name: 127
     long_name: 127
-    description: 159
-  - # Entity 161
-    tile_index: 156
+    description: 159  # Entity 161
+  - tile_index: 156
     type: decor
     subtype: 1
     parm: 0
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 162
-    tile_index: 158
+    description: 159  # Entity 162
+  - tile_index: 158
     type: decor_noclip
     subtype: 8
     parm: 1
     name: 166
     long_name: 166
-    description: 159
-  - # Entity 163
-    tile_index: 159
+    description: 159  # Entity 163
+  - tile_index: 159
     type: decor_noclip
     subtype: 8
     parm: 1
     name: 166
     long_name: 166
-    description: 159
-  - # Entity 164
-    tile_index: 173
+    description: 159  # Entity 164
+  - tile_index: 173
     type: decor
     subtype: 0
     parm: 1
     name: 125
     long_name: 159
-    description: 159
-  - # Entity 165
-    tile_index: 178
+    description: 159  # Entity 165
+  - tile_index: 178
     type: attack_interactive
     subtype: 1
     parm: 2
     name: 137
     long_name: 159
-    description: 159
-  - # Entity 166
-    tile_index: 179
+    description: 159  # Entity 166
+  - tile_index: 179
     type: decor
     subtype: 0
     parm: 1
     name: 161
     long_name: 161
-    description: 159
-  - # Entity 167
-    tile_index: 180
+    description: 159  # Entity 167
+  - tile_index: 180
     type: decor
     subtype: 0
     parm: 1
     name: 129
     long_name: 129
-    description: 159
-  - # Entity 168
-    tile_index: 181
+    description: 159  # Entity 168
+  - tile_index: 181
     type: decor
     subtype: 0
     parm: 1
     name: 162
     long_name: 162
-    description: 159
-  - # Entity 169
-    tile_index: 182
+    description: 159  # Entity 169
+  - tile_index: 182
     type: decor
     subtype: 0
     parm: 1
     name: 163
     long_name: 163
-    description: 159
-  - # Entity 170
-    tile_index: 183
+    description: 159  # Entity 170
+  - tile_index: 183
     type: decor
     subtype: 0
     parm: 1
     name: 164
     long_name: 164
-    description: 159
-  - # Entity 171
-    tile_index: 187
+    description: 159  # Entity 171
+  - tile_index: 187
     type: decor
     subtype: 0
     parm: 0
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 172
-    tile_index: 188
+    description: 159  # Entity 172
+  - tile_index: 188
     type: decor
     subtype: 0
     parm: 0
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 173
-    tile_index: 189
+    description: 159  # Entity 173
+  - tile_index: 189
     type: decor
     subtype: 0
     parm: 0
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 174
-    tile_index: 201
+    description: 159  # Entity 174
+  - tile_index: 201
     type: decor
     subtype: 0
     parm: 1
     name: 171
     long_name: 171
-    description: 159
-  - # Entity 175
-    tile_index: 271
+    description: 159  # Entity 175
+  - tile_index: 271
     type: door
     subtype: 1
     parm: 1
     name: 139
     long_name: 159
-    description: 159
-  - # Entity 176
-    tile_index: 272
+    description: 159  # Entity 176
+  - tile_index: 272
     type: door
     subtype: 2
     parm: 1
     name: 138
     long_name: 159
-    description: 159
-  - # Entity 177
-    tile_index: 273
+    description: 159  # Entity 177
+  - tile_index: 273
     type: door
     subtype: 1
     parm: 1
     name: 141
     long_name: 159
-    description: 159
-  - # Entity 178
-    tile_index: 274
+    description: 159  # Entity 178
+  - tile_index: 274
     type: door
     subtype: 2
     parm: 1
     name: 140
     long_name: 159
-    description: 159
-  - # Entity 179
-    tile_index: 275
+    description: 159  # Entity 179
+  - tile_index: 275
     type: door
     subtype: 1
     parm: 0
     name: 142
     long_name: 159
-    description: 159
-  - # Entity 180
-    tile_index: 276
+    description: 159  # Entity 180
+  - tile_index: 276
     type: door
     subtype: 2
     parm: 0
     name: 143
     long_name: 159
-    description: 159
-  - # Entity 181
-    tile_index: 277
+    description: 159  # Entity 181
+  - tile_index: 277
     type: door
     subtype: 1
     parm: 2
     name: 168
     long_name: 168
-    description: 159
-  - # Entity 182
-    tile_index: 278
+    description: 159  # Entity 182
+  - tile_index: 278
     type: door
     subtype: 2
     parm: 2
     name: 169
     long_name: 169
-    description: 159
-  - # Entity 183
-    tile_index: 479
+    description: 159  # Entity 183
+  - tile_index: 479
     type: decor_noclip
     subtype: 0
     parm: 0
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 184
-    tile_index: 480
+    description: 159  # Entity 184
+  - tile_index: 480
     type: decor_noclip
     subtype: 0
     parm: 0
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 185
-    tile_index: 507
+    description: 159  # Entity 185
+  - tile_index: 507
     type: nonobstructing_spritewall
     subtype: 0
     parm: 0
     name: 151
     long_name: 159
-    description: 159
-  - # Entity 186
-    tile_index: 508
+    description: 159  # Entity 186
+  - tile_index: 508
     type: spritewall
     subtype: 0
     parm: 0
     name: 152
     long_name: 159
-    description: 159
-  - # Entity 187
-    tile_index: 509
+    description: 159  # Entity 187
+  - tile_index: 509
     type: spritewall
     subtype: 1
     parm: 0
     name: 153
     long_name: 159
-    description: 159
-  - # Entity 188
-    tile_index: 510
+    description: 159  # Entity 188
+  - tile_index: 510
     type: player
     subtype: 0
     parm: 0
     name: 159
     long_name: 159
-    description: 159
-  - # Entity 189
-    tile_index: 511
+    description: 159  # Entity 189
+  - tile_index: 511
     type: world
     subtype: 0
     parm: 0

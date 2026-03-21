@@ -1,12 +1,4 @@
-# Menu definitions for DoomIIRPG
-#
-# Menu types: default=0, list=1, confirm=2, confirm2=3, main=4,
-#             help=5, vcenter=6, notebook=7, main_list=8, vending_machine=9
-#
-# Item flags: normal=0, noselect=1, nodehyphenate=2, disabled=4,
-#             align_center=8, showdetails=32, divider=64, selector=128,
-#             block_text=256, highlight=512, checked=1024,
-#             right_arrow=8192, left_arrow=16384, hidden=32768
+# Menu definitions for DoomIIRPG  #   # Menu types: default=0, list=1, confirm=2, confirm2=3, main=4,  #             help=5, vcenter=6, notebook=7, main_list=8, vending_machine=9  #   # Item flags: normal=0, noselect=1, nodehyphenate=2, disabled=4,  #             align_center=8, showdetails=32, divider=64, selector=128,  #             block_text=256, highlight=512, checked=1024,  #             right_arrow=8192, left_arrow=16384, hidden=32768
 
 menus:
   - menu_id: 3
