@@ -2,168 +2,213 @@
 
 ## Overview
 
-The engine uses a Virtual File System (VFS) with priority-based mounts. At startup, two sources are mounted:
+The engine uses a **converter pipeline** and a **YAML-based asset system**. The original `.ipa` is never opened at runtime — instead, a separate converter tool (`doom2rpg-convert`) extracts and converts all assets ahead of time into a game directory (e.g. `games/doom2rpg/`).
 
-| Mount        | Priority | Source                         |
-|--------------|----------|--------------------------------|
-| `basedata/`  | 100      | Loose files (modding overlay)  |
-| `.ipa` zip   | 0        | Original packaged assets       |
+At runtime, a Virtual File System (VFS) provides priority-based directory mounts:
 
-When a file is requested, VFS checks mounts in priority order — modded files in `basedata/` override originals.
+| Mount                    | Priority | Source                                   |
+|--------------------------|----------|------------------------------------------|
+| `.` (game dir / CWD)    | 200      | Converted game assets (`games/doom2rpg/`)|
+| `basedata/`             | 100      | Shared/fallback assets (modding overlay) |
 
-For data assets (tables, entities, menus, strings), the engine first checks for `.ini` files in the current working directory. If not found, it falls back to `.bin` files loaded through VFS.
+When a file is requested, VFS checks mounts in priority order — files in the game directory override `basedata/`. All mounts are **directory-only** (no zip/IPA support at runtime).
+
+Data assets (tables, entities, menus, strings, sounds, characters) are loaded from **YAML files only**. Binary `.bin` formats are used only for textures, maps, and 3D models.
+
+### Game Module Architecture
+
+The engine uses an `IGameModule` interface (`src/engine/IGameModule.h`) to abstract game-specific logic. The default implementation is `DoomIIRPGGame` (`src/game/DoomIIRPGGame.cpp`). The game module:
+- Creates game objects (Game, Player, Combat, EntityDefManager, etc.)
+- Controls startup order for game subsystems
+- Registers custom script opcodes (128-254 via `OpcodeRegistry`)
+- Hooks into lifecycle events (map loaded, new game, etc.)
 
 ## Startup Sequence
 
 ```
 main.cpp
-  │
-  ├─ Parse CLI args (--ipa, --gamedir)
-  ├─ Open .ipa as zip archive
-  ├─ Mount VFS: basedata/ (pri 100), .ipa (pri 0)
-  ├─ Init SDL / OpenGL
-  │
-  └─ CAppContainer::Construct()
-       └─ Applet::startup()                          [App.cpp:43]
-            │
-            ├─ 1. Canvas::startup()                   — back buffer (480x320)
-            ├─ 2. Localization::startup()              — strings
-            ├─ 3. Render::startup()                    — renderer
-            ├─ 4. Resource::initTableLoading()         — table init
-            │     └─ Applet::loadTables()              — game data tables
-            ├─ 5. TinyGL::startup()                    — OpenGL context
-            ├─ 6. EntityDefManager::startup()          — entity definitions
-            ├─ 7. Player::startup()                    — player data
-            ├─ 8. MenuSystem::startup()                — UI menus
-            ├─ 9. Sound::startup()                     — audio
-            ├─10. Game::startup()                      — game logic
-            ├─11. ParticleSystem::startup()            — particles
-            └─12. Combat::startup()                    — combat system
+  |
+  +- Parse CLI args (--gamedir, --game, --map)
+  +- Auto-detect game dir (games/doom2rpg/game.yaml)
+  |    +- If IPA found but not converted -> auto-run doom2rpg-convert
+  +- chdir() to game directory
+  +- Load game.yaml -> GameConfig struct
+  +- Apply save directory from config
+  +- Mount VFS: CWD (pri 200), basedata/ (pri 100)
+  +- Init SDL / OpenGL
+  +- Create DoomIIRPGGame module
+  |
+  +- CAppContainer::Construct()
+       +- Applet::startup()                          [App.cpp:48]
+            |
+            +- 1. Create engine subsystems (Canvas, Resource, Localization,
+            |     Render, TinyGL, MenuSystem, Sound, Hud, ParticleSystem)
+            +- 2. gameModule->createGameObjects()     -- Game, Player, Combat,
+            |                                           EntityDefManager, etc.
+            +- 3. loadConfig()
+            +- 4. Canvas::startup()                   -- back buffer (480x320)
+            |     +- loadImage("cockpit.bmp")
+            |     +- canvas->loadMiniGameImages()
+            +- 5. Localization::startup()             -- strings.yaml
+            +- 6. Render::startup()                   -- renderer
+            +- 7. Resource::initTableLoading()
+            |     +- Applet::loadTables()             -- tables.yaml
+            +- 8. TinyGL::startup()                   -- OpenGL context
+            +- 9. gameModule->startup()               -- EntityDefManager -> Player
+            |                                           -> Game -> Combat
+            +-10. MenuSystem::startup()               -- menus.yaml
+            +-11. Sound::startup()                    -- sounds.yaml
+            +-12. ParticleSystem::startup()           -- particles
+            +-13. gameModule->loadConfig()
+            +-14. gameModule->registerOpcodes()
 ```
 
 ## Asset Loading Detail
 
-### Strings (step 2)
+### Game Configuration (pre-startup)
+
+```
+main.cpp                                             [Main.cpp:150]
+  +- YAML::LoadFile("game.yaml") -> GameConfig struct [CAppContainer.h:14]
+```
+
+**YAML file:** `game.yaml`
+**Fields:** `name`, `window_title`, `save_dir`, `entry_map`, `no_fog_maps`
+**Generated by:** `doom2rpg-convert`
+
+---
+
+### Character Definitions (step 9 -- Player::startup)
+
+```
+Player::setStatsAccordingToCharacterChoice()         [Player.cpp:451]
+  +- Try: YAML::LoadFile("characters.yaml")
+  |    +- Read characters[idx] -> defense, strength, accuracy, agility, iq, credits
+  +- Fallback: hardcoded defaults per character choice
+```
+
+**YAML file:** `characters.yaml`
+**Generated by:** `doom2rpg-convert`
+
+---
+
+### Strings (step 5)
 
 ```
 Localization::startup()                              [Text.cpp:24]
-  ├─ Try: load "strings.ini" from CWD
-  │    └─ Localization::loadFromINI()                [Text.cpp:116]
-  │         └─ loadGroupFromINI() per lang/group     [Text.cpp:137]
-  │
-  └─ Fallback: load binary via VFS
-       ├─ Read "strings.idx"      — index (languages, group offsets)
-       └─ Read "strings00.bin"    — string data for selected language
-            "strings01.bin"
-            "strings02.bin"
+  +- loadFromYAML("strings.yaml")                   [Text.cpp:60]
+       +- loadGroupFromYAML() per lang/group         [Text.cpp:111]
 ```
 
-**Binary files:** `strings.idx`, `strings00.bin` – `strings02.bin`
-**INI file:** `strings.ini` — sections `[Lang_X_Group_Y]`
+**YAML file:** `strings.yaml` -- nested `strings[lang][group]` arrays
 **Loaded:** 5 languages, 15 groups. Groups 0, 1, 3, 14 loaded eagerly; rest lazy.
+**Language switching:** `setLanguage()` reloads all active groups from YAML.
 
 ---
 
-### Tables (step 4)
+### Tables (step 7)
 
 ```
-Applet::loadTables()                                 [App.cpp:411]
-  ├─ Try: load "tables.ini" from CWD
-  │    └─ Applet::loadTablesFromINI()                [App.cpp:532]
-  │
-  └─ Fallback: load "tables.bin" via VFS
-       └─ Binary: 20x int32 offset header, then 14 tables
+Applet::loadTables()                                 [App.cpp:407]
+  +- loadTablesFromYAML("tables.yaml")              [App.cpp:520]
 ```
 
-**Binary file:** `tables.bin`
-**INI file:** `tables.ini`
+**YAML file:** `tables.yaml` -- named keys with symbolic values
 **14 tables loaded into subsystems:**
 
-| # | Table            | Target subsystem |
-|---|------------------|------------------|
-| 0 | MonsterAttacks   | Combat           |
-| 1 | WeaponInfo       | Combat           |
-| 2 | Weapons          | Combat           |
-| 3 | MonsterStats     | Combat           |
-| 4 | CombatMasks      | Combat           |
-| 5 | KeysNumeric      | Canvas           |
-| 6 | OSCCycle         | Canvas           |
-| 7 | LevelNames       | Game             |
-| 8 | MonsterColors    | Render           |
-| 9 | SinTable         | Render           |
-|10 | EnergyDrinkData  | Game             |
-|11 | MonsterWeakness  | Combat           |
-|12 | MonsterSounds    | Combat           |
-|13 | MovieEffects     | Game             |
+| YAML key           | Target subsystem  |
+|--------------------|-------------------|
+| `monster_attacks`  | Combat            |
+| `weapon_info`      | Combat            |
+| `weapons`          | Combat            |
+| `monster_stats`    | Combat            |
+| `combat_masks`     | Combat            |
+| `keys_numeric`     | Canvas            |
+| `osc_cycle`        | Canvas            |
+| `level_names`      | Game              |
+| `monster_colors`   | ParticleSystem    |
+| `sin_table`        | Render            |
+| `energy_drink_data`| VendingMachine    |
+| `monster_weakness` | Combat            |
+| `movie_effects`    | Canvas            |
+| `monster_sounds`   | Game              |
+
+YAML uses symbolic names for weapons, projectile types, and monster names instead of raw numeric IDs.
 
 ---
 
-### Entity Definitions (step 6)
+### Entity Definitions (step 9 -- gameModule->startup)
 
 ```
-EntityDefManager::startup()                          [EntityDef.cpp:63]
-  ├─ Try: load "entities.ini" from CWD
-  │    └─ EntityDefManager::loadFromINI()            [EntityDef.cpp:109]
-  │
-  └─ Fallback: load "entities.bin" via VFS
-       └─ EntityDefManager::loadFromBinary()         [EntityDef.cpp:81]
-            └─ int16 count + 8-byte records
+EntityDefManager::startup()                          [EntityDef.cpp:337]
+  +- loadFromYAML("entities.yaml")                   [EntityDef.cpp:345]
+       +- Parse entities[] array with rendering overrides
 ```
 
-**Binary file:** `entities.bin` (1522 bytes)
-**INI file:** `entities.ini`
-**Record:** tileIndex (int16), eType (uint8), eSubType (uint8), parm (uint8), name/longName/description (uint8 string refs)
+**YAML file:** `entities.yaml`
+**Core fields:** `tile_index`, `type`, `subtype`, `parm`, `name`, `long_name`, `description`
+**Extended fields:** Entity definitions now include extensive rendering parameters that can be overridden per entity:
+
+| Category       | Fields                                                       |
+|----------------|--------------------------------------------------------------|
+| Render flags   | `is_floater`, `has_gun_flare`, `is_special_boss`            |
+| Fear eyes      | `fear_eye_l/r`, `fear_eye_z_*`, `fear_single_eye`           |
+| Gun flare      | `gun_flare_dual`, `gun_flare1/2_x/z`                        |
+| Body parts     | `idle/walk/attack_torso_z`, `idle/walk/attack_head_z`, etc.  |
+| Floater data   | `floater_type`, `floater_z_offset`, `floater_*`             |
+| Special boss   | `boss_type`, `boss_torso_z`, `boss_*_sprite`, etc.           |
+| Sprite anim    | `anim_clamp_scale`, `anim_attack_leg_offset`, etc.           |
+
+All extended fields have auto-computed defaults based on `tile_index`/`subtype`, so only overrides need to be specified.
 
 ---
 
-### Menus (step 8)
+### Menus (step 10)
 
 ```
-MenuSystem::startup()                                [MenuSystem.cpp:44]
-  ├─ Try: load "menus.ini" from CWD
-  │    └─ MenuSystem::loadFromINI()
-  │
-  └─ Fallback: load "menus.bin" via VFS
-       └─ Binary: header (menuDataCount, menuItemsCount)
-                  + packed uint32 menu entries
-                  + packed uint32 item pairs
+MenuSystem::startup()                                [MenuSystem.cpp:47]
+  +- loadMenusFromYAML("menus.yaml")                [MenuSystem.cpp:50]
 ```
 
-**Binary file:** `menus.bin` (1996 bytes)
-**INI file:** `menus.ini`
+**YAML file:** `menus.yaml`
+**Format:** Named types (`default`, `list`, `confirm`, etc.) and named actions/flags.
 
 ---
 
-### Textures (step 3 — Render::startup)
+### Textures (step 6 -- Render::startup)
 
 ```
 Render::startup()
-  └─ Loaded on demand via Resource system
-       ├─ "newMappings.bin"    — tile mappings (18432 bytes)
-       ├─ "newPalettes.bin"    — RGB565 palettes (335932 bytes)
-       └─ "newTexels000.bin"   — texture pixel data
+  +- Loaded on demand via Resource system
+       +- "newMappings.bin"    -- tile mappings (18432 bytes)
+       +- "newPalettes.bin"    -- RGB565 palettes (335932 bytes)
+       +- "newTexels000.bin"   -- texture pixel data
           through
           "newTexels038.bin"      (39 files)
 ```
 
-**No INI equivalent** — these are raw binary image data.
+**No YAML equivalent** -- these are raw binary image data, loaded via VFS.
 
 ---
 
-### Maps (on demand — Game::startup / level load)
+### Maps (on demand -- level load)
 
 ```
 Game loads maps on level transition:
-  └─ "map00.bin" through "map09.bin"   — 10 levels
+  +- "map00.bin" through "map09.bin"   -- 10 levels
 ```
+
+Supports `--map` CLI override for loading a custom map file.
 
 ---
 
 ### 3D Models (on demand)
 
 ```
-"model_0000.bin" through "model_0009.bin"   — 10 models
+"model_0000.bin" through "model_0009.bin"   -- 10 models
 ```
+
+Binary-only, no YAML equivalent. Copied as-is by the converter.
 
 ---
 
@@ -171,39 +216,83 @@ Game loads maps on level transition:
 
 ```
 Applet::loadImage()                                  [App.cpp:333]
-  └─ Applet::createImage()                           [App.cpp:169]
-       └─ BMP parser (4-bit/8-bit indexed → RGB565)
+  +- Applet::createImage()                           [App.cpp:169]
+       +- BMP parser (4-bit/8-bit indexed -> RGB565)
 ```
 
 340+ `.bmp` files for UI, fonts, backgrounds, sprites. Loaded through VFS as needed.
 
 ---
 
-### Sounds (step 9)
+### Sounds (step 11)
 
 ```
-Sound::startup()
-  └─ Loaded via VFS with LOADTYPE_SOUND_RESOURCE
-       └─ Prefixed with "sounds2/" path
+Sound::startup()                                     [Sound.cpp:30]
+  +- Sounds::loadFromYAML("sounds.yaml")             [Sounds.cpp:8]
+       +- Fallback: Sounds::loadDefaults()           -- hardcoded filenames
 ```
+
+**YAML file:** `sounds.yaml` -- maps sound index -> WAV filename
+**WAV files:** Loaded at runtime via VFS from `sounds2/` prefix.
+
+---
+
+### Runtime Configuration (save/load)
+
+```
+Game::loadConfig() / Game::saveConfig()              [Game.cpp]
+  +- config.yaml in save directory
+```
+
+**File:** `config.yaml` (stored in configurable save directory)
+**Contents:** Display settings, controls, key bindings.
 
 ## File I/O Layer
 
 ```
-InputStream::loadFile()                              [JavaStream.cpp:67]
-  ├─ LOADTYPE_RESOURCE (5)       → VFS::readFile()
-  ├─ LOADTYPE_FILE (6)           → direct fopen from Doom2rpg.app/
-  └─ LOADTYPE_SOUND_RESOURCE (7) → VFS::readFile() with "sounds2/" prefix
+InputStream::loadFile()                              [JavaStream.cpp:80]
+  +- LT_RESOURCE (5)       -> VFS::readFile()
+  +- LT_FILE (6)           -> fopen from save directory (configurable)
+  +- LT_SOUND_RESOURCE (7) -> VFS::readFile() with "sounds2/" prefix
 
-VFS::readFile()                                      [VFS.cpp:76]
-  └─ iterate mounts by priority (high → low)
-       ├─ Directory mount → readFromDir()   (fopen/fread)
-       └─ Zip mount      → readFromZip()   (ZipFile)
+VFS::readFile()                                      [VFS.cpp:60]
+  +- iterate mounts by priority (high -> low)
+       +- Directory mount -> readFromDir()   (fopen/fread)
 ```
 
-## Extraction Pipeline (tools/)
+The save directory defaults to `Doom2rpg.app` and is overridden from `GameConfig::saveDir` (loaded from `game.yaml`) at startup via `setSaveDir()`.
 
-These Python scripts extract `.bin` → `.ini` from the original `.ipa`:
+## Converter Pipeline (doom2rpg-convert)
+
+The `doom2rpg-convert` tool (`src/converter/main.cpp`) converts the original `.ipa` into a game directory. It is also **auto-invoked** by the engine at startup if an IPA is found but no converted assets exist.
+
+```
+doom2rpg-convert --ipa "Doom 2 RPG.ipa" --output games/doom2rpg
+  |
+  +- Phase 1: Convert text assets to YAML
+  |    +- entities.bin     -> entities.yaml
+  |    +- tables.bin       -> tables.yaml
+  |    +- menus.bin        -> menus.yaml
+  |    +- strings.idx/bin  -> strings.yaml
+  |    +- sounds list      -> sounds.yaml
+  |    +- (generated)      -> game.yaml
+  |    +- (generated)      -> characters.yaml
+  |
+  +- Phase 2: Copy binary assets (as-is)
+  |    +- map00.bin - map09.bin
+  |    +- model_0000.bin - model_0009.bin
+  |    +- newMappings.bin, newPalettes.bin
+  |    +- newTexels000.bin - newTexels038.bin
+  |
+  +- Phase 3: Copy image assets
+       +- 340+ .bmp files
+```
+
+**Usage:** `doom2rpg-convert --ipa <path> [--output <dir>] [--force]`
+
+## Analysis & Viewer Tools (tools/)
+
+Python scripts for extracting and inspecting original `.bin` data (useful for research/debugging):
 
 | Script                | Input                          | Output          |
 |-----------------------|--------------------------------|-----------------|
@@ -212,31 +301,72 @@ These Python scripts extract `.bin` → `.ini` from the original `.ipa`:
 | `extract_entities.py` | `entities.bin`                 | `entities.ini`  |
 | `extract_menus.py`    | `menus.bin`                    | `menus.ini`     |
 | `extract_textures.py` | `newMappings/Palettes/Texels`  | PNG files       |
+| `extract_models.py`   | `model_XXXX.bin` / `mapXX.bin` | `.obj` files    |
+| `extract_maps.py`     | `mapXX.bin`                    | `.json` files   |
 
-Usage: `python3 tools/extract_<type>.py [path/to/ipa] [output.ini]`
+**Interactive HTML viewers:**
+
+| Tool               | Description                  |
+|--------------------|------------------------------|
+| `model-viewer.html`| 3D model viewer              |
+| `map-viewer.html`  | Map viewer                   |
+| `menu-editor.html` | Menu editor                  |
+
+Usage: `python3 tools/extract_<type>.py [path/to/ipa] [output]`
+
+> **Note:** These scripts produce `.ini` format for analysis purposes. The engine no longer reads `.ini` files — the `doom2rpg-convert` tool produces the `.yaml` files the engine uses at runtime.
 
 ## Summary Diagram
 
 ```
-  .ipa (original)          basedata/ (mods)         CWD (ini overrides)
-       │                        │                         │
-       └──── VFS (pri 0) ──────┘── VFS (pri 100) ───────┘
-                    │                                     │
-                    ▼                                     ▼
-              .bin loading                         .ini loading
-              (binary format)                      (human-readable)
-                    │                                     │
-                    └────────────┬─────────────────────────┘
-                                 ▼
-                          Engine subsystems
-                    ┌────────────────────────┐
-                    │ Localization (strings)  │
-                    │ Combat (tables 0-4,11-12)│
-                    │ Canvas (tables 5-6)     │
-                    │ Game (tables 7,10,13)   │
-                    │ Render (tables 8-9)     │
-                    │ EntityDefManager        │
-                    │ MenuSystem              │
-                    │ Sound                   │
-                    └────────────────────────┘
+  .ipa (original)               doom2rpg-convert
+       |                              |
+       +------------------------------+
+                    |
+                    v
+            games/doom2rpg/
+         +------------------------------+
+         | game.yaml (config)           |
+         | characters.yaml              |
+         | strings.yaml                 |
+         | tables.yaml                  |
+         | entities.yaml                |
+         | menus.yaml                   |
+         | sounds.yaml                  |
+         | map00-09.bin (binary)        |
+         | model_0000-0009.bin (binary) |
+         | newTexels/Palettes (binary)  |
+         | 340+ .bmp images             |
+         | sounds2/*.wav                |
+         +------------------------------+
+                    |
+    +---------------+---------------+
+    |                               |
+    v                               v
+  VFS pri 200 (CWD)         VFS pri 100 (basedata/)
+    |                               |
+    +---------------+---------------+
+                    v
+    +------ IGameModule ------+
+    |   DoomIIRPGGame         |
+    |   (game module)         |
+    +-------------------------+
+                    |
+                    v
+          Engine subsystems
+    +----------------------------+
+    | GameConfig (game.yaml)     |
+    | Localization (strings)     |
+    | Combat (tables 0-4,11-12)  |
+    | Canvas (tables 5-6,12)     |
+    | Game (tables 7,13)         |
+    | Render (table 9, textures) |
+    | ParticleSystem (table 8)   |
+    | VendingMachine (table 10)  |
+    | EntityDefManager           |
+    | MenuSystem                 |
+    | Sound                      |
+    | Player (characters.yaml)   |
+    | OpcodeRegistry (128-254)   |
+    +----------------------------+
 ```
