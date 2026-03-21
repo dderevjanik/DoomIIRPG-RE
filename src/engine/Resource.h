@@ -13,8 +13,6 @@ public:
     static constexpr char* RES_STRINGS_IDX_GZ = "strings.idx";
     static constexpr char* RES_TABLES_BIN_GZ = "tables.bin";
     static constexpr char* RES_STRINGS_ARRAY[] = { "strings00.bin", "strings01.bin", "strings02.bin" };
-    static constexpr char* RES_ENTITIES_BIN_GZ = "entities.bin";
-    static constexpr char* RES_MENUS_BIN_GZ = "menus.bin";
     static constexpr char* RES_NEWMAPPINGS_BIN_GZ = "newMappings.bin";
     static constexpr char* RES_MAP_FILE_ARRAY[] = { "map00.bin" , "map01.bin", "map02.bin", "map03.bin", "map04.bin", "map05.bin", "map06.bin", "map07.bin", "map08.bin", "map09.bin"};
     static constexpr char* RES_NEWPALETTES_BIN_GZ = "newPalettes.bin";

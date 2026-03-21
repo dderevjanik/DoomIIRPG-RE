@@ -4,7 +4,6 @@
 #include <sstream>
 
 #include "SDLGL.h"
-#include "ZipFile.h"
 
 #include "CAppContainer.h"
 #include "App.h"
@@ -395,70 +394,10 @@ void Applet::beginImageLoading() {}
 void Applet::endImageLoading() {}
 
 void Applet::loadTables() {
-	// Try loading from tables.yaml in CWD first
-	FILE* f = std::fopen("tables.yaml", "rb");
-	if (f) {
-		std::fclose(f);
-		printf("Applet::loadTables: loading from tables.yaml\n");
-		if (this->loadTablesFromYAML("tables.yaml")) {
-			return;
-		}
-		printf("Applet::loadTables: tables.yaml failed, falling back to tables.bin\n");
+	printf("Applet::loadTables: loading from tables.yaml\n");
+	if (!this->loadTablesFromYAML("tables.yaml")) {
+		this->Error("Failed to load tables.yaml\n");
 	}
-
-	printf("Applet::loadTables: loading from tables.bin (resource pack)\n");
-
-	int count01, count02, count03, count04, count05, count06, count07;
-	int count08, count09, count10, count11, count12, count13, count14;
-
-	count01 = this->resource->getNumTableShorts(0);  // count TBL_COMBAT_MONSTERATTACKS
-	count02 = this->resource->getNumTableBytes(1);   // count TBL_COMBAT_WEAPONINFO
-	count03 = this->resource->getNumTableBytes(2);   // count TBL_COMBAT_WEAPONDATA
-	count04 = this->resource->getNumTableBytes(3);   // count TBL_COMBAT_MONSTERSTATS
-	count05 = this->resource->getNumTableInts(4);    // count TBL_COMBAT_COMBATMASKS
-	count06 = this->resource->getNumTableBytes(5);   // count TBL_CANVAS_KEYSNUMERIC
-	count07 = this->resource->getNumTableBytes(6);   // count TBL_ENUMS_OSC_CYCLE
-	count08 = this->resource->getNumTableShorts(7);  // count TBL_GAME_LEVELNAMES
-	count09 = this->resource->getNumTableBytes(8);   // count TBL_MONSTER_COLORS
-	count10 = this->resource->getNumTableInts(9);    // count TBL_RENDER_SINETABLE
-	count11 = this->resource->getNumTableShorts(10); // count TBL_ENERGY_DRINK_DATA
-	count12 = this->resource->getNumTableBytes(11);  // count TBL_MONSTER_WEAKNESS
-	count13 = this->resource->getNumTableInts(12);   // count TBL_UNK
-	count14 = this->resource->getNumTableBytes(13);  // count TBL_MONSTER_SOUNDS
-
-	this->combat->monsterAttacks = new short[count01];
-	this->combat->wpinfo = new int8_t[count02];
-	this->combat->weapons = new int8_t[count03];
-	this->combat->monsterStats = new int8_t[count04];
-	this->combat->tableCombatMasks = new int32_t[count05];
-	this->canvas->keys_numeric = new int8_t[count06];
-	this->canvas->OSC_CYCLE = new int8_t[count07];
-	this->game->levelNames = new int16_t[count08];
-	this->particleSystem->monsterColors = new uint8_t[count09];
-	this->render->sinTable = new int32_t[count10];
-	this->vendingMachine->energyDrinkData = new int16_t[count11];
-	this->combat->monsterWeakness = new int8_t[count12];
-	this->canvas->movieEffects = new int32_t[count13];
-	this->game->monsterSounds = new uint8_t[count14];
-
-	this->resource->beginTableLoading();
-	this->resource->loadShortTable(this->combat->monsterAttacks, 0);
-	this->resource->loadByteTable(this->combat->wpinfo, 1);
-	this->resource->loadByteTable(this->combat->weapons, 2);
-	this->resource->loadByteTable(this->combat->monsterStats, 3);
-	this->resource->loadIntTable(this->combat->tableCombatMasks, 4);
-	this->resource->loadByteTable(this->canvas->keys_numeric, 5);
-	this->resource->loadByteTable(this->canvas->OSC_CYCLE, 6);
-	this->game->levelNamesCount = this->resource->loadShortTable(this->game->levelNames, 7);
-	this->resource->loadByteTable((int8_t*)this->particleSystem->monsterColors, 8);
-	this->resource->loadIntTable(this->render->sinTable, 9);
-	this->resource->loadShortTable(this->vendingMachine->energyDrinkData, 10);
-	this->resource->loadByteTable(this->combat->monsterWeakness, 11);
-	this->resource->loadIntTable(this->canvas->movieEffects, 12);
-	this->resource->loadByteTable((int8_t*)this->game->monsterSounds, 13);
-	this->resource->finishTableLoading();
-
-	printf("Applet::loadTables: loaded 14 tables from tables.bin\n");
 }
 
 // --- Helpers for tables.ini parsing ---

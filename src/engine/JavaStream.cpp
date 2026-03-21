@@ -4,7 +4,6 @@
 #include "JavaStream.h"
 #include "CAppContainer.h"
 #include "App.h"
-#include "ZipFile.h"
 #include "VFS.h"
 
 // Save directory (defaults to "Doom2rpg.app", overridden from GameConfig at startup)

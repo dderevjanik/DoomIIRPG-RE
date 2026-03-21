@@ -12,7 +12,6 @@ class EntityDefManager {
 	EntityDef* list;
 	int numDefs;
 
-	bool loadFromBinary();
 	bool loadFromYAML(const char* path);
 
   public:
@@ -22,7 +21,6 @@ class EntityDefManager {
 	~EntityDefManager();
 
 	bool startup();
-	void exportToINI(const char* path);
 	EntityDef* find(int eType, int eSubType);
 	EntityDef* find(int eType, int eSubType, int parm);
 	EntityDef* lookup(int tileIndex);

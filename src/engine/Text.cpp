@@ -51,40 +51,11 @@ bool Localization::startup() {
 	this->textCount[13] = 15;
 	this->textCount[14] = 3;
 
-	// Try loading from strings.yaml in CWD first
-	FILE* f = std::fopen("strings.yaml", "rb");
-	if (f) {
-		std::fclose(f);
-		printf("Localization: loading from strings.yaml\n");
-		if (!this->loadFromYAML("strings.yaml")) {
-			this->app->Error("Failed to load strings.yaml\n");
-			return false;
-		}
-		this->resetTextArgs();
-		return true;
+	printf("Localization: loading from strings.yaml\n");
+	if (!this->loadFromYAML("strings.yaml")) {
+		this->app->Error("Failed to load strings.yaml\n");
+		return false;
 	}
-
-	printf("Localization: loading from strings.idx + stringsXX.bin (resource pack)\n");
-
-	this->beginTextLoading();
-	for (int i = 0; i < Localization::MAXTEXT; i++) {
-		this->textSizes[i]= std::max(this->textSizes[i], this->textIndex[(i * 3) + 2]);
-	}
-	this->finishTextLoading();
-
-	this->allocateText(0);
-	this->allocateText(1);
-	this->allocateText(3);
-	this->allocateText(14);
-	this->defaultLanguage = 0;
-
-	this->beginTextLoading();
-	this->loadTextFromIndex(this->defaultLanguage, 0);
-	this->loadTextFromIndex(this->defaultLanguage, 1);
-	this->loadTextFromIndex(this->defaultLanguage, 3);
-	this->loadTextFromIndex(this->defaultLanguage, 14);
-	this->finishTextLoading();
-
 	this->resetTextArgs();
 	return true;
 }

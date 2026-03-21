@@ -26,7 +26,8 @@
 #include "SDLGL.h"
 #include "Input.h"
 #include "GLES.h"
-#include "INIReader.h"
+#include <yaml-cpp/yaml.h>
+#include <fstream>
 
 Game::Game() {
 	std::memset(this, 0, sizeof(Game));
@@ -2168,174 +2169,183 @@ static const char* keyBindingNames[KEY_MAPPIN_MAX] = {"move_forward", "move_back
 void Game::saveConfig() {
 
 	SDLGL* sdlGL = CAppContainer::getInstance()->sdlGL;
-	INIReader ini;
+	YAML::Emitter out;
+	out << YAML::BeginMap;
 
-	// [General]
-	ini.setInt("General", "version", 11);
-	ini.setString("General", "difficulty", difficultyToString(this->difficulty));
-	ini.setString("General", "language", languageToString(app->localization->defaultLanguage));
+	// General
+	out << YAML::Key << "version" << YAML::Value << 11;
+	out << YAML::Key << "difficulty" << YAML::Value << difficultyToString(this->difficulty);
+	out << YAML::Key << "language" << YAML::Value << languageToString(app->localization->defaultLanguage);
 
-	// [Sound]
-	ini.setBool("Sound", "enabled", app->sound->allowSounds);
-	ini.setInt("Sound", "fx_volume", app->sound->soundFxVolume);
-	ini.setInt("Sound", "music_volume", app->sound->musicVolume);
+	// Sound
+	out << YAML::Key << "sound_enabled" << YAML::Value << app->sound->allowSounds;
+	out << YAML::Key << "fx_volume" << YAML::Value << app->sound->soundFxVolume;
+	out << YAML::Key << "music_volume" << YAML::Value << app->sound->musicVolume;
 
-	// [Controls]
-	ini.setBool("Controls", "vibrate_enabled", app->canvas->vibrateEnabled);
-	ini.setInt("Controls", "vibration_intensity", gVibrationIntensity);
-	ini.setString("Controls", "control_layout", controlLayoutToString(app->canvas->m_controlLayout));
-	ini.setInt("Controls", "control_alpha", app->canvas->m_controlAlpha);
-	ini.setBool("Controls", "flip_controls", app->canvas->isFlipControls);
-	ini.setInt("Controls", "dead_zone", gDeadZone);
+	// Controls
+	out << YAML::Key << "vibrate_enabled" << YAML::Value << app->canvas->vibrateEnabled;
+	out << YAML::Key << "vibration_intensity" << YAML::Value << gVibrationIntensity;
+	out << YAML::Key << "control_layout" << YAML::Value << controlLayoutToString(app->canvas->m_controlLayout);
+	out << YAML::Key << "control_alpha" << YAML::Value << app->canvas->m_controlAlpha;
+	out << YAML::Key << "flip_controls" << YAML::Value << app->canvas->isFlipControls;
+	out << YAML::Key << "dead_zone" << YAML::Value << gDeadZone;
 
-	// [Display]
-	ini.setString("Display", "window_mode", windowModeToString(sdlGL->windowMode));
-	ini.setBool("Display", "vsync", sdlGL->vSync);
-	ini.setString("Display", "resolution", resolutionToString(sdlGL->resolutionIndex).c_str());
-	ini.setInt("Display", "anim_frames", app->canvas->animFrames);
-	ini.setBool("Display", "gles_init", _glesObj->isInit);
+	// Display
+	out << YAML::Key << "window_mode" << YAML::Value << windowModeToString(sdlGL->windowMode);
+	out << YAML::Key << "vsync" << YAML::Value << sdlGL->vSync;
+	out << YAML::Key << "resolution" << YAML::Value << resolutionToString(sdlGL->resolutionIndex);
+	out << YAML::Key << "anim_frames" << YAML::Value << app->canvas->animFrames;
+	out << YAML::Key << "gles_init" << YAML::Value << _glesObj->isInit;
 
-	// [Help]
-	ini.setBool("Help", "enabled", app->player->enableHelp);
-	ini.setInt("Help", "help_bitmask", app->player->helpBitmask);
-	ini.setInt("Help", "inv_help_bitmask", app->player->invHelpBitmask);
-	ini.setInt("Help", "ammo_help_bitmask", app->player->ammoHelpBitmask);
-	ini.setInt("Help", "weapon_help_bitmask", app->player->weaponHelpBitmask);
-	ini.setInt("Help", "armor_help_bitmask", app->player->armorHelpBitmask);
+	// Help
+	out << YAML::Key << "help_enabled" << YAML::Value << app->player->enableHelp;
+	out << YAML::Key << "help_bitmask" << YAML::Value << app->player->helpBitmask;
+	out << YAML::Key << "inv_help_bitmask" << YAML::Value << app->player->invHelpBitmask;
+	out << YAML::Key << "ammo_help_bitmask" << YAML::Value << app->player->ammoHelpBitmask;
+	out << YAML::Key << "weapon_help_bitmask" << YAML::Value << app->player->weaponHelpBitmask;
+	out << YAML::Key << "armor_help_bitmask" << YAML::Value << app->player->armorHelpBitmask;
 
-	// [Stats]
-	ini.setInt("Stats", "current_level_deaths", app->player->currentLevelDeaths);
-	ini.setInt("Stats", "total_deaths", app->player->totalDeaths);
+	// Stats
+	out << YAML::Key << "current_level_deaths" << YAML::Value << app->player->currentLevelDeaths;
+	out << YAML::Key << "total_deaths" << YAML::Value << app->player->totalDeaths;
 	this->totalPlayTime += (app->upTimeMs - this->lastSaveTime) / 1000;
-	ini.setInt("Stats", "total_play_time", this->totalPlayTime);
-	ini.setInt("Stats", "current_grades", app->player->currentGrades);
-	ini.setInt("Stats", "best_grades", app->player->bestGrades);
-	ini.setBool("Stats", "has_seen_intro", this->hasSeenIntro);
-	ini.setBool("Stats", "recent_brief_save", app->canvas->recentBriefSave);
+	out << YAML::Key << "total_play_time" << YAML::Value << this->totalPlayTime;
+	out << YAML::Key << "current_grades" << YAML::Value << app->player->currentGrades;
+	out << YAML::Key << "best_grades" << YAML::Value << app->player->bestGrades;
+	out << YAML::Key << "has_seen_intro" << YAML::Value << this->hasSeenIntro;
+	out << YAML::Key << "recent_brief_save" << YAML::Value << app->canvas->recentBriefSave;
 	this->lastSaveTime = app->upTimeMs;
 
-	// [LevelLoads]
+	// LevelLoads
+	out << YAML::Key << "level_loads" << YAML::Value << YAML::Flow << YAML::BeginSeq;
 	for (int j = 0; j < 10; ++j) {
-		char key[16];
-		snprintf(key, sizeof(key), "level_%d", j);
-		ini.setInt("LevelLoads", key, this->numLevelLoads[j]);
+		out << this->numLevelLoads[j];
 	}
+	out << YAML::EndSeq;
 
-	// [Menu]
+	// Menu indexes
+	out << YAML::Key << "menu_indexes" << YAML::Value << YAML::Flow << YAML::BeginSeq;
 	for (int i = 0; i < 10; ++i) {
-		char key[16];
-		snprintf(key, sizeof(key), "index_%d", i);
-		ini.setInt("Menu", key, app->menuSystem->indexes[i]);
+		out << app->menuSystem->indexes[i];
 	}
+	out << YAML::EndSeq;
 
-	// [KeyBindings]
+	// KeyBindings
+	out << YAML::Key << "key_bindings" << YAML::Value << YAML::BeginMap;
 	for (int i = 0; i < KEY_MAPPIN_MAX; i++) {
-		std::vector<std::string> bindNames;
+		out << YAML::Key << keyBindingNames[i] << YAML::Value << YAML::Flow << YAML::BeginSeq;
 		for (int j = 0; j < KEYBINDS_MAX; j++) {
-			bindNames.push_back(scancodeToName(keyMapping[i].keyBinds[j]));
+			out << scancodeToName(keyMapping[i].keyBinds[j]);
 		}
-		ini.setStringArray("KeyBindings", keyBindingNames[i], bindNames);
+		out << YAML::EndSeq;
 	}
+	out << YAML::EndMap;
 
-	const char* name = this->getProfileSaveFileName("config.ini");
-	if (!ini.save(name)) {
+	out << YAML::EndMap;
+
+	const char* name = this->getProfileSaveFileName("config.yaml");
+	std::ofstream fout(name);
+	if (!fout) {
 		app->Error("I/O Error in saveConfig");
+		return;
 	}
+	fout << out.c_str() << "\n";
 }
 
 void Game::loadConfig() {
 
 	SDLGL* sdlGL = CAppContainer::getInstance()->sdlGL;
-	INIReader ini;
 
-	const char* name = this->getProfileSaveFileName("config.ini");
-	if (!ini.load(name)) {
-		// Config file doesn't exist, use defaults
-		return;
+	const char* name = this->getProfileSaveFileName("config.yaml");
+	YAML::Node cfg;
+	try {
+		cfg = YAML::LoadFile(name);
+	} catch (const YAML::Exception&) {
+		return; // Config file doesn't exist, use defaults
 	}
 
-	// Check version
-	int version = ini.getInt("General", "version", 0);
-	if (version != 11) {
-		// Invalid or old version, use defaults
-		return;
+	if (cfg["version"].as<int>(0) != 11) {
+		return; // Invalid or old version, use defaults
 	}
 
-	// [General]
-	this->difficulty = difficultyFromString(ini.getString("General", "difficulty", "normal"));
-	int lang = languageFromString(ini.getString("General", "language", "english"));
+	// General
+	this->difficulty = difficultyFromString(cfg["difficulty"].as<std::string>("normal"));
+	int lang = languageFromString(cfg["language"].as<std::string>("english"));
 	if (lang != app->localization->defaultLanguage) {
 		app->localization->setLanguage(lang);
 	}
 
-	// [Sound]
-	app->sound->allowSounds = ini.getBool("Sound", "enabled", true);
+	// Sound
+	app->sound->allowSounds = cfg["sound_enabled"].as<bool>(true);
 	app->canvas->areSoundsAllowed = app->sound->allowSounds;
-	app->sound->soundFxVolume = ini.getInt("Sound", "fx_volume", 100);
-	app->sound->musicVolume = ini.getInt("Sound", "music_volume", 100);
+	app->sound->soundFxVolume = cfg["fx_volume"].as<int>(100);
+	app->sound->musicVolume = cfg["music_volume"].as<int>(100);
 
-	// [Controls]
-	app->canvas->vibrateEnabled = ini.getBool("Controls", "vibrate_enabled", true);
-	gVibrationIntensity = ini.getInt("Controls", "vibration_intensity", 100);
-	app->canvas->m_controlLayout = controlLayoutFromString(ini.getString("Controls", "control_layout", "chevrons"));
+	// Controls
+	app->canvas->vibrateEnabled = cfg["vibrate_enabled"].as<bool>(true);
+	gVibrationIntensity = cfg["vibration_intensity"].as<int>(100);
+	app->canvas->m_controlLayout = controlLayoutFromString(cfg["control_layout"].as<std::string>("chevrons"));
 	if (app->canvas->m_controlLayout > 2) {
 		app->canvas->m_controlLayout = 0;
 	}
-	app->canvas->m_controlAlpha = ini.getInt("Controls", "control_alpha", 255);
-	app->canvas->isFlipControls = ini.getBool("Controls", "flip_controls", false);
-	gDeadZone = ini.getInt("Controls", "dead_zone", 8000);
+	app->canvas->m_controlAlpha = cfg["control_alpha"].as<int>(255);
+	app->canvas->isFlipControls = cfg["flip_controls"].as<bool>(false);
+	gDeadZone = cfg["dead_zone"].as<int>(8000);
 
-	// [Display]
-	sdlGL->windowMode = windowModeFromString(ini.getString("Display", "window_mode", "windowed"));
-	sdlGL->vSync = ini.getBool("Display", "vsync", true);
-	sdlGL->resolutionIndex = resolutionFromString(ini.getString("Display", "resolution", "480x320"));
-	int animFrames = ini.getInt("Display", "anim_frames", 8);
+	// Display
+	sdlGL->windowMode = windowModeFromString(cfg["window_mode"].as<std::string>("windowed"));
+	sdlGL->vSync = cfg["vsync"].as<bool>(true);
+	sdlGL->resolutionIndex = resolutionFromString(cfg["resolution"].as<std::string>("480x320"));
+	int animFrames = cfg["anim_frames"].as<int>(8);
 	if (animFrames < 2) {
 		animFrames = 2;
 	} else if (animFrames > 64) {
 		animFrames = 64;
 	}
 	app->canvas->setAnimFrames(animFrames);
-	_glesObj->isInit = ini.getBool("Display", "gles_init", false);
+	_glesObj->isInit = cfg["gles_init"].as<bool>(false);
 
-	// [Help]
-	app->player->enableHelp = ini.getBool("Help", "enabled", true);
-	app->player->helpBitmask = ini.getInt("Help", "help_bitmask", 0);
-	app->player->invHelpBitmask = ini.getInt("Help", "inv_help_bitmask", 0);
-	app->player->ammoHelpBitmask = ini.getInt("Help", "ammo_help_bitmask", 0);
-	app->player->weaponHelpBitmask = ini.getInt("Help", "weapon_help_bitmask", 0);
-	app->player->armorHelpBitmask = ini.getInt("Help", "armor_help_bitmask", 0);
+	// Help
+	app->player->enableHelp = cfg["help_enabled"].as<bool>(true);
+	app->player->helpBitmask = cfg["help_bitmask"].as<int>(0);
+	app->player->invHelpBitmask = cfg["inv_help_bitmask"].as<int>(0);
+	app->player->ammoHelpBitmask = cfg["ammo_help_bitmask"].as<int>(0);
+	app->player->weaponHelpBitmask = cfg["weapon_help_bitmask"].as<int>(0);
+	app->player->armorHelpBitmask = cfg["armor_help_bitmask"].as<int>(0);
 
-	// [Stats]
-	app->player->currentLevelDeaths = ini.getInt("Stats", "current_level_deaths", 0);
-	app->player->totalDeaths = ini.getInt("Stats", "total_deaths", 0);
-	this->totalPlayTime = ini.getInt("Stats", "total_play_time", 0);
-	app->player->currentGrades = ini.getInt("Stats", "current_grades", 0);
-	app->player->bestGrades = ini.getInt("Stats", "best_grades", 0);
-	this->hasSeenIntro = ini.getBool("Stats", "has_seen_intro", false);
-	app->canvas->recentBriefSave = ini.getBool("Stats", "recent_brief_save", false);
+	// Stats
+	app->player->currentLevelDeaths = cfg["current_level_deaths"].as<int>(0);
+	app->player->totalDeaths = cfg["total_deaths"].as<int>(0);
+	this->totalPlayTime = cfg["total_play_time"].as<int>(0);
+	app->player->currentGrades = cfg["current_grades"].as<int>(0);
+	app->player->bestGrades = cfg["best_grades"].as<int>(0);
+	this->hasSeenIntro = cfg["has_seen_intro"].as<bool>(false);
+	app->canvas->recentBriefSave = cfg["recent_brief_save"].as<bool>(false);
 	this->lastSaveTime = app->upTimeMs;
 
-	// [LevelLoads]
-	for (int j = 0; j < 10; ++j) {
-		char key[16];
-		snprintf(key, sizeof(key), "level_%d", j);
-		this->numLevelLoads[j] = ini.getInt("LevelLoads", key, 0);
+	// LevelLoads
+	if (cfg["level_loads"] && cfg["level_loads"].IsSequence()) {
+		for (int j = 0; j < 10 && j < (int)cfg["level_loads"].size(); ++j) {
+			this->numLevelLoads[j] = cfg["level_loads"][j].as<int>(0);
+		}
 	}
 
-	// [Menu]
-	for (int i = 0; i < 10; ++i) {
-		char key[16];
-		snprintf(key, sizeof(key), "index_%d", i);
-		app->menuSystem->indexes[i] = ini.getInt("Menu", key, 0);
+	// Menu indexes
+	if (cfg["menu_indexes"] && cfg["menu_indexes"].IsSequence()) {
+		for (int i = 0; i < 10 && i < (int)cfg["menu_indexes"].size(); ++i) {
+			app->menuSystem->indexes[i] = cfg["menu_indexes"][i].as<int>(0);
+		}
 	}
 
-	// [KeyBindings]
-	for (int i = 0; i < KEY_MAPPIN_MAX; i++) {
-		std::vector<std::string> bindNames =
-		    ini.getStringArray("KeyBindings", keyBindingNames[i], KEYBINDS_MAX, "none");
-		for (int j = 0; j < KEYBINDS_MAX; j++) {
-			keyMapping[i].keyBinds[j] = scancodeFromName(bindNames[j]);
+	// KeyBindings
+	if (cfg["key_bindings"] && cfg["key_bindings"].IsMap()) {
+		for (int i = 0; i < KEY_MAPPIN_MAX; i++) {
+			YAML::Node binds = cfg["key_bindings"][keyBindingNames[i]];
+			if (binds && binds.IsSequence()) {
+				for (int j = 0; j < KEYBINDS_MAX && j < (int)binds.size(); j++) {
+					keyMapping[i].keyBinds[j] = scancodeFromName(binds[j].as<std::string>("none"));
+				}
+			}
 		}
 	}
 
@@ -2496,14 +2506,13 @@ bool Game::loadState(int activeLoadType) {
 }
 
 bool Game::hasConfig() {
-	INIReader ini;
-	const char* name = this->getProfileSaveFileName("config.ini");
-	if (ini.load(name)) {
-		if (ini.getInt("General", "version", 0) == 11) {
-			return true;
-		}
+	const char* name = this->getProfileSaveFileName("config.yaml");
+	try {
+		YAML::Node cfg = YAML::LoadFile(name);
+		return cfg["version"].as<int>(0) == 11;
+	} catch (const YAML::Exception&) {
+		return false;
 	}
-	return false;
 }
 
 bool Game::hasElement(const char* name) {
@@ -2599,79 +2608,87 @@ void Game::removeState(bool b) {
 void Game::saveEmptyConfig() {
 
 	SDLGL* sdlGL = CAppContainer::getInstance()->sdlGL;
-	INIReader ini;
+	YAML::Emitter out;
+	out << YAML::BeginMap;
 
-	// [General] - reset difficulty to normal, keep language
-	ini.setInt("General", "version", 11);
-	ini.setString("General", "difficulty", "normal");
-	ini.setString("General", "language", languageToString(app->localization->defaultLanguage));
+	// General - reset difficulty to normal, keep language
+	out << YAML::Key << "version" << YAML::Value << 11;
+	out << YAML::Key << "difficulty" << YAML::Value << "normal";
+	out << YAML::Key << "language" << YAML::Value << languageToString(app->localization->defaultLanguage);
 
-	// [Sound] - keep current settings
-	ini.setBool("Sound", "enabled", app->sound->allowSounds);
-	ini.setInt("Sound", "fx_volume", app->sound->soundFxVolume);
-	ini.setInt("Sound", "music_volume", app->sound->musicVolume);
+	// Sound - keep current settings
+	out << YAML::Key << "sound_enabled" << YAML::Value << app->sound->allowSounds;
+	out << YAML::Key << "fx_volume" << YAML::Value << app->sound->soundFxVolume;
+	out << YAML::Key << "music_volume" << YAML::Value << app->sound->musicVolume;
 
-	// [Controls] - keep current settings
-	ini.setBool("Controls", "vibrate_enabled", app->canvas->vibrateEnabled);
-	ini.setInt("Controls", "vibration_intensity", gVibrationIntensity);
-	ini.setString("Controls", "control_layout", controlLayoutToString(app->canvas->m_controlLayout));
-	ini.setInt("Controls", "control_alpha", app->canvas->m_controlAlpha);
-	ini.setBool("Controls", "flip_controls", app->canvas->isFlipControls);
-	ini.setInt("Controls", "dead_zone", gDeadZone);
+	// Controls - keep current settings
+	out << YAML::Key << "vibrate_enabled" << YAML::Value << app->canvas->vibrateEnabled;
+	out << YAML::Key << "vibration_intensity" << YAML::Value << gVibrationIntensity;
+	out << YAML::Key << "control_layout" << YAML::Value << controlLayoutToString(app->canvas->m_controlLayout);
+	out << YAML::Key << "control_alpha" << YAML::Value << app->canvas->m_controlAlpha;
+	out << YAML::Key << "flip_controls" << YAML::Value << app->canvas->isFlipControls;
+	out << YAML::Key << "dead_zone" << YAML::Value << gDeadZone;
 
-	// [Display] - keep current settings
-	ini.setString("Display", "window_mode", windowModeToString(sdlGL->windowMode));
-	ini.setBool("Display", "vsync", sdlGL->vSync);
-	ini.setString("Display", "resolution", resolutionToString(sdlGL->resolutionIndex).c_str());
-	ini.setInt("Display", "anim_frames", app->canvas->animFrames);
-	ini.setBool("Display", "gles_init", _glesObj->isInit);
+	// Display - keep current settings
+	out << YAML::Key << "window_mode" << YAML::Value << windowModeToString(sdlGL->windowMode);
+	out << YAML::Key << "vsync" << YAML::Value << sdlGL->vSync;
+	out << YAML::Key << "resolution" << YAML::Value << resolutionToString(sdlGL->resolutionIndex);
+	out << YAML::Key << "anim_frames" << YAML::Value << app->canvas->animFrames;
+	out << YAML::Key << "gles_init" << YAML::Value << _glesObj->isInit;
 
-	// [Help] - reset bitmasks
-	ini.setBool("Help", "enabled", app->player->enableHelp);
-	ini.setInt("Help", "help_bitmask", 0);
-	ini.setInt("Help", "inv_help_bitmask", 0);
-	ini.setInt("Help", "ammo_help_bitmask", 0);
-	ini.setInt("Help", "weapon_help_bitmask", 0);
-	ini.setInt("Help", "armor_help_bitmask", 0);
+	// Help - reset bitmasks
+	out << YAML::Key << "help_enabled" << YAML::Value << app->player->enableHelp;
+	out << YAML::Key << "help_bitmask" << YAML::Value << 0;
+	out << YAML::Key << "inv_help_bitmask" << YAML::Value << 0;
+	out << YAML::Key << "ammo_help_bitmask" << YAML::Value << 0;
+	out << YAML::Key << "weapon_help_bitmask" << YAML::Value << 0;
+	out << YAML::Key << "armor_help_bitmask" << YAML::Value << 0;
 
-	// [Stats] - reset player stats but keep some data
-	ini.setInt("Stats", "current_level_deaths", 0);
-	ini.setInt("Stats", "total_deaths", 0);
+	// Stats - reset player stats but keep some data
+	out << YAML::Key << "current_level_deaths" << YAML::Value << 0;
+	out << YAML::Key << "total_deaths" << YAML::Value << 0;
 	this->totalPlayTime += (app->upTimeMs - this->lastSaveTime) / 1000;
-	ini.setInt("Stats", "total_play_time", this->totalPlayTime);
-	ini.setInt("Stats", "current_grades", 0);
-	ini.setInt("Stats", "best_grades", 0);
-	ini.setBool("Stats", "has_seen_intro", this->hasSeenIntro);
-	ini.setBool("Stats", "recent_brief_save", false);
+	out << YAML::Key << "total_play_time" << YAML::Value << this->totalPlayTime;
+	out << YAML::Key << "current_grades" << YAML::Value << 0;
+	out << YAML::Key << "best_grades" << YAML::Value << 0;
+	out << YAML::Key << "has_seen_intro" << YAML::Value << this->hasSeenIntro;
+	out << YAML::Key << "recent_brief_save" << YAML::Value << false;
 	this->lastSaveTime = app->upTimeMs;
 
-	// [LevelLoads] - keep level load counts
+	// LevelLoads - keep level load counts
+	out << YAML::Key << "level_loads" << YAML::Value << YAML::Flow << YAML::BeginSeq;
 	for (int j = 0; j < 10; ++j) {
-		char key[16];
-		snprintf(key, sizeof(key), "level_%d", j);
-		ini.setInt("LevelLoads", key, this->numLevelLoads[j]);
+		out << this->numLevelLoads[j];
 	}
+	out << YAML::EndSeq;
 
-	// [Menu] - reset menu indexes
+	// Menu - reset menu indexes
+	out << YAML::Key << "menu_indexes" << YAML::Value << YAML::Flow << YAML::BeginSeq;
 	for (int i = 0; i < 10; ++i) {
-		char key[16];
-		snprintf(key, sizeof(key), "index_%d", i);
-		ini.setInt("Menu", key, 0);
+		out << 0;
 	}
+	out << YAML::EndSeq;
 
-	// [KeyBindings] - keep current key mappings
+	// KeyBindings - keep current key mappings
+	out << YAML::Key << "key_bindings" << YAML::Value << YAML::BeginMap;
 	for (int i = 0; i < KEY_MAPPIN_MAX; i++) {
-		std::vector<std::string> bindNames;
+		out << YAML::Key << keyBindingNames[i] << YAML::Value << YAML::Flow << YAML::BeginSeq;
 		for (int j = 0; j < KEYBINDS_MAX; j++) {
-			bindNames.push_back(scancodeToName(keyMapping[i].keyBinds[j]));
+			out << scancodeToName(keyMapping[i].keyBinds[j]);
 		}
-		ini.setStringArray("KeyBindings", keyBindingNames[i], bindNames);
+		out << YAML::EndSeq;
 	}
+	out << YAML::EndMap;
 
-	const char* name = this->getProfileSaveFileName("config.ini");
-	if (!ini.save(name)) {
+	out << YAML::EndMap;
+
+	const char* name = this->getProfileSaveFileName("config.yaml");
+	std::ofstream fout(name);
+	if (!fout) {
 		app->Error("I/O Error in saveConfig");
+		return;
 	}
+	fout << out.c_str() << "\n";
 }
 
 bool Game::canSnapMonsters() {

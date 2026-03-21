@@ -6,6 +6,10 @@ file(GLOB_RECURSE SOURCE_FILES
 	"engine/*.cpp" "engine/*.c"
 	"game/*.cpp" "game/*.c")
 
+# ZipFile is only used by the converter tool, not the engine
+list(FILTER SOURCE_FILES EXCLUDE REGEX "ZipFile\\.cpp$")
+list(FILTER HEADER_FILES EXCLUDE REGEX "ZipFile\\.h$")
+
 file(GLOB_RECURSE RESOURCES_FILES
 	"engine/*.rc" "engine/*.ico"
 	"game/*.rc" "game/*.ico")
@@ -29,7 +33,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
 target_link_libraries(${PROJECT_NAME}
 	SDL2::SDL2
-	ZLIB::ZLIB
 	OpenAL::OpenAL
 	OpenGL::GL
 	${HASH_LIBRARY_TGT_NAME}

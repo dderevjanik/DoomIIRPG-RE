@@ -7,7 +7,6 @@
 #include "IDIB.h"
 
 class SDLGL;
-class ZipFile;
 class IDIB;
 class Image;
 class IGameModule;

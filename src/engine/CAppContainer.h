@@ -5,18 +5,16 @@
 #include "App.h"
 #include "OpcodeRegistry.h"
 
-class ZipFile;
 class VFS;
 class SDLGL;
 class Applet;
 class IGameModule;
 
-// Game-level configuration loaded from game.ini
+// Game-level configuration loaded from game.yaml
 struct GameConfig {
 	std::string name = "Doom II RPG";
 	std::string windowTitle = "Doom II RPG";
 	std::string saveDir = "Doom2rpg.app";
-	std::string ipaPrefix = "Payload/Doom2rpg.app/Packages/";
 	std::string entryMap = "map00";
 	std::vector<int> noFogMaps;  // Map IDs where fog is disabled (e.g. outdoor maps)
 
@@ -32,8 +30,7 @@ class CAppContainer {
   private:
   public:
 	Applet* app;
-	SDLGL* sdlGL;     // New
-	ZipFile* zipFile; // New
+	SDLGL* sdlGL;
 	VFS* vfs;
 	GameConfig gameConfig;         // Loaded from game.ini
 	OpcodeRegistry opcodeRegistry; // Extension script opcodes (128-254)
@@ -60,7 +57,7 @@ class CAppContainer {
 	void TestCheatEntry(float pressX, float pressY);
 	bool testCheatCode(int code);
 	void UpdateAccelerometer(float x, float y, float z, bool useMouse);
-	void Construct(SDLGL* sdlGL, ZipFile* zipFile, VFS* vfs, IGameModule* gameModule = nullptr);
+	void Construct(SDLGL* sdlGL, VFS* vfs, IGameModule* gameModule = nullptr);
 };
 
 #endif

@@ -1248,10 +1248,49 @@ static bool generateCharactersYaml(const std::string& outDir) {
 }
 
 // ========================================================================
+// Copy all BMP image files from the IPA Packages directory
+// ========================================================================
+static void copyImageAssets(ZipFile& zip, const std::string& outDir) {
+	const std::string prefix = std::string(PKG_PREFIX);
+	int copied = 0;
+
+	for (int i = 0; i < zip.getEntryCount(); i++) {
+		const char* name = zip.getEntryName(i);
+		if (!name) continue;
+		std::string entry(name);
+
+		// Must be under the Packages prefix
+		if (entry.compare(0, prefix.size(), prefix) != 0) continue;
+
+		// Must end with .bmp (case-insensitive check)
+		if (entry.size() < 4) continue;
+		std::string ext = entry.substr(entry.size() - 4);
+		if (ext != ".bmp" && ext != ".BMP") continue;
+
+		// Strip prefix to get relative path (e.g. "logo.bmp" or "ComicBook/Cover.bmp")
+		std::string relPath = entry.substr(prefix.size());
+
+		int size = 0;
+		uint8_t* data = zip.readZipFileEntry(name, &size);
+		if (data) {
+			std::string outPath = outDir + "/" + relPath;
+			size_t slash = outPath.rfind('/');
+			if (slash != std::string::npos) {
+				mkdirRecursive(outPath.substr(0, slash));
+			}
+			writeFile(outPath, data, size);
+			free(data);
+			copied++;
+		}
+	}
+	printf("  Image assets: %d BMP files copied\n", copied);
+}
+
+// ========================================================================
 // Copy binary assets that aren't converted yet (maps, textures, models)
 // ========================================================================
 static void copyBinaryAssets(ZipFile& zip, const std::string& outDir) {
-	// Copy image/resource files that the engine loads directly via VFS
+	// Copy binary resource files that the engine loads directly via VFS
 	const char* binaryFiles[] = {
 	    // Maps
 	    "Packages/map00.bin",
@@ -1317,8 +1356,8 @@ static void copyBinaryAssets(ZipFile& zip, const std::string& outDir) {
 	    "Packages/newTexels036.bin",
 	    "Packages/newTexels037.bin",
 	    "Packages/newTexels038.bin",
-	    // Images
-	    "logo.bmp",
+	    // Binary data (sky/camera tables still loaded at runtime)
+	    "Packages/tables.bin",
 	};
 
 	int copied = 0;
@@ -1331,6 +1370,9 @@ static void copyBinaryAssets(ZipFile& zip, const std::string& outDir) {
 		if (data) {
 			// Strip "Packages/" prefix for output — engine VFS reads from CWD
 			std::string outFile = relPath;
+			if (outFile.compare(0, 9, "Packages/") == 0) {
+				outFile = outFile.substr(9);
+			}
 			std::string outPath = outDir + "/" + outFile;
 
 			// Ensure parent dir exists
@@ -1353,12 +1395,15 @@ static void copyBinaryAssets(ZipFile& zip, const std::string& outDir) {
 int main(int argc, char* argv[]) {
 	const char* ipaPath = nullptr;
 	std::string outputDir = "games/doom2rpg";
+	bool force = false;
 
 	for (int i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "--ipa") == 0 && i + 1 < argc) {
 			ipaPath = argv[++i];
 		} else if (strcmp(argv[i], "--output") == 0 && i + 1 < argc) {
 			outputDir = argv[++i];
+		} else if (strcmp(argv[i], "--force") == 0 || strcmp(argv[i], "-f") == 0) {
+			force = true;
 		} else if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
 			printUsage(argv[0]);
 			return 0;
@@ -1372,8 +1417,8 @@ int main(int argc, char* argv[]) {
 	}
 
 	// Check if output already exists
-	if (dirExists(outputDir.c_str())) {
-		fprintf(stderr, "Output directory '%s' already exists. Remove it first to re-convert.\n", outputDir.c_str());
+	if (dirExists(outputDir.c_str()) && !force) {
+		fprintf(stderr, "Output directory '%s' already exists. Use --force to overwrite.\n", outputDir.c_str());
 		return 1;
 	}
 
@@ -1418,6 +1463,10 @@ int main(int argc, char* argv[]) {
 	// Copy binary assets that still need the original format
 	printf("\nCopying binary assets (maps, textures, models)...\n");
 	copyBinaryAssets(zip, outputDir);
+
+	// Copy all BMP images from the IPA
+	printf("\nCopying image assets...\n");
+	copyImageAssets(zip, outputDir);
 
 	zip.closeZipFile();
 

@@ -5,7 +5,6 @@
 
 #include "CAppContainer.h"
 #include <yaml-cpp/yaml.h>
-#include "INIReader.h"
 #include "App.h"
 #include "Hud.h"
 #include "Game.h"
@@ -47,21 +46,10 @@ bool MenuSystem::startup() {
 	Applet* app = this->app;
 	printf("MenuSystem::startup\n");
 
-	// Try loading from menus.yaml in CWD first
-	FILE* f = std::fopen("menus.yaml", "rb");
-	if (f) {
-		std::fclose(f);
-		printf("MenuSystem: loading from menus.yaml\n");
-		if (!this->loadMenusFromYAML("menus.yaml")) {
-			app->Error("Failed to load menus.yaml\n");
-			return false;
-		}
-	} else {
-		// Fall back to binary from resource pack
-		printf("MenuSystem: loading from menus.bin (resource pack)\n");
-		if (!this->loadMenusFromBinary()) {
-			return false;
-		}
+	printf("MenuSystem: loading from menus.yaml\n");
+	if (!this->loadMenusFromYAML("menus.yaml")) {
+		app->Error("Failed to load menus.yaml\n");
+		return false;
 	}
 
 	this->numItems = 0;
@@ -417,48 +405,6 @@ static const char* menuIdToName(int id) {
 	return "MENU_UNKNOWN";
 }
 
-bool MenuSystem::loadMenusFromBinary() {
-
-	InputStream IS;
-
-	if (!IS.loadResource(Resources::RES_MENUS_BIN_GZ)) {
-		app->Error("Failed to load menus.bin\n");
-		return false;
-	}
-
-	app->resource->read(&IS, sizeof(int));
-	this->menuDataCount = (uint32_t)app->resource->shortAt(0);
-	this->menuItemsCount = (uint32_t)app->resource->shortAt(2);
-
-	this->menuData = new uint32_t[this->menuDataCount];
-	this->menuItems = new uint32_t[this->menuItemsCount];
-
-	int n = 0;
-	int n2 = 0;
-	int n3;
-	do {
-		n3 = (((this->menuDataCount << 2) - n2 > Resource::IO_SIZE) ? Resource::IO_SIZE : ((this->menuDataCount << 2) - n2));
-		app->resource->read(&IS, n3);
-		for (int i = 4; i <= n3; i += 4) {
-			this->menuData[n++] = app->resource->shiftInt();
-		}
-	} while ((n2 += n3) < this->menuDataCount << 2);
-
-	n = 0;
-	n2 = 0;
-	do {
-		n3 = (((this->menuItemsCount << 2) - n2 > Resource::IO_SIZE) ? Resource::IO_SIZE : ((this->menuItemsCount << 2) - n2));
-		app->resource->read(&IS, n3);
-		for (int i = 4; i <= n3; i += 4) {
-			this->menuItems[n++] = app->resource->shiftInt();
-		}
-	} while ((n2 += n3) < this->menuItemsCount << 2);
-
-	IS.~InputStream();
-	printf("MenuSystem: loaded %d menus, %d item words from menus.bin\n", this->menuDataCount, this->menuItemsCount);
-	return true;
-}
-
 bool MenuSystem::loadMenusFromYAML(const char* path) {
 	YAML::Node config;
 	try {
@@ -519,53 +465,6 @@ bool MenuSystem::loadMenusFromYAML(const char* path) {
 
 	printf("MenuSystem: loaded %d menus, %d item words from %s\n", this->menuDataCount, this->menuItemsCount, path);
 	return true;
-}
-
-void MenuSystem::exportMenusToINI(const char* path) {
-	INIReader ini;
-	ini.setInt("Menus", "count", this->menuDataCount);
-
-	int prevEnd = 0;
-	for (uint32_t i = 0; i < this->menuDataCount; i++) {
-		char section[32];
-		snprintf(section, sizeof(section), "Menu_%d", i);
-
-		uint32_t md = this->menuData[i];
-		int mid = md & 0xFF;
-		int signedId = (mid >= 250) ? (mid - 256) : mid;
-		int itemEnd = (md & 0xFFFF00) >> 8;
-		int mtype = (md & 0xFF000000) >> 24;
-		int numItems = (itemEnd - prevEnd) / 2;
-
-		ini.setInt(section, "menu_id", signedId);
-		ini.setString(section, "type", menuTypeToString(mtype));
-		ini.setInt(section, "item_count", numItems);
-
-		for (int j = 0; j < numItems; j++) {
-			char itemSection[48];
-			snprintf(itemSection, sizeof(itemSection), "Menu_%d_Item_%d", i, j);
-
-			int idx = prevEnd + j * 2;
-			uint32_t w0 = this->menuItems[idx];
-			uint32_t w1 = this->menuItems[idx + 1];
-
-			ini.setInt(itemSection, "string_id", (w0 >> 16) & 0xFFFF);
-			ini.setString(itemSection, "flags", flagsToString(w0 & 0xFFFF).c_str());
-			ini.setString(itemSection, "action", actionToString((w1 >> 8) & 0xFF));
-			ini.setInt(itemSection, "param", w1 & 0xFF);
-			int helpStr = (w1 >> 16) & 0xFFFF;
-			if (helpStr != 0) {
-				ini.setInt(itemSection, "help_string", helpStr);
-			}
-		}
-		prevEnd = itemEnd;
-	}
-
-	if (!ini.save(path)) {
-		printf("MenuSystem: failed to export to %s\n", path);
-	} else {
-		printf("MenuSystem: exported %d menus to %s\n", this->menuDataCount, path);
-	}
 }
 
 void MenuSystem::buildDivider(Text* text, int i) {

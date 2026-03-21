@@ -39,6 +39,8 @@ public:
 	void closeZipFile();
 	uint8_t* readZipFileEntry(const char* name, int* sizep);
 	bool hasEntry(const char* name);
+	int getEntryCount() const { return entry_count; }
+	const char* getEntryName(int i) const { return (i >= 0 && i < entry_count) ? entry[i].name : nullptr; }
 };
 
 #endif

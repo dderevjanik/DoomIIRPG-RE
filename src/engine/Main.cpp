@@ -3,12 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
-#include <limits.h>
 #include <unistd.h>
 
 #include <SDL.h>
 #include "SDLGL.h"
-#include "ZipFile.h"
 #include "VFS.h"
 #include <yaml-cpp/yaml.h>
 
@@ -37,15 +35,12 @@ int main(int argc, char* args[]) {
 
 	int UpTime = 0;
 
-	const char* ipaPath = "Doom 2 RPG.ipa";
 	const char* gameDir = ".";
 	const char* gameName = nullptr;
 	const char* customMap = nullptr;
 
 	for (int i = 1; i < argc; i++) {
-		if (strcmp(args[i], "--ipa") == 0 && i + 1 < argc) {
-			ipaPath = args[++i];
-		} else if (strcmp(args[i], "--gamedir") == 0 && i + 1 < argc) {
+		if (strcmp(args[i], "--gamedir") == 0 && i + 1 < argc) {
 			gameDir = args[++i];
 		} else if (strcmp(args[i], "--game") == 0 && i + 1 < argc) {
 			gameName = args[++i];
@@ -70,15 +65,7 @@ int main(int argc, char* args[]) {
 		}
 	}
 
-	// Resolve IPA path to absolute before any chdir
-	char ipaAbsPath[PATH_MAX];
-	if (ipaPath[0] != '/') {
-		if (realpath(ipaPath, ipaAbsPath)) {
-			ipaPath = ipaAbsPath;
-		}
-	}
-
-	// Change working directory to gamedir so .ini files are found there
+	// Change working directory to gamedir so config files are found there
 	if (strcmp(gameDir, ".") != 0) {
 		if (chdir(gameDir) != 0) {
 			printf("Error: cannot change to gamedir '%s'\n", gameDir);
@@ -108,7 +95,9 @@ int main(int argc, char* args[]) {
 				printf("Game: %s (save: %s)\n", gc.name.c_str(), gc.saveDir.c_str());
 			}
 		} catch (const YAML::Exception& e) {
-			printf("Warning: could not load game.yaml: %s\n", e.what());
+			printf("Error: could not load game.yaml: %s\n", e.what());
+			printf("Run doom2rpg-convert to extract game assets first.\n");
+			return 1;
 		}
 	}
 
@@ -117,16 +106,11 @@ int main(int argc, char* args[]) {
 	// Apply save directory from game config
 	setSaveDir(gc.saveDir);
 
-	ZipFile zipFile;
-	zipFile.openZipFile(ipaPath);
-
 	VFS vfs;
 	// Mount CWD at highest priority (game directory or project root)
 	vfs.mountDir(".", 200);
 	// Mount basedata for shared/fallback assets
 	vfs.mountDir("basedata", 100);
-	// Mount the .ipa zip with the internal package prefix
-	vfs.mountZip(&zipFile, gc.ipaPrefix.c_str(), 0);
 
 	SDLGL sdlGL;
 	sdlGL.Initialize();
@@ -136,7 +120,7 @@ int main(int argc, char* args[]) {
 	// Set up the game module — custom games would provide their own IGameModule here
 	DoomIIRPGGame doom2rpgModule;
 
-	CAppContainer::getInstance()->Construct(&sdlGL, &zipFile, &vfs, &doom2rpgModule);
+	CAppContainer::getInstance()->Construct(&sdlGL, &vfs, &doom2rpgModule);
 
 	input.init(); // [GEC] Port: set default Binds — must be after Construct() so app pointer exists
 
@@ -180,7 +164,6 @@ int main(int argc, char* args[]) {
 
 	printf("APP_QUIT\n");
 	CAppContainer::getInstance()->~CAppContainer();
-	zipFile.closeZipFile();
 	sdlGL.~SDLGL();
 	input.~Input();
 	return 0;

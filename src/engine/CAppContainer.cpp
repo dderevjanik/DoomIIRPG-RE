@@ -1,7 +1,6 @@
 #include <stdexcept>
 
 #include "SDLGL.h"
-#include "ZipFile.h"
 #include "VFS.h"
 #include "App.h"
 #include "Canvas.h"
@@ -37,11 +36,6 @@ CAppContainer::~CAppContainer() {
 	if (this->sdlGL) {
 		this->sdlGL->~SDLGL();
 		this->sdlGL = nullptr;
-	}
-
-	if (this->zipFile) {
-		this->zipFile->closeZipFile();
-		this->zipFile = nullptr;
 	}
 }
 
@@ -180,10 +174,9 @@ void CAppContainer::UpdateAccelerometer(float x, float y, float z, bool useMouse
 	}
 }
 
-void CAppContainer::Construct(SDLGL* sdlGL, ZipFile* zipFile, VFS* vfs, IGameModule* gameModule) {
+void CAppContainer::Construct(SDLGL* sdlGL, VFS* vfs, IGameModule* gameModule) {
 	printf("CAppContainer::Construct\n");
-	this->sdlGL = sdlGL; // New
-	this->zipFile = zipFile; // New
+	this->sdlGL = sdlGL;
 	this->vfs = vfs;
 
 	this->app = new Applet();
