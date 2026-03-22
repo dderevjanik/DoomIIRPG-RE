@@ -399,6 +399,10 @@ void Applet::loadTables() {
 	if (!this->loadTablesFromYAML("tables.yaml")) {
 		this->Error("Failed to load tables.yaml\n");
 	}
+	printf("Applet::loadTables: loading from weapons.yaml\n");
+	if (!this->loadWeaponsFromYAML("weapons.yaml")) {
+		this->Error("Failed to load weapons.yaml\n");
+	}
 	printf("Applet::loadTables: loading from monsters.yaml\n");
 	if (!this->loadMonstersFromYAML("monsters.yaml")) {
 		this->Error("Failed to load monsters.yaml\n");
@@ -491,6 +495,111 @@ static int projTypeFromName(const std::string& name) {
 	}
 }
 
+static int ammoTypeFromName(const std::string& name) {
+	if (name == "none")
+		return 0;
+	if (name == "bullets")
+		return 1;
+	if (name == "shells")
+		return 2;
+	if (name == "holy_water")
+		return 3;
+	if (name == "cells")
+		return 4;
+	if (name == "rockets")
+		return 5;
+	if (name == "soul_cube")
+		return 6;
+	if (name == "sentry_bot")
+		return 7;
+	if (name == "item")
+		return 8;
+	try {
+		return std::stoi(name);
+	} catch (...) {
+		return 0;
+	}
+}
+
+bool Applet::loadWeaponsFromYAML(const char* path) {
+	YAML::Node config;
+	try {
+		config = YAML::LoadFile(path);
+	} catch (const YAML::Exception&) {
+		return false;
+	}
+
+	YAML::Node weapons = config["weapons"];
+	if (!weapons || !weapons.IsSequence()) {
+		return false;
+	}
+
+	// First pass: find max index
+	int maxIdx = -1;
+	for (int i = 0; i < (int)weapons.size(); i++) {
+		int idx = weapons[i]["index"].as<int>(i);
+		if (idx > maxIdx)
+			maxIdx = idx;
+	}
+	int numWeapons = maxIdx + 1;
+
+	// Allocate flat arrays
+	this->combat->weapons = new int8_t[numWeapons * 9];
+	std::memset(this->combat->weapons, 0, numWeapons * 9);
+	this->combat->wpinfo = new int8_t[numWeapons * 6];
+	std::memset(this->combat->wpinfo, 0, numWeapons * 6);
+
+	// Second pass: populate arrays
+	for (int i = 0; i < (int)weapons.size(); i++) {
+		YAML::Node w = weapons[i];
+		int idx = w["index"].as<int>(i);
+		int base = idx * 9;
+
+		// Damage
+		if (YAML::Node dmg = w["damage"]) {
+			this->combat->weapons[base + 0] = (int8_t)dmg["min"].as<int>(0);
+			this->combat->weapons[base + 1] = (int8_t)dmg["max"].as<int>(0);
+		}
+
+		// Range
+		if (YAML::Node rng = w["range"]) {
+			this->combat->weapons[base + 2] = (int8_t)rng["min"].as<int>(0);
+			this->combat->weapons[base + 3] = (int8_t)rng["max"].as<int>(0);
+		}
+
+		// Ammo
+		if (YAML::Node ammo = w["ammo"]) {
+			this->combat->weapons[base + 4] = (int8_t)ammoTypeFromName(ammo["type"].as<std::string>("none"));
+			this->combat->weapons[base + 5] = (int8_t)ammo["usage"].as<int>(0);
+		}
+
+		// Projectile, shots, shot_hold
+		this->combat->weapons[base + 6] = (int8_t)projTypeFromName(w["projectile"].as<std::string>("none"));
+		this->combat->weapons[base + 7] = (int8_t)w["shots"].as<int>(1);
+		this->combat->weapons[base + 8] = (int8_t)w["shot_hold"].as<int>(0);
+
+		// Sprite info (optional)
+		if (YAML::Node sprite = w["sprite"]) {
+			int wpBase = idx * 6;
+			if (YAML::Node idle = sprite["idle"]) {
+				this->combat->wpinfo[wpBase + 0] = (int8_t)idle["x"].as<int>(0);
+				this->combat->wpinfo[wpBase + 1] = (int8_t)idle["y"].as<int>(0);
+			}
+			if (YAML::Node atk = sprite["attack"]) {
+				this->combat->wpinfo[wpBase + 2] = (int8_t)atk["x"].as<int>(0);
+				this->combat->wpinfo[wpBase + 3] = (int8_t)atk["y"].as<int>(0);
+			}
+			if (YAML::Node flash = sprite["flash"]) {
+				this->combat->wpinfo[wpBase + 4] = (int8_t)flash["x"].as<int>(0);
+				this->combat->wpinfo[wpBase + 5] = (int8_t)flash["y"].as<int>(0);
+			}
+		}
+	}
+
+	printf("Weapons: loaded %d weapon definitions from %s\n", (int)weapons.size(), path);
+	return true;
+}
+
 static std::vector<int> parseIntList(const std::string& str) {
 	std::vector<int> result;
 	std::stringstream ss(str);
@@ -518,45 +627,6 @@ bool Applet::loadTablesFromYAML(const char* path) {
 		config = YAML::LoadFile(path);
 	} catch (const YAML::Exception&) {
 		return false;
-	}
-
-	// === Weapons ===
-	if (YAML::Node weapons = config["weapons"]) {
-		int numWeapons = (int)weapons.size();
-		int weaponBytes = numWeapons * 9;
-		this->combat->weapons = new int8_t[weaponBytes];
-		std::memset(this->combat->weapons, 0, weaponBytes);
-		for (int w = 0; w < numWeapons; w++) {
-			YAML::Node wp = weapons[w];
-			int base = w * 9;
-			this->combat->weapons[base + 0] = (int8_t)wp["str_min"].as<int>(0);
-			this->combat->weapons[base + 1] = (int8_t)wp["str_max"].as<int>(0);
-			this->combat->weapons[base + 2] = (int8_t)wp["range_min"].as<int>(0);
-			this->combat->weapons[base + 3] = (int8_t)wp["range_max"].as<int>(0);
-			this->combat->weapons[base + 4] = (int8_t)wp["ammo_type"].as<int>(0);
-			this->combat->weapons[base + 5] = (int8_t)wp["ammo_usage"].as<int>(0);
-			this->combat->weapons[base + 6] = (int8_t)projTypeFromName(wp["proj_type"].as<std::string>("none").c_str());
-			this->combat->weapons[base + 7] = (int8_t)wp["num_shots"].as<int>(1);
-			this->combat->weapons[base + 8] = (int8_t)wp["shot_hold"].as<int>(0);
-		}
-	}
-
-	// === WeaponInfo ===
-	if (YAML::Node wpinfos = config["weapon_info"]) {
-		int numWpInfo = (int)wpinfos.size();
-		int wpinfoBytes = numWpInfo * 6;
-		this->combat->wpinfo = new int8_t[wpinfoBytes];
-		std::memset(this->combat->wpinfo, 0, wpinfoBytes);
-		for (int w = 0; w < numWpInfo; w++) {
-			YAML::Node wi = wpinfos[w];
-			int base = w * 6;
-			this->combat->wpinfo[base + 0] = (int8_t)wi["idle_x"].as<int>(0);
-			this->combat->wpinfo[base + 1] = (int8_t)wi["idle_y"].as<int>(0);
-			this->combat->wpinfo[base + 2] = (int8_t)wi["attack_x"].as<int>(0);
-			this->combat->wpinfo[base + 3] = (int8_t)wi["attack_y"].as<int>(0);
-			this->combat->wpinfo[base + 4] = (int8_t)wi["flash_x"].as<int>(0);
-			this->combat->wpinfo[base + 5] = (int8_t)wi["flash_y"].as<int>(0);
-		}
 	}
 
 	// === CombatMasks ===

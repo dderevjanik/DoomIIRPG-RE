@@ -170,6 +170,15 @@ static std::string projTypeName(int val) {
 	return std::to_string(val);
 }
 
+static const char* AMMO_TYPE_NAMES[] = {"none", "bullets", "shells", "holy_water", "cells", "rockets", "soul_cube", "sentry_bot", "item"};
+static const int NUM_AMMO_TYPES = 9;
+
+static std::string ammoTypeName(int val) {
+	if (val >= 0 && val < NUM_AMMO_TYPES)
+		return AMMO_TYPE_NAMES[val];
+	return std::to_string(val);
+}
+
 static std::string monsterName(int idx) {
 	if (idx >= 0 && idx < NUM_MONSTER_NAMES)
 		return MONSTER_NAMES[idx];
@@ -605,55 +614,120 @@ static bool convertTables(ZipFile& zip, const std::string& outDir) {
 	out << YAML::Newline;
 	out << YAML::BeginMap;
 
-	// --- Table 2: Weapons (stride 9 bytes) ---
+	// --- Tables 2+1: Weapons + WeaponInfo → weapons.yaml ---
+	struct WeaponData {
+		int strMin, strMax, rangeMin, rangeMax, ammoType, ammoUsage, projType, numShots, shotHold;
+	};
+	struct WpInfoData {
+		int idleX, idleY, atkX, atkY, flashX, flashY;
+	};
+	std::vector<WeaponData> allWeapons;
+	std::vector<WpInfoData> allWpInfo;
+
+	// Read Table 2: Weapons (stride 9)
 	{
 		int start, end;
 		tableRange(2, start, end);
 		TableReader r = {data, dataStart + start};
 		int count = r.readInt();
 		int numWeapons = count / 9;
-
-		out << YAML::Key << "weapons" << YAML::Value << YAML::BeginSeq;
+		allWeapons.resize(numWeapons);
 		for (int i = 0; i < numWeapons; i++) {
-			out << YAML::Comment("Weapon " + std::to_string(i));
-			out << YAML::BeginMap;
-			out << YAML::Key << "str_min" << YAML::Value << (int)r.readUByte();
-			out << YAML::Key << "str_max" << YAML::Value << (int)r.readUByte();
-			out << YAML::Key << "range_min" << YAML::Value << (int)r.readUByte();
-			out << YAML::Key << "range_max" << YAML::Value << (int)r.readUByte();
-			out << YAML::Key << "ammo_type" << YAML::Value << (int)r.readUByte();
-			out << YAML::Key << "ammo_usage" << YAML::Value << (int)r.readUByte();
+			allWeapons[i].strMin = (int)r.readUByte();
+			allWeapons[i].strMax = (int)r.readUByte();
+			allWeapons[i].rangeMin = (int)r.readUByte();
+			allWeapons[i].rangeMax = (int)r.readUByte();
+			allWeapons[i].ammoType = (int)r.readUByte();
+			allWeapons[i].ammoUsage = (int)r.readUByte();
 			uint8_t pt = r.readUByte();
-			int ptSigned = (pt < 128) ? pt : (pt - 256);
-			out << YAML::Key << "proj_type" << YAML::Value << projTypeName(ptSigned);
-			out << YAML::Key << "num_shots" << YAML::Value << (int)r.readUByte();
-			out << YAML::Key << "shot_hold" << YAML::Value << (int)r.readUByte();
-			out << YAML::EndMap;
+			allWeapons[i].projType = (pt < 128) ? pt : (pt - 256);
+			allWeapons[i].numShots = (int)r.readUByte();
+			allWeapons[i].shotHold = (int)r.readUByte();
 		}
-		out << YAML::EndSeq;
 	}
 
-	// --- Table 1: WeaponInfo (stride 6 bytes) ---
+	// Read Table 1: WeaponInfo (stride 6)
 	{
 		int start, end;
 		tableRange(1, start, end);
 		TableReader r = {data, dataStart + start};
 		int count = r.readInt();
 		int numInfo = count / 6;
-
-		out << YAML::Key << "weapon_info" << YAML::Value << YAML::BeginSeq;
+		allWpInfo.resize(numInfo);
 		for (int i = 0; i < numInfo; i++) {
-			out << YAML::Comment("WeaponInfo " + std::to_string(i));
-			out << YAML::BeginMap;
-			out << YAML::Key << "idle_x" << YAML::Value << (int)r.readByte();
-			out << YAML::Key << "idle_y" << YAML::Value << (int)r.readByte();
-			out << YAML::Key << "attack_x" << YAML::Value << (int)r.readByte();
-			out << YAML::Key << "attack_y" << YAML::Value << (int)r.readByte();
-			out << YAML::Key << "flash_x" << YAML::Value << (int)r.readByte();
-			out << YAML::Key << "flash_y" << YAML::Value << (int)r.readByte();
-			out << YAML::EndMap;
+			allWpInfo[i].idleX = (int)r.readByte();
+			allWpInfo[i].idleY = (int)r.readByte();
+			allWpInfo[i].atkX = (int)r.readByte();
+			allWpInfo[i].atkY = (int)r.readByte();
+			allWpInfo[i].flashX = (int)r.readByte();
+			allWpInfo[i].flashY = (int)r.readByte();
 		}
-		out << YAML::EndSeq;
+	}
+
+	// Emit consolidated weapons.yaml
+	{
+		YAML::Emitter wout;
+		wout << YAML::Comment("Weapon definitions - consolidated combat and sprite data");
+		wout << YAML::Newline;
+		wout << YAML::BeginMap;
+		wout << YAML::Key << "weapons" << YAML::Value << YAML::BeginSeq;
+
+		for (int i = 0; i < (int)allWeapons.size(); i++) {
+			const auto& w = allWeapons[i];
+			wout << YAML::BeginMap;
+			wout << YAML::Key << "name" << YAML::Value << weaponName(i);
+			wout << YAML::Key << "index" << YAML::Value << i;
+
+			wout << YAML::Key << "damage" << YAML::Value << YAML::BeginMap;
+			wout << YAML::Key << "min" << YAML::Value << w.strMin;
+			wout << YAML::Key << "max" << YAML::Value << w.strMax;
+			wout << YAML::EndMap;
+
+			wout << YAML::Key << "range" << YAML::Value << YAML::BeginMap;
+			wout << YAML::Key << "min" << YAML::Value << w.rangeMin;
+			wout << YAML::Key << "max" << YAML::Value << w.rangeMax;
+			wout << YAML::EndMap;
+
+			wout << YAML::Key << "ammo" << YAML::Value << YAML::BeginMap;
+			wout << YAML::Key << "type" << YAML::Value << ammoTypeName(w.ammoType);
+			wout << YAML::Key << "usage" << YAML::Value << w.ammoUsage;
+			wout << YAML::EndMap;
+
+			wout << YAML::Key << "projectile" << YAML::Value << projTypeName(w.projType);
+			wout << YAML::Key << "shots" << YAML::Value << w.numShots;
+			wout << YAML::Key << "shot_hold" << YAML::Value << w.shotHold;
+
+			// Sprite info only for weapons with weapon_info data
+			if (i < (int)allWpInfo.size()) {
+				const auto& wi = allWpInfo[i];
+				wout << YAML::Key << "sprite" << YAML::Value << YAML::BeginMap;
+				wout << YAML::Key << "idle" << YAML::Value << YAML::Flow << YAML::BeginMap;
+				wout << YAML::Key << "x" << YAML::Value << wi.idleX;
+				wout << YAML::Key << "y" << YAML::Value << wi.idleY;
+				wout << YAML::EndMap;
+				wout << YAML::Key << "attack" << YAML::Value << YAML::Flow << YAML::BeginMap;
+				wout << YAML::Key << "x" << YAML::Value << wi.atkX;
+				wout << YAML::Key << "y" << YAML::Value << wi.atkY;
+				wout << YAML::EndMap;
+				wout << YAML::Key << "flash" << YAML::Value << YAML::Flow << YAML::BeginMap;
+				wout << YAML::Key << "x" << YAML::Value << wi.flashX;
+				wout << YAML::Key << "y" << YAML::Value << wi.flashY;
+				wout << YAML::EndMap;
+				wout << YAML::EndMap;
+			}
+
+			wout << YAML::EndMap;
+		}
+
+		wout << YAML::EndSeq;
+		wout << YAML::EndMap;
+
+		std::string wpPath = outDir + "/weapons.yaml";
+		if (!writeString(wpPath, wout.c_str())) {
+			fprintf(stderr, "  Failed to write %s\n", wpPath.c_str());
+			return false;
+		}
+		printf("  -> %s (%d weapons, %d with sprites)\n", wpPath.c_str(), (int)allWeapons.size(), (int)allWpInfo.size());
 	}
 
 	// --- Table 4: CombatMasks (int table) ---
