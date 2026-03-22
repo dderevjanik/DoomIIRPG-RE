@@ -398,6 +398,10 @@ void Applet::loadTables() {
 	if (!this->loadTablesFromYAML("tables.yaml")) {
 		this->Error("Failed to load tables.yaml\n");
 	}
+	printf("Applet::loadTables: loading from monsters.yaml\n");
+	if (!this->loadMonstersFromYAML("monsters.yaml")) {
+		this->Error("Failed to load monsters.yaml\n");
+	}
 }
 
 // --- Helpers for tables.ini parsing ---
@@ -554,38 +558,6 @@ bool Applet::loadTablesFromYAML(const char* path) {
 		}
 	}
 
-	// === MonsterAttacks ===
-	if (YAML::Node attacks = config["monster_attacks"]) {
-		int numMonsterAttacks = (int)attacks.size();
-		int maShorts = numMonsterAttacks * 9;
-		this->combat->monsterAttacks = new short[maShorts];
-		std::memset(this->combat->monsterAttacks, 0, maShorts * sizeof(short));
-		for (int m = 0; m < numMonsterAttacks; m++) {
-			YAML::Node ma = attacks[m];
-			int base = m * 9;
-			for (int p = 0; p < 3; p++) {
-				std::string a1key = "parm" + std::to_string(p) + "_attack1";
-				std::string a2key = "parm" + std::to_string(p) + "_attack2";
-				std::string chkey = "parm" + std::to_string(p) + "_chance";
-				this->combat->monsterAttacks[base + p * 3 + 0] = (short)weaponNameToIndex(ma[a1key].as<std::string>("0").c_str());
-				this->combat->monsterAttacks[base + p * 3 + 1] = (short)weaponNameToIndex(ma[a2key].as<std::string>("0").c_str());
-				this->combat->monsterAttacks[base + p * 3 + 2] = (short)ma[chkey].as<int>(0);
-			}
-		}
-	}
-
-	// === MonsterStats ===
-	if (YAML::Node ms = config["monster_stats"]) {
-		YAML::Node data = ms["data"];
-		if (data && data.IsSequence()) {
-			int count = (int)data.size();
-			this->combat->monsterStats = new int8_t[count];
-			for (int i = 0; i < count; i++) {
-				this->combat->monsterStats[i] = (int8_t)data[i].as<int>(0);
-			}
-		}
-	}
-
 	// === CombatMasks ===
 	if (YAML::Node masks = config["combat_masks"]) {
 		int count = (int)masks.size();
@@ -634,25 +606,6 @@ bool Applet::loadTablesFromYAML(const char* path) {
 		this->game->levelNamesCount = count;
 	}
 
-	// === MonsterColors ===
-	if (YAML::Node mc = config["monster_colors"]) {
-		static const char* monsterNames[] = {"zombie", "zombie_commando", "lost_soul", "imp", "sawcubus", "pinky"};
-		int count = 6 * 3;
-		this->particleSystem->monsterColors = new uint8_t[count];
-		std::memset(this->particleSystem->monsterColors, 0, count);
-		int idx = 0;
-		for (int i = 0; i < 6; i++) {
-			if (YAML::Node rgb = mc[monsterNames[i]]) {
-				if (rgb.IsSequence() && rgb.size() >= 3) {
-					this->particleSystem->monsterColors[idx + 0] = (uint8_t)rgb[0].as<int>(0);
-					this->particleSystem->monsterColors[idx + 1] = (uint8_t)rgb[1].as<int>(0);
-					this->particleSystem->monsterColors[idx + 2] = (uint8_t)rgb[2].as<int>(0);
-				}
-			}
-			idx += 3;
-		}
-	}
-
 	// === SinTable ===
 	if (YAML::Node st = config["sin_table"]) {
 		YAML::Node data = st["data"];
@@ -677,20 +630,6 @@ bool Applet::loadTablesFromYAML(const char* path) {
 		}
 	}
 
-	// === MonsterWeakness ===
-	if (YAML::Node mw = config["monster_weakness"]) {
-		static const char* monsterNames[] = {
-		    "zombie",   "zombie_commando", "lost_soul", "imp",       "sawcubus",   "pinky",      "cacodemon",
-		    "sentinel", "mancubus",        "revenant",  "arch_vile", "sentry_bot", "cyberdemon", "mastermind",
-		    "phantom",  "archvile_ghost",  "belphegor", "apollyon"};
-		int count = 18;
-		this->combat->monsterWeakness = new int8_t[count];
-		std::memset(this->combat->monsterWeakness, 0, count);
-		for (int i = 0; i < count; i++) {
-			this->combat->monsterWeakness[i] = (int8_t)mw[monsterNames[i]].as<int>(0);
-		}
-	}
-
 	// === MovieEffects ===
 	if (YAML::Node me = config["movie_effects"]) {
 		YAML::Node data = me["data"];
@@ -703,29 +642,119 @@ bool Applet::loadTablesFromYAML(const char* path) {
 		}
 	}
 
-	// === MonsterSounds ===
-	if (YAML::Node msounds = config["monster_sounds"]) {
-		int numMonsterSounds = (int)msounds.size();
-		int msoundBytes = numMonsterSounds * 8;
-		this->game->monsterSounds = new uint8_t[msoundBytes];
-		std::memset(this->game->monsterSounds, 255, msoundBytes);
-		static const char* msoundFields[] = {"alert1", "alert2", "alert3", "attack1",
-		                                     "attack2", "idle", "pain", "death"};
-		for (int m = 0; m < numMonsterSounds; m++) {
-			YAML::Node ms = msounds[m];
-			int base = m * 8;
+	printf("Applet::loadTables: loaded tables from %s\n", path);
+	return true;
+}
+
+bool Applet::loadMonstersFromYAML(const char* path) {
+	YAML::Node config;
+	try {
+		config = YAML::LoadFile(path);
+	} catch (const YAML::Exception&) {
+		return false;
+	}
+
+	YAML::Node monsters = config["monsters"];
+	if (!monsters || !monsters.IsSequence()) {
+		return false;
+	}
+
+	// First pass: find max index to size arrays
+	int maxIdx = -1;
+	for (int i = 0; i < (int)monsters.size(); i++) {
+		int idx = monsters[i]["index"].as<int>(0);
+		if (idx > maxIdx) maxIdx = idx;
+	}
+	int numTypes = maxIdx + 1;
+	int numTiers = 3;
+	int totalEntities = numTypes * numTiers;
+
+	// Allocate flat arrays
+	this->combat->monsterAttacks = new short[numTypes * 9];
+	std::memset(this->combat->monsterAttacks, 0, numTypes * 9 * sizeof(short));
+
+	this->combat->monsterStats = new int8_t[totalEntities * 6];
+	std::memset(this->combat->monsterStats, 0, totalEntities * 6);
+
+	this->combat->monsterWeakness = new int8_t[totalEntities * 8];
+	std::memset(this->combat->monsterWeakness, 0, totalEntities * 8);
+
+	this->game->monsterSounds = new uint8_t[numTypes * 8];
+	std::memset(this->game->monsterSounds, 255, numTypes * 8);
+
+	this->particleSystem->monsterColors = new uint8_t[numTypes * 3];
+	std::memset(this->particleSystem->monsterColors, 0, numTypes * 3);
+
+	static const char* soundFields[] = {"alert1", "alert2", "alert3", "attack1",
+	                                    "attack2", "idle", "pain", "death"};
+	static const char* statFields[] = {"health", "armor", "defense", "strength",
+	                                   "accuracy", "agility"};
+
+	// Second pass: populate arrays
+	for (int i = 0; i < (int)monsters.size(); i++) {
+		YAML::Node m = monsters[i];
+		int idx = m["index"].as<int>(0);
+
+		// Blood color (optional)
+		if (YAML::Node bc = m["blood_color"]) {
+			if (bc.IsSequence() && bc.size() >= 3) {
+				this->particleSystem->monsterColors[idx * 3 + 0] = (uint8_t)bc[0].as<int>(0);
+				this->particleSystem->monsterColors[idx * 3 + 1] = (uint8_t)bc[1].as<int>(0);
+				this->particleSystem->monsterColors[idx * 3 + 2] = (uint8_t)bc[2].as<int>(0);
+			}
+		}
+
+		// Sounds
+		if (YAML::Node snd = m["sounds"]) {
+			int sndBase = idx * 8;
 			for (int f = 0; f < 8; f++) {
-				std::string val = ms[msoundFields[f]].as<std::string>("none");
+				std::string val = snd[soundFields[f]].as<std::string>("none");
 				if (val == "none") {
-					this->game->monsterSounds[base + f] = 255;
+					this->game->monsterSounds[sndBase + f] = 255;
 				} else {
-					this->game->monsterSounds[base + f] = (uint8_t)std::atoi(val.c_str());
+					this->game->monsterSounds[sndBase + f] = (uint8_t)std::atoi(val.c_str());
+				}
+			}
+		}
+
+		// Tiers
+		if (YAML::Node tiers = m["tiers"]) {
+			int numParms = std::min((int)tiers.size(), numTiers);
+			for (int p = 0; p < numParms; p++) {
+				YAML::Node tier = tiers[p];
+				int entityIdx = idx * numTiers + p;
+
+				// Stats (6 bytes per entity)
+				if (YAML::Node stats = tier["stats"]) {
+					int statsBase = entityIdx * 6;
+					for (int s = 0; s < 6; s++) {
+						this->combat->monsterStats[statsBase + s] = (int8_t)stats[statFields[s]].as<int>(0);
+					}
+				}
+
+				// Attacks (3 shorts per tier, 9 per type)
+				if (YAML::Node atk = tier["attacks"]) {
+					int atkBase = idx * 9 + p * 3;
+					this->combat->monsterAttacks[atkBase + 0] = (short)weaponNameToIndex(atk["attack1"].as<std::string>("0").c_str());
+					this->combat->monsterAttacks[atkBase + 1] = (short)weaponNameToIndex(atk["attack2"].as<std::string>("0").c_str());
+					this->combat->monsterAttacks[atkBase + 2] = (short)atk["chance"].as<int>(0);
+				}
+
+				// Weakness (8 bytes per tier)
+				if (YAML::Node weak = tier["weakness"]) {
+					if (weak.IsSequence()) {
+						int weakBase = entityIdx * 8;
+						int weakCount = std::min((int)weak.size(), 8);
+						for (int w = 0; w < weakCount; w++) {
+							this->combat->monsterWeakness[weakBase + w] = (int8_t)weak[w].as<int>(0);
+						}
+					}
 				}
 			}
 		}
 	}
 
-	printf("Applet::loadTables: loaded 14 tables from %s\n", path);
+	printf("Applet::loadMonstersFromYAML: loaded %d monsters from %s\n", (int)monsters.size(), path);
 	return true;
 }
 

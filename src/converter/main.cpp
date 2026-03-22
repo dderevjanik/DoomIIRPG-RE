@@ -655,48 +655,6 @@ static bool convertTables(ZipFile& zip, const std::string& outDir) {
 		out << YAML::EndSeq;
 	}
 
-	// --- Table 0: MonsterAttacks (stride 9 shorts) ---
-	{
-		int start, end;
-		tableRange(0, start, end);
-		TableReader r = {data, dataStart + start};
-		int count = r.readInt();
-		int numAttacks = count / 9;
-
-		out << YAML::Key << "monster_attacks" << YAML::Value << YAML::BeginSeq;
-		for (int i = 0; i < numAttacks; i++) {
-			out << YAML::Comment("MonsterAttack " + std::to_string(i));
-			out << YAML::BeginMap;
-			for (int p = 0; p < 3; p++) {
-				std::string prefix = "parm" + std::to_string(p) + "_";
-				int16_t atk1 = r.readShort();
-				int16_t atk2 = r.readShort();
-				int16_t chance = r.readShort();
-				out << YAML::Key << prefix + "attack1" << YAML::Value << weaponName(atk1);
-				out << YAML::Key << prefix + "attack2" << YAML::Value << weaponName(atk2);
-				out << YAML::Key << prefix + "chance" << YAML::Value << (int)chance;
-			}
-			out << YAML::EndMap;
-		}
-		out << YAML::EndSeq;
-	}
-
-	// --- Table 3: MonsterStats (flat byte array) ---
-	{
-		int start, end;
-		tableRange(3, start, end);
-		TableReader r = {data, dataStart + start};
-		int count = r.readInt();
-
-		out << YAML::Key << "monster_stats" << YAML::Value << YAML::BeginMap;
-		out << YAML::Key << "data" << YAML::Value << YAML::Flow << YAML::BeginSeq;
-		for (int i = 0; i < count; i++) {
-			out << (int)r.readByte();
-		}
-		out << YAML::EndSeq;
-		out << YAML::EndMap;
-	}
-
 	// --- Table 4: CombatMasks (int table) ---
 	{
 		int start, end;
@@ -760,28 +718,6 @@ static bool convertTables(ZipFile& zip, const std::string& outDir) {
 		out << YAML::EndSeq;
 	}
 
-	// --- Table 8: MonsterColors (stride 3 bytes RGB) ---
-	{
-		int start, end;
-		tableRange(8, start, end);
-		TableReader r = {data, dataStart + start};
-		int count = r.readInt();
-		int numColors = count / 3;
-
-		out << YAML::Key << "monster_colors" << YAML::Value << YAML::BeginMap;
-		for (int i = 0; i < numColors; i++) {
-			int cr = r.readUByte();
-			int cg = r.readUByte();
-			int cb = r.readUByte();
-			std::string key = monsterName(i);
-			std::string val = std::to_string(cr) + ", " + std::to_string(cg) + ", " + std::to_string(cb);
-			out << YAML::Key << key << YAML::Value << YAML::Flow << YAML::BeginSeq;
-			out << cr << cg << cb;
-			out << YAML::EndSeq;
-		}
-		out << YAML::EndMap;
-	}
-
 	// --- Table 9: SinTable (flat int array) ---
 	{
 		int start, end;
@@ -814,21 +750,6 @@ static bool convertTables(ZipFile& zip, const std::string& outDir) {
 		out << YAML::EndMap;
 	}
 
-	// --- Table 11: MonsterWeakness (byte table) ---
-	{
-		int start, end;
-		tableRange(11, start, end);
-		TableReader r = {data, dataStart + start};
-		int count = r.readInt();
-
-		out << YAML::Key << "monster_weakness" << YAML::Value << YAML::BeginMap;
-		for (int i = 0; i < count; i++) {
-			int8_t val = r.readByte();
-			out << YAML::Key << monsterName(i) << YAML::Value << (int)val;
-		}
-		out << YAML::EndMap;
-	}
-
 	// --- Table 12: MovieEffects (flat int array) ---
 	{
 		int start, end;
@@ -845,42 +766,203 @@ static bool convertTables(ZipFile& zip, const std::string& outDir) {
 		out << YAML::EndMap;
 	}
 
-	// --- Table 13: MonsterSounds (stride 8 bytes) ---
-	{
-		int start, end;
-		tableRange(13, start, end);
-		TableReader r = {data, dataStart + start};
-		int count = r.readInt();
-		int numSounds = count / 8;
-		const char* fields[] = {"alert1", "alert2", "alert3", "attack1", "attack2", "idle", "pain", "death"};
-
-		out << YAML::Key << "monster_sounds" << YAML::Value << YAML::BeginSeq;
-		for (int i = 0; i < numSounds; i++) {
-			out << YAML::Comment("MonsterSound " + std::to_string(i));
-			out << YAML::BeginMap;
-			for (int f = 0; f < 8; f++) {
-				uint8_t val = r.readUByte();
-				if (val == 255) {
-					out << YAML::Key << fields[f] << YAML::Value << "none";
-				} else {
-					out << YAML::Key << fields[f] << YAML::Value << (int)val;
-				}
-			}
-			out << YAML::EndMap;
-		}
-		out << YAML::EndSeq;
-	}
-
 	out << YAML::EndMap;
-
-	free(data);
 
 	std::string path = outDir + "/tables.yaml";
 	if (!writeString(path, out.c_str())) {
 		fprintf(stderr, "  Failed to write %s\n", path.c_str());
 		return false;
 	}
-	printf("  -> %s (14 tables)\n", path.c_str());
+	printf("  -> %s\n", path.c_str());
+
+	// === Write consolidated monsters.yaml ===
+
+	// Read all monster tables into temp arrays
+	int numTypes = 0;
+
+	// Table 0: MonsterAttacks
+	struct AttackTier { std::string atk1, atk2; int chance; };
+	std::vector<std::array<AttackTier, 3>> allAttacks;
+	{
+		int start, end;
+		tableRange(0, start, end);
+		TableReader r = {data, dataStart + start};
+		int count = r.readInt();
+		int num = count / 9;
+		numTypes = std::max(numTypes, num);
+		allAttacks.resize(num);
+		for (int i = 0; i < num; i++) {
+			for (int p = 0; p < 3; p++) {
+				allAttacks[i][p].atk1 = weaponName(r.readShort());
+				allAttacks[i][p].atk2 = weaponName(r.readShort());
+				allAttacks[i][p].chance = (int)r.readShort();
+			}
+		}
+	}
+
+	// Table 3: MonsterStats
+	struct StatTier { int vals[6]; };
+	std::vector<std::array<StatTier, 3>> allStats;
+	{
+		int start, end;
+		tableRange(3, start, end);
+		TableReader r = {data, dataStart + start};
+		int count = r.readInt();
+		int numEntities = count / 6;
+		int num = numEntities / 3;
+		numTypes = std::max(numTypes, num);
+		allStats.resize(num);
+		for (int t = 0; t < num; t++) {
+			for (int p = 0; p < 3; p++) {
+				for (int s = 0; s < 6; s++) {
+					allStats[t][p].vals[s] = (int)r.readByte();
+				}
+			}
+		}
+	}
+
+	// Table 8: MonsterColors
+	std::vector<std::array<int, 3>> allColors;
+	int numColors = 0;
+	{
+		int start, end;
+		tableRange(8, start, end);
+		TableReader r = {data, dataStart + start};
+		int count = r.readInt();
+		numColors = count / 3;
+		allColors.resize(numColors);
+		for (int i = 0; i < numColors; i++) {
+			allColors[i][0] = r.readUByte();
+			allColors[i][1] = r.readUByte();
+			allColors[i][2] = r.readUByte();
+		}
+	}
+
+	// Table 11: MonsterWeakness
+	std::vector<std::array<std::array<int, 8>, 3>> allWeakness;
+	{
+		int start, end;
+		tableRange(11, start, end);
+		TableReader r = {data, dataStart + start};
+		int count = r.readInt();
+		int numEntities = count / 8;
+		int num = numEntities / 3;
+		numTypes = std::max(numTypes, num);
+		allWeakness.resize(num);
+		for (int t = 0; t < num; t++) {
+			for (int p = 0; p < 3; p++) {
+				for (int w = 0; w < 8; w++) {
+					allWeakness[t][p][w] = (int)r.readByte();
+				}
+			}
+		}
+	}
+
+	// Table 13: MonsterSounds
+	struct SoundSet { int vals[8]; };
+	std::vector<SoundSet> allSounds;
+	{
+		int start, end;
+		tableRange(13, start, end);
+		TableReader r = {data, dataStart + start};
+		int count = r.readInt();
+		int num = count / 8;
+		numTypes = std::max(numTypes, num);
+		allSounds.resize(num);
+		for (int i = 0; i < num; i++) {
+			for (int f = 0; f < 8; f++) {
+				allSounds[i].vals[f] = (int)r.readUByte();
+			}
+		}
+	}
+
+	// Emit consolidated monsters.yaml
+	const char* soundFields[] = {"alert1", "alert2", "alert3", "attack1", "attack2", "idle", "pain", "death"};
+	const char* statNames[] = {"health", "armor", "defense", "strength", "accuracy", "agility"};
+
+	YAML::Emitter mout;
+	mout << YAML::Comment("Monster combat data - consolidated definitions");
+	mout << YAML::Newline;
+	mout << YAML::BeginMap;
+	mout << YAML::Key << "monsters" << YAML::Value << YAML::BeginSeq;
+
+	for (int i = 0; i < numTypes; i++) {
+		mout << YAML::BeginMap;
+		mout << YAML::Key << "name" << YAML::Value << monsterName(i);
+		mout << YAML::Key << "index" << YAML::Value << i;
+
+		// Blood color (only for first numColors monsters)
+		if (i < numColors) {
+			mout << YAML::Key << "blood_color" << YAML::Value << YAML::Flow << YAML::BeginSeq;
+			mout << allColors[i][0] << allColors[i][1] << allColors[i][2];
+			mout << YAML::EndSeq;
+		}
+
+		// Sounds
+		if (i < (int)allSounds.size()) {
+			mout << YAML::Key << "sounds" << YAML::Value << YAML::BeginMap;
+			for (int f = 0; f < 8; f++) {
+				if (allSounds[i].vals[f] == 255) {
+					mout << YAML::Key << soundFields[f] << YAML::Value << "none";
+				} else {
+					mout << YAML::Key << soundFields[f] << YAML::Value << allSounds[i].vals[f];
+				}
+			}
+			mout << YAML::EndMap;
+		}
+
+		// Tiers
+		mout << YAML::Key << "tiers" << YAML::Value << YAML::BeginSeq;
+		for (int p = 0; p < 3; p++) {
+			mout << YAML::Comment("parm " + std::to_string(p));
+			mout << YAML::BeginMap;
+
+			// Stats
+			if (i < (int)allStats.size()) {
+				mout << YAML::Key << "stats" << YAML::Value << YAML::BeginMap;
+				for (int s = 0; s < 6; s++) {
+					mout << YAML::Key << statNames[s] << YAML::Value << allStats[i][p].vals[s];
+				}
+				mout << YAML::EndMap;
+			}
+
+			// Attacks
+			if (i < (int)allAttacks.size()) {
+				mout << YAML::Key << "attacks" << YAML::Value << YAML::BeginMap;
+				mout << YAML::Key << "attack1" << YAML::Value << allAttacks[i][p].atk1;
+				mout << YAML::Key << "attack2" << YAML::Value << allAttacks[i][p].atk2;
+				mout << YAML::Key << "chance" << YAML::Value << allAttacks[i][p].chance;
+				mout << YAML::EndMap;
+			}
+
+			// Weakness
+			if (i < (int)allWeakness.size()) {
+				mout << YAML::Key << "weakness" << YAML::Value << YAML::Flow << YAML::BeginSeq;
+				for (int w = 0; w < 8; w++) {
+					mout << allWeakness[i][p][w];
+				}
+				mout << YAML::EndSeq;
+			}
+
+			mout << YAML::EndMap;
+		}
+		mout << YAML::EndSeq;
+
+		mout << YAML::EndMap;
+	}
+
+	mout << YAML::EndSeq;
+	mout << YAML::EndMap;
+
+	std::string mpath = outDir + "/monsters.yaml";
+	if (!writeString(mpath, mout.c_str())) {
+		fprintf(stderr, "  Failed to write %s\n", mpath.c_str());
+		free(data);
+		return false;
+	}
+	printf("  -> %s (%d monsters)\n", mpath.c_str(), numTypes);
+
+	free(data);
 	return true;
 }
 
