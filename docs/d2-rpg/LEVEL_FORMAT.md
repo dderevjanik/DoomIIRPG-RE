@@ -33,8 +33,8 @@ All multi-byte values are stored in **little-endian** format.
 |--------|------|-------|-------------|
 | 0 | ubyte | version | Must equal 3 |
 | 1 | int | mapCompileDate | Compilation timestamp |
-| 5 | ushort | mapSpawnIndex | Player spawn tile index (0-1023) |
-| 7 | ubyte | mapSpawnDir | Player spawn direction (0-7) |
+| 5 | ushort | mapSpawnIndex | Player spawn tile index (0-1023), col=index%32, row=index/32 |
+| 7 | ubyte | mapSpawnDir | Player spawn direction (0-7), angle=dir*128. See [Angle System](#angle-system) |
 | 8 | byte | mapFlagsBitmask | Map-wide flags |
 | 9 | byte | totalSecrets | Number of secrets in level |
 | 10 | ubyte | totalLoot | Number of loot items |
@@ -147,6 +147,8 @@ ubyte[numLines * 2]    lineYs       Line Y coordinates
 ubyte[1024]  heightMap    Height value for each tile (32x32 grid)
 [MARKER: 0xCAFEBABE]
 ```
+
+Indexed as `heightMap[row * 32 + col]`. The stored value must be shifted left by 3 to get the actual world height: `worldZ = heightMap[index] << 3`. See [Coordinate System](#coordinate-system) for details.
 
 ---
 
@@ -361,6 +363,64 @@ Per-tile navigation flags (4 bits per tile):
 |-----|-------------|
 | 0 | Solid/blocking |
 | 6 | Has tile event (0x40) |
+
+## Coordinate System
+
+The game uses multiple coordinate scales. Understanding how they relate is critical for correctly positioning the camera and interpreting map data.
+
+### Tile Coordinates
+
+Tiles are addressed by column (X) and row (Y) in a 32x32 grid (indices 0-31).
+
+- **Tile index** (0-1023): `index = row * 32 + col`
+- **Tile to column/row**: `col = index % 32`, `row = index / 32`
+
+### World Coordinates (Canvas Scale)
+
+Each tile is 64 world units wide. The center of a tile is at an offset of +32:
+
+- `worldX = col * 64 + 32` (tile center)
+- `worldY = row * 64 + 32` (tile center)
+
+This is the coordinate system used by `mapFlags`, `heightMap`, `getHeight()`, and sprite positions.
+
+### Render Coordinates
+
+The renderer (`Render::render()`) expects coordinates at a 16x higher scale with a +8 offset:
+
+- `renderX = (worldX << 4) + 8`
+- `renderY = (worldY << 4) + 8`
+- `renderZ = (worldZ << 4) + 8`
+
+This scaling is applied by the game in `Canvas.cpp` before calling `render()`. The full range for a 32-tile map is 0 to 32×64×16 = 32768 render units.
+
+### Height Map
+
+The `heightMap` array stores one byte per tile (1024 entries). The actual world height is obtained by shifting left by 3:
+
+- `worldZ = heightMap[tileIndex] << 3`
+
+Use `Render::getHeight(worldX, worldY)` which performs the lookup and shift internally.
+
+### Player Spawn
+
+The `mapSpawnIndex` (0-1023) and `mapSpawnDir` (0-7) fields in the header define the player start:
+
+- **Position**: Convert spawn index to tile col/row, then to world coordinates (center of tile), then use `getHeight()` to get the tile's floor height. Player eye height is approximately +36 world units above the floor.
+- **Direction**: `mapSpawnDir` maps to engine angles: `engineAngle = spawnDir * 128` (in a 0-1023 angle system where 256 = 90°). Direction values: 0=East, 1=NE, 2=North, 3=NW, 4=West, 5=SW, 6=South, 7=SE.
+
+### Angle System
+
+The engine uses a 10-bit angle system (0-1023):
+
+| Angle | Direction | Degrees |
+|-------|-----------|---------|
+| 0 | East (+X) | 0° |
+| 256 | North | 90° |
+| 512 | West (-X) | 180° |
+| 768 | South | 270° |
+
+Conversion: `degrees = angle * (360.0 / 1024.0)`, `angle = degrees * (1024.0 / 360.0)`
 
 ## Constants
 
