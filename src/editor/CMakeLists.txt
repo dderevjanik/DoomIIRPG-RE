@@ -24,6 +24,8 @@ add_executable(${EDITOR_TGT_NAME}
 	main.cpp
 	Camera.cpp
 	EditorUI.cpp
+	MapDataIO.cpp
+	BSPCompiler.cpp
 	${IMGUI_SOURCES}
 )
 

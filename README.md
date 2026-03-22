@@ -104,4 +104,61 @@ This is an early-stage reverse engineering project (v0.1.0). Many reverse-engine
 
 ## Editor
 
-`./build/src/editor/doom2rpg-editor games/doom2rpg/levels/maps/map00.bin`
+The map editor lets you view and edit maps — change tile geometry, heights, textures and flags, with a live 3D preview using the game engine's renderer.
+
+### Building the Editor
+
+The editor is built alongside the main project:
+
+```bash
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --target doom2rpg-editor --parallel
+```
+
+### Running
+
+```bash
+./build/src/editor/doom2rpg-editor --game doom2rpg
+```
+
+Options:
+
+| Flag | Description |
+| --- | --- |
+| `--game <name>` | Game directory under `games/` (e.g. `doom2rpg`) |
+| `--gamedir <path>` | Explicit game directory path |
+| `--map <1-10>` | Map to load on startup (default: 1) |
+
+### Editor Hotkeys
+
+**3D Viewport** (click in viewport to capture mouse):
+
+| Action | Key |
+| --- | --- |
+| Move Forward/Back | W / S |
+| Strafe Left/Right | A / D |
+| Move Up/Down | E / Q |
+| Look Around | Mouse |
+| Sprint | Shift |
+| Zoom Speed | Scroll Wheel |
+| Release Mouse | Escape |
+
+**Editor**:
+
+| Action | Key |
+| --- | --- |
+| Toggle Automap | Tab |
+| Toggle Noclip | N |
+| Save Map | Ctrl+S |
+| Quit | Ctrl+Q |
+
+**Automap**: click a tile to select it. The Inspector panel shows tile properties (height, solid flag, textures) that you can edit. Modified maps can be saved with Ctrl+S — the engine reloads the map automatically to preview changes.
+
+### Running Tests
+
+```bash
+cmake --build build --target test-mapdata-roundtrip --parallel
+ctest --test-dir build --output-on-failure
+```
+
+Tests verify the MapData binary round-trip (create map → save `.bin` → reload → compare). No game assets required.

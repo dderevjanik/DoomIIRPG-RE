@@ -1,5 +1,7 @@
 #include "Camera.h"
 #include "EditorUI.h"
+#include "MapData.h"
+#include "MapDataIO.h"
 
 #include <SDL.h>
 #include <SDL_opengl.h>
@@ -35,7 +37,10 @@
 
 static Camera camera;
 static EditorUI ui;
+static MapData mapData;
 static int currentMapID = 0;
+static bool noclip = false;
+static std::string currentMapPath;
 
 static void editorLoadMap(int mapID) {
 	if (mapID < 1 || mapID > 10) {
@@ -62,6 +67,21 @@ static void editorLoadMap(int mapID) {
 	// The BSP geometry and textures are already loaded by beginLoadMap()
 	currentMapID = mapID;
 
+	// Load MapData from the same .bin file for editing
+	{
+		char mapFile[64];
+		std::snprintf(mapFile, sizeof(mapFile), "levels/maps/map%02d.bin", mapID - 1);
+		currentMapPath = mapFile;
+		std::string err;
+		MapData newData;
+		if (MapDataIO::loadFromBin(mapFile, newData, err)) {
+			mapData = std::move(newData);
+			std::fprintf(stderr, "MapData loaded for editing\n");
+		} else {
+			std::fprintf(stderr, "Warning: could not load MapData: %s\n", err.c_str());
+		}
+	}
+
 	// Place camera at player spawn point
 	int spawnTileX = app->render->mapSpawnIndex % 32;
 	int spawnTileY = app->render->mapSpawnIndex / 32;
@@ -83,6 +103,21 @@ static void editorLoadMap(int mapID) {
 
 static void editorLoadMapByID(int mapID) {
 	editorLoadMap(mapID);
+}
+
+static void editorSaveMap() {
+	if (currentMapID <= 0 || currentMapPath.empty()) return;
+
+	std::string err;
+	if (MapDataIO::saveToBin(mapData, currentMapPath, err)) {
+		std::fprintf(stderr, "Saved map to %s\n", currentMapPath.c_str());
+		mapData.dirty = false;
+
+		// Reload map in engine to see changes
+		editorLoadMap(currentMapID);
+	} else {
+		std::fprintf(stderr, "Error saving map: %s\n", err.c_str());
+	}
 }
 
 int main(int argc, char* argv[]) {
@@ -190,6 +225,8 @@ int main(int argc, char* argv[]) {
 	// Init editor UI
 	ui.init(nullptr);
 	ui.setLoadCallback([](int mapID) { editorLoadMapByID(mapID); });
+	ui.setSaveCallback([]() { editorSaveMap(); });
+	ui.setMapData(&mapData);
 
 	// Load initial map
 	editorLoadMap(initialMap);
@@ -213,6 +250,10 @@ int main(int argc, char* argv[]) {
 						mouseCaptured = false;
 					} else if (event.key.keysym.sym == SDLK_TAB) {
 						ui.showAutomap = !ui.showAutomap;
+					} else if (event.key.keysym.sym == SDLK_n) {
+						noclip = !noclip;
+					} else if (event.key.keysym.sym == SDLK_s && (event.key.keysym.mod & KMOD_CTRL)) {
+						editorSaveMap();
 					} else if (event.key.keysym.sym == SDLK_q && (event.key.keysym.mod & KMOD_CTRL)) {
 						running = false;
 					}
@@ -259,7 +300,7 @@ int main(int argc, char* argv[]) {
 		ImGui::NewFrame();
 
 		// Draw editor UI
-		ui.draw(currentMapID, camera);
+		ui.draw(currentMapID, camera, noclip);
 
 		// Render 3D scene using game engine
 		int drawW, drawH;
@@ -303,13 +344,11 @@ int main(int argc, char* argv[]) {
 			// Skip sprites — entities aren't loaded in editor mode
 			app->render->skipSprites = true;
 
-			// Disable BSP culling only when camera is outside map bounds
-			// so geometry is visible from outside, but normal culling applies inside
+			// Disable BSP culling when noclip is on or camera is outside map bounds
 			{
-				// render coords = (tile*64) << 4, so 32 tiles = 32*64*16 = 32768
 				constexpr int mapExtent = 32 * 64 * 16;
 				bool outside = (viewX < 0 || viewY < 0 || viewX > mapExtent || viewY > mapExtent);
-				app->render->skipCull = outside;
+				app->render->skipCull = noclip || outside;
 			}
 
 			// Unbind VBO/EBO so engine's client-side arrays work correctly

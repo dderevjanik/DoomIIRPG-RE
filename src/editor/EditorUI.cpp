@@ -1,5 +1,6 @@
 #include "EditorUI.h"
 #include "Camera.h"
+#include "MapData.h"
 #include "imgui.h"
 
 #include <SDL.h>
@@ -13,16 +14,21 @@ void EditorUI::init(void* unused) {
     (void)unused;
 }
 
-void EditorUI::draw(int currentMapID, const Camera& camera) {
+void EditorUI::draw(int currentMapID, const Camera& camera, bool noclip) {
     drawMenuBar();
 
     ImGui::SetNextWindowPos(ImVec2(0, 20), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(280, 400), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(280, 600), ImGuiCond_FirstUseEver);
     ImGui::Begin("Inspector", nullptr, ImGuiWindowFlags_NoCollapse);
 
     drawMapInfo(currentMapID);
     ImGui::Separator();
     drawMapList();
+
+    if (mapData_ && selectedTileIdx_ >= 0) {
+        ImGui::Separator();
+        drawTileInspector();
+    }
 
     ImGui::End();
 
@@ -30,7 +36,7 @@ void EditorUI::draw(int currentMapID, const Camera& camera) {
         drawAutomap(camera);
     }
 
-    drawStatusBar(camera);
+    drawStatusBar(camera, noclip);
 
     if (showAbout_) {
         ImGui::OpenPopup("About");
@@ -50,6 +56,10 @@ void EditorUI::draw(int currentMapID, const Camera& camera) {
 void EditorUI::drawMenuBar() {
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("File")) {
+            if (ImGui::MenuItem("Save Map", "Ctrl+S", false, mapData_ != nullptr && mapData_->dirty)) {
+                if (saveCallback_) saveCallback_();
+            }
+            ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Ctrl+Q")) {
                 SDL_Event quit;
                 quit.type = SDL_QUIT;
@@ -80,17 +90,23 @@ void EditorUI::drawMapInfo(int currentMapID) {
     ImGui::Text("Lines: %d", render->numLines);
     ImGui::Text("Sprites: %d + %dz",
                 render->numNormalSprites, render->numZSprites);
+
+    if (mapData_ && mapData_->dirty) {
+        ImGui::SameLine();
+        ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.0f, 1.0f), " [Modified]");
+    }
 }
 
 void EditorUI::drawMapList() {
     ImGui::Text("Maps:");
-    ImGui::BeginChild("MapList", ImVec2(0, 200), ImGuiChildFlags_Borders);
+    ImGui::BeginChild("MapList", ImVec2(0, 150), ImGuiChildFlags_Borders);
     for (int i = 1; i <= 10; i++) {
         char label[32];
         std::snprintf(label, sizeof(label), "Map %02d", i - 1);
         bool selected = (i - 1 == selectedMapIdx_);
         if (ImGui::Selectable(label, selected)) {
             selectedMapIdx_ = i - 1;
+            selectedTileIdx_ = -1;
             if (loadCallback_) loadCallback_(i);
         }
     }
@@ -117,7 +133,7 @@ void EditorUI::drawAutomap(const Camera& camera) {
 
     // Draw tiles — game indexes mapFlags as [row * 32 + col]
     // where col = viewX/64, row = viewY/64
-    // Automap screen: col → X (right), row → Y (down)
+    // Automap screen: col -> X (right), row -> Y (down)
     for (int row = 0; row < 32; row++) {
         for (int col = 0; col < 32; col++) {
             int idx = row * 32 + col;
@@ -143,7 +159,28 @@ void EditorUI::drawAutomap(const Camera& camera) {
                 color = IM_COL32(25, 28, 40, 255);
 
             dl->AddRectFilled(ImVec2(x, y), ImVec2(x + tileSize - 0.5f, y + tileSize - 0.5f), color);
+
+            // Show height as brightness overlay when MapData is available
+            if (mapData_) {
+                uint8_t h = mapData_->tiles[idx].height;
+                if (h > 0) {
+                    uint8_t alpha = (uint8_t)(h * 80 / 255);
+                    dl->AddRectFilled(ImVec2(x, y), ImVec2(x + tileSize - 0.5f, y + tileSize - 0.5f),
+                                      IM_COL32(255, 255, 200, alpha));
+                }
+            }
         }
+    }
+
+    // Highlight selected tile
+    if (selectedTileIdx_ >= 0 && selectedTileIdx_ < 1024) {
+        int selCol = selectedTileIdx_ % 32;
+        int selRow = selectedTileIdx_ / 32;
+        float sx = canvasPos.x + selCol * tileSize;
+        float sy = canvasPos.y + selRow * tileSize;
+        dl->AddRect(ImVec2(sx - 1, sy - 1),
+                    ImVec2(sx + tileSize + 0.5f, sy + tileSize + 0.5f),
+                    IM_COL32(255, 255, 0, 255), 0.0f, 0, 2.0f);
     }
 
     // Draw wall lines
@@ -161,7 +198,7 @@ void EditorUI::drawAutomap(const Camera& camera) {
     }
 
     // Draw camera position
-    // posX → engine viewX → col (automap X), posZ → engine viewY → row (automap Y)
+    // posX -> engine viewX -> col (automap X), posZ -> engine viewY -> row (automap Y)
     float col = camera.posX * 128.0f / 64.0f;
     float row = camera.posZ * 128.0f / 64.0f;
     float playerMapX = canvasPos.x + col * tileSize;
@@ -176,11 +213,63 @@ void EditorUI::drawAutomap(const Camera& camera) {
     dl->AddLine(ImVec2(playerMapX, playerMapY), ImVec2(ax, ay),
                 IM_COL32(255, 255, 0, 255), 2.0f);
 
-    ImGui::Dummy(ImVec2(mapSize, mapSize));
+    // Reserve canvas space and handle click
+    ImGui::InvisibleButton("AutomapCanvas", ImVec2(mapSize, mapSize));
+    if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(0)) {
+        ImVec2 mousePos = ImGui::GetMousePos();
+        int clickCol = (int)((mousePos.x - canvasPos.x) / tileSize);
+        int clickRow = (int)((mousePos.y - canvasPos.y) / tileSize);
+        if (clickCol >= 0 && clickCol < 32 && clickRow >= 0 && clickRow < 32) {
+            selectedTileIdx_ = clickRow * 32 + clickCol;
+        }
+    }
+
     ImGui::End();
 }
 
-void EditorUI::drawStatusBar(const Camera& camera) {
+void EditorUI::drawTileInspector() {
+    if (!mapData_ || selectedTileIdx_ < 0 || selectedTileIdx_ >= 1024)
+        return;
+
+    TileData& tile = mapData_->tiles[selectedTileIdx_];
+    int col = selectedTileIdx_ % 32;
+    int row = selectedTileIdx_ / 32;
+
+    ImGui::Text("Tile [%d, %d] (#%d)", col, row, selectedTileIdx_);
+
+    // Height slider
+    int height = tile.height;
+    if (ImGui::SliderInt("Height", &height, 0, 255)) {
+        tile.height = (uint8_t)height;
+        mapData_->dirty = true;
+    }
+
+    // Solid flag
+    bool solid = (tile.flags & 0x1) != 0;
+    if (ImGui::Checkbox("Solid", &solid)) {
+        if (solid)
+            tile.flags |= 0x1;
+        else
+            tile.flags &= ~0x1;
+        mapData_->dirty = true;
+    }
+
+    // Texture numbers
+    if (ImGui::InputInt("Wall Texture", &tile.wallTexture)) {
+        mapData_->dirty = true;
+    }
+    if (ImGui::InputInt("Floor Texture", &tile.floorTexture)) {
+        mapData_->dirty = true;
+    }
+
+    // Spawn point
+    if (ImGui::Button("Set Spawn Here")) {
+        mapData_->spawnIndex = (uint16_t)selectedTileIdx_;
+        mapData_->dirty = true;
+    }
+}
+
+void EditorUI::drawStatusBar(const Camera& camera, bool noclip) {
     ImGuiViewport* viewport = ImGui::GetMainViewport();
     float barHeight = ImGui::GetFrameHeight();
 
@@ -198,8 +287,9 @@ void EditorUI::drawStatusBar(const Camera& camera) {
     int tileRow = worldY >> 6;
     int tileIndex = tileRow * 32 + tileCol;
 
-    ImGui::Text("World: %d, %d, %d  |  Tile: [%d,%d] (#%d)  |  Yaw: %.0f  Pitch: %.0f",
-                worldX, worldY, worldZ, tileCol, tileRow, tileIndex, camera.yaw, camera.pitch);
+    ImGui::Text("World: %d, %d, %d  |  Tile: [%d,%d] (#%d)  |  Yaw: %.0f  Pitch: %.0f  |  Noclip: %s",
+                worldX, worldY, worldZ, tileCol, tileRow, tileIndex, camera.yaw, camera.pitch,
+                noclip ? "ON" : "OFF");
 
     ImGui::End();
 }

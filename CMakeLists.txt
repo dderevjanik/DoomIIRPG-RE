@@ -41,3 +41,7 @@ FetchContent_MakeAvailable(yaml-cpp)
 set(HASH_LIBRARY_TGT_NAME           Hash-Library)
 add_subdirectory("${PROJECT_SOURCE_DIR}/src")
 add_subdirectory("${PROJECT_SOURCE_DIR}/third_party_libs/hash-library")
+
+# Tests
+enable_testing()
+add_subdirectory("${PROJECT_SOURCE_DIR}/test")
