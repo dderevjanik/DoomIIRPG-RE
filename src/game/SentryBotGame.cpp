@@ -16,6 +16,8 @@
 #include "Enums.h"
 #include "Utils.h"
 #include "Menus.h"
+#include "SoundNames.h"
+#include "Sounds.h"
 
 bool SentryBotGame::wasTouched = false;
 
@@ -830,7 +832,7 @@ void SentryBotGame::endGame(int n) {
         this->callingThread = nullptr;
     }
     else {
-        app->sound->playSound(1071, 1u, 3, 0);
+        app->sound->playSound(Sounds::getResIDByName(SoundName::MUSIC_TITLE), 1u, 3, 0);
         app->menuSystem->setMenu(Menus::MENU_MAIN_MINIGAME);
     }
 }

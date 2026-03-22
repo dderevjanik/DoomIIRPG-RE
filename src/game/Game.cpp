@@ -28,6 +28,8 @@
 #include "GLES.h"
 #include <yaml-cpp/yaml.h>
 #include <fstream>
+#include "SoundNames.h"
+#include "Sounds.h"
 
 Game::Game() {
 	std::memset(this, 0, sizeof(Game));
@@ -1118,13 +1120,13 @@ bool Game::performDoorEvent(int n, ScriptThread* scriptThread, Entity* watchLine
 		if (!b && b3) {
 			this->updatePlayerDoors(watchLine, false);
 		}
-		app->sound->playSound(1028, 0, 3, 0);
+		app->sound->playSound(Sounds::getResIDByName(SoundName::DOOR_CLOSE), 0, 3, 0);
 	} else if (n == 0 && !b) {
 		if (b3) {
 			this->updatePlayerDoors(watchLine, true);
 		}
 		allocLerpSprite->dstScale = 0;
-		app->sound->playSound(1030, 0, 3, 0);
+		app->sound->playSound(Sounds::getResIDByName(SoundName::DOOR_OPEN), 0, 3, 0);
 	}
 	app->render->mapSprites[app->render->S_SCALEFACTOR + sprite] = (uint16_t)((uint8_t)allocLerpSprite->srcScale);
 	app->render->mapSprites[app->render->S_X + sprite] = (short)allocLerpSprite->srcX;
@@ -3255,9 +3257,9 @@ int Game::updateLerpSprite(LerpSprite* lerpSprite) {
 						if ((1 + (n8 * lerpSprite->dist >> 12) & 0x3) >> 1 !=
 						    ((((app->render->mapSpriteInfo[n2]) & 0xFF00) >> 8) & 3) >> 1) {
 							if (entity->def->eSubType == Enums::BOSS_CYBERDEMON) {
-								app->sound->playSound(1047, 0, true, 0);
+								app->sound->playSound(Sounds::getResIDByName(SoundName::HOOF), 0, true, 0);
 							} else if (entity->def->eSubType == Enums::BOSS_MASTERMIND) {
-								app->sound->playSound(1003, 0, true, 0);
+								app->sound->playSound(Sounds::getResIDByName(SoundName::ARACHNOTRON_WALK), 0, true, 0);
 							} else {
 								app->sound->playSound((int8_t)(Enums::MSOUND_NONE), 0, true, 0);
 							}
@@ -3799,9 +3801,9 @@ void Game::awardSecret(bool b) {
 	this->mapSecretsFound++;
 
 	if (b) {
-		app->sound->playSound(1103, 0, 3, 0);
+		app->sound->playSound(Sounds::getResIDByName(SoundName::SECRET), 0, 3, 0);
 	} else {
-		app->sound->playSound(1020, 0, 3, 0);
+		app->sound->playSound(Sounds::getResIDByName(SoundName::CHIME), 0, 3, 0);
 	}
 
 	if (this->mapSecretsFound == this->totalSecrets &&

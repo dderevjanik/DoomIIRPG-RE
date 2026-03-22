@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <algorithm>
 #include <string>
 #include <vector>
 #include <sys/stat.h>
@@ -898,14 +899,24 @@ static bool convertTables(ZipFile& zip, const std::string& outDir) {
 			mout << YAML::EndSeq;
 		}
 
-		// Sounds
+		// Sounds (output as names, not numeric indices)
 		if (i < (int)allSounds.size()) {
 			mout << YAML::Key << "sounds" << YAML::Value << YAML::BeginMap;
 			for (int f = 0; f < 8; f++) {
-				if (allSounds[i].vals[f] == 255) {
+				int sndIdx = allSounds[i].vals[f];
+				if (sndIdx == 255) {
 					mout << YAML::Key << soundFields[f] << YAML::Value << "none";
+				} else if (sndIdx < NUM_DEFAULT_SOUNDS) {
+					// Convert index to name: strip .wav, lowercase
+					std::string sndName = DEFAULT_SOUND_NAMES[sndIdx];
+					size_t dotPos = sndName.rfind('.');
+					if (dotPos != std::string::npos) {
+						sndName = sndName.substr(0, dotPos);
+					}
+					std::transform(sndName.begin(), sndName.end(), sndName.begin(), ::tolower);
+					mout << YAML::Key << soundFields[f] << YAML::Value << sndName;
 				} else {
-					mout << YAML::Key << soundFields[f] << YAML::Value << allSounds[i].vals[f];
+					mout << YAML::Key << soundFields[f] << YAML::Value << sndIdx;
 				}
 			}
 			mout << YAML::EndMap;
@@ -1230,16 +1241,27 @@ static bool convertSounds(ZipFile& zip, const std::string& outDir) {
 
 	printf("  Sounds: %d/%d WAV files extracted\n", extracted, NUM_DEFAULT_SOUNDS);
 
-	// Write sounds.yaml
+	// Write sounds.yaml with named entries
 	YAML::Emitter out;
-	out << YAML::Comment("Sound resource definitions");
-	out << YAML::Comment("Maps sound index to WAV filename");
-	out << YAML::Comment("Sound IDs start at 1000, index = resID - 1000");
+	out << YAML::Comment("Sound resource definitions - Named sound entries");
+	out << YAML::Comment("Each sound has a name (lookup key) and file (WAV filename)");
+	out << YAML::Comment("Index = position in array, ResID = index + 1000");
 	out << YAML::Newline;
 	out << YAML::BeginMap;
 	out << YAML::Key << "sounds" << YAML::Value << YAML::BeginSeq;
-	for (const auto& name : soundNames) {
-		out << name;
+	for (const auto& fileName : soundNames) {
+		// Generate name from filename: strip .wav, lowercase
+		std::string sndName = fileName;
+		size_t dotPos = sndName.rfind('.');
+		if (dotPos != std::string::npos) {
+			sndName = sndName.substr(0, dotPos);
+		}
+		std::transform(sndName.begin(), sndName.end(), sndName.begin(), ::tolower);
+
+		out << YAML::BeginMap;
+		out << YAML::Key << "name" << YAML::Value << sndName;
+		out << YAML::Key << "file" << YAML::Value << fileName;
+		out << YAML::EndMap;
 	}
 	out << YAML::EndSeq;
 	out << YAML::EndMap;

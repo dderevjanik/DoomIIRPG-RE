@@ -18,6 +18,8 @@
 #include "Enums.h"
 #include "ParticleSystem.h"
 #include "Sound.h"
+#include "SoundNames.h"
+#include "Sounds.h"
 
 Combat::Combat() {
 	std::memset(this, 0, sizeof(Combat));
@@ -942,7 +944,7 @@ void Combat::explodeOnMonster() {
         this->isGibbed = true;
         app->particleSystem->spawnMonsterBlood(this->curTarget, this->isGibbed);
         app->game->spawnDropItem(this->curTarget);
-        app->sound->playSound(1037, 0, 3, 0);
+        app->sound->playSound(Sounds::getResIDByName(SoundName::GIB), 0, 3, 0);
     }
 }
 
@@ -1295,7 +1297,7 @@ void Combat::updateProjectile() {
                     this->missileAnim = 242;
                     renderMode = 4;
                     app->canvas->startShake(500, 4, 500);
-                    app->sound->playSound(1032, 0, 4, 0);
+                    app->sound->playSound(Sounds::getResIDByName(SoundName::EXPLOSION), 0, 4, 0);
                     break;
                 }
                 case 10: {
@@ -1328,7 +1330,7 @@ void Combat::updateProjectile() {
                     break;
                 }
                 case 7: {
-                    app->sound->playSound(1034, 0, 4, 0);
+                    app->sound->playSound(Sounds::getResIDByName(SoundName::FIREBALL_IMPACT), 0, 4, 0);
                     if (this->curTarget == nullptr && this->hitType != 0 && app->player->buffs[9] > 0) {
                         this->missileAnim = 208;
                         x += app->canvas->viewStepX >> 1;
@@ -1343,7 +1345,7 @@ void Combat::updateProjectile() {
                 case 13: {
                     this->missileAnim = 0;
                     app->particleSystem->spawnParticles(1, -1, actMissile->sprite);
-                    app->sound->playSound(1135, 0, 4, 0);
+                    app->sound->playSound(Sounds::getResIDByName(SoundName::WEAPON_PICKUP), 0, 4, 0);
                     break;
                 }
                 case 12: {

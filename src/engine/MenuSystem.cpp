@@ -33,6 +33,8 @@
 #include "Utils.h"
 #include "TinyGL.h"
 #include "GLES.h"
+#include "SoundNames.h"
+#include "Sounds.h"
 
 MenuSystem::MenuSystem() {
 	std::memset(this, 0, sizeof(MenuSystem));
@@ -740,7 +742,7 @@ void MenuSystem::moveDir(int n) { // J2ME
 			}
 
 			if (this->old_0x48 != this->m_scrollBar->field_0x48_) {
-				app->sound->playSound(1065, 0, 5, false); // [GEC]
+				app->sound->playSound(Sounds::getResIDByName(SoundName::MENU_SCROLL), 0, 5, false); // [GEC]
 			}
 
 			this->old_0x44 = this->m_scrollBar->field_0x44_;
@@ -779,7 +781,7 @@ void MenuSystem::back() {
 
 	if (this->menu != Menus::MENU_MAIN_MORE_GAMES && this->menu != Menus::MENU_MAIN) {
 		if (!app->sound->isSoundPlaying(1122)) {
-			app->sound->playSound(1122, 0, 5, false); // [GEC]
+			app->sound->playSound(Sounds::getResIDByName(SoundName::SWITCH_EXIT), 0, 5, false); // [GEC]
 		}
 	}
 
@@ -3175,7 +3177,7 @@ void MenuSystem::select(int i) {
 	}
 
 	if (this->menu == Menus::MENU_VENDING_MACHINE_CONFIRM) {
-		app->sound->playSound(1125, 0, 3, false);
+		app->sound->playSound(Sounds::getResIDByName(SoundName::VENDING_SALE), 0, 3, false);
 	}
 
 	int action = this->items[i].action;
@@ -3204,7 +3206,7 @@ void MenuSystem::select(int i) {
 			return;
 		}
 
-		app->sound->playSound(1086, 0, 5, false); // [GEC] Pistol Sound
+		app->sound->playSound(Sounds::getResIDByName(SoundName::PISTOL), 0, 5, false); // [GEC] Pistol Sound
 	}
 	else {
 		//SysIPhoneOpenURL("http://www.idsoftware.com/iphone-games/index.htm");
@@ -3249,7 +3251,7 @@ void MenuSystem::select(int i) {
 		case 6: { // ACTION_TOGSOUND
 			app->sound->allowSounds = true;
 			if (this->menu == Menus::MENU_ENABLE_SOUNDS) {
-				app->sound->playSound(1068, 1u, 3, 0);
+				app->sound->playSound(Sounds::getResIDByName(SoundName::MUSIC_GENERAL), 1u, 3, 0);
 				app->canvas->setState(Canvas::ST_INTRO_MOVIE);
 				break;
 			}
@@ -3280,7 +3282,7 @@ void MenuSystem::select(int i) {
 		case 9: { // ACTION_CHANGESTATE
 			if (this->items[i].param == Canvas::ST_CREDITS) {
 				if (app->canvas->loadMapID != 0) {
-					app->sound->playSound(1071, 1, 3, false);
+					app->sound->playSound(Sounds::getResIDByName(SoundName::MUSIC_TITLE), 1, 3, false);
 				}
 			}
 			app->canvas->setState(this->items[i].param);
@@ -6066,5 +6068,5 @@ void MenuSystem::refresh() {
 }
 
 void MenuSystem::soundClick() {
-	this->app->sound->playSound(1027, 0, 5, false);
+	this->app->sound->playSound(Sounds::getResIDByName(SoundName::DIALOG_HELP), 0, 5, false);
 }

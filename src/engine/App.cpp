@@ -32,6 +32,7 @@
 #include <yaml-cpp/yaml.h>
 #include "Input.h"
 #include "Enums.h"
+#include "Sounds.h"
 
 Applet::Applet() {
 	std::memset(this, 0, sizeof(Applet));
@@ -712,7 +713,12 @@ bool Applet::loadMonstersFromYAML(const char* path) {
 				if (val == "none") {
 					this->game->monsterSounds[sndBase + f] = 255;
 				} else {
-					this->game->monsterSounds[sndBase + f] = (uint8_t)std::atoi(val.c_str());
+					int soundIdx = Sounds::getIndexByName(val);
+					if (soundIdx >= 0) {
+						this->game->monsterSounds[sndBase + f] = (uint8_t)soundIdx;
+					} else {
+						this->game->monsterSounds[sndBase + f] = (uint8_t)std::atoi(val.c_str());
+					}
 				}
 			}
 		}

@@ -15,6 +15,8 @@
 #include "JavaStream.h"
 #include "Sound.h"
 #include <yaml-cpp/yaml.h>
+#include "SoundNames.h"
+#include "Sounds.h"
 
 Player::Player() {
 	std::memset(this, 0, sizeof(Player));
@@ -349,7 +351,7 @@ void Player::addLevel() {
 	bool dispose = true;
 	if (app->canvas->state != Canvas::ST_MENU) {
 		app->sound->soundStop();
-		app->sound->playSound(1070, 0, 5, false);
+		app->sound->playSound(Sounds::getResIDByName(SoundName::MUSIC_LEVELUP), 0, 5, false);
 		dispose = (app->canvas->enqueueHelpDialog(textBuff, 0) ? false : true);
 	}
 
@@ -637,12 +639,12 @@ void Player::painEvent(Entity* entity, bool b) {
 	}
 
 	if (this->isFamiliar) {
-		app->sound->playSound(1111, 0, 3, false);
+		app->sound->playSound(Sounds::getResIDByName(SoundName::SENTRYBOT_PAIN), 0, 3, false);
 	} else {
 		if (this->characterChoice == 1) {
-			app->sound->playSound(1094, 0, 3, false);
+			app->sound->playSound(Sounds::getResIDByName(SoundName::PLAYER_PAIN2), 0, 3, false);
 		} else {
-			app->sound->playSound(1093, 0, 3, false);
+			app->sound->playSound(Sounds::getResIDByName(SoundName::PLAYER_PAIN1), 0, 3, false);
 		}
 	}
 
@@ -718,11 +720,11 @@ void Player::died() {
 	this->totalDeaths++;
 
 	if (this->characterChoice == 1) {
-		app->sound->playSound(1092, 0, 3, false);
+		app->sound->playSound(Sounds::getResIDByName(SoundName::PLAYER_DEATH3), 0, 3, false);
 	} else if (this->characterChoice == 2) {
-		app->sound->playSound(1091, 0, 3, false);
+		app->sound->playSound(Sounds::getResIDByName(SoundName::PLAYER_DEATH2), 0, 3, false);
 	} else if (this->characterChoice == 3) {
-		app->sound->playSound(1090, 0, 3, false);
+		app->sound->playSound(Sounds::getResIDByName(SoundName::PLAYER_DEATH1), 0, 3, false);
 	}
 
 	app->canvas->startShake(350, 5, 500);
@@ -741,7 +743,7 @@ void Player::familiarDying(bool familiarSelfDestructed) {
 	if (familiarSelfDestructed) {
 		app->combat->curAttacker = nullptr;
 	} else {
-		app->sound->playSound(1109, 0, 3, false);
+		app->sound->playSound(Sounds::getResIDByName(SoundName::SENTRYBOT_DEATH), 0, 3, false);
 		app->canvas->startShake(350, 5, 500);
 	}
 
@@ -949,7 +951,7 @@ bool Player::useItem(int n) {
 			return false;
 		}
 	}
-	app->sound->playSound(1124, 0, 3, false);
+	app->sound->playSound(Sounds::getResIDByName(SoundName::USE_ITEM), 0, 3, false);
 	if (b2) {
 		--this->inventory[n];
 	}
@@ -1559,7 +1561,7 @@ bool Player::addStatusEffect(int n, int n2, int n3) {
 		if (this->buffs[9] > 0) {
 			return false;
 		}
-		app->sound->playSound(1034, 0, 3, false);
+		app->sound->playSound(Sounds::getResIDByName(SoundName::FIREBALL_IMPACT), 0, 3, false);
 	}
 	int n4 = this->statusEffects[36 + n] + 1;
 	if (n4 > 3 || ((n == 12 || n == 9) && n4 > 1)) {
@@ -1971,7 +1973,7 @@ void Player::showAchievementMessage(int n) {
 		n2 = this->calcLevelXP(this->level) - calcLevelXP(this->level - 1) >> 4;
 	}
 	this->addXP(n2);
-	app->sound->playSound(1020, 0, 3, false);
+	app->sound->playSound(Sounds::getResIDByName(SoundName::CHIME), 0, 3, false);
 }
 
 short Player::gradeToString(int n) {
@@ -2113,7 +2115,7 @@ void Player::setFamiliar(short familiarType) {
 	if (!b) {
 		app->canvas->drawPlayingSoftKeys();
 	}
-	app->sound->playSound(1108, 0, 3, false);
+	app->sound->playSound(Sounds::getResIDByName(SoundName::SENTRYBOT_ACTIVATE), 0, 3, false);
 }
 
 short Player::unsetFamiliar(bool b) {
@@ -2264,7 +2266,7 @@ void Player::explodeFamiliar(int n, int n2, int n3) {
 
 void Player::familiarReturnsToPlayer(bool b) {
 
-	app->sound->playSound(1112, 0, 3, false);
+	app->sound->playSound(Sounds::getResIDByName(SoundName::SENTRYBOT_RETURN), 0, 3, false);
 
 	this->unsetFamiliar(b);
 	this->tookBotsInventory = this->stealFamiliarsInventory();

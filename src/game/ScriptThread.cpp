@@ -21,6 +21,8 @@
 #include "VendingMachine.h"
 #include "HackingGame.h"
 #include "Sound.h"
+#include "SoundNames.h"
+#include "Sounds.h"
 
 ScriptThread::ScriptThread() {
 }
@@ -766,13 +768,13 @@ uint32_t ScriptThread::run() {
                     else if (n44 == 2) {
                         this->app->game->setLineLocked(entity, true);
                         if (n43 != 0) {
-                            this->app->sound->playSound(1065, 0, 3, 0);
+                            this->app->sound->playSound(Sounds::getResIDByName(SoundName::MENU_SCROLL), 0, 3, 0);
                         }
                     }
                     else {
                         this->app->game->setLineLocked(entity, false);
                         if (n43 != 0) {
-                            this->app->sound->playSound(1065, 0, 3, 0);
+                            this->app->sound->playSound(Sounds::getResIDByName(SoundName::MENU_SCROLL), 0, 3, 0);
                         }
                     }
                     break;

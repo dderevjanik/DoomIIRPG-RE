@@ -18,6 +18,8 @@
 #include "JavaStream.h"
 #include "Enums.h"
 #include "Sound.h"
+#include "SoundNames.h"
+#include "Sounds.h"
 
 Entity::Entity() {
     std::memset(this, 0, sizeof(Entity));
@@ -275,7 +277,7 @@ bool Entity::touchedItem() {
         }
     }
     app->game->removeEntity(this);
-    app->sound->playSound(1054, 0, 4, false);
+    app->sound->playSound(Sounds::getResIDByName(SoundName::ITEM_PICKUP), 0, 4, false);
     return true;
 }
 
@@ -374,7 +376,7 @@ bool Entity::pain(int n, Entity* entity) {
         if (eSubType == 1) {
             app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | 0x100);
             app->particleSystem->spawnParticles(2, -1, sprite);
-            app->sound->playSound(1038, 0, 3, false);
+            app->sound->playSound(Sounds::getResIDByName(SoundName::GLASS), 0, 3, false);
             app->game->unlinkEntity(this);
         }
         else {
@@ -734,7 +736,7 @@ int Entity::aiWeaponForTarget(Entity* entity) {
                     app->game->trace(n2, n3, n6, n7, this, 15535, 2);
                     if (app->game->numTraceEntities == 0) {
                         app->particleSystem->spawnParticles(7, -1, sprite);
-                        app->sound->playSound(1123, 0, 1, 0);
+                        app->sound->playSound(Sounds::getResIDByName(SoundName::TELEPORT), 0, 1, 0);
                         app->game->unlinkEntity(this);
                         app->render->mapSprites[app->render->S_X + sprite] = (short)n6;
                         app->render->mapSprites[app->render->S_Y + sprite] = (short)n7;

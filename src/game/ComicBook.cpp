@@ -11,6 +11,8 @@
 #include "MenuSystem.h"
 #include "Enums.h"
 #include "Canvas.h"
+#include "SoundNames.h"
+#include "Sounds.h"
 
 ComicBook::ComicBook() {
 	//printf("ComicBook::Constructor %d\n", sizeof(ComicBook));
@@ -777,7 +779,7 @@ void ComicBook::Touch(int x, int y, bool b)
     this->curX = x;
     this->curY = y;
     if (this->ButtonTouch(x, y) && !app->sound->isSoundPlaying(1064)) {
-        app->sound->playSound(1064, 0, 5, 0);
+        app->sound->playSound(Sounds::getResIDByName(SoundName::MENU_OPEN), 0, 5, 0);
     }
 
     if (v4)

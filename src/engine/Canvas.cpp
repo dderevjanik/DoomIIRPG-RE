@@ -24,6 +24,8 @@
 #include "Text.h"
 #include "Button.h"
 #include "Sound.h"
+#include "Sounds.h"
+#include "SoundNames.h"
 #include "Resource.h"
 #include "Enums.h"
 #include "Utils.h"
@@ -943,7 +945,7 @@ void Canvas::run() {
 						this->setState(Canvas::ST_TRAVELMAP);
 					}
 					else if ((this->saveType & 0x10) != 0x0) {
-						app->sound->playSound(1069, 1u, 3, saveType & 8);
+						app->sound->playSound(Sounds::getResIDByName(SoundName::MUSIC_LEVEL_END), 1u, 3, saveType & 8);
 						app->menuSystem->setMenu(Menus::MENU_LEVEL_STATS);
 					}
 					else if ((this->saveType & 0x100) != 0x0) {
@@ -1926,7 +1928,7 @@ void Canvas::disposeEpilogue() {
 	this->dialogBuffer = nullptr;
 	app->sound->soundStop();
 	app->menuSystem->setMenu(Menus::MENU_LEVEL_STATS);
-	app->sound->playSound(1069,'\x01',3,false);
+	app->sound->playSound(Sounds::getResIDByName(SoundName::MUSIC_LEVEL_END),'\x01',3,false);
 }
 
 void Canvas::loadMiniGameImages() {
@@ -2531,7 +2533,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 					app->hud->addMessage((short)248);
 					app->player->ammo[3] = 100;
 					app->player->showHelp((short)14, false);
-					app->sound->playSound(1046, 0, 3, 0);
+					app->sound->playSound(Sounds::getResIDByName(SoundName::HOLYWATERPISTOL_REFILL), 0, 3, 0);
 				}
 				else if (app->player->ce->getStat(4) < 11) {
 					app->hud->addMessage((short)238, 3);
@@ -2547,7 +2549,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 						app->combat->explodeThread->run();
 						app->combat->explodeThread = nullptr;
 					}
-					app->sound->playSound(1134, 0, 3, 0);
+					app->sound->playSound(Sounds::getResIDByName(SoundName::WEAPON_SNIPER_SCOPE), 0, 3, 0);
 				}
 				return true;
 			}
@@ -2557,7 +2559,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 				if (app->player->ammo[3] < 100) {
 					app->hud->addMessage((short)248);
 					app->player->showHelp((short)14, false);
-					app->sound->playSound(1046, 0, 3, 0);
+					app->sound->playSound(Sounds::getResIDByName(SoundName::HOLYWATERPISTOL_REFILL), 0, 3, 0);
 				}
 				else {
 					app->hud->addMessage((short)249);
@@ -2576,7 +2578,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 					}
 				}
 				else {
-					app->sound->playSound(1111, 0, 3, 0);
+					app->sound->playSound(Sounds::getResIDByName(SoundName::SENTRYBOT_PAIN), 0, 3, 0);
 					app->hud->addMessage((short)193, 2);
 				}
 				return true;
@@ -2593,13 +2595,13 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 				}
 
 				if (app->player->isFamiliar) {
-					app->sound->playSound(1111, 0, 3, 0);
+					app->sound->playSound(Sounds::getResIDByName(SoundName::SENTRYBOT_PAIN), 0, 3, 0);
 				}
 				else if (app->player->characterChoice == 1) {
-					app->sound->playSound(1073, 0, 3, 0);
+					app->sound->playSound(Sounds::getResIDByName(SoundName::NO_USE2), 0, 3, 0);
 				}
 				else if (app->player->characterChoice >= 1 && app->player->characterChoice <= 3) {
-					app->sound->playSound(1072, 0, 3, 0);
+					app->sound->playSound(Sounds::getResIDByName(SoundName::NO_USE), 0, 3, 0);
 				}
 
 				app->combat->shiftWeapon(true);
@@ -3872,7 +3874,7 @@ void Canvas::familiarDyingState() {
 		this->renderScene(this->viewX, this->viewY, this->viewZ, this->viewAngle, this->viewPitch, this->viewRoll, 290);
 		this->repaintFlags |= (Canvas::REPAINT_HUD | Canvas::REPAINT_PARTICLES);
 		if (app->time >= this->familiarDeathTime + 1500) {
-			app->sound->playSound(1032, 0, 3, 0);
+			app->sound->playSound(Sounds::getResIDByName(SoundName::EXPLOSION), 0, 3, 0);
 			this->setState(Canvas::ST_PLAYING);
 			app->player->familiarDied();
 		}
@@ -4364,7 +4366,7 @@ void Canvas::closeDialog(bool skipDialog) {
 			if (app->player->inventory[12] >= 5) {
 				app->player->give(0, 12, -5);
 				app->player->give(0, 11, 1);
-				app->sound->playSound(1054, 0, 3, 0);
+				app->sound->playSound(Sounds::getResIDByName(SoundName::ITEM_PICKUP), 0, 3, 0);
 				int modifyStat = app->player->modifyStat(3, 1);
 				if (modifyStat > 0) {
 					app->localization->resetTextArgs();
@@ -4377,10 +4379,10 @@ void Canvas::closeDialog(bool skipDialog) {
 			}
 			else {
 				if (app->player->characterChoice == 1) {
-					app->sound->playSound(1073, 0, 3, 0);
+					app->sound->playSound(Sounds::getResIDByName(SoundName::NO_USE2), 0, 3, 0);
 				}
 				else if (app->player->characterChoice >= 1 && app->player->characterChoice <= 3) {
-					app->sound->playSound(1072, 0, 3, 0);
+					app->sound->playSound(Sounds::getResIDByName(SoundName::NO_USE), 0, 3, 0);
 				}
 				app->hud->addMessage((short)0, (short)210, 3);
 			}
@@ -4504,7 +4506,7 @@ void Canvas::prepareDialog(Text* text, int dialogStyle, int dialogFlags) {
 	smallBuffer->dispose();
 
 	if (dialogStyle == 2) {
-		app->sound->playSound(1027, 0, 3, 0);
+		app->sound->playSound(Sounds::getResIDByName(SoundName::DIALOG_HELP), 0, 3, 0);
 	}
 }
 
@@ -4608,7 +4610,7 @@ void Canvas::backToMain(bool b) {
 		}
 	}
 	else {
-		app->sound->playSound(1071, 1, 3, false);
+		app->sound->playSound(Sounds::getResIDByName(SoundName::MUSIC_TITLE), 1, 3, false);
 		app->menuSystem->setMenu(Menus::MENU_MAIN);
 	}
 }
@@ -5562,7 +5564,7 @@ bool Canvas::handleZoomEvents(int key, int action, bool b) {
 				float maxScroll = (float)((this->m_sniperScopeDialScrollButton->barRect).h - this->m_sniperScopeDialScrollButton->field_0x4c_);
 				float curFOV = (float)((float)this->zoomCurFOVPercent / (float)this->zoomMinFOVPercent);
 				this->m_sniperScopeDialScrollButton->field_0x48_ = (int)(maxScroll - (maxScroll * curFOV));
-				app->sound->playSound(1113, 0, 5, false);
+				app->sound->playSound(Sounds::getResIDByName(SoundName::SLIDER), 0, 5, false);
 			}
 
 		}
@@ -5580,7 +5582,7 @@ bool Canvas::handleZoomEvents(int key, int action, bool b) {
 				float maxScroll = (float)((this->m_sniperScopeDialScrollButton->barRect).h - this->m_sniperScopeDialScrollButton->field_0x4c_);
 				float curFOV = (float)((float)this->zoomCurFOVPercent / (float)this->zoomMinFOVPercent);
 				this->m_sniperScopeDialScrollButton->field_0x48_ = (int)(maxScroll - (maxScroll * curFOV));
-				app->sound->playSound(1113, 0, 5, false);
+				app->sound->playSound(Sounds::getResIDByName(SoundName::SLIDER), 0, 5, false);
 			}
 		}
 		++this->zoomTurn;
@@ -5676,7 +5678,7 @@ void Canvas::handleCharacterSelectionInput(int key, int action) {
 				}
 				else if (action == Enums::ACTION_FIRE) {
 					this->stateVars[8] = 1; // [GEC]
-					app->sound->playSound(1086, 0, 5, false);
+					app->sound->playSound(Sounds::getResIDByName(SoundName::PISTOL), 0, 5, false);
 				}
 				else if (action == Enums::ACTION_MENU) {
 					this->disposeCharacterSelection();
@@ -5699,13 +5701,13 @@ void Canvas::handleCharacterSelectionInput(int key, int action) {
 						this->disposeCharacterSelection();
 						this->backToMain(false);
 					}
-					app->sound->playSound(1086, 0, 5, false);
+					app->sound->playSound(Sounds::getResIDByName(SoundName::PISTOL), 0, 5, false);
 				}
 				else if (action == Enums::ACTION_MENU) {
 					this->stateVars[1] = 0;
 					this->stateVars[2] = 1;
 					this->stateVars[8] = 0; // [GEC]
-					app->sound->playSound(1122, 0, 5, false);
+					app->sound->playSound(Sounds::getResIDByName(SoundName::SWITCH_EXIT), 0, 5, false);
 				}
 			}
 		}
@@ -5794,7 +5796,7 @@ void Canvas::lootingState() {
 	else {
 		if (!this->field_0xac5_) {
 			this->field_0xac5_ = true;
-			app->sound->playSound(1055, 0, 3, 0);
+			app->sound->playSound(Sounds::getResIDByName(SoundName::LOOT), 0, 3, 0);
 		}
 		if (this->crouchingForLoot) {
 			this->viewX = this->destX + 48 * (this->viewStepX >> 6);
@@ -7095,7 +7097,7 @@ void Canvas::playIntroMovie(Graphics* graphics) {
 		if (app->game->mayaCameras)
 		{
 			if (this->stateVars[3] == 0) { // init movie prolog
-				app->sound->playSound(1068, 1, 6, false);
+				app->sound->playSound(Sounds::getResIDByName(SoundName::MUSIC_GENERAL), 1, 6, false);
 				if (this->stateVars[1] < app->gameTime) {
 					app->game->activeCameraKey = -1;
 					this->stateVars[3] = 0;
@@ -7899,10 +7901,10 @@ bool Canvas::startArmorRepair(ScriptThread* armorRepairThread) {
 	}
 
 	if (app->player->characterChoice == 1) {
-		app->sound->playSound(1073, 0, 3, 0);
+		app->sound->playSound(Sounds::getResIDByName(SoundName::NO_USE2), 0, 3, 0);
 	}
 	else if (app->player->characterChoice >= 1 && app->player->characterChoice <= 3){
-		app->sound->playSound(1072, 0, 3, 0);
+		app->sound->playSound(Sounds::getResIDByName(SoundName::NO_USE), 0, 3, 0);
 	}
 
 	app->hud->addMessage((short)0, (short)210, 3);

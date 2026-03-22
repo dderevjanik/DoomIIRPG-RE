@@ -16,6 +16,8 @@
 #include "Enums.h"
 #include "Utils.h"
 #include "Menus.h"
+#include "SoundNames.h"
+#include "Sounds.h"
 
 int HackingGame::touchedColumn = -1;
 
@@ -630,7 +632,7 @@ void HackingGame::endGame(int n) {
 		this->callingThread = nullptr;
 	}
 	else {
-		app->sound->playSound(1071, '\x01', 3, false);
+		app->sound->playSound(Sounds::getResIDByName(SoundName::MUSIC_TITLE), '\x01', 3, false);
 		app->menuSystem->setMenu(Menus::MENU_MAIN_MINIGAME);
 	}
 }

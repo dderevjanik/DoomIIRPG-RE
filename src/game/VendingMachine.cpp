@@ -16,6 +16,8 @@
 #include "Sound.h"
 #include "Enums.h"
 #include "Menus.h"
+#include "SoundNames.h"
+#include "Sounds.h"
 
 VendingMachine::VendingMachine() {
 	std::memset(this, 0, sizeof(VendingMachine));
@@ -334,7 +336,7 @@ void VendingMachine::handleInputForGame(int action) {
             this->updateHighLowState();
             --this->triesLeft;
             if (this->playerHasWon()) {
-                app->sound->playSound(1043, 0, 3, 0);
+                app->sound->playSound(Sounds::getResIDByName(SoundName::HACK_SUCCESS), 0, 3, 0);
                 this->stateVars[2] = 1;
                 this->machineHasBeenHacked = true;
                 if (!this->gamePlayedFromMainMenu) {
@@ -342,7 +344,7 @@ void VendingMachine::handleInputForGame(int action) {
                 }
             }
             else {
-                app->sound->playSound(1040, 0, 3, 0);
+                app->sound->playSound(Sounds::getResIDByName(SoundName::HACK_FAIL), 0, 3, 0);
                 if (!this->gamePlayedFromMainMenu) {
                     app->player->removeOneVendingMachineTry(this->currentMachineNumber);
                 }
@@ -860,7 +862,7 @@ void VendingMachine::endGame(int n) {
         this->callingThread = nullptr;
     }
     else {
-        app->sound->playSound(1071, 1, 3, false);
+        app->sound->playSound(Sounds::getResIDByName(SoundName::MUSIC_TITLE), 1, 3, false);
         app->menuSystem->setMenu(Menus::MENU_MAIN_MINIGAME);
     }
 }
