@@ -155,49 +155,105 @@ bool MapDataIO::loadFromBin(const std::string& path, MapData& out, std::string& 
     r.skip(numNormals * 3 * 2);
     r.readMarkerAny(); // CAFEBABE
 
-    // ---- BSP nodes (skip, will be regenerated) ----
-    // nodeOffsets
-    r.skip(numNodes * 2);
+    // ---- BSP nodes (read for texture extraction) ----
+    std::vector<int16_t> nodeOffsets(numNodes);
+    for (int i = 0; i < numNodes; i++) nodeOffsets[i] = r.readI16();
     r.readMarkerAny();
-    // nodeNormalIdxs
+
+    // nodeNormalIdxs (skip)
     r.skip(numNodes);
     r.readMarkerAny();
+
     // nodeChildOffset1 + nodeChildOffset2
-    r.skip(numNodes * 2 * 2);
+    std::vector<int16_t> nodeChild1(numNodes), nodeChild2(numNodes);
+    for (int i = 0; i < numNodes; i++) nodeChild1[i] = r.readI16();
+    for (int i = 0; i < numNodes; i++) nodeChild2[i] = r.readI16();
     r.readMarkerAny();
+
     // nodeBounds
-    r.skip(numNodes * 4);
+    std::vector<uint8_t> nodeBounds(numNodes * 4);
+    for (int i = 0; i < numNodes * 4; i++) nodeBounds[i] = r.readU8();
     r.readMarkerAny();
 
-    // ---- Polygon data (scan for tile textures) ----
+    // ---- Polygon data (parse to extract per-tile textures) ----
     size_t polyStart = r.pos;
+    std::vector<uint8_t> polyData(dataSizePolys);
+    for (int i = 0; i < dataSizePolys; i++) polyData[i] = r.readU8();
+    r.readMarkerAny();
 
-    // We need to extract texture tile numbers used per BSP leaf to populate tiles.
-    // For now, scan all polygon meshes to collect unique texture tile numbers.
-    // A more sophisticated approach would correlate leaf bounds to tile positions.
-    // For MVP, we'll use the first wall texture and first floor texture found.
-    int firstWallTex = 1;
-    int firstFloorTex = 1;
-    bool foundWall = false;
-    bool foundFloor = false;
+    // Walk BSP leaf nodes to extract texture assignments per tile
+    // Each leaf has bounds and polygon meshes with tileNum (texture ID)
+    for (int n = 0; n < numNodes; n++) {
+        if ((nodeOffsets[n] & 0xFFFF) != 0xFFFF) continue; // not a leaf
 
-    {
-        // Quick scan of polygon data to extract textures
-        size_t scanPos = polyStart;
-        // We need to walk the BSP tree to find leaf nodes and their poly data offsets.
-        // Instead, for loading, we'll do a simpler scan: iterate nodePolys linearly.
-        // The polygon data is a flat array; we scan mesh-by-mesh.
-        // However, meshes are referenced by nodeChildOffset1 of leaf nodes.
-        // For simplicity, we'll just record all unique texture tile numbers.
+        // Leaf bounds in vertex-byte coords (world >> 7)
+        uint8_t bMinX = nodeBounds[n * 4 + 0];
+        uint8_t bMinY = nodeBounds[n * 4 + 1];
+        uint8_t bMaxX = nodeBounds[n * 4 + 2];
+        uint8_t bMaxY = nodeBounds[n * 4 + 3];
 
-        // Actually, we already skipped the node data. Let's just scan the raw poly data.
-        size_t polyEnd = polyStart + dataSizePolys;
-        // We can't trivially parse without knowing entry points. Skip texture extraction
-        // for now - use defaults. The user can change textures in the editor.
+        // Parse polygon meshes at this leaf's poly data offset
+        int offset = nodeChild1[n] & 0xFFFF;
+        if (offset >= dataSizePolys) continue;
+
+        int meshCount = polyData[offset++];
+        int floorTileNum = -1;
+        int wallTileNum = -1;
+
+        for (int m = 0; m < meshCount && offset + 5 < dataSizePolys; m++) {
+            offset += 4; // skip 4 reserved bytes
+            uint16_t packed = polyData[offset] | (polyData[offset + 1] << 8);
+            offset += 2;
+            int tileNum = packed >> 7;
+            int polyCount = packed & 0x7F;
+
+            // Parse each polygon to determine if it's a floor (horizontal) or wall (vertical)
+            for (int j = 0; j < polyCount && offset < dataSizePolys; j++) {
+                int polyFlags = polyData[offset++];
+                int numVerts = (polyFlags & 0x7) + 2;
+
+                // Check first two vertices to classify as floor vs wall
+                bool isFloor = false;
+                if (numVerts >= 2 && offset + numVerts * 5 <= dataSizePolys) {
+                    // Floor polygons have all Z values the same
+                    uint8_t z0 = polyData[offset + 2];
+                    bool allSameZ = true;
+                    for (int k = 1; k < numVerts && allSameZ; k++) {
+                        if (polyData[offset + k * 5 + 2] != z0) allSameZ = false;
+                    }
+                    isFloor = allSameZ;
+                }
+
+                if (isFloor && floorTileNum < 0) floorTileNum = tileNum;
+                if (!isFloor && wallTileNum < 0) wallTileNum = tileNum;
+
+                offset += numVerts * 5;
+            }
+        }
+
+        // Map leaf bounds to tile grid and assign textures
+        // Bounds are in vertex-byte coords (world >> 7). Tile = world / 64.
+        // So tile = (byteCoord << 7) / 64 = byteCoord * 2.
+        int tMinCol = (int)bMinX * 2;
+        int tMinRow = (int)bMinY * 2;
+        int tMaxCol = (int)bMaxX * 2;
+        int tMaxRow = (int)bMaxY * 2;
+        if (tMaxCol <= tMinCol) tMaxCol = tMinCol + 1;
+        if (tMaxRow <= tMinRow) tMaxRow = tMinRow + 1;
+
+        for (int row = tMinRow; row < tMaxRow && row < 32; row++) {
+            for (int col = tMinCol; col < tMaxCol && col < 32; col++) {
+                if (col < 0 || row < 0) continue;
+                int idx = row * 32 + col;
+                if (floorTileNum > 0 && out.tiles[idx].floorTexture <= 1) {
+                    out.tiles[idx].floorTexture = floorTileNum;
+                }
+                if (wallTileNum > 0 && out.tiles[idx].wallTexture <= 1) {
+                    out.tiles[idx].wallTexture = wallTileNum;
+                }
+            }
+        }
     }
-
-    r.pos = polyStart + dataSizePolys;
-    r.readMarkerAny(); // CAFEBABE
 
     // ---- Lines (skip, will be regenerated) ----
     r.skip((numLines + 1) / 2);       // lineFlags
@@ -338,12 +394,6 @@ bool MapDataIO::loadFromBin(const std::string& path, MapData& out, std::string& 
         if (idx < 1024) {
             out.tiles[idx].flags |= 0x40;
         }
-    }
-
-    // Set default textures (will be improved later with polygon data scanning)
-    for (int i = 0; i < 1024; i++) {
-        out.tiles[i].wallTexture = 1;
-        out.tiles[i].floorTexture = 1;
     }
 
     return true;

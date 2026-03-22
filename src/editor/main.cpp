@@ -1,7 +1,5 @@
 #include "Camera.h"
 #include "EditorUI.h"
-#include "MapData.h"
-#include "MapDataIO.h"
 
 #include <SDL.h>
 #include <SDL_opengl.h>
@@ -23,6 +21,10 @@
 #include "Resource.h"
 #include "DoomIIRPGGame.h"
 #include "IGameModule.h"
+#include "EntityDef.h"
+#include "Entity.h"
+#include "EntityMonster.h"
+#include "Enums.h"
 
 #include <yaml-cpp/yaml.h>
 
@@ -37,10 +39,8 @@
 
 static Camera camera;
 static EditorUI ui;
-static MapData mapData;
 static int currentMapID = 0;
 static bool noclip = false;
-static std::string currentMapPath;
 
 static void editorLoadMap(int mapID) {
 	if (mapID < 1 || mapID > 10) {
@@ -63,24 +63,55 @@ static void editorLoadMap(int mapID) {
 		return;
 	}
 
-	// Skip loadMapEntities() — it requires full gameplay state (loot tables, etc.)
-	// The BSP geometry and textures are already loaded by beginLoadMap()
-	currentMapID = mapID;
-
-	// Load MapData from the same .bin file for editing
+	// Create lightweight entity stubs for rendering (instead of full loadMapEntities)
 	{
-		char mapFile[64];
-		std::snprintf(mapFile, sizeof(mapFile), "levels/maps/map%02d.bin", mapID - 1);
-		currentMapPath = mapFile;
-		std::string err;
-		MapData newData;
-		if (MapDataIO::loadFromBin(mapFile, newData, err)) {
-			mapData = std::move(newData);
-			std::fprintf(stderr, "MapData loaded for editing\n");
-		} else {
-			std::fprintf(stderr, "Warning: could not load MapData: %s\n", err.c_str());
+		auto* game = app->game;
+		auto* render = app->render;
+
+		// Reset entity state
+		for (int i = 0; i < game->numEntities; i++)
+			game->entities[i].reset();
+		game->numEntities = 0;
+		game->numMonsters = 0;
+
+		// Create world + player placeholder entities (indices 0, 1)
+		Entity* worldEnt = &game->entities[game->numEntities++];
+		worldEnt->def = app->entityDefManager->find(0, 0);
+		Entity* playerEnt = &game->entities[game->numEntities++];
+		playerEnt->def = app->entityDefManager->find(1, 0);
+		playerEnt->info = 0x20000;
+
+		// Create entity stubs for each map sprite
+		for (int i = 0; i < render->numMapSprites; i++) {
+			int tileNum = render->mapSpriteInfo[i] & 0xFF;
+			if ((render->mapSpriteInfo[i] & 0x400000) != 0)
+				tileNum += 257;
+
+			EntityDef* def = app->entityDefManager->lookup(tileNum);
+			if (def == nullptr) continue;
+			if (game->numEntities >= 275) break;
+
+			Entity* ent = &game->entities[game->numEntities];
+			ent->reset();
+			ent->def = def;
+			ent->info = ((i + 1) & 0xFFFF);
+
+			if (def->eType == Enums::ET_MONSTER) {
+				if (game->numMonsters < 80) {
+					ent->monster = &game->entityMonsters[game->numMonsters++];
+					ent->monster->reset();
+					ent->info |= 0x40000;
+				}
+			}
+
+			render->mapSprites[render->S_ENT + i] = game->numEntities++;
 		}
+
+		std::fprintf(stderr, "Created %d entity stubs (%d monsters)\n",
+		             game->numEntities, game->numMonsters);
 	}
+
+	currentMapID = mapID;
 
 	// Place camera at player spawn point
 	int spawnTileX = app->render->mapSpawnIndex % 32;
@@ -103,21 +134,6 @@ static void editorLoadMap(int mapID) {
 
 static void editorLoadMapByID(int mapID) {
 	editorLoadMap(mapID);
-}
-
-static void editorSaveMap() {
-	if (currentMapID <= 0 || currentMapPath.empty()) return;
-
-	std::string err;
-	if (MapDataIO::saveToBin(mapData, currentMapPath, err)) {
-		std::fprintf(stderr, "Saved map to %s\n", currentMapPath.c_str());
-		mapData.dirty = false;
-
-		// Reload map in engine to see changes
-		editorLoadMap(currentMapID);
-	} else {
-		std::fprintf(stderr, "Error saving map: %s\n", err.c_str());
-	}
 }
 
 int main(int argc, char* argv[]) {
@@ -225,8 +241,6 @@ int main(int argc, char* argv[]) {
 	// Init editor UI
 	ui.init(nullptr);
 	ui.setLoadCallback([](int mapID) { editorLoadMapByID(mapID); });
-	ui.setSaveCallback([]() { editorSaveMap(); });
-	ui.setMapData(&mapData);
 
 	// Load initial map
 	editorLoadMap(initialMap);
@@ -252,8 +266,8 @@ int main(int argc, char* argv[]) {
 						ui.showAutomap = !ui.showAutomap;
 					} else if (event.key.keysym.sym == SDLK_n) {
 						noclip = !noclip;
-					} else if (event.key.keysym.sym == SDLK_s && (event.key.keysym.mod & KMOD_CTRL)) {
-						editorSaveMap();
+					} else if (event.key.keysym.sym == SDLK_t) {
+						ui.showEntities = !ui.showEntities;
 					} else if (event.key.keysym.sym == SDLK_q && (event.key.keysym.mod & KMOD_CTRL)) {
 						running = false;
 					}
@@ -341,8 +355,9 @@ int main(int argc, char* argv[]) {
 			app->tinyGL->fogMin = 32752;
 			app->tinyGL->fogRange = 1;
 
-			// Skip sprites — entities aren't loaded in editor mode
-			app->render->skipSprites = true;
+			// Render sprites with entity stubs
+			app->render->skipSprites = false;
+			app->render->disableRenderActivate = true;
 
 			// Disable BSP culling when noclip is on or camera is outside map bounds
 			{

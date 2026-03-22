@@ -1122,11 +1122,12 @@ void gles::CreateTextureForMediaID(int n, int mediaID, bool b) {
 	std::free(data);
 }
 
-GLuint gles::getTextureID(int tileNum, int frame) {
+GLuint gles::getTextureID(int tileNum, int frame, bool create) {
 	if (!this->isInit) return 0;
 	int mediaID = this->render->mediaMappings[tileNum] + frame;
 	if (mediaID < 0 || mediaID >= MAX_MEDIA) return 0;
 	if (!this->chains[mediaID].texnum) {
+		if (!create) return 0;
 		this->CreateTextureForMediaID(tileNum, mediaID, true);
 	}
 	return this->chains[mediaID].texnum;
