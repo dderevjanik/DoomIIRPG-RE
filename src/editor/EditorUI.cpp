@@ -172,7 +172,7 @@ void EditorUI::drawAutomap(const Camera& camera) {
     float yawRad = camera.yaw * 3.14159265f / 180.0f;
     float arrowLen = 10.0f;
     float ax = playerMapX + std::cos(yawRad) * arrowLen;
-    float ay = playerMapY + std::sin(yawRad) * arrowLen;
+    float ay = playerMapY - std::sin(yawRad) * arrowLen;
     dl->AddLine(ImVec2(playerMapX, playerMapY), ImVec2(ax, ay),
                 IM_COL32(255, 255, 0, 255), 2.0f);
 
