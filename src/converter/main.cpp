@@ -1217,16 +1217,63 @@ static bool convertMenus(ZipFile& zip, const std::string& outDir) {
 		offset += 4;
 	}
 
+	// Menu name lookup by ID
+	struct MenuNameEntry { int id; const char* name; };
+	static const MenuNameEntry MENU_NAMES[] = {
+		{-6, "main_controller"}, {-5, "main_bindings"}, {-4, "main_controls"},
+		{-3, "main_options_sound"}, {-2, "main_options_video"}, {-1, "main_options_input"},
+		{0, "none"}, {1, "level_stats"}, {2, "drawsworld"},
+		{3, "main"}, {4, "main_help"}, {5, "main_armorhelp"},
+		{6, "main_effecthelp"}, {7, "main_itemhelp"}, {8, "main_about"},
+		{9, "main_general"}, {10, "main_move"}, {11, "main_attack"},
+		{12, "main_sniper"}, {13, "main_exit"}, {14, "main_confirmnew"},
+		{15, "main_confirmnew2"}, {16, "main_difficulty"}, {17, "main_options"},
+		{18, "main_minigame"}, {19, "main_more_games"}, {20, "main_hacker_help"},
+		{21, "main_matrix_skip_help"}, {22, "main_power_up_help"}, {23, "select_language"},
+		{24, "end_ranking"}, {25, "enable_sounds"}, {26, "end"},
+		{27, "end_finalquit"}, {28, "inherit_backmenu"}, {29, "ingame"},
+		{30, "ingame_status"}, {31, "ingame_player"}, {32, "ingame_level"},
+		{33, "ingame_grades"}, {35, "ingame_options"}, {36, "ingame_language"},
+		{37, "ingame_help"}, {38, "ingame_general"}, {39, "ingame_move"},
+		{40, "ingame_attack"}, {41, "ingame_sniper"}, {42, "ingame_exit"},
+		{43, "ingame_armorhelp"}, {44, "ingame_effecthelp"}, {45, "ingame_itemhelp"},
+		{46, "ingame_questlog"}, {47, "ingame_recipes"}, {48, "ingame_save"},
+		{49, "ingame_load"}, {50, "ingame_loadnosave"}, {51, "ingame_dead"},
+		{52, "ingame_restartlvl"}, {53, "ingame_savequit"},
+		{57, "ingame_kicking"}, {58, "ingame_special_exit"},
+		{59, "ingame_hacker_help"}, {60, "ingame_matrix_skip_help"},
+		{61, "ingame_power_up_help"}, {62, "ingame_controls"},
+		{65, "debug"}, {66, "debug_maps"}, {67, "debug_stats"},
+		{68, "debug_cheats"}, {69, "developer_vars"}, {70, "debug_sys"},
+		{71, "showdetails"}, {72, "items"}, {73, "items_weapons"},
+		{75, "items_drinks"}, {77, "items_confirm"},
+		{79, "items_healthmsg"}, {80, "items_armormsg"},
+		{81, "items_syringemsg"}, {82, "items_holy_water_max"},
+		{83, "vending_machine"}, {84, "vending_machine_drinks"},
+		{85, "vending_machine_snacks"}, {86, "vending_machine_confirm"},
+		{87, "vending_machine_cant_buy"}, {88, "vending_machine_details"},
+		{89, "comic_book"},
+	};
+	auto menuIdToName = [&](int id) -> const char* {
+		for (const auto& e : MENU_NAMES) {
+			if (e.id == id) return e.name;
+		}
+		return nullptr;
+	};
+
 	YAML::Emitter out;
 	out << YAML::Comment("Menu definitions for DoomIIRPG");
 	out << YAML::Comment("");
-	out << YAML::Comment("Menu types: default=0, list=1, confirm=2, confirm2=3, main=4,");
-	out << YAML::Comment("            help=5, vcenter=6, notebook=7, main_list=8, vending_machine=9");
+	out << YAML::Comment("Menu types: default, list, confirm, confirm2, main,");
+	out << YAML::Comment("            help, vcenter, notebook, main_list, vending_machine");
 	out << YAML::Comment("");
-	out << YAML::Comment("Item flags: normal=0, noselect=1, nodehyphenate=2, disabled=4,");
-	out << YAML::Comment("            align_center=8, showdetails=32, divider=64, selector=128,");
-	out << YAML::Comment("            block_text=256, highlight=512, checked=1024,");
-	out << YAML::Comment("            right_arrow=8192, left_arrow=16384, hidden=32768");
+	out << YAML::Comment("Item flags: normal, noselect, nodehyphenate, disabled,");
+	out << YAML::Comment("            align_center, showdetails, divider, selector,");
+	out << YAML::Comment("            block_text, highlight, checked,");
+	out << YAML::Comment("            right_arrow, left_arrow, hidden");
+	out << YAML::Comment("");
+	out << YAML::Comment("string_id values are indices into menu strings (group 3)");
+	out << YAML::Comment("goto targets reference menu names instead of numeric IDs");
 	out << YAML::Newline;
 	out << YAML::BeginMap;
 	out << YAML::Key << "menus" << YAML::Value << YAML::BeginSeq;
@@ -1241,6 +1288,10 @@ static bool convertMenus(ZipFile& zip, const std::string& outDir) {
 		int numItems = (itemEnd - itemStart) / 2;
 
 		out << YAML::BeginMap;
+		const char* mname = menuIdToName(signedId);
+		if (mname) {
+			out << YAML::Key << "name" << YAML::Value << mname;
+		}
 		out << YAML::Key << "menu_id" << YAML::Value << signedId;
 		if (mtype < 10) {
 			out << YAML::Key << "type" << YAML::Value << MENU_TYPE_NAMES[mtype];
@@ -1269,7 +1320,15 @@ static bool convertMenus(ZipFile& zip, const std::string& outDir) {
 				if (action != 0) {
 					out << YAML::Key << "action" << YAML::Value << actionName(action);
 				}
-				if (param != 0) {
+				if (action == 1 && param != 0) {
+					// goto action: output named target
+					const char* targetName = menuIdToName(param);
+					if (targetName) {
+						out << YAML::Key << "goto" << YAML::Value << targetName;
+					} else {
+						out << YAML::Key << "param" << YAML::Value << param;
+					}
+				} else if (param != 0) {
 					out << YAML::Key << "param" << YAML::Value << param;
 				}
 				if (helpString != 0) {

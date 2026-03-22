@@ -407,6 +407,53 @@ static const char* menuIdToName(int id) {
 	return "MENU_UNKNOWN";
 }
 
+// Lowercase menu name -> id lookup (e.g. "main_help" -> 4)
+static const struct { const char* name; int id; } menuNameLookup[] = {
+	{"main_controller", -6}, {"main_bindings", -5}, {"main_controls", -4},
+	{"main_options_sound", -3}, {"main_options_video", -2}, {"main_options_input", -1},
+	{"none", 0}, {"level_stats", 1}, {"drawsworld", 2},
+	{"main", 3}, {"main_help", 4}, {"main_armorhelp", 5},
+	{"main_effecthelp", 6}, {"main_itemhelp", 7}, {"main_about", 8},
+	{"main_general", 9}, {"main_move", 10}, {"main_attack", 11},
+	{"main_sniper", 12}, {"main_exit", 13}, {"main_confirmnew", 14},
+	{"main_confirmnew2", 15}, {"main_difficulty", 16}, {"main_options", 17},
+	{"main_minigame", 18}, {"main_more_games", 19}, {"main_hacker_help", 20},
+	{"main_matrix_skip_help", 21}, {"main_power_up_help", 22}, {"select_language", 23},
+	{"end_ranking", 24}, {"enable_sounds", 25}, {"end", 26},
+	{"end_finalquit", 27}, {"inherit_backmenu", 28}, {"ingame", 29},
+	{"ingame_status", 30}, {"ingame_player", 31}, {"ingame_level", 32},
+	{"ingame_grades", 33}, {"ingame_options", 35}, {"ingame_language", 36},
+	{"ingame_help", 37}, {"ingame_general", 38}, {"ingame_move", 39},
+	{"ingame_attack", 40}, {"ingame_sniper", 41}, {"ingame_exit", 42},
+	{"ingame_armorhelp", 43}, {"ingame_effecthelp", 44}, {"ingame_itemhelp", 45},
+	{"ingame_questlog", 46}, {"ingame_recipes", 47}, {"ingame_save", 48},
+	{"ingame_load", 49}, {"ingame_loadnosave", 50}, {"ingame_dead", 51},
+	{"ingame_restartlvl", 52}, {"ingame_savequit", 53},
+	{"ingame_kicking", 57}, {"ingame_special_exit", 58},
+	{"ingame_hacker_help", 59}, {"ingame_matrix_skip_help", 60},
+	{"ingame_power_up_help", 61}, {"ingame_controls", 62},
+	{"debug", 65}, {"debug_maps", 66}, {"debug_stats", 67},
+	{"debug_cheats", 68}, {"developer_vars", 69}, {"debug_sys", 70},
+	{"showdetails", 71}, {"items", 72}, {"items_weapons", 73},
+	{"items_drinks", 75}, {"items_confirm", 77},
+	{"items_healthmsg", 79}, {"items_armormsg", 80},
+	{"items_syringemsg", 81}, {"items_holy_water_max", 82},
+	{"vending_machine", 83}, {"vending_machine_drinks", 84},
+	{"vending_machine_snacks", 85}, {"vending_machine_confirm", 86},
+	{"vending_machine_cant_buy", 87}, {"vending_machine_details", 88},
+	{"comic_book", 89},
+};
+static const int numMenuNameLookup = sizeof(menuNameLookup) / sizeof(menuNameLookup[0]);
+
+static int menuNameToId(const std::string& name) {
+	for (int i = 0; i < numMenuNameLookup; i++) {
+		if (name == menuNameLookup[i].name) return menuNameLookup[i].id;
+	}
+	// Try parsing as integer fallback
+	try { return std::stoi(name); } catch (...) {}
+	return 0;
+}
+
 bool MenuSystem::loadMenusFromYAML(const char* path) {
 	YAML::Node config;
 	try {
@@ -451,6 +498,10 @@ bool MenuSystem::loadMenusFromYAML(const char* path) {
 			int flags = flagsFromString(item["flags"].as<std::string>("normal").c_str());
 			int action = actionFromString(item["action"].as<std::string>("none").c_str());
 			int param = item["param"].as<int>(0);
+			// Named goto target overrides numeric param
+			if (YAML::Node gotoNode = item["goto"]) {
+				param = menuNameToId(gotoNode.as<std::string>(""));
+			}
 			int helpString = item["help_string"].as<int>(0);
 
 			itemWords.push_back((uint32_t)((stringId & 0xFFFF) << 16) | (uint32_t)(flags & 0xFFFF));
