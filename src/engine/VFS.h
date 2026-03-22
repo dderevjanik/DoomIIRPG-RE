@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <vector>
 #include <string>
+#include <unordered_map>
 
 // A mounted filesystem directory for the VFS
 struct VFSMount {
@@ -14,8 +15,14 @@ struct VFSMount {
 class VFS {
 private:
 	std::vector<VFSMount> mounts;
+	std::vector<std::string> searchDirs;
+
+	// Lazily-built cache: bare filename -> subdir/filename (e.g. "logo.bmp" -> "ui/logo.bmp")
+	std::unordered_map<std::string, std::string> fileIndex;
+	bool fileIndexBuilt = false;
 
 	uint8_t* readFromDir(const VFSMount& mount, const char* path, int* sizeOut);
+	void buildFileIndex();
 
 public:
 	VFS();
@@ -24,7 +31,11 @@ public:
 	// Mount a filesystem directory (e.g. "basedata/" or "mods/mymod/")
 	void mountDir(const char* dirPath, int priority);
 
-	// Read a file by logical name (e.g. "logo.bmp", "sounds2/hit.wav")
+	// Register a subdirectory to search when a file isn't found at the mount root.
+	// Search dirs are tried in registration order after the exact path fails.
+	void addSearchDir(const char* subdir);
+
+	// Read a file by logical name (e.g. "logo.bmp", "audio/hit.wav")
 	// Returns malloc'd buffer, caller must free(). Sets *sizeOut to file size.
 	// Returns nullptr if not found in any mount.
 	uint8_t* readFile(const char* path, int* sizeOut);

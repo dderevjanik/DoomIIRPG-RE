@@ -339,7 +339,7 @@ bool EntityDefManager::startup() {
 	this->numDefs = 0;
 
 	printf("EntityDefManager: loading from entities.yaml\n");
-	return this->loadFromYAML("entities.yaml");
+	return this->loadFromYAML("config/entities.yaml");
 }
 
 bool EntityDefManager::loadFromYAML(const char* path) {

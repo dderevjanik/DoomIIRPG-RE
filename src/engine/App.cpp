@@ -395,7 +395,7 @@ void Applet::endImageLoading() {}
 
 void Applet::loadTables() {
 	printf("Applet::loadTables: loading from tables.yaml\n");
-	if (!this->loadTablesFromYAML("tables.yaml")) {
+	if (!this->loadTablesFromYAML("config/tables.yaml")) {
 		this->Error("Failed to load tables.yaml\n");
 	}
 }

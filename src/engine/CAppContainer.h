@@ -17,6 +17,7 @@ struct GameConfig {
 	std::string saveDir = "Doom2rpg.app";
 	std::string entryMap = "map00";
 	std::vector<int> noFogMaps;  // Map IDs where fog is disabled (e.g. outdoor maps)
+	std::vector<std::string> searchDirs;  // VFS search subdirectories for asset resolution
 
 	bool isFogDisabled(int mapID) const {
 		for (int id : noFogMaps) {

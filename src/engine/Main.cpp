@@ -161,6 +161,12 @@ int main(int argc, char* args[]) {
 					}
 				}
 
+				if (game["search_dirs"]) {
+					for (const auto& dir : game["search_dirs"]) {
+						gc.searchDirs.push_back(dir.as<std::string>());
+					}
+				}
+
 				printf("Game: %s (save: %s)\n", gc.name.c_str(), gc.saveDir.c_str());
 			}
 		} catch (const YAML::Exception& e) {
@@ -180,6 +186,11 @@ int main(int argc, char* args[]) {
 	vfs.mountDir(".", 200);
 	// Mount basedata for shared/fallback assets
 	vfs.mountDir("basedata", 100);
+
+	// Register search subdirectories from game.yaml (e.g. ui/, hud/, fonts/, audio/)
+	for (const auto& dir : gc.searchDirs) {
+		vfs.addSearchDir(dir.c_str());
+	}
 
 	SDLGL sdlGL;
 	sdlGL.Initialize();

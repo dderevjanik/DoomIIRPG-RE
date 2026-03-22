@@ -47,7 +47,7 @@ bool MenuSystem::startup() {
 	printf("MenuSystem::startup\n");
 
 	printf("MenuSystem: loading from menus.yaml\n");
-	if (!this->loadMenusFromYAML("menus.yaml")) {
+	if (!this->loadMenusFromYAML("config/menus.yaml")) {
 		app->Error("Failed to load menus.yaml\n");
 		return false;
 	}

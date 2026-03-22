@@ -538,7 +538,8 @@ static bool convertEntities(ZipFile& zip, const std::string& outDir) {
 
 	free(data);
 
-	std::string path = outDir + "/entities.yaml";
+	std::string path = outDir + "/config/entities.yaml";
+	mkdirRecursive(outDir + "/config");
 	if (!writeString(path, out.c_str())) {
 		fprintf(stderr, "  Failed to write %s\n", path.c_str());
 		return false;
@@ -875,7 +876,7 @@ static bool convertTables(ZipFile& zip, const std::string& outDir) {
 
 	free(data);
 
-	std::string path = outDir + "/tables.yaml";
+	std::string path = outDir + "/config/tables.yaml";
 	if (!writeString(path, out.c_str())) {
 		fprintf(stderr, "  Failed to write %s\n", path.c_str());
 		return false;
@@ -985,7 +986,7 @@ static bool convertMenus(ZipFile& zip, const std::string& outDir) {
 
 	free(data);
 
-	std::string path = outDir + "/menus.yaml";
+	std::string path = outDir + "/config/menus.yaml";
 	if (!writeString(path, out.c_str())) {
 		fprintf(stderr, "  Failed to write %s\n", path.c_str());
 		return false;
@@ -1105,7 +1106,7 @@ static bool convertStrings(ZipFile& zip, const std::string& outDir) {
 			free(chunks[i]);
 	}
 
-	std::string path = outDir + "/strings.yaml";
+	std::string path = outDir + "/config/strings.yaml";
 	if (!writeString(path, yaml)) {
 		fprintf(stderr, "  Failed to write %s\n", path.c_str());
 		return false;
@@ -1118,8 +1119,8 @@ static bool convertStrings(ZipFile& zip, const std::string& outDir) {
 // Conversion: sounds -> sounds.yaml + sounds2/ directory
 // ========================================================================
 static bool convertSounds(ZipFile& zip, const std::string& outDir) {
-	// Create sounds2/ directory (engine looks for sounds2/)
-	std::string soundsDir = outDir + "/sounds2";
+	// Create audio/ directory for sound assets
+	std::string soundsDir = outDir + "/audio";
 	if (!mkdirRecursive(soundsDir)) {
 		fprintf(stderr, "  Failed to create %s\n", soundsDir.c_str());
 		return false;
@@ -1162,7 +1163,7 @@ static bool convertSounds(ZipFile& zip, const std::string& outDir) {
 	out << YAML::EndSeq;
 	out << YAML::EndMap;
 
-	std::string path = outDir + "/sounds.yaml";
+	std::string path = outDir + "/config/sounds.yaml";
 	if (!writeString(path, out.c_str())) {
 		fprintf(stderr, "  Failed to write %s\n", path.c_str());
 		return false;
@@ -1195,6 +1196,20 @@ static bool generateGameYaml(const std::string& outDir) {
 	yaml += "\n";
 	yaml += "  # Map IDs where fog is disabled (e.g. outdoor maps)\n";
 	yaml += "  no_fog_maps: [2]\n";
+	yaml += "\n";
+	yaml += "  # Subdirectories to search when resolving asset files.\n";
+	yaml += "  # The engine tries the exact path first, then searches these dirs in order.\n";
+	yaml += "  search_dirs:\n";
+	yaml += "    - config\n";
+	yaml += "    - ui\n";
+	yaml += "    - hud\n";
+	yaml += "    - fonts\n";
+	yaml += "    - levels/maps\n";
+	yaml += "    - levels/textures\n";
+	yaml += "    - levels/models\n";
+	yaml += "    - audio\n";
+	yaml += "    - comicbook\n";
+	yaml += "    - data\n";
 
 	std::string path = outDir + "/game.yaml";
 	if (!writeString(path, yaml)) {
@@ -1238,7 +1253,7 @@ static bool generateCharactersYaml(const std::string& outDir) {
 	yaml += "    iq: 150\n";
 	yaml += "    credits: 80\n";
 
-	std::string path = outDir + "/characters.yaml";
+	std::string path = outDir + "/config/characters.yaml";
 	if (!writeString(path, yaml)) {
 		fprintf(stderr, "  Failed to write %s\n", path.c_str());
 		return false;
@@ -1250,6 +1265,43 @@ static bool generateCharactersYaml(const std::string& outDir) {
 // ========================================================================
 // Copy all BMP image files from the IPA Packages directory
 // ========================================================================
+// Determine the output subdirectory for a BMP file based on its filename
+static std::string classifyImage(const std::string& relPath) {
+	// ComicBook images -> comicbook/
+	if (relPath.compare(0, 10, "ComicBook/") == 0) {
+		return "comicbook/" + relPath.substr(10);
+	}
+
+	// Extract just the filename for classification
+	std::string name = relPath;
+	size_t slash = name.rfind('/');
+	if (slash != std::string::npos) {
+		name = name.substr(slash + 1);
+	}
+
+	// Fonts
+	if (name.compare(0, 4, "Font") == 0 || name == "WarFont.bmp") {
+		return "fonts/" + name;
+	}
+
+	// HUD elements
+	if (name.compare(0, 3, "Hud") == 0 || name.compare(0, 3, "HUD") == 0 ||
+	    name.compare(0, 3, "hud") == 0 ||
+	    name == "cockpit.bmp" || name == "damage.bmp" || name == "damage_bot.bmp" ||
+	    name == "Automap_Cursor.bmp" || name == "ui_images.bmp" ||
+	    name == "DialogScroll.bmp" ||
+	    name.compare(0, 6, "Switch") == 0 ||
+	    name == "Soft_Key_Fill.bmp" ||
+	    name == "scope.bmp" || name.compare(0, 11, "SniperScope") == 0 ||
+	    name == "inGame_menu_softkey.bmp" ||
+	    name.compare(0, 15, "vending_softkey") == 0) {
+		return "hud/" + name;
+	}
+
+	// Everything else goes to ui/
+	return "ui/" + name;
+}
+
 static void copyImageAssets(ZipFile& zip, const std::string& outDir) {
 	const std::string prefix = std::string(PKG_PREFIX);
 	int copied = 0;
@@ -1270,10 +1322,13 @@ static void copyImageAssets(ZipFile& zip, const std::string& outDir) {
 		// Strip prefix to get relative path (e.g. "logo.bmp" or "ComicBook/Cover.bmp")
 		std::string relPath = entry.substr(prefix.size());
 
+		// Classify into subdirectory
+		std::string classifiedPath = classifyImage(relPath);
+
 		int size = 0;
 		uint8_t* data = zip.readZipFileEntry(name, &size);
 		if (data) {
-			std::string outPath = outDir + "/" + relPath;
+			std::string outPath = outDir + "/" + classifiedPath;
 			size_t slash = outPath.rfind('/');
 			if (slash != std::string::npos) {
 				mkdirRecursive(outPath.substr(0, slash));
@@ -1368,11 +1423,23 @@ static void copyBinaryAssets(ZipFile& zip, const std::string& outDir) {
 			continue;
 		uint8_t* data = zip.readZipFileEntry(ipaPath.c_str(), &size);
 		if (data) {
-			// Strip "Packages/" prefix for output — engine VFS reads from CWD
+			// Strip "Packages/" prefix and route to domain subdirectory
 			std::string outFile = relPath;
 			if (outFile.compare(0, 9, "Packages/") == 0) {
 				outFile = outFile.substr(9);
 			}
+
+			// Classify binary assets into subdirectories
+			if (outFile.compare(0, 3, "map") == 0 && outFile.find(".bin") != std::string::npos) {
+				outFile = "levels/maps/" + outFile;
+			} else if (outFile.compare(0, 6, "model_") == 0) {
+				outFile = "levels/models/" + outFile;
+			} else if (outFile.compare(0, 3, "new") == 0) {
+				outFile = "levels/textures/" + outFile;
+			} else if (outFile == "tables.bin") {
+				outFile = "data/" + outFile;
+			}
+
 			std::string outPath = outDir + "/" + outFile;
 
 			// Ensure parent dir exists

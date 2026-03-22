@@ -85,7 +85,7 @@ bool InputStream::loadFile(const char* fileName, int loadType) {
 		}
 	} else if (loadType == LT_SOUND_RESOURCE) { // [GEC]
 		VFS* vfs = CAppContainer::getInstance()->vfs;
-		std::snprintf(namePath, sizeof(namePath), "sounds2/%s", fileName);
+		std::snprintf(namePath, sizeof(namePath), "audio/%s", fileName);
 		this->data = vfs->readFile(namePath, &this->fileSize);
 		if (this->data) {
 			return true;

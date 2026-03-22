@@ -266,54 +266,54 @@ void ComicBook::loadImage(int index, bool vComic) {
         switch (index)
         {
         case 0:
-            this->imgComicBook[0] = app->loadImage("ComicBook/Cover.bmp", true);
+            this->imgComicBook[0] = app->loadImage("comicbook/Cover.bmp", true);
             break;
         case 1:
-            this->imgComicBook[1] = app->loadImage("ComicBook/page_01.bmp", true);
+            this->imgComicBook[1] = app->loadImage("comicbook/page_01.bmp", true);
             break;
         case 2:
-            this->imgComicBook[2] = app->loadImage("ComicBook/page_02.bmp", true);
+            this->imgComicBook[2] = app->loadImage("comicbook/page_02.bmp", true);
             break;
         case 3:
-            this->imgComicBook[3] = app->loadImage("ComicBook/page_03.bmp", true);
+            this->imgComicBook[3] = app->loadImage("comicbook/page_03.bmp", true);
             break;
         case 4:
-            this->imgComicBook[4] = app->loadImage("ComicBook/page_04.bmp", true);
+            this->imgComicBook[4] = app->loadImage("comicbook/page_04.bmp", true);
             break;
         case 5:
-            this->imgComicBook[5] = app->loadImage("ComicBook/page_05.bmp", true);
+            this->imgComicBook[5] = app->loadImage("comicbook/page_05.bmp", true);
             break;
         case 6:
-            this->imgComicBook[6] = app->loadImage("ComicBook/page_06.bmp", true);
+            this->imgComicBook[6] = app->loadImage("comicbook/page_06.bmp", true);
             break;
         case 7:
-            this->imgComicBook[7] = app->loadImage("ComicBook/page_07.bmp", true);
+            this->imgComicBook[7] = app->loadImage("comicbook/page_07.bmp", true);
             break;
         case 8:
-            this->imgComicBook[8] = app->loadImage("ComicBook/page_08.bmp", true);
+            this->imgComicBook[8] = app->loadImage("comicbook/page_08.bmp", true);
             break;
         case 9:
-            this->imgComicBook[9] = app->loadImage("ComicBook/page_09.bmp", true);
+            this->imgComicBook[9] = app->loadImage("comicbook/page_09.bmp", true);
             break;
         case 10:
-            this->imgComicBook[10] = app->loadImage("ComicBook/page_10.bmp", true);
+            this->imgComicBook[10] = app->loadImage("comicbook/page_10.bmp", true);
             break;
         case 11:
-            this->imgComicBook[11] = app->loadImage("ComicBook/page_11.bmp", true);
+            this->imgComicBook[11] = app->loadImage("comicbook/page_11.bmp", true);
             break;
         case 12:
-            this->imgComicBook[12] = app->loadImage("ComicBook/page_12.bmp", true);
+            this->imgComicBook[12] = app->loadImage("comicbook/page_12.bmp", true);
             break;
         case 13:
-            this->imgComicBook[13] = app->loadImage("ComicBook/page_13.bmp", true);
+            this->imgComicBook[13] = app->loadImage("comicbook/page_13.bmp", true);
         case 14:
-            this->imgComicBook[14] = app->loadImage("ComicBook/page_14.bmp", true);
+            this->imgComicBook[14] = app->loadImage("comicbook/page_14.bmp", true);
             break;
         case 15:
-            this->imgComicBook[15] = app->loadImage("ComicBook/page_15.bmp", true);
+            this->imgComicBook[15] = app->loadImage("comicbook/page_15.bmp", true);
             break;
         case 16:
-            this->imgComicBook[16] = app->loadImage("ComicBook/page_16.bmp", true);
+            this->imgComicBook[16] = app->loadImage("comicbook/page_16.bmp", true);
             break;
         }
     }
@@ -322,121 +322,121 @@ void ComicBook::loadImage(int index, bool vComic) {
         switch (index)
         {
         case 0:
-            this->imgiPhoneComicBook[0] = app->loadImage("ComicBook/frames/iPhone cover.bmp", true);
+            this->imgiPhoneComicBook[0] = app->loadImage("comicbook/frames/iPhone cover.bmp", true);
             break;
         case 1:
-            this->imgiPhoneComicBook[1] = app->loadImage("ComicBook/frames/iPhone page 1a.bmp", true);
+            this->imgiPhoneComicBook[1] = app->loadImage("comicbook/frames/iPhone page 1a.bmp", true);
             break;
         case 2:
-            this->imgiPhoneComicBook[2] = app->loadImage("ComicBook/frames/iPhone page 1b.bmp", true);
+            this->imgiPhoneComicBook[2] = app->loadImage("comicbook/frames/iPhone page 1b.bmp", true);
             break;
         case 3:
-            this->imgiPhoneComicBook[3] = app->loadImage("ComicBook/frames/iPhone page 2a.bmp", true);
+            this->imgiPhoneComicBook[3] = app->loadImage("comicbook/frames/iPhone page 2a.bmp", true);
             break;
         case 4:
-            this->imgiPhoneComicBook[4] = app->loadImage("ComicBook/frames/iPhone page 2b.bmp", true);
+            this->imgiPhoneComicBook[4] = app->loadImage("comicbook/frames/iPhone page 2b.bmp", true);
             break;
         case 5:
-            this->imgiPhoneComicBook[5] = app->loadImage("ComicBook/frames/iPhone page 2c.bmp", true);
+            this->imgiPhoneComicBook[5] = app->loadImage("comicbook/frames/iPhone page 2c.bmp", true);
             break;
         case 6:
-            this->imgiPhoneComicBook[6] = app->loadImage("ComicBook/frames/iPhone page 3a.bmp", true);
+            this->imgiPhoneComicBook[6] = app->loadImage("comicbook/frames/iPhone page 3a.bmp", true);
             break;
         case 7:
-            this->imgiPhoneComicBook[7] = app->loadImage("ComicBook/frames/iPhone page 3b.bmp", true);
+            this->imgiPhoneComicBook[7] = app->loadImage("comicbook/frames/iPhone page 3b.bmp", true);
             break;
         case 8:
-            this->imgiPhoneComicBook[8] = app->loadImage("ComicBook/frames/iPhone page 4a.bmp", true);
+            this->imgiPhoneComicBook[8] = app->loadImage("comicbook/frames/iPhone page 4a.bmp", true);
             break;
         case 9:
-            this->imgiPhoneComicBook[9] = app->loadImage("ComicBook/frames/iPhone page 4b.bmp", true);
+            this->imgiPhoneComicBook[9] = app->loadImage("comicbook/frames/iPhone page 4b.bmp", true);
             break;
         case 10:
-            this->imgiPhoneComicBook[10] = app->loadImage("ComicBook/frames/iPhone page 4c.bmp", true);
+            this->imgiPhoneComicBook[10] = app->loadImage("comicbook/frames/iPhone page 4c.bmp", true);
             break;
         case 11:
-            this->imgiPhoneComicBook[11] = app->loadImage("ComicBook/frames/iPhone page 5a.bmp", true);
+            this->imgiPhoneComicBook[11] = app->loadImage("comicbook/frames/iPhone page 5a.bmp", true);
             break;
         case 12:
-            this->imgiPhoneComicBook[12] = app->loadImage("ComicBook/frames/iPhone page 5b.bmp", true);
+            this->imgiPhoneComicBook[12] = app->loadImage("comicbook/frames/iPhone page 5b.bmp", true);
             break;
         case 13:
-            this->imgiPhoneComicBook[13] = app->loadImage("ComicBook/frames/iPhone page 5c.bmp", true);
+            this->imgiPhoneComicBook[13] = app->loadImage("comicbook/frames/iPhone page 5c.bmp", true);
             break;
         case 14:
-            this->imgiPhoneComicBook[14] = app->loadImage("ComicBook/frames/iPhone page 6a.bmp", true);
+            this->imgiPhoneComicBook[14] = app->loadImage("comicbook/frames/iPhone page 6a.bmp", true);
             break;
         case 15:
-            this->imgiPhoneComicBook[15] = app->loadImage("ComicBook/frames/iPhone page 6b.bmp", true);
+            this->imgiPhoneComicBook[15] = app->loadImage("comicbook/frames/iPhone page 6b.bmp", true);
             break;
         case 16:
-            this->imgiPhoneComicBook[16] = app->loadImage("ComicBook/frames/iPhone page 6c.bmp", true);
+            this->imgiPhoneComicBook[16] = app->loadImage("comicbook/frames/iPhone page 6c.bmp", true);
             break;
         case 17:
-            this->imgiPhoneComicBook[17] = app->loadImage("ComicBook/frames/iPhone page 7a.bmp", true);
+            this->imgiPhoneComicBook[17] = app->loadImage("comicbook/frames/iPhone page 7a.bmp", true);
             break;
         case 18:
-            this->imgiPhoneComicBook[18] = app->loadImage("ComicBook/frames/iPhone page 7b.bmp", true);
+            this->imgiPhoneComicBook[18] = app->loadImage("comicbook/frames/iPhone page 7b.bmp", true);
             break;
         case 19:
-            this->imgiPhoneComicBook[19] = app->loadImage("ComicBook/frames/iPhone page 8a.bmp", true);
+            this->imgiPhoneComicBook[19] = app->loadImage("comicbook/frames/iPhone page 8a.bmp", true);
             break;
         case 20:
-            this->imgiPhoneComicBook[20] = app->loadImage("ComicBook/frames/iPhone page 8b.bmp", true);
+            this->imgiPhoneComicBook[20] = app->loadImage("comicbook/frames/iPhone page 8b.bmp", true);
             break;
         case 21:
-            this->imgiPhoneComicBook[21] = app->loadImage("ComicBook/frames/iPhone page 8c.bmp", true);
+            this->imgiPhoneComicBook[21] = app->loadImage("comicbook/frames/iPhone page 8c.bmp", true);
             break;
         case 22:
-            this->imgiPhoneComicBook[22] = app->loadImage("ComicBook/frames/iPhone page 9.bmp", true);
+            this->imgiPhoneComicBook[22] = app->loadImage("comicbook/frames/iPhone page 9.bmp", true);
             break;
         case 23:
-            this->imgiPhoneComicBook[23] = app->loadImage("ComicBook/frames/iPhone page 10a.bmp", true);
+            this->imgiPhoneComicBook[23] = app->loadImage("comicbook/frames/iPhone page 10a.bmp", true);
             break;
         case 24:
-            this->imgiPhoneComicBook[24] = app->loadImage("ComicBook/frames/iPhone page 10b.bmp", true);
+            this->imgiPhoneComicBook[24] = app->loadImage("comicbook/frames/iPhone page 10b.bmp", true);
             break;
         case 25:
-            this->imgiPhoneComicBook[25] = app->loadImage("ComicBook/frames/iPhone page 10c.bmp", true);
+            this->imgiPhoneComicBook[25] = app->loadImage("comicbook/frames/iPhone page 10c.bmp", true);
             break;
         case 26:
-            this->imgiPhoneComicBook[26] = app->loadImage("ComicBook/frames/iPhone page 11a.bmp", true);
+            this->imgiPhoneComicBook[26] = app->loadImage("comicbook/frames/iPhone page 11a.bmp", true);
             break;
         case 27:
-            this->imgiPhoneComicBook[27] = app->loadImage("ComicBook/frames/iPhone page 11b.bmp", true);
+            this->imgiPhoneComicBook[27] = app->loadImage("comicbook/frames/iPhone page 11b.bmp", true);
             break;
         case 28:
-            this->imgiPhoneComicBook[28] = app->loadImage("ComicBook/frames/iPhone page 12a.bmp", true);
+            this->imgiPhoneComicBook[28] = app->loadImage("comicbook/frames/iPhone page 12a.bmp", true);
             break;
         case 29:
-            this->imgiPhoneComicBook[29] = app->loadImage("ComicBook/frames/iPhone page 12b.bmp", true);
+            this->imgiPhoneComicBook[29] = app->loadImage("comicbook/frames/iPhone page 12b.bmp", true);
             break;
         case 30:
-            this->imgiPhoneComicBook[30] = app->loadImage("ComicBook/frames/iPhone page 13a.bmp", true);
+            this->imgiPhoneComicBook[30] = app->loadImage("comicbook/frames/iPhone page 13a.bmp", true);
             break;
         case 31:
-            this->imgiPhoneComicBook[31] = app->loadImage("ComicBook/frames/iPhone page 13b.bmp", true);
+            this->imgiPhoneComicBook[31] = app->loadImage("comicbook/frames/iPhone page 13b.bmp", true);
             break;
         case 32:
-            this->imgiPhoneComicBook[32] = app->loadImage("ComicBook/frames/iPhone page 14a.bmp", true);
+            this->imgiPhoneComicBook[32] = app->loadImage("comicbook/frames/iPhone page 14a.bmp", true);
             break;
         case 33:
-            this->imgiPhoneComicBook[33] = app->loadImage("ComicBook/frames/iPhone page 14b.bmp", true);
+            this->imgiPhoneComicBook[33] = app->loadImage("comicbook/frames/iPhone page 14b.bmp", true);
             break;
         case 34:
-            this->imgiPhoneComicBook[34] = app->loadImage("ComicBook/frames/iPhone page 15a.bmp", true);
+            this->imgiPhoneComicBook[34] = app->loadImage("comicbook/frames/iPhone page 15a.bmp", true);
             break;
         case 35:
-            this->imgiPhoneComicBook[35] = app->loadImage("ComicBook/frames/iPhone page 15b.bmp", true);
+            this->imgiPhoneComicBook[35] = app->loadImage("comicbook/frames/iPhone page 15b.bmp", true);
             break;
         case 36:
-            this->imgiPhoneComicBook[36] = app->loadImage("ComicBook/frames/iPhone page 15c.bmp", true);
+            this->imgiPhoneComicBook[36] = app->loadImage("comicbook/frames/iPhone page 15c.bmp", true);
             break;
         case 37:
-            this->imgiPhoneComicBook[37] = app->loadImage("ComicBook/frames/iPhone page 16a.bmp", true);
+            this->imgiPhoneComicBook[37] = app->loadImage("comicbook/frames/iPhone page 16a.bmp", true);
             break;
         case 38:
-            this->imgiPhoneComicBook[38] = app->loadImage("ComicBook/frames/iPhone page 16b.bmp", true);
+            this->imgiPhoneComicBook[38] = app->loadImage("comicbook/frames/iPhone page 16b.bmp", true);
             break;
         }
     }
