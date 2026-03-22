@@ -538,8 +538,7 @@ static bool convertEntities(ZipFile& zip, const std::string& outDir) {
 
 	free(data);
 
-	std::string path = outDir + "/config/entities.yaml";
-	mkdirRecursive(outDir + "/config");
+	std::string path = outDir + "/entities.yaml";
 	if (!writeString(path, out.c_str())) {
 		fprintf(stderr, "  Failed to write %s\n", path.c_str());
 		return false;
@@ -876,7 +875,7 @@ static bool convertTables(ZipFile& zip, const std::string& outDir) {
 
 	free(data);
 
-	std::string path = outDir + "/config/tables.yaml";
+	std::string path = outDir + "/tables.yaml";
 	if (!writeString(path, out.c_str())) {
 		fprintf(stderr, "  Failed to write %s\n", path.c_str());
 		return false;
@@ -986,7 +985,7 @@ static bool convertMenus(ZipFile& zip, const std::string& outDir) {
 
 	free(data);
 
-	std::string path = outDir + "/config/menus.yaml";
+	std::string path = outDir + "/menus.yaml";
 	if (!writeString(path, out.c_str())) {
 		fprintf(stderr, "  Failed to write %s\n", path.c_str());
 		return false;
@@ -1106,7 +1105,7 @@ static bool convertStrings(ZipFile& zip, const std::string& outDir) {
 			free(chunks[i]);
 	}
 
-	std::string path = outDir + "/config/strings.yaml";
+	std::string path = outDir + "/strings.yaml";
 	if (!writeString(path, yaml)) {
 		fprintf(stderr, "  Failed to write %s\n", path.c_str());
 		return false;
@@ -1163,7 +1162,7 @@ static bool convertSounds(ZipFile& zip, const std::string& outDir) {
 	out << YAML::EndSeq;
 	out << YAML::EndMap;
 
-	std::string path = outDir + "/config/sounds.yaml";
+	std::string path = outDir + "/sounds.yaml";
 	if (!writeString(path, out.c_str())) {
 		fprintf(stderr, "  Failed to write %s\n", path.c_str());
 		return false;
@@ -1253,7 +1252,7 @@ static bool generateCharactersYaml(const std::string& outDir) {
 	yaml += "    iq: 150\n";
 	yaml += "    credits: 80\n";
 
-	std::string path = outDir + "/config/characters.yaml";
+	std::string path = outDir + "/characters.yaml";
 	if (!writeString(path, yaml)) {
 		fprintf(stderr, "  Failed to write %s\n", path.c_str());
 		return false;
