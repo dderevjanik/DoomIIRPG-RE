@@ -450,7 +450,7 @@ void Player::setStatsAccordingToCharacterChoice() {
 
 	// Try loading from characters.yaml first
 	try {
-		YAML::Node config = YAML::LoadFile("config/characters.yaml");
+		YAML::Node config = YAML::LoadFile("characters.yaml");
 		if (YAML::Node chars = config["characters"]) {
 			int idx = this->characterChoice - 1; // characterChoice is 1-based
 			if (idx >= 0 && idx < (int)chars.size()) {

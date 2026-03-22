@@ -41,7 +41,7 @@ bool Sound::startup() {
 	this->alContext = nullptr;
 
 	// Load sound definitions from sounds.yaml, fall back to hardcoded defaults
-	if (!Sounds::loadFromYAML("config/sounds.yaml")) {
+	if (!Sounds::loadFromYAML("sounds.yaml")) {
 		printf("Sound: sounds.yaml not found, using built-in defaults\n");
 		Sounds::loadDefaults();
 	}

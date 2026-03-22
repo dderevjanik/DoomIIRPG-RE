@@ -50,7 +50,7 @@ bool Localization::startup() {
 	this->textCount[14] = 3;
 
 	printf("Localization: loading from strings.yaml\n");
-	if (!this->loadFromYAML("config/strings.yaml")) {
+	if (!this->loadFromYAML("strings.yaml")) {
 		this->app->Error("Failed to load strings.yaml\n");
 		return false;
 	}
