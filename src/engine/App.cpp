@@ -766,9 +766,16 @@ bool Applet::loadMonstersFromYAML(const char* path) {
 		YAML::Node m = monsters[i];
 		int idx = m["index"].as<int>(0);
 
-		// Blood color (optional)
+		// Blood color (optional) - hex string "#RRGGBB" or legacy [R, G, B] array
 		if (YAML::Node bc = m["blood_color"]) {
-			if (bc.IsSequence() && bc.size() >= 3) {
+			if (bc.IsScalar()) {
+				std::string hex = bc.as<std::string>();
+				if (hex.size() >= 7 && hex[0] == '#') {
+					this->particleSystem->monsterColors[idx * 3 + 0] = (uint8_t)std::stoi(hex.substr(1, 2), nullptr, 16);
+					this->particleSystem->monsterColors[idx * 3 + 1] = (uint8_t)std::stoi(hex.substr(3, 2), nullptr, 16);
+					this->particleSystem->monsterColors[idx * 3 + 2] = (uint8_t)std::stoi(hex.substr(5, 2), nullptr, 16);
+				}
+			} else if (bc.IsSequence() && bc.size() >= 3) {
 				this->particleSystem->monsterColors[idx * 3 + 0] = (uint8_t)bc[0].as<int>(0);
 				this->particleSystem->monsterColors[idx * 3 + 1] = (uint8_t)bc[1].as<int>(0);
 				this->particleSystem->monsterColors[idx * 3 + 2] = (uint8_t)bc[2].as<int>(0);

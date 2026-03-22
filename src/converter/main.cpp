@@ -1088,11 +1088,12 @@ static bool convertTables(ZipFile& zip, const std::string& outDir) {
 		mout << YAML::Key << "name" << YAML::Value << monsterName(i);
 		mout << YAML::Key << "index" << YAML::Value << i;
 
-		// Blood color (only for first numColors monsters)
+		// Blood color as hex "#RRGGBB" (only for first numColors monsters)
 		if (i < numColors) {
-			mout << YAML::Key << "blood_color" << YAML::Value << YAML::Flow << YAML::BeginSeq;
-			mout << allColors[i][0] << allColors[i][1] << allColors[i][2];
-			mout << YAML::EndSeq;
+			char hexColor[8];
+			snprintf(hexColor, sizeof(hexColor), "#%02X%02X%02X",
+				allColors[i][0], allColors[i][1], allColors[i][2]);
+			mout << YAML::Key << "blood_color" << YAML::Value << std::string(hexColor);
 		}
 
 		// Sounds (output as names, not numeric indices)
