@@ -208,6 +208,8 @@ ushort[12]  staticFuncs    Static function entry points
 [MARKER: 0xCAFEBABE]
 ```
 
+12 level-wide script entry points (e.g., map init, boss health thresholds, per-turn logic). Value `0xFFFF` means not defined. See [SCRIPTING.md — Static Functions](SCRIPTING.md#triggering-static-functions) for the full table.
+
 ---
 
 #### 16. Tile Events
@@ -218,8 +220,10 @@ int[numTileEvents * 2]  tileEvents    Tile event data (2 ints per event)
 ```
 
 Tile event format:
-- First int: Tile index in lower 10 bits (& 0x3FF)
-- Second int: Event parameters
+- First int: Tile index in lower 10 bits (& 0x3FF), bytecode IP in upper 16 bits (>> 16)
+- Second int: Event flags — trigger type, direction, attack type, disable/block flags
+
+See [SCRIPTING.md — Tile Events](SCRIPTING.md#triggering-tile-events) for the complete flag bit layout and matching logic.
 
 ---
 
@@ -229,6 +233,8 @@ Tile event format:
 ubyte[mapByteCodeSize]  mapByteCode    Script VM bytecode
 [MARKER: 0xCAFEBABE]
 ```
+
+Big-endian bytecode for the stack-based script VM. See [SCRIPTING.md](SCRIPTING.md) for the instruction format, complete opcode reference, and VM architecture.
 
 ---
 
