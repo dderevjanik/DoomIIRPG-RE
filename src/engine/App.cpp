@@ -816,10 +816,34 @@ bool Applet::loadMonstersFromYAML(const char* path) {
 					this->combat->monsterAttacks[atkBase + 2] = (short)atk["chance"].as<int>(0);
 				}
 
-				// Weakness (8 bytes per tier)
+				// Weakness: named weapon map or legacy packed byte array
 				if (YAML::Node weak = tier["weakness"]) {
-					if (weak.IsSequence()) {
-						int weakBase = entityIdx * 8;
+					int weakBase = entityIdx * 8;
+					if (weak.IsMap()) {
+						// Named format: {weapon_name: damage_percent, ...}
+						// Default all nibbles to 7 (100% = normal damage)
+						for (int w = 0; w < 8; w++) {
+							this->combat->monsterWeakness[weakBase + w] = 0x77;
+						}
+						for (auto it = weak.begin(); it != weak.end(); ++it) {
+							std::string wname = it->first.as<std::string>();
+							double pct = it->second.as<double>(100.0);
+							int weaponIdx = weaponNameToIndex(wname);
+							if (weaponIdx >= 0 && weaponIdx < 16) {
+								int nibble = std::max(0, std::min(15, (int)(pct / 12.5) - 1));
+								int byteIdx = weaponIdx / 2;
+								int8_t& b = this->combat->monsterWeakness[weakBase + byteIdx];
+								uint8_t ub = (uint8_t)b;
+								if (weaponIdx % 2 == 0) {
+									ub = (ub & 0xF0) | (nibble & 0x0F);
+								} else {
+									ub = (ub & 0x0F) | ((nibble & 0x0F) << 4);
+								}
+								b = (int8_t)ub;
+							}
+						}
+					} else if (weak.IsSequence()) {
+						// Legacy packed byte array format
 						int weakCount = std::min((int)weak.size(), 8);
 						for (int w = 0; w < weakCount; w++) {
 							this->combat->monsterWeakness[weakBase + w] = (int8_t)weak[w].as<int>(0);

@@ -1142,13 +1142,25 @@ static bool convertTables(ZipFile& zip, const std::string& outDir) {
 				mout << YAML::EndMap;
 			}
 
-			// Weakness
+			// Weakness: output as named weapon -> damage percentage map
 			if (i < (int)allWeakness.size()) {
-				mout << YAML::Key << "weakness" << YAML::Value << YAML::Flow << YAML::BeginSeq;
-				for (int w = 0; w < 8; w++) {
-					mout << allWeakness[i][p][w];
+				mout << YAML::Key << "weakness" << YAML::Comment("damage % per weapon (unlisted = 100%)");
+				mout << YAML::Value << YAML::BeginMap;
+				for (int wi = 0; wi < 15; wi++) { // 15 player weapons
+					int byteIdx = wi / 2;
+					uint8_t ub = (uint8_t)allWeakness[i][p][byteIdx];
+					int nibble = (wi % 2 == 0) ? (ub & 0xF) : ((ub >> 4) & 0xF);
+					double pct = (nibble + 1) * 32.0 / 256.0 * 100.0;
+					if (pct != 100.0) {
+						mout << YAML::Key << WEAPON_NAMES[wi] << YAML::Value;
+						if (pct == (int)pct) {
+							mout << (int)pct;
+						} else {
+							mout << pct;
+						}
+					}
 				}
-				mout << YAML::EndSeq;
+				mout << YAML::EndMap;
 			}
 
 			mout << YAML::EndMap;
