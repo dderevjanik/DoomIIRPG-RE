@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <algorithm>
+#include <map>
 #include <string>
 #include <vector>
 #include <sys/stat.h>
@@ -152,9 +153,9 @@ static const char* PROJ_TYPE_NAMES[] = {"bullet", "melee",       "water",  "plas
 static const char* MONSTER_NAMES[] = {
     "zombie",   "zombie_commando", "lost_soul", "imp",       "sawcubus",   "pinky",      "cacodemon",
     "sentinel", "mancubus",        "revenant",  "arch_vile", "sentry_bot", "cyberdemon", "mastermind",
-    "phantom",  "archvile_ghost",  "belphegor", "apollyon",
+    "phantom",  "boss_vios",       "boss_vios2",
 };
-static const int NUM_MONSTER_NAMES = 18;
+static const int NUM_MONSTER_NAMES = 17;
 
 static std::string weaponName(int idx) {
 	if (idx >= 0 && idx < NUM_WEAPON_NAMES)
@@ -183,6 +184,100 @@ static std::string monsterName(int idx) {
 	if (idx >= 0 && idx < NUM_MONSTER_NAMES)
 		return MONSTER_NAMES[idx];
 	return "monster_" + std::to_string(idx);
+}
+
+// ========================================================================
+// Entity subtype/parm name helpers for named entity output
+// ========================================================================
+static const char* ITEM_SUBTYPE_NAMES[] = {"inventory", "weapon", "ammo", "food", "sack", "c_note", "c_string"};
+static const int NUM_ITEM_SUBTYPES = 7;
+
+static const char* DOOR_SUBTYPE_NAMES[] = {"", "locked", "unlocked"};
+static const int NUM_DOOR_SUBTYPES = 3;
+
+static const char* DECOR_SUBTYPE_NAMES[] = {"misc", "exithall", "mixing", "statue", "", "tombstone", "dynamite", "water_spout", "treadmill"};
+static const int NUM_DECOR_SUBTYPES = 9;
+
+// Player weapon names (first 15 of WEAPON_NAMES)
+static const int NUM_PLAYER_WEAPONS = 15;
+
+// Ammo parm names (ammo subtype parm values)
+static const char* AMMO_PARM_NAMES[] = {"none", "bullets", "shells", "holy_water", "cells", "rockets", "soul_cube"};
+static const int NUM_AMMO_PARMS = 7;
+
+static std::string entitySubtypeName(int eType, int eSubType) {
+	switch (eType) {
+	case 2: // monster
+	case 9: // corpse (subtypes are monster indices)
+		if (eSubType >= 0 && eSubType < NUM_MONSTER_NAMES)
+			return MONSTER_NAMES[eSubType];
+		break;
+	case 5: // door
+		if (eSubType >= 0 && eSubType < NUM_DOOR_SUBTYPES && DOOR_SUBTYPE_NAMES[eSubType][0] != '\0')
+			return DOOR_SUBTYPE_NAMES[eSubType];
+		break;
+	case 6: // item
+		if (eSubType >= 0 && eSubType < NUM_ITEM_SUBTYPES)
+			return ITEM_SUBTYPE_NAMES[eSubType];
+		break;
+	case 7:  // decor
+	case 14: // decor_noclip
+		if (eSubType >= 0 && eSubType < NUM_DECOR_SUBTYPES && DECOR_SUBTYPE_NAMES[eSubType][0] != '\0')
+			return DECOR_SUBTYPE_NAMES[eSubType];
+		break;
+	}
+	return std::to_string(eSubType);
+}
+
+static std::string entityParmName(int eType, int eSubType, int parm) {
+	if (eType == 6) { // item
+		if (eSubType == 1 && parm >= 0 && parm < NUM_PLAYER_WEAPONS) // weapon
+			return WEAPON_NAMES[parm];
+		if (eSubType == 2 && parm >= 0 && parm < NUM_AMMO_PARMS) // ammo
+			return AMMO_PARM_NAMES[parm];
+	}
+	return std::to_string(parm);
+}
+
+static std::string generateEntityName(int eType, int eSubType, int parm, const char* typeName, std::map<std::string, int>& nameCount) {
+	std::string base;
+	switch (eType) {
+	case 2: // monster
+		base = entitySubtypeName(eType, eSubType);
+		break;
+	case 9: // corpse (subtypes are monster indices, prefix with type name)
+		base = std::string(typeName) + "_" + entitySubtypeName(eType, eSubType);
+		break;
+	case 6: { // item
+		std::string sub = entitySubtypeName(eType, eSubType);
+		std::string p = entityParmName(eType, eSubType, parm);
+		if (eSubType == 1 || eSubType == 2) // weapon or ammo - parm is the name
+			base = p;
+		else
+			base = sub + "_" + p;
+		break;
+	}
+	case 5: { // door
+		std::string sub = entitySubtypeName(eType, eSubType);
+		base = std::string(typeName) + "_" + sub;
+		break;
+	}
+	default:
+		base = std::string(typeName) + "_" + std::to_string(eSubType);
+		break;
+	}
+
+	// Add parm suffix for monsters and corpses
+	if (eType == 2 || eType == 9)
+		base += "_parm" + std::to_string(parm);
+
+	// Deduplicate
+	int& cnt = nameCount[base];
+	cnt++;
+	if (cnt > 1)
+		base += "_" + std::to_string(cnt);
+
+	return base;
 }
 
 // ========================================================================
@@ -520,26 +615,53 @@ static bool convertEntities(ZipFile& zip, const std::string& outDir) {
 	out << YAML::Key << "entities" << YAML::Value;
 	out << YAML::BeginSeq;
 
+	// First pass: read all entities to generate unique names
+	struct RawEntity {
+		int16_t tileIndex;
+		uint8_t eType, eSubType, parm, name, longName, description;
+	};
+	std::vector<RawEntity> entities(count);
 	int offset = 2;
 	for (int i = 0; i < count; i++) {
-		int16_t tileIndex = readShort(data, offset);
-		uint8_t eType = data[offset + 2];
-		uint8_t eSubType = data[offset + 3];
-		uint8_t parm = data[offset + 4];
-		uint8_t name = data[offset + 5];
-		uint8_t longName = data[offset + 6];
-		uint8_t description = data[offset + 7];
+		entities[i].tileIndex = readShort(data, offset);
+		entities[i].eType = data[offset + 2];
+		entities[i].eSubType = data[offset + 3];
+		entities[i].parm = data[offset + 4];
+		entities[i].name = data[offset + 5];
+		entities[i].longName = data[offset + 6];
+		entities[i].description = data[offset + 7];
 		offset += 8;
+	}
+
+	// Generate unique names
+	std::map<std::string, int> nameCount;
+	std::vector<std::string> entityNames(count);
+	for (int i = 0; i < count; i++) {
+		auto& e = entities[i];
+		const char* typeName = entityTypeName(e.eType);
+		entityNames[i] = generateEntityName(e.eType, e.eSubType, e.parm, typeName, nameCount);
+	}
+
+	// Second pass: emit YAML
+	for (int i = 0; i < count; i++) {
+		auto& e = entities[i];
+		std::string typeName = entityTypeName(e.eType);
+		std::string subtypeName = entitySubtypeName(e.eType, e.eSubType);
+		std::string parmName = entityParmName(e.eType, e.eSubType, e.parm);
 
 		out << YAML::Comment("Entity " + std::to_string(i));
 		out << YAML::BeginMap;
-		out << YAML::Key << "tile_index" << YAML::Value << (int)tileIndex;
-		out << YAML::Key << "type" << YAML::Value << entityTypeName(eType);
-		out << YAML::Key << "subtype" << YAML::Value << (int)eSubType;
-		out << YAML::Key << "parm" << YAML::Value << (int)parm;
-		out << YAML::Key << "name" << YAML::Value << (int)name;
-		out << YAML::Key << "long_name" << YAML::Value << (int)longName;
-		out << YAML::Key << "description" << YAML::Value << (int)description;
+		out << YAML::Key << "name" << YAML::Value << entityNames[i];
+		out << YAML::Key << "tile_index" << YAML::Value << (int)e.tileIndex;
+		out << YAML::Key << "type" << YAML::Value << typeName;
+		out << YAML::Key << "subtype" << YAML::Value << subtypeName;
+		out << YAML::Key << "parm" << YAML::Value << parmName;
+		out << YAML::Key << "text" << YAML::Value;
+		out << YAML::BeginMap;
+		out << YAML::Key << "name" << YAML::Value << (int)e.name;
+		out << YAML::Key << "long_name" << YAML::Value << (int)e.longName;
+		out << YAML::Key << "description" << YAML::Value << (int)e.description;
+		out << YAML::EndMap;
 		out << YAML::EndMap;
 	}
 

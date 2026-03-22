@@ -53,6 +53,86 @@ static int entityTypeFromString(const std::string& str) {
 	}
 }
 
+// --- Named subtype/parm lookup tables ---
+
+static const char* monsterSubtypeNames[] = {
+    "zombie", "zombie_commando", "lost_soul", "imp", "sawcubus", "pinky",
+    "cacodemon", "sentinel", "mancubus", "revenant", "arch_vile", "sentry_bot",
+    "cyberdemon", "mastermind", "phantom", "boss_vios", "boss_vios2"
+};
+static const int numMonsterSubtypes = 17;
+
+static const char* itemSubtypeNames[] = {
+    "inventory", "weapon", "ammo", "food", "sack", "c_note", "c_string"
+};
+static const int numItemSubtypes = 7;
+
+static const char* doorSubtypeNames[] = {"", "locked", "unlocked"};
+static const int numDoorSubtypes = 3;
+
+static const char* decorSubtypeNames[] = {"misc", "exithall", "mixing", "statue", "", "tombstone", "dynamite", "water_spout", "treadmill"};
+static const int numDecorSubtypes = 9;
+
+static const char* weaponParmNames[] = {
+    "assault_rifle", "chainsaw", "holy_water_pistol",
+    "shooting_sentry_bot", "exploding_sentry_bot",
+    "red_shooting_sentry_bot", "red_exploding_sentry_bot",
+    "super_shotgun", "chaingun", "assault_rifle_with_scope",
+    "plasma_gun", "rocket_launcher", "bfg", "soul_cube", "item"
+};
+static const int numWeaponParms = 15;
+
+static const char* ammoParmNames[] = {"none", "bullets", "shells", "holy_water", "cells", "rockets", "soul_cube"};
+static const int numAmmoParms = 7;
+
+static int lookupName(const std::string& str, const char* names[], int count) {
+	for (int i = 0; i < count; i++) {
+		if (names[i][0] != '\0' && str == names[i])
+			return i;
+	}
+	try {
+		return std::stoi(str);
+	} catch (...) {
+		return 0;
+	}
+}
+
+static int resolveSubtype(int eType, const std::string& str) {
+	switch (eType) {
+		case Enums::ET_MONSTER:
+		case Enums::ET_CORPSE:
+			return lookupName(str, monsterSubtypeNames, numMonsterSubtypes);
+		case Enums::ET_ITEM:
+		case Enums::ET_MONSTERBLOCK_ITEM:
+			return lookupName(str, itemSubtypeNames, numItemSubtypes);
+		case Enums::ET_DOOR:
+			return lookupName(str, doorSubtypeNames, numDoorSubtypes);
+		case Enums::ET_DECOR:
+		case Enums::ET_DECOR_NOCLIP:
+			return lookupName(str, decorSubtypeNames, numDecorSubtypes);
+		default:
+			try {
+				return std::stoi(str);
+			} catch (...) {
+				return 0;
+			}
+	}
+}
+
+static int resolveParm(int eType, int eSubType, const std::string& str) {
+	if (eType == Enums::ET_ITEM || eType == Enums::ET_MONSTERBLOCK_ITEM) {
+		if (eSubType == 1) // weapon
+			return lookupName(str, weaponParmNames, numWeaponParms);
+		if (eSubType == 2) // ammo
+			return lookupName(str, ammoParmNames, numAmmoParms);
+	}
+	try {
+		return std::stoi(str);
+	} catch (...) {
+		return 0;
+	}
+}
+
 // Auto-compute render flags from tile index (for backward compat with binary data and INI defaults)
 static uint32_t computeRenderFlags(int16_t tileIndex) {
 	uint32_t flags = EntityDef::RFLAG_NONE;
@@ -368,11 +448,19 @@ bool EntityDefManager::loadFromYAML(const char* path) {
 
 		this->list[i].tileIndex = (int16_t)e["tile_index"].as<int>(0);
 		this->list[i].eType = (uint8_t)entityTypeFromString(e["type"].as<std::string>("world").c_str());
-		this->list[i].eSubType = (uint8_t)e["subtype"].as<int>(0);
-		this->list[i].parm = (uint8_t)e["parm"].as<int>(0);
-		this->list[i].name = (int16_t)e["name"].as<int>(0);
-		this->list[i].longName = (int16_t)e["long_name"].as<int>(0);
-		this->list[i].description = (int16_t)e["description"].as<int>(0);
+		this->list[i].eSubType = (uint8_t)resolveSubtype(this->list[i].eType, e["subtype"].as<std::string>("0"));
+		this->list[i].parm = (uint8_t)resolveParm(this->list[i].eType, this->list[i].eSubType, e["parm"].as<std::string>("0"));
+
+		// Text resource IDs: support both nested text: group and flat fields
+		if (YAML::Node text = e["text"]) {
+			this->list[i].name = (int16_t)text["name"].as<int>(0);
+			this->list[i].longName = (int16_t)text["long_name"].as<int>(0);
+			this->list[i].description = (int16_t)text["description"].as<int>(0);
+		} else {
+			this->list[i].name = (int16_t)e["name"].as<int>(0);
+			this->list[i].longName = (int16_t)e["long_name"].as<int>(0);
+			this->list[i].description = (int16_t)e["description"].as<int>(0);
+		}
 
 		// Load render flags, fall back to auto-computed defaults
 		uint32_t defaultFlags = computeRenderFlags(this->list[i].tileIndex);

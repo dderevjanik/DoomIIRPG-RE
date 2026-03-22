@@ -88,6 +88,9 @@ public:
 	bool DrawModelVerts(TGLVert* verts, int numVerts);
 	void SetupTexture(int n, int n2, int renderMode, int flags);
 	void CreateTextureForMediaID(int n, int mediaID, bool b);
+	// Get OpenGL texture ID for a media index. Uploads if not yet created.
+	GLuint getTextureID(int tileNum, int frame = 0);
+	void getTextureDims(int tileNum, int frame, int& w, int& h);
 	bool DrawSkyMap();
 	void DrawPortalTexture(Image* img, int x, int y, int w, int h, float tx, float ty, float scale, float angle, char mode);
 	void TexCombineShift(int r, int g, int b); // [GEC]

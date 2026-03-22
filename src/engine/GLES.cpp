@@ -1122,6 +1122,24 @@ void gles::CreateTextureForMediaID(int n, int mediaID, bool b) {
 	std::free(data);
 }
 
+GLuint gles::getTextureID(int tileNum, int frame) {
+	if (!this->isInit) return 0;
+	int mediaID = this->render->mediaMappings[tileNum] + frame;
+	if (mediaID < 0 || mediaID >= MAX_MEDIA) return 0;
+	if (!this->chains[mediaID].texnum) {
+		this->CreateTextureForMediaID(tileNum, mediaID, true);
+	}
+	return this->chains[mediaID].texnum;
+}
+
+void gles::getTextureDims(int tileNum, int frame, int& w, int& h) {
+	int mediaID = this->render->mediaMappings[tileNum] + frame;
+	if (mediaID < 0 || mediaID >= MAX_MEDIA) { w = 0; h = 0; return; }
+	uint8_t dims = this->render->mediaDimensions[mediaID];
+	w = 1 << ((dims >> 4) & 0xF);
+	h = 1 << (dims & 0xF);
+}
+
 bool gles::DrawSkyMap() {
 	int fogMode; // r6
 	GLVert v5[4]; // [sp+4h] [bp-D0h] BYREF
