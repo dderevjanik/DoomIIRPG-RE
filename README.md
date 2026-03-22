@@ -101,3 +101,7 @@ J2ME/BREW version - open menu and enter these numbers:<br>
 ## Status
 
 This is an early-stage reverse engineering project (v0.1.0). Many reverse-engineered field names still use placeholder names (e.g., `field_0x7c`). Contributions to improve naming, fix bugs, and document behavior are welcome.
+
+## Editor
+
+`./build/src/editor/doom2rpg-editor games/doom2rpg/levels/maps/map00.bin`
