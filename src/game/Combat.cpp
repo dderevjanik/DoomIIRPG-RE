@@ -552,8 +552,9 @@ int Combat::monsterSeq() {
             this->curAttacker->monster->frameTime = app->time + lerpSprite->travelTime;
             this->launchProjectile();
         }
-        if (this->gotHit && (this->attackerWeaponId == 23 || this->curAttacker->def->eSubType == 2)) {
-            app->player->addStatusEffect(13, 5, 3);
+        MonsterBehaviors& atkBeh = app->combat->monsterBehaviors[this->curAttacker->def->eSubType];
+        if (this->gotHit && (this->attackerWeaponId == 23 || atkBeh.onHitPoison)) {
+            app->player->addStatusEffect(atkBeh.onHitPoison ? atkBeh.onHitPoisonId : 13, atkBeh.onHitPoison ? atkBeh.onHitPoisonDuration : 5, atkBeh.onHitPoison ? atkBeh.onHitPoisonPower : 3);
             app->player->translateStatusEffects();
         }
         this->stage = -1;
@@ -1017,7 +1018,7 @@ void Combat::explodeOnPlayer() {
                         }
                         app->render->rockView(200, app->canvas->viewX + a * 6, app->canvas->viewY + a2 * 6, app->canvas->viewZ);
                     }
-                    if (app->player->ce->getStat(Enums::STAT_HEALTH) > 0 && this->curAttacker->def->eSubType == 5 && this->attackerWeaponId == 18) {
+                    if (app->player->ce->getStat(Enums::STAT_HEALTH) > 0 && app->combat->monsterBehaviors[this->curAttacker->def->eSubType].knockbackWeaponId >= 0 && app->combat->monsterBehaviors[this->curAttacker->def->eSubType].knockbackWeaponId == this->attackerWeaponId) {
                         entity->knockback(app->render->mapSprites[app->render->S_X + sprite], app->render->mapSprites[app->render->S_Y + sprite], 1);
                     }
                 }
@@ -1320,7 +1321,7 @@ void Combat::updateProjectile() {
                     renderMode = 4;
                     if (this->curTarget != nullptr && (this->crFlags & 0x1007) != 0x0) {
                         EntityMonster* monster = this->curTarget->monster;
-                        if (monster != nullptr && (1 << this->curTarget->def->eSubType & Enums::FEAR_IMMUNE_MONSTERS) == 0x0) {
+                        if (monster != nullptr && !app->combat->monsterBehaviors[this->curTarget->def->eSubType].fearImmune) {
                             monster->resetGoal();
                             monster->goalType = 4;
                             monster->goalParam = 3;

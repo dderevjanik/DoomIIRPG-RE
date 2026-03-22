@@ -45,7 +45,6 @@ public:
 	void died(bool b, Entity* entity);
 	bool deathByExplosion(Entity* entity);
 	void aiCalcSimpleGoal(bool b);
-	bool aiCalcArchVileGoal();
 	void aiMoveToGoal();
 	void aiChooseNewGoal(bool b);
 	bool aiIsValidGoal();

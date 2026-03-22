@@ -756,6 +756,8 @@ bool Applet::loadMonstersFromYAML(const char* path) {
 	this->particleSystem->monsterColors = new uint8_t[numTypes * 3];
 	std::memset(this->particleSystem->monsterColors, 0, numTypes * 3);
 
+	this->combat->monsterBehaviors = new MonsterBehaviors[numTypes]();
+
 	static const char* soundFields[] = {"alert1", "alert2", "alert3", "attack1",
 	                                    "attack2", "idle", "pain", "death"};
 	static const char* statFields[] = {"health", "armor", "defense", "strength",
@@ -798,6 +800,26 @@ bool Applet::loadMonstersFromYAML(const char* path) {
 					}
 				}
 			}
+		}
+
+		// Behaviors
+		if (YAML::Node beh = m["behaviors"]) {
+			MonsterBehaviors& mb = this->combat->monsterBehaviors[idx];
+			mb.isBoss = beh["is_boss"].as<bool>(false);
+			mb.fearImmune = beh["fear_immune"].as<bool>(false);
+			mb.evading = beh["evading"].as<bool>(false);
+			mb.moveToAttack = beh["move_to_attack"].as<bool>(false);
+			mb.canResurrect = beh["can_resurrect"].as<bool>(false);
+			mb.onHitPoison = beh["on_hit_poison"].as<bool>(false);
+			if (YAML::Node poison = beh["on_hit_poison_params"]) {
+				mb.onHitPoisonId = poison["id"].as<int>(13);
+				mb.onHitPoisonDuration = poison["duration"].as<int>(5);
+				mb.onHitPoisonPower = poison["power"].as<int>(3);
+			}
+			std::string kbWeapon = beh["knockback_weapon"].as<std::string>("none");
+			mb.knockbackWeaponId = (kbWeapon == "none") ? -1 : weaponNameToIndex(kbWeapon);
+			std::string ws = beh["walk_sound"].as<std::string>("none");
+			mb.walkSoundResId = (ws == "none") ? -1 : Sounds::getResIDByName(ws);
 		}
 
 		// Tiers

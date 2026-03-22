@@ -3252,17 +3252,11 @@ int Game::updateLerpSprite(LerpSprite* lerpSprite) {
 			if (anim == Enums::MANIM_WALK_FRONT || anim == Enums::MANIM_WALK_BACK) {
 
 				if (entity->def->eType == Enums::ET_MONSTER) {
-					if (entity->def->eSubType == Enums::BOSS_CYBERDEMON ||
-					    entity->def->eSubType == Enums::BOSS_MASTERMIND) {
+					int walkSnd = app->combat->monsterBehaviors[entity->def->eSubType].walkSoundResId;
+					if (walkSnd >= 0) {
 						if ((1 + (n8 * lerpSprite->dist >> 12) & 0x3) >> 1 !=
 						    ((((app->render->mapSpriteInfo[n2]) & 0xFF00) >> 8) & 3) >> 1) {
-							if (entity->def->eSubType == Enums::BOSS_CYBERDEMON) {
-								app->sound->playSound(Sounds::getResIDByName(SoundName::HOOF), 0, true, 0);
-							} else if (entity->def->eSubType == Enums::BOSS_MASTERMIND) {
-								app->sound->playSound(Sounds::getResIDByName(SoundName::ARACHNOTRON_WALK), 0, true, 0);
-							} else {
-								app->sound->playSound((int8_t)(Enums::MSOUND_NONE), 0, true, 0);
-							}
+							app->sound->playSound(walkSnd, 0, true, 0);
 						}
 					}
 				}

@@ -79,9 +79,6 @@ public:
     static constexpr int CORPSE_SKELETON = 17;
     static constexpr int MAX_MONSTER_TYPES = 17;
     static constexpr int MONSTER_END = 18;
-    static constexpr int EVADING_MONSTERS = 0x4604;
-    static constexpr int FEAR_IMMUNE_MONSTERS = 0x1F801;
-    static constexpr int MOVE2ATTACK_MONSTERS = 0x180D0;
     static constexpr uint8_t MSOUND_NONE = 255;
     static constexpr int MSOUND_ALERT1 = 0;
     static constexpr int MSOUND_ALERT2 = 1;

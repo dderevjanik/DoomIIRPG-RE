@@ -538,10 +538,10 @@ bool Entity::deathByExplosion(Entity* entity) {
 void Entity::aiCalcSimpleGoal(bool b) {
 
 
-    if (this->def->eSubType == Enums::MONSTER_ARCH_VILE && this->aiCalcArchVileGoal()) {
+    if (app->combat->monsterBehaviors[this->def->eSubType].canResurrect && this->findRaiseTarget(0x19000, 0, 0) != -1) {
         return;
     }
-    if (app->player->buffs[11] > 0 && !(1 << this->def->eSubType & Enums::FEAR_IMMUNE_MONSTERS)) {
+    if (app->player->buffs[11] > 0 && !app->combat->monsterBehaviors[this->def->eSubType].fearImmune) {
         this->monster->goalType = 4;
         this->monster->goalParam = 1;
         return;
@@ -555,21 +555,17 @@ void Entity::aiCalcSimpleGoal(bool b) {
     if (b2) {
         this->monster->goalType = 3;
         this->monster->goalParam = 1;
-        if ((1 << this->def->eSubType & Enums::EVADING_MONSTERS)) {
+        if (app->combat->monsterBehaviors[this->def->eSubType].evading) {
             this->monster->flags |= 0x1;
         }
     }
     else {
         this->monster->goalType = 2;
         this->monster->goalParam = 1;
-        if ((1 << this->def->eSubType & Enums::EVADING_MONSTERS)) {
+        if (app->combat->monsterBehaviors[this->def->eSubType].evading) {
             this->monster->flags &= ~0x1;
         }
     }
-}
-
-bool Entity::aiCalcArchVileGoal() {
-    return this->findRaiseTarget(0x19000, 0, 0) != -1;
 }
 
 void Entity::aiMoveToGoal() {
@@ -600,7 +596,7 @@ void Entity::aiChooseNewGoal(bool b) {
     uint8_t eSubType = this->def->eSubType;
     this->monster->resetGoal();
     this->aiCalcSimpleGoal(b);
-    if ((1 << eSubType & Enums::EVADING_MONSTERS) != 0x0 && this->monster->goalType == 3) {
+    if (app->combat->monsterBehaviors[eSubType].evading && this->monster->goalType == 3) {
         this->monster->goalFlags |= 0x8;
     }
 }
@@ -1123,7 +1119,7 @@ void Entity::aiReachedGoal_MOVE() {
     EntityMonster* monster = this->monster;
     EntityDef* def = this->def;
     this->info &= ~0x10000000;
-    if (monster->goalType != 4 && monster->goalType != 5 && ((1 << def->eSubType & Enums::MOVE2ATTACK_MONSTERS) || ((1 << def->eSubType & Enums::EVADING_MONSTERS) && !(monster->flags & 0x1)))) {
+    if (monster->goalType != 4 && monster->goalType != 5 && (app->combat->monsterBehaviors[def->eSubType].moveToAttack || (app->combat->monsterBehaviors[def->eSubType].evading && !(monster->flags & 0x1)))) {
         Entity* target = &app->game->entities[1];
         int aiWeaponForTarget = this->aiWeaponForTarget(target);
         if (aiWeaponForTarget != -1) {
@@ -1138,7 +1134,7 @@ void Entity::aiReachedGoal_MOVE() {
             return;
         }
     }
-    if ((1 << def->eSubType & Enums::EVADING_MONSTERS) != 0x0) {
+    if (app->combat->monsterBehaviors[def->eSubType].evading) {
         monster->flags |= 0x1;
     }
     if ((monster->goalFlags & 0x10) != 0x0) {
@@ -1399,7 +1395,8 @@ int* Entity::calcPosition() {
 }
 
 bool Entity::isBoss() {
-	return this->def->eSubType >= Enums::FIRSTBOSS && this->def->eSubType <= Enums::LASTBOSS && (this->def->eSubType != Enums::BOSS_MASTERMIND || this->def->parm != 0);
+	return app->combat->monsterBehaviors[this->def->eSubType].isBoss
+		&& (this->def->eSubType != Enums::BOSS_MASTERMIND || this->def->parm != 0);
 }
 
 bool Entity::isHasteResistant() {

@@ -3516,7 +3516,7 @@ void Render::renderFearEyes(Entity* entity, int frame, int x, int y, int z, int 
 	frame &= Enums::MFRAME_MASK;
 
 	if ((anim != 0 && anim != 32) || entity->monster == nullptr ||
-	    (1 << eSubType & Enums::FEAR_IMMUNE_MONSTERS) != 0x0 || entity->monster->goalType != 4) {
+	    app->combat->monsterBehaviors[eSubType].fearImmune || entity->monster->goalType != 4) {
 		return;
 	}
 

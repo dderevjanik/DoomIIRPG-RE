@@ -10,6 +10,20 @@ class EntityDef;
 class Text;
 class Applet;
 
+struct MonsterBehaviors {
+	bool isBoss = false;
+	bool fearImmune = false;
+	bool evading = false;
+	bool moveToAttack = false;
+	bool canResurrect = false;
+	bool onHitPoison = false;
+	int onHitPoisonId = 13;
+	int onHitPoisonDuration = 5;
+	int onHitPoisonPower = 3;
+	int knockbackWeaponId = -1;   // -1 = none
+	int walkSoundResId = -1;      // -1 = none
+};
+
 class Combat
 {
 private:
@@ -125,6 +139,7 @@ public:
 	int attackY;
 	int8_t* weapons;
 	int8_t* monsterWeakness;
+	MonsterBehaviors* monsterBehaviors;
 	CombatEntity* monsters[51];
 	int worldDist;
 	int tileDist;
