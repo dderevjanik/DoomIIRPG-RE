@@ -1646,217 +1646,273 @@ void Player::equipForLevel(int highestMap) {
 	this->enableHelp = false;
 	this->weapons = 0;
 	app->game->numMallocsForVIOS = 0;
-	switch (highestMap) {
-		case 2: {
-			this->give(1, 1, 1);
-			this->give(1, 0, 1);
-			this->addArmor(33);
-			this->give(0, 17, 23);
-			this->give(0, 11, 4);
-			this->give(0, 12, 3);
-			this->give(2, 1, 100);
-			this->give(0, 24, 4);
-			this->addXP(638);
-			this->modifyStat(3, 4);
-			this->modifyStat(4, 2);
-			this->modifyStat(5, 11);
-			this->modifyStat(7, 4);
-			break;
+
+	// Try loading map rewards from YAML
+	bool loadedFromYAML = false;
+	try {
+		YAML::Node config = YAML::LoadFile("map_rewards.yaml");
+		if (YAML::Node rewards = config["map_rewards"]) {
+			// Map 10 uses map 9 rewards
+			int lookupMap = highestMap;
+			YAML::Node r = rewards[lookupMap];
+			if (!r && lookupMap == 10)
+				r = rewards[9];
+			if (r) {
+				// Weapons
+				if (YAML::Node weapons = r["weapons"]) {
+					for (size_t w = 0; w < weapons.size(); w++)
+						this->give(1, weapons[w].as<int>(), 1);
+				}
+				// Weapons given with specific ammo amounts
+				if (YAML::Node wa = r["weapon_ammo"]) {
+					for (auto it = wa.begin(); it != wa.end(); ++it)
+						this->give(1, it->first.as<int>(), it->second.as<int>());
+				}
+				// Armor
+				if (r["armor"])
+					this->addArmor(r["armor"].as<int>());
+				// Inventory items
+				if (YAML::Node inv = r["inventory"]) {
+					for (auto it = inv.begin(); it != inv.end(); ++it)
+						this->give(0, it->first.as<int>(), it->second.as<int>());
+				}
+				// Ammo
+				if (YAML::Node ammo = r["ammo"]) {
+					for (auto it = ammo.begin(); it != ammo.end(); ++it)
+						this->give(2, it->first.as<int>(), it->second.as<int>());
+				}
+				// XP
+				if (r["xp"])
+					this->addXP(r["xp"].as<int>());
+				// Stats
+				if (YAML::Node stats = r["stats"]) {
+					if (stats["defense"])  this->modifyStat(Enums::STAT_DEFENSE, stats["defense"].as<int>());
+					if (stats["strength"]) this->modifyStat(Enums::STAT_STRENGTH, stats["strength"].as<int>());
+					if (stats["accuracy"]) this->modifyStat(Enums::STAT_ACCURACY, stats["accuracy"].as<int>());
+					if (stats["agility"])  this->modifyStat(Enums::STAT_AGILITY, stats["agility"].as<int>());
+					if (stats["iq"])       this->modifyStat(Enums::STAT_IQ, stats["iq"].as<int>());
+				}
+				// VIOS mallocs
+				app->game->numMallocsForVIOS = r["vios_mallocs"].as<int>(0);
+				loadedFromYAML = true;
+			}
 		}
-		case 3: {
-			this->give(1, 2, 1);
-			this->give(1, 1, 1);
-			this->give(1, 0, 1);
-			this->give(1, 3, 100);
-			this->addArmor(4);
-			this->give(0, 17, 34);
-			this->give(0, 11, 12);
-			this->give(0, 12, 6);
-			this->give(2, 1, 100);
-			this->give(2, 3, 90);
-			this->give(0, 24, 39);
-			this->addXP(1519);
-			this->modifyStat(3, 13);
-			this->modifyStat(4, 5);
-			this->modifyStat(5, 10);
-			this->modifyStat(6, 6);
-			this->modifyStat(7, 10);
-			app->game->numMallocsForVIOS = 1;
-			break;
-		}
-		case 4: {
-			this->give(1, 7, 1);
-			this->give(1, 2, 1);
-			this->give(1, 1, 1);
-			this->give(1, 0, 1);
-			this->give(1, 4, 100);
-			this->addArmor(4);
-			this->give(0, 17, 44);
-			this->give(0, 11, 5);
-			this->give(0, 12, 26);
-			this->give(2, 1, 73);
-			this->give(2, 3, 30);
-			this->give(2, 2, 24);
-			this->give(0, 24, 59);
-			this->addXP(2622);
-			this->modifyStat(3, 14);
-			this->modifyStat(4, 10);
-			this->modifyStat(5, 9);
-			this->modifyStat(6, 14);
-			this->modifyStat(7, 20);
-			app->game->numMallocsForVIOS = 1;
-			break;
-		}
-		case 5: {
-			this->give(1, 9, 1);
-			this->give(1, 8, 1);
-			this->give(1, 7, 1);
-			this->give(1, 2, 1);
-			this->give(1, 1, 1);
-			this->give(1, 0, 1);
-			this->give(1, 5, 100);
-			this->addArmor(34);
-			this->give(0, 17, 79);
-			this->give(0, 16, 31);
-			this->give(0, 11, 9);
-			this->give(0, 12, 40);
-			this->give(2, 1, 84);
-			this->give(2, 3, 85);
-			this->give(2, 2, 88);
-			this->give(2, 4, 55);
-			this->give(0, 24, 73);
-			this->addXP(3594);
-			this->modifyStat(3, 14);
-			this->modifyStat(4, 12);
-			this->modifyStat(5, 9);
-			this->modifyStat(6, 18);
-			this->modifyStat(7, 28);
-			app->game->numMallocsForVIOS = 2;
-			break;
-		}
-		case 6: {
-			this->give(1, 10, 1);
-			this->give(1, 9, 1);
-			this->give(1, 8, 1);
-			this->give(1, 7, 1);
-			this->give(1, 2, 1);
-			this->give(1, 1, 1);
-			this->give(1, 0, 1);
-			this->give(1, 5, 100);
-			this->addArmor(24);
-			this->give(0, 17, 116);
-			this->give(0, 16, 54);
-			this->give(0, 11, 22);
-			this->give(0, 12, 2);
-			this->give(2, 1, 88);
-			this->give(2, 3, 60);
-			this->give(2, 2, 100);
-			this->give(2, 4, 100);
-			this->give(2, 5, 20);
-			this->give(0, 24, 101);
-			this->addXP(4749);
-			this->modifyStat(3, 24);
-			this->modifyStat(4, 13);
-			this->modifyStat(5, 9);
-			this->modifyStat(6, 18);
-			this->modifyStat(7, 34);
-			app->game->numMallocsForVIOS = 3;
-			break;
-		}
-		case 7: {
-			this->give(1, 11, 1);
-			this->give(1, 10, 1);
-			this->give(1, 9, 1);
-			this->give(1, 8, 1);
-			this->give(1, 7, 1);
-			this->give(1, 2, 1);
-			this->give(1, 1, 1);
-			this->give(1, 0, 1);
-			this->give(1, 5, 100);
-			this->addArmor(44);
-			this->give(0, 17, 132);
-			this->give(0, 16, 72);
-			this->give(0, 11, 23);
-			this->give(0, 12, 12);
-			this->give(2, 1, 70);
-			this->give(2, 3, 40);
-			this->give(2, 2, 66);
-			this->give(2, 4, 60);
-			this->give(2, 5, 63);
-			this->give(0, 24, 168);
-			this->addXP(5971);
-			this->modifyStat(3, 25);
-			this->modifyStat(4, 14);
-			this->modifyStat(5, 8);
-			this->modifyStat(6, 18);
-			this->modifyStat(7, 40);
-			app->game->numMallocsForVIOS = 3;
-			break;
-		}
-		case 8: {
-			this->give(1, 12, 1);
-			this->give(1, 11, 1);
-			this->give(1, 10, 1);
-			this->give(1, 9, 1);
-			this->give(1, 8, 1);
-			this->give(1, 7, 1);
-			this->give(1, 2, 1);
-			this->give(1, 1, 1);
-			this->give(1, 0, 1);
-			this->give(1, 5, 100);
-			this->addArmor(38);
-			this->give(0, 17, 146);
-			this->give(0, 16, 94);
-			this->give(0, 11, 27);
-			this->give(0, 12, 20);
-			this->give(2, 1, 89);
-			this->give(2, 3, 25);
-			this->give(2, 2, 94);
-			this->give(2, 4, 52);
-			this->give(2, 5, 100);
-			this->give(0, 24, 168);
-			this->addXP(7198);
-			this->modifyStat(3, 27);
-			this->modifyStat(4, 16);
-			this->modifyStat(5, 8);
-			this->modifyStat(6, 22);
-			this->modifyStat(7, 46);
-			app->game->numMallocsForVIOS = 4;
-			break;
-		}
-		case 9:
-		case 10: {
-			this->give(1, 13, 1);
-			this->give(1, 12, 1);
-			this->give(1, 11, 1);
-			this->give(1, 10, 1);
-			this->give(1, 9, 1);
-			this->give(1, 8, 1);
-			this->give(1, 7, 1);
-			this->give(1, 2, 1);
-			this->give(1, 1, 1);
-			this->give(1, 0, 1);
-			this->give(1, 5, 100);
-			this->addArmor(27);
-			this->give(0, 17, 160);
-			this->give(0, 16, 90);
-			this->give(0, 11, 23);
-			this->give(0, 12, 28);
-			this->give(2, 1, 29);
-			this->give(2, 3, 8);
-			this->give(2, 2, 44);
-			this->give(2, 4, 55);
-			this->give(2, 5, 90);
-			this->give(2, 6, 5);
-			this->give(0, 24, 174);
-			this->addXP(8281);
-			this->modifyStat(3, 27);
-			this->modifyStat(4, 17);
-			this->modifyStat(5, 8);
-			this->modifyStat(6, 22);
-			this->modifyStat(7, 46);
-			app->game->numMallocsForVIOS = 4;
-			break;
+	} catch (const YAML::Exception&) {}
+
+	if (!loadedFromYAML) {
+		// Fallback to hardcoded defaults
+		switch (highestMap) {
+			case 2: {
+				this->give(1, 1, 1);
+				this->give(1, 0, 1);
+				this->addArmor(33);
+				this->give(0, 17, 23);
+				this->give(0, 11, 4);
+				this->give(0, 12, 3);
+				this->give(2, 1, 100);
+				this->give(0, 24, 4);
+				this->addXP(638);
+				this->modifyStat(3, 4);
+				this->modifyStat(4, 2);
+				this->modifyStat(5, 11);
+				this->modifyStat(7, 4);
+				break;
+			}
+			case 3: {
+				this->give(1, 2, 1);
+				this->give(1, 1, 1);
+				this->give(1, 0, 1);
+				this->give(1, 3, 100);
+				this->addArmor(4);
+				this->give(0, 17, 34);
+				this->give(0, 11, 12);
+				this->give(0, 12, 6);
+				this->give(2, 1, 100);
+				this->give(2, 3, 90);
+				this->give(0, 24, 39);
+				this->addXP(1519);
+				this->modifyStat(3, 13);
+				this->modifyStat(4, 5);
+				this->modifyStat(5, 10);
+				this->modifyStat(6, 6);
+				this->modifyStat(7, 10);
+				app->game->numMallocsForVIOS = 1;
+				break;
+			}
+			case 4: {
+				this->give(1, 7, 1);
+				this->give(1, 2, 1);
+				this->give(1, 1, 1);
+				this->give(1, 0, 1);
+				this->give(1, 4, 100);
+				this->addArmor(4);
+				this->give(0, 17, 44);
+				this->give(0, 11, 5);
+				this->give(0, 12, 26);
+				this->give(2, 1, 73);
+				this->give(2, 3, 30);
+				this->give(2, 2, 24);
+				this->give(0, 24, 59);
+				this->addXP(2622);
+				this->modifyStat(3, 14);
+				this->modifyStat(4, 10);
+				this->modifyStat(5, 9);
+				this->modifyStat(6, 14);
+				this->modifyStat(7, 20);
+				app->game->numMallocsForVIOS = 1;
+				break;
+			}
+			case 5: {
+				this->give(1, 9, 1);
+				this->give(1, 8, 1);
+				this->give(1, 7, 1);
+				this->give(1, 2, 1);
+				this->give(1, 1, 1);
+				this->give(1, 0, 1);
+				this->give(1, 5, 100);
+				this->addArmor(34);
+				this->give(0, 17, 79);
+				this->give(0, 16, 31);
+				this->give(0, 11, 9);
+				this->give(0, 12, 40);
+				this->give(2, 1, 84);
+				this->give(2, 3, 85);
+				this->give(2, 2, 88);
+				this->give(2, 4, 55);
+				this->give(0, 24, 73);
+				this->addXP(3594);
+				this->modifyStat(3, 14);
+				this->modifyStat(4, 12);
+				this->modifyStat(5, 9);
+				this->modifyStat(6, 18);
+				this->modifyStat(7, 28);
+				app->game->numMallocsForVIOS = 2;
+				break;
+			}
+			case 6: {
+				this->give(1, 10, 1);
+				this->give(1, 9, 1);
+				this->give(1, 8, 1);
+				this->give(1, 7, 1);
+				this->give(1, 2, 1);
+				this->give(1, 1, 1);
+				this->give(1, 0, 1);
+				this->give(1, 5, 100);
+				this->addArmor(24);
+				this->give(0, 17, 116);
+				this->give(0, 16, 54);
+				this->give(0, 11, 22);
+				this->give(0, 12, 2);
+				this->give(2, 1, 88);
+				this->give(2, 3, 60);
+				this->give(2, 2, 100);
+				this->give(2, 4, 100);
+				this->give(2, 5, 20);
+				this->give(0, 24, 101);
+				this->addXP(4749);
+				this->modifyStat(3, 24);
+				this->modifyStat(4, 13);
+				this->modifyStat(5, 9);
+				this->modifyStat(6, 18);
+				this->modifyStat(7, 34);
+				app->game->numMallocsForVIOS = 3;
+				break;
+			}
+			case 7: {
+				this->give(1, 11, 1);
+				this->give(1, 10, 1);
+				this->give(1, 9, 1);
+				this->give(1, 8, 1);
+				this->give(1, 7, 1);
+				this->give(1, 2, 1);
+				this->give(1, 1, 1);
+				this->give(1, 0, 1);
+				this->give(1, 5, 100);
+				this->addArmor(44);
+				this->give(0, 17, 132);
+				this->give(0, 16, 72);
+				this->give(0, 11, 23);
+				this->give(0, 12, 12);
+				this->give(2, 1, 70);
+				this->give(2, 3, 40);
+				this->give(2, 2, 66);
+				this->give(2, 4, 60);
+				this->give(2, 5, 63);
+				this->give(0, 24, 168);
+				this->addXP(5971);
+				this->modifyStat(3, 25);
+				this->modifyStat(4, 14);
+				this->modifyStat(5, 8);
+				this->modifyStat(6, 18);
+				this->modifyStat(7, 40);
+				app->game->numMallocsForVIOS = 3;
+				break;
+			}
+			case 8: {
+				this->give(1, 12, 1);
+				this->give(1, 11, 1);
+				this->give(1, 10, 1);
+				this->give(1, 9, 1);
+				this->give(1, 8, 1);
+				this->give(1, 7, 1);
+				this->give(1, 2, 1);
+				this->give(1, 1, 1);
+				this->give(1, 0, 1);
+				this->give(1, 5, 100);
+				this->addArmor(38);
+				this->give(0, 17, 146);
+				this->give(0, 16, 94);
+				this->give(0, 11, 27);
+				this->give(0, 12, 20);
+				this->give(2, 1, 89);
+				this->give(2, 3, 25);
+				this->give(2, 2, 94);
+				this->give(2, 4, 52);
+				this->give(2, 5, 100);
+				this->give(0, 24, 168);
+				this->addXP(7198);
+				this->modifyStat(3, 27);
+				this->modifyStat(4, 16);
+				this->modifyStat(5, 8);
+				this->modifyStat(6, 22);
+				this->modifyStat(7, 46);
+				app->game->numMallocsForVIOS = 4;
+				break;
+			}
+			case 9:
+			case 10: {
+				this->give(1, 13, 1);
+				this->give(1, 12, 1);
+				this->give(1, 11, 1);
+				this->give(1, 10, 1);
+				this->give(1, 9, 1);
+				this->give(1, 8, 1);
+				this->give(1, 7, 1);
+				this->give(1, 2, 1);
+				this->give(1, 1, 1);
+				this->give(1, 0, 1);
+				this->give(1, 5, 100);
+				this->addArmor(27);
+				this->give(0, 17, 160);
+				this->give(0, 16, 90);
+				this->give(0, 11, 23);
+				this->give(0, 12, 28);
+				this->give(2, 1, 29);
+				this->give(2, 3, 8);
+				this->give(2, 2, 44);
+				this->give(2, 4, 55);
+				this->give(2, 5, 90);
+				this->give(2, 6, 5);
+				this->give(0, 24, 174);
+				this->addXP(8281);
+				this->modifyStat(3, 27);
+				this->modifyStat(4, 17);
+				this->modifyStat(5, 8);
+				this->modifyStat(6, 22);
+				this->modifyStat(7, 46);
+				app->game->numMallocsForVIOS = 4;
+				break;
+			}
 		}
 	}
 	this->give(0, 18, 1);
