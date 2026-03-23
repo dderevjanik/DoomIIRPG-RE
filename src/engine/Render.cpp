@@ -3432,10 +3432,16 @@ void Render::rockView(int rockViewDur, int x, int y, int z) {
 }
 
 bool Render::isNPC(int n) {
+	EntityDef* def = app->entityDefManager->lookup(n);
+	if (def)
+		return def->hasRenderFlag(EntityDef::RFLAG_NPC);
 	return n >= Enums::TILENUM_FIRST_NPC && n <= Enums::TILENUM_LAST_NPC;
 }
 
 bool Render::isImp(int n) {
+	EntityDef* def = app->entityDefManager->lookup(n);
+	if (def)
+		return def->hasRenderFlag(EntityDef::RFLAG_IMP_TYPE);
 	return n >= Enums::TILENUM_MONSTER_IMP && n <= Enums::TILENUM_MONSTER_IMP3;
 }
 
@@ -3448,6 +3454,9 @@ bool Render::isPinky(int n) {
 }
 
 bool Render::isRevenant(int n) {
+	EntityDef* def = app->entityDefManager->lookup(n);
+	if (def)
+		return def->hasRenderFlag(EntityDef::RFLAG_REVENANT_TYPE);
 	return n >= Enums::TILENUM_MONSTER_REVENANT && n <= Enums::TILENUM_MONSTER_REVENANT3;
 }
 

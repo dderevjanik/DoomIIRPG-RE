@@ -35,9 +35,12 @@ class EntityDef {
   public:
 	// Render flag constants (bitmask)
 	static constexpr uint32_t RFLAG_NONE = 0;
-	static constexpr uint32_t RFLAG_FLOATER = 0x1;      // Floats (no legs), uses floating anim path
-	static constexpr uint32_t RFLAG_GUN_FLARE = 0x2;    // Shows gun flash on attack
-	static constexpr uint32_t RFLAG_SPECIAL_BOSS = 0x4; // Uses special boss rendering path
+	static constexpr uint32_t RFLAG_FLOATER = 0x1;       // Floats (no legs), uses floating anim path
+	static constexpr uint32_t RFLAG_GUN_FLARE = 0x2;     // Shows gun flash on attack
+	static constexpr uint32_t RFLAG_SPECIAL_BOSS = 0x4;  // Uses special boss rendering path
+	static constexpr uint32_t RFLAG_NPC = 0x8;           // Is an NPC (shadow placement, body composition)
+	static constexpr uint32_t RFLAG_IMP_TYPE = 0x10;     // Imp-like (double-claw attack anim)
+	static constexpr uint32_t RFLAG_REVENANT_TYPE = 0x20;// Revenant-like (special attack2 anim)
 
 	// Fear eye rendering offsets (used by Render::renderFearEyes)
 	struct FearEyeData {

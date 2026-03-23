@@ -160,6 +160,21 @@ static uint32_t computeRenderFlags(int16_t tileIndex) {
 		flags |= EntityDef::RFLAG_SPECIAL_BOSS;
 	}
 
+	// NPC: tile range 65-80
+	if (n >= Enums::TILENUM_FIRST_NPC && n <= Enums::TILENUM_LAST_NPC) {
+		flags |= EntityDef::RFLAG_NPC;
+	}
+
+	// Imp-like: Imp (20-22)
+	if (n >= Enums::TILENUM_MONSTER_IMP && n <= Enums::TILENUM_MONSTER_IMP3) {
+		flags |= EntityDef::RFLAG_IMP_TYPE;
+	}
+
+	// Revenant-like: Revenant (35-37)
+	if (n >= Enums::TILENUM_MONSTER_REVENANT && n <= Enums::TILENUM_MONSTER_REVENANT3) {
+		flags |= EntityDef::RFLAG_REVENANT_TYPE;
+	}
+
 	return flags;
 }
 
@@ -475,6 +490,15 @@ bool EntityDefManager::loadFromYAML(const char* path) {
 		if (e["is_special_boss"].as<bool>((defaultFlags & EntityDef::RFLAG_SPECIAL_BOSS) != 0)) {
 			this->list[i].renderFlags |= EntityDef::RFLAG_SPECIAL_BOSS;
 		}
+		if (e["is_npc"].as<bool>((defaultFlags & EntityDef::RFLAG_NPC) != 0)) {
+			this->list[i].renderFlags |= EntityDef::RFLAG_NPC;
+		}
+		if (e["is_imp_type"].as<bool>((defaultFlags & EntityDef::RFLAG_IMP_TYPE) != 0)) {
+			this->list[i].renderFlags |= EntityDef::RFLAG_IMP_TYPE;
+		}
+		if (e["is_revenant_type"].as<bool>((defaultFlags & EntityDef::RFLAG_REVENANT_TYPE) != 0)) {
+			this->list[i].renderFlags |= EntityDef::RFLAG_REVENANT_TYPE;
+		}
 
 		// Rendering data: nested rendering: group or flat keys, with computeDefault*() fallback
 		YAML::Node r = e["rendering"];
@@ -486,6 +510,9 @@ bool EntityDefManager::loadFromYAML(const char* path) {
 				if (flag == "floater") this->list[i].renderFlags |= EntityDef::RFLAG_FLOATER;
 				else if (flag == "gun_flare") this->list[i].renderFlags |= EntityDef::RFLAG_GUN_FLARE;
 				else if (flag == "special_boss") this->list[i].renderFlags |= EntityDef::RFLAG_SPECIAL_BOSS;
+				else if (flag == "npc") this->list[i].renderFlags |= EntityDef::RFLAG_NPC;
+				else if (flag == "imp_type") this->list[i].renderFlags |= EntityDef::RFLAG_IMP_TYPE;
+				else if (flag == "revenant_type") this->list[i].renderFlags |= EntityDef::RFLAG_REVENANT_TYPE;
 			}
 		}
 
