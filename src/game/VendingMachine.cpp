@@ -41,6 +41,7 @@ void VendingMachine::playFromMainMenu() {
 }
 
 void VendingMachine::initGame(ScriptThread* callingThread, int a, int a2) {
+    if (!this->app) this->app = CAppContainer::getInstance()->app;
     Applet* app = this->app;
     this->stateVars = app->canvas->stateVars;
     this->callingThread = callingThread;

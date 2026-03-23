@@ -29,7 +29,7 @@ HackingGame::~HackingGame() {
 }
 
 void HackingGame::playFromMainMenu() {
-
+	if (!this->app) this->app = CAppContainer::getInstance()->app;
 
 	int rnd = app->nextInt() % 3 + 3;
 	this->initGame(nullptr, rnd, (app->nextInt() % ((rnd * 10) - 15)) + 5);
@@ -57,7 +57,7 @@ void HackingGame::initGame(ScriptThread* scriptThread, int i) {
 }
 
 void HackingGame::initGame(ScriptThread* scriptThread, int i, int i2) {
-
+	if (!this->app) this->app = CAppContainer::getInstance()->app;
 
 	this->columnCount = std::max(3, std::min(i, 6));
 	this->callingThread = scriptThread;
