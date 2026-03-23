@@ -34,6 +34,7 @@
 #include "Input.h"
 #include "Enums.h"
 #include "Sounds.h"
+#include "WeaponNames.h"
 
 Applet::Applet() {
 	std::memset(this, 0, sizeof(Applet));
@@ -414,51 +415,6 @@ void Applet::loadTables() {
 
 // --- Helpers for tables.ini parsing ---
 
-static const char* tblWeaponNames[] = {"assault_rifle",
-                                       "chainsaw",
-                                       "holy_water_pistol",
-                                       "shooting_sentry_bot",
-                                       "exploding_sentry_bot",
-                                       "red_shooting_sentry_bot",
-                                       "red_exploding_sentry_bot",
-                                       "super_shotgun",
-                                       "chaingun",
-                                       "assault_rifle_with_scope",
-                                       "plasma_gun",
-                                       "rocket_launcher",
-                                       "bfg",
-                                       "soul_cube",
-                                       "item",
-                                       "m_bite",
-                                       "m_claw",
-                                       "m_punch",
-                                       "m_charge",
-                                       "m_flesh_throw",
-                                       "m_fireball",
-                                       "m_plasma",
-                                       "m_floor_strike",
-                                       "m_fire",
-                                       "m_machine_gun",
-                                       "m_chain_gun",
-                                       "m_rockets",
-                                       "m_acid_spit",
-                                       "m_plasma_gun",
-                                       "m_vios_plasma",
-                                       "m_vios_lightning",
-                                       "m_vios_poison"};
-static const int numTblWeaponNames = 32;
-
-static int weaponNameToIndex(const std::string& name) {
-	for (int i = 0; i < numTblWeaponNames; i++) {
-		if (name == tblWeaponNames[i])
-			return i;
-	}
-	try {
-		return std::stoi(name);
-	} catch (...) {
-		return 0;
-	}
-}
 
 static int projTypeFromName(const std::string& name) {
 	if (name == "none")
@@ -1018,7 +974,7 @@ bool Applet::loadMonstersFromYAML(const char* path) {
 				mb.onHitPoisonPower = poison["power"].as<int>(3);
 			}
 			std::string kbWeapon = beh["knockback_weapon"].as<std::string>("none");
-			mb.knockbackWeaponId = (kbWeapon == "none") ? -1 : weaponNameToIndex(kbWeapon);
+			mb.knockbackWeaponId = (kbWeapon == "none") ? -1 : WeaponNames::toIndex(kbWeapon);
 			std::string ws = beh["walk_sound"].as<std::string>("none");
 			mb.walkSoundResId = (ws == "none") ? -1 : Sounds::getResIDByName(ws);
 		}
@@ -1041,8 +997,8 @@ bool Applet::loadMonstersFromYAML(const char* path) {
 				// Attacks (3 shorts per tier, 9 per type)
 				if (YAML::Node atk = tier["attacks"]) {
 					int atkBase = idx * 9 + p * 3;
-					this->combat->monsterAttacks[atkBase + 0] = (short)weaponNameToIndex(atk["attack1"].as<std::string>("0").c_str());
-					this->combat->monsterAttacks[atkBase + 1] = (short)weaponNameToIndex(atk["attack2"].as<std::string>("0").c_str());
+					this->combat->monsterAttacks[atkBase + 0] = (short)WeaponNames::toIndex(atk["attack1"].as<std::string>("0").c_str());
+					this->combat->monsterAttacks[atkBase + 1] = (short)WeaponNames::toIndex(atk["attack2"].as<std::string>("0").c_str());
 					this->combat->monsterAttacks[atkBase + 2] = (short)atk["chance"].as<int>(0);
 				}
 
@@ -1058,7 +1014,7 @@ bool Applet::loadMonstersFromYAML(const char* path) {
 						for (auto it = weak.begin(); it != weak.end(); ++it) {
 							std::string wname = it->first.as<std::string>();
 							double pct = it->second.as<double>(100.0);
-							int weaponIdx = weaponNameToIndex(wname);
+							int weaponIdx = WeaponNames::toIndex(wname);
 							if (weaponIdx >= 0 && weaponIdx < 16) {
 								int nibble = std::max(0, std::min(15, (int)(pct / 12.5) - 1));
 								int byteIdx = weaponIdx / 2;

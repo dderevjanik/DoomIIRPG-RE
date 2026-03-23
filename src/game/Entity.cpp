@@ -1846,7 +1846,7 @@ int Entity::getSaveHandle(bool b) {
         }
     }
     if (b) {
-        if (this->def->eType == Enums::ET_CORPSE && this->def->eSubType != Enums::CORPSE_SKELETON && !droppedEntity && 0x0 == (this->monster->flags & 0x80)) {
+        if (this->def->eType == Enums::ET_CORPSE && this->def->eSubType != Enums::CORPSE_SKELETON && !droppedEntity && this->monster && 0x0 == (this->monster->flags & 0x80)) {
             n = ((n & 0xFFFBFFFF) | 0x80000);
         }
         else if (this->def->eType == Enums::ET_MONSTER) {

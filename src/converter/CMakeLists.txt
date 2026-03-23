@@ -14,6 +14,7 @@ set_target_properties(${CONVERTER_TGT_NAME} PROPERTIES
 
 target_include_directories(${CONVERTER_TGT_NAME} PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/../engine
+	${CMAKE_CURRENT_SOURCE_DIR}/../game
 )
 
 target_link_libraries(${CONVERTER_TGT_NAME}

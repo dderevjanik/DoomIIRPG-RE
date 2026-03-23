@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 
 #include "ZipFile.h"
+#include "WeaponNames.h"
 #include <yaml-cpp/yaml.h>
 
 // IPA internal path prefix
@@ -111,41 +112,6 @@ static const char* entityTypeName(int etype) {
 // ========================================================================
 // Weapon/monster names for tables
 // ========================================================================
-static const char* WEAPON_NAMES[] = {
-    "assault_rifle",
-    "chainsaw",
-    "holy_water_pistol",
-    "shooting_sentry_bot",
-    "exploding_sentry_bot",
-    "red_shooting_sentry_bot",
-    "red_exploding_sentry_bot",
-    "super_shotgun",
-    "chaingun",
-    "assault_rifle_with_scope",
-    "plasma_gun",
-    "rocket_launcher",
-    "bfg",
-    "soul_cube",
-    "item",
-    "m_bite",
-    "m_claw",
-    "m_punch",
-    "m_charge",
-    "m_flesh_throw",
-    "m_fireball",
-    "m_plasma",
-    "m_floor_strike",
-    "m_fire",
-    "m_machine_gun",
-    "m_chain_gun",
-    "m_rockets",
-    "m_acid_spit",
-    "m_plasma_gun",
-    "m_vios_plasma",
-    "m_vios_lightning",
-    "m_vios_poison",
-};
-static const int NUM_WEAPON_NAMES = 32;
 
 static const char* PROJ_TYPE_NAMES[] = {"bullet", "melee",       "water",  "plasma", "rocket",   "bfg",       "flesh",
                                         "fire",   "caco_plasma", "thorns", "acid",   "electric", "soul_cube", "item"};
@@ -158,9 +124,7 @@ static const char* MONSTER_NAMES[] = {
 static const int NUM_MONSTER_NAMES = 17;
 
 static std::string weaponName(int idx) {
-	if (idx >= 0 && idx < NUM_WEAPON_NAMES)
-		return WEAPON_NAMES[idx];
-	return std::to_string(idx);
+	return WeaponNames::fromIndex(idx);
 }
 
 static std::string projTypeName(int val) {
@@ -198,7 +162,7 @@ static const int NUM_DOOR_SUBTYPES = 3;
 static const char* DECOR_SUBTYPE_NAMES[] = {"misc", "exithall", "mixing", "statue", "", "tombstone", "dynamite", "water_spout", "treadmill"};
 static const int NUM_DECOR_SUBTYPES = 9;
 
-// Player weapon names (first 15 of WEAPON_NAMES)
+// Player weapon names (first 15 of WeaponNames::TABLE)
 static const int NUM_PLAYER_WEAPONS = 15;
 
 // Ammo parm names (ammo subtype parm values)
@@ -232,7 +196,7 @@ static std::string entitySubtypeName(int eType, int eSubType) {
 static std::string entityParmName(int eType, int eSubType, int parm) {
 	if (eType == 6) { // item
 		if (eSubType == 1 && parm >= 0 && parm < NUM_PLAYER_WEAPONS) // weapon
-			return WEAPON_NAMES[parm];
+			return WeaponNames::TABLE[parm];
 		if (eSubType == 2 && parm >= 0 && parm < NUM_AMMO_PARMS) // ammo
 			return AMMO_PARM_NAMES[parm];
 	}
@@ -1501,7 +1465,7 @@ static bool convertTables(ZipFile& zip, const std::string& outDir) {
 					int nibble = (wi % 2 == 0) ? (ub & 0xF) : ((ub >> 4) & 0xF);
 					double pct = (nibble + 1) * 32.0 / 256.0 * 100.0;
 					if (pct != 100.0) {
-						mout << YAML::Key << WEAPON_NAMES[wi] << YAML::Value;
+						mout << YAML::Key << WeaponNames::TABLE[wi] << YAML::Value;
 						if (pct == (int)pct) {
 							mout << (int)pct;
 						} else {

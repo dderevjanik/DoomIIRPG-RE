@@ -1645,7 +1645,7 @@ void Game::saveWorldState(OutputStream* OS, bool b) {
 			if (b && mapSprites[app->render->S_ENT + n3] != -1) {
 				Entity* entity = &this->entities[mapSprites[app->render->S_ENT + n3]];
 				EntityDef* def = entity->def;
-				if (def->eType == 9 && def->eSubType != 17 && (entity->monster->flags & 0x80) == 0x0) {
+				if (def->eType == 9 && def->eSubType != 17 && entity->monster && (entity->monster->flags & 0x80) == 0x0) {
 					n5 = 1;
 				}
 			}
