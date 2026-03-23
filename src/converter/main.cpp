@@ -135,6 +135,18 @@ static std::string projTypeName(int val) {
 	return std::to_string(val);
 }
 
+static const char* RENDER_MODE_NAMES[] = {
+    "normal", "blend25", "blend50", "add", "add75", "add50", "add25", "sub",
+    "unk", "perf", "none", nullptr, "blend75", "blend_special_alpha"
+};
+static const int NUM_RENDER_MODES = 14;
+
+static std::string renderModeName(int val) {
+	if (val >= 0 && val < NUM_RENDER_MODES && RENDER_MODE_NAMES[val] != nullptr)
+		return RENDER_MODE_NAMES[val];
+	return std::to_string(val);
+}
+
 static const char* AMMO_TYPE_NAMES[] = {"none", "bullets", "shells", "holy_water", "cells", "rockets", "soul_cube", "sentry_bot", "item"};
 static const int NUM_AMMO_TYPES = 9;
 
@@ -1541,7 +1553,7 @@ static bool generateProjectilesYaml(const std::string& outDir) {
 
 		if (d.launchRM >= 0 || d.animFromWeapon) {
 			out << YAML::Key << "launch" << YAML::Value << YAML::BeginMap;
-			if (d.launchRM >= 0) out << YAML::Key << "render_mode" << YAML::Value << d.launchRM;
+			if (d.launchRM >= 0) out << YAML::Key << "render_mode" << YAML::Value << renderModeName(d.launchRM);
 			if (d.launchAnimMon != 0) {
 				out << YAML::Key << "anim_player" << YAML::Value << d.launchAnim;
 				out << YAML::Key << "anim_monster" << YAML::Value << d.launchAnimMon;
@@ -1567,7 +1579,7 @@ static bool generateProjectilesYaml(const std::string& outDir) {
 		if (d.impactAnim != 0 || d.impactSound != nullptr || d.shake) {
 			out << YAML::Key << "impact" << YAML::Value << YAML::BeginMap;
 			out << YAML::Key << "anim" << YAML::Value << d.impactAnim;
-			if (d.impactRM != 0) out << YAML::Key << "render_mode" << YAML::Value << d.impactRM;
+			if (d.impactRM != 0) out << YAML::Key << "render_mode" << YAML::Value << renderModeName(d.impactRM);
 			if (d.impactSound) out << YAML::Key << "impact_sound" << YAML::Value << d.impactSound;
 			if (d.shake) {
 				out << YAML::Key << "screen_shake" << YAML::Value << YAML::Flow << YAML::BeginMap;

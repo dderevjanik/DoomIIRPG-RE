@@ -480,6 +480,22 @@ static int ammoTypeFromName(const std::string& name) {
 	}
 }
 
+static int renderModeFromName(const std::string& name) {
+	if (name == "normal") return 0;
+	if (name == "blend25") return 1;
+	if (name == "blend50") return 2;
+	if (name == "add") return 3;
+	if (name == "add75") return 4;
+	if (name == "add50") return 5;
+	if (name == "add25") return 6;
+	if (name == "sub") return 7;
+	if (name == "perf") return 9;
+	if (name == "none") return 10;
+	if (name == "blend75") return 12;
+	if (name == "blend_special_alpha") return 13;
+	try { return std::stoi(name); } catch (...) { return 0; }
+}
+
 bool Applet::loadWeaponsFromYAML(const char* path) {
 	YAML::Node config;
 	try {
@@ -619,7 +635,7 @@ bool Applet::loadProjectilesFromYAML(const char* path) {
 
 		if (YAML::Node launch = p["launch"]) {
 			auto& pv = this->combat->projVisuals[i];
-			pv.launchRenderMode = (int8_t)launch["render_mode"].as<int>(0);
+			pv.launchRenderMode = (int8_t)renderModeFromName(launch["render_mode"].as<std::string>("normal"));
 			pv.launchAnim = (int16_t)launch["anim"].as<int>(0);
 			pv.launchAnimMonster = (int16_t)launch["anim_monster"].as<int>(0);
 			pv.launchSpeed = (int16_t)launch["speed"].as<int>(0);
@@ -641,7 +657,7 @@ bool Applet::loadProjectilesFromYAML(const char* path) {
 		if (YAML::Node impact = p["impact"]) {
 			auto& pv = this->combat->projVisuals[i];
 			pv.impactAnim = (int16_t)impact["anim"].as<int>(0);
-			pv.impactRenderMode = (int8_t)impact["render_mode"].as<int>(0);
+			pv.impactRenderMode = (int8_t)renderModeFromName(impact["render_mode"].as<std::string>("normal"));
 			std::string snd = impact["impact_sound"].as<std::string>("");
 			if (!snd.empty()) {
 				pv.impactSound = (int16_t)Sounds::getResIDByName(snd);
