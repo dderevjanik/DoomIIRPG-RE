@@ -120,6 +120,18 @@ public:
 		int16_t shakeDuration;
 		int8_t shakeIntensity;
 		int16_t shakeFade;
+		// Impact behaviors
+		bool causesFear;             // Causes fear on target monster (holy water)
+		bool reflectsWithBuff;       // Reflects when player has anti-fire buff
+		int8_t reflectBuffId;        // Which buff index blocks this projectile (-1 = none)
+		int16_t reflectAnim;         // Anim override when reflected
+		int8_t reflectRenderMode;    // Render mode when reflected
+		bool impactParticles;        // Spawn particles at impact point
+		uint32_t particleColor;      // Particle color (0 = default white)
+		int16_t particleZOffset;     // Z offset for particle spawn
+		int16_t impactZOffset;       // Z offset added at impact position
+		bool soulCubeReturn;         // Soul cube special return behavior
+		bool impactParticlesOnSprite; // Spawn particles on sprite (not position)
 	};
 	ProjVisual* projVisuals;
 	int numProjTypes;

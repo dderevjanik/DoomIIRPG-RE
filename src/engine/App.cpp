@@ -747,6 +747,7 @@ bool Applet::loadProjectilesFromYAML(const char* path) {
 	for (int i = 0; i < count; i++) {
 		this->combat->projVisuals[i].launchRenderMode = -1; // -1 = no missile
 		this->combat->projVisuals[i].impactSound = -1;
+		this->combat->projVisuals[i].reflectBuffId = -1;
 	}
 
 	int i = 0;
@@ -787,6 +788,24 @@ bool Applet::loadProjectilesFromYAML(const char* path) {
 				pv.shakeDuration = (int16_t)shake["duration"].as<int>(500);
 				pv.shakeIntensity = (int8_t)shake["intensity"].as<int>(4);
 				pv.shakeFade = (int16_t)shake["fade"].as<int>(500);
+			}
+			// Impact behaviors
+			pv.causesFear = impact["causes_fear"].as<bool>(false);
+			pv.soulCubeReturn = impact["soul_cube_return"].as<bool>(false);
+			pv.impactParticlesOnSprite = impact["particles_on_sprite"].as<bool>(false);
+			pv.impactZOffset = (int16_t)impact["impact_z_offset"].as<int>(0);
+			int reflectBuff = impact["reflects_with_buff"].as<int>(-1);
+			if (reflectBuff >= 0) {
+				pv.reflectsWithBuff = true;
+				pv.reflectBuffId = (int8_t)reflectBuff;
+				pv.reflectAnim = (int16_t)tileFromName(impact["reflect_anim"].as<std::string>("0"));
+				pv.reflectRenderMode = (int8_t)renderModeFromName(impact["reflect_render_mode"].as<std::string>("normal"));
+			}
+			if (YAML::Node particles = impact["particles"]) {
+				pv.impactParticles = true;
+				std::string colorStr = particles["color"].as<std::string>("0xFFFFFFFF");
+				pv.particleColor = (uint32_t)std::stoul(colorStr, nullptr, 0);
+				pv.particleZOffset = (int16_t)particles["z_offset"].as<int>(0);
 			}
 		}
 	}

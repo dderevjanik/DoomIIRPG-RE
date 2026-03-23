@@ -1225,10 +1225,11 @@ void Combat::updateProjectile() {
                     this->missileAnim = 0;
                 }
 
-                // Projectile-specific impact behaviors that can't be data-driven
-                switch (this->attackerWeaponProj) {
-                case 2: { // holy water - cause fear
-                    if (this->curTarget != nullptr && (this->crFlags & 0x1007) != 0x0) {
+                // Data-driven projectile impact behaviors
+                if (this->projVisuals != nullptr && this->attackerWeaponProj >= 0 &&
+                    this->attackerWeaponProj < this->numProjTypes) {
+                    const auto& pv = this->projVisuals[this->attackerWeaponProj];
+                    if (pv.causesFear && this->curTarget != nullptr && (this->crFlags & 0x1007) != 0x0) {
                         EntityMonster* monster = this->curTarget->monster;
                         if (monster != nullptr && !app->combat->monsterBehaviors[this->curTarget->def->eSubType].fearImmune) {
                             monster->resetGoal();
@@ -1236,40 +1237,34 @@ void Combat::updateProjectile() {
                             monster->goalParam = 3;
                         }
                     }
-                    break;
-                }
-                case 7: { // fire - reflect check with anti-fire buff
-                    if (this->curTarget == nullptr && this->hitType != 0 && app->player->buffs[9] > 0) {
-                        this->missileAnim = 208;
+                    if (pv.reflectsWithBuff && this->curTarget == nullptr && this->hitType != 0 &&
+                        pv.reflectBuffId >= 0 && app->player->buffs[pv.reflectBuffId] > 0) {
+                        this->missileAnim = pv.reflectAnim;
                         x += app->canvas->viewStepX >> 1;
                         y += app->canvas->viewStepY >> 1;
-                        renderMode = 3;
+                        renderMode = pv.reflectRenderMode;
                     }
-                    break;
-                }
-                case 9: { // thorns - spawn thorn particles
-                    app->particleSystem->spawnParticles(1, 0xFF81603D, x, y, z + 16);
-                    z += 48;
-                    break;
-                }
-                case 12: { // soul cube return
-                    app->game->gsprite_destroy(actMissile);
-                    for (int j = i + 1; j < this->numActiveMissiles; ++j) {
-                        this->activeMissiles[j - 1] = this->activeMissiles[j];
+                    if (pv.impactParticles) {
+                        app->particleSystem->spawnParticles(1, pv.particleColor, x, y, z + pv.particleZOffset);
                     }
-                    --this->numActiveMissiles;
-                    if (this->soulCubeIsAttacking) {
-                        this->soulCubeIsAttacking = false;
-                        this->exploded = true;
-                        this->explodeOnMonster();
-                        this->launchSoulCube();
+                    z += pv.impactZOffset;
+                    if (pv.soulCubeReturn) {
+                        app->game->gsprite_destroy(actMissile);
+                        for (int j = i + 1; j < this->numActiveMissiles; ++j) {
+                            this->activeMissiles[j - 1] = this->activeMissiles[j];
+                        }
+                        --this->numActiveMissiles;
+                        if (this->soulCubeIsAttacking) {
+                            this->soulCubeIsAttacking = false;
+                            this->exploded = true;
+                            this->explodeOnMonster();
+                            this->launchSoulCube();
+                        }
+                        return;
                     }
-                    return;
-                }
-                case 13: { // item - spawn particles
-                    app->particleSystem->spawnParticles(1, -1, actMissile->sprite);
-                    break;
-                }
+                    if (pv.impactParticlesOnSprite) {
+                        app->particleSystem->spawnParticles(1, -1, actMissile->sprite);
+                    }
                 }
 
                 if (this->curAttacker != nullptr && (1 << app->hud->damageDir & 0x1C) == 0x0 && !b) {
