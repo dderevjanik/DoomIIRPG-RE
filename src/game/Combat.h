@@ -86,6 +86,8 @@ public:
 	int8_t* wpSwOffsetY;        // Per-weapon software renderer Y offset
 	int16_t* wpAttackSound;     // Per-weapon attack sound resource ID (-1 = none)
 	int16_t* wpAttackSoundAlt;  // Per-weapon alt attack sound (for character-dependent sounds, -1 = none)
+	int16_t* wpViewTile;        // Per-weapon tile index for first-person view sprite
+	int numWeaponViewTiles;
 
 	// Familiar data loaded from weapons.yaml (per sentry bot weapon)
 	struct FamiliarDef {

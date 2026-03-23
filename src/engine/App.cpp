@@ -599,9 +599,12 @@ bool Applet::loadWeaponsFromYAML(const char* path) {
 	std::memset(this->combat->wpSwOffsetY, 0, numWeapons);
 	this->combat->wpAttackSound = new int16_t[numWeapons];
 	this->combat->wpAttackSoundAlt = new int16_t[numWeapons];
+	this->combat->wpViewTile = new int16_t[numWeapons];
+	this->combat->numWeaponViewTiles = numWeapons;
 	for (int j = 0; j < numWeapons; j++) {
 		this->combat->wpAttackSound[j] = -1;
 		this->combat->wpAttackSoundAlt[j] = -1;
+		this->combat->wpViewTile[j] = 0;  // 0 = not set, will use fallback formula
 	}
 
 	// Second pass: populate arrays
@@ -667,6 +670,12 @@ bool Applet::loadWeaponsFromYAML(const char* path) {
 		std::string atkSndAlt = w["attack_sound_alt"].as<std::string>("");
 		if (!atkSndAlt.empty()) {
 			this->combat->wpAttackSoundAlt[idx] = (int16_t)Sounds::getResIDByName(atkSndAlt);
+		}
+
+		// View tile (first-person weapon sprite tile index)
+		std::string vtName = w["view_tile"].as<std::string>("");
+		if (!vtName.empty()) {
+			this->combat->wpViewTile[idx] = (int16_t)tileFromName(vtName);
 		}
 	}
 
