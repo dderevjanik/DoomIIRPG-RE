@@ -953,13 +953,14 @@ bool Player::give(int n, int n2, int n3, bool b, bool b2) {
 		}
 		case 0: {
 			short* array = (this->isFamiliar && !b2) ? this->inventoryCopy : this->inventory;
+			const GameConfig& gc = CAppContainer::getInstance()->gameConfig;
 			int n5 = n3 + array[n2 - 0];
 			if (n2 == 24) {
-				if (n5 > 9999) {
-					n5 = 9999;
+				if (n5 > gc.capCredits) {
+					n5 = gc.capCredits;
 				}
-			} else if (n5 > 999) {
-				n5 = 999;
+			} else if (n5 > gc.capInventory) {
+				n5 = gc.capInventory;
 			}
 			if (n5 < 0) {
 				return false;
@@ -977,12 +978,13 @@ bool Player::give(int n, int n2, int n3, bool b, bool b2) {
 		}
 		case 2: {
 			short* array2 = (this->isFamiliar && !b2 && n2 != 6) ? this->ammoCopy : this->ammo;
+			const GameConfig& gc2 = CAppContainer::getInstance()->gameConfig;
 			int n6 = n3 + array2[n2];
-			if (n6 > 100) {
-				n6 = 100;
+			if (n6 > gc2.capAmmo) {
+				n6 = gc2.capAmmo;
 			}
-			if (n2 == 6 && n6 > 5) {
-				n6 = 5;
+			if (n2 == 6 && n6 > gc2.capBotFuel) {
+				n6 = gc2.capBotFuel;
 			}
 			if (n6 < 0) {
 				return false;
@@ -1611,18 +1613,19 @@ void Player::giveAll() {
 		this->selectPrevWeapon();
 		this->selectNextWeapon();
 	}
+	const GameConfig& gc = CAppContainer::getInstance()->gameConfig;
 	for (int j = 0; j < 9; ++j) {
 		if (j != 8) {
-			this->give(2, j, 100, true);
+			this->give(2, j, gc.capAmmo, true);
 		}
 	}
 	for (int k = 0; k < 26; ++k) {
 		if (k != 24) {
-			this->give(0, (uint8_t)k, 999, true);
+			this->give(0, (uint8_t)k, gc.capInventory, true);
 			app->canvas->numHelpMessages = 0;
 		}
 	}
-	this->give(0, 24, 9999, true);
+	this->give(0, 24, gc.capCredits, true);
 	this->ce->setStat(Enums::STAT_HEALTH, this->ce->getStat(Enums::STAT_MAX_HEALTH));
 }
 

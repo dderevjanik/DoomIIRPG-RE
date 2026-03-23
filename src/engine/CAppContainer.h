@@ -19,6 +19,15 @@ struct GameConfig {
 	std::vector<int> noFogMaps;  // Map IDs where fog is disabled (e.g. outdoor maps)
 	std::vector<std::string> searchDirs;  // VFS search subdirectories for asset resolution
 
+	// Inventory/ammo capacity caps
+	int capCredits = 9999;
+	int capInventory = 999;
+	int capAmmo = 100;
+	int capBotFuel = 5;
+
+	// Entity limits
+	int maxEntities = 275;
+
 	bool isFogDisabled(int mapID) const {
 		for (int id : noFogMaps) {
 			if (id == mapID) return true;

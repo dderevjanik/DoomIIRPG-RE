@@ -27,7 +27,8 @@ public:
 
     static constexpr int32_t dropDirs[] { 64, 0, 64, 64, 0, 64, -64, 64, -64, 0, -64, -64, 0, -64, 64, -64 };
     static constexpr int MAX_GRID_ENTITIES = 9;
-    static constexpr int MAX_ENTITIES = 275;
+    static constexpr int DEFAULT_MAX_ENTITIES = 275;
+    int maxEntities;
     static constexpr int FILE_NAME_FULLWORLD = 0;
     static constexpr int FILE_NAME_CONFIG = 1;
     static constexpr int FILE_NAME_BRIEFPLAYER = 2;

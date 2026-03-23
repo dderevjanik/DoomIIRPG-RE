@@ -169,6 +169,15 @@ int main(int argc, char* args[]) {
 					}
 				}
 
+				gc.maxEntities = game["max_entities"].as<int>(gc.maxEntities);
+
+				if (YAML::Node caps = game["caps"]) {
+					gc.capCredits = caps["credits"].as<int>(gc.capCredits);
+					gc.capInventory = caps["inventory"].as<int>(gc.capInventory);
+					gc.capAmmo = caps["ammo"].as<int>(gc.capAmmo);
+					gc.capBotFuel = caps["bot_fuel"].as<int>(gc.capBotFuel);
+				}
+
 				printf("Game: %s (save: %s)\n", gc.name.c_str(), gc.saveDir.c_str());
 			}
 		} catch (const YAML::Exception& e) {

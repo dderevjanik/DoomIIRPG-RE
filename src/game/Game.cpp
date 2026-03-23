@@ -1,6 +1,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <cstdio>
+#include <memory>
 #include <sys/stat.h>
 
 #include "CAppContainer.h"
@@ -42,13 +43,14 @@ bool Game::startup() {
 	Applet* app = this->app;
 	printf("Game::startup\n");
 
-	this->entities = new Entity[275];
+	this->maxEntities = CAppContainer::getInstance()->gameConfig.maxEntities;
+	this->entities = new Entity[this->maxEntities];
 	this->ofsMayaTween = new short[6];
 
 	this->difficulty = 1;
 	this->cinematicWeapon = -1;
 
-	for (int i = 0; i < 275; i++) {
+	for (int i = 0; i < this->maxEntities; i++) {
 		this->entities[i].app = app;
 	}
 
@@ -418,7 +420,7 @@ void Game::loadMapEntities() {
 				}
 			}
 			if (lookup != nullptr) {
-				if (this->numEntities == 275) {
+				if (this->numEntities == this->maxEntities) {
 					app->Error(35); // ERR_MAX_ENTITIES
 					return;
 				}
@@ -457,7 +459,7 @@ void Game::loadMapEntities() {
 				}
 				++n4;
 			} else if ((app->render->mapSpriteInfo[n5] & 0x800000) != 0x0) {
-				if (this->numEntities == 275) {
+				if (this->numEntities == this->maxEntities) {
 					app->Error(35); // ERR_MAX_ENTITIES
 					return;
 				}
@@ -483,7 +485,7 @@ void Game::loadMapEntities() {
 	}
 	this->firstDropIndex = this->numEntities;
 	for (int n23 = 0; n23 < 16; ++n23) {
-		if (this->numEntities == 275) {
+		if (this->numEntities == this->maxEntities) {
 			app->Error(35); // ERR_MAX_ENTITIES
 			return;
 		}
@@ -3681,21 +3683,28 @@ void Game::loadEntityStates(InputStream* IS) {
 }
 void Game::saveEntityStates(OutputStream* OS, bool b) {
 
-	int indices[Game::MAX_ENTITIES];
+	int indices[Game::DEFAULT_MAX_ENTITIES > 0 ? Game::DEFAULT_MAX_ENTITIES : 275];
+	// Use heap if maxEntities exceeds default
+	int* indicesPtr = indices;
+	std::unique_ptr<int[]> heapIndices;
+	if (this->maxEntities > Game::DEFAULT_MAX_ENTITIES) {
+		heapIndices.reset(new int[this->maxEntities]);
+		indicesPtr = heapIndices.get();
+	}
 
 	int16_t stateCount = 0;
 	for (int i = 0; i < this->numEntities; i++) {
 		int saveHandle = this->entities[i].getSaveHandle(b);
 		if (saveHandle != -1) {
-			indices[stateCount++] = saveHandle;
+			indicesPtr[stateCount++] = saveHandle;
 		}
 	}
 	OS->writeShort(stateCount);
 	for (int i = 0; i < stateCount; i++) {
-		Entity* entity = &this->entities[indices[i] & 0xFFFF];
+		Entity* entity = &this->entities[indicesPtr[i] & 0xFFFF];
 		app->resource->writeMarker(OS);
-		OS->writeInt(indices[i]);
-		entity->saveState(OS, indices[i]);
+		OS->writeInt(indicesPtr[i]);
+		entity->saveState(OS, indicesPtr[i]);
 	}
 }
 
