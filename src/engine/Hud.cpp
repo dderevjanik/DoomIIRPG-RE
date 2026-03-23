@@ -537,34 +537,12 @@ void Hud::drawDamageVignette(Graphics* graphics) {
 
 
 	if (app->time < this->damageTime && this->damageCount >= 0 && app->combat->totalDamage > 0) {
+		const auto& dirs = CAppContainer::getInstance()->gameConfig.damageVignetteDirs;
 		int n = 0;
-		switch (this->damageDir) {
-			case 1: {
-				n = 2;
-				break;
-			}
-			case 2: {
-				n = 3;
-				break;
-			}
-			case 3: {
-				n = 15;
-				break;
-			}
-			case 4: {
-				n = 5;
-				break;
-			}
-			case 5: {
-				n = 4;
-				break;
-			}
-			case 0:
-			case 6:
-			case 7: {
-				n = 8;
-				break;
-			}
+		if (this->damageDir >= 0 && this->damageDir < (int)dirs.size()) {
+			n = dirs[this->damageDir];
+		} else {
+			n = 8; // fallback: bottom edge
 		}
 		Image* image = app->player->isFamiliar ? this->imgDamageVignetteBot : this->imgDamageVignette;
 		int width = image->width;
@@ -951,28 +929,14 @@ void Hud::drawBubbleText(Graphics* graphics) {
 	int n2 = app->canvas->SCR_CX + 5;
 	int n3 = 0;
 	int n4 = 6;
-	switch ((unsigned int)this->bubbleColor) {
-		case 0xFF800000: {
-			n3 = 0;
-			break;
-		}
-		case 0xFF002864: {
-			n3 = 10;
-			break;
-		}
-		case 0xFF2E0854: {
-			n3 = 20;
-			break;
-		}
-		case (unsigned int)Canvas::PLAYER_DLG_COLOR: {
-			n3 = 30;
-			n4 = 12;
-			break;
-		}
-		case 0xFFFF9600: {
-			n3 = 45;
-			n4 = 12;
-			break;
+	{
+		const auto& bubbleColors = CAppContainer::getInstance()->gameConfig.bubbleColors;
+		for (const auto& bc : bubbleColors) {
+			if ((unsigned int)this->bubbleColor == bc.color) {
+				n3 = bc.offset;
+				n4 = bc.tailWidth;
+				break;
+			}
 		}
 	}
 	/*if (app->canvas->state == Canvas::ST_CAMERA) { // J2ME
@@ -1051,66 +1015,14 @@ void Hud::drawWeapon(Graphics* graphics, int x, int y, int weapon, bool highligh
 	bool drawNumbers;
 
 
-	switch (weapon)
-	{
-	case 0:
-		texY = 0;
-		drawNumbers = true;
-		break;
-	case 1:
-		texY = 1;
-		drawNumbers = false;
-		break;
-	case 2:
-		texY = 2;
-		drawNumbers = true;
-		break;
-	case 3:
-	case 4:
-		texY = 10;
-		drawNumbers = true;
-		break;
-	case 5:
-	case 6:
-		texY = 11;
-		drawNumbers = true;
-		break;
-	case 7:
-		texY = 3;
-		drawNumbers = true;
-		break;
-	case 8:
-		texY = 4;
-		drawNumbers = true;
-		break;
-	case 9:
-		texY = 5;
-		drawNumbers = true;
-		break;
-	case 10:
-		texY = 6;
-		drawNumbers = true;
-		break;
-	case 11:
-		texY = 7;
-		drawNumbers = true;
-		break;
-	case 12:
-		texY = 8;
-		drawNumbers = true;
-		break;
-	case 13:
-		texY = 9;
-		drawNumbers = true;
-		break;
-	case 14:
-		texY = 12;
-		drawNumbers = true;
-		break;
-	default:
+	if (weapon >= 0 && weapon < app->combat->numWeaponViewTiles &&
+	    app->combat->wpHudTexRow[weapon] >= 0) {
+		texY = app->combat->wpHudTexRow[weapon];
+		drawNumbers = app->combat->wpHudShowAmmo[weapon];
+	} else {
+		// Hardcoded fallback
 		texY = 13;
 		drawNumbers = false;
-		break;
 	}
 	if (highlighted) {
 		graphics->drawRegion(this->imgWeaponActive, 0, texY * 44, this->imgWeaponActive->width, 44, x, y, 20, 0, 0);

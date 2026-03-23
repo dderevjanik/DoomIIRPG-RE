@@ -32,6 +32,39 @@ struct GameConfig {
 	// Entity limits
 	int maxEntities = 275;
 
+	// Damage vignette direction masks (indexed by damageDir 0-7)
+	std::vector<int> damageVignetteDirs = {8, 2, 3, 15, 5, 4, 8, 8};
+
+	// Dialog bubble colors
+	struct BubbleColor {
+		unsigned int color;
+		int offset;
+		int tailWidth;
+	};
+	std::vector<BubbleColor> bubbleColors = {
+		{0xFF800000, 0, 6},
+		{0xFF002864, 10, 6},
+		{0xFF2E0854, 20, 6},
+		{0xFF005617, 30, 12},
+		{0xFFFF9600, 45, 12},
+	};
+
+	// Target practice scoring
+	int tpHeadPoints = 30;
+	int tpBodyPoints = 20;
+	int tpLegPoints = 10;
+	int tpHitDisplayMs = 500;
+
+	// Vending machine minigame
+	struct IQHint {
+		int iq;
+		int hints;
+	};
+	int vendSliderMin = 0;
+	int vendSliderMax = 9;
+	int vendSliderStart = 5;
+	std::vector<IQHint> vendIQHints = { {80, 3}, {50, 2}, {20, 1} };
+
 	bool isFogDisabled(int mapID) const {
 		for (int id : noFogMaps) {
 			if (id == mapID) return true;

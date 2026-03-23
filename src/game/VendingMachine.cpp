@@ -140,36 +140,33 @@ bool VendingMachine::machineCanBeHacked() {
 
 void VendingMachine::randomizeGame() {
     Applet* app = this->app;
+    const GameConfig& gc = CAppContainer::getInstance()->gameConfig;
+    int sliderRange = gc.vendSliderMax - gc.vendSliderMin + 1;
+
     this->correctSum = 0;
     for (int i = 0; i < 4; ++i) {
-        this->solution[i] = app->nextInt() % 9 + 0;
-        this->sliderPositions[i] = 5;
+        this->solution[i] = app->nextInt() % sliderRange + gc.vendSliderMin;
+        this->sliderPositions[i] = gc.vendSliderStart;
         this->correctSum += this->solution[i];
     }
     for (int j = 0; j < 4; ++j) {
         this->playersGuess[j] = this->sliderPositions[j];
-        this->minimums[j] = 0;
-        this->maximums[j] = 9;
+        this->minimums[j] = gc.vendSliderMin;
+        this->maximums[j] = gc.vendSliderMax;
         this->chevronAnimationOffset[j] = 0;
     }
     int n = this->gamePlayedFromMainMenu ? 0 : app->player->ce->getIQPercent();
-    int k;
-    if (n >= 80) {
-        k = 3;
-    }
-    else if (n >= 50) {
-        k = 2;
-    }
-    else if (n >= 20) {
-        k = 1;
-    }
-    else {
-        k = 0;
+    int k = 0;
+    for (const auto& hint : gc.vendIQHints) {
+        if (n >= hint.iq) {
+            k = hint.hints;
+            break;
+        }
     }
     while (k > this->numbersCorrect()) {
         int n2 = app->nextInt() % 4;
-        this->correctSum -= this->solution[n2] - 5;
-        this->solution[n2] = 5;
+        this->correctSum -= this->solution[n2] - gc.vendSliderStart;
+        this->solution[n2] = gc.vendSliderStart;
     }
     this->machineHasBeenHacked = false;
 }

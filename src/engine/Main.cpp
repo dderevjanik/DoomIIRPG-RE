@@ -185,6 +185,47 @@ int main(int argc, char* args[]) {
 					gc.capBotFuel = caps["bot_fuel"].as<int>(gc.capBotFuel);
 				}
 
+				if (YAML::Node dvd = game["damage_vignette_dirs"]) {
+					gc.damageVignetteDirs.clear();
+					for (const auto& val : dvd) {
+						gc.damageVignetteDirs.push_back(val.as<int>());
+					}
+				}
+
+				if (YAML::Node bc = game["bubble_colors"]) {
+					gc.bubbleColors.clear();
+					for (const auto& entry : bc) {
+						unsigned int color = static_cast<unsigned int>(entry["color"].as<long long>());
+						gc.bubbleColors.push_back({
+							color,
+							entry["offset"].as<int>(),
+							entry["tail_width"].as<int>()
+						});
+					}
+				}
+
+				if (YAML::Node tp = game["target_practice"]) {
+					gc.tpHeadPoints = tp["head_points"].as<int>(gc.tpHeadPoints);
+					gc.tpBodyPoints = tp["body_points"].as<int>(gc.tpBodyPoints);
+					gc.tpLegPoints = tp["leg_points"].as<int>(gc.tpLegPoints);
+					gc.tpHitDisplayMs = tp["hit_display_ms"].as<int>(gc.tpHitDisplayMs);
+				}
+
+				if (YAML::Node vm = game["vending_machine"]) {
+					gc.vendSliderMin = vm["slider_min"].as<int>(gc.vendSliderMin);
+					gc.vendSliderMax = vm["slider_max"].as<int>(gc.vendSliderMax);
+					gc.vendSliderStart = vm["slider_start"].as<int>(gc.vendSliderStart);
+					if (YAML::Node hints = vm["iq_hints"]) {
+						gc.vendIQHints.clear();
+						for (const auto& h : hints) {
+							gc.vendIQHints.push_back({
+								h["iq"].as<int>(),
+								h["hints"].as<int>()
+							});
+						}
+					}
+				}
+
 				printf("Game: %s (save: %s)\n", gc.name.c_str(), gc.saveDir.c_str());
 			}
 		} catch (const YAML::Exception& e) {

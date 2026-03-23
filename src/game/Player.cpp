@@ -2514,24 +2514,25 @@ void Player::assessTargetPracticeShot(Entity* entity) {
 		}
 	}
 	if (n5 != -1) {
+		const GameConfig& gc = CAppContainer::getInstance()->gameConfig;
 		if (n5 == 0 || n4 == 16) {
 			app->hud->addMessage((short)230, 4);
-			this->targetPracticeScore += 30;
-			app->canvas->headShotTime = app->time + 500;
+			this->targetPracticeScore += gc.tpHeadPoints;
+			app->canvas->headShotTime = app->time + gc.tpHitDisplayMs;
 			app->canvas->bodyShotTime = 0;
 			app->canvas->legShotTime = 0;
 		} else if (n5 == 1) {
 			app->hud->addMessage((short)231, 4);
-			this->targetPracticeScore += 20;
+			this->targetPracticeScore += gc.tpBodyPoints;
 			app->canvas->headShotTime = 0;
-			app->canvas->bodyShotTime = app->time + 500;
+			app->canvas->bodyShotTime = app->time + gc.tpHitDisplayMs;
 			app->canvas->legShotTime = 0;
 		} else {
 			app->hud->addMessage((short)232, 4);
-			this->targetPracticeScore += 10;
+			this->targetPracticeScore += gc.tpLegPoints;
 			app->canvas->headShotTime = 0;
 			app->canvas->bodyShotTime = 0;
-			app->canvas->legShotTime = app->time + 500;
+			app->canvas->legShotTime = app->time + gc.tpHitDisplayMs;
 		}
 	} else {
 		app->hud->addMessage((short)68, 4);

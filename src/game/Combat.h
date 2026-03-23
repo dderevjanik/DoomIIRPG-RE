@@ -88,6 +88,8 @@ public:
 	int16_t* wpAttackSoundAlt;  // Per-weapon alt attack sound (for character-dependent sounds, -1 = none)
 	int16_t* wpViewTile;        // Per-weapon tile index for first-person view sprite
 	int numWeaponViewTiles;
+	int8_t* wpHudTexRow;        // Per-weapon HUD texture row (-1 = use default 13)
+	bool* wpHudShowAmmo;        // Per-weapon whether to draw ammo numbers on HUD
 
 	// Familiar data loaded from weapons.yaml (per sentry bot weapon)
 	struct FamiliarDef {

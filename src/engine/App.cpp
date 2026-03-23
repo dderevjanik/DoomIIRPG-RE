@@ -601,10 +601,14 @@ bool Applet::loadWeaponsFromYAML(const char* path) {
 	this->combat->wpAttackSoundAlt = new int16_t[numWeapons];
 	this->combat->wpViewTile = new int16_t[numWeapons];
 	this->combat->numWeaponViewTiles = numWeapons;
+	this->combat->wpHudTexRow = new int8_t[numWeapons];
+	this->combat->wpHudShowAmmo = new bool[numWeapons];
 	for (int j = 0; j < numWeapons; j++) {
 		this->combat->wpAttackSound[j] = -1;
 		this->combat->wpAttackSoundAlt[j] = -1;
 		this->combat->wpViewTile[j] = 0;  // 0 = not set, will use fallback formula
+		this->combat->wpHudTexRow[j] = -1;  // -1 = not set, will use default
+		this->combat->wpHudShowAmmo[j] = false;
 	}
 
 	// Second pass: populate arrays
@@ -676,6 +680,12 @@ bool Applet::loadWeaponsFromYAML(const char* path) {
 		std::string vtName = w["view_tile"].as<std::string>("");
 		if (!vtName.empty()) {
 			this->combat->wpViewTile[idx] = (int16_t)tileFromName(vtName);
+		}
+
+		// HUD texture row and ammo display
+		if (YAML::Node hud = w["hud"]) {
+			this->combat->wpHudTexRow[idx] = (int8_t)hud["tex_row"].as<int>(-1);
+			this->combat->wpHudShowAmmo[idx] = hud["show_ammo"].as<bool>(false);
 		}
 	}
 
