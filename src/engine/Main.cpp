@@ -49,6 +49,8 @@ int main(int argc, char* args[]) {
 			gameName = args[++i];
 		} else if (strcmp(args[i], "--map") == 0 && i + 1 < argc) {
 			customMap = args[++i];
+		} else if (strcmp(args[i], "--minigame") == 0 && i + 1 < argc) {
+			CAppContainer::getInstance()->minigameName = args[++i];
 		} else if (strcmp(args[i], "--skip-travel-map") == 0) {
 			CAppContainer::getInstance()->skipTravelMap = true;
 		}

@@ -49,6 +49,7 @@ class CAppContainer {
 	GameConfig gameConfig;         // Loaded from game.ini
 	OpcodeRegistry opcodeRegistry; // Extension script opcodes (128-254)
 	const char* customMapFile;     // --map override
+	const char* minigameName;     // --minigame override
 	bool skipTravelMap;            // --skip-travel-map
 	static CAppContainer* getInstance();
 	static int m_cheatEntry;

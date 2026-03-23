@@ -3905,6 +3905,22 @@ void Canvas::logoState() {
 		return;
 	}
 
+	if (CAppContainer::getInstance()->minigameName) {
+		const char* mg = CAppContainer::getInstance()->minigameName;
+		CAppContainer::getInstance()->minigameName = nullptr;
+		app->sound->soundStop();
+		if (strcmp(mg, "hacking") == 0) {
+			app->hackingGame->playFromMainMenu();
+		} else if (strcmp(mg, "sentrybot") == 0) {
+			app->sentryBotGame->playFromMainMenu();
+		} else if (strcmp(mg, "vending") == 0) {
+			app->vendingMachine->playFromMainMenu();
+		} else {
+			printf("Unknown minigame: %s (valid: hacking, sentrybot, vending)\n", mg);
+		}
+		return;
+	}
+
 	if (this->pacLogoTime <= 120) {
 		this->pacLogoTime++;
 		if (this->imgStartupLogo == nullptr) {

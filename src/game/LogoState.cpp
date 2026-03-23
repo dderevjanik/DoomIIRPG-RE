@@ -10,6 +10,9 @@
 #include "Graphics.h"
 #include "Enums.h"
 #include "CombatEntity.h"
+#include "HackingGame.h"
+#include "SentryBotGame.h"
+#include "VendingMachine.h"
 
 void LogoState::onEnter(Canvas* canvas) {
 	// No special setup needed — pacLogoTime is zeroed by memset
@@ -59,6 +62,22 @@ void LogoState::update(Canvas* canvas) {
 		app->player->reset();
 
 		canvas->loadMap(canvas->startupMap, false, true);
+		return;
+	}
+
+	if (CAppContainer::getInstance()->minigameName) {
+		const char* mg = CAppContainer::getInstance()->minigameName;
+		CAppContainer::getInstance()->minigameName = nullptr; // consume so it only fires once
+		app->sound->soundStop();
+		if (strcmp(mg, "hacking") == 0) {
+			app->hackingGame->playFromMainMenu();
+		} else if (strcmp(mg, "sentrybot") == 0) {
+			app->sentryBotGame->playFromMainMenu();
+		} else if (strcmp(mg, "vending") == 0) {
+			app->vendingMachine->playFromMainMenu();
+		} else {
+			printf("Unknown minigame: %s (valid: hacking, sentrybot, vending)\n", mg);
+		}
 		return;
 	}
 
