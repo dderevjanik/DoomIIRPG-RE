@@ -640,7 +640,54 @@ bool Applet::loadWeaponsFromYAML(const char* path) {
 		}
 	}
 
-	printf("Weapons: loaded %d weapon definitions from %s\n", (int)weapons.size(), path);
+	// Build weapon name→index map for familiar cross-references
+	std::map<std::string, int> weaponNameToIndex;
+	for (auto wit2 = weapons.begin(); wit2 != weapons.end(); ++wit2) {
+		std::string name = wit2->first.as<std::string>("");
+		int idx = wit2->second["index"].as<int>(-1);
+		if (!name.empty() && idx >= 0) {
+			weaponNameToIndex[name] = idx;
+		}
+	}
+
+	// Load familiar definitions from weapons with familiar: section
+	std::vector<Combat::FamiliarDef> famDefs;
+	for (auto wit3 = weapons.begin(); wit3 != weapons.end(); ++wit3) {
+		YAML::Node fam = wit3->second["familiar"];
+		if (!fam) continue;
+
+		Combat::FamiliarDef fd{};
+		fd.weaponIndex = wit3->second["index"].as<int>(0);
+		fd.familiarType = (int16_t)fam["type"].as<int>(1);
+		fd.postProcess = (int8_t)fam["post_process"].as<int>(0);
+		fd.explodes = fam["explodes"].as<bool>(false);
+		fd.explodeWeaponIndex = -1;
+		fd.deathRemainsWeapon = -1;
+		fd.helpId = (int16_t)fam["help_id"].as<int>(12);
+
+		std::string explWp = fam["explode_weapon"].as<std::string>("");
+		if (!explWp.empty()) {
+			auto it = weaponNameToIndex.find(explWp);
+			if (it != weaponNameToIndex.end()) fd.explodeWeaponIndex = it->second;
+		}
+		std::string deathWp = fam["death_remains_weapon"].as<std::string>("");
+		if (!deathWp.empty()) {
+			auto it = weaponNameToIndex.find(deathWp);
+			if (it != weaponNameToIndex.end()) fd.deathRemainsWeapon = it->second;
+		}
+
+		famDefs.push_back(fd);
+	}
+
+	this->combat->familiarDefCount = (int)famDefs.size();
+	if (!famDefs.empty()) {
+		this->combat->familiarDefs = new Combat::FamiliarDef[famDefs.size()];
+		std::copy(famDefs.begin(), famDefs.end(), this->combat->familiarDefs);
+	}
+	this->combat->defaultFamiliarType = 1;
+
+	printf("Weapons: loaded %d weapon definitions (%d familiars) from %s\n",
+		(int)weapons.size(), (int)famDefs.size(), path);
 	return true;
 }
 

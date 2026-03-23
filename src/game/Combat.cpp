@@ -1637,3 +1637,21 @@ int Combat::getWeaponTileNum(int n) {
         }
     }
 }
+
+const Combat::FamiliarDef* Combat::getFamiliarDefByWeapon(int weaponIndex) const {
+	for (int i = 0; i < this->familiarDefCount; i++) {
+		if (this->familiarDefs[i].weaponIndex == weaponIndex) {
+			return &this->familiarDefs[i];
+		}
+	}
+	return nullptr;
+}
+
+const Combat::FamiliarDef* Combat::getFamiliarDefByType(int familiarType) const {
+	for (int i = 0; i < this->familiarDefCount; i++) {
+		if (this->familiarDefs[i].familiarType == familiarType) {
+			return &this->familiarDefs[i];
+		}
+	}
+	return nullptr;
+}

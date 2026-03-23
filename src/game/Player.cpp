@@ -2053,12 +2053,8 @@ void Player::setFamiliar(short familiarType) {
 	}
 	this->clearOutFamiliarsStatusEffects();
 	this->swapStatusEffects();
-	bool b;
-	if (this->familiarType == 1 || this->familiarType == 3) {
-		b = this->showHelp((short)12, false);
-	} else {
-		b = this->showHelp((short)13, false);
-	}
+	const Combat::FamiliarDef* famDefHelp = app->combat->getFamiliarDefByType(this->familiarType);
+	bool b = this->showHelp(famDefHelp ? famDefHelp->helpId : (short)12, false);
 	if (!b) {
 		app->canvas->drawPlayingSoftKeys();
 	}
@@ -2167,28 +2163,11 @@ void Player::familiarDied() {
 	int viewY = app->canvas->viewY;
 	short unsetFamiliar = this->unsetFamiliar(false);
 	app->hud->addMessage((short)0, (short)192, 2);
-	if (unsetFamiliar == 2 || unsetFamiliar == 4) {
+	const Combat::FamiliarDef* famDef = app->combat->getFamiliarDefByType(unsetFamiliar);
+	if (famDef && famDef->explodes) {
 		this->explodeFamiliar(viewX >> 6, viewY >> 6, unsetFamiliar);
 	}
-	int n = 0;
-	switch (unsetFamiliar) {
-		case 2: {
-			n = 4;
-			break;
-		}
-		case 3: {
-			n = 5;
-			break;
-		}
-		case 4: {
-			n = 6;
-			break;
-		}
-		default: {
-			n = 3;
-			break;
-		}
-	}
+	int n = famDef ? famDef->deathRemainsWeapon : 3;
 	if (this->noFamiliarRemains) {
 		this->noFamiliarRemains = false;
 	} else {
@@ -2200,7 +2179,8 @@ void Player::familiarDied() {
 void Player::explodeFamiliar(int n, int n2, int n3) {
 
 
-	app->combat->attackerWeaponId = (n3 == 2) ? 4 : 6;
+	const Combat::FamiliarDef* famDef = app->combat->getFamiliarDefByType(n3);
+	app->combat->attackerWeaponId = (famDef && famDef->explodeWeaponIndex >= 0) ? famDef->explodeWeaponIndex : 4;
 	int n4 = app->combat->attackerWeaponId * 9;
 
 	int n5 = app->combat->weapons[n4 + 0] & 0xFF;
@@ -2340,25 +2320,8 @@ void Player::attemptToDeploySentryBot() {
 		app->hud->addMessage((short)0, (short)217, 3);
 		return;
 	}
-	short familiar = 0;
-	switch (this->ce->weapon) {
-		case 4: {
-			familiar = 2;
-			break;
-		}
-		case 5: {
-			familiar = 3;
-			break;
-		}
-		case 6: {
-			familiar = 4;
-			break;
-		}
-		default: {
-			familiar = 1;
-			break;
-		}
-	}
+	const Combat::FamiliarDef* famDef = app->combat->getFamiliarDefByWeapon(this->ce->weapon);
+	short familiar = famDef ? famDef->familiarType : (short)app->combat->defaultFamiliarType;
 	this->setFamiliar(familiar);
 }
 
@@ -2436,21 +2399,11 @@ void Player::setFamiliarType(short familiarType) {
 void Player::calcViewMode() {
 
 
-	switch (this->familiarType) {
-		case 0: {
-			app->render->postProcessMode = 0;
-			break;
-		}
-		case 1:
-		case 2: {
-			app->render->postProcessMode = 1;
-			break;
-		}
-		case 3:
-		case 4: {
-			app->render->postProcessMode = 2;
-			break;
-		}
+	if (this->familiarType == 0) {
+		app->render->postProcessMode = 0;
+	} else {
+		const Combat::FamiliarDef* famDef = app->combat->getFamiliarDefByType(this->familiarType);
+		app->render->postProcessMode = famDef ? famDef->postProcess : 0;
 	}
 }
 

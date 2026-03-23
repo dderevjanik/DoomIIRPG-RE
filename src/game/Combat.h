@@ -87,6 +87,20 @@ public:
 	int16_t* wpAttackSound;     // Per-weapon attack sound resource ID (-1 = none)
 	int16_t* wpAttackSoundAlt;  // Per-weapon alt attack sound (for character-dependent sounds, -1 = none)
 
+	// Familiar data loaded from weapons.yaml (per sentry bot weapon)
+	struct FamiliarDef {
+		int weaponIndex;        // weapon index this familiar is tied to
+		int16_t familiarType;   // familiar type ID (1-4)
+		int8_t postProcess;     // post-process render mode (0-2)
+		bool explodes;          // explodes on death
+		int explodeWeaponIndex; // weapon index used for explosion damage (-1 = none)
+		int deathRemainsWeapon; // weapon index for death remains drop
+		int16_t helpId;         // help text ID shown when activating
+	};
+	FamiliarDef* familiarDefs;  // array, familiarDefCount entries
+	int familiarDefCount;
+	int defaultFamiliarType;    // familiar type for non-sentry weapons (default: 1)
+
 	// Projectile visual data (per projectile type)
 	struct ProjVisual {
 		int8_t launchRenderMode;     // Render mode for missile sprite
@@ -216,6 +230,8 @@ public:
 	GameSprite* allocMissile(int n, int n2, int n3, int n4, int n5, int n6, int duration, int n7);
 	void launchSoulCube();
 	int getWeaponTileNum(int n);
+	const FamiliarDef* getFamiliarDefByWeapon(int weaponIndex) const;
+	const FamiliarDef* getFamiliarDefByType(int familiarType) const;
 
 };
 
