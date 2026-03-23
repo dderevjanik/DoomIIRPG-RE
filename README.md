@@ -128,6 +128,7 @@ Options:
 | `--game <name>` | Game directory under `games/` (e.g. `doom2rpg`) |
 | `--gamedir <path>` | Explicit game directory path |
 | `--map <1-10>` | Map to load on startup (default: 1) |
+| `--minigame <name>` | Launch a minigame directly (`hacking`, `sentrybot`, `vending`) |
 
 ### Editor Hotkeys
 
