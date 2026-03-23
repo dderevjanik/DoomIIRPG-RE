@@ -132,6 +132,7 @@ public:
 	bool loadEffectsFromYAML(const char* path);
 	bool loadItemsFromYAML(const char* path, const char* effectsPath);
 	bool loadMonstersFromYAML(const char* path);
+	bool loadDialogStylesFromYAML(const char* path);
 
 	void loadRuntimeImages();
 	void freeRuntimeImages();

@@ -17,6 +17,16 @@ class fmScrollButton;
 class fmButton;
 class fmSwipeArea;
 
+struct DialogStyleDef {
+	int index;
+	int bgColor;
+	int altBgColor;       // alternate bg when dialogFlags & 1 (-1 = none)
+	int headerColor;      // header bar color (-1 = no header color override)
+	int yAdjust;          // pixel offset to default Y position
+	int posTopOnFlag;     // move to top when dialogFlags & this != 0 (0 = disabled)
+	bool positionTop;     // always position at top
+};
+
 class Canvas
 {
 private:
@@ -106,6 +116,10 @@ public:
 	static constexpr int CONFIRMATION_DLG_COLOR = 0xFFB18A01;
 	static constexpr int VIOS_DLG_COLOR = 0xFF800000;
 	static constexpr int SAL_DLG_COLOR = 0xFFFF9600;
+
+	// Dialog style data loaded from dialogs.yaml (pointer to avoid memset UB)
+	DialogStyleDef* dialogStyleDefs;
+	int dialogStyleDefCount;
 
 	static constexpr int REPAINT_CLEAR = 1;
 	static constexpr int REPAINT_SOFTKEYS = 2;

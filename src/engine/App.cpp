@@ -409,6 +409,7 @@ void Applet::loadTables() {
 	this->loadProjectilesFromYAML("projectiles.yaml");
 	this->loadEffectsFromYAML("effects.yaml");
 	this->loadItemsFromYAML("items.yaml", "effects.yaml");
+	this->loadDialogStylesFromYAML("dialogs.yaml");
 	printf("Applet::loadTables: loading from monsters.yaml\n");
 	if (!this->loadMonstersFromYAML("monsters.yaml")) {
 		this->Error("Failed to load monsters.yaml\n");
@@ -864,6 +865,76 @@ bool Applet::loadEffectsFromYAML(const char* path) {
 	}
 
 	printf("Effects: loaded %d buffs from %s\n", count, path);
+	return true;
+}
+
+bool Applet::loadDialogStylesFromYAML(const char* path) {
+	Canvas* c = this->canvas;
+
+	// Initialize with hardcoded defaults
+	static const DialogStyleDef defaults[] = {
+		{ 0, (int)0xFF000000, -1, -1, 0, 0, false },  // normal
+		{ 1, (int)0xFF002864, -1, -1, 0, 0, false },  // npc
+		{ 2, (int)0xFF000000, -1, (int)0xFF000000, 0, 0, false },  // help (header_color used for color2)
+		{ 3, 0, -1, -1, 0, 0, false },                 // scroll (custom draw)
+		{ 4, (int)0xFF005A00, (int)0xFFB18A01, -1, 0, 0, false },  // chest
+		{ 5, (int)0xFF800000, -1, -1, 0, 2, false },   // monster
+		{ 6, (int)0xFF002864, -1, -1, 0, 0, false },   // ghost
+		{ 7, (int)0xFF000000, -1, -1, 0, 0, false },   // yell
+		{ 8, Canvas::PLAYER_DLG_COLOR, -1, -1, -64, 0, false },  // player
+		{ 9, (int)0xFF000000, -1, (int)0xFF000000, 0, 0, false },  // terminal
+		{10, (int)0xFF2E0854, -1, -1, 0, 0, true },    // elevator
+		{11, (int)0xFF800000, -1, -1, 0, 2, false },   // vios
+		{12, (int)0xFFB18A01, -1, -1, 0, 0, false },   // self_destruct_confirm
+		{13, (int)0xFFB18A01, -1, -1, 0, 0, false },   // armor_repair
+		{14, (int)0xFF002864, -1, -1, -20, 0, false },  // comm_link
+		{15, (int)0xFFFF9600, -1, -1, 0, 0, false },   // sal
+		{16, (int)0xFF000000, -1, (int)0xFF000066, 0, 0, false },  // special
+	};
+	int defaultCount = sizeof(defaults) / sizeof(defaults[0]);
+
+	if (c->dialogStyleDefs) {
+		delete[] c->dialogStyleDefs;
+	}
+	c->dialogStyleDefs = new DialogStyleDef[defaultCount];
+	c->dialogStyleDefCount = defaultCount;
+	std::copy(defaults, defaults + defaultCount, c->dialogStyleDefs);
+
+	YAML::Node config;
+	try {
+		config = YAML::LoadFile(path);
+	} catch (const YAML::Exception&) {
+		printf("Warning: dialogs.yaml not found, using defaults\n");
+		return true;
+	}
+
+	if (!config["dialog_styles"]) {
+		printf("Warning: dialogs.yaml has no dialog_styles section\n");
+		return true;
+	}
+
+	YAML::Node styles = config["dialog_styles"];
+	for (auto it = styles.begin(); it != styles.end(); ++it) {
+		YAML::Node s = it->second;
+		int idx = s["index"].as<int>(-1);
+		if (idx < 0 || idx >= c->dialogStyleDefCount) continue;
+
+		DialogStyleDef& def = c->dialogStyleDefs[idx];
+		if (s["bg_color"])
+			def.bgColor = (int)s["bg_color"].as<unsigned int>((unsigned int)def.bgColor);
+		if (s["alt_bg_color"])
+			def.altBgColor = (int)s["alt_bg_color"].as<unsigned int>((unsigned int)def.altBgColor);
+		if (s["header_color"])
+			def.headerColor = (int)s["header_color"].as<unsigned int>((unsigned int)def.headerColor);
+		if (s["y_adjust"])
+			def.yAdjust = s["y_adjust"].as<int>(def.yAdjust);
+		if (s["position_top_on_flag"])
+			def.posTopOnFlag = s["position_top_on_flag"].as<int>(def.posTopOnFlag);
+		if (s["position_top"])
+			def.positionTop = s["position_top"].as<bool>(def.positionTop);
+	}
+
+	printf("Dialog styles: loaded from %s\n", path);
 	return true;
 }
 

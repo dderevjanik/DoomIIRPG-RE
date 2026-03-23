@@ -38,6 +38,7 @@ Canvas::Canvas() {
 }
 
 Canvas::~Canvas() {
+	delete[] this->dialogStyleDefs;
 }
 
 void Canvas::registerStateHandler(int stateId, ICanvasState* handler) {
@@ -3287,79 +3288,30 @@ void Canvas::dialogState(Graphics* graphics) {
 	int n2 = 0xFF000000;
 	int color = 0xFFFFFFFF;
 	int color2 = 0xFF666666;
-	switch (this->dialogStyle) {
-		case 3: {
-			n = -this->screenRect[0] + 1;
-			dialogRect[1] = 320 - dialogRect[3] - 10;//Canvas.hudRect[3] - dialogRect[3] - 10;
-			//this->drawScroll(graphics, dialogRect[0], dialogRect[1] - 10, this->hudRect[2], dialogRect[3] + 20);
-			graphics->fillRect(dialogRect[0], dialogRect[1] - 10, this->hudRect[2], this->dialogRect[3] + 20, 12800);
-			graphics->setColor(color);
-			graphics->drawRect(dialogRect[0], dialogRect[1] - 10, dialogRect[2] - 1, dialogRect[3] + 19);
-			break;
+	if (this->dialogStyle == 3) {
+		// Scroll style: custom drawing
+		n = -this->screenRect[0] + 1;
+		dialogRect[1] = 320 - dialogRect[3] - 10;
+		graphics->fillRect(dialogRect[0], dialogRect[1] - 10, this->hudRect[2], this->dialogRect[3] + 20, 12800);
+		graphics->setColor(color);
+		graphics->drawRect(dialogRect[0], dialogRect[1] - 10, dialogRect[2] - 1, dialogRect[3] + 19);
+	} else if (this->dialogStyle >= 0 && this->dialogStyle < this->dialogStyleDefCount) {
+		const DialogStyleDef& style = this->dialogStyleDefs[this->dialogStyle];
+		n2 = style.bgColor;
+		if (style.altBgColor != -1 && (this->dialogFlags & 0x1) != 0) {
+			n2 = style.altBgColor;
 		}
-		case 16: {
-			color2 = 0xFF000066;
-			break;
+		if (style.headerColor != -1) {
+			color2 = style.headerColor;
 		}
-		case 4: {
-			if ((this->dialogFlags & 0x1) != 0x0) {
-				n2 = 0xFFB18A01;
-				break;
-			}
-			n2 = 0xFF005A00;
-			break;
+		if (style.yAdjust != 0) {
+			dialogRect[1] += style.yAdjust;
 		}
-		case 11: {
-			n2 = 0xFF800000;
-			if ((this->dialogFlags & 0x2) != 0x0) {
-				dialogRect[1] = this->hudRect[1] + 20;
-				break;
-			}
-			break;
-		}
-		case 5: {
-			n2 = 0xFF800000;
-			if ((this->dialogFlags & 0x2) != 0x0) {
-				dialogRect[1] = this->hudRect[1] + 20;
-				break;
-			}
-			break;
-		}
-		case 8: {
-			dialogRect[1] -= 64;
-			n2 = Canvas::PLAYER_DLG_COLOR;
-			break;
-		}
-		case 14: {
-			n2 = 0xFF002864;
-			dialogRect[1] -= 20;
-		}
-		case 1:
-		case 6: {
-			n2 = 0xFF002864;
-			break;
-		}
-		case 9: {
-			n2 = 0xFF000000;
-			color2 = 0xFF000000;
-			break;
-		}
-		case 10: {
-			n2 = 0xFF2E0854;
+		if (style.positionTop) {
 			dialogRect[1] = this->hudRect[1] + 20;
-			break;
 		}
-		case 12: {
-			n2 = 0xFFB18A01;
-			break;
-		}
-		case 13: {
-			n2 = 0xFFB18A01;
-			break;
-		}
-		case 15: {
-			n2 = 0xFFFF9600;
-			break;
+		if (style.posTopOnFlag != 0 && (this->dialogFlags & style.posTopOnFlag) != 0) {
+			dialogRect[1] = this->hudRect[1] + 20;
 		}
 	}
 
