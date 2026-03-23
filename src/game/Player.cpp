@@ -364,7 +364,8 @@ void Player::addLevel() {
 }
 
 int Player::calcLevelXP(int n) {
-	return 500 * n + 100 * ((n - 1) * (n - 1) * (n - 1) + (n - 1));
+	const GameConfig& gc = CAppContainer::getInstance()->gameConfig;
+	return gc.xpLinear * n + gc.xpCubic * ((n - 1) * (n - 1) * (n - 1) + (n - 1));
 }
 
 int Player::calcScore() {

@@ -171,6 +171,11 @@ int main(int argc, char* args[]) {
 
 				gc.maxEntities = game["max_entities"].as<int>(gc.maxEntities);
 
+				if (YAML::Node xp = game["xp_formula"]) {
+					gc.xpLinear = xp["linear"].as<int>(gc.xpLinear);
+					gc.xpCubic = xp["cubic"].as<int>(gc.xpCubic);
+				}
+
 				if (YAML::Node caps = game["caps"]) {
 					gc.capCredits = caps["credits"].as<int>(gc.capCredits);
 					gc.capInventory = caps["inventory"].as<int>(gc.capInventory);

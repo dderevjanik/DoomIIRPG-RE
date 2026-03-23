@@ -25,6 +25,10 @@ struct GameConfig {
 	int capAmmo = 100;
 	int capBotFuel = 5;
 
+	// XP formula coefficients: linear*n + cubic*((n-1)^3 + (n-1))
+	int xpLinear = 500;
+	int xpCubic = 100;
+
 	// Entity limits
 	int maxEntities = 275;
 
