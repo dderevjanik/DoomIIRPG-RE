@@ -434,8 +434,8 @@ bool EntityDefManager::loadFromYAML(const char* path) {
 	}
 
 	YAML::Node entities = config["entities"];
-	if (!entities || !entities.IsSequence() || entities.size() == 0) {
-		app->Error("entities.yaml: missing or empty 'entities' array\n");
+	if (!entities || !entities.IsMap() || entities.size() == 0) {
+		app->Error("entities.yaml: missing or empty 'entities' map\n");
 		return false;
 	}
 
@@ -443,8 +443,9 @@ bool EntityDefManager::loadFromYAML(const char* path) {
 	this->numDefs = count;
 	this->list = new EntityDef[count];
 
-	for (int i = 0; i < count; i++) {
-		YAML::Node e = entities[i];
+	int i = 0;
+	for (auto eit = entities.begin(); eit != entities.end(); ++eit, ++i) {
+		YAML::Node e = eit->second;
 
 		this->list[i].tileIndex = (int16_t)e["tile_index"].as<int>(0);
 		this->list[i].eType = (uint8_t)entityTypeFromString(e["type"].as<std::string>("world").c_str());

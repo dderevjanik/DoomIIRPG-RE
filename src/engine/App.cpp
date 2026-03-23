@@ -542,14 +542,14 @@ bool Applet::loadWeaponsFromYAML(const char* path) {
 	}
 
 	YAML::Node weapons = config["weapons"];
-	if (!weapons || !weapons.IsSequence()) {
+	if (!weapons || !weapons.IsMap()) {
 		return false;
 	}
 
 	// First pass: find max index
 	int maxIdx = -1;
-	for (int i = 0; i < (int)weapons.size(); i++) {
-		int idx = weapons[i]["index"].as<int>(i);
+	for (auto it = weapons.begin(); it != weapons.end(); ++it) {
+		int idx = it->second["index"].as<int>(0);
 		if (idx > maxIdx)
 			maxIdx = idx;
 	}
@@ -574,9 +574,9 @@ bool Applet::loadWeaponsFromYAML(const char* path) {
 	}
 
 	// Second pass: populate arrays
-	for (int i = 0; i < (int)weapons.size(); i++) {
-		YAML::Node w = weapons[i];
-		int idx = w["index"].as<int>(i);
+	for (auto wit = weapons.begin(); wit != weapons.end(); ++wit) {
+		YAML::Node w = wit->second;
+		int idx = w["index"].as<int>(0);
 		int base = idx * 9;
 
 		// Damage
@@ -658,6 +658,10 @@ bool Applet::loadProjectilesFromYAML(const char* path) {
 	}
 
 	YAML::Node projectiles = config["projectiles"];
+	if (!projectiles.IsMap()) {
+		printf("Warning: projectiles section is not a map\n");
+		return true;
+	}
 	int count = (int)projectiles.size();
 	this->combat->numProjTypes = count;
 	this->combat->projVisuals = new Combat::ProjVisual[count];
@@ -667,8 +671,9 @@ bool Applet::loadProjectilesFromYAML(const char* path) {
 		this->combat->projVisuals[i].impactSound = -1;
 	}
 
-	for (int i = 0; i < count; i++) {
-		YAML::Node p = projectiles[i];
+	int i = 0;
+	for (auto pit = projectiles.begin(); pit != projectiles.end(); ++pit, ++i) {
+		YAML::Node p = pit->second;
 
 		if (YAML::Node launch = p["launch"]) {
 			auto& pv = this->combat->projVisuals[i];
@@ -758,10 +763,13 @@ bool Applet::loadEffectsFromYAML(const char* path) {
 
 	// Build name→index lookup from YAML order (must match buff IDs 0-14)
 	std::map<std::string, int> nameToIndex;
-	for (int i = 0; i < count; i++) {
-		std::string name = buffs[i]["name"].as<std::string>("");
-		if (!name.empty()) {
-			nameToIndex[name] = i;
+	{
+		int bi = 0;
+		for (auto it = buffs.begin(); it != buffs.end() && bi < count; ++it, ++bi) {
+			std::string name = it->first.as<std::string>("");
+			if (!name.empty()) {
+				nameToIndex[name] = bi;
+			}
 		}
 	}
 
@@ -769,8 +777,9 @@ bool Applet::loadEffectsFromYAML(const char* path) {
 	p->buffNoAmountMask = 0;
 	p->buffAmtNotDrawnMask = 0;
 
-	for (int i = 0; i < count; i++) {
-		YAML::Node b = buffs[i];
+	int i = 0;
+	for (auto bit = buffs.begin(); bit != buffs.end() && i < count; ++bit, ++i) {
+		YAML::Node b = bit->second;
 
 		p->buffMaxStacks[i] = (int8_t)b["max_stacks"].as<int>(3);
 
@@ -936,14 +945,14 @@ bool Applet::loadMonstersFromYAML(const char* path) {
 	}
 
 	YAML::Node monsters = config["monsters"];
-	if (!monsters || !monsters.IsSequence()) {
+	if (!monsters || !monsters.IsMap()) {
 		return false;
 	}
 
 	// First pass: find max index to size arrays
 	int maxIdx = -1;
-	for (int i = 0; i < (int)monsters.size(); i++) {
-		int idx = monsters[i]["index"].as<int>(0);
+	for (auto it = monsters.begin(); it != monsters.end(); ++it) {
+		int idx = it->second["index"].as<int>(0);
 		if (idx > maxIdx) maxIdx = idx;
 	}
 	int numTypes = maxIdx + 1;
@@ -974,8 +983,8 @@ bool Applet::loadMonstersFromYAML(const char* path) {
 	                                   "accuracy", "agility"};
 
 	// Second pass: populate arrays
-	for (int i = 0; i < (int)monsters.size(); i++) {
-		YAML::Node m = monsters[i];
+	for (auto mit = monsters.begin(); mit != monsters.end(); ++mit) {
+		YAML::Node m = mit->second;
 		int idx = m["index"].as<int>(0);
 
 		// Blood color (optional) - hex string "#RRGGBB" or legacy [R, G, B] array

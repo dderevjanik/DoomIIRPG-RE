@@ -456,16 +456,19 @@ void Player::setStatsAccordingToCharacterChoice() {
 		YAML::Node config = YAML::LoadFile("characters.yaml");
 		if (YAML::Node chars = config["characters"]) {
 			int idx = this->characterChoice - 1; // characterChoice is 1-based
-			if (idx >= 0 && idx < (int)chars.size()) {
-				YAML::Node c = chars[idx];
-				this->baseCe->setStat(Enums::STAT_DEFENSE, c["defense"].as<int>(8));
-				this->baseCe->setStat(Enums::STAT_STRENGTH, c["strength"].as<int>(8));
-				this->baseCe->setStat(Enums::STAT_ACCURACY, c["accuracy"].as<int>(90));
-				this->baseCe->setStat(Enums::STAT_AGILITY, c["agility"].as<int>(6));
-				this->baseCe->setStat(Enums::STAT_IQ, c["iq"].as<int>(100));
-				n = c["credits"].as<int>(0);
-				this->give(0, 24, n, true);
-				return;
+			int ci = 0;
+			for (auto it = chars.begin(); it != chars.end(); ++it, ++ci) {
+				if (ci == idx) {
+					YAML::Node c = it->second;
+					this->baseCe->setStat(Enums::STAT_DEFENSE, c["defense"].as<int>(8));
+					this->baseCe->setStat(Enums::STAT_STRENGTH, c["strength"].as<int>(8));
+					this->baseCe->setStat(Enums::STAT_ACCURACY, c["accuracy"].as<int>(90));
+					this->baseCe->setStat(Enums::STAT_AGILITY, c["agility"].as<int>(6));
+					this->baseCe->setStat(Enums::STAT_IQ, c["iq"].as<int>(100));
+					n = c["credits"].as<int>(0);
+					this->give(0, 24, n, true);
+					return;
+				}
 			}
 		}
 	} catch (const YAML::Exception&) {}

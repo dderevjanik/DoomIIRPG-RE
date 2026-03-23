@@ -10,8 +10,8 @@ bool Sounds::loadFromYAML(const char* path) {
 	try {
 		YAML::Node config = YAML::LoadFile(path);
 		YAML::Node sounds = config["sounds"];
-		if (!sounds || !sounds.IsSequence()) {
-			printf("sounds.yaml: missing or invalid 'sounds' array\n");
+		if (!sounds || !sounds.IsMap()) {
+			printf("sounds.yaml: missing or invalid 'sounds' map\n");
 			return false;
 		}
 
@@ -19,17 +19,15 @@ bool Sounds::loadFromYAML(const char* path) {
 		soundFileNames.reserve(sounds.size());
 		soundNameToIndex.clear();
 
-		for (int i = 0; i < (int)sounds.size(); i++) {
-			const auto& entry = sounds[i];
+		int i = 0;
+		for (auto it = sounds.begin(); it != sounds.end(); ++it, ++i) {
+			std::string name = it->first.as<std::string>();
 			std::string file;
-			std::string name;
 
-			if (entry.IsMap()) {
-				file = entry["file"].as<std::string>("");
-				name = entry["name"].as<std::string>("");
-			} else {
-				// Backward compat: plain string entry
-				file = entry.as<std::string>("");
+			if (it->second.IsMap()) {
+				file = it->second["file"].as<std::string>("");
+			} else if (it->second.IsScalar()) {
+				file = it->second.as<std::string>("");
 			}
 
 			soundFileNames.push_back(file);
