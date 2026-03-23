@@ -595,6 +595,289 @@ static const int NUM_DEFAULT_SOUNDS = 144;
 // ========================================================================
 // Conversion: entities.bin -> entities.yaml
 // ========================================================================
+// ========================================================================
+// Entity rendering data helpers (mirrors computeDefault*() in EntityDef.cpp)
+// ========================================================================
+
+// Tile index constants (from Enums.h)
+static const int TILE_SENTRY_BOT       = 19;
+static const int TILE_RED_SENTRY_BOT   = 18;
+static const int TILE_ZOMBIE           = 20;
+static const int TILE_IMP              = 23;
+static const int TILE_SAWCUBUS         = 26;
+static const int TILE_LOST_SOUL        = 29;
+static const int TILE_PINKY            = 32;
+static const int TILE_REVENANT         = 35;
+static const int TILE_MANCUBUS         = 38;
+static const int TILE_CACODEMON        = 41;
+static const int TILE_SENTINEL         = 44;
+static const int TILE_ARCH_VILE        = 50;
+static const int TILE_ARACHNOTRON      = 53;
+static const int TILE_BOSS_CYBERDEMON  = 54;
+static const int TILE_BOSS_PINKY       = 56;
+static const int TILE_BOSS_MASTERMIND  = 57;
+static const int TILE_BOSS_VIOS        = 58;
+static const int TILE_BOSS_VIOS5       = 62;
+
+// Monster subtype IDs (from Enums.h)
+static const int M_ZOMBIE     = 0;
+static const int M_LOST_SOUL  = 2;
+static const int M_IMP        = 3;
+static const int M_SAWCUBUS   = 4;
+static const int M_PINKY      = 5;
+static const int M_CACODEMON  = 6;
+static const int M_SENTINEL   = 7;
+static const int M_MANCUBUS   = 8;
+static const int M_REVENANT   = 9;
+static const int M_ARCH_VILE  = 10;
+static const int M_SENTRY_BOT = 11;
+static const int M_CYBERDEMON = 12;
+
+static bool tileInRange(int tile, int base, int variants = 3) {
+	return tile >= base && tile < base + variants;
+}
+
+static void emitRenderFlags(YAML::Emitter& out, int16_t tileIndex) {
+	bool isFloater = tileInRange(tileIndex, TILE_SENTINEL) ||
+	                 tileInRange(tileIndex, TILE_LOST_SOUL) ||
+	                 tileInRange(tileIndex, TILE_CACODEMON);
+	bool hasGunFlare = tileInRange(tileIndex, TILE_MANCUBUS) ||
+	                   tileInRange(tileIndex, TILE_REVENANT) ||
+	                   tileIndex == TILE_SENTRY_BOT || tileIndex == TILE_RED_SENTRY_BOT ||
+	                   tileIndex == TILE_BOSS_CYBERDEMON || tileIndex == TILE_BOSS_MASTERMIND;
+	bool isSpecialBoss = tileIndex == TILE_BOSS_MASTERMIND || tileIndex == TILE_ARACHNOTRON ||
+	                     tileIndex == TILE_BOSS_PINKY ||
+	                     (tileIndex >= TILE_BOSS_VIOS && tileIndex <= TILE_BOSS_VIOS5);
+
+	if (isFloater || hasGunFlare || isSpecialBoss) {
+		out << YAML::Key << "flags" << YAML::Value << YAML::BeginSeq;
+		if (isFloater)     out << "floater";
+		if (hasGunFlare)   out << "gun_flare";
+		if (isSpecialBoss) out << "special_boss";
+		out << YAML::EndSeq;
+	}
+}
+
+static void emitFearEyes(YAML::Emitter& out, int subtype) {
+	struct { int eyeL, eyeR, zAdd, zAlwaysPre, zIdlePre; bool singleEye; int eyeLFlip, eyeRFlip; } d =
+		{0, 0, 0, 0, 0, false, 0, 0};
+	switch (subtype) {
+		case M_ARCH_VILE:  d = {-3, 3, 403, 0, 48, false, 0, 0}; break;
+		case M_SAWCUBUS:   d = {-3, 3, 388, 0, 0, false, 0, 0}; break;
+		case M_IMP:        d = {-3, 3, 294, 0, 0, false, 0, 0}; break;
+		case M_LOST_SOUL:  d = {-4, 4, -192, 192, 0, false, 0, 0}; break;
+		case M_MANCUBUS:   d = {-3, 3, 280, 0, 0, false, 0, 0}; break;
+		case M_PINKY:      d = {-5, 5, 35, 0, 0, false, 0, 0}; break;
+		case M_CACODEMON:  d = {0, -1, 32, 0, 0, true, 0, 0}; break;
+		case M_REVENANT:   d = {-2, 5, 324, 160, 32, false, -5, 2}; break;
+		case M_SENTINEL:   d = {-1, 4, 274, 0, 0, false, 0, 0}; break;
+		default: return; // no data = skip section
+	}
+	out << YAML::Key << "fear_eyes" << YAML::Value << YAML::BeginMap;
+	out << YAML::Key << "eye_l" << YAML::Value << d.eyeL;
+	out << YAML::Key << "eye_r" << YAML::Value << d.eyeR;
+	out << YAML::Key << "z_add" << YAML::Value << d.zAdd;
+	if (d.zAlwaysPre != 0) out << YAML::Key << "z_always_pre" << YAML::Value << d.zAlwaysPre;
+	if (d.zIdlePre != 0) out << YAML::Key << "z_idle_pre" << YAML::Value << d.zIdlePre;
+	if (d.singleEye) out << YAML::Key << "single_eye" << YAML::Value << true;
+	if (d.eyeLFlip != 0) out << YAML::Key << "eye_l_flip" << YAML::Value << d.eyeLFlip;
+	if (d.eyeRFlip != 0) out << YAML::Key << "eye_r_flip" << YAML::Value << d.eyeRFlip;
+	out << YAML::EndMap;
+}
+
+static void emitGunFlare(YAML::Emitter& out, int subtype) {
+	struct { bool dual; int f1x, f1z, f2x, f2z; } d = {false, 0, 0, 0, 0};
+	switch (subtype) {
+		case M_MANCUBUS:   d = {true, -24, 160, 22, 128}; break;
+		case M_REVENANT:   d = {true, -9, 736, 15, 736}; break;
+		case M_SENTRY_BOT: d = {false, 0, 0, 0, -64}; break;
+		case M_CYBERDEMON:  d = {false, 0, 0, 14, 352}; break;
+		default: return;
+	}
+	out << YAML::Key << "gun_flare" << YAML::Value << YAML::BeginMap;
+	if (d.dual) out << YAML::Key << "dual" << YAML::Value << true;
+	if (d.f1x != 0) out << YAML::Key << "flash1_x" << YAML::Value << d.f1x;
+	if (d.f1z != 0) out << YAML::Key << "flash1_z" << YAML::Value << d.f1z;
+	if (d.f2x != 0) out << YAML::Key << "flash2_x" << YAML::Value << d.f2x;
+	if (d.f2z != 0) out << YAML::Key << "flash2_z" << YAML::Value << d.f2z;
+	out << YAML::EndMap;
+}
+
+static void emitBodyParts(YAML::Emitter& out, int eType, int subtype) {
+	struct { int idleTZ, idleHZ, walkTZ, walkHZ, atkTZF0, atkTZF1, atkHZ, atkHX;
+	         bool noHBack, sentryFlip, flipTorso, noHAtk, noHMancAtk; int revAtk2TZ; } d =
+		{0, 0, 0, 0, 0, 0, 0, 0, false, false, false, false, false, 0};
+	bool hasData = false;
+	if (eType == 2) { // monster
+		hasData = true;
+		switch (subtype) {
+			case M_REVENANT:   d = {-30, 140, 0, 160, 0, 0, 20, 2, false, false, false, false, false, 130}; break;
+			case M_ARCH_VILE:  d = {-36, 109, -36, 109, 288, 0, 0, 0, false, false, true, true, false, 0}; break;
+			case M_SAWCUBUS:   d = {0, 0, 0, 0, 96, -100, 16, 0, false, false, false, false, false, 0}; break;
+			case M_MANCUBUS:   d = {0, 0, 0, 0, 0, 0, -112, 7, false, false, false, false, true, 0}; break;
+			case M_PINKY:      d = {0, 0, 0, 0, 0, 0, 0, 0, true, false, false, false, false, 0}; break;
+			case M_ZOMBIE:     d = {0, 0, 0, 0, 0, 0, 0, 0, false, false, false, true, false, 0}; break;
+			case M_IMP:        d = {0, 0, 0, 0, 0, 0, 0, 0, false, false, false, true, false, 0}; break;
+			case M_SENTRY_BOT: d = {0, 0, 0, 0, 0, 0, 0, 0, false, true, false, false, false, 0}; break;
+			case M_CYBERDEMON:  d = {-30, -15, 0, 0, 0, 0, 0, 0, false, false, false, false, false, 0}; break;
+			default: hasData = false; break;
+		}
+	} else if (eType == 3) { // NPC
+		hasData = true;
+		d.idleTZ = -18;
+		d.flipTorso = true;
+	}
+	if (!hasData) return;
+
+	out << YAML::Key << "body_parts" << YAML::Value << YAML::BeginMap;
+	if (d.idleTZ != 0) out << YAML::Key << "idle_torso_z" << YAML::Value << d.idleTZ;
+	if (d.idleHZ != 0) out << YAML::Key << "idle_head_z" << YAML::Value << d.idleHZ;
+	if (d.walkTZ != 0) out << YAML::Key << "walk_torso_z" << YAML::Value << d.walkTZ;
+	if (d.walkHZ != 0) out << YAML::Key << "walk_head_z" << YAML::Value << d.walkHZ;
+	if (d.atkTZF0 != 0) out << YAML::Key << "attack_torso_z_f0" << YAML::Value << d.atkTZF0;
+	if (d.atkTZF1 != 0) out << YAML::Key << "attack_torso_z_f1" << YAML::Value << d.atkTZF1;
+	if (d.atkHZ != 0) out << YAML::Key << "attack_head_z" << YAML::Value << d.atkHZ;
+	if (d.atkHX != 0) out << YAML::Key << "attack_head_x" << YAML::Value << d.atkHX;
+	if (d.noHBack) out << YAML::Key << "no_head_on_back" << YAML::Value << true;
+	if (d.sentryFlip) out << YAML::Key << "sentry_head_flip" << YAML::Value << true;
+	if (d.flipTorso) out << YAML::Key << "flip_torso_walk" << YAML::Value << true;
+	if (d.noHAtk) out << YAML::Key << "no_head_on_attack" << YAML::Value << true;
+	if (d.noHMancAtk) out << YAML::Key << "no_head_on_manc_atk" << YAML::Value << true;
+	if (d.revAtk2TZ != 0) out << YAML::Key << "attack_rev_atk2_torso_z" << YAML::Value << d.revAtk2TZ;
+	out << YAML::EndMap;
+}
+
+static void emitFloater(YAML::Emitter& out, int subtype) {
+	bool hasData = false;
+	int type = 0, zOffset = 0, backViewFrame = 0, idleFrontFrame = 0, headZOffset = 0, backExtraSpriteIdx = 0;
+	bool hasIdleFrameInc = false, hasBackExtraSprite = false, hasDeadLoot = false;
+	switch (subtype) {
+		case M_SENTINEL:
+			hasData = true;
+			type = 1; // FLOATER_MULTIPART
+			backViewFrame = 6; idleFrontFrame = 2; headZOffset = -11; hasDeadLoot = true;
+			break;
+		case M_LOST_SOUL:
+			hasData = true;
+			zOffset = 192; hasIdleFrameInc = true;
+			break;
+		case M_CACODEMON:
+			hasData = true;
+			hasBackExtraSprite = true; backExtraSpriteIdx = 7;
+			break;
+		default: break;
+	}
+	if (!hasData) return;
+
+	const char* floaterTypes[] = {"default", "multipart"};
+	out << YAML::Key << "floater" << YAML::Value << YAML::BeginMap;
+	if (type != 0) out << YAML::Key << "type" << YAML::Value << floaterTypes[type];
+	if (zOffset != 0) out << YAML::Key << "z_offset" << YAML::Value << zOffset;
+	if (hasIdleFrameInc) out << YAML::Key << "has_idle_frame_increment" << YAML::Value << true;
+	if (hasBackExtraSprite) out << YAML::Key << "has_back_extra_sprite" << YAML::Value << true;
+	if (backExtraSpriteIdx != 0) out << YAML::Key << "back_extra_sprite_idx" << YAML::Value << backExtraSpriteIdx;
+	if (backViewFrame != 0) out << YAML::Key << "back_view_frame" << YAML::Value << backViewFrame;
+	if (idleFrontFrame != 0) out << YAML::Key << "idle_front_frame" << YAML::Value << idleFrontFrame;
+	if (headZOffset != 0) out << YAML::Key << "head_z_offset" << YAML::Value << headZOffset;
+	if (hasDeadLoot) out << YAML::Key << "has_dead_loot" << YAML::Value << true;
+	out << YAML::EndMap;
+}
+
+static void emitSpecialBoss(YAML::Emitter& out, int16_t tileIndex) {
+	const char* bossTypes[] = {"none", "multipart", "ethereal", "spider"};
+	int type = 0;
+	struct { int torsoZ, idleSprite, atkSprite, painSprite, renderMode, painRenderMode,
+	         legLateral, legBaseZ, idleTorsoZ, idleBobDiv, idleTorsoZBase,
+	         walkTorsoZ, atkTorsoZ, painTorsoZ, painLegsZ, painLegPos;
+	         bool hasAtkFlare; int flareZ, flareLat, flareTorsoZExtra; } d =
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false, 0, 0, 0};
+
+	if (tileIndex == TILE_BOSS_PINKY) {
+		type = 1; // multipart
+		d.torsoZ = 384; d.idleSprite = 3; d.atkSprite = 8; d.painSprite = 12;
+	} else if (tileIndex >= TILE_BOSS_VIOS && tileIndex <= TILE_BOSS_VIOS5) {
+		type = 2; // ethereal
+		d.renderMode = 3; d.painRenderMode = 5;
+	} else if (tileIndex == TILE_BOSS_MASTERMIND) {
+		type = 3; // spider
+		d.legLateral = -44; d.legBaseZ = 6; d.idleTorsoZ = 35; d.idleBobDiv = 1;
+		d.idleTorsoZBase = 0; d.walkTorsoZ = 35; d.atkTorsoZ = 40;
+		d.painTorsoZ = 70; d.painLegsZ = 100; d.painLegPos = 2;
+		d.hasAtkFlare = true; d.flareZ = 288; d.flareLat = 0; d.flareTorsoZExtra = 10;
+	} else if (tileIndex == TILE_ARACHNOTRON) {
+		type = 3; // spider
+		d.legLateral = -29; d.legBaseZ = 6; d.idleTorsoZ = 50; d.idleBobDiv = 2;
+		d.idleTorsoZBase = 50; d.walkTorsoZ = 50; d.atkTorsoZ = 50;
+		d.painTorsoZ = 100; d.painLegsZ = 70; d.painLegPos = 1;
+	} else {
+		return;
+	}
+
+	out << YAML::Key << "special_boss" << YAML::Value << YAML::BeginMap;
+	out << YAML::Key << "type" << YAML::Value << bossTypes[type];
+	if (d.torsoZ != 0) out << YAML::Key << "torso_z" << YAML::Value << d.torsoZ;
+	if (d.idleSprite != 0) out << YAML::Key << "idle_sprite_idx" << YAML::Value << d.idleSprite;
+	if (d.atkSprite != 0) out << YAML::Key << "attack_sprite_idx" << YAML::Value << d.atkSprite;
+	if (d.painSprite != 0) out << YAML::Key << "pain_sprite_idx" << YAML::Value << d.painSprite;
+	if (d.renderMode != 0) out << YAML::Key << "render_mode_override" << YAML::Value << d.renderMode;
+	if (d.painRenderMode != 0) out << YAML::Key << "pain_render_mode" << YAML::Value << d.painRenderMode;
+	if (d.legLateral != 0) out << YAML::Key << "leg_lateral" << YAML::Value << d.legLateral;
+	if (d.legBaseZ != 0) out << YAML::Key << "leg_base_z" << YAML::Value << d.legBaseZ;
+	if (d.idleTorsoZ != 0) out << YAML::Key << "idle_torso_z" << YAML::Value << d.idleTorsoZ;
+	if (d.idleBobDiv != 0) out << YAML::Key << "idle_bob_div" << YAML::Value << d.idleBobDiv;
+	// idleTorsoZBase: emit even if 0 for mastermind (differs from arachnotron's 50)
+	if (type == 3) out << YAML::Key << "idle_torso_z_base" << YAML::Value << d.idleTorsoZBase;
+	if (d.walkTorsoZ != 0) out << YAML::Key << "walk_torso_z" << YAML::Value << d.walkTorsoZ;
+	if (d.atkTorsoZ != 0) out << YAML::Key << "attack_torso_z" << YAML::Value << d.atkTorsoZ;
+	if (d.painTorsoZ != 0) out << YAML::Key << "pain_torso_z" << YAML::Value << d.painTorsoZ;
+	if (d.painLegsZ != 0) out << YAML::Key << "pain_legs_z" << YAML::Value << d.painLegsZ;
+	if (d.painLegPos != 0) out << YAML::Key << "pain_leg_pos" << YAML::Value << d.painLegPos;
+	if (d.hasAtkFlare) out << YAML::Key << "has_attack_flare" << YAML::Value << true;
+	if (d.flareZ != 0) out << YAML::Key << "flare_z_offset" << YAML::Value << d.flareZ;
+	// flareLat: emit even if 0 when flare exists (mastermind has 0)
+	if (d.hasAtkFlare) out << YAML::Key << "flare_lateral_pos" << YAML::Value << d.flareLat;
+	if (d.flareTorsoZExtra != 0) out << YAML::Key << "flare_torso_z_extra" << YAML::Value << d.flareTorsoZExtra;
+	out << YAML::EndMap;
+}
+
+static void emitSpriteAnim(YAML::Emitter& out, int16_t tileIndex, int subtype) {
+	if (tileIndex == TILE_BOSS_CYBERDEMON) {
+		out << YAML::Key << "sprite_anim" << YAML::Value << YAML::BeginMap;
+		out << YAML::Key << "clamp_scale" << YAML::Value << true;
+		out << YAML::Key << "attack_leg_offset" << YAML::Value << -3;
+		out << YAML::Key << "attack_leg_offset_on_flip" << YAML::Value << true;
+		out << YAML::EndMap;
+	} else if (subtype == M_SAWCUBUS) {
+		out << YAML::Key << "sprite_anim" << YAML::Value << YAML::BeginMap;
+		out << YAML::Key << "has_frame_dependent_head" << YAML::Value << true;
+		out << YAML::Key << "head_z_frame0" << YAML::Value << 17;
+		out << YAML::Key << "head_x_frame0" << YAML::Value << 2;
+		out << YAML::Key << "head_z_frame1" << YAML::Value << 16;
+		out << YAML::EndMap;
+	}
+}
+
+// Check if an entity needs any rendering data at all
+static bool entityNeedsRendering(int eType, int subtype, int16_t tileIndex) {
+	if (eType == 3) return true; // NPC always gets body_parts
+	if (eType != 2) return false; // Only monsters otherwise
+
+	// Check all rendering categories
+	switch (subtype) {
+		case M_ZOMBIE: case M_IMP: case M_SAWCUBUS: case M_LOST_SOUL:
+		case M_PINKY: case M_CACODEMON: case M_SENTINEL: case M_MANCUBUS:
+		case M_REVENANT: case M_ARCH_VILE: case M_SENTRY_BOT: case M_CYBERDEMON:
+			return true;
+	}
+	// Special boss tiles
+	if (tileIndex == TILE_BOSS_PINKY || tileIndex == TILE_BOSS_MASTERMIND ||
+	    tileIndex == TILE_ARACHNOTRON || tileIndex == TILE_BOSS_CYBERDEMON ||
+	    (tileIndex >= TILE_BOSS_VIOS && tileIndex <= TILE_BOSS_VIOS5))
+		return true;
+
+	return false;
+}
+
 static bool convertEntities(ZipFile& zip, const std::string& outDir) {
 	int size = 0;
 	std::string ipaPath = std::string(PKG_PREFIX) + "entities.bin";
@@ -662,6 +945,20 @@ static bool convertEntities(ZipFile& zip, const std::string& outDir) {
 		out << YAML::Key << "long_name" << YAML::Value << (int)e.longName;
 		out << YAML::Key << "description" << YAML::Value << (int)e.description;
 		out << YAML::EndMap;
+
+		// Rendering data (only for monsters and NPCs that need it)
+		if (entityNeedsRendering(e.eType, e.eSubType, e.tileIndex)) {
+			out << YAML::Key << "rendering" << YAML::Value << YAML::BeginMap;
+			emitRenderFlags(out, e.tileIndex);
+			emitFearEyes(out, e.eSubType);
+			emitGunFlare(out, e.eSubType);
+			emitBodyParts(out, e.eType, e.eSubType);
+			emitFloater(out, e.eSubType);
+			emitSpecialBoss(out, e.tileIndex);
+			emitSpriteAnim(out, e.tileIndex, e.eSubType);
+			out << YAML::EndMap;
+		}
+
 		out << YAML::EndMap;
 	}
 
@@ -800,6 +1097,26 @@ static bool convertTables(ZipFile& zip, const std::string& outDir) {
 			wout << YAML::Key << "name" << YAML::Value << weaponName(i);
 			wout << YAML::Key << "index" << YAML::Value << i;
 
+			// Attack sound (hardcoded defaults per weapon)
+			{
+				const char* snd = nullptr;
+				const char* sndAlt = nullptr;
+				switch (i) {
+					case 0: case 8: snd = "chaingun"; break;
+					case 1:  snd = "chainsaw"; break;
+					case 2:  snd = "holywaterpistol"; break;
+					case 3: case 5: case 9: snd = "pistol"; break;
+					case 7:  snd = "supershotgun"; break;
+					case 10: snd = "plasma"; break;
+					case 11: snd = "rocketlauncher"; break;
+					case 12: snd = "bfg"; break;
+					case 13: snd = "soulcube"; break;
+					case 14: snd = "weapon_toilet_throw"; sndAlt = "weapon_toilet_throw2"; break;
+				}
+				if (snd) wout << YAML::Key << "attack_sound" << YAML::Value << snd;
+				if (sndAlt) wout << YAML::Key << "attack_sound_alt" << YAML::Value << sndAlt;
+			}
+
 			wout << YAML::Key << "damage" << YAML::Value << YAML::BeginMap;
 			wout << YAML::Key << "min" << YAML::Value << w.strMin;
 			wout << YAML::Key << "max" << YAML::Value << w.strMax;
@@ -836,6 +1153,37 @@ static bool convertTables(ZipFile& zip, const std::string& outDir) {
 				wout << YAML::Key << "y" << YAML::Value << wi.flashY;
 				wout << YAML::EndMap;
 				wout << YAML::EndMap;
+			}
+
+			// Display offsets (hardcoded defaults per weapon index)
+			{
+				int offY = 0, swX = 0, swY = 0;
+				switch (i) {
+					case 1:  offY = 3;  swX = -7; swY = 4;  break; // chainsaw
+					case 2:  offY = 10; swY = 3;            break; // holy_water_pistol
+					case 3:  offY = 12; swX = -4; swY = 12; break; // shooting_sentry_bot
+					case 4:  offY = 12; swX = -4; swY = 12; break; // exploding_sentry_bot
+					case 5:  offY = 12; swX = -4; swY = 12; break; // red_shooting_sentry_bot
+					case 6:  offY = 12; swX = -4; swY = 12; break; // red_exploding_sentry_bot
+					case 7:  swX = 1;                        break; // super_shotgun
+					case 8:  swX = -3;                       break; // chaingun
+					case 10: swX = 3;                        break; // plasma_gun
+					case 11: swX = 3;                        break; // rocket_launcher
+					case 12: swX = -11;                      break; // bfg
+					case 13: swX = -3;                       break; // soul_cube
+				}
+				if (offY != 0 || swX != 0 || swY != 0) {
+					wout << YAML::Key << "display" << YAML::Value << YAML::BeginMap;
+					if (offY != 0)
+						wout << YAML::Key << "offset_y" << YAML::Value << offY;
+					if (swX != 0 || swY != 0) {
+						wout << YAML::Key << "sw_offset" << YAML::Value << YAML::Flow << YAML::BeginMap;
+						if (swX != 0) wout << YAML::Key << "x" << YAML::Value << swX;
+						if (swY != 0) wout << YAML::Key << "y" << YAML::Value << swY;
+						wout << YAML::EndMap;
+					}
+					wout << YAML::EndMap;
+				}
 			}
 
 			wout << YAML::EndMap;
@@ -1183,6 +1531,182 @@ static bool convertTables(ZipFile& zip, const std::string& outDir) {
 	printf("  -> %s (%d monsters)\n", mpath.c_str(), numTypes);
 
 	free(data);
+	return true;
+}
+
+// ========================================================================
+// Generate: projectiles.yaml (hardcoded defaults, not from binary)
+// ========================================================================
+static bool generateProjectilesYaml(const std::string& outDir) {
+	YAML::Emitter out;
+	out << YAML::Comment("Projectile visual definitions");
+	out << YAML::Comment("Controls missile animation, render mode, and impact effects");
+	out << YAML::Newline;
+	out << YAML::BeginMap;
+	out << YAML::Key << "projectiles" << YAML::Value << YAML::BeginSeq;
+
+	struct ProjDef {
+		const char* name;
+		int launchRM, launchAnim, launchAnimMon, launchSpeed, launchSpeedAdd;
+		int launchOffXR, launchOffZ, launchZOff;
+		bool animFromWeapon;
+		int impactAnim, impactRM;
+		const char* impactSound;
+		bool shake; int shakeDur, shakeInt, shakeFade;
+	};
+	ProjDef defs[] = {
+		{"bullet",      -1, 0,0,0,0, 0,0,0, false,  0,0, nullptr, false,0,0,0},
+		{"melee",       -1, 0,0,0,0, 0,0,0, false,  0,0, nullptr, false,0,0,0},
+		{"water",        3, 240,0,512,0, 0,0,0, false,  235,4, nullptr, false,0,0,0},
+		{"plasma",       3, 243,0,512,0, 4,15,0, false,  243,4, nullptr, false,0,0,0},
+		{"rocket",       0, 225,226,0,64, 4,10,0, false,  242,4, "explosion", true,500,4,500},
+		{"bfg",          4, 244,0,0,0, 0,0,0, false,  244,4, nullptr, false,0,0,0},
+		{"flesh",        0, 227,0,0,0, 0,0,0, false,  0,0, nullptr, false,0,0,0},
+		{"fire",         3, 242,0,0,0, 0,0,0, false,  242,4, "fireball_impact", false,0,0,0},
+		{"caco_plasma",  3, 241,0,0,0, 0,0,0, false,  0,0, nullptr, false,0,0,0},
+		{"thorns",       0, 171,0,0,0, 0,0,-32, false,  170,0, nullptr, false,0,0,0},
+		{"acid",         3, 252,0,0,0, 0,0,48, false,  252,4, nullptr, false,0,0,0},
+		{"electric",     3, 248,0,0,0, 0,0,0, false,  0,0, nullptr, false,0,0,0},
+		{"soul_cube",   -1, 0,0,0,0, 0,0,0, false,  0,0, nullptr, false,0,0,0},
+		{"item",         0, 0,0,0,0, 0,0,0, true,  0,0, "weapon_pickup", false,0,0,0},
+	};
+
+	for (const auto& d : defs) {
+		out << YAML::BeginMap;
+		out << YAML::Key << "name" << YAML::Value << d.name;
+
+		if (d.launchRM >= 0 || d.animFromWeapon) {
+			out << YAML::Key << "launch" << YAML::Value << YAML::BeginMap;
+			if (d.launchRM >= 0) out << YAML::Key << "render_mode" << YAML::Value << d.launchRM;
+			if (d.launchAnimMon != 0) {
+				out << YAML::Key << "anim_player" << YAML::Value << d.launchAnim;
+				out << YAML::Key << "anim_monster" << YAML::Value << d.launchAnimMon;
+			} else if (d.launchAnim != 0) {
+				out << YAML::Key << "anim" << YAML::Value << d.launchAnim;
+			}
+			if (d.launchSpeed > 0) out << YAML::Key << "speed" << YAML::Value << d.launchSpeed;
+			if (d.launchSpeedAdd != 0) out << YAML::Key << "speed_add" << YAML::Value << d.launchSpeedAdd;
+			if (d.launchOffXR != 0 || d.launchOffZ != 0) {
+				out << YAML::Key << "offset" << YAML::Value << YAML::Flow << YAML::BeginMap;
+				if (d.launchOffXR != 0) {
+					out << YAML::Key << "x_right" << YAML::Value << d.launchOffXR;
+					out << YAML::Key << "y_right" << YAML::Value << d.launchOffXR;
+				}
+				if (d.launchOffZ != 0) out << YAML::Key << "z" << YAML::Value << d.launchOffZ;
+				out << YAML::EndMap;
+			}
+			if (d.launchZOff != 0) out << YAML::Key << "z_offset" << YAML::Value << d.launchZOff;
+			if (d.animFromWeapon) out << YAML::Key << "anim_from_weapon" << YAML::Value << true;
+			out << YAML::EndMap;
+		}
+
+		if (d.impactAnim != 0 || d.impactSound != nullptr || d.shake) {
+			out << YAML::Key << "impact" << YAML::Value << YAML::BeginMap;
+			out << YAML::Key << "anim" << YAML::Value << d.impactAnim;
+			if (d.impactRM != 0) out << YAML::Key << "render_mode" << YAML::Value << d.impactRM;
+			if (d.impactSound) out << YAML::Key << "impact_sound" << YAML::Value << d.impactSound;
+			if (d.shake) {
+				out << YAML::Key << "screen_shake" << YAML::Value << YAML::Flow << YAML::BeginMap;
+				out << YAML::Key << "duration" << YAML::Value << d.shakeDur;
+				out << YAML::Key << "intensity" << YAML::Value << d.shakeInt;
+				out << YAML::Key << "fade" << YAML::Value << d.shakeFade;
+				out << YAML::EndMap;
+			}
+			out << YAML::EndMap;
+		}
+
+		out << YAML::EndMap;
+	}
+
+	out << YAML::EndSeq;
+	out << YAML::EndMap;
+
+	std::string path = outDir + "/projectiles.yaml";
+	if (!writeString(path, out.c_str())) {
+		fprintf(stderr, "  Failed to write %s\n", path.c_str());
+		return false;
+	}
+	printf("  -> %s (14 projectile types)\n", path.c_str());
+	return true;
+}
+
+// ========================================================================
+// Generate: effects.yaml (buff/status effect definitions)
+// ========================================================================
+static bool generateEffectsYaml(const std::string& outDir) {
+	struct BuffDef {
+		const char* name;
+		int maxStacks;
+		bool hasAmount;
+		bool drawAmount;
+		const char* blockedBy;     // nullptr = none
+		const char* onApplySound;  // nullptr = none
+		int perTurnDamage;         // 0 = none
+		const char* perTurn;       // nullptr = none
+	};
+
+	static const BuffDef buffs[] = {
+		// name          stacks  hasAmt  drawAmt  blockedBy  applySound        ptDmg  perTurn
+		{ "reflect",     3,      false,  false,   nullptr,   nullptr,          0,     nullptr },
+		{ "purify",      3,      false,  false,   nullptr,   nullptr,          0,     nullptr },
+		{ "haste",       3,      false,  false,   nullptr,   nullptr,          0,     nullptr },
+		{ "regen",       3,      true,   true,    nullptr,   nullptr,          0,     "heal_by_amount" },
+		{ "defense",     3,      true,   true,    nullptr,   nullptr,          0,     nullptr },
+		{ "strength",    3,      true,   true,    nullptr,   nullptr,          0,     nullptr },
+		{ "agility",     3,      true,   true,    nullptr,   nullptr,          0,     nullptr },
+		{ "focus",       3,      true,   true,    nullptr,   nullptr,          0,     nullptr },
+		{ "anger",       3,      true,   true,    nullptr,   nullptr,          0,     nullptr },
+		{ "antifire",    1,      false,  false,   nullptr,   nullptr,          0,     nullptr },
+		{ "fortitude",   3,      true,   true,    nullptr,   nullptr,          0,     nullptr },
+		{ "fear",        3,      false,  false,   nullptr,   nullptr,          0,     nullptr },
+		{ "wp_poison",   1,      false,  false,   nullptr,   nullptr,          0,     nullptr },
+		{ "fire",        3,      true,   false,   "antifire","fireball_impact",3,     nullptr },
+		{ "disease",     3,      true,   true,    nullptr,   nullptr,          0,     nullptr },
+	};
+	static const int NUM_BUFFS = sizeof(buffs) / sizeof(buffs[0]);
+
+	YAML::Emitter out;
+	out << YAML::Comment("Buff/status effect definitions");
+	out << YAML::Comment("Loaded by the engine to configure buff behavior");
+	out << YAML::Newline;
+	out << YAML::BeginMap;
+
+	out << YAML::Key << "warning_time" << YAML::Value << 10;
+	out << YAML::Newline;
+
+	out << YAML::Key << "buffs" << YAML::Value << YAML::BeginSeq;
+
+	for (int i = 0; i < NUM_BUFFS; i++) {
+		const auto& b = buffs[i];
+		out << YAML::BeginMap;
+		out << YAML::Key << "name" << YAML::Value << b.name;
+		out << YAML::Key << "max_stacks" << YAML::Value << b.maxStacks;
+		out << YAML::Key << "has_amount" << YAML::Value << b.hasAmount;
+		out << YAML::Key << "draw_amount" << YAML::Value << b.drawAmount;
+		if (b.blockedBy) {
+			out << YAML::Key << "blocked_by" << YAML::Value << b.blockedBy;
+		}
+		if (b.onApplySound) {
+			out << YAML::Key << "on_apply_sound" << YAML::Value << b.onApplySound;
+		}
+		if (b.perTurnDamage > 0) {
+			out << YAML::Key << "per_turn_damage" << YAML::Value << b.perTurnDamage;
+		}
+		if (b.perTurn) {
+			out << YAML::Key << "per_turn" << YAML::Value << b.perTurn;
+		}
+		out << YAML::EndMap;
+	}
+
+	out << YAML::EndSeq;
+	out << YAML::EndMap;
+
+	std::string path = outDir + "/effects.yaml";
+	if (!writeString(path, out.c_str())) {
+		fprintf(stderr, "  Failed to write %s\n", path.c_str());
+		return false;
+	}
+	printf("  -> %s (%d buff types)\n", path.c_str(), NUM_BUFFS);
 	return true;
 }
 
@@ -1882,6 +2406,12 @@ int main(int argc, char* argv[]) {
 
 	printf("Converting tables...\n");
 	ok &= convertTables(zip, outputDir);
+
+	printf("Generating projectiles.yaml...\n");
+	ok &= generateProjectilesYaml(outputDir);
+
+	printf("Generating effects.yaml...\n");
+	ok &= generateEffectsYaml(outputDir);
 
 	printf("Converting menus...\n");
 	ok &= convertMenus(zip, outputDir);

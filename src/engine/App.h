@@ -127,6 +127,8 @@ public:
 	void loadTables();
 	bool loadTablesFromYAML(const char* path);
 	bool loadWeaponsFromYAML(const char* path);
+	bool loadProjectilesFromYAML(const char* path);
+	bool loadEffectsFromYAML(const char* path);
 	bool loadMonstersFromYAML(const char* path);
 
 	void loadRuntimeImages();

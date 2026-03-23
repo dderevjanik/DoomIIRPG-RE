@@ -1,6 +1,7 @@
 #include <stdexcept>
 #include <cstdio>
 #include <algorithm>
+#include <map>
 #include <sstream>
 
 #include "SDLGL.h"
@@ -403,6 +404,8 @@ void Applet::loadTables() {
 	if (!this->loadWeaponsFromYAML("weapons.yaml")) {
 		this->Error("Failed to load weapons.yaml\n");
 	}
+	this->loadProjectilesFromYAML("projectiles.yaml");
+	this->loadEffectsFromYAML("effects.yaml");
 	printf("Applet::loadTables: loading from monsters.yaml\n");
 	if (!this->loadMonstersFromYAML("monsters.yaml")) {
 		this->Error("Failed to load monsters.yaml\n");
@@ -548,6 +551,18 @@ bool Applet::loadWeaponsFromYAML(const char* path) {
 	std::memset(this->combat->weapons, 0, numWeapons * 9);
 	this->combat->wpinfo = new int8_t[numWeapons * 6];
 	std::memset(this->combat->wpinfo, 0, numWeapons * 6);
+	this->combat->wpDisplayOffsetY = new int8_t[numWeapons];
+	std::memset(this->combat->wpDisplayOffsetY, 0, numWeapons);
+	this->combat->wpSwOffsetX = new int8_t[numWeapons];
+	std::memset(this->combat->wpSwOffsetX, 0, numWeapons);
+	this->combat->wpSwOffsetY = new int8_t[numWeapons];
+	std::memset(this->combat->wpSwOffsetY, 0, numWeapons);
+	this->combat->wpAttackSound = new int16_t[numWeapons];
+	this->combat->wpAttackSoundAlt = new int16_t[numWeapons];
+	for (int j = 0; j < numWeapons; j++) {
+		this->combat->wpAttackSound[j] = -1;
+		this->combat->wpAttackSoundAlt[j] = -1;
+	}
 
 	// Second pass: populate arrays
 	for (int i = 0; i < (int)weapons.size(); i++) {
@@ -594,9 +609,195 @@ bool Applet::loadWeaponsFromYAML(const char* path) {
 				this->combat->wpinfo[wpBase + 5] = (int8_t)flash["y"].as<int>(0);
 			}
 		}
+
+		// Display offsets (optional)
+		if (YAML::Node disp = w["display"]) {
+			this->combat->wpDisplayOffsetY[idx] = (int8_t)disp["offset_y"].as<int>(0);
+			if (YAML::Node sw = disp["sw_offset"]) {
+				this->combat->wpSwOffsetX[idx] = (int8_t)sw["x"].as<int>(0);
+				this->combat->wpSwOffsetY[idx] = (int8_t)sw["y"].as<int>(0);
+			}
+		}
+
+		// Attack sound (optional)
+		std::string atkSnd = w["attack_sound"].as<std::string>("");
+		if (!atkSnd.empty()) {
+			this->combat->wpAttackSound[idx] = (int16_t)Sounds::getResIDByName(atkSnd);
+		}
+		std::string atkSndAlt = w["attack_sound_alt"].as<std::string>("");
+		if (!atkSndAlt.empty()) {
+			this->combat->wpAttackSoundAlt[idx] = (int16_t)Sounds::getResIDByName(atkSndAlt);
+		}
 	}
 
 	printf("Weapons: loaded %d weapon definitions from %s\n", (int)weapons.size(), path);
+	return true;
+}
+
+bool Applet::loadProjectilesFromYAML(const char* path) {
+	YAML::Node config;
+	try {
+		config = YAML::LoadFile(path);
+	} catch (const YAML::Exception&) {
+		printf("Warning: projectiles.yaml not found, using defaults\n");
+		return true; // Not fatal — code defaults still work
+	}
+
+	if (!config["projectiles"]) {
+		printf("Warning: projectiles.yaml empty, using defaults\n");
+		return true;
+	}
+
+	YAML::Node projectiles = config["projectiles"];
+	int count = (int)projectiles.size();
+	this->combat->numProjTypes = count;
+	this->combat->projVisuals = new Combat::ProjVisual[count];
+	std::memset(this->combat->projVisuals, 0, count * sizeof(Combat::ProjVisual));
+	for (int i = 0; i < count; i++) {
+		this->combat->projVisuals[i].launchRenderMode = -1; // -1 = no missile
+		this->combat->projVisuals[i].impactSound = -1;
+	}
+
+	for (int i = 0; i < count; i++) {
+		YAML::Node p = projectiles[i];
+
+		if (YAML::Node launch = p["launch"]) {
+			auto& pv = this->combat->projVisuals[i];
+			pv.launchRenderMode = (int8_t)launch["render_mode"].as<int>(0);
+			pv.launchAnim = (int16_t)launch["anim"].as<int>(0);
+			pv.launchAnimMonster = (int16_t)launch["anim_monster"].as<int>(0);
+			pv.launchSpeed = (int16_t)launch["speed"].as<int>(0);
+			pv.launchSpeedAdd = (int16_t)launch["speed_add"].as<int>(0);
+			pv.launchAnimFromWeapon = launch["anim_from_weapon"].as<bool>(false);
+			pv.launchZOffset = (int16_t)launch["z_offset"].as<int>(0);
+			if (YAML::Node off = launch["offset"]) {
+				pv.launchOffsetXR = (int8_t)off["x_right"].as<int>(0);
+				pv.launchOffsetYR = (int8_t)off["y_right"].as<int>(0);
+				pv.launchOffsetZ = (int8_t)off["z"].as<int>(0);
+			}
+			// Support anim_player as alias for anim
+			if (launch["anim_player"])
+				pv.launchAnim = (int16_t)launch["anim_player"].as<int>(0);
+			if (launch["anim_monster"])
+				pv.launchAnimMonster = (int16_t)launch["anim_monster"].as<int>(0);
+		}
+
+		if (YAML::Node impact = p["impact"]) {
+			auto& pv = this->combat->projVisuals[i];
+			pv.impactAnim = (int16_t)impact["anim"].as<int>(0);
+			pv.impactRenderMode = (int8_t)impact["render_mode"].as<int>(0);
+			std::string snd = impact["impact_sound"].as<std::string>("");
+			if (!snd.empty()) {
+				pv.impactSound = (int16_t)Sounds::getResIDByName(snd);
+			}
+			if (YAML::Node shake = impact["screen_shake"]) {
+				pv.impactScreenShake = true;
+				pv.shakeDuration = (int16_t)shake["duration"].as<int>(500);
+				pv.shakeIntensity = (int8_t)shake["intensity"].as<int>(4);
+				pv.shakeFade = (int16_t)shake["fade"].as<int>(500);
+			}
+		}
+	}
+
+	printf("Projectiles: loaded %d types from %s\n", count, path);
+	return true;
+}
+
+bool Applet::loadEffectsFromYAML(const char* path) {
+	// Initialize defaults matching original hardcoded values
+	Player* p = this->player;
+	for (int i = 0; i < 15; i++) {
+		p->buffMaxStacks[i] = 3;
+		p->buffBlockedBy[i] = -1;
+		p->buffApplySound[i] = -1;
+		p->buffPerTurnDamage[i] = 0;
+		p->buffPerTurnHealByAmount[i] = false;
+	}
+	// Original hardcoded: wp_poison and antifire have max 1 stack
+	p->buffMaxStacks[Enums::BUFF_WP_POISON] = 1;
+	p->buffMaxStacks[Enums::BUFF_ANTIFIRE] = 1;
+	// Original hardcoded: fire blocked by antifire
+	p->buffBlockedBy[Enums::BUFF_FIRE] = Enums::BUFF_ANTIFIRE;
+	// Original hardcoded: fire per-turn damage = 3
+	p->buffPerTurnDamage[Enums::BUFF_FIRE] = 3;
+	// Original hardcoded: regen heals by amount
+	p->buffPerTurnHealByAmount[Enums::BUFF_REGEN] = true;
+	// Original hardcoded constants
+	p->buffNoAmountMask = Enums::BUFF_NO_AMOUNT;
+	p->buffAmtNotDrawnMask = Enums::BUFF_AMT_NOT_DRAWN;
+	p->buffWarningTime = Enums::BUFF_WARNING_TIME;
+
+	YAML::Node config;
+	try {
+		config = YAML::LoadFile(path);
+	} catch (const YAML::Exception&) {
+		printf("Warning: effects.yaml not found, using defaults\n");
+		return true;
+	}
+
+	if (config["warning_time"]) {
+		p->buffWarningTime = config["warning_time"].as<int>(10);
+	}
+
+	if (!config["buffs"]) {
+		printf("Warning: effects.yaml has no buffs section, using defaults\n");
+		return true;
+	}
+
+	YAML::Node buffs = config["buffs"];
+	int count = std::min((int)buffs.size(), 15);
+
+	// Build name→index lookup from YAML order (must match buff IDs 0-14)
+	std::map<std::string, int> nameToIndex;
+	for (int i = 0; i < count; i++) {
+		std::string name = buffs[i]["name"].as<std::string>("");
+		if (!name.empty()) {
+			nameToIndex[name] = i;
+		}
+	}
+
+	// Rebuild bitmasks from per-buff flags
+	p->buffNoAmountMask = 0;
+	p->buffAmtNotDrawnMask = 0;
+
+	for (int i = 0; i < count; i++) {
+		YAML::Node b = buffs[i];
+
+		p->buffMaxStacks[i] = (int8_t)b["max_stacks"].as<int>(3);
+
+		bool hasAmount = b["has_amount"].as<bool>(true);
+		bool drawAmount = b["draw_amount"].as<bool>(true);
+		if (!hasAmount) {
+			p->buffNoAmountMask |= (1 << i);
+			p->buffAmtNotDrawnMask |= (1 << i);
+		} else if (!drawAmount) {
+			p->buffAmtNotDrawnMask |= (1 << i);
+		}
+
+		// blocked_by: resolve buff name to index
+		std::string blockedBy = b["blocked_by"].as<std::string>("");
+		if (!blockedBy.empty()) {
+			auto it = nameToIndex.find(blockedBy);
+			if (it != nameToIndex.end()) {
+				p->buffBlockedBy[i] = (int8_t)it->second;
+			}
+		}
+
+		// on_apply_sound: resolve sound name
+		std::string applySound = b["on_apply_sound"].as<std::string>("");
+		if (!applySound.empty()) {
+			p->buffApplySound[i] = (int16_t)Sounds::getResIDByName(applySound);
+		}
+
+		// per_turn_damage: flat damage per turn
+		p->buffPerTurnDamage[i] = (int8_t)b["per_turn_damage"].as<int>(0);
+
+		// per_turn: heal_by_amount
+		std::string perTurn = b["per_turn"].as<std::string>("");
+		p->buffPerTurnHealByAmount[i] = (perTurn == "heal_by_amount");
+	}
+
+	printf("Effects: loaded %d buffs from %s\n", count, path);
 	return true;
 }
 

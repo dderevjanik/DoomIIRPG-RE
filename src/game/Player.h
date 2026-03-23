@@ -39,6 +39,16 @@ public:
 	static constexpr int PURIFY_TURNS = 10;
 	static constexpr int FEAR_TURNS = 6;
 	static constexpr int COLD_TURNS = 5;
+
+	// Buff data loaded from effects.yaml
+	int8_t buffMaxStacks[15];
+	int8_t buffBlockedBy[15];     // -1 = none
+	int16_t buffApplySound[15];   // -1 = none
+	int8_t buffPerTurnDamage[15]; // 0 = none, >0 = flat damage per turn
+	bool buffPerTurnHealByAmount[15]; // true = heals by buff amount per turn
+	int buffNoAmountMask;
+	int buffAmtNotDrawnMask;
+	int buffWarningTime;
 	static constexpr int BOX_X1 = 17;
 	static constexpr int BOX_X2 = 31;
 	static constexpr int BOX_X3 = 43;

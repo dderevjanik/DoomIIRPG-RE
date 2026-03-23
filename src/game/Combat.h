@@ -81,6 +81,35 @@ public:
 	int drawLogo;
 	int field_0x58_;
 	int8_t* wpinfo;
+	int8_t* wpDisplayOffsetY;   // Per-weapon general Y offset (all renderers)
+	int8_t* wpSwOffsetX;        // Per-weapon software renderer X offset
+	int8_t* wpSwOffsetY;        // Per-weapon software renderer Y offset
+	int16_t* wpAttackSound;     // Per-weapon attack sound resource ID (-1 = none)
+	int16_t* wpAttackSoundAlt;  // Per-weapon alt attack sound (for character-dependent sounds, -1 = none)
+
+	// Projectile visual data (per projectile type)
+	struct ProjVisual {
+		int8_t launchRenderMode;     // Render mode for missile sprite
+		int16_t launchAnim;          // Sprite anim ID (0 = no missile)
+		int16_t launchAnimMonster;   // Alt anim when monster fires (0 = use launchAnim)
+		int16_t launchSpeed;         // Override speed (0 = default)
+		int16_t launchSpeedAdd;      // Added to default speed (0 = none)
+		int8_t launchOffsetXR;       // Right-step X offset divisor
+		int8_t launchOffsetYR;       // Right-step Y offset divisor
+		int8_t launchOffsetZ;        // Z launch offset
+		int16_t launchZOffset;       // Additional Z offset for start/end
+		bool launchAnimFromWeapon;   // Use weapon tile as anim
+		int16_t impactAnim;          // Impact explosion anim ID
+		int8_t impactRenderMode;     // Impact render mode
+		int16_t impactSound;         // Impact sound resource ID (-1 = none)
+		bool impactScreenShake;      // Trigger screen shake on impact
+		int16_t shakeDuration;
+		int8_t shakeIntensity;
+		int16_t shakeFade;
+	};
+	ProjVisual* projVisuals;
+	int numProjTypes;
+
 	int8_t* monsterStats;
 	Entity* curAttacker;
 	Entity* curTarget;

@@ -71,12 +71,13 @@ void Player::advanceTurn() {
 	}
 
 	if (this->statusEffects[13] > 0) {
-		this->addHealth(-3);
+		int fireDmg = this->buffPerTurnDamage[Enums::BUFF_FIRE];
+		this->addHealth(-fireDmg);
 		Text* text = app->hud->getMessageBuffer(0);
 		app->localization->composeText(0, 82, text);
 		text->append(' ');
 		app->localization->resetTextArgs();
-		app->localization->addTextArg(3);
+		app->localization->addTextArg(fireDmg);
 		app->localization->composeText(0, 71, text);
 		app->hud->finishMessageBuffer();
 		b = true;
@@ -1219,7 +1220,7 @@ void Player::drawBuffs(Graphics* graphics) {
 	}
 	int n5 = numbuffs * 31 + 6;
 	for (int n6 = 0; n6 < 15 && n4 < 6; ++n6) {
-		if (this->buffs[0 + n6] > 0 && (1 << n6 & Enums::BUFF_AMT_NOT_DRAWN) == 0x0) {
+		if (this->buffs[0 + n6] > 0 && (1 << n6 & this->buffAmtNotDrawnMask) == 0x0) {
 			if (this->buffs[15 + n6] > 99 || this->buffs[15 + n6] < -99) {
 				n2 = n - 73;
 				break;
@@ -1514,7 +1515,7 @@ void Player::translateStatusEffects() {
 
 	for (int k = 0; k < 15; k++) {
 		if (this->buffs[0 + k] > 0) {
-			if ((1 << k & Enums::BUFF_NO_AMOUNT) == 0x0 && this->buffs[15 + k] == 0) {
+			if ((1 << k & this->buffNoAmountMask) == 0x0 && this->buffs[15 + k] == 0) {
 				this->buffs[0 + k] = 0;
 			} else {
 				this->numbuffs++;
@@ -1557,14 +1558,17 @@ bool Player::addStatusEffect(int n, int n2, int n3) {
 	if (this->isFamiliar) {
 		return false;
 	}
-	if (n == 13) {
-		if (this->buffs[9] > 0) {
+	if (n >= 0 && n < 15 && this->buffBlockedBy[n] >= 0) {
+		if (this->buffs[this->buffBlockedBy[n]] > 0) {
 			return false;
 		}
-		app->sound->playSound(Sounds::getResIDByName(SoundName::FIREBALL_IMPACT), 0, 3, false);
+	}
+	if (n >= 0 && n < 15 && this->buffApplySound[n] >= 0) {
+		app->sound->playSound(this->buffApplySound[n], 0, 3, false);
 	}
 	int n4 = this->statusEffects[36 + n] + 1;
-	if (n4 > 3 || ((n == 12 || n == 9) && n4 > 1)) {
+	int maxStacks = (n >= 0 && n < 15) ? this->buffMaxStacks[n] : 3;
+	if (n4 > maxStacks) {
 		if (n == 14) {
 			this->statusEffects[0 + n] = n3;
 		}
@@ -1594,7 +1598,7 @@ void Player::drawStatusEffectIcon(Graphics* graphics, int n, int n2, int n3, int
 	if (n == 8) {
 		smallBuffer->append('%');
 		smallBuffer->append(n2);
-	} else if ((1 << n & 0x3A07) == 0x0) {
+	} else if ((1 << n & this->buffAmtNotDrawnMask) == 0x0) {
 		if (n2 >= 0) {
 			smallBuffer->append('+');
 			smallBuffer->append(n2);

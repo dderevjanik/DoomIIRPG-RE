@@ -261,50 +261,11 @@ int Combat::playerSeq() {
             this->damage = damage;
         }
         int n3 = -1;
-        switch (this->attackerWeaponId) {
-        case 3:
-        case 5:
-        case 9: {
-            n3 = 1086;
-            break;
-        }
-        case 2: {
-            n3 = 1045;
-            break;
-        }
-        case 7: {
-            n3 = 1117;
-            break;
-        }
-        case 0:
-        case 8: {
-            n3 = 1014;
-            break;
-        }
-        case 10: {
-            n3 = 1087;
-            break;
-        }
-        case 11: {
-            n3 = 1101;
-            break;
-        }
-        case 12: {
-            n3 = 1009;
-            break;
-        }
-        case 13: {
-            n3 = 1114;
-            break;
-        }
-        case 14: {
-            n3 = (app->player->characterChoice == 1) ? 1137 : 1136;
-            break;
-        }
-        case 1: {
-            n3 = 1015;
-            break;
-        }
+        if (this->wpAttackSoundAlt != nullptr && this->wpAttackSoundAlt[this->attackerWeaponId] != -1 &&
+            app->player->characterChoice == 1) {
+            n3 = this->wpAttackSoundAlt[this->attackerWeaponId];
+        } else if (this->wpAttackSound != nullptr) {
+            n3 = this->wpAttackSound[this->attackerWeaponId];
         }
         if (n3 != -1) {
             app->sound->playCombatSound(n3, 0, 4);
@@ -637,39 +598,8 @@ void Combat::drawWeapon(int sx, int sy) {
         scrY = (app->render->screenHeight / 2) - 18;
         loweredWeaponY += 13;
         renderFlags |= Render::RENDER_FLAG_SCALE_WEAPON; // [GEC]
-        switch (app->player->ce->weapon)
-        {
-        case 1:
-            scrX -= 7;
-            scrY += 4;
-            break;
-        case 2:
-            scrY += 3;
-            break;
-        case 3: // Shooting Bot Green
-        case 4: // Exploding Bot Green
-        case 5: // Shooting Bot Red
-        case 6: // Exploding Bot Red
-            scrX -= 4;
-            scrY += 12;
-            break;
-        case 8:
-            scrX -= 3;
-            break;
-        case 7:
-            scrX += 1;
-            break;
-        case 10:
-        case 11:
-            scrX += 3;
-            break;
-        case 12:
-            scrX -= 11;
-            break;
-        case 13:
-            scrX -= 3;
-            break;
-        }
+        scrX += this->wpSwOffsetX[app->player->ce->weapon];
+        scrY += this->wpSwOffsetY[app->player->ce->weapon];
     }
 
     this->renderTime = app->upTimeMs;
@@ -680,21 +610,7 @@ void Combat::drawWeapon(int sx, int sy) {
     bool b2 = app->canvas->state == Canvas::ST_CAMERA && app->game->cinematicWeapon != -1;
     int weapon = app->player->ce->weapon;
 
-    switch (weapon)
-    {
-    case 1:
-        scrY += 3;
-        break;
-    case 2:
-        scrY += 10;
-        break;
-    case 3:
-    case 4:
-    case 5:
-    case 6:
-        scrY += 12;
-        break;
-    }
+    scrY += this->wpDisplayOffsetY[weapon];
 
     if (app->player->isFamiliar) {
         if (app->player->familiarType != 1 && app->player->familiarType != 3) {
@@ -1293,32 +1209,25 @@ void Combat::updateProjectile() {
                 int x = actMissile->pos[3];
                 int y = actMissile->pos[4];
                 int z = actMissile->pos[5];
+                // Load impact data from projectile visual table
+                if (this->projVisuals != nullptr && this->attackerWeaponProj >= 0 &&
+                    this->attackerWeaponProj < this->numProjTypes) {
+                    const auto& pv = this->projVisuals[this->attackerWeaponProj];
+                    this->missileAnim = pv.impactAnim;
+                    renderMode = pv.impactRenderMode;
+                    if (pv.impactScreenShake) {
+                        app->canvas->startShake(pv.shakeDuration, pv.shakeIntensity, pv.shakeFade);
+                    }
+                    if (pv.impactSound != -1) {
+                        app->sound->playSound(pv.impactSound, 0, 4, 0);
+                    }
+                } else {
+                    this->missileAnim = 0;
+                }
+
+                // Projectile-specific impact behaviors that can't be data-driven
                 switch (this->attackerWeaponProj) {
-                case 4: {
-                    this->missileAnim = 242;
-                    renderMode = 4;
-                    app->canvas->startShake(500, 4, 500);
-                    app->sound->playSound(Sounds::getResIDByName(SoundName::EXPLOSION), 0, 4, 0);
-                    break;
-                }
-                case 10: {
-                    this->missileAnim = 252;
-                    renderMode = 4;
-                    break;
-                }
-                case 3: {
-                    this->missileAnim = 243;
-                    renderMode = 4;
-                    break;
-                }
-                case 5: {
-                    this->missileAnim = 244;
-                    renderMode = 4;
-                    break;
-                }
-                case 2: {
-                    this->missileAnim = 235;
-                    renderMode = 4;
+                case 2: { // holy water - cause fear
                     if (this->curTarget != nullptr && (this->crFlags & 0x1007) != 0x0) {
                         EntityMonster* monster = this->curTarget->monster;
                         if (monster != nullptr && !app->combat->monsterBehaviors[this->curTarget->def->eSubType].fearImmune) {
@@ -1326,30 +1235,24 @@ void Combat::updateProjectile() {
                             monster->goalType = 4;
                             monster->goalParam = 3;
                         }
-                        break;
                     }
                     break;
                 }
-                case 7: {
-                    app->sound->playSound(Sounds::getResIDByName(SoundName::FIREBALL_IMPACT), 0, 4, 0);
+                case 7: { // fire - reflect check with anti-fire buff
                     if (this->curTarget == nullptr && this->hitType != 0 && app->player->buffs[9] > 0) {
                         this->missileAnim = 208;
                         x += app->canvas->viewStepX >> 1;
                         y += app->canvas->viewStepY >> 1;
                         renderMode = 3;
-                        break;
                     }
-                    this->missileAnim = 242;
-                    renderMode = 4;
                     break;
                 }
-                case 13: {
-                    this->missileAnim = 0;
-                    app->particleSystem->spawnParticles(1, -1, actMissile->sprite);
-                    app->sound->playSound(Sounds::getResIDByName(SoundName::WEAPON_PICKUP), 0, 4, 0);
+                case 9: { // thorns - spawn thorn particles
+                    app->particleSystem->spawnParticles(1, 0xFF81603D, x, y, z + 16);
+                    z += 48;
                     break;
                 }
-                case 12: {
+                case 12: { // soul cube return
                     app->game->gsprite_destroy(actMissile);
                     for (int j = i + 1; j < this->numActiveMissiles; ++j) {
                         this->activeMissiles[j - 1] = this->activeMissiles[j];
@@ -1363,15 +1266,8 @@ void Combat::updateProjectile() {
                     }
                     return;
                 }
-                case 9: {
-                    renderMode = 0;
-                    this->missileAnim = 170;
-                    app->particleSystem->spawnParticles(1, 0xFF81603D, x, y, z + 16);
-                    z += 48;
-                    break;
-                }
-                default: {
-                    this->missileAnim = 0;
+                case 13: { // item - spawn particles
+                    app->particleSystem->spawnParticles(1, -1, actMissile->sprite);
                     break;
                 }
                 }
@@ -1483,101 +1379,56 @@ void Combat::launchProjectile() {
         z2 = app->render->mapSprites[app->render->S_Z + n10];
     }
     bool b = false;
-    switch (this->attackerWeaponProj) {
-    case 2: {
-        renderMode = 3;
-        this->missileAnim = 240;
-        b = false;
-        n = 512;
-        break;
-    }
-    case 3: {
-        x1 += app->game->viewRightStepX >> 4;
-        y1 += app->game->viewRightStepY >> 4;
-        z1 += 15;
-        renderMode = 3;
-        this->missileAnim = 243;
-        n = 512;
-        if (app->render->mapSprites[app->render->S_SCALEFACTOR + this->curTarget->getSprite()] >= 64) {
-            z2 += 16;
+
+    // Load projectile visual data from YAML-driven table
+    if (this->projVisuals != nullptr && this->attackerWeaponProj >= 0 &&
+        this->attackerWeaponProj < this->numProjTypes) {
+        const auto& pv = this->projVisuals[this->attackerWeaponProj];
+        if (pv.launchRenderMode < 0) {
+            // No missile (bullet/melee)
+            this->missileAnim = 0;
+            this->exploded = true;
+            return;
         }
-        b = false;
-        break;
-    }
-    case 4: {
-        x1 += app->game->viewRightStepX >> 4;
-        y1 += app->game->viewRightStepY >> 4;
-        z1 += 10;
-        renderMode = 0;
-        if (this->curAttacker == nullptr) {
-            this->missileAnim = 225;
+        renderMode = pv.launchRenderMode;
+        if (pv.launchAnimFromWeapon) {
+            this->missileAnim = app->player->activeWeaponDef->tileIndex;
+        } else if (pv.launchAnimMonster != 0 && this->curAttacker != nullptr) {
+            this->missileAnim = pv.launchAnimMonster;
+        } else {
+            this->missileAnim = pv.launchAnim;
         }
-        else {
-            this->missileAnim = 226;
+        if (pv.launchSpeed > 0) n = pv.launchSpeed;
+        n += pv.launchSpeedAdd;
+        if (pv.launchOffsetXR != 0) {
+            x1 += app->game->viewRightStepX >> pv.launchOffsetXR;
+            y1 += app->game->viewRightStepY >> pv.launchOffsetXR;
         }
-        n += 64;
+        z1 += pv.launchOffsetZ;
+        z1 += pv.launchZOffset;
+        z2 += pv.launchZOffset;
         b = false;
-        break;
-    }
-    case 5: {
-        renderMode = 4;
-        this->missileAnim = 244;
-        if (this->curAttacker != nullptr) {
-            n += n >> 1;
+
+        // Projectile-specific behaviors that can't be data-driven
+        switch (this->attackerWeaponProj) {
+        case 3: // plasma - adjust target Z for close targets
+            if (app->render->mapSprites[app->render->S_SCALEFACTOR + this->curTarget->getSprite()] >= 64) {
+                z2 += 16;
+            }
+            break;
+        case 5: // bfg - monsters fire faster
+            if (this->curAttacker != nullptr) {
+                n += n >> 1;
+            }
+            break;
+        case 9: // thorns
+            this->numThornParticleSystems = 0;
+            break;
         }
-        b = false;
-        break;
-    }
-    case 6: {
-        renderMode = 0;
-        this->missileAnim = 227;
-        b = false;
-        break;
-    }
-    case 7: {
-        renderMode = 3;
-        this->missileAnim = 242;
-        b = false;
-        break;
-    }
-    case 8: {
-        renderMode = 3;
-        this->missileAnim = 241;
-        b = false;
-        break;
-    }
-    case 9: {
-        this->missileAnim = 171;
-        b = false;
-        z1 -= 32;
-        z2 -= 32;
-        this->numThornParticleSystems = 0;
-        break;
-    }
-    case 10: {
-        renderMode = 3;
-        this->missileAnim = 252;
-        z1 += 48;
-        b = false;
-        break;
-    }
-    case 11: {
-        renderMode = 3;
-        this->missileAnim = 248;
-        b = false;
-        break;
-    }
-    case 13: {
-        b = false;
-        this->missileAnim = app->player->activeWeaponDef->tileIndex;
-        renderMode = 0;
-        break;
-    }
-    default: {
+    } else {
         this->missileAnim = 0;
         this->exploded = true;
         return;
-    }
     }
     int dx = std::abs(x2 - x1);
     int dy = std::abs(y2 - y1);
