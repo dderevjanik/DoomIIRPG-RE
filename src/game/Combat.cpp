@@ -1404,21 +1404,16 @@ void Combat::launchProjectile() {
         z2 += pv.launchZOffset;
         b = false;
 
-        // Projectile-specific behaviors that can't be data-driven
-        switch (this->attackerWeaponProj) {
-        case 3: // plasma - adjust target Z for close targets
-            if (app->render->mapSprites[app->render->S_SCALEFACTOR + this->curTarget->getSprite()] >= 64) {
-                z2 += 16;
-            }
-            break;
-        case 5: // bfg - monsters fire faster
-            if (this->curAttacker != nullptr) {
-                n += n >> 1;
-            }
-            break;
-        case 9: // thorns
+        // Data-driven projectile launch behaviors
+        if (pv.closeRangeZAdjust &&
+            app->render->mapSprites[app->render->S_SCALEFACTOR + this->curTarget->getSprite()] >= 64) {
+            z2 += pv.closeRangeZAmount;
+        }
+        if (pv.monsterDamageBoost && this->curAttacker != nullptr) {
+            n += n >> 1;
+        }
+        if (pv.resetThornParticles) {
             this->numThornParticleSystems = 0;
-            break;
         }
     } else {
         this->missileAnim = 0;

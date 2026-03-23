@@ -773,6 +773,14 @@ bool Applet::loadProjectilesFromYAML(const char* path) {
 				pv.launchAnim = (int16_t)tileFromName(launch["anim_player"].as<std::string>("0"));
 			if (launch["anim_monster"])
 				pv.launchAnimMonster = (int16_t)tileFromName(launch["anim_monster"].as<std::string>("0"));
+			// Launch behaviors
+			int crZAdj = launch["close_range_z_adjust"].as<int>(0);
+			if (crZAdj != 0) {
+				pv.closeRangeZAdjust = true;
+				pv.closeRangeZAmount = (int16_t)crZAdj;
+			}
+			pv.monsterDamageBoost = launch["monster_damage_boost"].as<bool>(false);
+			pv.resetThornParticles = launch["reset_thorn_particles"].as<bool>(false);
 		}
 
 		if (YAML::Node impact = p["impact"]) {

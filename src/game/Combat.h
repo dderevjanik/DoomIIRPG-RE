@@ -132,6 +132,11 @@ public:
 		int16_t impactZOffset;       // Z offset added at impact position
 		bool soulCubeReturn;         // Soul cube special return behavior
 		bool impactParticlesOnSprite; // Spawn particles on sprite (not position)
+		// Launch behaviors
+		bool closeRangeZAdjust;      // Adjust target Z when target is close (plasma)
+		int16_t closeRangeZAmount;   // Z amount to add (default: 16)
+		bool monsterDamageBoost;     // Monster fires with 1.5x speed/damage (BFG)
+		bool resetThornParticles;    // Reset thorn particle counter on launch
 	};
 	ProjVisual* projVisuals;
 	int numProjTypes;
