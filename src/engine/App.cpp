@@ -408,6 +408,7 @@ void Applet::loadTables() {
 	}
 	this->loadProjectilesFromYAML("projectiles.yaml");
 	this->loadEffectsFromYAML("effects.yaml");
+	this->loadItemsFromYAML("items.yaml", "effects.yaml");
 	printf("Applet::loadTables: loading from monsters.yaml\n");
 	if (!this->loadMonstersFromYAML("monsters.yaml")) {
 		this->Error("Failed to load monsters.yaml\n");
@@ -816,6 +817,125 @@ bool Applet::loadEffectsFromYAML(const char* path) {
 	}
 
 	printf("Effects: loaded %d buffs from %s\n", count, path);
+	return true;
+}
+
+bool Applet::loadItemsFromYAML(const char* path, const char* effectsPath) {
+	Player* p = this->player;
+	if (!p->itemDefs) {
+		p->itemDefs = new std::vector<ItemDef>();
+	}
+	p->itemDefs->clear();
+
+	// Build buff name→index map from effects.yaml order
+	std::map<std::string, int> buffNameToIndex;
+	{
+		YAML::Node effectsConfig;
+		try {
+			effectsConfig = YAML::LoadFile(effectsPath);
+		} catch (const YAML::Exception&) {
+			// Fallback: use hardcoded buff names matching Enums.h order
+		}
+		if (effectsConfig["buffs"]) {
+			int bi = 0;
+			for (auto it = effectsConfig["buffs"].begin(); it != effectsConfig["buffs"].end() && bi < 15; ++it, ++bi) {
+				std::string name = it->first.as<std::string>("");
+				if (!name.empty()) {
+					buffNameToIndex[name] = bi;
+				}
+			}
+		}
+		if (buffNameToIndex.empty()) {
+			// Hardcoded fallback
+			buffNameToIndex = {
+				{"reflect", 0}, {"purify", 1}, {"haste", 2}, {"regen", 3},
+				{"defense", 4}, {"strength", 5}, {"agility", 6}, {"focus", 7},
+				{"anger", 8}, {"antifire", 9}, {"fortitude", 10}, {"fear", 11},
+				{"wp_poison", 12}, {"fire", 13}, {"disease", 14}
+			};
+		}
+	}
+
+	auto resolveBuff = [&](const std::string& name) -> int {
+		auto it = buffNameToIndex.find(name);
+		return (it != buffNameToIndex.end()) ? it->second : -1;
+	};
+
+	auto parseEffect = [&](const YAML::Node& node) -> ItemEffect {
+		ItemEffect e{};
+		std::string type = node["type"].as<std::string>("");
+		if (type == "health") {
+			e.type = ItemEffect::HEALTH;
+			e.amount = node["amount"].as<int>(0);
+		} else if (type == "armor") {
+			e.type = ItemEffect::ARMOR;
+			e.amount = node["amount"].as<int>(0);
+		} else if (type == "status_effect") {
+			e.type = ItemEffect::STATUS_EFFECT;
+			e.buffIndex = resolveBuff(node["buff"].as<std::string>(""));
+			e.amount = node["amount"].as<int>(0);
+			e.duration = node["duration"].as<int>(0);
+		}
+		return e;
+	};
+
+	YAML::Node config;
+	try {
+		config = YAML::LoadFile(path);
+	} catch (const YAML::Exception&) {
+		printf("Warning: items.yaml not found, useItem will use hardcoded fallback\n");
+		return false;
+	}
+
+	if (!config["items"]) {
+		printf("Warning: items.yaml has no items section\n");
+		return false;
+	}
+
+	YAML::Node items = config["items"];
+	for (auto it = items.begin(); it != items.end(); ++it) {
+		YAML::Node node = it->second;
+		ItemDef def{};
+		def.index = node["index"].as<int>(-1);
+		if (def.index < 0) continue;
+
+		std::string mode = node["require_mode"].as<std::string>("all");
+		def.requireAll = (mode == "all");
+		def.advanceTurn = node["advance_turn"].as<bool>(true);
+		def.consume = node["consume"].as<bool>(true);
+		def.skipEmptyCheck = node["skip_empty_check"].as<bool>(false);
+
+		std::string reqNoBuff = node["requires_no_buff"].as<std::string>("");
+		def.requiresNoBuff = reqNoBuff.empty() ? -1 : resolveBuff(reqNoBuff);
+
+		if (node["effects"]) {
+			for (const auto& e : node["effects"]) {
+				def.effects.push_back(parseEffect(e));
+			}
+		}
+		if (node["bonus_effects"]) {
+			for (const auto& e : node["bonus_effects"]) {
+				def.bonusEffects.push_back(parseEffect(e));
+			}
+		}
+		if (node["remove_buffs"]) {
+			for (const auto& rb : node["remove_buffs"]) {
+				int idx = resolveBuff(rb.as<std::string>(""));
+				if (idx >= 0) def.removeBuffs.push_back(idx);
+			}
+		}
+
+		def.ammoCostType = -1;
+		def.ammoCostAmount = 0;
+		if (node["ammo_cost"]) {
+			def.ammoCostType = node["ammo_cost"]["type"].as<int>(-1);
+			def.ammoCostAmount = node["ammo_cost"]["amount"].as<int>(0);
+		}
+
+		p->itemDefs->push_back(def);
+	}
+
+	printf("Items: loaded %d item definitions from %s\n", (int)p->itemDefs->size(), path);
 	return true;
 }
 

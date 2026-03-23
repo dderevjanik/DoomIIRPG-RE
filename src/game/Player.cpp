@@ -22,7 +22,9 @@ Player::Player() {
 	std::memset(this, 0, sizeof(Player));
 }
 
-Player::~Player() {}
+Player::~Player() {
+	delete this->itemDefs;
+}
 
 bool Player::startup() {
 	printf("Player::startup\n");
@@ -806,160 +808,98 @@ bool Player::fireWeapon(Entity* entity, int n, int n2) {
 
 bool Player::useItem(int n) {
 
+	// Find item definition for this inventory index
+	const ItemDef* def = nullptr;
+	if (this->itemDefs) {
+		for (const auto& d : *this->itemDefs) {
+			if (d.index == n) {
+				def = &d;
+				break;
+			}
+		}
+	}
 
-	if (this->inventory[n] == 0 && n != 22) {
+	if (!def) {
 		return false;
 	}
-	bool b = true;
-	bool b2 = true;
-	switch (n) {
-		case 16: {
-			if (!this->addHealth(20)) {
-				return false;
-			}
-			break;
+
+	if (this->inventory[n] == 0 && !def->skipEmptyCheck) {
+		return false;
+	}
+
+	// Check requires_no_buff
+	if (def->requiresNoBuff >= 0 && this->statusEffects[def->requiresNoBuff] != 0) {
+		return false;
+	}
+
+	// No effects = immediate success (e.g. pack)
+	if (def->effects.empty() && def->bonusEffects.empty()) {
+		return true;
+	}
+
+	// Apply main effects
+	bool anyApplied = false;
+	bool allApplied = true;
+	bool hadStatusEffect = false;
+
+	for (const auto& e : def->effects) {
+		bool ok = false;
+		switch (e.type) {
+			case ItemEffect::HEALTH:
+				ok = this->addHealth(e.amount);
+				break;
+			case ItemEffect::ARMOR:
+				ok = this->addArmor(e.amount);
+				break;
+			case ItemEffect::STATUS_EFFECT:
+				ok = this->addStatusEffect(e.buffIndex, e.amount, e.duration);
+				if (ok) hadStatusEffect = true;
+				break;
 		}
-		case 17: {
-			if (!this->addHealth(80)) {
-				return false;
-			}
-			break;
-		}
-		case 11: {
-			if (!this->addArmor(50)) {
-				return false;
-			}
-			break;
-		}
-		case 12: {
-			if (!this->addArmor(10)) {
-				return false;
-			}
-			break;
-		}
-		case 7: {
-			if (!this->addStatusEffect(6, 25, 31)) {
-				return false;
-			}
-			this->translateStatusEffects();
-			break;
-		}
-		case 6: {
-			if (!this->addStatusEffect(4, 25, 31)) {
-				return false;
-			}
-			this->translateStatusEffects();
-			break;
-		}
-		case 1: {
-			if (!this->addStatusEffect(7, 5, 31)) {
-				return false;
-			}
-			this->translateStatusEffects();
-			break;
-		}
-		case 3: {
-			bool b3 = false;
-			if (this->addStatusEffect(8, 25, 31)) {
-				b3 = true;
-			}
-			if (this->addStatusEffect(5, 20, 31)) {
-				b3 = true;
-			}
-			if (b3) {
+		if (ok) anyApplied = true;
+		else allApplied = false;
+	}
+
+	bool success = def->requireAll ? allApplied : anyApplied;
+	if (!success) {
+		return false;
+	}
+
+	if (hadStatusEffect) {
+		this->translateStatusEffects();
+	}
+
+	// Remove buffs
+	for (int buffIdx : def->removeBuffs) {
+		this->removeStatusEffect(buffIdx);
+	}
+
+	// Apply bonus effects (always applied, don't affect success)
+	for (const auto& e : def->bonusEffects) {
+		switch (e.type) {
+			case ItemEffect::HEALTH:
+				this->addHealth(e.amount);
+				break;
+			case ItemEffect::ARMOR:
+				this->addArmor(e.amount);
+				break;
+			case ItemEffect::STATUS_EFFECT:
+				this->addStatusEffect(e.buffIndex, e.amount, e.duration);
 				this->translateStatusEffects();
 				break;
-			}
-			return false;
-		}
-		case 2: {
-			if (!this->addStatusEffect(9, 0, 11)) {
-				return false;
-			}
-			this->removeStatusEffect(13);
-			this->translateStatusEffects();
-			break;
-		}
-		case 9: {
-			if (!this->addStatusEffect(8, 100, 31)) {
-				return false;
-			}
-			this->translateStatusEffects();
-			break;
-		}
-		case 8: {
-			if (this->statusEffects[2] != 0) {
-				return false;
-			}
-			b = false;
-			this->addStatusEffect(2, 0, 21);
-			this->translateStatusEffects();
-			break;
-		}
-		case 0: {
-			if (!this->addStatusEffect(10, 20, 31)) {
-				return false;
-			}
-			this->translateStatusEffects();
-			this->addHealth(20);
-			break;
-		}
-		case 5: {
-			if (!this->addStatusEffect(3, 5, 31)) {
-				return false;
-			}
-			this->translateStatusEffects();
-			break;
-		}
-		case 10: {
-			bool b4 = false;
-			if (this->addStatusEffect(6, 25, 31)) {
-				b4 = true;
-			}
-			if (this->addStatusEffect(8, 25, 31)) {
-				b4 = true;
-			}
-			if (this->addStatusEffect(4, 25, 31)) {
-				b4 = true;
-			}
-			if (this->addStatusEffect(7, 5, 31)) {
-				b4 = true;
-			}
-			if (b4) {
-				this->translateStatusEffects();
-				break;
-			}
-			return false;
-		}
-		case 4: {
-			if (!this->addStatusEffect(12, 10, 11)) {
-				return false;
-			}
-			this->translateStatusEffects();
-			break;
-		}
-		case 22: {
-			bool b5 = this->addHealth(25) | this->addStatusEffect(11, 100, 3);
-			b2 = false;
-			if (b5) {
-				this->ammo[3] -= 25;
-				this->translateStatusEffects();
-				break;
-			}
-			return false;
-		}
-		case 23: {
-			return true;
-		}
-		default: {
-			return false;
 		}
 	}
+
+	// Ammo cost
+	if (def->ammoCostType >= 0) {
+		this->ammo[def->ammoCostType] -= def->ammoCostAmount;
+	}
+
 	app->sound->playSound(Sounds::getResIDByName(SoundName::USE_ITEM), 0, 3, false);
-	if (b2) {
+	if (def->consume) {
 		--this->inventory[n];
 	}
-	if (b) {
+	if (def->advanceTurn) {
 		app->game->advanceTurn();
 	}
 	return true;

@@ -1,6 +1,8 @@
 #ifndef __PLAYER_H__
 #define __PLAYER_H__
 
+#include <vector>
+#include <string>
 #include "Entity.h"
 #include "EntityDef.h"
 #include "CombatEntity.h"
@@ -14,6 +16,28 @@ class OutputStream;
 class Graphics;
 class Applet;
 class ScriptThread;
+
+struct ItemEffect {
+	enum Type { HEALTH, ARMOR, STATUS_EFFECT };
+	Type type;
+	int buffIndex;   // for STATUS_EFFECT: resolved buff index
+	int amount;
+	int duration;    // for STATUS_EFFECT: turn duration
+};
+
+struct ItemDef {
+	int index;
+	bool requireAll;      // true = all effects must succeed, false = any
+	bool advanceTurn;
+	bool consume;
+	bool skipEmptyCheck;
+	int requiresNoBuff;   // -1 = none, otherwise buff index
+	std::vector<ItemEffect> effects;
+	std::vector<ItemEffect> bonusEffects;
+	std::vector<int> removeBuffs;
+	int ammoCostType;     // -1 = none
+	int ammoCostAmount;
+};
 
 class Player
 {
@@ -49,6 +73,9 @@ public:
 	int buffNoAmountMask;
 	int buffAmtNotDrawnMask;
 	int buffWarningTime;
+
+	// Item data loaded from items.yaml (pointer to avoid memset UB)
+	std::vector<ItemDef>* itemDefs;
 	static constexpr int BOX_X1 = 17;
 	static constexpr int BOX_X2 = 31;
 	static constexpr int BOX_X3 = 43;

@@ -130,6 +130,7 @@ public:
 	bool loadWeaponsFromYAML(const char* path);
 	bool loadProjectilesFromYAML(const char* path);
 	bool loadEffectsFromYAML(const char* path);
+	bool loadItemsFromYAML(const char* path, const char* effectsPath);
 	bool loadMonstersFromYAML(const char* path);
 
 	void loadRuntimeImages();
