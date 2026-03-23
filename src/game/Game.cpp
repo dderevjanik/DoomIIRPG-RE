@@ -1324,40 +1324,33 @@ GameSprite* Game::gsprite_allocAnim(int n, int n2, int n3, int n4) {
 	gsprite_alloc->destScale = 64;
 	gsprite_alloc->startScale = 64;
 	gsprite_alloc->duration = 200 * gsprite_alloc->numAnimFrames;
-	switch (n) {
-		case 241: { // TILENUM_POOF
-			app->render->mapSprites[app->render->S_RENDERMODE + gsprite_alloc->sprite] = 4;
-			break;
-		}
-		case 234: { // TILENUM_ANIM_FIRE
-			app->render->mapSprites[app->render->S_RENDERMODE + gsprite_alloc->sprite] = 3;
-			app->render->mapSprites[app->render->S_SCALEFACTOR + gsprite_alloc->sprite] = 48;
+	auto saIt = gSpriteAnimDefs.find(n);
+	if (saIt != gSpriteAnimDefs.end()) {
+		const SpriteAnimDef& sa = saIt->second;
+		if (sa.renderMode >= 0)
+			app->render->mapSprites[app->render->S_RENDERMODE + gsprite_alloc->sprite] = sa.renderMode;
+		if (sa.scale >= 0)
+			app->render->mapSprites[app->render->S_SCALEFACTOR + gsprite_alloc->sprite] = sa.scale;
+		if (sa.numFrames >= 0)
+			gsprite_alloc->numAnimFrames = sa.numFrames;
+		if (sa.duration >= 0)
+			gsprite_alloc->duration = sa.duration;
+		else if (sa.numFrames >= 0)
+			gsprite_alloc->duration = 200 * sa.numFrames;
+		if (sa.zAtGround) {
 			app->render->mapSprites[app->render->S_Z + gsprite_alloc->sprite] =
-			    (short)(app->render->getHeight(n2, n3) + 32);
-			if ((app->nextInt() & 0x1) != 0x0) {
+			    (short)(app->render->getHeight(n2, n3) + sa.zOffset);
+		}
+		if (sa.randomFlip) {
+			if ((app->nextInt() & 0x1) != 0x0)
 				app->render->mapSpriteInfo[gsprite_alloc->sprite] |= 0x20000;
-				break;
-			}
-			app->render->mapSpriteInfo[gsprite_alloc->sprite] &= 0xFFFDFFFF;
-			break;
+			else
+				app->render->mapSpriteInfo[gsprite_alloc->sprite] &= 0xFFFDFFFF;
 		}
-		case 242: { // TILENUM_FIRE_BALL
-			app->render->mapSprites[app->render->S_RENDERMODE + gsprite_alloc->sprite] = 3;
-			break;
-		}
-		case 208: { // TILENUM_FOG_GRAY
-			gsprite_alloc->numAnimFrames = 1;
-			gsprite_alloc->duration = 400;
-			break;
-		}
-		case 245:   // TILENUM_MONSTER_CLAW
-		case 246:   // TILENUM_MONSTER_BITE
-		case 247: { // TILENUM_MONSTER_BLUNT_TRAUMA
-			gsprite_alloc->duration = 200;
+		if (sa.facePlayer) {
 			gsprite_alloc->flags |= 0x1002;
-			gsprite_alloc->numAnimFrames = 1;
-			gsprite_alloc->pos[0] = -6;
-			gsprite_alloc->pos[3] = -6;
+			gsprite_alloc->pos[0] = sa.posOffset;
+			gsprite_alloc->pos[3] = sa.posOffset;
 			gsprite_alloc->pos[1] = 0;
 			gsprite_alloc->pos[4] = 0;
 			gsprite_alloc->vel[2] = 0;
@@ -1373,16 +1366,6 @@ GameSprite* Game::gsprite_allocAnim(int n, int n2, int n3, int n4) {
 			            (this->viewRightStepY >> 6) * gsprite_alloc->pos[1]);
 			app->render->mapSprites[app->render->S_Z + gsprite_alloc->sprite] =
 			    (short)(app->canvas->viewZ + gsprite_alloc->pos[2]);
-			break;
-		}
-		case 252: { // TILENUM_ACID_SPIT
-			gsprite_alloc->numAnimFrames = 2;
-			break;
-		}
-		case 170: { // TILENUM_SENTINEL_SPIKES
-			gsprite_alloc->numAnimFrames = 1;
-			gsprite_alloc->duration = 200;
-			break;
 		}
 	}
 	app->render->relinkSprite(gsprite_alloc->sprite);

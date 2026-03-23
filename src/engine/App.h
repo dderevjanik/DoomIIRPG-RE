@@ -3,8 +3,23 @@
 
 #include <cstring>
 #include <stdint.h>
+#include <map>
 
 #include "IDIB.h"
+
+struct SpriteAnimDef {
+	int renderMode = -1;  // -1 = don't override
+	int scale = -1;       // -1 = don't override
+	int numFrames = -1;   // -1 = don't override
+	int duration = -1;    // -1 = don't override
+	bool zAtGround = false;
+	int zOffset = 0;
+	bool randomFlip = false;
+	bool facePlayer = false;
+	int posOffset = 0;
+};
+
+extern std::map<int, SpriteAnimDef> gSpriteAnimDefs;
 
 class SDLGL;
 class IDIB;

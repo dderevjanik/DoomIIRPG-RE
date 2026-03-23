@@ -486,6 +486,9 @@ static int ammoTypeFromName(const std::string& name) {
 // Global tile name -> index map, populated from animations.yaml
 static std::map<std::string, int> tileNameMap;
 
+// Global sprite animation overrides, populated from animations.yaml sprite_anims section
+std::map<int, SpriteAnimDef> gSpriteAnimDefs;
+
 static int tileFromName(const std::string& name) {
 	if (name.empty() || name == "0" || name == "none")
 		return 0;
@@ -496,6 +499,22 @@ static int tileFromName(const std::string& name) {
 		printf("Warning: unknown tile name '%s'\n", name.c_str());
 		return 0;
 	}
+}
+
+static int renderModeFromName(const std::string& name) {
+	if (name == "normal") return 0;
+	if (name == "blend25") return 1;
+	if (name == "blend50") return 2;
+	if (name == "add") return 3;
+	if (name == "add75") return 4;
+	if (name == "add50") return 5;
+	if (name == "add25") return 6;
+	if (name == "sub") return 7;
+	if (name == "perf") return 9;
+	if (name == "none") return 10;
+	if (name == "blend75") return 12;
+	if (name == "blend_special_alpha") return 13;
+	try { return std::stoi(name); } catch (...) { return 0; }
 }
 
 bool Applet::loadAnimationsFromYAML(const char* path) {
@@ -516,23 +535,33 @@ bool Applet::loadAnimationsFromYAML(const char* path) {
 	}
 
 	printf("Animations: loaded %d tile names from %s\n", (int)tileNameMap.size(), path);
-	return true;
-}
 
-static int renderModeFromName(const std::string& name) {
-	if (name == "normal") return 0;
-	if (name == "blend25") return 1;
-	if (name == "blend50") return 2;
-	if (name == "add") return 3;
-	if (name == "add75") return 4;
-	if (name == "add50") return 5;
-	if (name == "add25") return 6;
-	if (name == "sub") return 7;
-	if (name == "perf") return 9;
-	if (name == "none") return 10;
-	if (name == "blend75") return 12;
-	if (name == "blend_special_alpha") return 13;
-	try { return std::stoi(name); } catch (...) { return 0; }
+	YAML::Node spriteAnims = config["sprite_anims"];
+	if (spriteAnims && spriteAnims.IsMap()) {
+		for (auto it = spriteAnims.begin(); it != spriteAnims.end(); ++it) {
+			int tileId = tileFromName(it->first.as<std::string>());
+			if (tileId == 0) continue;
+			YAML::Node sa = it->second;
+			SpriteAnimDef def;
+			if (sa["render_mode"])
+				def.renderMode = renderModeFromName(sa["render_mode"].as<std::string>());
+			if (sa["scale"])
+				def.scale = sa["scale"].as<int>();
+			if (sa["num_frames"])
+				def.numFrames = sa["num_frames"].as<int>();
+			if (sa["duration"])
+				def.duration = sa["duration"].as<int>();
+			def.zAtGround = sa["z_at_ground"].as<bool>(false);
+			def.zOffset = sa["z_offset"].as<int>(0);
+			def.randomFlip = sa["random_flip"].as<bool>(false);
+			def.facePlayer = sa["face_player"].as<bool>(false);
+			def.posOffset = sa["pos_offset"].as<int>(0);
+			gSpriteAnimDefs[tileId] = def;
+		}
+		printf("Animations: loaded %d sprite anim overrides\n", (int)gSpriteAnimDefs.size());
+	}
+
+	return true;
 }
 
 bool Applet::loadWeaponsFromYAML(const char* path) {
