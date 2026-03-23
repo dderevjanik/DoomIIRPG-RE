@@ -1145,6 +1145,11 @@ void Canvas::setState(int state) {
 		this->combatDone = false;
 	}
 	else if (state == Canvas::ST_TRAVELMAP) {
+		if (CAppContainer::getInstance()->skipTravelMap) {
+			this->setLoadingBarText((short)0, (short)41);
+			this->setState(Canvas::ST_LOADING);
+			return;
+		}
 		this->initTravelMap();
 	}
 	else if (state == Canvas::ST_PLAYING) {
