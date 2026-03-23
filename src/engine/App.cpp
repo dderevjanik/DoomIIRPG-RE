@@ -401,6 +401,7 @@ void Applet::loadTables() {
 	if (!this->loadTablesFromYAML("tables.yaml")) {
 		this->Error("Failed to load tables.yaml\n");
 	}
+	this->loadAnimationsFromYAML("animations.yaml");
 	printf("Applet::loadTables: loading from weapons.yaml\n");
 	if (!this->loadWeaponsFromYAML("weapons.yaml")) {
 		this->Error("Failed to load weapons.yaml\n");
@@ -478,6 +479,42 @@ static int ammoTypeFromName(const std::string& name) {
 	} catch (...) {
 		return 0;
 	}
+}
+
+// Global tile name -> index map, populated from animations.yaml
+static std::map<std::string, int> tileNameMap;
+
+static int tileFromName(const std::string& name) {
+	if (name.empty() || name == "0" || name == "none")
+		return 0;
+	auto it = tileNameMap.find(name);
+	if (it != tileNameMap.end())
+		return it->second;
+	try { return std::stoi(name); } catch (...) {
+		printf("Warning: unknown tile name '%s'\n", name.c_str());
+		return 0;
+	}
+}
+
+bool Applet::loadAnimationsFromYAML(const char* path) {
+	YAML::Node config;
+	try {
+		config = YAML::LoadFile(path);
+	} catch (const YAML::Exception&) {
+		printf("Warning: could not load %s\n", path);
+		return false;
+	}
+
+	YAML::Node tiles = config["tiles"];
+	if (!tiles || !tiles.IsMap())
+		return false;
+
+	for (auto it = tiles.begin(); it != tiles.end(); ++it) {
+		tileNameMap[it->first.as<std::string>()] = it->second.as<int>();
+	}
+
+	printf("Animations: loaded %d tile names from %s\n", (int)tileNameMap.size(), path);
+	return true;
 }
 
 static int renderModeFromName(const std::string& name) {
@@ -636,8 +673,8 @@ bool Applet::loadProjectilesFromYAML(const char* path) {
 		if (YAML::Node launch = p["launch"]) {
 			auto& pv = this->combat->projVisuals[i];
 			pv.launchRenderMode = (int8_t)renderModeFromName(launch["render_mode"].as<std::string>("normal"));
-			pv.launchAnim = (int16_t)launch["anim"].as<int>(0);
-			pv.launchAnimMonster = (int16_t)launch["anim_monster"].as<int>(0);
+			pv.launchAnim = (int16_t)tileFromName(launch["anim"].as<std::string>("0"));
+			pv.launchAnimMonster = (int16_t)tileFromName(launch["anim_monster"].as<std::string>("0"));
 			pv.launchSpeed = (int16_t)launch["speed"].as<int>(0);
 			pv.launchSpeedAdd = (int16_t)launch["speed_add"].as<int>(0);
 			pv.launchAnimFromWeapon = launch["anim_from_weapon"].as<bool>(false);
@@ -649,14 +686,14 @@ bool Applet::loadProjectilesFromYAML(const char* path) {
 			}
 			// Support anim_player as alias for anim
 			if (launch["anim_player"])
-				pv.launchAnim = (int16_t)launch["anim_player"].as<int>(0);
+				pv.launchAnim = (int16_t)tileFromName(launch["anim_player"].as<std::string>("0"));
 			if (launch["anim_monster"])
-				pv.launchAnimMonster = (int16_t)launch["anim_monster"].as<int>(0);
+				pv.launchAnimMonster = (int16_t)tileFromName(launch["anim_monster"].as<std::string>("0"));
 		}
 
 		if (YAML::Node impact = p["impact"]) {
 			auto& pv = this->combat->projVisuals[i];
-			pv.impactAnim = (int16_t)impact["anim"].as<int>(0);
+			pv.impactAnim = (int16_t)tileFromName(impact["anim"].as<std::string>("0"));
 			pv.impactRenderMode = (int8_t)renderModeFromName(impact["render_mode"].as<std::string>("normal"));
 			std::string snd = impact["impact_sound"].as<std::string>("");
 			if (!snd.empty()) {

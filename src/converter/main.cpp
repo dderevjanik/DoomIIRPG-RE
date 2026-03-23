@@ -147,6 +147,25 @@ static std::string renderModeName(int val) {
 	return std::to_string(val);
 }
 
+// Reverse map: tile index -> name for YAML output
+static std::map<int, std::string> tileIndexToName = {
+	{225, "missile_player_rocket"}, {226, "missile_rocket"}, {227, "flesh"},
+	{232, "shadow"}, {234, "anim_fire"}, {235, "anim_water"},
+	{236, "air_vent"}, {239, "soul_cube_attack"}, {240, "water_stream"},
+	{241, "caco_plasma"}, {242, "fire_ball"}, {243, "plasma_ball"},
+	{244, "bfg_ball"}, {245, "monster_claw"}, {246, "monster_bite"},
+	{247, "monster_blunt_trauma"}, {248, "electric_slide"},
+	{251, "fear_eye"}, {252, "acid_spit"},
+	{170, "sentinel_spikes"}, {171, "sentinel_spikes_dummy"},
+};
+
+static std::string tileName(int idx) {
+	if (idx == 0) return "0";
+	auto it = tileIndexToName.find(idx);
+	if (it != tileIndexToName.end()) return it->second;
+	return std::to_string(idx);
+}
+
 static const char* AMMO_TYPE_NAMES[] = {"none", "bullets", "shells", "holy_water", "cells", "rockets", "soul_cube", "sentry_bot", "item"};
 static const int NUM_AMMO_TYPES = 9;
 
@@ -1513,6 +1532,106 @@ static bool convertTables(ZipFile& zip, const std::string& outDir) {
 // ========================================================================
 // Generate: projectiles.yaml (hardcoded defaults, not from binary)
 // ========================================================================
+static bool generateAnimationsYaml(const std::string& outDir) {
+	YAML::Emitter out;
+	out << YAML::Comment("Tile/sprite name-to-index mapping");
+	out << YAML::Comment("Used by projectiles.yaml, entities.yaml, and other configs");
+	out << YAML::Comment("Modders can remap sprite sheet layouts by changing the indices here.");
+	out << YAML::Newline;
+
+	struct TileEntry { const char* name; int index; };
+	static const TileEntry entries[] = {
+		// View weapons
+		{"assault_rifle", 1}, {"chainsaw", 2}, {"holy_water_pistol", 3},
+		{"sentry_bot_shooting", 4}, {"sentry_bot_exploding", 5},
+		{"super_shotgun", 6}, {"chaingun", 7}, {"assault_rifle_with_scope", 8},
+		{"plasma_gun", 9}, {"rocket_launcher", 10}, {"bfg", 11}, {"soul_cube", 12},
+		{"sentry_bot_red_shooting", 13}, {"sentry_bot_red_exploding", 14},
+		{"world_weapon", 15},
+		// Monsters
+		{"monster_red_sentry_bot", 18}, {"monster_sentry_bot", 19},
+		{"monster_zombie", 20}, {"monster_zombie2", 21}, {"monster_zombie3", 22},
+		{"monster_imp", 23}, {"monster_imp2", 24}, {"monster_imp3", 25},
+		{"monster_saw_goblin", 26}, {"monster_saw_goblin2", 27}, {"monster_saw_goblin3", 28},
+		{"monster_lost_soul", 29}, {"monster_lost_soul2", 30}, {"monster_lost_soul3", 31},
+		{"monster_pinky", 32}, {"monster_pinky2", 33}, {"monster_pinky3", 34},
+		{"monster_revenant", 35}, {"monster_revenant2", 36}, {"monster_revenant3", 37},
+		{"monster_mancubus", 38}, {"monster_mancubus2", 39}, {"monster_mancubus3", 40},
+		{"monster_cacodemon", 41}, {"monster_cacodemon2", 42}, {"monster_cacodemon3", 43},
+		{"monster_sentinel", 44}, {"monster_sentinel2", 45}, {"monster_sentinel3", 46},
+		{"monster_arch_vile", 50}, {"monster_arch_vile2", 51}, {"monster_arch_vile3", 52},
+		{"monster_arachnotron", 53},
+		{"boss_cyberdemon", 54}, {"boss_pinky", 56}, {"boss_mastermind", 57},
+		{"boss_vios", 58}, {"boss_vios2", 59}, {"boss_vios3", 60},
+		{"boss_vios4", 61}, {"boss_vios5", 62},
+		// NPCs
+		{"npc_riley_oconnor", 66}, {"npc_major", 68}, {"npc_bob", 69},
+		{"npc_civilian", 71}, {"npc_sarge", 72}, {"npc_female", 73},
+		{"npc_evil_scientist", 74}, {"npc_scientist", 75}, {"npc_researcher", 76},
+		{"npc_civilian2", 77},
+		// Items
+		{"ammo_bullets", 85}, {"ammo_shells", 86}, {"ammo_rockets", 88},
+		{"ammo_cells", 89}, {"ammo_holy_water", 90}, {"one_uac_credit", 107},
+		{"key_red", 110}, {"key_blue", 111}, {"armor_jacket", 112},
+		{"satchel", 113}, {"pack_item", 114}, {"worker_pack", 115},
+		{"health_pack", 116}, {"food_plate", 117}, {"armor_shard", 119},
+		// World objects
+		{"obj_table", 121}, {"hell_seal", 122}, {"toilet", 123},
+		{"dirt_decal", 124}, {"ladder", 125}, {"blood_splatter", 126},
+		{"sink", 127}, {"barred_window", 128}, {"hazard_bar", 129},
+		{"obj_fire", 130}, {"treadmill_monitor", 131}, {"tech_station", 133},
+		{"water_spout", 134}, {"obj_chair", 135}, {"obj_torchiere", 136},
+		{"obj_scientist_corpse", 137}, {"obj_corpse", 138}, {"obj_other_corpse", 139},
+		{"dummy_pain", 140}, {"attack_dummy", 141}, {"exit_dummy", 142},
+		{"use_dummy", 143}, {"septic_station", 147}, {"practice_target", 149},
+		{"obj_printer", 150}, {"obj_crate", 152}, {"vending_machine", 153},
+		{"armor_repair", 154}, {"closed_portal_eye", 155}, {"eye_portal", 156},
+		{"portal_socket", 157}, {"treadmill_side", 158}, {"treadmill_front", 159},
+		{"hell_hands", 161}, {"doorjamb_decal", 162}, {"stones_and_skulls", 164},
+		{"nonobstructing_spritewall", 166}, {"fence", 168},
+		{"sentinel_spikes", 170}, {"sentinel_spikes_dummy", 171},
+		{"switch", 173}, {"tech_detail", 175}, {"hell_skulls", 177},
+		{"glass", 178}, {"terminal_target", 179}, {"terminal_general", 180},
+		{"terminal_vios", 181}, {"terminal_bot", 182}, {"terminal_hacking", 183},
+		{"elevator_nums", 184}, {"bush", 187}, {"tree_top", 188},
+		{"tree_trunk", 189}, {"sfx_lightglow1", 193}, {"window3", 197},
+		{"glaevenscope", 201}, {"fog_gray", 208}, {"scorch_mark", 212},
+		{"static_flame", 223},
+		// Projectiles and effects
+		{"missile_player_rocket", 225}, {"missile_rocket", 226}, {"flesh", 227},
+		{"shadow", 232}, {"anim_fire", 234}, {"anim_water", 235},
+		{"air_vent", 236}, {"soul_cube_attack", 239}, {"water_stream", 240},
+		{"caco_plasma", 241}, {"fire_ball", 242}, {"plasma_ball", 243},
+		{"bfg_ball", 244}, {"monster_claw", 245}, {"monster_bite", 246},
+		{"monster_blunt_trauma", 247}, {"electric_slide", 248},
+		{"fear_eye", 251}, {"acid_spit", 252}, {"npc_chat", 254}, {"alert", 255},
+		// Walls and doors
+		{"doorjamb", 257}, {"red_door_locked", 271}, {"red_door_unlocked", 272},
+		{"blue_door_locked", 273}, {"blue_door_unlocked", 274},
+		{"door_locked", 275}, {"door_unlocked", 276},
+		{"level_door_locked", 277}, {"level_door_unlocked", 278},
+		{"sky_box", 301}, {"fade", 302},
+		// Flats
+		{"flat_lava", 479}, {"flat_lava2", 480},
+	};
+
+	out << YAML::BeginMap;
+	out << YAML::Key << "tiles" << YAML::Value << YAML::BeginMap;
+	for (const auto& e : entries) {
+		out << YAML::Key << e.name << YAML::Value << e.index;
+	}
+	out << YAML::EndMap;
+	out << YAML::EndMap;
+
+	std::string path = outDir + "/animations.yaml";
+	FILE* f = fopen(path.c_str(), "w");
+	if (!f) return false;
+	fprintf(f, "%s\n", out.c_str());
+	fclose(f);
+	printf("  -> %s\n", path.c_str());
+	return true;
+}
+
 static bool generateProjectilesYaml(const std::string& outDir) {
 	YAML::Emitter out;
 	out << YAML::Comment("Projectile visual definitions");
@@ -1555,10 +1674,10 @@ static bool generateProjectilesYaml(const std::string& outDir) {
 			out << YAML::Key << "launch" << YAML::Value << YAML::BeginMap;
 			if (d.launchRM >= 0) out << YAML::Key << "render_mode" << YAML::Value << renderModeName(d.launchRM);
 			if (d.launchAnimMon != 0) {
-				out << YAML::Key << "anim_player" << YAML::Value << d.launchAnim;
-				out << YAML::Key << "anim_monster" << YAML::Value << d.launchAnimMon;
+				out << YAML::Key << "anim_player" << YAML::Value << tileName(d.launchAnim);
+				out << YAML::Key << "anim_monster" << YAML::Value << tileName(d.launchAnimMon);
 			} else if (d.launchAnim != 0) {
-				out << YAML::Key << "anim" << YAML::Value << d.launchAnim;
+				out << YAML::Key << "anim" << YAML::Value << tileName(d.launchAnim);
 			}
 			if (d.launchSpeed > 0) out << YAML::Key << "speed" << YAML::Value << d.launchSpeed;
 			if (d.launchSpeedAdd != 0) out << YAML::Key << "speed_add" << YAML::Value << d.launchSpeedAdd;
@@ -1578,7 +1697,7 @@ static bool generateProjectilesYaml(const std::string& outDir) {
 
 		if (d.impactAnim != 0 || d.impactSound != nullptr || d.shake) {
 			out << YAML::Key << "impact" << YAML::Value << YAML::BeginMap;
-			out << YAML::Key << "anim" << YAML::Value << d.impactAnim;
+			out << YAML::Key << "anim" << YAML::Value << tileName(d.impactAnim);
 			if (d.impactRM != 0) out << YAML::Key << "render_mode" << YAML::Value << renderModeName(d.impactRM);
 			if (d.impactSound) out << YAML::Key << "impact_sound" << YAML::Value << d.impactSound;
 			if (d.shake) {
@@ -2382,6 +2501,9 @@ int main(int argc, char* argv[]) {
 
 	printf("Converting tables...\n");
 	ok &= convertTables(zip, outputDir);
+
+	printf("Generating animations.yaml...\n");
+	ok &= generateAnimationsYaml(outputDir);
 
 	printf("Generating projectiles.yaml...\n");
 	ok &= generateProjectilesYaml(outputDir);
