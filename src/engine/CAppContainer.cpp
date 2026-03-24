@@ -1,4 +1,5 @@
 #include <stdexcept>
+#include <chrono>
 
 #include "SDLGL.h"
 #include "VFS.h"
@@ -22,6 +23,7 @@ CAppContainer::CAppContainer() {
 	this->customMapFile = nullptr;
 	this->minigameName = nullptr;
 	this->skipTravelMap = false;
+	this->headless = false;
 }
 
 CAppContainer::~CAppContainer() {
@@ -51,10 +53,14 @@ short* CAppContainer::GetBackBuffer()
 }
 
 void CAppContainer::DoLoop(int time) {
-	this->app->sound->startFrame();
+	if (!this->headless) {
+		this->app->sound->startFrame();
+	}
 	this->app->canvas->staleView = true;
 	this->app->canvas->run();
-	this->app->sound->endFrame();
+	if (!this->headless) {
+		this->app->sound->endFrame();
+	}
 	this->app->upTimeMs += time;
 }
 
@@ -92,6 +98,11 @@ void CAppContainer::unHighlightButtons() {
 }
 
 uint32_t CAppContainer::getTimeMS() {
+	if (this->headless) {
+		static auto start = std::chrono::steady_clock::now();
+		auto now = std::chrono::steady_clock::now();
+		return (uint32_t)std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();
+	}
 	return SDL_GetTicks();
 }
 

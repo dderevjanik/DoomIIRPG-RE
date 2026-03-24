@@ -428,6 +428,7 @@ bool Canvas::startup() {
 }
 
 void Canvas::flushGraphics() {
+	if (CAppContainer::getInstance()->headless) { return; }
 	this->graphics.resetScreenSpace();
 	this->backPaint(&this->graphics);
 }
@@ -826,7 +827,7 @@ void Canvas::run() {
 	this->runInputEvents();
 
 	// [GEC]
-	if (this->repaintFlags & Canvas::REPAINT_VIEW3D) { // REPAINT_VIEW3D
+	if (!CAppContainer::getInstance()->headless && (this->repaintFlags & Canvas::REPAINT_VIEW3D)) { // REPAINT_VIEW3D
 		if (!app->render->_gles->isInit) {
 			app->render->Render3dScene();
 			app->tinyGL->applyClearColorBuffer();

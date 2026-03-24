@@ -594,6 +594,7 @@ bool isGamepadAxisInputJustReleased() noexcept { // [GEC]
 //----------------------
 
 void controllerVibrate(int duration_ms) noexcept {
+    if (CAppContainer::getInstance()->headless) { return; }
     float intensity = (float)gVibrationIntensity / 100.f;
     // Use game controller
     if (gpGameController) {
@@ -710,6 +711,7 @@ void Input::setInputBind(int scancode) {
 }
 
 void Input::handleEvents() noexcept {
+	if (CAppContainer::getInstance()->headless) { return; }
 
 	SDL_Event sdlEvent;
     SDLGL* sdlGL = CAppContainer::getInstance()->sdlGL;

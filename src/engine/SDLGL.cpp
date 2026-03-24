@@ -16,15 +16,31 @@ SDLGL::SDLGL() {
 
 SDLGL::~SDLGL() {
 	if (this) {
-		if (initialized) {
-			if (this->window) {
-				SDL_SetWindowFullscreen(this->window, 0);
-			}
+		if (initialized && this->window) {
+			SDL_SetWindowFullscreen(this->window, 0);
 			SDL_GL_DeleteContext(glcontext);
 			SDL_DestroyWindow(window);
 			SDL_Quit();
 		}
 	}
+}
+
+bool SDLGL::InitializeHeadless() {
+	if (!this->initialized) {
+		this->window = nullptr;
+		this->resolutionIndex = 0;
+		this->oldResolutionIndex = -1;
+		this->winVidWidth = Applet::IOS_WIDTH;
+		this->winVidHeight = Applet::IOS_HEIGHT;
+		this->vidWidth = Applet::IOS_WIDTH;
+		this->vidHeight = Applet::IOS_HEIGHT;
+		this->windowMode = 0;
+		this->oldWindowMode = -1;
+		this->vSync = false;
+		this->oldVSync = false;
+		this->initialized = true;
+	}
+	return this->initialized;
 }
 
 bool SDLGL::Initialize() {

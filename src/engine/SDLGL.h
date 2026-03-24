@@ -28,6 +28,7 @@ public:
 	// Destructor
 	~SDLGL();
 	bool Initialize();
+	bool InitializeHeadless();
 	void Error(const char* fmt, ...);
 
 	void transformCoord2f(float* x, float* y);

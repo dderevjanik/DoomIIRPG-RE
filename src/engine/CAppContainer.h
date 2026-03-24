@@ -108,6 +108,7 @@ class CAppContainer {
 	const char* customMapFile;     // --map override
 	const char* minigameName;     // --minigame override
 	bool skipTravelMap;            // --skip-travel-map
+	bool headless;                 // --headless mode (no rendering, no audio)
 	static CAppContainer* getInstance();
 	static int m_cheatEntry;
 	float MoveX, MoveY, MoveAng;

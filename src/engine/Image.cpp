@@ -17,13 +17,16 @@ Image::~Image() {
             std::free(this->piDIB);
         }
         this->piDIB = nullptr;
-        glDeleteTextures(1, &this->texture);
+        if (!CAppContainer::getInstance()->headless) {
+            glDeleteTextures(1, &this->texture);
+        }
         this->texture = -1;
         std::free(this);
     }
 }
 
 void Image::CreateTexture(uint16_t* data, uint32_t width, uint32_t height) {
+    if (CAppContainer::getInstance()->headless) { return; }
     glEnable(GL_TEXTURE_2D);
     glGenTextures(1, &this->texture);
     glBindTexture(GL_TEXTURE_2D, this->texture);
