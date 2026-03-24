@@ -174,7 +174,7 @@ int CombatEntity::calcHit(CombatEntity* ce, CombatEntity* ce2, bool b, int i, bo
         return app->combat->crFlags |= 0x1;
     }
     
-    if (Entity::CheckWeaponMask(attackerWeaponId, 0x200) != 0x0) {
+    if (app->combat->getWeaponFlags(attackerWeaponId).isScoped) {
         if (eType == 2) {
             int sprite = curTarget->getSprite();
             int n2 = app->canvas->zoomCollisionX - app->render->mapSprites[app->render->S_X + sprite];
@@ -226,7 +226,7 @@ int CombatEntity::calcHit(CombatEntity* ce, CombatEntity* ce2, bool b, int i, bo
         n7 = app->combat->weapons[attackerWeapon + Combat::WEAPON_FIELD_RANGEMIN] - worldDistToTileDist;
     }
     else if (worldDistToTileDist > app->combat->weapons[attackerWeapon + Combat::WEAPON_FIELD_RANGEMAX]) {
-        if (attackerWeaponId == 7 || attackerWeaponId == 2) {
+        if (app->combat->getWeaponFlags(attackerWeaponId).outOfRangeStillFires) {
             b3 = true;
         }
         n7 = worldDistToTileDist - app->combat->weapons[attackerWeapon + Combat::WEAPON_FIELD_RANGEMAX];
@@ -245,7 +245,7 @@ int CombatEntity::calcHit(CombatEntity* ce, CombatEntity* ce2, bool b, int i, bo
     }
     int stat = ce->getStat(Enums::STAT_ACCURACY);
     int stat2 = ce2->getStat(Enums::STAT_AGILITY);
-    if (Entity::CheckWeaponMask(attackerWeaponId, 0x800) == 0x0) {
+    if (!app->combat->getWeaponFlags(attackerWeaponId).fullAgility) {
         stat2 = stat2 * 96 >> 8;
     }
     app->combat->crHitChance = (stat - stat2 << 8) / 100;
@@ -365,7 +365,7 @@ int CombatEntity::calcDamage(CombatEntity* ce, Entity* entity, CombatEntity* ce2
         else {
             damage = dmgStrMin * 5 / 8;
         }
-        if (Entity::CheckWeaponMask(ce->weapon, 0x900000) != 0x0 && app->player->buffs[9] > 0) {
+        if (app->combat->getWeaponFlags(ce->weapon).blockableByShield && app->player->buffs[9] > 0) {
             armorDamage = 0;
             damage = 0;
         }

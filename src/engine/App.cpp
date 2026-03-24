@@ -725,6 +725,11 @@ bool Applet::loadWeaponsFromYAML(const char* path) {
 			f.interactFlags = beh["interact_flags"].as<int>(0);
 			f.canLootCorpses = beh["can_loot_corpses"].as<bool>(false);
 			f.fountainWeapon = beh["fountain_weapon"].as<bool>(false);
+			f.isScoped = beh["is_scoped"].as<bool>(false);
+			f.fullAgility = beh["full_agility"].as<bool>(false);
+			f.requiresLineOfSight = beh["requires_line_of_sight"].as<bool>(false);
+			f.blockableByShield = beh["blockable_by_shield"].as<bool>(false);
+			f.outOfRangeStillFires = beh["out_of_range_still_fires"].as<bool>(false);
 		}
 	}
 

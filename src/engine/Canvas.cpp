@@ -2319,7 +2319,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 		int n4 = 16384;
 		int n5 = 13997;
 
-		if (Entity::CheckWeaponMask(weapon2, 2) != 0x0) {
+		if (app->combat->getWeaponFlags(weapon2).isMelee) {
 			//n5 |= 0x2000; // J2ME only?
 		}
 		if (app->combat->getWeaponFlags(weapon2).interactFlags != 0) {
@@ -2327,7 +2327,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 		}
 		int n6 = 0;
 		int n7 = 6;
-		if (Entity::CheckWeaponMask(weapon2, 2) != 0x0) {
+		if (app->combat->getWeaponFlags(weapon2).isMelee) {
 			n7 = 1;
 			n5 |= 0x10;
 		}
@@ -2366,7 +2366,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 					}
 				}
 				else if (eType == 13) {
-					if (Entity::CheckWeaponMask(weapon2, 2) != 0x0) {
+					if (app->combat->getWeaponFlags(weapon2).isMelee) {
 						entity2 = entity3;
 					}
 				}
@@ -2509,7 +2509,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 				entity->param = app->upTimeMs + 200;
 				app->game->unlinkEntity(entity);
 			}
-			else if (weapon2 == 11) {}
+			else if (app->combat->getWeaponFlags(weapon2).splashDamage) {}
 		}
 
 		int flagForFacingDir = this->flagForFacingDir(4);
@@ -2625,7 +2625,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 					app->player->addXP(5);
 				}
 				else {
-					if (!this->isZoomedIn && Entity::CheckWeaponMask(weapon2, 512) != 0x0 && app->player->ammo[app->combat->weapons[n12 + 4]] > 0) {
+					if (!this->isZoomedIn && app->combat->getWeaponFlags(weapon2).isScoped && app->player->ammo[app->combat->weapons[n12 + 4]] > 0) {
 						this->initZoom();
 						return true;
 					}

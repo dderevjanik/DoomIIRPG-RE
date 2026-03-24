@@ -143,6 +143,11 @@ public:
 		int interactFlags;      // Additional entity type flags when targeting with this weapon (0 = none)
 		bool canLootCorpses;    // Can loot corpses at melee range (chainsaw)
 		bool fountainWeapon;    // Can refill ammo at fountain/water spout entities (holy water pistol)
+		bool isScoped;          // Scoped weapon — enables zoom mode and sniper hit detection (assault rifle w/ scope)
+		bool fullAgility;       // Use full agility in accuracy calc (rocket launcher); if false, agility is reduced to 96/256
+		bool requiresLineOfSight; // Weapon requires clear line of sight to target (melee weapons)
+		bool blockableByShield; // Attack is blocked when player has shield buff active (fireball, archvile fire)
+		bool outOfRangeStillFires; // Still fires when out of range (super shotgun, holy water — no early miss)
 	};
 	WeaponFlags* wpFlags;       // Array sized to numWeapons
 	int numWeaponFlags;

@@ -2,6 +2,7 @@
 
 #include "CAppContainer.h"
 #include "App.h"
+#include "Combat.h"
 #include "Text.h"
 #include "Game.h"
 #include "Button.h"
@@ -805,21 +806,13 @@ void SentryBotGame::awardSentryBot(int n) {
     if (!this->app) this->app = CAppContainer::getInstance()->app;
     Applet* app = this->app;
 
-    if ((app->player->weapons & 0x8) != 0x0) {
-        app->player->attemptToDiscardFamiliar(3);
-        app->player->showHelp((short)16, true);
-    }
-    else if ((app->player->weapons & 0x10) != 0x0) {
-        app->player->attemptToDiscardFamiliar(4);
-        app->player->showHelp((short)16, true);
-    }
-    else if ((app->player->weapons & 0x20) != 0x0) {
-        app->player->attemptToDiscardFamiliar(5);
-        app->player->showHelp((short)16, true);
-    }
-    else if ((app->player->weapons & 0x40) != 0x0) {
-        app->player->attemptToDiscardFamiliar(6);
-        app->player->showHelp((short)16, true);
+    for (int i = 0; i < app->combat->familiarDefCount; i++) {
+        int wpIdx = app->combat->familiarDefs[i].weaponIndex;
+        if ((app->player->weapons & (1 << wpIdx)) != 0) {
+            app->player->attemptToDiscardFamiliar(wpIdx);
+            app->player->showHelp((short)16, true);
+            break;
+        }
     }
     app->player->give(1, n, 1);
 }

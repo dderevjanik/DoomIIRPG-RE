@@ -782,10 +782,10 @@ int Entity::aiWeaponForTarget(Entity* entity) {
             int monsterField2 = app->combat->getMonsterField(this->def, 0);
             int monsterField3 = app->combat->getMonsterField(this->def, 1);
             if (!b) {
-                if (Entity::CheckWeaponMask(monsterField2, 0x78002) != 0x0) {
+                if (app->combat->getWeaponFlags(monsterField2).requiresLineOfSight) {
                     monsterField2 = 0;
                 }
-                if (Entity::CheckWeaponMask(monsterField3, 0x78002) != 0x0) {
+                if (app->combat->getWeaponFlags(monsterField3).requiresLineOfSight) {
                     monsterField3 = 0;
                 }
             }
