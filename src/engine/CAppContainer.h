@@ -1,5 +1,6 @@
 #ifndef __CAPPCONTAINER_H__
 #define __CAPPCONTAINER_H__
+#include <map>
 #include <string>
 #include <vector>
 #include "App.h"
@@ -68,6 +69,9 @@ struct GameConfig {
 	int vendSliderMax = 9;
 	int vendSliderStart = 5;
 	std::vector<IQHint> vendIQHints = { {80, 3}, {50, 2}, {20, 1} };
+
+	// Per-map joke item tables: mapID → list of item IDs (selected by sprite % count)
+	std::map<int, std::vector<int>> jokeItems;
 
 	bool isFogDisabled(int mapID) const {
 		for (int id : noFogMaps) {

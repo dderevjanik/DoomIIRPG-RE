@@ -1391,6 +1391,7 @@ bool Applet::loadMonstersFromYAML(const char* path) {
 		if (YAML::Node beh = m["behaviors"]) {
 			MonsterBehaviors& mb = this->combat->monsterBehaviors[idx];
 			mb.isBoss = beh["is_boss"].as<bool>(false);
+			mb.bossMinTier = beh["boss_min_tier"].as<int>(0);
 			mb.fearImmune = beh["fear_immune"].as<bool>(false);
 			mb.evading = beh["evading"].as<bool>(false);
 			mb.moveToAttack = beh["move_to_attack"].as<bool>(false);

@@ -15,6 +15,7 @@ class Applet;
 
 struct MonsterBehaviors {
 	bool isBoss = false;
+	int bossMinTier = 0;        // Minimum tier (parm) to be considered a boss (0 = all tiers)
 	bool fearImmune = false;
 	bool evading = false;
 	bool moveToAttack = false;

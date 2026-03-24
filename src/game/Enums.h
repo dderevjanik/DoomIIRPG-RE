@@ -147,16 +147,7 @@ public:
     static constexpr int WP_ITEM = 14;
     static constexpr int WP_PLAYERMAX = 15;
     static constexpr int WP_PLAYERMASK = 32767;
-    static constexpr int WP_PUNCH_MASK = 0;
-    static constexpr int WP_EXPLOSIONMASK = 2048;
-    static constexpr int WP_MELEEMASK = 2;
-    static constexpr int WP_SNIPERMASK = 512;
-    static constexpr int WP_SENTRY_BOT_MASK = 120;
-    static constexpr int WP_MUZZLE_FLASH = 385;
-    static constexpr int WP_RANGEMASK = 24573;
-    static constexpr int WP_NODISTANCECHK = 30719;
-    static constexpr int WP_STARTING_WEAPONS = 0;
-    static constexpr int WP_NORECOIL = 9222;
+    // Legacy weapon bitmask constants removed — replaced by WeaponFlags system in Combat.h
     static constexpr int WP_PAINTINGMASK = 0;
     static constexpr int WP_SPRITE_WALL = 2;
     static constexpr int WP_MONSTERMIN = 15;

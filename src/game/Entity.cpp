@@ -1172,7 +1172,7 @@ void Entity::undoAttack() {
     }
     monster->flags &= ~0x400;
     int sprite = this->getSprite();
-    if (this->monster->ce.weapon == 18) {
+    if (app->combat->getWeaponFlags(this->monster->ce.weapon).chargeAttack) {
         app->render->mapSpriteInfo[sprite] &= 0xFFFF00FF;
     }
     this->monster->resetGoal();
@@ -1395,8 +1395,8 @@ int* Entity::calcPosition() {
 }
 
 bool Entity::isBoss() {
-	return app->combat->monsterBehaviors[this->def->eSubType].isBoss
-		&& (this->def->eSubType != Enums::BOSS_MASTERMIND || this->def->parm != 0);
+	const MonsterBehaviors& mb = app->combat->monsterBehaviors[this->def->eSubType];
+	return mb.isBoss && this->def->parm >= mb.bossMinTier;
 }
 
 bool Entity::isHasteResistant() {
@@ -2024,249 +2024,12 @@ void Entity::populateDefaultLootSet() {
 }
 
 int Entity::findRandomJokeItem() {
-
-
     int sprite = this->getSprite();
-
-    switch (app->canvas->loadMapID) {
-        case 1: {
-            switch (sprite % 5) {
-                case 0: {
-                    return 180;
-                }
-                case 1: {
-                    return 181;
-                }
-                case 2: {
-                    return 182;
-                }
-                case 3: {
-                    return 183;
-                }
-                case 4: {
-                    return 184;
-                }
-                default: {
-                    goto LABEL_9;
-                }
-            }
-            break;
-        }
-        case 2: {
-            LABEL_9:
-            switch (sprite % 5) {
-                case 0: {
-                    return 149;
-                }
-                case 1: {
-                    return 150;
-                }
-                case 2: {
-                    return 151;
-                }
-                case 3: {
-                    return 152;
-                }
-                case 4: {
-                    return 153;
-                }
-                default: {
-                    goto LABEL_16;
-                }
-            }
-            break;
-        }
-        case 3: {
-            LABEL_16:
-            switch (sprite % 5) {
-                case 0: {
-                    return 130;
-                }
-                case 1: {
-                    return 131;
-                }
-                case 2: {
-                    return 132;
-                }
-                case 3: {
-                    return 133;
-                }
-                case 4: {
-                    return 134;
-                }
-                default: {
-                    goto LABEL_18;
-                }
-            }
-            break;
-        }
-        case 4: {
-            LABEL_18:
-            switch (sprite % 5) {
-                case 0: {
-                    return 129;
-                }
-                case 1: {
-                    return 130;
-                }
-                case 2: {
-                    return 131;
-                }
-                case 3: {
-                    return 132;
-                }
-                case 4: {
-                    return 133;
-                }
-                default: {
-                    goto LABEL_21;
-                }
-            }
-            break;
-        }
-        case 5: {
-            LABEL_21:
-            switch (sprite % 5) {
-                case 0: {
-                    return 131;
-                }
-                case 1: {
-                    return 132;
-                }
-                case 2: {
-                    return 133;
-                }
-                case 3: {
-                    return 134;
-                }
-                case 4: {
-                    return 135;
-                }
-                default: {
-                    goto LABEL_24;
-                }
-            }
-            break;
-        }
-        case 6: {
-            LABEL_24:
-            switch (sprite % 5) {
-                case 0: {
-                    return 78;
-                }
-                case 1: {
-                    return 79;
-                }
-                case 2: {
-                    return 80;
-                }
-                case 3: {
-                    return 81;
-                }
-                case 4: {
-                    return 82;
-                }
-                default: {
-                    goto LABEL_31;
-                }
-            }
-            break;
-        }
-        case 7: {
-            LABEL_31:
-            switch (sprite % 5) {
-                case 0: {
-                    return 24;
-                }
-                case 1: {
-                    return 25;
-                }
-                case 2: {
-                    return 26;
-                }
-                case 3: {
-                    return 27;
-                }
-                case 4: {
-                    return 28;
-                }
-                default: {
-                    goto LABEL_38;
-                }
-            }
-            break;
-        }
-        case 8: {
-            LABEL_38:
-            switch (sprite % 5) {
-                case 0: {
-                    return 34;
-                }
-                case 1: {
-                    return 35;
-                }
-                case 2: {
-                    return 36;
-                }
-                case 3: {
-                    return 37;
-                }
-                case 4: {
-                    return 38;
-                }
-                default: {
-                    goto LABEL_45;
-                }
-            }
-            break;
-        }
-        case 9: {
-            LABEL_45:
-            switch (sprite % 5) {
-                case 0: {
-                    return 15;
-                }
-                case 1: {
-                    return 16;
-                }
-                case 2: {
-                    return 17;
-                }
-                case 3: {
-                    return 18;
-                }
-                case 4: {
-                    return 19;
-                }
-                default: {
-                    goto LABEL_52;
-                }
-            }
-            break;
-        }
-        case 10: {
-            LABEL_52:
-            switch (sprite % 5) {
-                case 0: {
-                    return 9;
-                }
-                case 1: {
-                    return 10;
-                }
-                case 2: {
-                    return 11;
-                }
-                case 3: {
-                    return 12;
-                }
-                case 4: {
-                    return 13;
-                }
-            }
-            break;
-        }
+    const auto& jokeItems = CAppContainer::getInstance()->gameConfig.jokeItems;
+    auto it = jokeItems.find(app->canvas->loadMapID);
+    if (it != jokeItems.end() && !it->second.empty()) {
+        return it->second[sprite % it->second.size()];
     }
-
     app->Error(117); // ERR_ENT_LOOTSET
     return 0;
 }

@@ -227,6 +227,17 @@ int main(int argc, char* args[]) {
 					}
 				}
 
+				if (YAML::Node ji = game["joke_items"]) {
+					for (const auto& entry : ji) {
+						int mapId = entry["map"].as<int>();
+						std::vector<int> items;
+						for (const auto& item : entry["items"]) {
+							items.push_back(item.as<int>());
+						}
+						gc.jokeItems[mapId] = std::move(items);
+					}
+				}
+
 				printf("Game: %s (save: %s)\n", gc.name.c_str(), gc.saveDir.c_str());
 			}
 		} catch (const YAML::Exception& e) {

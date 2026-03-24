@@ -659,17 +659,13 @@ void Combat::drawWeapon(int sx, int sy) {
     int wpX = wpIdleX;
     int wpY = wpIdleY;
     int gameTime = app->gameTime;
-    int n14 = 1 << weapon;
-    if ((1 << weapon & 0x0) != 0x0 && (this->punchingMonster == 2 || this->punchingMonster == 3)) {
-        b = true;
-    }
     bool b5 = b2 || (app->canvas->state == Canvas::ST_COMBAT && this->curAttacker == nullptr && this->nextStage == 1);
     bool b6 = false;
     if (b5) {
         wpX = wpAtkX;
         wpY = wpAtkY;
         if (!this->flashDone) {
-            b = ((n14 & 0x200) == 0x0);
+            b = !this->getWeaponFlags(weapon).drawDoubleSprite;
             if (gameTime >= this->flashDoneTime) {
                 this->flashDone = true;
             }
