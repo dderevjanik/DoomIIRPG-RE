@@ -59,6 +59,7 @@ void gles::GLInit(Render* render) {
 }
 
 bool gles::ClearBuffer(int color) {
+	if (CAppContainer::getInstance()->headless) { return false; }
 	if (this->isInit)
 	{
 		float r = COLOR_BYTE_TO_FLOAT(color >> 16 & 0xff);
@@ -75,6 +76,7 @@ bool gles::ClearBuffer(int color) {
 }
 
 void gles::SetGLState() {
+	if (CAppContainer::getInstance()->headless) { return; }
 
 	PFNGLACTIVETEXTUREPROC glActiveTexture = (PFNGLACTIVETEXTUREPROC)SDL_GL_GetProcAddress("glActiveTexture");
 	PFNGLCLIENTACTIVETEXTUREPROC glClientActiveTexture = (PFNGLCLIENTACTIVETEXTUREPROC)SDL_GL_GetProcAddress("glClientActiveTexture");
@@ -109,6 +111,7 @@ void gles::SetGLState() {
 }
 
 void gles::BeginFrame(int x, int y, int w, int h, int* mtxView, int* mtxProjection) {
+	if (CAppContainer::getInstance()->headless) { return; }
 
 	Canvas* canvas = app->canvas;
 	int posX, posY;
@@ -202,6 +205,7 @@ void gles::BeginFrame(int x, int y, int w, int h, int* mtxView, int* mtxProjecti
 }
 
 void gles::ResetGLState() {
+	if (CAppContainer::getInstance()->headless) { return; }
 	SDLGL* sdlGL = CAppContainer::getInstance()->sdlGL;
 	int width = sdlGL->vidWidth;
 	int height = sdlGL->vidHeight;
@@ -297,6 +301,7 @@ void gles::CreateAllActiveTextures() {
 }
 
 bool gles::RasterizeConvexPolygon(int numVerts, TGLVert* verts) {
+	if (CAppContainer::getInstance()->headless) { return false; }
 
 	Vertex* immediate;
 	GLfloat projectionMatrix[MAX_GLVERTS];
@@ -481,6 +486,7 @@ void gles::UnloadSkyMap() {
 }
 
 bool gles::DrawWorldSpaceSpriteLine(TGLVert* vert1, TGLVert* vert2, TGLVert* vert3, int flags) {
+	if (CAppContainer::getInstance()->headless) { return false; }
 	TGLVert verts[4];
 
 	if (this->isInit) {

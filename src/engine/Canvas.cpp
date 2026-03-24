@@ -1026,8 +1026,10 @@ void Canvas::run() {
 	this->st_fields[12] = app->upTimeMs - time;
 
 	this->flushTime = app->upTimeMs;
-	this->graphics.resetScreenSpace();
-	this->backPaint(&this->graphics);
+	if (!CAppContainer::getInstance()->headless) {
+		this->graphics.resetScreenSpace();
+		this->backPaint(&this->graphics);
+	}
 	if (this->keyPressedTime != 0) {
 		this->lastKeyPressedTime = app->upTimeMs - this->keyPressedTime;
 		this->keyPressedTime = 0;

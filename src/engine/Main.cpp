@@ -4,6 +4,7 @@
 #include <string.h>
 #include <string>
 #include <unistd.h>
+#include <climits>
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
 #endif
@@ -31,6 +32,7 @@
 #include "Utils.h"
 #include "TinyGL.h"
 #include "Input.h"
+#include "GameScript.h"
 
 void drawView(SDLGL* sdlGL);
 
@@ -41,6 +43,11 @@ int main(int argc, char* args[]) {
 	const char* gameDir = ".";
 	const char* gameName = nullptr;
 	const char* customMap = nullptr;
+	bool headless = false;
+	int maxTicks = 0;           // 0 = unlimited (normal mode)
+	unsigned int seed = 0;      // 0 = don't seed (normal mode)
+	bool hasSeed = false;
+	const char* scriptFile = nullptr;
 
 	for (int i = 1; i < argc; i++) {
 		if (strcmp(args[i], "--gamedir") == 0 && i + 1 < argc) {
@@ -53,7 +60,24 @@ int main(int argc, char* args[]) {
 			CAppContainer::getInstance()->minigameName = args[++i];
 		} else if (strcmp(args[i], "--skip-travel-map") == 0) {
 			CAppContainer::getInstance()->skipTravelMap = true;
+		} else if (strcmp(args[i], "--headless") == 0) {
+			headless = true;
+		} else if (strcmp(args[i], "--ticks") == 0 && i + 1 < argc) {
+			maxTicks = atoi(args[++i]);
+		} else if (strcmp(args[i], "--seed") == 0 && i + 1 < argc) {
+			seed = (unsigned int)atoi(args[++i]);
+			hasSeed = true;
+		} else if (strcmp(args[i], "--script") == 0 && i + 1 < argc) {
+			scriptFile = args[++i];
 		}
+	}
+
+	if (headless) {
+		CAppContainer::getInstance()->headless = true;
+	}
+	if (hasSeed) {
+		std::srand(seed);
+		printf("Seed: %u\n", seed);
 	}
 
 	// --game <name> is sugar for --gamedir games/<name>
@@ -135,6 +159,16 @@ int main(int argc, char* args[]) {
 				printf("Error: conversion ran but game.yaml not found.\n");
 				return 1;
 			}
+		}
+	}
+
+	// Resolve script path to absolute before chdir
+	std::string scriptPathStr;
+	if (scriptFile) {
+		char resolved[PATH_MAX];
+		if (realpath(scriptFile, resolved)) {
+			scriptPathStr = resolved;
+			scriptFile = scriptPathStr.c_str();
 		}
 	}
 
@@ -285,7 +319,11 @@ int main(int argc, char* args[]) {
 	}
 
 	SDLGL sdlGL;
-	sdlGL.Initialize();
+	if (headless) {
+		sdlGL.InitializeHeadless();
+	} else {
+		sdlGL.Initialize();
+	}
 
 	Input input;
 
@@ -300,37 +338,87 @@ int main(int argc, char* args[]) {
 		CAppContainer::getInstance()->customMapFile = customMap;
 		printf("Custom map: %s\n", customMap);
 	}
-	sdlGL.updateVideo(); // [GEC]
 
-	SDL_Event ev;
+	// Load script if specified (works in both headless and windowed modes)
+	GameScript script;
+	bool hasScript = false;
+	if (scriptFile) {
+		hasScript = script.loadFromFile(scriptFile);
+		if (!hasScript) {
+			printf("Error: failed to load script '%s'\n", scriptFile);
+			return 1;
+		}
+		// Auto-set ticks from script if not explicitly given
+		if (maxTicks == 0) {
+			maxTicks = script.lastTick() + 100; // run 100 ticks past last command
+		}
+	}
 
-	float x = 0.0f, y = 30.0f;
-	int vp_cx = 480;
-	int vp_cy = 320;
+	if (headless) {
+		// Headless game loop — deterministic fixed timestep, no window
+		const int fixedTimestepMs = 15;
+		int ticksRun = 0;
 
-	Uint8 state;
-	int mX, mY;                                 /* mouse location*/
-	float mousePressX = 0.f, mousePressY = 0.f; /* mouse location float*/
-	int winVidWidth = sdlGL.winVidWidth;
-	int winVidHeight = sdlGL.winVidHeight;
-	bool useMouse = false;
+		printf("[headless] Running%s%s...\n",
+			maxTicks > 0 ? (" " + std::to_string(maxTicks) + " ticks").c_str() : "",
+			hasScript ? " with script" : "");
 
-	while (CAppContainer::getInstance()->app->closeApplet != true) {
+		while (!CAppContainer::getInstance()->app->closeApplet && (maxTicks == 0 || ticksRun < maxTicks)) {
+			CAppContainer::getInstance()->headlessTimeMs += fixedTimestepMs;
 
-		int currentTimeMillis = CAppContainer::getInstance()->getTimeMS();
+			if (hasScript) {
+				script.injectForTick(ticksRun);
+			}
 
-		// if (!useMouse) {
-		// float ax = SDL_GameControllerGetAxis(sdlGL.accelerometer, SDL_CONTROLLER_AXIS_LEFTX);
-		// float ay = SDL_GameControllerGetAxis(sdlGL.accelerometer, SDL_CONTROLLER_AXIS_LEFTY);
-		// CAppContainer::getInstance()->UpdateAccelerometer((ax* (1.0f / 32767))/2, (ay* (1.0f / 32767))/2, 0.f,
-		// false);
-		//}
+			CAppContainer::getInstance()->DoLoop(fixedTimestepMs);
+			ticksRun++;
 
-		if (currentTimeMillis > UpTime) {
-			input.handleEvents();
-			UpTime = currentTimeMillis + 15;
-			drawView(&sdlGL);
-			input.consumeEvents();
+			if (ticksRun % 100 == 0) {
+				printf("[headless] tick %d/%d, state=%d\n",
+					ticksRun, maxTicks, CAppContainer::getInstance()->app->canvas->state);
+			}
+		}
+
+		printf("[headless] Completed %d ticks. Final state=%d\n",
+			ticksRun, CAppContainer::getInstance()->app->canvas->state);
+	} else {
+		// Normal windowed game loop
+		sdlGL.updateVideo(); // [GEC]
+
+		float x = 0.0f, y = 30.0f;
+		int vp_cx = 480;
+		int vp_cy = 320;
+
+		Uint8 state;
+		int mX, mY;                                 /* mouse location*/
+		float mousePressX = 0.f, mousePressY = 0.f; /* mouse location float*/
+		int winVidWidth = sdlGL.winVidWidth;
+		int winVidHeight = sdlGL.winVidHeight;
+		bool useMouse = false;
+		int ticksRun = 0;
+
+		while (CAppContainer::getInstance()->app->closeApplet != true) {
+
+			int currentTimeMillis = CAppContainer::getInstance()->getTimeMS();
+
+			if (currentTimeMillis > UpTime) {
+				input.handleEvents();
+
+				if (hasScript) {
+					script.injectForTick(ticksRun);
+				}
+
+				UpTime = currentTimeMillis + 15;
+				drawView(&sdlGL);
+				input.consumeEvents();
+				ticksRun++;
+
+				// Auto-quit when script + ticks are done
+				if (maxTicks > 0 && ticksRun >= maxTicks) {
+					printf("[script] Completed %d ticks. Exiting.\n", ticksRun);
+					break;
+				}
+			}
 		}
 	}
 
