@@ -59,6 +59,25 @@ void LogoState::update(Canvas* canvas) {
 		app->player->setCharacterChoice(1); // Major (default)
 		app->player->reset();
 
+		// Parse map number from filename (e.g. "map09.bin" -> mapID 10, 1-based)
+		// Defer equipForLevel until map is fully loaded (needs valid render data)
+		int mapID = 1;
+		const char* mapFile = CAppContainer::getInstance()->customMapFile;
+		if (mapFile) {
+			const char* p = mapFile;
+			while (*p && !(*p == 'm' && *(p+1) == 'a' && *(p+2) == 'p')) p++;
+			if (*p == 'm') {
+				p += 3;
+				int num = 0;
+				while (*p >= '0' && *p <= '9') {
+					num = num * 10 + (*p - '0');
+					p++;
+				}
+				mapID = num + 1;
+			}
+		}
+		CAppContainer::getInstance()->pendingEquipLevel = mapID;
+
 		canvas->loadMap(canvas->startupMap, false, true);
 		return;
 	}

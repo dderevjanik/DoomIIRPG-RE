@@ -1635,7 +1635,6 @@ void Player::giveAll() {
 
 void Player::equipForLevel(int highestMap) {
 
-
 	if (this->isFamiliar) {
 		this->familiarReturnsToPlayer(false);
 	}
@@ -1660,11 +1659,9 @@ void Player::equipForLevel(int highestMap) {
 		YAML::Node config = YAML::LoadFile("map_rewards.yaml");
 		if (YAML::Node rewards = config["map_rewards"]) {
 			// Map 10 uses map 9 rewards
-			int lookupMap = highestMap;
+			int lookupMap = (highestMap == 10) ? 9 : highestMap;
 			YAML::Node r = rewards[lookupMap];
-			if (!r && lookupMap == 10)
-				r = rewards[9];
-			if (r) {
+			if (r && r.IsDefined() && !r.IsNull()) {
 				// Weapons
 				if (YAML::Node weapons = r["weapons"]) {
 					for (size_t w = 0; w < weapons.size(); w++)

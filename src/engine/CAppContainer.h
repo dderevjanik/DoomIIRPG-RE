@@ -107,6 +107,7 @@ class CAppContainer {
 	MinigameRegistry minigameRegistry; // Minigame dispatch registry
 	const char* customMapFile;     // --map override
 	const char* minigameName;     // --minigame override
+	int pendingEquipLevel;         // deferred equipForLevel after --map load (0 = none)
 	bool skipTravelMap;            // --skip-travel-map
 	bool headless;                 // --headless mode (no rendering, no audio)
 	uint32_t headlessTimeMs;       // deterministic tick counter for headless mode

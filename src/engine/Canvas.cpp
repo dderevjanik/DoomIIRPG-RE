@@ -1159,6 +1159,10 @@ void Canvas::setState(int state) {
 		if (this->oldState != Canvas::ST_COMBAT && this->oldState != Canvas::ST_DIALOG) {
 			this->invalidateRect();
 		}
+		if (CAppContainer::getInstance()->pendingEquipLevel > 0) {
+			app->player->equipForLevel(CAppContainer::getInstance()->pendingEquipLevel);
+			CAppContainer::getInstance()->pendingEquipLevel = 0;
+		}
 	}
 	else if (state == Canvas::ST_INTER_CAMERA) {
 		app->hud->repaintFlags = 43;
