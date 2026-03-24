@@ -34,6 +34,18 @@ struct MonsterBehaviors {
 	// Per-weapon weakness modifiers (indexed by weapon index, -1=immune, 0=normal, >0=left shift)
 	static constexpr int MAX_WEAKNESS_MODS = 16;
 	int8_t weaknessMods[MAX_WEAKNESS_MODS] = {};  // 0 = no modifier for all weapons
+
+	// Loot drop configuration (per type, with optional per-tier overrides)
+	struct LootConfig {
+		int16_t base = 0;       // Base flags/category value (e.g. 0x600, 0x2100)
+		int8_t modulus = 0;     // Sprite % modulus for randomization (0 = use joke items)
+		int8_t offset = 0;      // Added to (sprite % modulus) result
+		bool noCorpseLoot = false; // Skip loot when this monster is a corpse type
+	};
+	LootConfig lootConfig;      // Type-level default
+	static constexpr int MAX_LOOT_TIERS = 4;
+	LootConfig lootTiers[MAX_LOOT_TIERS]; // Per-tier overrides (if modulus != 0)
+	bool hasLootTiers = false;
 };
 
 class Combat
@@ -127,6 +139,8 @@ public:
 		int16_t attackSoundOverride;  // Override monster attack sound resource ID (-1 = use default)
 		int16_t missSoundOverride;    // Override sound when missing (-1 = use default)
 		int16_t meleeImpactAnim;      // Melee impact animation ID (0 = none)
+		int interactFlags;      // Additional entity type flags when targeting with this weapon (0 = none)
+		bool canLootCorpses;    // Can loot corpses at melee range (chainsaw)
 	};
 	WeaponFlags* wpFlags;       // Array sized to numWeapons
 	int numWeaponFlags;

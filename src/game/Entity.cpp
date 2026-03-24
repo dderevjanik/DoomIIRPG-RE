@@ -2006,43 +2006,19 @@ void Entity::populateDefaultLootSet() {
     this->lootSet[2] = 0;
 
     if (this->def->eType == Enums::ET_CORPSE) {
-        if (this->def->eSubType != Enums::MONSTER_SENTRY_BOT) {
+        const MonsterBehaviors& mb = app->combat->monsterBehaviors[this->def->eSubType];
+        if (!mb.lootConfig.noCorpseLoot) {
             this->lootSet[0] = 1089;
         }
     }
     else {
-        switch (this->def->eSubType) {
-            case Enums::MONSTER_ZOMBIE: {
-                int n = this->getSprite() % 3 + 1;
-                if (this->def->parm == 1) {
-                    n = this->getSprite() % 5 + 3;
-                }
-                else if (this->def->parm == 2) {
-                    n = this->getSprite() % 8 + 5;
-                }
-                this->lootSet[0] = (0x600 | n);
-                break;
-            }
-            case Enums::MONSTER_CACODEMON: {
-                this->lootSet[0] = (0x2100 | this->getSprite() % 5 + 3);
-                break;
-            }
-            case Enums::MONSTER_MANCUBUS: {
-                this->lootSet[0] = (0x2140 | this->getSprite() % 3 + 1);
-                break;
-            }
-            case Enums::MONSTER_REVENANT: {
-                this->lootSet[0] = (0x2140 | this->getSprite() % 3 + 3);
-                break;
-            }
-            case Enums::MONSTER_SENTRY_BOT: {
-                this->lootSet[0] = (0x2040 | this->getSprite() % 6 + 6);
-                break;
-            }
-            default: {
-                this->lootSet[0] = (0x6000 | this->findRandomJokeItem());
-                break;
-            }
+        const MonsterBehaviors& mb = app->combat->monsterBehaviors[this->def->eSubType];
+        const auto& lc = (mb.hasLootTiers && this->def->parm < MonsterBehaviors::MAX_LOOT_TIERS)
+            ? mb.lootTiers[this->def->parm] : mb.lootConfig;
+        if (lc.modulus > 0) {
+            this->lootSet[0] = lc.base | (this->getSprite() % lc.modulus + lc.offset);
+        } else {
+            this->lootSet[0] = (0x6000 | this->findRandomJokeItem());
         }
     }
 }

@@ -722,6 +722,8 @@ bool Applet::loadWeaponsFromYAML(const char* path) {
 			std::string missSndOvr = beh["miss_sound_override"].as<std::string>("none");
 			f.missSoundOverride = (missSndOvr == "none") ? -1 : (int16_t)Sounds::getResIDByName(missSndOvr);
 			f.meleeImpactAnim = beh["melee_impact_anim"].as<int16_t>(0);
+			f.interactFlags = beh["interact_flags"].as<int>(0);
+			f.canLootCorpses = beh["can_loot_corpses"].as<bool>(false);
 		}
 	}
 
@@ -1428,6 +1430,13 @@ bool Applet::loadMonstersFromYAML(const char* path) {
 					mb.randomDeathSounds[d] = (sname == "none") ? -1 : (int16_t)Sounds::getResIDByName(sname);
 				}
 			}
+			// Loot drop config (type-level default)
+			if (YAML::Node loot = beh["loot"]) {
+				mb.lootConfig.base = loot["base"].as<int16_t>(0);
+				mb.lootConfig.modulus = loot["modulus"].as<int8_t>(0);
+				mb.lootConfig.offset = loot["offset"].as<int8_t>(0);
+				mb.lootConfig.noCorpseLoot = loot["no_corpse_loot"].as<bool>(false);
+			}
 		}
 
 		// Tiers
@@ -1486,6 +1495,17 @@ bool Applet::loadMonstersFromYAML(const char* path) {
 							this->combat->monsterWeakness[weakBase + w] = (int8_t)weak[w].as<int>(0);
 						}
 					}
+				}
+
+				// Per-tier loot override
+				if (YAML::Node tloot = tier["loot"]) {
+					auto& lt = this->combat->monsterBehaviors[idx].lootTiers[p];
+					lt.base = tloot["base"].as<int16_t>(this->combat->monsterBehaviors[idx].lootConfig.base);
+					lt.modulus = tloot["modulus"].as<int8_t>(this->combat->monsterBehaviors[idx].lootConfig.modulus);
+					lt.offset = tloot["offset"].as<int8_t>(this->combat->monsterBehaviors[idx].lootConfig.offset);
+					this->combat->monsterBehaviors[idx].hasLootTiers = true;
+				} else if (p < MonsterBehaviors::MAX_LOOT_TIERS) {
+					this->combat->monsterBehaviors[idx].lootTiers[p] = this->combat->monsterBehaviors[idx].lootConfig;
 				}
 
 				// Per-tier sound overrides (override type-level sounds for this tier)

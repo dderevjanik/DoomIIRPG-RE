@@ -2322,8 +2322,8 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 		if (Entity::CheckWeaponMask(weapon2, 2) != 0x0) {
 			//n5 |= 0x2000; // J2ME only?
 		}
-		if (weapon2 == 2) {
-			n5 |= 0x4100;
+		if (app->combat->getWeaponFlags(weapon2).interactFlags != 0) {
+			n5 |= app->combat->getWeaponFlags(weapon2).interactFlags;
 		}
 		int n6 = 0;
 		int n7 = 6;
@@ -2398,7 +2398,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 					}
 					else if (eType == 9) {
 						if (dist == app->combat->tileDistances[0]) {
-							if (weapon2 == 1) {
+							if (app->combat->getWeaponFlags(weapon2).canLootCorpses) {
 #if 0 // J2ME
 								if (entity != nullptr && entity->def->eType == 9) {
 									if (entity->linkIndex < entity3->linkIndex) {
