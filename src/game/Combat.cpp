@@ -22,14 +22,23 @@
 #include "Sounds.h"
 
 Combat::Combat() {
-	std::memset(this, 0, sizeof(Combat));
+	// Zero all POD members. The map is default-constructed (empty).
+	// We skip the map by zeroing in two ranges around it.
+	char* thisPtr = reinterpret_cast<char*>(this);
+	char* mapStart = reinterpret_cast<char*>(&this->monsterNameToIndex);
+	char* mapEnd = mapStart + sizeof(this->monsterNameToIndex);
+	char* objEnd = thisPtr + sizeof(Combat);
+	std::memset(thisPtr, 0, mapStart - thisPtr);
+	if (mapEnd < objEnd) {
+		std::memset(mapEnd, 0, objEnd - mapEnd);
+	}
 }
 
 Combat::~Combat() {
 }
 
 short Combat::getWeaponWeakness(int n, int n2, int n3) {
-    return (short)((this->monsterWeakness[(n2 * 3 + n3) * 8 + n / 2] >> ((n & 0x1) << 2) & 0xF) + 1 << 5);
+    return (short)((this->monsterWeakness[(n2 * this->tiersPerMonster + n3) * 8 + n / 2] >> ((n & 0x1) << 2) & 0xF) + 1 << 5);
 }
 
 bool Combat::startup() {
@@ -37,7 +46,8 @@ bool Combat::startup() {
 	Applet* app = this->app;
 	printf("Combat::startup\n");
 
-	for (int n = 0, i = 0; i < 51; ++i, n += 6) {
+	this->monsters = new CombatEntity*[this->monsterSlotCount];
+	for (int n = 0, i = 0; i < this->monsterSlotCount; ++i, n += 6) {
 		this->monsters[i] = new CombatEntity(5 * (this->monsterStats[n + 0] & 0xFF), this->monsterStats[n + 1], this->monsterStats[n + 2], this->monsterStats[n + 3], this->monsterStats[n + 4], this->monsterStats[n + 5]);
 	}
 
@@ -669,7 +679,7 @@ void Combat::drawWeapon(int sx, int sy) {
                 wpX = wpIdleX;
                 wpY = wpIdleY;
             }
-            else if (weapon == 1) {
+            else if (this->getWeaponFlags(weapon).vibrateAnim) {
                 if (n15 < 43690) {
                     wpX = wpAtkX + ((n15 & 0x8) ?  2 : 0);
                     wpY = wpAtkY + ((n15 & 0x8) ? -1 : 0);
@@ -715,13 +725,7 @@ void Combat::drawWeapon(int sx, int sy) {
         }
     }
     if (app->player->weaponIsASentryBot(weapon)) {
-        int n21;
-        if (weapon == 4 || weapon == 3) {
-            n21 = 19;
-        }
-        else {
-            n21 = 18;
-        }
+        int n21 = this->getWeaponTileNum(weapon);
         int n22 = flags;
         int n23 = (app->time + n21 * 1337) / 1024 & 0xF;
         if (n23 == 0 || (n23 >= 4 && n23 <= 7) || (n23 >= 10 && n23 <= 12)) {
@@ -731,7 +735,7 @@ void Combat::drawWeapon(int sx, int sy) {
         app->render->draw2DSprite(n21, 2, x, y, flags, renderMode, renderFlags, 0x10000);
         app->render->draw2DSprite(n21, 3, x, y + n24, n22, renderMode, renderFlags, 0x10000);
     }
-    else if (weapon == 14) {
+    else if (this->getWeaponFlags(weapon).isThrowableItem) {
         if (app->player->ammo[8] > 0) {
             app->render->draw2DSprite(app->player->activeWeaponDef->tileIndex, 1, x + wpFlashX, y + wpFlashY, flags, renderMode, renderFlags, 0x10000);
         }
@@ -740,10 +744,10 @@ void Combat::drawWeapon(int sx, int sy) {
         }
     }
     else {
-        if (b6 | ((weapon == 13 || weapon == 8) && b5)) {
+        if (b6 | (this->getWeaponFlags(weapon).showFlashFrame && b5)) {
             frame = 1;
         }
-        if (b && (1 << weapon & 0x181) != 0x0) {
+        if (b && this->getWeaponFlags(weapon).hasFlashSprite) {
             int xf = 40;
             int yf = 40;
             if (!app->render->_gles->isInit) {  // [GEC] Adjusted like this to match the XY position on the GL version
@@ -909,7 +913,7 @@ void Combat::explodeOnPlayer() {
                         this->totalDamage += (this->totalDamage >> 1) + loadMapID / this->weapons[this->attackerWeapon + 7];
                     }
                     EntityDef* def = this->curAttacker->def;
-                    if (def->eType == Enums::ET_MONSTER && def->eSubType == Enums::BOSS_VIOS) {
+                    if (def->eType == Enums::ET_MONSTER && this->monsterBehaviors[def->eSubType].isVios) {
                         if (def->parm == 4) {
                             this->totalDamage += app->game->numMallocsForVIOS * 8;
                         }

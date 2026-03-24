@@ -1,6 +1,9 @@
 #ifndef __COMBAT_H__
 #define __COMBAT_H__
 
+#include <map>
+#include <string>
+
 class Entity;
 class EntityMonster;
 class GameSprite;
@@ -17,6 +20,9 @@ struct MonsterBehaviors {
 	bool moveToAttack = false;
 	bool canResurrect = false;
 	bool onHitPoison = false;
+	bool floats = false;            // Floating death anim (lost soul, cacodemon)
+	bool isVios = false;            // Randomize param on spawn (vios bosses)
+	int smallParm0Scale = -1;       // Scale override for parm==0 (-1 = no override)
 	int onHitPoisonId = 13;
 	int onHitPoisonDuration = 5;
 	int onHitPoisonPower = 3;
@@ -90,6 +96,27 @@ public:
 	int numWeaponViewTiles;
 	int8_t* wpHudTexRow;        // Per-weapon HUD texture row (-1 = use default 13)
 	bool* wpHudShowAmmo;        // Per-weapon whether to draw ammo numbers on HUD
+
+	// Per-weapon behavior flags (loaded from weapons.yaml)
+	struct WeaponFlags {
+		bool vibrateAnim;       // Vibration animation during attack (chainsaw-like)
+		bool chainsawHitEvent;  // Triggers usedChainsaw() on hit
+		bool alwaysHits;        // Bypasses accuracy check (soul cube-like)
+		bool doubleDamage;      // Doubles min/max damage (soul cube-like)
+		bool isThrowableItem;   // Special render path with ammo check, skip in weapon cycle
+		bool showFlashFrame;    // Show muzzle flash frame during attack (chaingun-like)
+		bool hasFlashSprite;    // Render flash sprite overlay (assault rifle, super shotgun, chaingun)
+		bool soulAmmoDisplay;   // Special ammo display format (X/5 instead of XXX)
+	};
+	WeaponFlags* wpFlags;       // Array sized to numWeapons
+	int numWeaponFlags;
+
+	// Safe accessor for weapon flags (returns all-false flags for out-of-range indices)
+	const WeaponFlags& getWeaponFlags(int weaponIdx) const {
+		static const WeaponFlags empty{};
+		if (weaponIdx >= 0 && weaponIdx < numWeaponFlags) return wpFlags[weaponIdx];
+		return empty;
+	}
 
 	// Familiar data loaded from weapons.yaml (per sentry bot weapon)
 	struct FamiliarDef {
@@ -204,7 +231,11 @@ public:
 	int8_t* weapons;
 	int8_t* monsterWeakness;
 	MonsterBehaviors* monsterBehaviors;
-	CombatEntity* monsters[51];
+	CombatEntity** monsters;    // Dynamic array: numMonsterTypes * tiersPerMonster slots
+	int numMonsterTypes;        // Number of monster types (default: 17)
+	int tiersPerMonster;        // Tiers per monster type (default: 3)
+	int monsterSlotCount;       // Total: numMonsterTypes * tiersPerMonster
+	std::map<std::string, int> monsterNameToIndex; // Monster name → subtype index (built from monsters.yaml)
 	int worldDist;
 	int tileDist;
 	int crFlags;

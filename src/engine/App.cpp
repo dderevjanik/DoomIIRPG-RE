@@ -610,6 +610,9 @@ bool Applet::loadWeaponsFromYAML(const char* path) {
 		this->combat->wpHudTexRow[j] = -1;  // -1 = not set, will use default
 		this->combat->wpHudShowAmmo[j] = false;
 	}
+	this->combat->wpFlags = new Combat::WeaponFlags[numWeapons];
+	this->combat->numWeaponFlags = numWeapons;
+	std::memset(this->combat->wpFlags, 0, sizeof(Combat::WeaponFlags) * numWeapons);
 
 	// Second pass: populate arrays
 	for (auto wit = weapons.begin(); wit != weapons.end(); ++wit) {
@@ -686,6 +689,19 @@ bool Applet::loadWeaponsFromYAML(const char* path) {
 		if (YAML::Node hud = w["hud"]) {
 			this->combat->wpHudTexRow[idx] = (int8_t)hud["tex_row"].as<int>(-1);
 			this->combat->wpHudShowAmmo[idx] = hud["show_ammo"].as<bool>(false);
+		}
+
+		// Weapon behavior flags
+		if (YAML::Node beh = w["behavior"]) {
+			auto& f = this->combat->wpFlags[idx];
+			f.vibrateAnim = beh["vibrate_anim"].as<bool>(false);
+			f.chainsawHitEvent = beh["chainsaw_hit_event"].as<bool>(false);
+			f.alwaysHits = beh["always_hits"].as<bool>(false);
+			f.doubleDamage = beh["double_damage"].as<bool>(false);
+			f.isThrowableItem = beh["is_throwable_item"].as<bool>(false);
+			f.showFlashFrame = beh["show_flash_frame"].as<bool>(false);
+			f.hasFlashSprite = beh["has_flash_sprite"].as<bool>(false);
+			f.soulAmmoDisplay = beh["soul_ammo_display"].as<bool>(false);
 		}
 	}
 
@@ -1272,6 +1288,11 @@ bool Applet::loadMonstersFromYAML(const char* path) {
 	int numTiers = 3;
 	int totalEntities = numTypes * numTiers;
 
+	// Store counts for dynamic monster array sizing
+	this->combat->numMonsterTypes = numTypes;
+	this->combat->tiersPerMonster = numTiers;
+	this->combat->monsterSlotCount = totalEntities;
+
 	// Allocate flat arrays
 	this->combat->monsterAttacks = new short[numTypes * 9];
 	std::memset(this->combat->monsterAttacks, 0, numTypes * 9 * sizeof(short));
@@ -1294,6 +1315,15 @@ bool Applet::loadMonstersFromYAML(const char* path) {
 	                                    "attack2", "idle", "pain", "death"};
 	static const char* statFields[] = {"health", "armor", "defense", "strength",
 	                                   "accuracy", "agility"};
+
+	// Build monster name → index map
+	for (auto mit = monsters.begin(); mit != monsters.end(); ++mit) {
+		std::string name = mit->first.as<std::string>("");
+		int idx = mit->second["index"].as<int>(0);
+		if (!name.empty()) {
+			this->combat->monsterNameToIndex[name] = idx;
+		}
+	}
 
 	// Second pass: populate arrays
 	for (auto mit = monsters.begin(); mit != monsters.end(); ++mit) {
@@ -1343,6 +1373,9 @@ bool Applet::loadMonstersFromYAML(const char* path) {
 			mb.moveToAttack = beh["move_to_attack"].as<bool>(false);
 			mb.canResurrect = beh["can_resurrect"].as<bool>(false);
 			mb.onHitPoison = beh["on_hit_poison"].as<bool>(false);
+			mb.floats = beh["floats"].as<bool>(false);
+			mb.isVios = beh["is_vios"].as<bool>(false);
+			mb.smallParm0Scale = beh["small_parm0_scale"].as<int>(-1);
 			if (YAML::Node poison = beh["on_hit_poison_params"]) {
 				mb.onHitPoisonId = poison["id"].as<int>(13);
 				mb.onHitPoisonDuration = poison["duration"].as<int>(5);

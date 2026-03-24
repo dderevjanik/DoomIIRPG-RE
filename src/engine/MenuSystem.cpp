@@ -2240,7 +2240,7 @@ void MenuSystem::initMenu(int menu) {
 
 			for (int n10 = 0; n10 < 15; ++n10) {
 				if ((app->player->weapons & 1 << n10) != 0x0) {
-					int n11 = (app->player->ce->weapon == 14 && n10 != 14) ? 4 : 0;
+					int n11 = (app->combat->getWeaponFlags(app->player->ce->weapon).isThrowableItem && n10 != app->player->ce->weapon) ? 4 : 0;
 					EntityDef* find5 = app->entityDefManager->find(6, 1, (uint8_t)n10);
 					if (app->player->ce->weapon == n10) {
 						n11 |= 0x400;

@@ -2241,7 +2241,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 	}
 	else if (action == Enums::ACTION_PREVWEAPON || action == Enums::ACTION_NEXTWEAPON) {
 		int weapon = app->player->ce->weapon;
-		if (weapon == 14) {
+		if (app->combat->getWeaponFlags(weapon).isThrowableItem) {
 			return true;
 		}
 		if (action == Enums::ACTION_PREVWEAPON) {

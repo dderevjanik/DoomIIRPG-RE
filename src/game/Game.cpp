@@ -1579,7 +1579,7 @@ void Game::saveWorldState(OutputStream* OS, bool b) {
 	OS->writeInt(app->render->playerFogColor);
 	OS->writeInt(app->render->playerFogMin);
 	OS->writeInt(app->render->playerFogRange);
-	if (app->player->ce->weapon == 14) {
+	if (app->combat->getWeaponFlags(app->player->ce->weapon).isThrowableItem) {
 		OS->writeByte((uint8_t)app->player->activeWeaponDef->tileIndex);
 	}
 	for (int i = 0; i < 4; ++i) {
@@ -1755,7 +1755,7 @@ bool Game::loadWorldState(InputStream* IS) {
 		app->render->buildFogTables(app->tinyGL->fogColor);
 
 		app->canvas->updateLoadingBar(false);
-		if (app->player->ce->weapon == 14) {
+		if (app->combat->getWeaponFlags(app->player->ce->weapon).isThrowableItem) {
 			app->player->setPickUpWeapon(IS->readByte() & 0xFF);
 		}
 		for (int i = 0; i < 4; ++i) {

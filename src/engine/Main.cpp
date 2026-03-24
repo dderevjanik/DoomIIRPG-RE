@@ -172,6 +172,7 @@ int main(int argc, char* args[]) {
 				}
 
 				gc.maxEntities = game["max_entities"].as<int>(gc.maxEntities);
+				gc.maxWeaponButtons = game["max_weapon_buttons"].as<int>(gc.maxWeaponButtons);
 
 				if (YAML::Node xp = game["xp_formula"]) {
 					gc.xpLinear = xp["linear"].as<int>(gc.xpLinear);

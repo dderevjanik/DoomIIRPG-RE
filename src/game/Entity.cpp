@@ -60,7 +60,7 @@ void Entity::initspawn() {
 
     int tileNum = app->render->mapSpriteInfo[sprite] & 0xFF;
     if (eType == Enums::ET_MONSTER) {
-        app->combat->monsters[eSubType * 3 + (int8_t)this->def->parm]->clone(&this->monster->ce);
+        app->combat->monsters[eSubType * app->combat->tiersPerMonster + (int8_t)this->def->parm]->clone(&this->monster->ce);
 
         if (app->game->difficulty == 4 || (app->game->difficulty == 2 && !this->isBoss())) {
             int stat = this->monster->ce.getStat(1);
@@ -72,13 +72,13 @@ void Entity::initspawn() {
         short n4 = 64;
         app->render->mapSprites[app->render->S_Z + sprite] = (short)(32 + app->render->getHeight(app->render->mapSprites[app->render->S_X + sprite], app->render->mapSprites[app->render->S_Y + sprite]));
         app->render->relinkSprite(sprite);
-        if ((eSubType == Enums::BOSS_MASTERMIND || eSubType == Enums::MONSTER_PINKY) && this->def->parm == 0) {
-            n4 = 42;
+        if (app->combat->monsterBehaviors[eSubType].smallParm0Scale >= 0 && this->def->parm == 0) {
+            n4 = (short)app->combat->monsterBehaviors[eSubType].smallParm0Scale;
         }
         app->render->mapSprites[app->render->S_SCALEFACTOR + sprite] = n4;
         app->render->mapSprites[app->render->S_RENDERMODE + sprite] = n3;
         this->info |= 0x20000;
-        if (eSubType == Enums::BOSS_VIOS || eSubType == Enums::BOSS_VIOS2) {
+        if (app->combat->monsterBehaviors[eSubType].isVios) {
             this->param = app->nextInt() % 3 + 3;
         }
     }
@@ -491,13 +491,13 @@ void Entity::died(bool b, Entity* entity) {
             app->player->inCombat = false;
             app->game->executeStaticFunc(5);
         }
-        else if (eSubType == Enums::MONSTER_LOST_SOUL || eSubType == Enums::MONSTER_CACODEMON) {
+        else if (app->combat->monsterBehaviors[eSubType].floats) {
             app->game->gsprite_allocAnim(241, n, n2, app->render->mapSprites[app->render->S_Z + sprite]);
             n3 |= 0x10000;
             app->game->spawnDropItem(this);
         }
         this->checkMonsterDeath(b, true);
-        if ((this->info & 0x10000) != 0x0 || eSubType == Enums::MONSTER_LOST_SOUL || eSubType == Enums::MONSTER_CACODEMON) {
+        if ((this->info & 0x10000) != 0x0 || app->combat->monsterBehaviors[eSubType].floats) {
             this->info = ((this->info & 0xFEFDFFFF) | 0x10000);
             app->game->unlinkEntity(this);
         }

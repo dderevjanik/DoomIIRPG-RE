@@ -7,6 +7,7 @@
 #include "App.h"
 #include "EntityDef.h"
 #include "Enums.h"
+#include "Combat.h"
 #include "JavaStream.h"
 #include "Resource.h"
 #include <yaml-cpp/yaml.h>
@@ -97,11 +98,23 @@ static int lookupName(const std::string& str, const char* names[], int count) {
 	}
 }
 
+static int lookupMonsterName(const std::string& str) {
+	// Try dynamic map first (loaded from monsters.yaml)
+	Applet* app = CAppContainer::getInstance()->app;
+	if (app && app->combat) {
+		auto it = app->combat->monsterNameToIndex.find(str);
+		if (it != app->combat->monsterNameToIndex.end())
+			return it->second;
+	}
+	// Fall back to hardcoded table
+	return lookupName(str, monsterSubtypeNames, numMonsterSubtypes);
+}
+
 static int resolveSubtype(int eType, const std::string& str) {
 	switch (eType) {
 		case Enums::ET_MONSTER:
 		case Enums::ET_CORPSE:
-			return lookupName(str, monsterSubtypeNames, numMonsterSubtypes);
+			return lookupMonsterName(str);
 		case Enums::ET_ITEM:
 		case Enums::ET_MONSTERBLOCK_ITEM:
 			return lookupName(str, itemSubtypeNames, numItemSubtypes);

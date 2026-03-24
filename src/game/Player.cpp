@@ -2442,13 +2442,16 @@ void Player::removeOneVendingMachineTry(int max) {
 }
 
 bool Player::weaponIsASentryBot(int n) {
-	return (1 << n & Enums::WP_SENTRY_BOT_MASK) != 0x0;
+	return app->combat->getFamiliarDefByWeapon(n) != nullptr;
 }
 
 bool Player::hasASentryBot() {
-	bool b = (this->weapons & 0x8) != 0x0 || (this->weapons & 0x20) != 0x0;
-	bool b2 = (this->weapons & 0x10) != 0x0 || (this->weapons & 0x40) != 0x0;
-	return b || b2;
+	for (int i = 0; i < app->combat->familiarDefCount; i++) {
+		int wpIdx = app->combat->familiarDefs[i].weaponIndex;
+		if ((this->weapons & (1 << wpIdx)) != 0)
+			return true;
+	}
+	return false;
 }
 
 void Player::setFamiliarType(short familiarType) {

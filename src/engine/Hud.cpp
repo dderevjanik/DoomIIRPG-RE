@@ -87,7 +87,7 @@ bool Hud::startup() {
 	this->m_hudButtons->AddButton(btnKey);
 	
 	this->m_weaponsButtons = new fmButtonContainer;
-	for (int i = 0; i < Hud::MAX_WEAPON_BUTTONS; i++) {
+	for (int i = 0; i < CAppContainer::getInstance()->gameConfig.maxWeaponButtons; i++) {
 		fmButton* btnWpn = new fmButton(i, 480, 320, this->imgWeaponNormal->width, 44, 1027);
 		this->m_weaponsButtons->AddButton(btnWpn);
 	}
@@ -1048,11 +1048,9 @@ void Hud::drawNumbers(Graphics* graphics, int x, int y, int space, int num, int 
 		v11 = num / 100;
 		v12 = num % 100 / 10;
 		v15 = num % 100 % 10;
-		if (weapon == 13) {
+		if (app->combat->getWeaponFlags(weapon).soulAmmoDisplay) {
 			v11 = num % 100 % 10;
 			v15 = 5;
-		}
-		if (weapon == 13) {
 			v12 = -1;
 		}
 		graphics->drawRegion(this->imgNumbers, 0, 20 * (9 - v11), 10, 20, x, y, 20, 0, 0);

@@ -146,7 +146,7 @@ void CombatEntity::calcCombat(CombatEntity* combatEntity, Entity* entity, bool b
     if ((calcHit & 0x1007) == 0x0) {
         return;
     }
-    if (!b && combatEntity->weapon == 1) {
+    if (!b && app->combat->getWeaponFlags(combatEntity->weapon).chainsawHitEvent) {
         app->player->usedChainsaw(true);
     }
     int calcDamage = this->calcDamage(combatEntity, entity, combatEntity2, b, n2);
@@ -240,7 +240,7 @@ int CombatEntity::calcHit(CombatEntity* ce, CombatEntity* ce2, bool b, int i, bo
     else if ((app->combat->weapons[attackerWeapon + Combat::WEAPON_FIELD_RANGEMIN] == app->combat->weapons[attackerWeapon + Combat::WEAPON_FIELD_RANGEMAX] || (app->combat->crFlags & 0x40) != 0x0) && n7 > 0) {
         return app->combat->crFlags |= 0x400;
     }
-    if (b2 || ce->weapon == 13) {
+    if (b2 || app->combat->getWeaponFlags(ce->weapon).alwaysHits) {
         return app->combat->crFlags |= 0x1;
     }
     int stat = ce->getStat(Enums::STAT_ACCURACY);
@@ -308,7 +308,7 @@ int CombatEntity::calcDamage(CombatEntity* ce, Entity* entity, CombatEntity* ce2
     int dmgStrMin = app->combat->weapons[weapon + Combat::WEAPON_FIELD_STRMIN] & 0xFF;
     int dmgStrMax = app->combat->weapons[weapon + Combat::WEAPON_FIELD_STRMAX] & 0xFF;
 
-    if (ce->weapon == 13) {
+    if (app->combat->getWeaponFlags(ce->weapon).doubleDamage) {
         dmgStrMin *= 2;
         dmgStrMax *= 2;
     }

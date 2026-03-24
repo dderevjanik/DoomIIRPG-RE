@@ -33,6 +33,9 @@ struct GameConfig {
 	// Entity limits
 	int maxEntities = 275;
 
+	// HUD limits
+	int maxWeaponButtons = 15;
+
 	// Damage vignette direction masks (indexed by damageDir 0-7)
 	std::vector<int> damageVignetteDirs = {8, 2, 3, 15, 5, 4, 8, 8};
 
