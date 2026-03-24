@@ -214,7 +214,7 @@ int Combat::playerSeq() {
         if (this->punchingMonster == 1) {
             this->punchingMonster = 2;
         }
-        if ((1 << this->attackerWeaponId & 0x77FF) == 0x0) {
+        if (this->getWeaponFlags(this->attackerWeaponId).autoHit || this->attackerWeaponId >= this->numWeaponFlags) {
             this->crFlags |= 0x40;
         }
         if (this->weapons[this->attackerWeapon + Combat::WEAPON_FIELD_AMMOTYPE] != 0) {
@@ -223,7 +223,7 @@ int Combat::playerSeq() {
                 animLoopCount = app->player->ammo[this->weapons[this->attackerWeapon + Combat::WEAPON_FIELD_AMMOTYPE]] / this->weapons[this->attackerWeapon + Combat::WEAPON_FIELD_AMMOUSAGE];
             }
         }
-        if (b && this->targetType != 2 && this->attackerWeaponId != 14 && !app->player->weaponIsASentryBot(this->attackerWeaponId)) {
+        if (b && this->targetType != 2 && !this->getWeaponFlags(this->attackerWeaponId).isThrowableItem && !app->player->weaponIsASentryBot(this->attackerWeaponId)) {
             if (animLoopCount == 2) {
                 app->hud->addMessage((short)62);
             }
@@ -234,7 +234,7 @@ int Combat::playerSeq() {
             }
         }
         if (this->targetType == 2) {
-            if ((1 << this->attackerWeaponId & 0x2) == 0x0) {
+            if (!this->getWeaponFlags(this->attackerWeaponId).isMelee) {
                 this->crFlags |= 0x20;
             }
             app->player->ce->calcCombat(app->player->ce, this->curTarget, false, this->worldDist, this->targetSubType);
@@ -297,9 +297,9 @@ int Combat::playerSeq() {
             this->animLoopCount = animLoopCount;
         }
         this->launchProjectile();
-        if ((1 << this->attackerWeaponId & 0x2406) == 0x0) {
+        if (!this->getWeaponFlags(this->attackerWeaponId).noRecoil) {
             int n4 = 2;
-            if (this->attackerWeaponId == 11) {
+            if (this->getWeaponFlags(this->attackerWeaponId).autoHit) {
                 n4 = 6;
             }
             app->render->rockView(this->animTime, app->canvas->viewX - n4 * (app->canvas->viewStepX >> 6), app->canvas->viewY - n4 * (app->canvas->viewStepY >> 6), app->canvas->viewZ);
@@ -382,8 +382,8 @@ int Combat::playerSeq() {
                 app->localization->composeText((short)0, (short)71, messageBuffer);
                 app->hud->finishMessageBuffer();
             }
-            if (this->attackerWeaponId == 14) {
-                app->player->weapons &= 0xFFFFBFFF;
+            if (this->getWeaponFlags(this->attackerWeaponId).consumeOnUse) {
+                app->player->weapons &= ~(1 << this->attackerWeaponId);
                 app->player->selectWeapon(app->player->currentWeaponCopy);
             }
             return 0;
@@ -756,7 +756,7 @@ void Combat::drawWeapon(int sx, int sy) {
             }
             app->render->draw2DSprite(this->getWeaponTileNum(0), 3, x + wpFlashX + xf, y + wpFlashY + yf, flags, 5, (!app->render->_gles->isInit) ? 0x400 : 0, 0x8000);
         }
-        if (weapon == 9) {
+        if (this->getWeaponFlags(weapon).drawDoubleSprite) {
             app->render->draw2DSprite(this->getWeaponTileNum(0), frame, x, y, flags, renderMode, renderFlags, 0x10000);
         }
 
@@ -813,14 +813,14 @@ void Combat::explodeOnMonster() {
         this->explodeThread = nullptr;
     }
     app->render->shotsFired = true;
-    if ((1 << this->attackerWeaponId & 0x2) != 0x0 && this->hitType == 0) {
+    if (this->getWeaponFlags(this->attackerWeaponId).isMelee && this->hitType == 0) {
         app->render->shotsFired = false;
     }
     else if (this->curTarget->monster != nullptr && this->curTarget->def->eType == Enums::ET_MONSTER && (this->curTarget->info & 0x40000) == 0x0) {
         app->game->activate(this->curTarget, true, false, true, true);
     }
     if (this->hitType == 0) {
-        if (this->targetType != 2 && this->attackerWeaponId == 11) {
+        if (this->targetType != 2 && this->getWeaponFlags(this->attackerWeaponId).splashDamage) {
             this->radiusHurtEntities(this->attackX >> 6, this->attackY >> 6, 1, this->damage + this->crArmorDamage >> 2, app->player->getPlayerEnt(), nullptr);
         }
         return;
@@ -829,7 +829,7 @@ void Combat::explodeOnMonster() {
         if (this->totalDamage > 0) {
             this->checkMonsterFX();
             bool pain = this->curTarget->pain(this->totalDamage, app->player->getPlayerEnt());
-            if (this->attackerWeaponId != 14) {
+            if (!this->getWeaponFlags(this->attackerWeaponId).noBloodOnHit) {
                 app->particleSystem->spawnMonsterBlood(this->curTarget, false);
             }
             if (this->targetMonster->ce.getStat(Enums::STAT_HEALTH) > 0) {
@@ -843,8 +843,11 @@ void Combat::explodeOnMonster() {
                     app->player->link();
                 }
             }
-            if (this->attackerWeaponId == 11 || this->attackerWeaponId == 12) {
-                this->radiusHurtEntities(this->attackX >> 6, this->attackY >> 6, 1, this->crDamage >> ((this->attackerWeaponId == 12) ? 1 : 2), app->player->getPlayerEnt(), this->curTarget);
+            {
+                const auto& wf = this->getWeaponFlags(this->attackerWeaponId);
+                if (wf.splashDamage && wf.splashDivisor > 0) {
+                    this->radiusHurtEntities(this->attackX >> 6, this->attackY >> 6, 1, this->crDamage / wf.splashDivisor, app->player->getPlayerEnt(), this->curTarget);
+                }
             }
         }
         else if (this->totalDamage < 0) {

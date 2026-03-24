@@ -184,7 +184,7 @@ void Player::selectPrevWeapon() {
 			}
 		}
 	}
-	if (this->ce->weapon == weapon && weapon != 14) {
+	if (this->ce->weapon == weapon && !app->combat->getWeaponFlags(weapon).isThrowableItem) {
 		for (int j = 14; j > weapon; --j) {
 			if ((n & 1 << j) != 0x0) {
 				int n3 = j * 9;

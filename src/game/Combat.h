@@ -107,6 +107,14 @@ public:
 		bool showFlashFrame;    // Show muzzle flash frame during attack (chaingun-like)
 		bool hasFlashSprite;    // Render flash sprite overlay (assault rifle, super shotgun, chaingun)
 		bool soulAmmoDisplay;   // Special ammo display format (X/5 instead of XXX)
+		bool autoHit;           // Auto-hit (no accuracy roll, e.g. rocket launcher, monster weapons)
+		bool isMelee;           // Melee weapon (chainsaw) — no shotsFired flag, special miss behavior
+		bool noRecoil;          // No recoil/rock view on fire (chainsaw, holy water, plasma, soul cube)
+		bool splashDamage;      // Deals splash/radius damage on hit (rocket launcher, BFG)
+		int splashDivisor;      // Splash damage divisor (2 = half, 4 = quarter; 0 = no splash)
+		bool noBloodOnHit;      // Skip blood particle spawn on hit (item weapon)
+		bool drawDoubleSprite;  // Draw weapon sprite twice (scoped assault rifle overlay)
+		bool consumeOnUse;      // Weapon is consumed after attack (item weapon — removes from inventory)
 	};
 	WeaponFlags* wpFlags;       // Array sized to numWeapons
 	int numWeaponFlags;

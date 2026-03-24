@@ -532,7 +532,7 @@ void Entity::died(bool b, Entity* entity) {
 
 bool Entity::deathByExplosion(Entity* entity) {
 
-    return entity == app->player->getPlayerEnt() && app->player->ce->weapon == 11;
+    return entity == app->player->getPlayerEnt() && app->combat->getWeaponFlags(app->player->ce->weapon).splashDamage;
 }
 
 void Entity::aiCalcSimpleGoal(bool b) {

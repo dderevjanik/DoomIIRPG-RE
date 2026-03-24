@@ -702,6 +702,14 @@ bool Applet::loadWeaponsFromYAML(const char* path) {
 			f.showFlashFrame = beh["show_flash_frame"].as<bool>(false);
 			f.hasFlashSprite = beh["has_flash_sprite"].as<bool>(false);
 			f.soulAmmoDisplay = beh["soul_ammo_display"].as<bool>(false);
+			f.autoHit = beh["auto_hit"].as<bool>(false);
+			f.isMelee = beh["is_melee"].as<bool>(false);
+			f.noRecoil = beh["no_recoil"].as<bool>(false);
+			f.splashDamage = beh["splash_damage"].as<bool>(false);
+			f.splashDivisor = beh["splash_divisor"].as<int>(0);
+			f.noBloodOnHit = beh["no_blood_on_hit"].as<bool>(false);
+			f.drawDoubleSprite = beh["draw_double_sprite"].as<bool>(false);
+			f.consumeOnUse = beh["consume_on_use"].as<bool>(false);
 		}
 	}
 
