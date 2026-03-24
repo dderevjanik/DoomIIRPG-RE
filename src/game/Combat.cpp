@@ -102,7 +102,7 @@ void Combat::performAttack(Entity* curAttacker, Entity* curTarget, int attackX, 
     else {
         this->attackerMonster = this->curAttacker->monster;
         this->attackerWeaponId = this->attackerMonster->ce.weapon;
-        if (this->attackerWeaponId == 18) {
+        if (this->getWeaponFlags(this->attackerWeaponId).chargeAttack) {
             this->attackFrame = 64;
         }
         else if (this->attackerWeaponId == this->getMonsterField(this->curAttacker->def, 1)) {
@@ -141,7 +141,7 @@ void Combat::performAttack(Entity* curAttacker, Entity* curTarget, int attackX, 
         this->tileDist = this->WorldDistToTileDist(this->worldDist);
     }
     short* mapSprites = app->render->mapSprites;
-    if (this->attackerWeaponId == 18) {
+    if (this->getWeaponFlags(this->attackerWeaponId).chargeAttack) {
         int sprite = this->curAttacker->getSprite();
         int n2 = mapSprites[app->render->S_X + sprite] - app->canvas->viewX;
         int n3 = mapSprites[app->render->S_Y + sprite] - app->canvas->viewY;
@@ -484,11 +484,12 @@ int Combat::monsterSeq() {
             this->totalArmorDamage += this->crArmorDamage;
         }
         int monsterSound;
-        if ((this->attackerWeaponId == 17) && !(this->crFlags & Enums::CR_HITMASK)) {
-            monsterSound = 1100; // "Revenant_swing.wav"
+        const auto& atkWpFlags = this->getWeaponFlags(this->attackerWeaponId);
+        if (atkWpFlags.missSoundOverride != -1 && !(this->crFlags & Enums::CR_HITMASK)) {
+            monsterSound = atkWpFlags.missSoundOverride;
         }
-        else if (this->attackerWeaponId == 28) {
-            monsterSound = 1087; // "plasma.wav"
+        else if (atkWpFlags.attackSoundOverride != -1) {
+            monsterSound = atkWpFlags.attackSoundOverride;
         }
         else {
             monsterSound = app->game->getMonsterSound(this->curAttacker->def->eSubType, this->curAttacker->def->parm, soundType);
@@ -499,14 +500,14 @@ int Combat::monsterSeq() {
         this->animTime = this->weapons[this->attackerWeapon + Combat::WEAPON_FIELD_SHOTHOLD] * 10;
         this->animStartTime = app->gameTime;
         this->animEndTime = this->animStartTime + this->animTime;
-        if (this->attackerWeaponId != 18) {
+        if (!this->getWeaponFlags(this->attackerWeaponId).chargeAttack) {
             app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | this->attackFrame << 8);
             this->curAttacker->monster->frameTime = app->time + this->animTime;
         }
         if (this->curTarget != nullptr) {
             this->targetKilled = true;
         }
-        if (this->attackerWeaponId == 18) {
+        if (this->getWeaponFlags(this->attackerWeaponId).chargeAttack) {
             LerpSprite* lerpSprite = app->game->allocLerpSprite(nullptr, sprite, true);
             lerpSprite->startTime = app->gameTime;
             lerpSprite->travelTime = 500;
@@ -524,7 +525,7 @@ int Combat::monsterSeq() {
             this->launchProjectile();
         }
         MonsterBehaviors& atkBeh = app->combat->monsterBehaviors[this->curAttacker->def->eSubType];
-        if (this->gotHit && (this->attackerWeaponId == 23 || atkBeh.onHitPoison)) {
+        if (this->gotHit && (this->getWeaponFlags(this->attackerWeaponId).poisonOnHit || atkBeh.onHitPoison)) {
             app->player->addStatusEffect(atkBeh.onHitPoison ? atkBeh.onHitPoisonId : 13, atkBeh.onHitPoison ? atkBeh.onHitPoisonDuration : 5, atkBeh.onHitPoison ? atkBeh.onHitPoisonPower : 3);
             app->player->translateStatusEffects();
         }
@@ -536,7 +537,7 @@ int Combat::monsterSeq() {
             this->nextStage = 0;
         }
         this->nextStageTime = this->animEndTime;
-        if (app->render->isImp(this->curAttacker->def->tileIndex) && this->attackerWeaponId == 16 && this->animLoopCount == 0) {
+        if (this->getWeaponFlags(this->attackerWeaponId).flipSpriteOnEnd && this->animLoopCount == 0) {
             app->render->mapSpriteInfo[sprite] ^= 0x20000;
         }
         this->updateProjectile();
@@ -1300,16 +1301,8 @@ void Combat::updateProjectile() {
             }
         }
     }
-    else if (this->gotHit && (this->totalDamage > 0 || this->totalArmorDamage > 0) && this->exploded && (this->attackerWeaponId == 16 || this->attackerWeaponId == 15 || this->attackerWeaponId == 18 || this->attackerWeaponId == 17)) {
-        if (this->attackerWeaponId == 16) {
-            this->missileAnim = 245;
-        }
-        else if (this->attackerWeaponId == 15) {
-            this->missileAnim = 246;
-        }
-        else {
-            this->missileAnim = 247;
-        }
+    else if (this->gotHit && (this->totalDamage > 0 || this->totalArmorDamage > 0) && this->exploded && this->getWeaponFlags(this->attackerWeaponId).meleeImpactAnim != 0) {
+        this->missileAnim = this->getWeaponFlags(this->attackerWeaponId).meleeImpactAnim;
         int* calcPosition = this->curAttacker->calcPosition();
         if (app->game->isInFront(calcPosition[0] >> 6, calcPosition[1] >> 6)) {
             GameSprite* gSprite = app->game->gsprite_allocAnim(this->missileAnim, app->canvas->destZ, app->canvas->destY, app->canvas->destZ);

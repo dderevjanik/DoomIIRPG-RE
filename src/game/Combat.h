@@ -115,6 +115,12 @@ public:
 		bool noBloodOnHit;      // Skip blood particle spawn on hit (item weapon)
 		bool drawDoubleSprite;  // Draw weapon sprite twice (scoped assault rifle overlay)
 		bool consumeOnUse;      // Weapon is consumed after attack (item weapon — removes from inventory)
+		bool chargeAttack;      // Monster charge: physical rush toward player (m_charge)
+		bool flipSpriteOnEnd;   // Flip sprite horizontally when attack loop ends (imp fireball)
+		bool poisonOnHit;       // Apply status effect on hit (arch-vile fire)
+		int16_t attackSoundOverride;  // Override monster attack sound resource ID (-1 = use default)
+		int16_t missSoundOverride;    // Override sound when missing (-1 = use default)
+		int16_t meleeImpactAnim;      // Melee impact animation ID (0 = none)
 	};
 	WeaponFlags* wpFlags;       // Array sized to numWeapons
 	int numWeaponFlags;

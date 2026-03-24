@@ -2356,7 +2356,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 			}
 			else {
 				if (eType == 10) {
-					if ((1 << entity3->def->eSubType & 0x1) == 0x0 || app->player->ce->weapon == 1) {
+					if ((1 << entity3->def->eSubType & 0x1) == 0x0 || app->combat->getWeaponFlags(app->player->ce->weapon).isMelee) {
 						if (n6 == 0) {
 							entity = entity3;
 							n4 = n11;

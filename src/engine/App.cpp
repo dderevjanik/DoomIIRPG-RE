@@ -613,6 +613,10 @@ bool Applet::loadWeaponsFromYAML(const char* path) {
 	this->combat->wpFlags = new Combat::WeaponFlags[numWeapons];
 	this->combat->numWeaponFlags = numWeapons;
 	std::memset(this->combat->wpFlags, 0, sizeof(Combat::WeaponFlags) * numWeapons);
+	for (int j = 0; j < numWeapons; j++) {
+		this->combat->wpFlags[j].attackSoundOverride = -1;
+		this->combat->wpFlags[j].missSoundOverride = -1;
+	}
 
 	// Second pass: populate arrays
 	for (auto wit = weapons.begin(); wit != weapons.end(); ++wit) {
@@ -710,6 +714,14 @@ bool Applet::loadWeaponsFromYAML(const char* path) {
 			f.noBloodOnHit = beh["no_blood_on_hit"].as<bool>(false);
 			f.drawDoubleSprite = beh["draw_double_sprite"].as<bool>(false);
 			f.consumeOnUse = beh["consume_on_use"].as<bool>(false);
+			f.chargeAttack = beh["charge_attack"].as<bool>(false);
+			f.flipSpriteOnEnd = beh["flip_sprite_on_end"].as<bool>(false);
+			f.poisonOnHit = beh["poison_on_hit"].as<bool>(false);
+			std::string atkSndOvr = beh["attack_sound_override"].as<std::string>("none");
+			f.attackSoundOverride = (atkSndOvr == "none") ? -1 : (int16_t)Sounds::getResIDByName(atkSndOvr);
+			std::string missSndOvr = beh["miss_sound_override"].as<std::string>("none");
+			f.missSoundOverride = (missSndOvr == "none") ? -1 : (int16_t)Sounds::getResIDByName(missSndOvr);
+			f.meleeImpactAnim = beh["melee_impact_anim"].as<int16_t>(0);
 		}
 	}
 
