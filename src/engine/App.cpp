@@ -1323,8 +1323,8 @@ bool Applet::loadMonstersFromYAML(const char* path) {
 	this->combat->monsterWeakness = new int8_t[totalEntities * 8];
 	std::memset(this->combat->monsterWeakness, 0, totalEntities * 8);
 
-	this->game->monsterSounds = new uint8_t[numTypes * 8];
-	std::memset(this->game->monsterSounds, 255, numTypes * 8);
+	this->game->monsterSounds = new uint8_t[totalEntities * 8];
+	std::memset(this->game->monsterSounds, 255, totalEntities * 8);
 
 	this->particleSystem->monsterColors = new uint8_t[numTypes * 3];
 	std::memset(this->particleSystem->monsterColors, 0, numTypes * 3);
@@ -1366,21 +1366,22 @@ bool Applet::loadMonstersFromYAML(const char* path) {
 			}
 		}
 
-		// Sounds
+		// Sounds (type-level defaults, copied to all tiers)
 		if (YAML::Node snd = m["sounds"]) {
-			int sndBase = idx * 8;
+			uint8_t typeSounds[8];
 			for (int f = 0; f < 8; f++) {
 				std::string val = snd[soundFields[f]].as<std::string>("none");
 				if (val == "none") {
-					this->game->monsterSounds[sndBase + f] = 255;
+					typeSounds[f] = 255;
 				} else {
 					int soundIdx = Sounds::getIndexByName(val);
-					if (soundIdx >= 0) {
-						this->game->monsterSounds[sndBase + f] = (uint8_t)soundIdx;
-					} else {
-						this->game->monsterSounds[sndBase + f] = (uint8_t)std::atoi(val.c_str());
-					}
+					typeSounds[f] = (soundIdx >= 0) ? (uint8_t)soundIdx : (uint8_t)std::atoi(val.c_str());
 				}
+			}
+			// Copy to all tiers for this monster type
+			for (int t = 0; t < numTiers; t++) {
+				int sndBase = (idx * numTiers + t) * 8;
+				std::memcpy(&this->game->monsterSounds[sndBase], typeSounds, 8);
 			}
 		}
 
@@ -1405,6 +1406,28 @@ bool Applet::loadMonstersFromYAML(const char* path) {
 			mb.knockbackWeaponId = (kbWeapon == "none") ? -1 : WeaponNames::toIndex(kbWeapon);
 			std::string ws = beh["walk_sound"].as<std::string>("none");
 			mb.walkSoundResId = (ws == "none") ? -1 : Sounds::getResIDByName(ws);
+			if (YAML::Node wmods = beh["weakness_modifiers"]) {
+				for (auto wit = wmods.begin(); wit != wmods.end(); ++wit) {
+					std::string wname = wit->first.as<std::string>();
+					int weaponIdx = WeaponNames::toIndex(wname);
+					if (weaponIdx >= 0 && weaponIdx < MonsterBehaviors::MAX_WEAKNESS_MODS) {
+						std::string val = wit->second.as<std::string>("0");
+						if (val == "immune") {
+							mb.weaknessMods[weaponIdx] = -1;
+						} else {
+							mb.weaknessMods[weaponIdx] = (int8_t)std::atoi(val.c_str());
+						}
+					}
+				}
+			}
+			if (YAML::Node rds = beh["random_death_sounds"]) {
+				int count = std::min((int)rds.size(), 4);
+				mb.numRandomDeathSounds = (int8_t)count;
+				for (int d = 0; d < count; d++) {
+					std::string sname = rds[d].as<std::string>("none");
+					mb.randomDeathSounds[d] = (sname == "none") ? -1 : (int16_t)Sounds::getResIDByName(sname);
+				}
+			}
 		}
 
 		// Tiers
@@ -1461,6 +1484,22 @@ bool Applet::loadMonstersFromYAML(const char* path) {
 						int weakCount = std::min((int)weak.size(), 8);
 						for (int w = 0; w < weakCount; w++) {
 							this->combat->monsterWeakness[weakBase + w] = (int8_t)weak[w].as<int>(0);
+						}
+					}
+				}
+
+				// Per-tier sound overrides (override type-level sounds for this tier)
+				if (YAML::Node tsnd = tier["sounds"]) {
+					int sndBase = entityIdx * 8;
+					for (int f = 0; f < 8; f++) {
+						if (YAML::Node sv = tsnd[soundFields[f]]) {
+							std::string val = sv.as<std::string>("none");
+							if (val == "none") {
+								this->game->monsterSounds[sndBase + f] = 255;
+							} else {
+								int soundIdx = Sounds::getIndexByName(val);
+								this->game->monsterSounds[sndBase + f] = (soundIdx >= 0) ? (uint8_t)soundIdx : (uint8_t)std::atoi(val.c_str());
+							}
 						}
 					}
 				}

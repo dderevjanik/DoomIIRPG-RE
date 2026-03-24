@@ -28,6 +28,12 @@ struct MonsterBehaviors {
 	int onHitPoisonPower = 3;
 	int knockbackWeaponId = -1;   // -1 = none
 	int walkSoundResId = -1;      // -1 = none
+	int16_t randomDeathSounds[4] = {-1, -1, -1, -1}; // Up to 4 random death sound resource IDs
+	int8_t numRandomDeathSounds = 0;                   // 0 = use normal death sound
+
+	// Per-weapon weakness modifiers (indexed by weapon index, -1=immune, 0=normal, >0=left shift)
+	static constexpr int MAX_WEAKNESS_MODS = 16;
+	int8_t weaknessMods[MAX_WEAKNESS_MODS] = {};  // 0 = no modifier for all weapons
 };
 
 class Combat

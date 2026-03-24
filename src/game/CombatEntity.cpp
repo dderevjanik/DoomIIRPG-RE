@@ -343,17 +343,13 @@ int CombatEntity::calcDamage(CombatEntity* ce, Entity* entity, CombatEntity* ce2
             dmgStrMin += (app->player->buffs[23] << 8) / 100 * dmgStrMin >> 8;
         }
         int weaponWeakness = app->combat->getWeaponWeakness(ce->weapon, entity->def->eSubType, entity->def->parm);
-        if (ce->weapon == 2) {
-            if (entity->def->eSubType == 2) {
-                if (app->game->difficulty == 4) {
-                    weaponWeakness <<= 1;
-                }
-                else {
-                    weaponWeakness <<= 2;
-                }
-            }
-            else if (entity->def->eSubType == 0) {
+        if (ce->weapon >= 0 && ce->weapon < MonsterBehaviors::MAX_WEAKNESS_MODS) {
+            int8_t mod = app->combat->monsterBehaviors[entity->def->eSubType].weaknessMods[ce->weapon];
+            if (mod == -1) {
                 weaponWeakness = 0;
+            } else if (mod > 0) {
+                int shift = (app->game->difficulty == 4) ? std::max(1, (int)mod - 1) : mod;
+                weaponWeakness <<= shift;
             }
         }
         damage = weaponWeakness * dmgStrMin >> 8;

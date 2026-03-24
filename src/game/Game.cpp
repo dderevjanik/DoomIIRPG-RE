@@ -4098,64 +4098,17 @@ int Game::getMonsterSound(int eSubType, int param, int soundType) {
 		rand = app->nextByte() % 3;
 	}
 
-	if ((eSubType == Enums::MONSTER_PINKY) && (param == 0)) {
-		switch (soundType) {
-			case Enums::MSOUND_ALERT1:
-			case Enums::MSOUND_ALERT2:
-			case Enums::MSOUND_ALERT3:
-				monsterSoundResId = 1085; // "Pinky_small_sight.wav"
-				break;
-			case Enums::MSOUND_ATTACK1:
-			case Enums::MSOUND_ATTACK2:
-				monsterSoundResId = 1082; // "Pinky_small_attack.wav"
-				break;
-			case Enums::MSOUND_IDLE:
-				monsterSoundResId = 1026; // "demon_small_active.wav",
-				break;
-			case Enums::MSOUND_PAIN:
-				monsterSoundResId = 1084; // "Pinky_small_pain.wav"
-				break;
-			case Enums::MSOUND_DEATH:
-				monsterSoundResId = 1083; // "Pinky_small_death.wav",
-				break;
-		}
-	} else {
-		if ((eSubType == Enums::BOSS_MASTERMIND) && (param == 1)) {
-			switch (soundType) {
-				case Enums::MSOUND_ALERT1:
-				case Enums::MSOUND_ALERT2:
-				case Enums::MSOUND_ALERT3:
-					monsterSoundResId = 1116; // "SpiderMastermind_sight.wav"
-					break;
-				case Enums::MSOUND_ATTACK1:
-				case Enums::MSOUND_ATTACK2:
-					goto getMonsterSound;
-					break;
-				case Enums::MSOUND_IDLE:
-					monsterSoundResId = 1024; // "demon_active.wav"
-					break;
-				case Enums::MSOUND_PAIN:
-					monsterSoundResId = 1025; // "demon_pain.wav"
-					break;
-				case Enums::MSOUND_DEATH:
-					monsterSoundResId = 1115; // "SpiderMastermind_death.wav"
-					break;
-			}
-		} else {
-		getMonsterSound:
-			monsterSoundResId = this->monsterSounds[(eSubType * Enums::MSOUND_TYPES) + soundType + rand];
-			if (this->monsterSounds[(eSubType * Enums::MSOUND_TYPES) + soundType + rand] != Enums::MSOUND_NONE) {
-				monsterSoundResId += 1000;
-			}
-		}
+	// Per-tier sound lookup: monsterSounds[(eSubType * tiersPerMonster + param) * 8 + soundType]
+	int tierIdx = eSubType * app->combat->tiersPerMonster + param;
+	monsterSoundResId = this->monsterSounds[tierIdx * Enums::MSOUND_TYPES + soundType + rand];
+	if (monsterSoundResId != Enums::MSOUND_NONE) {
+		monsterSoundResId += 1000;
 	}
 
-	if ((eSubType == Enums::MONSTER_IMP) && (soundType == Enums::MSOUND_DEATH)) {
-		monsterSoundResId = (std::rand() % 2) + 1050; // "Imp_death1.wav", "Imp_death2.wav"
-	}
-
-	if ((eSubType == Enums::MONSTER_ZOMBIE) && (soundType == Enums::MSOUND_DEATH)) {
-		monsterSoundResId = (std::rand() % 3) + 1139; // "zombie_death1.wav", "zombie_death2.wav", "zombie_death3.wav"
+	// Random death sound override (e.g. imp has 2 death sounds, zombie has 3)
+	const MonsterBehaviors& mb = app->combat->monsterBehaviors[eSubType];
+	if (soundType == Enums::MSOUND_DEATH && mb.numRandomDeathSounds > 0) {
+		monsterSoundResId = mb.randomDeathSounds[std::rand() % mb.numRandomDeathSounds];
 	}
 
 	return monsterSoundResId;
