@@ -4108,7 +4108,7 @@ int Game::getMonsterSound(int eSubType, int param, int soundType) {
 	// Random death sound override (e.g. imp has 2 death sounds, zombie has 3)
 	const MonsterBehaviors& mb = app->combat->monsterBehaviors[eSubType];
 	if (soundType == Enums::MSOUND_DEATH && mb.numRandomDeathSounds > 0) {
-		monsterSoundResId = mb.randomDeathSounds[std::rand() % mb.numRandomDeathSounds];
+		monsterSoundResId = mb.randomDeathSounds[app->nextInt() % mb.numRandomDeathSounds];
 	}
 
 	return monsterSoundResId;

@@ -109,6 +109,7 @@ class CAppContainer {
 	const char* minigameName;     // --minigame override
 	bool skipTravelMap;            // --skip-travel-map
 	bool headless;                 // --headless mode (no rendering, no audio)
+	uint32_t headlessTimeMs;       // deterministic tick counter for headless mode
 	static CAppContainer* getInstance();
 	static int m_cheatEntry;
 	float MoveX, MoveY, MoveAng;

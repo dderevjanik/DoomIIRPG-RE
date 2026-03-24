@@ -23,6 +23,7 @@
 int main(int argc, char* args[]) {
 
 	int maxTicks = 100;
+	unsigned int seed = 42; // Default deterministic seed
 	const char* gameDir = ".";
 	const char* gameName = nullptr;
 	const char* customMap = nullptr;
@@ -36,6 +37,8 @@ int main(int argc, char* args[]) {
 			customMap = args[++i];
 		} else if (strcmp(args[i], "--ticks") == 0 && i + 1 < argc) {
 			maxTicks = atoi(args[++i]);
+		} else if (strcmp(args[i], "--seed") == 0 && i + 1 < argc) {
+			seed = (unsigned int)atoi(args[++i]);
 		} else if (strcmp(args[i], "--minigame") == 0 && i + 1 < argc) {
 			CAppContainer::getInstance()->minigameName = args[++i];
 		} else if (strcmp(args[i], "--skip-travel-map") == 0) {
@@ -45,6 +48,10 @@ int main(int argc, char* args[]) {
 
 	// Mark headless mode before anything else
 	CAppContainer::getInstance()->headless = true;
+
+	// Seed RNG for deterministic execution
+	std::srand(seed);
+	printf("[headless] Seed: %u\n", seed);
 
 	// --game <name> is sugar for --gamedir games/<name>
 	std::string gameDirStr;
@@ -217,6 +224,7 @@ int main(int argc, char* args[]) {
 	const int fixedTimestepMs = 15; // ~67 FPS, same as normal game loop
 
 	while (!CAppContainer::getInstance()->app->closeApplet && ticksRun < maxTicks) {
+		CAppContainer::getInstance()->headlessTimeMs += fixedTimestepMs;
 		CAppContainer::getInstance()->DoLoop(fixedTimestepMs);
 		ticksRun++;
 
