@@ -1149,7 +1149,7 @@ void Canvas::setState(int state) {
 		if (app->game->monstersTurn == 0 || this->oldState == Canvas::ST_CAMERA) {
 			this->drawPlayingSoftKeys();
 		}
-		if (this->oldState == Canvas::ST_COMBAT && app->combat->curTarget != nullptr && app->combat->curTarget->def->eType == 3) {
+		if (this->oldState == Canvas::ST_COMBAT && app->combat->curTarget != nullptr && app->combat->curTarget->def->eType == Enums::ET_NPC) {
 			app->game->executeStaticFunc(7);
 		}
 		this->updateFacingEntity = true;
@@ -1327,43 +1327,43 @@ void Canvas::checkFacingEntity() {
 	int *view = app->tinyGL->view;
 	app->game->trace(destX + (-view[2] * 28 >> 14), destY + (-view[6] * 28 >> 14), destZ + (-view[10] * 28 >> 14), destX + (6 * -view[2] >> 8), destY + (6 * -view[6] >> 8), destZ + (6 * -view[10] >> 8), nullptr, n, 2, this->isZoomedIn);
 	Entity* traceEntity = app->game->traceEntity;
-	if (traceEntity != nullptr && (traceEntity->def->eType == 6 || traceEntity->def->eType == 11 || traceEntity->def->eType == 12 || traceEntity->def->eType == 10 || traceEntity->def->eType == 14)) {
+	if (traceEntity != nullptr && (traceEntity->def->eType == Enums::ET_ITEM || traceEntity->def->eType == Enums::ET_MONSTERBLOCK_ITEM || traceEntity->def->eType == Enums::ET_SPRITEWALL || traceEntity->def->eType == Enums::ET_ATTACK_INTERACTIVE || traceEntity->def->eType == Enums::ET_DECOR_NOCLIP)) {
 		int i = 0;
 		while (i < app->game->numTraceEntities) {
 			Entity* entity = app->game->traceEntities[i];
 			short linkIndex = entity->linkIndex;
-			if (entity->def->eType == 2) {
-				if (traceEntity->def->eType != 12) {
+			if (entity->def->eType == Enums::ET_MONSTER) {
+				if (traceEntity->def->eType != Enums::ET_SPRITEWALL) {
 					traceEntity = entity;
 					break;
 				}
 				break;
 			}
 			else {
-				if (entity->def->eType == 5 || entity->def->eType == 4) {
+				if (entity->def->eType == Enums::ET_DOOR || entity->def->eType == Enums::ET_PLAYERCLIP) {
 					break;
 				}
-				if (entity->def->eType == 0) {
+				if (entity->def->eType == Enums::ET_WORLD) {
 					break;
 				}
-				if (entity->def->eType == 12 && (app->render->mapFlags[linkIndex] & 0x2) != 0x0) {
+				if (entity->def->eType == Enums::ET_SPRITEWALL && (app->render->mapFlags[linkIndex] & 0x2) != 0x0) {
 					break;
 				}
-				if (entity->def->eType == 7) {
-					if (traceEntity->def->eType == 12) {
+				if (entity->def->eType == Enums::ET_DECOR) {
+					if (traceEntity->def->eType == Enums::ET_SPRITEWALL) {
 						traceEntity = entity;
 						break;
 					}
 					break;
 				}
 				else {
-					if (entity->def->eType == 14) {
-						if (traceEntity->def->eSubType != 6) {
+					if (entity->def->eType == Enums::ET_DECOR_NOCLIP) {
+						if (traceEntity->def->eSubType != Enums::DECOR_DYNAMITE) {
 							traceEntity = entity;
 							break;
 						}
 					}
-					else if (entity->def->eType == 10 && (entity->def->eSubType == 1 || entity->def->eSubType == 2 || entity->def->eSubType == 3) && traceEntity != nullptr && traceEntity->def->eType != 6) {
+					else if (entity->def->eType == Enums::ET_ATTACK_INTERACTIVE && (entity->def->eSubType == Enums::INTERACT_BARRICADE || entity->def->eSubType == Enums::INTERACT_CRATE || entity->def->eSubType == Enums::INTERACT_PICKUP) && traceEntity != nullptr && traceEntity->def->eType != Enums::ET_ITEM) {
 						traceEntity = entity;
 						break;
 					}
@@ -1376,31 +1376,31 @@ void Canvas::checkFacingEntity() {
 	if (app->player->facingEntity != nullptr) {
 		Entity* facingEntity = app->player->facingEntity;
 		int dist = facingEntity->distFrom(this->viewX, this->viewY);
-		if (facingEntity->def->eType != 2 && dist > app->combat->tileDistances[2]) {
+		if (facingEntity->def->eType != Enums::ET_MONSTER && dist > app->combat->tileDistances[2]) {
 			app->player->facingEntity = nullptr;
 		}
-		else if (facingEntity->def->eType == 3 && dist <= app->combat->tileDistances[0]) {
+		else if (facingEntity->def->eType == Enums::ET_NPC && dist <= app->combat->tileDistances[0]) {
 			app->player->showHelp((short)0, false);
 		}
 		else if (dist <= app->combat->tileDistances[0]) {
-			if (facingEntity->def->eType == 10) {
-				if (facingEntity->def->eSubType == 1) {
+			if (facingEntity->def->eType == Enums::ET_ATTACK_INTERACTIVE) {
+				if (facingEntity->def->eSubType == Enums::INTERACT_BARRICADE) {
 					app->player->showHelp((short)2, false);
 				}
-				else if (facingEntity->def->eSubType == 2) {
+				else if (facingEntity->def->eSubType == Enums::INTERACT_CRATE) {
 					app->player->showHelp((short)3, false);
 				}
-				else if (facingEntity->def->eSubType == 3) {
+				else if (facingEntity->def->eSubType == Enums::INTERACT_PICKUP) {
 					app->player->showHelp((short)9, false);
 				}
 			}
-			else if (facingEntity->def->eType == 5) {
-				if (facingEntity->def->eSubType == 1) {
+			else if (facingEntity->def->eType == Enums::ET_DOOR) {
+				if (facingEntity->def->eSubType == Enums::DOOR_LOCKED) {
 					app->player->showHelp((short)1, false);
 				}
 				app->player->showHelp((short)7, false);
 			}
-			else if (facingEntity->def->eType == 6 && facingEntity->def->eSubType == 3) {
+			else if (facingEntity->def->eType == Enums::ET_ITEM && facingEntity->def->eSubType == Enums::ITEM_KEY) {
 				app->player->showHelp((short)4, false);
 			}
 			else if (facingEntity->def->tileIndex == 158) {
@@ -1421,11 +1421,11 @@ void Canvas::checkFacingEntity() {
 	}
 	if (traceEntity2 != nullptr) {
 		int dist2 = traceEntity2->distFrom(this->viewX, this->viewY);
-		if (dist2 <= app->combat->tileDistances[0] && traceEntity2->def->eType == 0 && app->combat->weaponDown) {
+		if (dist2 <= app->combat->tileDistances[0] && traceEntity2->def->eType == Enums::ET_WORLD && app->combat->weaponDown) {
 			app->combat->shiftWeapon(true);
 		}
 		else if ((this->state == Canvas::ST_PLAYING || this->state == Canvas::ST_DIALOG) && ((0x2 & 1 << app->player->ce->weapon) == 0x0 || dist2 <= app->combat->tileDistances[0])) {
-			if (traceEntity2->def->eType == 3) {
+			if (traceEntity2->def->eType == Enums::ET_NPC) {
 				app->combat->shiftWeapon(true);
 			}
 			else if (app->combat->weaponDown) {
@@ -1520,13 +1520,13 @@ void Canvas::startRotation(bool b) {
 	int n2 = app->game->traceFracs[0] * n >> 14;
 	int n3;
 	int n4;
-	if (traceEntity != nullptr && (traceEntity->def->eType == 0 || traceEntity->def->eType == 12) && n2 <= 36) {
+	if (traceEntity != nullptr && (traceEntity->def->eType == Enums::ET_WORLD || traceEntity->def->eType == Enums::ET_SPRITEWALL) && n2 <= 36) {
 		n3 = this->destZ;
 		n4 = (b ? 0 : 1);
 	}
 	else {
 		bool b4 = !this->pitchIsControlled(this->destX >> 6, this->destY >> 6, app->game->VecToDir(b2 * 32, b3 * 32, false));
-		if (traceEntity != nullptr && traceEntity->def->eType == 2) {
+		if (traceEntity != nullptr && traceEntity->def->eType == Enums::ET_MONSTER) {
 			if (b4) {
 				int* calcPosition = traceEntity->calcPosition();
 				n3 = app->render->getHeight(calcPosition[0], calcPosition[1]) + 36;
@@ -2307,7 +2307,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 		}
 	}
 	else if (action == Enums::ACTION_FIRE) {
-		if (app->player->facingEntity != nullptr && app->player->facingEntity->def->eType == 10) {
+		if (app->player->facingEntity != nullptr && app->player->facingEntity->def->eType == Enums::ET_ATTACK_INTERACTIVE) {
 			this->lootSource = app->player->facingEntity->name;
 		}
 		else {
@@ -2346,7 +2346,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 			int n11 = app->game->traceFracs[i];
 			int dist = entity3->distFrom(this->viewX, this->viewY);
 			uint8_t eType = entity3->def->eType;
-			if (eType == 0 || eType == 12 || eType == 4) {
+			if (eType == Enums::ET_WORLD || eType == Enums::ET_SPRITEWALL || eType == Enums::ET_PLAYERCLIP) {
 				if (entity == nullptr) {
 					entity = entity3;
 					n4 = n11;
@@ -2355,7 +2355,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 				break;
 			}
 			else {
-				if (eType == 10) {
+				if (eType == Enums::ET_ATTACK_INTERACTIVE) {
 					if ((1 << entity3->def->eSubType & 0x1) == 0x0 || app->combat->getWeaponFlags(app->player->ce->weapon).isMelee) {
 						if (n6 == 0) {
 							entity = entity3;
@@ -2365,12 +2365,12 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 						break;
 					}
 				}
-				else if (eType == 13) {
+				else if (eType == Enums::ET_NONOBSTRUCTING_SPRITEWALL) {
 					if (app->combat->getWeaponFlags(weapon2).isMelee) {
 						entity2 = entity3;
 					}
 				}
-				else if (eType == 3) {
+				else if (eType == Enums::ET_NPC) {
 					if (dist >= 8192) {
 						if (n6 == 0) {
 							entity = entity3;
@@ -2381,13 +2381,13 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 					}
 				}
 				else {
-					if (eType == 2) {
+					if (eType == Enums::ET_MONSTER) {
 						entity = entity3;
 						n4 = n11;
 						n6 = 0;
 						break;
 					}
-					if (eType == 5) {
+					if (eType == Enums::ET_DOOR) {
 						if (entity == nullptr) {
 							entity = entity3;
 							n4 = n11;
@@ -2396,13 +2396,13 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 						}
 						break;
 					}
-					else if (eType == 9) {
+					else if (eType == Enums::ET_CORPSE) {
 						if (dist == app->combat->tileDistances[0]) {
 							if (app->combat->getWeaponFlags(weapon2).canLootCorpses) {
 #if 0 // J2ME
-								if (entity != nullptr && entity->def->eType == 9) {
+								if (entity != nullptr && entity->def->eType == Enums::ET_CORPSE) {
 									if (entity->linkIndex < entity3->linkIndex) {
-										if (entity3->monster == nullptr && entity3->def->eSubType != 11) {
+										if (entity3->monster == nullptr && entity3->def->eSubType != Enums::MONSTER_SENTRY_BOT) {
 											if (entity3->param == 0 && entity3->lootSet != nullptr) {
 												entity = entity3;
 												n4 = n11;
@@ -2418,7 +2418,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 										}
 									}
 								}
-								else if (entity3->monster == nullptr && entity3->def->eSubType != 11) {
+								else if (entity3->monster == nullptr && entity3->def->eSubType != Enums::MONSTER_SENTRY_BOT) {
 									if (entity3->param == 0 && entity3->lootSet != nullptr) {
 										entity = entity3;
 										n4 = n11;
@@ -2433,7 +2433,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 									n4 = n11;
 								}
 #else
-								if (((entity == nullptr) || (entity->def->eType != 9))
+								if (((entity == nullptr) || (entity->def->eType != Enums::ET_CORPSE))
 									|| (entity->linkIndex < entity3->linkIndex)) {
 									entity = entity3;
 									n4 = n11;
@@ -2456,29 +2456,29 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 							}
 						}
 					}
-					else if (eType == 8) {
-						if (entity3->def->eSubType == 1 && app->combat->getWeaponFlags(weapon2).fountainWeapon && app->player->ammo[app->combat->weapons[weapon2 * Combat::WEAPON_MAX_FIELDS + Combat::WEAPON_FIELD_AMMOTYPE]] >= app->combat->weapons[weapon2 * Combat::WEAPON_MAX_FIELDS + Combat::WEAPON_FIELD_AMMOUSAGE]) {
+					else if (eType == Enums::ET_ENV_DAMAGE) {
+						if (entity3->def->eSubType == Enums::ENV_DAMAGE_FIRE && app->combat->getWeaponFlags(weapon2).fountainWeapon && app->player->ammo[app->combat->weapons[weapon2 * Combat::WEAPON_MAX_FIELDS + Combat::WEAPON_FIELD_AMMOTYPE]] >= app->combat->weapons[weapon2 * Combat::WEAPON_MAX_FIELDS + Combat::WEAPON_FIELD_AMMOUSAGE]) {
 							entity = entity3;
 							n4 = n11;
 							n6 = 0;
 							break;
 						}
 					}
-					else if (eType == 7) {
+					else if (eType == Enums::ET_DECOR) {
 						if ((app->render->mapSpriteInfo[entity3->getSprite()] & 0xFF) == 0x95) {
 							entity = entity3;
 							n4 = n11;
 							break;
 						}
 					}
-					else if (eType == 14) {
-						if (entity3->def->eSubType == 7 && dist == app->combat->tileDistances[0]) {
+					else if (eType == Enums::ET_DECOR_NOCLIP) {
+						if (entity3->def->eSubType == Enums::DECOR_WATER_SPOUT && dist == app->combat->tileDistances[0]) {
 							entity = entity3;
 							n4 = n11;
 							break;
 						}
 					}
-					else if (eType != 7 && eType != 6 && entity == nullptr) {
+					else if (eType != Enums::ET_DECOR && eType != Enums::ET_ITEM && entity == nullptr) {
 						entity = entity3;
 						n4 = n11;
 					}
@@ -2497,14 +2497,14 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 			return true;
 		}
 		int n12 = weapon2 * 9;
-		if (entity != nullptr && entity->def->eType == 10 && (1 << entity->def->eSubType & 0x1) == 0x0 && app->combat->WorldDistToTileDist(dist2) > app->combat->weapons[n12 + 3]) {
+		if (entity != nullptr && entity->def->eType == Enums::ET_ATTACK_INTERACTIVE && (1 << entity->def->eSubType & 0x1) == 0x0 && app->combat->WorldDistToTileDist(dist2) > app->combat->weapons[n12 + 3]) {
 			entity = nullptr;
 		}
-		if (entity2 != nullptr && (entity == nullptr || (1 << weapon2 & 0x0) != 0x0 || (entity->def->eType != 2 && entity->def->eType != 9))) {
+		if (entity2 != nullptr && (entity == nullptr || (1 << weapon2 & 0x0) != 0x0 || (entity->def->eType != Enums::ET_MONSTER && entity->def->eType != Enums::ET_CORPSE))) {
 			entity = entity2;
 		}
 
-		if (entity != nullptr && entity->def->eType == 10 && entity->def->eSubType == 2) {
+		if (entity != nullptr && entity->def->eType == Enums::ET_ATTACK_INTERACTIVE && entity->def->eSubType == Enums::INTERACT_CRATE) {
 			if (dist2 <= app->combat->tileDistances[0]) {
 				entity->param = app->upTimeMs + 200;
 				app->game->unlinkEntity(entity);
@@ -2522,7 +2522,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 				app->game->advanceTurn();
 			}
 		}
-		else if (entity != nullptr && entity->def->eType == 10 && entity->def->eSubType == 3 && dist2 <= app->combat->tileDistances[0] && (app->combat->throwableItemAmmoType < 0 || app->player->ammo[app->combat->throwableItemAmmoType] == 0)) {
+		else if (entity != nullptr && entity->def->eType == Enums::ET_ATTACK_INTERACTIVE && entity->def->eSubType == Enums::INTERACT_PICKUP && dist2 <= app->combat->tileDistances[0] && (app->combat->throwableItemAmmoType < 0 || app->player->ammo[app->combat->throwableItemAmmoType] == 0)) {
 			if (!app->player->isFamiliar) {
 				int fountainAmmoType = app->combat->weapons[app->player->ce->weapon * Combat::WEAPON_MAX_FIELDS + Combat::WEAPON_FIELD_AMMOTYPE];
 				int fountainAmmoMax = CAppContainer::getInstance()->gameConfig.capAmmo;
@@ -2552,7 +2552,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 			}
 		}
 		else {
-			if (entity != nullptr && entity->def->eType == 14 && entity->def->eSubType == 7 && dist2 <= app->combat->tileDistances[0] && dist2 > 0 && app->combat->getWeaponFlags(app->player->ce->weapon).fountainWeapon) {
+			if (entity != nullptr && entity->def->eType == Enums::ET_DECOR_NOCLIP && entity->def->eSubType == Enums::DECOR_WATER_SPOUT && dist2 <= app->combat->tileDistances[0] && dist2 > 0 && app->combat->getWeaponFlags(app->player->ce->weapon).fountainWeapon) {
 				int fAmmoType = app->combat->weapons[app->player->ce->weapon * Combat::WEAPON_MAX_FIELDS + Combat::WEAPON_FIELD_AMMOTYPE];
 				int fAmmoMax = CAppContainer::getInstance()->gameConfig.capAmmo;
 				if (app->player->ammo[fAmmoType] < fAmmoMax) {
@@ -2566,7 +2566,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 				app->player->ammo[fAmmoType] = fAmmoMax;
 				return true;
 			}
-			if (entity != nullptr && entity->def->eType == 5 && dist2 <= app->combat->tileDistances[0] && !app->combat->getWeaponFlags(weapon2).isThrowableItem) {
+			if (entity != nullptr && entity->def->eType == Enums::ET_DOOR && dist2 <= app->combat->tileDistances[0] && !app->combat->getWeaponFlags(weapon2).isThrowableItem) {
 				if (!app->player->isFamiliar) {
 					if (entity->def->eSubType == 1) {
 						app->hud->addMessage((short)44, 2);
@@ -2582,13 +2582,13 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 				}
 				return true;
 			}
-			if (entity != nullptr && entity->def->eType == 12 && dist2 <= app->combat->tileDistances[0] && (app->render->mapFlags[n14 * 32 + n13] & 0x4) != 0x0) {
+			if (entity != nullptr && entity->def->eType == Enums::ET_SPRITEWALL && dist2 <= app->combat->tileDistances[0] && (app->render->mapFlags[n14 * 32 + n13] & 0x4) != 0x0) {
 				if (app->game->performDoorEvent(0, entity, 1, true)) {
 					app->game->awardSecret(true);
 				}
 				return true;
 			}
-			if (entity != nullptr && (entity->def->eType == 0 || entity->def->eType == 12) && dist2 <= app->combat->tileDistances[0]) {
+			if (entity != nullptr && (entity->def->eType == Enums::ET_WORLD || entity->def->eType == Enums::ET_SPRITEWALL) && dist2 <= app->combat->tileDistances[0]) {
 				if (this->isZoomedIn) {
 					return true;
 				}
@@ -2630,7 +2630,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 						this->initZoom();
 						return true;
 					}
-					if (entity != nullptr && entity->def->eType != 0) {
+					if (entity != nullptr && entity->def->eType != Enums::ET_WORLD) {
 						int* calcPosition2 = entity->calcPosition();
 						bool shouldFakeCombat = this->shouldFakeCombat(calcPosition2[0] >> 6, calcPosition2[1] >> 6, flagForFacingDir);
 						int n15 = weapon2 * 9;
@@ -4062,7 +4062,7 @@ void Canvas::drawAutomap(Graphics* graphics, bool b) {
 									bool b4 = false;
 									bool b5 = false;
 									int n18 = 2;
-									if (nextOnTile->def->eType == 5) {
+									if (nextOnTile->def->eType == Enums::ET_DOOR) {
 										const auto& gc = CAppContainer::getInstance()->gameConfig;
 										short tileIndex = nextOnTile->def->tileIndex;
 										color = gc.automapDoorDefault;
@@ -4075,30 +4075,30 @@ void Canvas::drawAutomap(Graphics* graphics, bool b) {
 										color = 0xFF2A3657;
 										b5 = true;
 									}
-									else if (nextOnTile->def->eType == 13) {
+									else if (nextOnTile->def->eType == Enums::ET_NONOBSTRUCTING_SPRITEWALL) {
 										color = 0xFF8D8068;
 										b5 = true;
 									}
-									else if (nextOnTile->def->eType == 3) {
+									else if (nextOnTile->def->eType == Enums::ET_NPC) {
 										b4 = true;
 										color = 0xFF0000FF;
 										n18 = 128;
 									}
-									else if (nextOnTile->def->eType == 10 && n17 == 0) {
+									else if (nextOnTile->def->eType == Enums::ET_ATTACK_INTERACTIVE && n17 == 0) {
 										color = 0xFF8000FF;
 									}
-									else if (nextOnTile->def->eType == 2) {
+									else if (nextOnTile->def->eType == Enums::ET_MONSTER) {
 										color = 0xFFFF8000;
 										n18 = 128;
 									}
-									else if (nextOnTile->def->eType == 7) {
+									else if (nextOnTile->def->eType == Enums::ET_DECOR) {
 										color = 0xFF8D8068;
 										const auto& hiddenDecors = CAppContainer::getInstance()->gameConfig.automapHiddenDecors;
 										for (int16_t hd : hiddenDecors) {
 											if (nextOnTile->def->tileIndex == hd) { color = 0; break; }
 										}
 									}
-									else if (app->player->god && nextOnTile->def->eType == 6 && nextOnTile->def->eSubType != 3) {
+									else if (app->player->god && nextOnTile->def->eType == Enums::ET_ITEM && nextOnTile->def->eSubType != Enums::ITEM_KEY) {
 										color = 0xFF00FFEA;
 									}
 									if (color != 0 && ((b3 & n18) != 0x0 || (n18 & 0x80) == 0x0)) {
@@ -4361,10 +4361,10 @@ void Canvas::prepareDialog(Text* text, int dialogStyle, int dialogFlags) {
 	if (dialogStyle == 1 || (dialogStyle == 5 && ((dialogFlags & 0x2) != 0x0 || (dialogFlags & 0x4) != 0x0))) {
 		this->updateFacingEntity = true;
 		Entity* facingEntity = app->player->facingEntity;
-		if (facingEntity != nullptr && facingEntity->def != nullptr && (facingEntity->def->eType == 2 || facingEntity->def->eType == 3)) {
+		if (facingEntity != nullptr && facingEntity->def != nullptr && (facingEntity->def->eType == Enums::ET_MONSTER || facingEntity->def->eType == Enums::ET_NPC)) {
 			app->combat->curTarget = facingEntity;
 			int sprite = facingEntity->getSprite();
-			if (facingEntity->def->eType == 2) {
+			if (facingEntity->def->eType == Enums::ET_MONSTER) {
 				app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | 96 << 8);
 			}
 			app->game->scriptStateVars[4] = 0;
@@ -4875,7 +4875,7 @@ void Canvas::drawCharacterSelectionStats(int i, Text* text, int x, int y, Graphi
 	}
 	}
 
-	if (app->game->difficulty == 2) {
+	if (app->game->difficulty == Enums::DIFFICULTY_NORMAL) {
 		defense = 0;
 	}
 
@@ -4954,7 +4954,7 @@ void Canvas::dequeueHelpDialog(bool b) {
 		EntityDef* entityDef = (EntityDef*)object;
 		uint8_t eSubType = entityDef->eSubType;
 		short n4 = -1;
-		if (eSubType == 0) {
+		if (eSubType == Enums::ITEM_CONSUMABLE) {
 			if (entityDef->parm >= 0 && entityDef->parm < 11) {
 				n4 = 32;
 			}
@@ -4965,10 +4965,10 @@ void Canvas::dequeueHelpDialog(bool b) {
 				n4 = 34;
 			}
 		}
-		else if (eSubType == 1) {
+		else if (eSubType == Enums::ITEM_WEAPON) {
 			n4 = 36;
 		}
-		else if (eSubType != 2) {
+		else if (eSubType != Enums::ITEM_AMMO) {
 			app->Error(0); // ERR_DEQUEUEHELP
 			return;
 		}
@@ -5838,7 +5838,7 @@ void Canvas::poolLoot(int* array) {
 	this->lootLineNum = 0;
 	this->lootPoolCredits = 0;
 	while (entity != nullptr) {
-		if (entity->def->eType == 9) {
+		if (entity->def->eType == Enums::ET_CORPSE) {
 			if (entity->monster == nullptr) {
 				if (entity->param != 0) {
 					entity = entity->nextOnTile;

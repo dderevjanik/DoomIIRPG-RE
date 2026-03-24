@@ -9,6 +9,7 @@
 
 #include "ZipFile.h"
 #include "WeaponNames.h"
+#include "Enums.h"
 #include <yaml-cpp/yaml.h>
 
 // IPA internal path prefix
@@ -225,10 +226,10 @@ static std::string entitySubtypeName(int eType, int eSubType) {
 }
 
 static std::string entityParmName(int eType, int eSubType, int parm) {
-	if (eType == 6) { // item
-		if (eSubType == 1 && parm >= 0 && parm < NUM_PLAYER_WEAPONS) // weapon
+	if (eType == Enums::ET_ITEM) { // item
+		if (eSubType == Enums::ITEM_WEAPON && parm >= 0 && parm < NUM_PLAYER_WEAPONS)
 			return WeaponNames::TABLE[parm];
-		if (eSubType == 2 && parm >= 0 && parm < NUM_AMMO_PARMS) // ammo
+		if (eSubType == Enums::ITEM_AMMO && parm >= 0 && parm < NUM_AMMO_PARMS)
 			return AMMO_PARM_NAMES[parm];
 	}
 	return std::to_string(parm);
@@ -237,22 +238,22 @@ static std::string entityParmName(int eType, int eSubType, int parm) {
 static std::string generateEntityName(int eType, int eSubType, int parm, const char* typeName, std::map<std::string, int>& nameCount) {
 	std::string base;
 	switch (eType) {
-	case 2: // monster
+	case Enums::ET_MONSTER: // monster
 		base = entitySubtypeName(eType, eSubType);
 		break;
-	case 9: // corpse (subtypes are monster indices, prefix with type name)
+	case Enums::ET_CORPSE: // corpse (subtypes are monster indices, prefix with type name)
 		base = std::string(typeName) + "_" + entitySubtypeName(eType, eSubType);
 		break;
-	case 6: { // item
+	case Enums::ET_ITEM: { // item
 		std::string sub = entitySubtypeName(eType, eSubType);
 		std::string p = entityParmName(eType, eSubType, parm);
-		if (eSubType == 1 || eSubType == 2) // weapon or ammo - parm is the name
+		if (eSubType == Enums::ITEM_WEAPON || eSubType == Enums::ITEM_AMMO)
 			base = p;
 		else
 			base = sub + "_" + p;
 		break;
 	}
-	case 5: { // door
+	case Enums::ET_DOOR: { // door
 		std::string sub = entitySubtypeName(eType, eSubType);
 		base = std::string(typeName) + "_" + sub;
 		break;
@@ -263,7 +264,7 @@ static std::string generateEntityName(int eType, int eSubType, int parm, const c
 	}
 
 	// Add parm suffix for monsters and corpses
-	if (eType == 2 || eType == 9)
+	if (eType == Enums::ET_MONSTER || eType == Enums::ET_CORPSE)
 		base += "_parm" + std::to_string(parm);
 
 	// Deduplicate
@@ -703,7 +704,7 @@ static void emitBodyParts(YAML::Emitter& out, int eType, int subtype) {
 	         bool noHBack, sentryFlip, flipTorso, noHAtk, noHMancAtk; int revAtk2TZ; } d =
 		{0, 0, 0, 0, 0, 0, 0, 0, false, false, false, false, false, 0};
 	bool hasData = false;
-	if (eType == 2) { // monster
+	if (eType == Enums::ET_MONSTER) { // monster
 		hasData = true;
 		switch (subtype) {
 			case M_REVENANT:   d = {-30, 140, 0, 160, 0, 0, 20, 2, false, false, false, false, false, 130}; break;
@@ -717,7 +718,7 @@ static void emitBodyParts(YAML::Emitter& out, int eType, int subtype) {
 			case M_CYBERDEMON:  d = {-30, -15, 0, 0, 0, 0, 0, 0, false, false, false, false, false, 0}; break;
 			default: hasData = false; break;
 		}
-	} else if (eType == 3) { // NPC
+	} else if (eType == Enums::ET_NPC) { // NPC
 		hasData = true;
 		d.idleTZ = -18;
 		d.flipTorso = true;
@@ -854,8 +855,8 @@ static void emitSpriteAnim(YAML::Emitter& out, int16_t tileIndex, int subtype) {
 
 // Check if an entity needs any rendering data at all
 static bool entityNeedsRendering(int eType, int subtype, int16_t tileIndex) {
-	if (eType == 3) return true; // NPC always gets body_parts
-	if (eType != 2) return false; // Only monsters otherwise
+	if (eType == Enums::ET_NPC) return true; // NPC always gets body_parts
+	if (eType != Enums::ET_MONSTER) return false; // Only monsters otherwise
 
 	// Check all rendering categories
 	switch (subtype) {

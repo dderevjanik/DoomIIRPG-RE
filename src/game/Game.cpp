@@ -166,7 +166,7 @@ void Game::linkWorldEntity(int i, int i2) {
 
 	Entity* entity = &this->entities[0];
 	while (nextOnTile != nullptr) {
-		if (nextOnTile->def->eType == 0) {
+		if (nextOnTile->def->eType == Enums::ET_WORLD) {
 			app->Error(27); // ERR_LINKWORLD
 			return;
 		}
@@ -228,7 +228,7 @@ void Game::trace(int n, int n2, int n3, int traceCollisionX, int traceCollisionY
 			if (nextOnTile != nullptr) {
 				while (nextOnTile != nullptr) {
 					if (nextOnTile != entity && 0x0 != (n4 & 1 << nextOnTile->def->eType)) {
-						if (nextOnTile->def->eType != 0) {
+						if (nextOnTile->def->eType != Enums::ET_WORLD) {
 							int sprite = nextOnTile->getSprite();
 							int destX;
 							int destY;
@@ -243,7 +243,7 @@ void Game::trace(int n, int n2, int n3, int traceCollisionX, int traceCollisionY
 									destY = app->render->mapSprites[app->render->S_Y + sprite];
 									destZ = app->render->mapSprites[app->render->S_Z + sprite];
 								}
-							} else if (nextOnTile->def->eType == 1) {
+							} else if (nextOnTile->def->eType == Enums::ET_PLAYER) {
 								destX = app->canvas->destX;
 								destY = app->canvas->destY;
 								destZ = app->canvas->destZ;
@@ -274,7 +274,7 @@ void Game::trace(int n, int n2, int n3, int traceCollisionX, int traceCollisionY
 								}
 							} else {
 								int n8 = 625;
-								if (nextOnTile->def->eType == 8) {
+								if (nextOnTile->def->eType == Enums::ET_ENV_DAMAGE) {
 									n8 = 256;
 								}
 								int capsuleToCircleTrace =
@@ -427,7 +427,7 @@ void Game::loadMapEntities() {
 				Entity* entity3 = &this->entities[this->numEntities];
 				entity3->info = (n5 + 1 & 0xFFFF);
 				entity3->def = lookup;
-				if (entity3->def->eType == 2) {
+				if (entity3->def->eType == Enums::ET_MONSTER) {
 					if (this->numMonsters == 80) {
 						app->Error(37); // ERR_MAX_MONSTERS
 						return;
@@ -446,7 +446,7 @@ void Game::loadMapEntities() {
 					    this->getMonsterSound(lookup->eSubType, lookup->parm, Enums::MSOUND_ATTACK1));
 					app->sound->cacheCombatSound(
 					    this->getMonsterSound(lookup->eSubType, lookup->parm, Enums::MSOUND_ATTACK2));
-				} else if (entity3->def->eType == 10 && entity3->def->eSubType != 3 && entity3->def->eSubType != 2) {
+				} else if (entity3->def->eType == Enums::ET_ATTACK_INTERACTIVE && entity3->def->eSubType != Enums::INTERACT_PICKUP && entity3->def->eSubType != Enums::INTERACT_CRATE) {
 					this->numDestroyableObj++;
 				}
 				entity3->initspawn();
@@ -811,7 +811,7 @@ void Game::activate(Entity* entity, bool b, bool b2, bool b3, bool b4) {
 void Game::killAll() {
 	for (int i = 0; i < this->numEntities; ++i) {
 		Entity* entity = &this->entities[i];
-		if (entity->def != nullptr && entity->def->eType == 2) {
+		if (entity->def != nullptr && entity->def->eType == Enums::ET_MONSTER) {
 			if (!entity->isBoss()) {
 				if ((entity->info & 0x20000) != 0x0) {
 					if ((entity->monster->flags & 0x80) == 0x0) {
@@ -1048,7 +1048,7 @@ bool Game::performDoorEvent(int n, ScriptThread* scriptThread, Entity* watchLine
 	}
 
 	bool b3 = n4 >= 271 && n4 < 281;
-	if (watchLine->def->eSubType == 1) {
+	if (watchLine->def->eSubType == Enums::DOOR_LOCKED) {
 		return false;
 	}
 	if (n == 0 && b2 && b3) {
@@ -1061,7 +1061,7 @@ bool Game::performDoorEvent(int n, ScriptThread* scriptThread, Entity* watchLine
 	if (b2 && b3) {
 		for (Entity* entity = this->findMapEntity(watchLine->linkIndex % 32 << 6, watchLine->linkIndex / 32 << 6);
 		     entity != nullptr; entity = entity->nextOnTile) {
-			if (entity->def->eType == 2 && entity->def->eSubType != 17) {
+			if (entity->def->eType == Enums::ET_MONSTER && entity->def->eSubType != Enums::CORPSE_SKELETON) {
 				this->watchLine = watchLine;
 				return false;
 			}
@@ -1630,7 +1630,7 @@ void Game::saveWorldState(OutputStream* OS, bool b) {
 			if (b && mapSprites[app->render->S_ENT + n3] != -1) {
 				Entity* entity = &this->entities[mapSprites[app->render->S_ENT + n3]];
 				EntityDef* def = entity->def;
-				if (def->eType == 9 && def->eSubType != 17 && entity->monster && (entity->monster->flags & 0x80) == 0x0) {
+				if (def->eType == Enums::ET_CORPSE && def->eSubType != Enums::CORPSE_SKELETON && entity->monster && (entity->monster->flags & 0x80) == 0x0) {
 					n5 = 1;
 				}
 			}
@@ -2707,7 +2707,7 @@ bool Game::snapMonsters(bool b) {
 					if (n == -1) {
 						return false;
 					}
-					if (this->entities[n].def->eType != 2) {
+					if (this->entities[n].def->eType != Enums::ET_MONSTER) {
 						return false;
 					}
 				}
@@ -2964,7 +2964,7 @@ Entity* Game::spawnDropItem(int n, int n2, int n3, EntityDef* def, int param, bo
 	}
 	freeDropEnt->info &= 0xFFFF;
 	freeDropEnt->info |= 0x400000;
-	if (freeDropEnt->def->eType == 10) {
+	if (freeDropEnt->def->eType == Enums::ET_ATTACK_INTERACTIVE) {
 		freeDropEnt->info |= 0x20000;
 	}
 	int sprite = freeDropEnt->getSprite();
@@ -3127,7 +3127,7 @@ Entity* Game::spawnSentryBotCorpse(int n, int n2, int n3, int n4, int n5) {
 void Game::throwDropItem(int dstX, int dstY, int n, Entity* entity) {
 
 
-	LerpSprite* allocLerpSprite = this->allocLerpSprite(nullptr, entity->getSprite(), entity->def->eType != 6);
+	LerpSprite* allocLerpSprite = this->allocLerpSprite(nullptr, entity->getSprite(), entity->def->eType != Enums::ET_ITEM);
 	if (allocLerpSprite != nullptr) {
 		allocLerpSprite->srcX = dstX;
 		allocLerpSprite->srcY = dstY;
@@ -3532,11 +3532,11 @@ void Game::freeLerpSprite(LerpSprite* lerpSprite) {
 				}
 			}
 		}
-		if (entity->def->eType == 2) {
+		if (entity->def->eType == Enums::ET_MONSTER) {
 			Entity* mapEntity = this->findMapEntity(lerpSprite->dstX, lerpSprite->dstY, 256);
 			if (mapEntity != nullptr) {
-				if (mapEntity->def->eSubType == 1 && entity->def->eType == 2) {
-					if (eSubType != 2) {
+				if (mapEntity->def->eSubType == Enums::INTERACT_BARRICADE && entity->def->eType == Enums::ET_MONSTER) {
+					if (eSubType != Enums::MONSTER_LOST_SOUL) {
 						entity->monster->monsterEffects |= 0x60008;
 						entity->monster->monsterEffects &= 0xFFFFE1FD;
 					}
@@ -3872,7 +3872,7 @@ void Game::raiseCorpses() {
 			    (inactiveMonsters->monster->flags & 0x40) == 0x0 &&
 			    this->findMapEntity(app->render->mapSprites[app->render->S_X + sprite],
 			                        app->render->mapSprites[app->render->S_Y + sprite], 15535) == nullptr &&
-			    (this->difficulty != 4 || 0x0 == (inactiveMonsters->monster->monsterEffects & 0x4))) {
+			    (this->difficulty != Enums::DIFFICULTY_NIGHTMARE || 0x0 == (inactiveMonsters->monster->monsterEffects & 0x4))) {
 				this->gridEntities[n++] = inactiveMonsters;
 				if (n == 9) {
 					break;

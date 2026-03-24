@@ -1380,7 +1380,7 @@ void Render::addSprite(short n) {
 			n3 += 5;
 		} else if (entity != nullptr && (entity->info & 0x1010000) != 0x0) {
 			++n3;
-		} else if (entity != nullptr && entity->def->eType == 2) {
+		} else if (entity != nullptr && entity->def->eType == Enums::ET_MONSTER) {
 			this->handleMonsterIdleSounds(entity);
 			--n3;
 		} else if ((n2 >= 240 && n2 <= 244) || n2 == 241 || n2 == 255) {
@@ -2101,7 +2101,7 @@ void Render::renderSpriteObject(int n) {
 				this->mapSpriteInfo[n] = ((n2 & 0xFFFF00FF) | n7 << 8);
 			}
 		}
-		if (entity->def->eType == 10 && entity->def->eSubType == 2 && entity->param != 0) {
+		if (entity->def->eType == Enums::ET_ATTACK_INTERACTIVE && entity->def->eSubType == Enums::INTERACT_CRATE && entity->param != 0) {
 			if (app->time > entity->param) {
 				++n7;
 				entity->param = app->time + 200;
@@ -2765,7 +2765,7 @@ void Render::render(int viewX, int viewY, int viewZ, int viewAngle, int viewPitc
 
 	if (this->chatZoom) { // WolfRpg ?
 		Entity* curTarget = app->combat->curTarget;
-		if (curTarget && ((curTarget->def->eType == 2) || (curTarget->def->eType == 3))) {
+		if (curTarget && ((curTarget->def->eType == Enums::ET_MONSTER) || (curTarget->def->eType == Enums::ET_NPC))) {
 			int sprite = curTarget->getSprite();
 			viewX = (-(32 * this->viewCos) >> 12) + (app->render->mapSprites[this->S_X + sprite] << 4);
 			viewY = ((32 * this->viewSin) >> 12) + (app->render->mapSprites[this->S_Y + sprite] << 4);

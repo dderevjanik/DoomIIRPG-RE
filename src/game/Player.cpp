@@ -585,7 +585,7 @@ void Player::reset() {
 	this->killedMonstersLevels = 0;
 	this->baseCe->setStat(Enums::STAT_MAX_HEALTH, 100);
 	this->setStatsAccordingToCharacterChoice();
-	if (app->game->difficulty == 2) {
+	if (app->game->difficulty == Enums::DIFFICULTY_NORMAL) {
 		this->baseCe->setStat(Enums::STAT_DEFENSE, 0);
 	}
 	this->updateStats();
@@ -2206,7 +2206,7 @@ void Player::familiarDied() {
 
 	if (app->combat->curAttacker != nullptr) {
 		int sprite = app->combat->curAttacker->getSprite();
-		if (app->combat->curAttacker->def->eType == 2) {
+		if (app->combat->curAttacker->def->eType == Enums::ET_MONSTER) {
 			app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | 0x0);
 		}
 		app->localization->resetTextArgs();

@@ -23,6 +23,11 @@ public:
     static constexpr int ET_NONOBSTRUCTING_SPRITEWALL = 13;
     static constexpr int ET_DECOR_NOCLIP = 14;
     static constexpr int ET_MAX = 15;
+    // Difficulty levels (set from menu param)
+    static constexpr int DIFFICULTY_EASY = 1;       // "Wuss"
+    static constexpr int DIFFICULTY_NORMAL = 2;     // "Brave"
+    static constexpr int DIFFICULTY_NIGHTMARE = 4;  // "Nightmare"
+
     static constexpr int CONTENTS_ANY = -1;
     static constexpr int CONTENTS_PICKUP = 64;
     static constexpr int CONTENTS_INTERACTIVE = 1068;
@@ -219,6 +224,16 @@ public:
     static constexpr int INV_MAX_ITEM_COUNT = 999;
     static constexpr int INV_MAX_CREDITS = 9999;
     static constexpr int WATER_BOTTLE_QUANTITY = 20;
+    // Player subtypes (eSubType when eType == ET_PLAYER)
+    static constexpr int PLAYER_MAIN = 0;
+    static constexpr int PLAYER_FAMILIAR = 1;
+
+    // Item subtypes (eSubType when eType == ET_ITEM)
+    static constexpr int ITEM_CONSUMABLE = 0;
+    static constexpr int ITEM_WEAPON = 1;
+    static constexpr int ITEM_AMMO = 2;
+    static constexpr int ITEM_KEY = 3;
+
     static constexpr int DOOR_LOCKED = 1;
     static constexpr int DOOR_UNLOCKED = 2;
     static constexpr int DOOR_FLAG_SCIFI = 1;

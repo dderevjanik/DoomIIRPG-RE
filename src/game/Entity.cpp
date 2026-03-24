@@ -62,7 +62,7 @@ void Entity::initspawn() {
     if (eType == Enums::ET_MONSTER) {
         app->combat->monsters[eSubType * app->combat->tiersPerMonster + (int8_t)this->def->parm]->clone(&this->monster->ce);
 
-        if (app->game->difficulty == 4 || (app->game->difficulty == 2 && !this->isBoss())) {
+        if (app->game->difficulty == Enums::DIFFICULTY_NIGHTMARE || (app->game->difficulty == Enums::DIFFICULTY_NORMAL && !this->isBoss())) {
             int stat = this->monster->ce.getStat(1);
             int n2 = stat + (stat >> 2);
             this->monster->ce.setStat(1, n2);
@@ -91,7 +91,7 @@ void Entity::initspawn() {
     else if (eType == Enums::ET_ATTACK_INTERACTIVE) {
         this->info |= 0x20000;
 #if 0 // J2ME
-        if (eSubType == 152) { // TILENUM_OBJ_CRATE
+        if (eSubType == Enums::TILENUM_OBJ_CRATE) {
             app->render->mapSprites[app->render->S_Z + sprite] -= 224;
         }
 #endif
@@ -373,7 +373,7 @@ bool Entity::pain(int n, Entity* entity) {
     }
     else if (this->def->eType == Enums::ET_ATTACK_INTERACTIVE) {
         uint8_t eSubType = this->def->eSubType;
-        if (eSubType == 1) {
+        if (eSubType == Enums::INTERACT_BARRICADE) {
             app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | 0x100);
             app->particleSystem->spawnParticles(2, -1, sprite);
             app->sound->playSound(Sounds::getResIDByName(SoundName::GLASS), 0, 3, false);
@@ -445,7 +445,7 @@ void Entity::died(bool b, Entity* entity) {
         app->hud->addMessage((short)89);
         smallBuffer->dispose();
         app->player->addXP(5);
-        if (this->def->eSubType != 3 && this->def->eSubType != 2) {
+        if (this->def->eSubType != Enums::INTERACT_PICKUP && this->def->eSubType != Enums::INTERACT_CRATE) {
             app->game->destroyedObject(sprite);
         }
     }
@@ -479,7 +479,7 @@ void Entity::died(bool b, Entity* entity) {
             this->monster->monsterEffects &= 0xFFFF801F;
             this->monster->monsterEffects |= 0x220220;
         }
-        if (app->game->difficulty == 4 && (this->monster->flags & 0x40) == 0x0) {
+        if (app->game->difficulty == Enums::DIFFICULTY_NIGHTMARE && (this->monster->flags & 0x40) == 0x0) {
             int n5 = 2 + app->nextInt() % 3;
             this->monster->monsterEffects &= 0xFFFE1FFB;
             this->monster->monsterEffects |= n5 << 13;
@@ -504,7 +504,7 @@ void Entity::died(bool b, Entity* entity) {
         this->def = app->entityDefManager->find(9, eSubType, this->def->parm);
         this->name = (short)(this->def->name | 0x400);
         app->canvas->invalidateRect();
-        if (app->game->difficulty == 4 && (this->monster->flags & 0x40) == 0x0 && (this->info & 0x80000) == 0x0) {
+        if (app->game->difficulty == Enums::DIFFICULTY_NIGHTMARE && (this->monster->flags & 0x40) == 0x0 && (this->info & 0x80000) == 0x0) {
             int n6 = 2 + app->nextInt() % 3;
             this->monster->monsterEffects |= n6 << 13;
             this->monster->monsterEffects |= 0x4;
@@ -585,7 +585,7 @@ void Entity::aiMoveToGoal() {
         }
         this->attack();
     }
-    if (this->def->eSubType == 13) {
+    if (this->def->eSubType == Enums::BOSS_PINKY) {
         int sprite = this->getSprite();
         app->game->scriptStateVars[9] = app->render->mapSprites[app->render->S_X + sprite];
         app->game->scriptStateVars[10] = app->render->mapSprites[app->render->S_Y + sprite];
@@ -659,7 +659,7 @@ bool Entity::aiIsAttackValid() {
             int n2 = calcPosition[1] - app->game->destY;
             b2 = ((n != 0 || n2 != 0) && (n == 0 || n2 == 0));
         }
-        if (monster->target == nullptr && traceEntity->def->eType == 1 && b && b2) {
+        if (monster->target == nullptr && traceEntity->def->eType == Enums::ET_PLAYER && b && b2) {
             return true;
         }
         if (monster->target == traceEntity && b && b2) {
@@ -700,7 +700,7 @@ int Entity::aiWeaponForTarget(Entity* entity) {
     int a = viewX - app->render->mapSprites[app->render->S_X + sprite];
     int a2 = viewY - app->render->mapSprites[app->render->S_Y + sprite];
     int8_t* weapons = app->combat->weapons;
-    if (this->def->eSubType == 13) {
+    if (this->def->eSubType == Enums::BOSS_PINKY) {
         if (a != 0 && a2 != 0) {
             return -1;
         }
@@ -712,7 +712,7 @@ int Entity::aiWeaponForTarget(Entity* entity) {
         return -1;
     }
     else {
-        if (this->def->eSubType == 15) {
+        if (this->def->eSubType == Enums::BOSS_VIOS) {
             if (this->param <= 0) {
                 this->param = (int)app->nextInt() % 3 + 3;
                 int n = 30;
@@ -749,8 +749,8 @@ int Entity::aiWeaponForTarget(Entity* entity) {
             }
         }
         if (a != 0 && a2 != 0) {
-            if (this->def->eSubType == 10 || (this->def->eSubType == 15 && this->def->parm != 0)) {
-                int monsterField = app->combat->getMonsterField(this->def, (this->def->eSubType == 15) ? 1 : 0);
+            if (this->def->eSubType == Enums::MONSTER_ARCH_VILE || (this->def->eSubType == 15 && this->def->parm != 0)) {
+                int monsterField = app->combat->getMonsterField(this->def, (this->def->eSubType == Enums::BOSS_VIOS) ? 1 : 0);
                 int n8 = monsterField * 9;
                 int worldDistToTileDist = app->combat->WorldDistToTileDist(entity->distFrom(app->render->mapSprites[app->render->S_X + sprite], app->render->mapSprites[app->render->S_Y + sprite]));
                 if (weapons[n8 + 2] <= worldDistToTileDist && weapons[n8 + 3] >= worldDistToTileDist) {
@@ -1095,7 +1095,7 @@ bool Entity::aiGoal_MOVE() {
                 this->info |= 0x10000000;
             }
             app->game->interpolatingMonsters = true;
-            if ((this->def->eSubType == 14 && this->def->parm != 0) || this->def->eSubType == 13) {
+            if ((this->def->eSubType == Enums::BOSS_MASTERMIND && this->def->parm != 0) || this->def->eSubType == Enums::BOSS_PINKY) {
                 this->aiInitLerp(500);
             }
             else {
@@ -1105,7 +1105,7 @@ bool Entity::aiGoal_MOVE() {
         else {
             this->monster->goalX = sX >> 6;
             this->monster->goalY = sY >> 6;
-            if (app->game->traceEntity->def->eType == 5) {
+            if (app->game->traceEntity->def->eType == Enums::ET_DOOR) {
                 app->game->performDoorEvent(0, app->game->traceEntity, 2);
             }
         }
@@ -1247,7 +1247,7 @@ void Entity::knockback(int n, int n2, int n3) {
     int goalX = destX + knockbackDelta[0] * farthestKnockbackDist * 64 >> 6;
     int goalY = destY + knockbackDelta[1] * farthestKnockbackDist * 64 >> 6;
     if (this->def->eType == Enums::ET_PLAYER) {
-        if (this->def->eSubType != 1) {
+        if (this->def->eSubType != Enums::PLAYER_FAMILIAR) {
             app->canvas->knockbackX = knockbackDelta[0];
             app->canvas->knockbackY = knockbackDelta[1];
             app->canvas->knockbackDist = farthestKnockbackDist;
@@ -1299,7 +1299,7 @@ int Entity::findRaiseTarget(int n, int n2, int n3) {
                 (inactiveMonsters->monster->flags & n3) == 0x0 &&
                 inactiveMonsters->distFrom(n4, n5) <= n &&
                 app->game->findMapEntity(app->render->mapSprites[app->render->S_X + sprite], app->render->mapSprites[app->render->S_Y + sprite], 15535) == nullptr &&
-                (app->game->difficulty != 4 || 0x0 == (inactiveMonsters->monster->monsterEffects & 0x4)))
+                (app->game->difficulty != Enums::DIFFICULTY_NIGHTMARE || 0x0 == (inactiveMonsters->monster->monsterEffects & 0x4)))
             {
                 this->raiseTargets[n6++] = inactiveMonsters;
             }
@@ -1335,7 +1335,7 @@ void Entity::raiseTarget(int n) {
     Text* smallBuffer2 = app->localization->getSmallBuffer();
     app->localization->composeTextField(entity->name, smallBuffer2);
     app->localization->addTextArg(smallBuffer2);
-    if (this->def->eType != 1) {
+    if (this->def->eType != Enums::ET_PLAYER) {
         app->hud->addMessage((short)93);
     }
     smallBuffer2->dispose();
@@ -1886,7 +1886,7 @@ void Entity::restoreBinaryState(int n) {
                         app->render->relinkSprite(sprite);
                     }
                     else {
-                        app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | ((this->def->eSubType == 2) ? 3 : 1) << 8);
+                        app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | ((this->def->eSubType == Enums::INTERACT_CRATE) ? 3 : 1) << 8);
                         app->render->relinkSprite(sprite);
                     }
                     break;

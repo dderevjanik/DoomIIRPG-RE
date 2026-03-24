@@ -134,9 +134,9 @@ static int resolveSubtype(int eType, const std::string& str) {
 
 static int resolveParm(int eType, int eSubType, const std::string& str) {
 	if (eType == Enums::ET_ITEM || eType == Enums::ET_MONSTERBLOCK_ITEM) {
-		if (eSubType == 1) // weapon
+		if (eSubType == Enums::ITEM_WEAPON)
 			return lookupName(str, weaponParmNames, numWeaponParms);
-		if (eSubType == 2) // ammo
+		if (eSubType == Enums::ITEM_AMMO)
 			return lookupName(str, ammoParmNames, numAmmoParms);
 	}
 	try {

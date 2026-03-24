@@ -2153,7 +2153,7 @@ void MenuSystem::initMenu(int menu) {
 
 		case Menus::MENU_SHOWDETAILS: {
 			Text* weaponStatStr = nullptr;
-			if (this->detailsDef != nullptr && this->detailsDef->eType == 6 && this->detailsDef->eSubType == 1) {
+			if (this->detailsDef != nullptr && this->detailsDef->eType == Enums::ET_ITEM && this->detailsDef->eSubType == Enums::ITEM_WEAPON) {
 				weaponStatStr = app->combat->getWeaponStatStr(this->detailsDef->parm);
 			}
 			app->localization->resetTextArgs();
@@ -3956,10 +3956,10 @@ void MenuSystem::FillRanking() {
 	this->addItem(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, 0, 0, 0, MenuSystem::EMPTY_TEXT);
 	this->addItem(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, 0, 0, 0, MenuSystem::EMPTY_TEXT);
 	this->addItem(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, 0, 0, 0, MenuSystem::EMPTY_TEXT);
-	if (app->game->difficulty == 1) {
+	if (app->game->difficulty == Enums::DIFFICULTY_EASY) {
 		this->addItem(Localization::STRINGID((short)3, (short)200), MenuSystem::EMPTY_TEXT, 72, 0, 0, MenuSystem::EMPTY_TEXT);
 	}
-	else if (app->game->difficulty == 2) {
+	else if (app->game->difficulty == Enums::DIFFICULTY_NORMAL) {
 		this->addItem(Localization::STRINGID((short)3, (short)201), MenuSystem::EMPTY_TEXT, 72, 0, 0, MenuSystem::EMPTY_TEXT);
 	}
 	else {
@@ -3984,7 +3984,7 @@ void MenuSystem::FillRanking() {
 			break;
 		}
 		case 3: {
-			if (app->game->difficulty == 4) {
+			if (app->game->difficulty == Enums::DIFFICULTY_NIGHTMARE) {
 				n = 24;
 				n2 = 25;
 				break;
@@ -3994,12 +3994,12 @@ void MenuSystem::FillRanking() {
 			break;
 		}
 		default: {
-			if (app->game->difficulty == 4) {
+			if (app->game->difficulty == Enums::DIFFICULTY_NIGHTMARE) {
 				n = 24;
 				n2 = 25;
 				break;
 			}
-			if (app->game->difficulty == 2) {
+			if (app->game->difficulty == Enums::DIFFICULTY_NORMAL) {
 				n = 22;
 				n2 = 23;
 				break;

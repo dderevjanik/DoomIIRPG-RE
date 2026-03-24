@@ -175,7 +175,7 @@ int CombatEntity::calcHit(CombatEntity* ce, CombatEntity* ce2, bool b, int i, bo
     }
     
     if (app->combat->getWeaponFlags(attackerWeaponId).isScoped) {
-        if (eType == 2) {
+        if (eType == Enums::ET_MONSTER) {
             int sprite = curTarget->getSprite();
             int n2 = app->canvas->zoomCollisionX - app->render->mapSprites[app->render->S_X + sprite];
             int n3 = app->canvas->zoomCollisionY - app->render->mapSprites[app->render->S_Y + sprite];
@@ -289,7 +289,7 @@ int CombatEntity::calcHit(CombatEntity* ce, CombatEntity* ce2, bool b, int i, bo
     if (b3) {
         return app->combat->crFlags |= 0x4;
     }
-    if (!b || app->game->difficulty == 4) {
+    if (!b || app->game->difficulty == Enums::DIFFICULTY_NIGHTMARE) {
         app->combat->crCritChance = app->combat->crHitChance / 20;
     }
     else {
@@ -316,7 +316,7 @@ int CombatEntity::calcDamage(CombatEntity* ce, Entity* entity, CombatEntity* ce2
     if (b && app->player->buffs[0] > 0) {
         return app->combat->crDamage = dmgStrMax;
     }
-    if (app->game->difficulty == 4) {
+    if (app->game->difficulty == Enums::DIFFICULTY_NIGHTMARE) {
         dmgStrMin -= dmgStrMin >> 2;
     }
     if ((app->combat->crFlags & 0x2) != 0x0 || (app->combat->crFlags & 0x2000) != 0x0) {
@@ -348,7 +348,7 @@ int CombatEntity::calcDamage(CombatEntity* ce, Entity* entity, CombatEntity* ce2
             if (mod == -1) {
                 weaponWeakness = 0;
             } else if (mod > 0) {
-                int shift = (app->game->difficulty == 4) ? std::max(1, (int)mod - 1) : mod;
+                int shift = (app->game->difficulty == Enums::DIFFICULTY_NIGHTMARE) ? std::max(1, (int)mod - 1) : mod;
                 weaponWeakness <<= shift;
             }
         }

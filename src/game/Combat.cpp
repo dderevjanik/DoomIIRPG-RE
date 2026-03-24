@@ -82,7 +82,7 @@ void Combat::performAttack(Entity* curAttacker, Entity* curTarget, int attackX, 
     if (curTarget != nullptr) {
         curTarget->info |= 0x200000;
     }
-    if (curTarget == nullptr || (curAttacker == nullptr && curTarget->def->eType == 2)) {
+    if (curTarget == nullptr || (curAttacker == nullptr && curTarget->def->eType == Enums::ET_MONSTER)) {
         app->player->lastCombatTurn = app->player->totalMoves;
         app->player->inCombat = true;
     }
@@ -265,7 +265,7 @@ int Combat::playerSeq() {
             if (damage != damageMax) {
                 damage += app->nextByte() % (damageMax - damage);
             }
-            if (app->game->difficulty == 4) {
+            if (app->game->difficulty == Enums::DIFFICULTY_NIGHTMARE) {
                 damage -= damage >> 2;
             }
             this->damage = damage;
@@ -443,7 +443,7 @@ int Combat::monsterSeq() {
         this->targetKilled = false;
         this->reflectionDmg = 0;
 #if 0 // J2ME
-        if (this->curAttacker->def->eSubType == 11 || (this->curAttacker->def->eSubType == 14 && this->curAttacker->def->parm != 0)) {
+        if (this->curAttacker->def->eSubType == Enums::MONSTER_SENTRY_BOT || (this->curAttacker->def->eSubType == Enums::BOSS_MASTERMIND && this->curAttacker->def->parm != 0)) {
             Sound.playSound(15);
         }
         else {
@@ -907,9 +907,9 @@ void Combat::explodeOnPlayer() {
             app->player->addArmor(-this->totalArmorDamage);
             if (this->totalDamage > 0) {
                 if (!b) {
-                    if (app->game->difficulty != 1) {
+                    if (app->game->difficulty != Enums::DIFFICULTY_EASY) {
                         int loadMapID = app->canvas->loadMapID;
-                        if (app->game->difficulty == 4) {
+                        if (app->game->difficulty == Enums::DIFFICULTY_NIGHTMARE) {
                             loadMapID *= 2;
                         }
                         this->totalDamage += (this->totalDamage >> 1) + loadMapID / this->weapons[this->attackerWeapon + 7];
@@ -998,7 +998,7 @@ void Combat::checkForBFGDeaths(int x, int y) {
                     Entity* nextOnTile;
                     for (Entity* mapEntity = app->game->findMapEntity(j << 6, i << 6, 30381); mapEntity != nullptr; mapEntity = nextOnTile) {
                         nextOnTile = mapEntity->nextOnTile;
-                        if (mapEntity->monster != nullptr && mapEntity->monster->ce.getStat(0) <= 0 && mapEntity->def->eType != 9) {
+                        if (mapEntity->monster != nullptr && mapEntity->monster->ce.getStat(0) <= 0 && mapEntity->def->eType != Enums::ET_CORPSE) {
                             mapEntity->died(true, app->player->getPlayerEnt());
                         }
                     }

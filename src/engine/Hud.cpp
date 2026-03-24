@@ -282,7 +282,7 @@ void Hud::drawTopBar(Graphics* graphics) {
 	else if (app->player->inTargetPractice) {
 		b = true;
 	}
-	else if (app->canvas->state != Canvas::ST_MENU && facingEntity != nullptr && facingEntity->def->eType != 0 && (facingEntity->def->eType != 12 || (facingEntity->info & 0x40000) != 0x0)) {
+	else if (app->canvas->state != Canvas::ST_MENU && facingEntity != nullptr && facingEntity->def->eType != Enums::ET_WORLD && (facingEntity->def->eType != Enums::ET_SPRITEWALL || (facingEntity->info & 0x40000) != 0x0)) {
 		smallBuffer->setLength(0);
 		int n6 = (facingEntity->info & 0xFFFF) - 1;
 		int n7 = app->render->mapSpriteInfo[n6] & 0xFF;
@@ -294,10 +294,10 @@ void Hud::drawTopBar(Graphics* graphics) {
 			app->localization->composeTextField(0x400 | facingEntity->def->longName, smallBuffer);
 		}
 		smallBuffer->dehyphenate();
-		if (eType == 3) {
+		if (eType == Enums::ET_NPC) {
 			n2 = 2;
 		}
-		else if (eType == 2) {
+		else if (eType == Enums::ET_MONSTER) {
 			smallBuffer->setLength(0);
 			if ((facingEntity->name & 0x3FF) != facingEntity->def->name) {
 				app->localization->composeTextField(facingEntity->name, smallBuffer);
@@ -308,25 +308,25 @@ void Hud::drawTopBar(Graphics* graphics) {
 			n2 = 1;
 			smallBuffer->dehyphenate();
 		}
-		else if (eType == 6) {
+		else if (eType == Enums::ET_ITEM) {
 			n2 = 0;
 		}
-		else if (eType == 5) {
+		else if (eType == Enums::ET_DOOR) {
 			if ((facingEntity->name & 0x3FF) == facingEntity->def->name || !app->localization->isEmptyString(facingEntity->name)) {
 				n2 = 3;
 			}
-			if (eType == 5 && (facingEntity->def->parm & 0x2) != 0x0) {
+			if (eType == Enums::ET_DOOR && (facingEntity->def->parm & 0x2) != 0x0) {
 				b2 = true;
 			}
 		}
-		else if (eType == 12) {
+		else if (eType == Enums::ET_SPRITEWALL) {
 			b2 = true;
 		}
-		else if (eType == 7 && facingEntity->def->eSubType == 1) {
+		else if (eType == Enums::ET_DECOR && facingEntity->def->eSubType == Enums::DECOR_EXITHALL) {
 			b2 = true;
 		}
-		else if (eType == 7) {
-			if (facingEntity->def->eSubType == 3) {
+		else if (eType == Enums::ET_DECOR) {
+			if (facingEntity->def->eSubType == Enums::DECOR_STATUE) {
 				n2 = 1;
 			}
 			else if (facingEntity->def->parm == 1) {
@@ -336,7 +336,7 @@ void Hud::drawTopBar(Graphics* graphics) {
 				n2 = 3;
 			}
 		}
-		else if (eType == 14) {
+		else if (eType == Enums::ET_DECOR_NOCLIP) {
 			if (n7 == 142) {
 				b2 = true;
 			}
@@ -349,12 +349,12 @@ void Hud::drawTopBar(Graphics* graphics) {
 			else if (n7 == 134) {
 				n2 = 0;
 			}
-			else if (facingEntity->def->eSubType == 8) {
+			else if (facingEntity->def->eSubType == Enums::DECOR_TREADMILL) {
 				n2 = 3;
 			}
 		}
-		else if (eType == 10) {
-			if (facingEntity->def->eSubType == 3 || facingEntity->def->eSubType == 2) {
+		else if (eType == Enums::ET_ATTACK_INTERACTIVE) {
+			if (facingEntity->def->eSubType == Enums::INTERACT_PICKUP || facingEntity->def->eSubType == Enums::INTERACT_CRATE) {
 				n2 = 0;
 			}
 			else {
@@ -362,7 +362,7 @@ void Hud::drawTopBar(Graphics* graphics) {
 			}
 		}
 	}
-	else if (facingEntity != nullptr && facingEntity->def->eType == 12) {
+	else if (facingEntity != nullptr && facingEntity->def->eType == Enums::ET_SPRITEWALL) {
 		int n8 = (facingEntity->info & 0xFFFF) - 1;
 		if ((app->render->mapSpriteInfo[n8] & 0xFF) == 0x99 && (app->render->mapSpriteInfo[n8] & 0xFF00) >> 8 == 0) {
 			n2 = 3;
@@ -811,7 +811,7 @@ void Hud::drawMonsterHealth(Graphics* graphics) {
 		this->lastTarget = nullptr;
 		return;
 	}
-	if (facingEntity->def->eType == 3 || (facingEntity->def->eType == 2 && (facingEntity->info & 0x20000) == 0x0)) {
+	if (facingEntity->def->eType == Enums::ET_NPC || (facingEntity->def->eType == Enums::ET_MONSTER && (facingEntity->info & 0x20000) == 0x0)) {
 		return;
 	}
 	int stat = facingEntity->monster->ce.getStat(1);
@@ -844,7 +844,7 @@ void Hud::drawMonsterHealth(Graphics* graphics) {
 		n2 = 1;
 	}
 	int n3 = 6;
-	if (facingEntity->def->eSubType == 5 && facingEntity->def->parm == 0) {
+	if (facingEntity->def->eSubType == Enums::MONSTER_PINKY && facingEntity->def->parm == 0) {
 		n3 = 50;
 	}
 	else if (app->canvas->isZoomedIn) {

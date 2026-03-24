@@ -466,7 +466,7 @@ uint32_t ScriptThread::run() {
                 Entity* entity = app->game->entityDb[srcX + (32 * srcY)];
                 if (entity != nullptr) {
                     while (entity != nullptr) {
-                        if (entity->def->eType != 12 && (1 << entity->def->eType & 0x6240) == 0x0) {
+                        if (entity->def->eType != Enums::ET_SPRITEWALL && (1 << entity->def->eType & 0x6240) == 0x0) {
                             n26 = 0;
                             break;
                         }
@@ -828,15 +828,15 @@ uint32_t ScriptThread::run() {
                     entity14->info |= 0x400000;
                     this->app->game->unlinkEntity(entity14);
                     EntityDef* def = entity14->def;
-                    if (def->eType == 10) {
-                        if (def->eSubType != 3) {
+                    if (def->eType == Enums::ET_ATTACK_INTERACTIVE) {
+                        if (def->eSubType != Enums::INTERACT_PICKUP) {
                             this->app->game->destroyedObject(uByteArg16);
                         }
                     }
-                    else if (def->eType == 6 && (def->eSubType == 1 || def->eSubType == 2 || (def->eSubType == 0 && def->parm == 21))) {
+                    else if (def->eType == Enums::ET_ITEM && (def->eSubType == Enums::ITEM_WEAPON || def->eSubType == Enums::ITEM_AMMO || (def->eSubType == Enums::ITEM_CONSUMABLE && def->parm == 21))) {
                         this->app->game->foundLoot(uByteArg16, 1);
                     }
-                    else if (def->eType == 2) {
+                    else if (def->eType == Enums::ET_MONSTER) {
                         this->corpsifyMonster(entity14->linkIndex % 32, entity14->linkIndex / 32, entity14, false);
                         this->app->game->removeEntity(entity14);
                         entity14->info |= 0x400000;
@@ -884,7 +884,7 @@ uint32_t ScriptThread::run() {
                     this->app->Error(23); //ERR_MISC_SCRIPT
                 }
                 Entity* entity17 = &this->app->game->entities[n53];
-                if (entity17->def->eType == 2) {
+                if (entity17->def->eType == Enums::ET_MONSTER) {
                     int sprite = entity17->getSprite();
                     entity17->monster->frameTime = 0;
                     this->app->render->mapSpriteInfo[sprite] = ((this->app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | 0x0);
@@ -991,7 +991,7 @@ uint32_t ScriptThread::run() {
                         n2 = 1;
                     }
                 }
-                else if (lookup->eType == 6 && lookup->eSubType == 1 && this->app->player->weaponIsASentryBot(lookup->parm)) {
+                else if (lookup->eType == Enums::ET_ITEM && lookup->eSubType == Enums::ITEM_WEAPON && this->app->player->weaponIsASentryBot(lookup->parm)) {
                     if (!this->app->player->give(lookup->eSubType, lookup->parm, n55, true)) {
                         n2 = 1;
                     }
@@ -1003,7 +1003,7 @@ uint32_t ScriptThread::run() {
                         this->app->game->removeEntity(spawnDropItem);
                         n2 = 1;
                     }
-                    else if (eType != 3 && n55 > 0) {
+                    else if (eType != Enums::ET_NPC && n55 > 0) {
                         this->app->game->foundLoot(this->app->canvas->viewX + this->app->canvas->viewStepX, this->app->canvas->viewY + this->app->canvas->viewStepY, this->app->canvas->viewZ, 1);
                     }
                 }
@@ -1101,7 +1101,7 @@ uint32_t ScriptThread::run() {
                 int n68 = uShortArg15 & 0x3FFF;
                 if (this->app->render->mapSprites[this->app->render->S_ENT + n68] != -1) {
                     Entity* entity21 = &this->app->game->entities[this->app->render->mapSprites[this->app->render->S_ENT + n68]];
-                    if (entity21->def->eType == 3) {
+                    if (entity21->def->eType == Enums::ET_NPC) {
                         entity21->param = param;
                         break;
                     }
@@ -2198,7 +2198,7 @@ void ScriptThread::composeLootDialog() {
                     break;
                 }
                 case 2: {
-                    if (this->app->game->difficulty != 4) {
+                    if (this->app->game->difficulty != Enums::DIFFICULTY_NIGHTMARE) {
                         this->app->player->give(2, n5, n6, false);
                         EntityDef* find = this->app->entityDefManager->find(6, n3, n5);
                         this->app->localization->addTextArg(n6);
