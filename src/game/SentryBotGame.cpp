@@ -22,7 +22,9 @@
 bool SentryBotGame::wasTouched = false;
 
 SentryBotGame::SentryBotGame() {
-	std::memset(this, 0, sizeof(SentryBotGame));
+	// Zero data members without clobbering the vtable pointer
+	char* start = reinterpret_cast<char*>(&this->app);
+	std::memset(start, 0, sizeof(SentryBotGame) - (start - reinterpret_cast<char*>(this)));
 }
 
 SentryBotGame::~SentryBotGame() {

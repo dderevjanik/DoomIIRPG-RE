@@ -22,7 +22,9 @@
 int HackingGame::touchedColumn = -1;
 
 HackingGame::HackingGame() {
-	std::memset(this, 0, sizeof(HackingGame));
+	// Zero data members without clobbering the vtable pointer
+	char* start = reinterpret_cast<char*>(&this->app);
+	std::memset(start, 0, sizeof(HackingGame) - (start - reinterpret_cast<char*>(this)));
 }
 
 HackingGame::~HackingGame() {
@@ -346,6 +348,7 @@ void HackingGame::attemptToMove(short n) {
 }
 
 void HackingGame::updateGame(Graphics* graphics) {
+	app->canvas->repaintFlags &= ~Canvas::REPAINT_HUD;
 
 	graphics->clipRect(0, 0, 480, 320);
 	if (this->stateVars[1] == 0) {

@@ -7,7 +7,9 @@ class Image;
 class fmButtonContainer;
 class Graphics;
 
-class VendingMachine
+#include "IMinigame.h"
+
+class VendingMachine : public IMinigame
 {
 private:
 
@@ -60,17 +62,17 @@ public:
 
 	bool startup();
 
-	void playFromMainMenu();
+	void playFromMainMenu() override;
 	void initGame(ScriptThread* callingThread, int a, int a2);
 	void returnFromBuying();
 	bool machineCanBeHacked();
 	void randomizeGame();
-	void handleInput(int action);
+	void handleInput(int action) override;
 	void handleInputForBasicVendingMachine(int action);
 	void handleInputForHelpScreen(int action);
 	void handleInputForGame(int action);
 	void updateHighLowState();
-	void updateGame(Graphics* graphics);
+	void updateGame(Graphics* graphics) override;
 	void drawGameResults(Graphics* graphics);
 	void drawMainScreen(Graphics* graphics);
 	void drawVendingMachineBackground(Graphics* graphics, bool b);
@@ -84,11 +86,11 @@ public:
 	int getSnackPrice();
 	int numbersCorrect();
 	bool playerHasWon();
-	void forceWin();
-	void endGame(int n);
-	void touchStart(int pressX, int pressY);
-	void touchMove(int pressX, int pressY);
-	void touchEnd(int pressX, int pressY);
+	void forceWin() override;
+	void endGame(int n) override;
+	void touchStart(int pressX, int pressY) override;
+	void touchMove(int pressX, int pressY) override;
+	void touchEnd(int pressX, int pressY) override;
 	void handleTouchForHelpScreen(int pressX, int pressY);
 	void handleTouchForGame(int pressX, int pressY);
 	void handleTouchForBasicVendingMachine(int pressX, int pressY);

@@ -7,7 +7,9 @@ class fmButtonContainer;
 class Graphics;
 class Applet;
 
-class SentryBotGame
+#include "IMinigame.h"
+
+class SentryBotGame : public IMinigame
 {
 private:
 	static bool wasTouched;
@@ -47,11 +49,11 @@ public:
 	// Destructor
 	~SentryBotGame();
 
-	void playFromMainMenu();
+	void playFromMainMenu() override;
 	void setupGlobalData();
 	void initGame(ScriptThread* scriptThread, short botType);
-	void handleInput(int action);
-	void updateGame(Graphics* graphics);
+	void handleInput(int action) override;
+	void updateGame(Graphics* graphics) override;
 	void drawFailureScreen(Graphics* graphics);
 	void drawSuccessScreen(Graphics* graphics);
 	void drawHelpScreen(Graphics* graphics);
@@ -61,12 +63,12 @@ public:
 	void drawCursor(int n, int n2, bool b, Graphics* graphics);
 	bool playerHasWon();
 	bool playerCouldStillWin();
-	void forceWin();
+	void forceWin() override;
 	void awardSentryBot(int n);
-	void endGame(int n);
-	void touchStart(int pressX, int pressY);
-	void touchMove(int pressX, int pressY);
-	void touchEnd(int pressX, int pressY);
+	void endGame(int n) override;
+	void touchStart(int pressX, int pressY) override;
+	void touchMove(int pressX, int pressY) override;
+	void touchEnd(int pressX, int pressY) override;
 	void handleTouchForHelpScreen(int pressX, int pressY);
 	void handleTouchForGame(int pressX, int pressY);
 };

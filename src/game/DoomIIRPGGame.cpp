@@ -10,6 +10,7 @@
 #include "VendingMachine.h"
 #include "ComicBook.h"
 #include "Canvas.h"
+#include "CAppContainer.h"
 
 void DoomIIRPGGame::createGameObjects(Applet* app) {
 	printf("DoomIIRPGGame::createGameObjects\n");
@@ -34,6 +35,12 @@ bool DoomIIRPGGame::startup(Applet* app) {
 	app->canvas->registerStateHandler(Canvas::ST_LOGO, &logoState);
 	app->canvas->registerStateHandler(Canvas::ST_CREDITS, &creditsState);
 	app->canvas->registerStateHandler(Canvas::ST_AUTOMAP, &automapState);
+
+	// Register minigames
+	auto& mgReg = CAppContainer::getInstance()->minigameRegistry;
+	mgReg.registerMinigame(0, app->sentryBotGame, "sentrybot");
+	mgReg.registerMinigame(2, app->hackingGame,   "hacking");
+	mgReg.registerMinigame(4, app->vendingMachine, "vending");
 
 	return true;
 }

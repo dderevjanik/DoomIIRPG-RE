@@ -6,7 +6,9 @@ class ScriptThread;
 class Image;
 class fmButtonContainer;
 
-class HackingGame
+#include "IMinigame.h"
+
+class HackingGame : public IMinigame
 {
 private:
 
@@ -45,26 +47,26 @@ public:
 	// Destructor
 	~HackingGame();
 
-	void playFromMainMenu();
+	void playFromMainMenu() override;
 	void setupGlobalData();
 	void initGame(ScriptThread* scriptThread, int i);
 	void initGame(ScriptThread* scriptThread, int i, int i2);
 	void fillGameBoardRandomly(short array[5][6], int n, int n2, int n3);
 	void fillGameBoardRandomly(short array[5][6], int n, int n2, int n3, int n4);
-	void handleInput(int action);
+	void handleInput(int action) override;
 	void attemptToMove(short n);
-	void updateGame(Graphics* graphics);
+	void updateGame(Graphics* graphics) override;
 	void drawHelpScreen(Graphics* graphics);
 	void drawGameScreen(Graphics* graphics);
 	void drawGoalTextAndBars(Graphics* graphics, Text* text);
 	void drawGamePieces(Graphics* graphics, int x, int y);
 	bool gameIsSolved(short array[5][6]);
 	void drawPiece(int i, int x, int y, Graphics* graphics);
-	void forceWin();
-	void endGame(int n);
-	void touchStart(int x, int y);
-	void touchMove(int x, int y);
-	void touchEnd(int x, int y);
+	void forceWin() override;
+	void endGame(int n) override;
+	void touchStart(int x, int y) override;
+	void touchMove(int x, int y) override;
+	void touchEnd(int x, int y) override;
 };
 
 #endif

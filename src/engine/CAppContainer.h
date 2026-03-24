@@ -4,6 +4,7 @@
 #include <vector>
 #include "App.h"
 #include "OpcodeRegistry.h"
+#include "MinigameRegistry.h"
 
 class VFS;
 class SDLGL;
@@ -81,6 +82,7 @@ class CAppContainer {
 	VFS* vfs;
 	GameConfig gameConfig;         // Loaded from game.ini
 	OpcodeRegistry opcodeRegistry; // Extension script opcodes (128-254)
+	MinigameRegistry minigameRegistry; // Minigame dispatch registry
 	const char* customMapFile;     // --map override
 	const char* minigameName;     // --minigame override
 	bool skipTravelMap;            // --skip-travel-map

@@ -20,7 +20,9 @@
 #include "Sounds.h"
 
 VendingMachine::VendingMachine() {
-	std::memset(this, 0, sizeof(VendingMachine));
+	// Zero data members without clobbering the vtable pointer
+	char* start = reinterpret_cast<char*>(&this->app);
+	std::memset(start, 0, sizeof(VendingMachine) - (start - reinterpret_cast<char*>(this)));
 }
 
 VendingMachine::~VendingMachine() {

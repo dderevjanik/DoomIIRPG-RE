@@ -17,6 +17,8 @@
 #include "Combat.h"
 #include "Player.h"
 #include "MenuSystem.h"
+#include "CAppContainer.h"
+#include "IMinigame.h"
 #include "HackingGame.h"
 #include "SentryBotGame.h"
 #include "VendingMachine.h"
@@ -504,21 +506,8 @@ void Canvas::backPaint(Graphics* graphics) {
 		this->dialogState(graphics);
 	}
 	else if (this->state == Canvas::ST_MINI_GAME) {
-		switch (this->stateVars[0]) {
-			case 2: {
-				this->repaintFlags &= ~Canvas::REPAINT_HUD;
-				app->hackingGame->updateGame(graphics);
-				break;
-			}
-			case 0: {
-				app->sentryBotGame->updateGame(graphics);
-				break;
-			}
-			case 4: {
-				app->vendingMachine->updateGame(graphics);
-				break;
-			}
-		}
+		IMinigame* mg = CAppContainer::getInstance()->minigameRegistry.getById(this->stateVars[0]);
+		if (mg) mg->updateGame(graphics);
 	}
 	else if (this->state == Canvas::ST_ERROR) {
 		//this->errorState(graphics);
@@ -2909,20 +2898,8 @@ bool Canvas::handleEvent(int key) {
 		this->handleDialogEvents(key);
 	}
 	else if (state == Canvas::ST_MINI_GAME) { // [GEC] Restored from J2ME/BREW
-		switch (this->stateVars[0]) {
-			case 2: {
-				app->hackingGame->handleInput(keyAction);
-				break;
-			}
-			case 0: {
-				app->sentryBotGame->handleInput(keyAction);
-				break;
-			}
-			case 4: {
-				app->vendingMachine->handleInput(keyAction);
-				break;
-			}
-		}
+		IMinigame* mg = CAppContainer::getInstance()->minigameRegistry.getById(this->stateVars[0]);
+		if (mg) mg->handleInput(keyAction);
 	}
 	else if (state == Canvas::ST_BENCHMARK || state == Canvas::ST_BENCHMARKDONE) { // [GEC] Restored from J2ME/BREW
 		this->setState(Canvas::ST_PLAYING);
@@ -3906,17 +3883,14 @@ void Canvas::logoState() {
 	}
 
 	if (CAppContainer::getInstance()->minigameName) {
-		const char* mg = CAppContainer::getInstance()->minigameName;
+		const char* mgName = CAppContainer::getInstance()->minigameName;
 		CAppContainer::getInstance()->minigameName = nullptr;
 		app->sound->soundStop();
-		if (strcmp(mg, "hacking") == 0) {
-			app->hackingGame->playFromMainMenu();
-		} else if (strcmp(mg, "sentrybot") == 0) {
-			app->sentryBotGame->playFromMainMenu();
-		} else if (strcmp(mg, "vending") == 0) {
-			app->vendingMachine->playFromMainMenu();
+		IMinigame* mg = CAppContainer::getInstance()->minigameRegistry.getByName(mgName);
+		if (mg) {
+			mg->playFromMainMenu();
 		} else {
-			printf("Unknown minigame: %s (valid: hacking, sentrybot, vending)\n", mg);
+			printf("Unknown minigame: %s\n", mgName);
 		}
 		return;
 	}
@@ -7274,15 +7248,8 @@ void Canvas::touchStart(int pressX, int pressY) {
 		this->m_characterButtons->HighlightButton(pressX, pressY, true);
 	}
 	else if (this->state == Canvas::ST_MINI_GAME) {
-		if (app->canvas->stateVars[0] == 2) {
-			app->hackingGame->touchStart(pressX, pressY);
-		}
-		else if (app->canvas->stateVars[0] == 4) {
-			app->vendingMachine->touchStart(pressX, pressY);
-		}
-		else if (app->canvas->stateVars[0] == 0) {
-			app->sentryBotGame->touchStart(pressX, pressY);
-		}
+		IMinigame* mg = CAppContainer::getInstance()->minigameRegistry.getById(app->canvas->stateVars[0]);
+		if (mg) mg->touchStart(pressX, pressY);
 	}
 	else if (this->state == Canvas::ST_CAMERA) { // [GEC ]Port: New
 		this->m_softKeyButtons->HighlightButton(pressX, pressY, true);
@@ -7405,15 +7372,8 @@ void Canvas::touchMove(int pressX, int pressY) {
 		this->m_characterButtons->HighlightButton(pressX, pressY, true);
 	}
 	else if (this->state == Canvas::ST_MINI_GAME) {
-		if (app->canvas->stateVars[0] == 2) {
-			app->hackingGame->touchMove(pressX, pressY);
-		}
-		else if (app->canvas->stateVars[0] == 4) {
-			app->vendingMachine->touchMove(pressX, pressY);
-		}
-		else if (app->canvas->stateVars[0] == 0) {
-			app->sentryBotGame->touchMove(pressX, pressY);
-		}
+		IMinigame* mg = CAppContainer::getInstance()->minigameRegistry.getById(app->canvas->stateVars[0]);
+		if (mg) mg->touchMove(pressX, pressY);
 	}
 	else if (this->state == Canvas::ST_CAMERA) { // [GEC]: New
 		this->m_softKeyButtons->HighlightButton(pressX, pressY, true);
@@ -7483,20 +7443,8 @@ void Canvas::touchEnd(int pressX, int pressY) {
 					}
 					else {
 						if (this->state == Canvas::ST_MINI_GAME) {
-							state = app->canvas->stateVars[0];
-							if (state == 2) {
-								app->hackingGame->touchEnd(pressX, pressY);
-							}
-							else {
-								if (state == 4) {
-									app->vendingMachine->touchEnd(pressX, pressY);
-								}
-								else {
-									if (state == 0) {
-										app->sentryBotGame->touchEnd(pressX, pressY);
-									}
-								}
-							}
+							IMinigame* mg = CAppContainer::getInstance()->minigameRegistry.getById(app->canvas->stateVars[0]);
+							if (mg) mg->touchEnd(pressX, pressY);
 						}
 						else {
 							if (this->state == Canvas::ST_CHARACTER_SELECTION) { // [GEC]
