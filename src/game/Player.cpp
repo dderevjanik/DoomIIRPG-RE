@@ -143,9 +143,12 @@ void Player::selectWeapon(int i) {
 	if (this->isFamiliar) {
 		return;
 	}
-	if (i != 14) {
-		this->weapons &= 0xFFFFBFFF;
-		this->ammo[8] = 0;
+	if (!app->combat->getWeaponFlags(i).isThrowableItem) {
+		int tiIdx = app->combat->throwableItemWeaponIdx;
+		if (tiIdx >= 0) {
+			this->weapons &= ~(1 << tiIdx);
+			this->ammo[app->combat->throwableItemAmmoType] = 0;
+		}
 	}
 	if (app->canvas->isZoomedIn) {
 		app->canvas->zoomOut();
@@ -225,7 +228,7 @@ void Player::selectNextWeapon() {
 }
 
 int Player::getHealth() {
-	return this->isFamiliar ? this->ammo[7] : this->ce->getStat(0);
+	return this->isFamiliar ? this->ammo[app->combat->familiarAmmoType] : this->ce->getStat(0);
 }
 
 int Player::modifyStat(int n, int n2) {
@@ -347,7 +350,7 @@ void Player::addLevel() {
 
 	this->ce->setStat(Enums::STAT_HEALTH, this->ce->getStat(Enums::STAT_MAX_HEALTH));
 	/*if ((this->weapons & 0x78) != 0x0) {
-	    this->ammo[7] = 100;
+	    this->ammo[app->combat->familiarAmmoType] = 100;
 	}*/
 	app->hud->repaintFlags |= 0x4;
 
@@ -423,7 +426,7 @@ bool Player::addHealth(int i, bool b) {
 	int stat;
 	int stat2;
 	if (this->isFamiliar) {
-		stat = this->ammo[7];
+		stat = this->ammo[app->combat->familiarAmmoType];
 		stat2 = 100;
 	} else {
 		stat = this->ce->getStat(Enums::STAT_HEALTH);
@@ -437,12 +440,12 @@ bool Player::addHealth(int i, bool b) {
 		return false;
 	}
 	if (this->isFamiliar) {
-		this->ammo[7] = (short)std::max(0, this->ammo[7] + i);
+		this->ammo[app->combat->familiarAmmoType] = (short)std::max(0, this->ammo[app->combat->familiarAmmoType] + i);
 	} else {
 		app->hud->playerStartHealth = stat;
 		this->ce->addStat(Enums::STAT_HEALTH, i);
 	}
-	int n2 = this->isFamiliar ? this->ammo[7] : this->ce->getStat(Enums::STAT_HEALTH);
+	int n2 = this->isFamiliar ? this->ammo[app->combat->familiarAmmoType] : this->ce->getStat(Enums::STAT_HEALTH);
 	if (b && n2 > stat) {
 		app->localization->resetTextArgs();
 		app->localization->addTextArg(n2 - stat);
@@ -2392,7 +2395,7 @@ void Player::attemptToDiscardFamiliar(int n) {
 		app->hud->addMessage((short)0, (short)221, 3);
 	} else {
 		app->game->spawnDropItem(app->canvas->viewX, app->canvas->viewY, app->combat->getWeaponTileNum(n), 6, 1, n,
-		                         this->ammo[7], false);
+		                         this->ammo[app->combat->familiarAmmoType], false);
 		this->give(1, n, -1);
 	}
 }
@@ -2609,28 +2612,36 @@ bool Player::hasANanoDrink() {
 
 void Player::stripInventoryForViosBattle() {
 	this->weaponsCopy = 0;
-	this->ammoCopy[3] = this->ammo[3];
-	this->ammo[3] = 0;
-	if ((this->weapons & 0x4) != 0x0) {
-		this->give(1, 2, -1);
-		this->weaponsCopy |= 0x4;
+	// Strip fountain weapon (holy water pistol) and save its ammo
+	int fwIdx = app->combat->fountainWeaponIdx;
+	int fwAmmo = app->combat->fountainAmmoType;
+	if (fwIdx >= 0 && fwAmmo >= 0) {
+		this->ammoCopy[fwAmmo] = this->ammo[fwAmmo];
+		this->ammo[fwAmmo] = 0;
+		int fwBit = 1 << fwIdx;
+		if ((this->weapons & fwBit) != 0x0) {
+			this->give(1, fwIdx, -1);
+			this->weaponsCopy |= fwBit;
+		}
 	}
-	if ((this->weapons & 0x2000) != 0x0) {
-		this->give(1, 13, -1);
-		this->weaponsCopy |= 0x2000;
+	// Strip soul cube weapon
+	int swIdx = app->combat->soulWeaponIdx;
+	if (swIdx >= 0) {
+		int swBit = 1 << swIdx;
+		if ((this->weapons & swBit) != 0x0) {
+			this->give(1, swIdx, -1);
+			this->weaponsCopy |= swBit;
+		}
 	}
-	if ((this->weapons & 0x8) != 0x0) {
-		this->give(1, 3, -1);
-		this->weaponsCopy |= 0x8;
-	} else if ((this->weapons & 0x10) != 0x0) {
-		this->give(1, 4, -1);
-		this->weaponsCopy |= 0x10;
-	} else if ((this->weapons & 0x20) != 0x0) {
-		this->give(1, 5, -1);
-		this->weaponsCopy |= 0x20;
-	} else if ((this->weapons & 0x40) != 0x0) {
-		this->give(1, 6, -1);
-		this->weaponsCopy |= 0x40;
+	// Strip first found familiar weapon (sentry bot)
+	for (int f = 0; f < app->combat->familiarDefCount; f++) {
+		int famWpn = app->combat->familiarDefs[f].weaponIndex;
+		int famBit = 1 << famWpn;
+		if ((this->weapons & famBit) != 0x0) {
+			this->give(1, famWpn, -1);
+			this->weaponsCopy |= famBit;
+			break;
+		}
 	}
 }
 
@@ -2648,33 +2659,33 @@ void Player::stripInventoryForTargetPractice() {
 }
 
 void Player::restoreInventory() {
-
+	int fwIdx = app->combat->fountainWeaponIdx;
+	int fwAmmo = app->combat->fountainAmmoType;
+	int swIdx = app->combat->soulWeaponIdx;
 
 	if ((this->weapons & 0x1) != 0x0) {
 		this->currentWeaponCopy = this->ce->weapon;
-		this->ammo[3] = this->ammoCopy[3];
-		if ((this->weaponsCopy & 0x4) != 0x0) {
-			this->give(1, 2, 1, true);
+		// Restore fountain weapon ammo
+		if (fwIdx >= 0 && fwAmmo >= 0) {
+			this->ammo[fwAmmo] = this->ammoCopy[fwAmmo];
+			if ((this->weaponsCopy & (1 << fwIdx)) != 0x0) {
+				this->give(1, fwIdx, 1, true);
+			}
 		}
-		if ((this->weaponsCopy & 0x2000) != 0x0) {
-			this->give(1, 13, 1, true);
+		// Restore soul cube weapon
+		if (swIdx >= 0 && (this->weaponsCopy & (1 << swIdx)) != 0x0) {
+			this->give(1, swIdx, 1, true);
 		}
-		if ((this->weaponsCopy & 0x8) != 0x0) {
-			short n = this->ammo[7];
-			this->give(1, 3, 1, true);
-			this->ammo[7] = n;
-		} else if ((this->weaponsCopy & 0x10) != 0x0) {
-			short n2 = this->ammo[7];
-			this->give(1, 4, 1, true);
-			this->ammo[7] = n2;
-		} else if ((this->weaponsCopy & 0x20) != 0x0) {
-			short n3 = this->ammo[7];
-			this->give(1, 5, 1, true);
-			this->ammo[7] = n3;
-		} else if ((this->weaponsCopy & 0x40) != 0x0) {
-			short n4 = this->ammo[7];
-			this->give(1, 6, 1, true);
-			this->ammo[7] = n4;
+		// Restore familiar weapon (preserve its ammo type to avoid give() adding extra)
+		for (int f = 0; f < app->combat->familiarDefCount; f++) {
+			int famWpn = app->combat->familiarDefs[f].weaponIndex;
+			if ((this->weaponsCopy & (1 << famWpn)) != 0x0) {
+				int famAmmoType = app->combat->weapons[famWpn * Combat::WEAPON_MAX_FIELDS + Combat::WEAPON_FIELD_AMMOTYPE];
+				short savedAmmo = this->ammo[famAmmoType];
+				this->give(1, famWpn, 1, true);
+				this->ammo[famAmmoType] = savedAmmo;
+				break;
+			}
 		}
 		this->forceRemoveFromScopeZoom();
 		this->selectWeapon(this->currentWeaponCopy);
@@ -2685,7 +2696,7 @@ void Player::restoreInventory() {
 			this->ammo[i] = 0;
 			this->give(2, i, this->ammoCopy[i], true);
 		}
-		for (int j = 0; j < 15; ++j) {
+		for (int j = 0; j < app->combat->numWeaponFlags && j < 32; ++j) {
 			if ((1 << j & this->weaponsCopy) != 0x0) {
 				this->give(1, j, 1, true);
 			}

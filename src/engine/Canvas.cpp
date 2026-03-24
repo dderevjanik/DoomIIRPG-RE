@@ -2457,7 +2457,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 						}
 					}
 					else if (eType == 8) {
-						if (entity3->def->eSubType == 1 && weapon2 == 2 && app->player->ammo[3] >= 2) {
+						if (entity3->def->eSubType == 1 && app->combat->getWeaponFlags(weapon2).fountainWeapon && app->player->ammo[app->combat->weapons[weapon2 * Combat::WEAPON_MAX_FIELDS + Combat::WEAPON_FIELD_AMMOTYPE]] >= app->combat->weapons[weapon2 * Combat::WEAPON_MAX_FIELDS + Combat::WEAPON_FIELD_AMMOUSAGE]) {
 							entity = entity3;
 							n4 = n11;
 							n6 = 0;
@@ -2522,11 +2522,13 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 				app->game->advanceTurn();
 			}
 		}
-		else if (entity != nullptr && entity->def->eType == 10 && entity->def->eSubType == 3 && dist2 <= app->combat->tileDistances[0] && app->player->ammo[8] == 0) {
+		else if (entity != nullptr && entity->def->eType == 10 && entity->def->eSubType == 3 && dist2 <= app->combat->tileDistances[0] && (app->combat->throwableItemAmmoType < 0 || app->player->ammo[app->combat->throwableItemAmmoType] == 0)) {
 			if (!app->player->isFamiliar) {
-				if (app->player->ce->weapon == 2 && app->player->ammo[3] < 100) {
+				int fountainAmmoType = app->combat->weapons[app->player->ce->weapon * Combat::WEAPON_MAX_FIELDS + Combat::WEAPON_FIELD_AMMOTYPE];
+				int fountainAmmoMax = CAppContainer::getInstance()->gameConfig.capAmmo;
+				if (app->combat->getWeaponFlags(app->player->ce->weapon).fountainWeapon && app->player->ammo[fountainAmmoType] < fountainAmmoMax) {
 					app->hud->addMessage((short)248);
-					app->player->ammo[3] = 100;
+					app->player->ammo[fountainAmmoType] = fountainAmmoMax;
 					app->player->showHelp((short)14, false);
 					app->sound->playSound(Sounds::getResIDByName(SoundName::HOLYWATERPISTOL_REFILL), 0, 3, 0);
 				}
@@ -2550,8 +2552,10 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 			}
 		}
 		else {
-			if (entity != nullptr && entity->def->eType == 14 && entity->def->eSubType == 7 && dist2 <= app->combat->tileDistances[0] && dist2 > 0 && app->player->ce->weapon == 2) {
-				if (app->player->ammo[3] < 100) {
+			if (entity != nullptr && entity->def->eType == 14 && entity->def->eSubType == 7 && dist2 <= app->combat->tileDistances[0] && dist2 > 0 && app->combat->getWeaponFlags(app->player->ce->weapon).fountainWeapon) {
+				int fAmmoType = app->combat->weapons[app->player->ce->weapon * Combat::WEAPON_MAX_FIELDS + Combat::WEAPON_FIELD_AMMOTYPE];
+				int fAmmoMax = CAppContainer::getInstance()->gameConfig.capAmmo;
+				if (app->player->ammo[fAmmoType] < fAmmoMax) {
 					app->hud->addMessage((short)248);
 					app->player->showHelp((short)14, false);
 					app->sound->playSound(Sounds::getResIDByName(SoundName::HOLYWATERPISTOL_REFILL), 0, 3, 0);
@@ -2559,10 +2563,10 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 				else {
 					app->hud->addMessage((short)249);
 				}
-				app->player->ammo[3] = 100;
+				app->player->ammo[fAmmoType] = fAmmoMax;
 				return true;
 			}
-			if (entity != nullptr && entity->def->eType == 5 && dist2 <= app->combat->tileDistances[0] && weapon2 != 14) {
+			if (entity != nullptr && entity->def->eType == 5 && dist2 <= app->combat->tileDistances[0] && !app->combat->getWeaponFlags(weapon2).isThrowableItem) {
 				if (!app->player->isFamiliar) {
 					if (entity->def->eSubType == 1) {
 						app->hud->addMessage((short)44, 2);
@@ -3694,8 +3698,8 @@ void Canvas::playingState() {
 		app->player->died();
 		return;
 	}
-	if (app->player->isFamiliar && app->player->ammo[7] <= 0) {
-		app->player->ammo[7] = 0;
+	if (app->player->isFamiliar && app->player->ammo[app->combat->familiarAmmoType] <= 0) {
+		app->player->ammo[app->combat->familiarAmmoType] = 0;
 		app->player->familiarDying(false);
 	}
 	if (app->hud->isShiftingCenterMsg()) {

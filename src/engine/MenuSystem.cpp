@@ -2191,10 +2191,12 @@ void MenuSystem::initMenu(int menu) {
 					this->addItem(Localization::STRINGID(Strings::FILE_ENTITYSTRINGS, find->name), this->getLastArgString(), 32, 24, n5, Localization::STRINGID(Strings::FILE_ENTITYSTRINGS, find->description));
 				}
 			}
-			if (app->player->ammo[3] >= 25 && (app->player->weapons & 0x4) != 0x0) {
+			int fwIdx = app->combat->fountainWeaponIdx;
+			int fwAmmoType = app->combat->fountainAmmoType;
+			if (fwIdx >= 0 && fwAmmoType >= 0 && app->player->ammo[fwAmmoType] >= 25 && (app->player->weapons & (1 << fwIdx)) != 0x0) {
 				textbuff->setLength(0);
-				textbuff->append(app->player->ammo[3]);
-				EntityDef* find2 = app->entityDefManager->find(6, 2, 3);
+				textbuff->append(app->player->ammo[fwAmmoType]);
+				EntityDef* find2 = app->entityDefManager->find(6, 2, fwAmmoType);
 				app->localization->addTextArg(textbuff);
 				this->addItem(Localization::STRINGID(Strings::FILE_ENTITYSTRINGS, find2->name), this->getLastArgString(), 32, 24, 22, Localization::STRINGID(Strings::FILE_ENTITYSTRINGS, find2->description));
 			}

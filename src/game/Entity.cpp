@@ -251,7 +251,7 @@ bool Entity::touchedItem() {
                 param3 = 100;
             }
             app->player->give(1, this->def->parm, 1, false);
-            app->player->ammo[7] = (short)param3;
+            app->player->ammo[app->combat->familiarAmmoType] = (short)param3;
             app->hud->addMessage((short)0, (short)223, 3);
         }
         else {

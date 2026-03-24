@@ -733,7 +733,7 @@ void Combat::drawWeapon(int sx, int sy) {
         app->render->draw2DSprite(n21, 3, x, y + n24, n22, renderMode, renderFlags, 0x10000);
     }
     else if (this->getWeaponFlags(weapon).isThrowableItem) {
-        if (app->player->ammo[8] > 0) {
+        if (app->player->ammo[this->weapons[weapon * Combat::WEAPON_MAX_FIELDS + Combat::WEAPON_FIELD_AMMOTYPE]] > 0) {
             app->render->draw2DSprite(app->player->activeWeaponDef->tileIndex, 1, x + wpFlashX, y + wpFlashY, flags, renderMode, renderFlags, 0x10000);
         }
         else {
@@ -956,7 +956,7 @@ void Combat::explodeOnPlayer() {
                 app->hud->addMessage((short)72);
             }
             app->game->linkEntity(this->curAttacker, this->curAttacker->linkIndex % 32, this->curAttacker->linkIndex / 32);
-            if (app->player->isFamiliar && app->player->ammo[7] <= 0) {
+            if (app->player->isFamiliar && app->player->ammo[this->familiarAmmoType] <= 0) {
                 app->player->familiarDying(false);
             }
         }

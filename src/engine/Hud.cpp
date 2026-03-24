@@ -622,7 +622,7 @@ void Hud::drawBottomBar(Graphics* graphics) {
 	bool noclip = app->player->noclip;
 	if (app->player->isFamiliar) {
 		int n = 118;
-		short n2 = app->player->ammo[7];
+		short n2 = app->player->ammo[app->combat->familiarAmmoType];
 		int n3;
 		if (n2 > 80) {
 			n3 = 0xFF59A907;

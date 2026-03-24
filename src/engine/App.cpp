@@ -724,6 +724,27 @@ bool Applet::loadWeaponsFromYAML(const char* path) {
 			f.meleeImpactAnim = beh["melee_impact_anim"].as<int16_t>(0);
 			f.interactFlags = beh["interact_flags"].as<int>(0);
 			f.canLootCorpses = beh["can_loot_corpses"].as<bool>(false);
+			f.fountainWeapon = beh["fountain_weapon"].as<bool>(false);
+		}
+	}
+
+	// Cache special weapon indices and ammo types for quick lookups
+	this->combat->throwableItemAmmoType = -1;
+	this->combat->throwableItemWeaponIdx = -1;
+	this->combat->fountainWeaponIdx = -1;
+	this->combat->fountainAmmoType = -1;
+	this->combat->soulWeaponIdx = -1;
+	for (int w = 0; w < numWeapons; w++) {
+		if (this->combat->wpFlags[w].isThrowableItem && this->combat->throwableItemWeaponIdx < 0) {
+			this->combat->throwableItemWeaponIdx = w;
+			this->combat->throwableItemAmmoType = this->combat->weapons[w * 9 + Combat::WEAPON_FIELD_AMMOTYPE];
+		}
+		if (this->combat->wpFlags[w].fountainWeapon && this->combat->fountainWeaponIdx < 0) {
+			this->combat->fountainWeaponIdx = w;
+			this->combat->fountainAmmoType = this->combat->weapons[w * 9 + Combat::WEAPON_FIELD_AMMOTYPE];
+		}
+		if (this->combat->wpFlags[w].soulAmmoDisplay && this->combat->soulWeaponIdx < 0) {
+			this->combat->soulWeaponIdx = w;
 		}
 	}
 
@@ -772,6 +793,13 @@ bool Applet::loadWeaponsFromYAML(const char* path) {
 		std::copy(famDefs.begin(), famDefs.end(), this->combat->familiarDefs);
 	}
 	this->combat->defaultFamiliarType = 1;
+
+	// Cache familiar ammo type from first familiar weapon
+	this->combat->familiarAmmoType = -1;
+	if (!famDefs.empty()) {
+		int famW = famDefs[0].weaponIndex;
+		this->combat->familiarAmmoType = this->combat->weapons[famW * 9 + Combat::WEAPON_FIELD_AMMOTYPE];
+	}
 
 	printf("Weapons: loaded %d weapon definitions (%d familiars) from %s\n",
 		(int)weapons.size(), (int)famDefs.size(), path);

@@ -142,9 +142,16 @@ public:
 		int16_t meleeImpactAnim;      // Melee impact animation ID (0 = none)
 		int interactFlags;      // Additional entity type flags when targeting with this weapon (0 = none)
 		bool canLootCorpses;    // Can loot corpses at melee range (chainsaw)
+		bool fountainWeapon;    // Can refill ammo at fountain/water spout entities (holy water pistol)
 	};
 	WeaponFlags* wpFlags;       // Array sized to numWeapons
 	int numWeaponFlags;
+	int throwableItemAmmoType;  // Cached ammo type index for the throwable item weapon (-1 = none)
+	int throwableItemWeaponIdx; // Cached weapon index for the throwable item weapon (-1 = none)
+	int fountainWeaponIdx;      // Cached weapon index for the fountain weapon (-1 = none)
+	int fountainAmmoType;       // Cached ammo type for the fountain weapon (-1 = none)
+	int soulWeaponIdx;          // Cached weapon index for the soul cube weapon (-1 = none)
+	int familiarAmmoType;       // Cached ammo type for familiar weapons (sentry bot fuel, -1 = none)
 
 	// Safe accessor for weapon flags (returns all-false flags for out-of-range indices)
 	const WeaponFlags& getWeaponFlags(int weaponIdx) const {

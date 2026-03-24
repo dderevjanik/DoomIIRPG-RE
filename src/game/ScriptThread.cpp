@@ -1931,7 +1931,7 @@ uint32_t ScriptThread::run() {
                 if (this->app->player->noclip) {
                     break;
                 }
-                int n96 = this->app->player->isFamiliar ? this->app->player->ammo[7] : this->app->player->ce->getStat(0);
+                int n96 = this->app->player->isFamiliar ? this->app->player->ammo[this->app->combat->familiarAmmoType] : this->app->player->ce->getStat(0);
                 if (!this->app->player->isFamiliar) {
                     this->app->player->painEvent(nullptr, false);
                 }
