@@ -645,7 +645,9 @@ void Hud::drawBottomBar(Graphics* graphics) {
 			graphics->drawImage(this->imgSentryBotActive, 143, 261, 0, 0, 0); // Old 262, 0, 0, 0);
 		}
 
-		graphics->drawRegion(this->imgSentryBotFace, 0, (app->player->familiarType == 3 || app->player->familiarType == 4) ? 17 : 0, 29, 17, app->canvas->SCR_CX - (15 + n) / 2, 278, 3, /*noclip ? 3 :*/ 0, 0);
+		const Combat::FamiliarDef* fd = app->combat->getFamiliarDefByType(app->player->familiarType);
+		int faceRow = fd ? fd->hudFaceRow : 0;
+		graphics->drawRegion(this->imgSentryBotFace, 0, faceRow, 29, 17, app->canvas->SCR_CX - (15 + n) / 2, 278, 3, /*noclip ? 3 :*/ 0, 0);
 
 		int n5 = app->canvas->SCR_CX + this->imgSentryBotFace->width - ((15 + n) / 2);
 		int n7 = n2 * 20 / 100;

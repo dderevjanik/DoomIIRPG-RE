@@ -2250,14 +2250,14 @@ void MenuSystem::initMenu(int menu) {
 					int n12 = n10 * 9;
 					textbuff->setLength(0);
 					if (app->combat->weapons[n12 + 4] != 0) {
-
-						if (app->combat->weapons[n12 + 4] == 6) {
-							textbuff->append(app->player->ammo[6]);
+						int ammoType = app->combat->weapons[n12 + 4];
+						if (app->combat->getWeaponFlags(n10).soulAmmoDisplay) {
+							textbuff->append(app->player->ammo[ammoType]);
 							textbuff->append('/');
-							textbuff->append(5);
+							textbuff->append(app->combat->weapons[n12 + Combat::WEAPON_FIELD_AMMOUSAGE]);
 						}
 						else {
-							textbuff->append(app->player->ammo[app->combat->weapons[n12 + 4]]);
+							textbuff->append(app->player->ammo[ammoType]);
 						}
 					}
 					else {

@@ -2654,8 +2654,9 @@ void Player::stripInventoryForTargetPractice() {
 		this->ammo[i] = 0;
 	}
 	this->weapons = 0;
-	this->give(1, 9, 1, true);
-	this->give(2, 1, 8, true);
+	const auto& gc = CAppContainer::getInstance()->gameConfig;
+	this->give(1, gc.tpWeaponIdx, 1, true);
+	this->give(2, gc.tpAmmoType, gc.tpAmmoCount, true);
 }
 
 void Player::restoreInventory() {
@@ -2691,7 +2692,8 @@ void Player::restoreInventory() {
 		this->selectWeapon(this->currentWeaponCopy);
 		app->game->angryVIOS = false;
 	} else {
-		bool b = (this->weaponsCopy & 0x200) != 0x0;
+		int tpWpn = CAppContainer::getInstance()->gameConfig.tpWeaponIdx;
+		bool b = (this->weaponsCopy & (1 << tpWpn)) != 0x0;
 		for (int i = 0; i < 9; ++i) {
 			this->ammo[i] = 0;
 			this->give(2, i, this->ammoCopy[i], true);
@@ -2703,7 +2705,7 @@ void Player::restoreInventory() {
 		}
 		this->forceRemoveFromScopeZoom();
 		if (!b) {
-			this->give(1, 9, -1);
+			this->give(1, tpWpn, -1);
 		}
 		this->selectWeapon(this->currentWeaponCopy);
 	}

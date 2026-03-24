@@ -210,6 +210,9 @@ int main(int argc, char* args[]) {
 					gc.tpBodyPoints = tp["body_points"].as<int>(gc.tpBodyPoints);
 					gc.tpLegPoints = tp["leg_points"].as<int>(gc.tpLegPoints);
 					gc.tpHitDisplayMs = tp["hit_display_ms"].as<int>(gc.tpHitDisplayMs);
+					gc.tpWeaponIdx = tp["weapon_index"].as<int>(gc.tpWeaponIdx);
+					gc.tpAmmoType = tp["ammo_type"].as<int>(gc.tpAmmoType);
+					gc.tpAmmoCount = tp["ammo_count"].as<int>(gc.tpAmmoCount);
 				}
 
 				if (YAML::Node vm = game["vending_machine"]) {
@@ -223,6 +226,24 @@ int main(int argc, char* args[]) {
 								h["iq"].as<int>(),
 								h["hints"].as<int>()
 							});
+						}
+					}
+				}
+
+				if (YAML::Node am = game["automap"]) {
+					if (YAML::Node dc = am["door_colors"]) {
+						gc.automapDoorColors.clear();
+						for (const auto& entry : dc) {
+							int16_t tile = (int16_t)entry["tile"].as<int>();
+							uint32_t color = (uint32_t)entry["color"].as<unsigned long>();
+							gc.automapDoorColors.push_back({tile, color});
+						}
+					}
+					gc.automapDoorDefault = (uint32_t)am["door_default_color"].as<unsigned long>(gc.automapDoorDefault);
+					if (YAML::Node hd = am["hidden_decors"]) {
+						gc.automapHiddenDecors.clear();
+						for (const auto& entry : hd) {
+							gc.automapHiddenDecors.push_back((int16_t)entry.as<int>());
 						}
 					}
 				}

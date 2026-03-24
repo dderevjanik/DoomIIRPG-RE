@@ -789,6 +789,10 @@ bool Applet::loadWeaponsFromYAML(const char* path) {
 			if (it != weaponNameToIndex.end()) fd.deathRemainsWeapon = it->second;
 		}
 
+		fd.canShoot = fam["can_shoot"].as<bool>(false);
+		fd.selfDestructs = fam["self_destructs"].as<bool>(false);
+		fd.hudFaceRow = (int8_t)fam["hud_face_row"].as<int>(0);
+
 		famDefs.push_back(fd);
 	}
 
@@ -1432,6 +1436,7 @@ bool Applet::loadMonstersFromYAML(const char* path) {
 			mb.onHitPoison = beh["on_hit_poison"].as<bool>(false);
 			mb.floats = beh["floats"].as<bool>(false);
 			mb.isVios = beh["is_vios"].as<bool>(false);
+			mb.boneGibs = beh["bone_gibs"].as<bool>(false);
 			mb.smallParm0Scale = beh["small_parm0_scale"].as<int>(-1);
 			if (YAML::Node poison = beh["on_hit_poison_params"]) {
 				mb.onHitPoisonId = poison["id"].as<int>(13);

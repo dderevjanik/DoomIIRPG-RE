@@ -59,6 +59,9 @@ struct GameConfig {
 	int tpBodyPoints = 20;
 	int tpLegPoints = 10;
 	int tpHitDisplayMs = 500;
+	int tpWeaponIdx = 9;      // Weapon given during target practice (assault_rifle_with_scope)
+	int tpAmmoType = 1;       // Ammo type for target practice (bullets)
+	int tpAmmoCount = 8;      // Amount of ammo given for target practice
 
 	// Vending machine minigame
 	struct IQHint {
@@ -72,6 +75,18 @@ struct GameConfig {
 
 	// Per-map joke item tables: mapID → list of item IDs (selected by sprite % count)
 	std::map<int, std::vector<int>> jokeItems;
+
+	// Automap color configuration
+	struct AutomapDoorColor {
+		int16_t tileIndex;
+		uint32_t color;
+	};
+	std::vector<AutomapDoorColor> automapDoorColors = {
+		{271, 0xFFFF8400}, {272, 0xFFFF8400},   // orange key doors
+		{273, 0xFF00C0FF}, {274, 0xFF00C0FF},   // blue key doors
+	};
+	uint32_t automapDoorDefault = 0xFF3D68E3;         // default door color
+	std::vector<int16_t> automapHiddenDecors = {173, 180}; // decor tiles invisible on automap
 
 	bool isFogDisabled(int mapID) const {
 		for (int id : noFogMaps) {

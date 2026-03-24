@@ -2610,7 +2610,8 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 				return true;
 			}
 			else {
-				if (app->player->isFamiliar && (app->player->familiarType == 2 || app->player->familiarType == 4)) {
+				const Combat::FamiliarDef* fd = app->combat->getFamiliarDefByType(app->player->familiarType);
+			if (app->player->isFamiliar && fd && fd->selfDestructs) {
 					app->player->startSelfDestructDialog();
 					return true;
 				}
@@ -2646,7 +2647,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 							}
 							app->player->fireWeapon(entity, calcPosition2[0], calcPosition2[1]);
 							if (app->player->inTargetPractice) {
-								if (app->player->ammo[1] == 0) {
+								if (app->player->ammo[CAppContainer::getInstance()->gameConfig.tpAmmoType] == 0) {
 									app->player->exitTargetPractice();
 								}
 								else {
@@ -2659,7 +2660,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 						this->shouldFakeCombat(app->game->traceCollisionX >> 6, app->game->traceCollisionY >> 6, flagForFacingDir);
 						app->player->fireWeapon(&app->game->entities[0], app->game->traceCollisionX, app->game->traceCollisionY);
 						if (app->player->inTargetPractice) {
-							if (app->player->ammo[1] == 0) {
+							if (app->player->ammo[CAppContainer::getInstance()->gameConfig.tpAmmoType] == 0) {
 								app->player->exitTargetPractice();
 							}
 							else {
@@ -4062,15 +4063,11 @@ void Canvas::drawAutomap(Graphics* graphics, bool b) {
 									bool b5 = false;
 									int n18 = 2;
 									if (nextOnTile->def->eType == 5) {
+										const auto& gc = CAppContainer::getInstance()->gameConfig;
 										short tileIndex = nextOnTile->def->tileIndex;
-										if (tileIndex == 271 || tileIndex == 272) {
-											color = 0xFFFF8400;
-										}
-										else if (tileIndex == 273 || tileIndex == 274) {
-											color = 0xFF00C0FF;
-										}
-										else {
-											color = 0xFF3D68E3;
+										color = gc.automapDoorDefault;
+										for (const auto& dc : gc.automapDoorColors) {
+											if (dc.tileIndex == tileIndex) { color = dc.color; break; }
 										}
 										b5 = true;
 									}
@@ -4096,8 +4093,9 @@ void Canvas::drawAutomap(Graphics* graphics, bool b) {
 									}
 									else if (nextOnTile->def->eType == 7) {
 										color = 0xFF8D8068;
-										if (nextOnTile->def->tileIndex == 173 || nextOnTile->def->tileIndex == 180) {
-											color = 0;
+										const auto& hiddenDecors = CAppContainer::getInstance()->gameConfig.automapHiddenDecors;
+										for (int16_t hd : hiddenDecors) {
+											if (nextOnTile->def->tileIndex == hd) { color = 0; break; }
 										}
 									}
 									else if (app->player->god && nextOnTile->def->eType == 6 && nextOnTile->def->eSubType != 3) {

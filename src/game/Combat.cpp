@@ -624,7 +624,8 @@ void Combat::drawWeapon(int sx, int sy) {
     scrY += this->wpDisplayOffsetY[weapon];
 
     if (app->player->isFamiliar) {
-        if (app->player->familiarType != 1 && app->player->familiarType != 3) {
+        const Combat::FamiliarDef* fd = app->combat->getFamiliarDefByType(app->player->familiarType);
+        if (!fd || !fd->canShoot) {
             return;
         }
         weapon = 0;
@@ -647,7 +648,8 @@ void Combat::drawWeapon(int sx, int sy) {
     int wpAtkX = this->wpinfo[wpnField + Combat::FLD_WPATKX];
     int wpAtkY = this->wpinfo[wpnField + Combat::FLD_WPATKY];
 
-    if (app->player->isFamiliar && (app->player->familiarType == 1 || app->player->familiarType == 3)) {
+    const Combat::FamiliarDef* fd2 = app->combat->getFamiliarDefByType(app->player->familiarType);
+    if (app->player->isFamiliar && fd2 && fd2->canShoot) {
         wpAtkX = 1 + (wpAtkX - wpIdleX);
         wpAtkY = 50 + (wpAtkY - wpIdleY);
         wpIdleX = 1;
@@ -1629,11 +1631,3 @@ const Combat::FamiliarDef* Combat::getFamiliarDefByWeapon(int weaponIndex) const
 	return nullptr;
 }
 
-const Combat::FamiliarDef* Combat::getFamiliarDefByType(int familiarType) const {
-	for (int i = 0; i < this->familiarDefCount; i++) {
-		if (this->familiarDefs[i].familiarType == familiarType) {
-			return &this->familiarDefs[i];
-		}
-	}
-	return nullptr;
-}

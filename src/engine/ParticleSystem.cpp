@@ -3,6 +3,7 @@
 
 #include "CAppContainer.h"
 #include "App.h"
+#include "Combat.h"
 #include "ParticleSystem.h"
 #include "Graphics.h"
 #include "Render.h"
@@ -242,7 +243,7 @@ void ParticleSystem::spawnMonsterBlood(Entity* entity, bool b) {
         z -= 26;
     }
 
-    if (b && (ParticleSystem::GIB_BONE_MASK & 1 << entity->def->eSubType) != 0x0) {
+    if (b && app->combat->monsterBehaviors[entity->def->eSubType].boneGibs) {
         this->spawnParticles(4, color, app->render->mapSprites[app->render->S_X + sprite], app->render->mapSprites[app->render->S_Y + sprite], app->render->mapSprites[app->render->S_Z + sprite] + z);
     }
     else {

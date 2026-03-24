@@ -31,6 +31,7 @@ struct MonsterBehaviors {
 	int walkSoundResId = -1;      // -1 = none
 	int16_t randomDeathSounds[4] = {-1, -1, -1, -1}; // Up to 4 random death sound resource IDs
 	int8_t numRandomDeathSounds = 0;                   // 0 = use normal death sound
+	bool boneGibs = false;         // Produce bone gib particles on death (skeleton-type monsters)
 
 	// Per-weapon weakness modifiers (indexed by weapon index, -1=immune, 0=normal, >0=left shift)
 	static constexpr int MAX_WEAKNESS_MODS = 16;
@@ -174,10 +175,21 @@ public:
 		int explodeWeaponIndex; // weapon index used for explosion damage (-1 = none)
 		int deathRemainsWeapon; // weapon index for death remains drop
 		int16_t helpId;         // help text ID shown when activating
+		bool canShoot;          // familiar can fire weapons (shooting sentry bots)
+		bool selfDestructs;     // familiar self-destructs on attack (exploding sentry bots)
+		int8_t hudFaceRow;      // Y offset row in sentry bot face sprite (0 or 17)
 	};
 	FamiliarDef* familiarDefs;  // array, familiarDefCount entries
 	int familiarDefCount;
 	int defaultFamiliarType;    // familiar type for non-sentry weapons (default: 1)
+
+	// Lookup FamiliarDef by familiarType; returns nullptr if not found
+	const FamiliarDef* getFamiliarDefByType(int famType) const {
+		for (int i = 0; i < familiarDefCount; i++) {
+			if (familiarDefs[i].familiarType == famType) return &familiarDefs[i];
+		}
+		return nullptr;
+	}
 
 	// Projectile visual data (per projectile type)
 	struct ProjVisual {
@@ -330,7 +342,6 @@ public:
 	void launchSoulCube();
 	int getWeaponTileNum(int n);
 	const FamiliarDef* getFamiliarDefByWeapon(int weaponIndex) const;
-	const FamiliarDef* getFamiliarDefByType(int familiarType) const;
 
 };
 
