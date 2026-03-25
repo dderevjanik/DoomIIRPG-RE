@@ -1653,12 +1653,12 @@ void Player::equipForLevel(int highestMap) {
 	this->weapons = 0;
 	app->game->numMallocsForVIOS = 0;
 
-	// Try loading map rewards from YAML
+	// Try loading map starting loadout from YAML
 	bool loadedFromYAML = false;
 	try {
-		YAML::Node config = YAML::LoadFile("map_rewards.yaml");
-		if (YAML::Node rewards = config["map_rewards"]) {
-			// Map 10 uses map 9 rewards
+		YAML::Node config = YAML::LoadFile("map_starting_loadout.yaml");
+		if (YAML::Node rewards = config["map_starting_loadout"]) {
+			// Map 10 uses map 9 loadout
 			int lookupMap = (highestMap == 10) ? 9 : highestMap;
 			YAML::Node r = rewards[lookupMap];
 			if (r && r.IsDefined() && !r.IsNull()) {
