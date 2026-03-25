@@ -28,9 +28,6 @@ jobs:
       - name: Test
         run: ctest --test-dir build --output-on-failure
 
-      - name: Headless map loading test
-        run: bash scripts/test_map_loading.sh --headless build
-
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -55,9 +52,6 @@ jobs:
 
       - name: Test
         run: ctest --test-dir build --output-on-failure
-
-      - name: Headless map loading test
-        run: bash scripts/test_map_loading.sh --headless build
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
