@@ -33,10 +33,12 @@
 #include "TinyGL.h"
 #include "Input.h"
 #include "GameScript.h"
+#include "CrashHandler.h"
 
 void drawView(SDLGL* sdlGL);
 
 int main(int argc, char* args[]) {
+	CrashHandler_Init();
 
 	int UpTime = 0;
 

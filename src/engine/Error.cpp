@@ -44,5 +44,5 @@ void Error(const char* fmt, ...) {
 	};
 
 	SDL_ShowMessageBox(&messageboxdata, NULL);
-	exit(0);
+	exit(1);
 }
