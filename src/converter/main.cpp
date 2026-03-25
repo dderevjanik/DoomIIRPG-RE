@@ -892,7 +892,7 @@ static bool convertEntities(ZipFile& zip, const std::string& outDir) {
 	out << YAML::Newline;
 	out << YAML::BeginMap;
 	out << YAML::Key << "entities" << YAML::Value;
-	out << YAML::BeginSeq;
+	out << YAML::BeginMap;
 
 	// First pass: read all entities to generate unique names
 	struct RawEntity {
@@ -929,8 +929,7 @@ static bool convertEntities(ZipFile& zip, const std::string& outDir) {
 		std::string parmName = entityParmName(e.eType, e.eSubType, e.parm);
 
 		out << YAML::Comment("Entity " + std::to_string(i));
-		out << YAML::BeginMap;
-		out << YAML::Key << "name" << YAML::Value << entityNames[i];
+		out << YAML::Key << entityNames[i] << YAML::Value << YAML::BeginMap;
 		out << YAML::Key << "tile_index" << YAML::Value << (int)e.tileIndex;
 		out << YAML::Key << "type" << YAML::Value << typeName;
 		out << YAML::Key << "subtype" << YAML::Value << subtypeName;
@@ -958,7 +957,7 @@ static bool convertEntities(ZipFile& zip, const std::string& outDir) {
 		out << YAML::EndMap;
 	}
 
-	out << YAML::EndSeq;
+	out << YAML::EndMap;
 	out << YAML::EndMap;
 
 	free(data);
@@ -1085,12 +1084,11 @@ static bool convertTables(ZipFile& zip, const std::string& outDir) {
 		wout << YAML::Comment("Weapon definitions - consolidated combat and sprite data");
 		wout << YAML::Newline;
 		wout << YAML::BeginMap;
-		wout << YAML::Key << "weapons" << YAML::Value << YAML::BeginSeq;
+		wout << YAML::Key << "weapons" << YAML::Value << YAML::BeginMap;
 
 		for (int i = 0; i < (int)allWeapons.size(); i++) {
 			const auto& w = allWeapons[i];
-			wout << YAML::BeginMap;
-			wout << YAML::Key << "name" << YAML::Value << weaponName(i);
+			wout << YAML::Key << weaponName(i) << YAML::Value << YAML::BeginMap;
 			wout << YAML::Key << "index" << YAML::Value << i;
 
 			// Attack sound (hardcoded defaults per weapon)
@@ -1185,7 +1183,7 @@ static bool convertTables(ZipFile& zip, const std::string& outDir) {
 			wout << YAML::EndMap;
 		}
 
-		wout << YAML::EndSeq;
+		wout << YAML::EndMap;
 		wout << YAML::EndMap;
 
 		std::string wpPath = outDir + "/weapons.yaml";
@@ -1425,11 +1423,10 @@ static bool convertTables(ZipFile& zip, const std::string& outDir) {
 	mout << YAML::Comment("Monster combat data - consolidated definitions");
 	mout << YAML::Newline;
 	mout << YAML::BeginMap;
-	mout << YAML::Key << "monsters" << YAML::Value << YAML::BeginSeq;
+	mout << YAML::Key << "monsters" << YAML::Value << YAML::BeginMap;
 
 	for (int i = 0; i < numTypes; i++) {
-		mout << YAML::BeginMap;
-		mout << YAML::Key << "name" << YAML::Value << monsterName(i);
+		mout << YAML::Key << monsterName(i) << YAML::Value << YAML::BeginMap;
 		mout << YAML::Key << "index" << YAML::Value << i;
 
 		// Blood color as hex "#RRGGBB" (only for first numColors monsters)
@@ -1515,7 +1512,7 @@ static bool convertTables(ZipFile& zip, const std::string& outDir) {
 		mout << YAML::EndMap;
 	}
 
-	mout << YAML::EndSeq;
+	mout << YAML::EndMap;
 	mout << YAML::EndMap;
 
 	std::string mpath = outDir + "/monsters.yaml";
@@ -1639,7 +1636,7 @@ static bool generateProjectilesYaml(const std::string& outDir) {
 	out << YAML::Comment("Controls missile animation, render mode, and impact effects");
 	out << YAML::Newline;
 	out << YAML::BeginMap;
-	out << YAML::Key << "projectiles" << YAML::Value << YAML::BeginSeq;
+	out << YAML::Key << "projectiles" << YAML::Value << YAML::BeginMap;
 
 	struct ProjDef {
 		const char* name;
@@ -1668,8 +1665,7 @@ static bool generateProjectilesYaml(const std::string& outDir) {
 	};
 
 	for (const auto& d : defs) {
-		out << YAML::BeginMap;
-		out << YAML::Key << "name" << YAML::Value << d.name;
+		out << YAML::Key << d.name << YAML::Value << YAML::BeginMap;
 
 		if (d.launchRM >= 0 || d.animFromWeapon) {
 			out << YAML::Key << "launch" << YAML::Value << YAML::BeginMap;
@@ -1714,7 +1710,7 @@ static bool generateProjectilesYaml(const std::string& outDir) {
 		out << YAML::EndMap;
 	}
 
-	out << YAML::EndSeq;
+	out << YAML::EndMap;
 	out << YAML::EndMap;
 
 	std::string path = outDir + "/projectiles.yaml";
@@ -1770,12 +1766,11 @@ static bool generateEffectsYaml(const std::string& outDir) {
 	out << YAML::Key << "warning_time" << YAML::Value << 10;
 	out << YAML::Newline;
 
-	out << YAML::Key << "buffs" << YAML::Value << YAML::BeginSeq;
+	out << YAML::Key << "buffs" << YAML::Value << YAML::BeginMap;
 
 	for (int i = 0; i < NUM_BUFFS; i++) {
 		const auto& b = buffs[i];
-		out << YAML::BeginMap;
-		out << YAML::Key << "name" << YAML::Value << b.name;
+		out << YAML::Key << b.name << YAML::Value << YAML::BeginMap;
 		out << YAML::Key << "max_stacks" << YAML::Value << b.maxStacks;
 		out << YAML::Key << "has_amount" << YAML::Value << b.hasAmount;
 		out << YAML::Key << "draw_amount" << YAML::Value << b.drawAmount;
@@ -1794,7 +1789,7 @@ static bool generateEffectsYaml(const std::string& outDir) {
 		out << YAML::EndMap;
 	}
 
-	out << YAML::EndSeq;
+	out << YAML::EndMap;
 	out << YAML::EndMap;
 
 	std::string path = outDir + "/effects.yaml";
@@ -2136,7 +2131,7 @@ static bool convertSounds(ZipFile& zip, const std::string& outDir) {
 	out << YAML::Comment("Index = position in array, ResID = index + 1000");
 	out << YAML::Newline;
 	out << YAML::BeginMap;
-	out << YAML::Key << "sounds" << YAML::Value << YAML::BeginSeq;
+	out << YAML::Key << "sounds" << YAML::Value << YAML::BeginMap;
 	for (const auto& fileName : soundNames) {
 		// Generate name from filename: strip .wav, lowercase
 		std::string sndName = fileName;
@@ -2146,12 +2141,11 @@ static bool convertSounds(ZipFile& zip, const std::string& outDir) {
 		}
 		std::transform(sndName.begin(), sndName.end(), sndName.begin(), ::tolower);
 
-		out << YAML::BeginMap;
-		out << YAML::Key << "name" << YAML::Value << sndName;
+		out << YAML::Key << sndName << YAML::Value << YAML::BeginMap;
 		out << YAML::Key << "file" << YAML::Value << fileName;
 		out << YAML::EndMap;
 	}
-	out << YAML::EndSeq;
+	out << YAML::EndMap;
 	out << YAML::EndMap;
 
 	std::string path = outDir + "/sounds.yaml";
@@ -2201,6 +2195,29 @@ static bool generateGameYaml(const std::string& outDir) {
 	yaml += "    - audio\n";
 	yaml += "    - comicbook\n";
 	yaml += "    - data\n";
+	yaml += "\n";
+	yaml += "  # Joke items dropped by corpses on each map\n";
+	yaml += "  joke_items:\n";
+	yaml += "    - map: 1\n";
+	yaml += "      items: [180, 181, 182, 183, 184]\n";
+	yaml += "    - map: 2\n";
+	yaml += "      items: [149, 150, 151, 152, 153]\n";
+	yaml += "    - map: 3\n";
+	yaml += "      items: [130, 131, 132, 133, 134]\n";
+	yaml += "    - map: 4\n";
+	yaml += "      items: [129, 130, 131, 132, 133]\n";
+	yaml += "    - map: 5\n";
+	yaml += "      items: [131, 132, 133, 134, 135]\n";
+	yaml += "    - map: 6\n";
+	yaml += "      items: [78, 79, 80, 81, 82]\n";
+	yaml += "    - map: 7\n";
+	yaml += "      items: [24, 25, 26, 27, 28]\n";
+	yaml += "    - map: 8\n";
+	yaml += "      items: [34, 35, 36, 37, 38]\n";
+	yaml += "    - map: 9\n";
+	yaml += "      items: [15, 16, 17, 18, 19]\n";
+	yaml += "    - map: 10\n";
+	yaml += "      items: [9, 10, 11, 12, 13]\n";
 
 	std::string path = outDir + "/game.yaml";
 	if (!writeString(path, yaml)) {
@@ -2220,7 +2237,7 @@ static bool generateCharactersYaml(const std::string& outDir) {
 	yaml += "# characterChoice: 1=Major, 2=Sarge, 3=Scientist\n";
 	yaml += "\n";
 	yaml += "characters:\n";
-	yaml += "  - name: Major\n";
+	yaml += "  Major:\n";
 	yaml += "    defense: 8\n";
 	yaml += "    strength: 9\n";
 	yaml += "    accuracy: 97\n";
@@ -2228,7 +2245,7 @@ static bool generateCharactersYaml(const std::string& outDir) {
 	yaml += "    iq: 110\n";
 	yaml += "    credits: 30\n";
 	yaml += "\n";
-	yaml += "  - name: Sarge\n";
+	yaml += "  Sarge:\n";
 	yaml += "    defense: 12\n";
 	yaml += "    strength: 14\n";
 	yaml += "    accuracy: 92\n";
@@ -2236,7 +2253,7 @@ static bool generateCharactersYaml(const std::string& outDir) {
 	yaml += "    iq: 100\n";
 	yaml += "    credits: 10\n";
 	yaml += "\n";
-	yaml += "  - name: Scientist\n";
+	yaml += "  Scientist:\n";
 	yaml += "    defense: 8\n";
 	yaml += "    strength: 8\n";
 	yaml += "    accuracy: 87\n";

@@ -485,6 +485,19 @@ void gles::UnloadSkyMap() {
 	}
 }
 
+void gles::ResetTextureChains() {
+	// Delete all GL textures and reset chain linked list
+	for (int i = 0; i < MAX_MEDIA; i++) {
+		if (this->chains[i].texnum) {
+			glDeleteTextures(1, &this->chains[i].texnum);
+		}
+	}
+	std::memset(this->chains, 0, sizeof(this->chains));
+	this->activeChain.prev = &this->activeChain;
+	this->activeChain.next = &this->activeChain;
+	this->activeTexels = 0;
+}
+
 bool gles::DrawWorldSpaceSpriteLine(TGLVert* vert1, TGLVert* vert2, TGLVert* vert3, int flags) {
 	if (CAppContainer::getInstance()->headless) { return false; }
 	TGLVert verts[4];

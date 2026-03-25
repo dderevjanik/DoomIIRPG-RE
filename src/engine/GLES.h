@@ -84,6 +84,7 @@ public:
 	bool RasterizeConvexPolygon(int numVerts, TGLVert* verts);
 	bool RasterizeConvexPolygon(int numVerts, GLVert* verts);
 	void UnloadSkyMap();
+	void ResetTextureChains();
 	bool DrawWorldSpaceSpriteLine(TGLVert* vert1, TGLVert* vert2, TGLVert* vert3, int flags);
 	bool DrawModelVerts(TGLVert* verts, int numVerts);
 	void SetupTexture(int n, int n2, int renderMode, int flags);

@@ -461,31 +461,33 @@ void Player::setStatsAccordingToCharacterChoice() {
 		return;
 	}
 
-	int n = 0;
-
-	YAML::Node config = YAML::LoadFile("characters.yaml");
-	YAML::Node chars = config["characters"];
-	if (!chars || !chars.IsMap()) {
-		app->Error("characters.yaml: missing or invalid 'characters' map");
-		return;
-	}
-
-	int idx = this->characterChoice - 1; // characterChoice is 1-based
-	int ci = 0;
-	for (auto it = chars.begin(); it != chars.end(); ++it, ++ci) {
-		if (ci == idx) {
-			YAML::Node c = it->second;
-			this->baseCe->setStat(Enums::STAT_DEFENSE, c["defense"].as<int>());
-			this->baseCe->setStat(Enums::STAT_STRENGTH, c["strength"].as<int>());
-			this->baseCe->setStat(Enums::STAT_ACCURACY, c["accuracy"].as<int>());
-			this->baseCe->setStat(Enums::STAT_AGILITY, c["agility"].as<int>());
-			this->baseCe->setStat(Enums::STAT_IQ, c["iq"].as<int>());
-			n = c["credits"].as<int>();
-			this->give(0, 24, n, true);
+	try {
+		YAML::Node config = YAML::LoadFile("characters.yaml");
+		YAML::Node chars = config["characters"];
+		if (!chars || !chars.IsMap()) {
+			app->Error("characters.yaml: missing or invalid 'characters' map");
 			return;
 		}
+
+		int idx = this->characterChoice - 1; // characterChoice is 1-based
+		int ci = 0;
+		for (auto it = chars.begin(); it != chars.end(); ++it, ++ci) {
+			if (ci == idx) {
+				YAML::Node c = it->second;
+				this->baseCe->setStat(Enums::STAT_DEFENSE, c["defense"].as<int>());
+				this->baseCe->setStat(Enums::STAT_STRENGTH, c["strength"].as<int>());
+				this->baseCe->setStat(Enums::STAT_ACCURACY, c["accuracy"].as<int>());
+				this->baseCe->setStat(Enums::STAT_AGILITY, c["agility"].as<int>());
+				this->baseCe->setStat(Enums::STAT_IQ, c["iq"].as<int>());
+				int n = c["credits"].as<int>();
+				this->give(0, 24, n, true);
+				return;
+			}
+		}
+		app->Error("characters.yaml: character index %d not found", idx);
+	} catch (const YAML::Exception& e) {
+		app->Error("characters.yaml: %s", e.what());
 	}
-	app->Error("characters.yaml: character index %d not found", idx);
 }
 
 void Player::reset() {
@@ -1632,53 +1634,56 @@ void Player::equipForLevel(int highestMap) {
 	app->game->numMallocsForVIOS = 0;
 
 	// Load map starting loadout from YAML
-	YAML::Node config = YAML::LoadFile("map_starting_loadout.yaml");
-	YAML::Node rewards = config["map_starting_loadout"];
-	if (!rewards || !rewards.IsMap()) {
-		app->Error("map_starting_loadout.yaml: missing or invalid 'map_starting_loadout' map");
-		return;
-	}
-
-	// Map 10 uses map 9 loadout
-	int lookupMap = (highestMap == 10) ? 9 : highestMap;
-	YAML::Node r = rewards[lookupMap];
-	if (r && r.IsDefined() && !r.IsNull()) {
-		// Weapons
-		if (YAML::Node weapons = r["weapons"]) {
-			for (size_t w = 0; w < weapons.size(); w++)
-				this->give(1, weapons[w].as<int>(), 1);
+	try {
+		YAML::Node config = YAML::LoadFile("map_starting_loadout.yaml");
+		YAML::Node rewards = config["map_starting_loadout"];
+		if (!rewards || !rewards.IsMap()) {
+			app->Error("map_starting_loadout.yaml: missing or invalid 'map_starting_loadout' map");
+		} else {
+			// Map 10 uses map 9 loadout
+			int lookupMap = (highestMap == 10) ? 9 : highestMap;
+			YAML::Node r = rewards[lookupMap];
+			if (r && r.IsDefined() && !r.IsNull()) {
+				// Weapons
+				if (YAML::Node weapons = r["weapons"]) {
+					for (size_t w = 0; w < weapons.size(); w++)
+						this->give(1, weapons[w].as<int>(), 1);
+				}
+				// Weapons given with specific ammo amounts
+				if (YAML::Node wa = r["weapon_ammo"]) {
+					for (auto it = wa.begin(); it != wa.end(); ++it)
+						this->give(1, it->first.as<int>(), it->second.as<int>());
+				}
+				// Armor
+				if (r["armor"])
+					this->addArmor(r["armor"].as<int>());
+				// Inventory items
+				if (YAML::Node inv = r["inventory"]) {
+					for (auto it = inv.begin(); it != inv.end(); ++it)
+						this->give(0, it->first.as<int>(), it->second.as<int>());
+				}
+				// Ammo
+				if (YAML::Node ammo = r["ammo"]) {
+					for (auto it = ammo.begin(); it != ammo.end(); ++it)
+						this->give(2, it->first.as<int>(), it->second.as<int>());
+				}
+				// XP
+				if (r["xp"])
+					this->addXP(r["xp"].as<int>());
+				// Stats
+				if (YAML::Node stats = r["stats"]) {
+					if (stats["defense"])  this->modifyStat(Enums::STAT_DEFENSE, stats["defense"].as<int>());
+					if (stats["strength"]) this->modifyStat(Enums::STAT_STRENGTH, stats["strength"].as<int>());
+					if (stats["accuracy"]) this->modifyStat(Enums::STAT_ACCURACY, stats["accuracy"].as<int>());
+					if (stats["agility"])  this->modifyStat(Enums::STAT_AGILITY, stats["agility"].as<int>());
+					if (stats["iq"])       this->modifyStat(Enums::STAT_IQ, stats["iq"].as<int>());
+				}
+				// VIOS mallocs
+				app->game->numMallocsForVIOS = r["vios_mallocs"].as<int>(0);
+			}
 		}
-		// Weapons given with specific ammo amounts
-		if (YAML::Node wa = r["weapon_ammo"]) {
-			for (auto it = wa.begin(); it != wa.end(); ++it)
-				this->give(1, it->first.as<int>(), it->second.as<int>());
-		}
-		// Armor
-		if (r["armor"])
-			this->addArmor(r["armor"].as<int>());
-		// Inventory items
-		if (YAML::Node inv = r["inventory"]) {
-			for (auto it = inv.begin(); it != inv.end(); ++it)
-				this->give(0, it->first.as<int>(), it->second.as<int>());
-		}
-		// Ammo
-		if (YAML::Node ammo = r["ammo"]) {
-			for (auto it = ammo.begin(); it != ammo.end(); ++it)
-				this->give(2, it->first.as<int>(), it->second.as<int>());
-		}
-		// XP
-		if (r["xp"])
-			this->addXP(r["xp"].as<int>());
-		// Stats
-		if (YAML::Node stats = r["stats"]) {
-			if (stats["defense"])  this->modifyStat(Enums::STAT_DEFENSE, stats["defense"].as<int>());
-			if (stats["strength"]) this->modifyStat(Enums::STAT_STRENGTH, stats["strength"].as<int>());
-			if (stats["accuracy"]) this->modifyStat(Enums::STAT_ACCURACY, stats["accuracy"].as<int>());
-			if (stats["agility"])  this->modifyStat(Enums::STAT_AGILITY, stats["agility"].as<int>());
-			if (stats["iq"])       this->modifyStat(Enums::STAT_IQ, stats["iq"].as<int>());
-		}
-		// VIOS mallocs
-		app->game->numMallocsForVIOS = r["vios_mallocs"].as<int>(0);
+	} catch (const YAML::Exception& e) {
+		app->Error("map_starting_loadout.yaml: %s", e.what());
 	}
 	this->give(0, 18, 1);
 	this->enableHelp = enableHelp;
