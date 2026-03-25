@@ -1,5 +1,6 @@
 #include "EditorUI.h"
 #include "Camera.h"
+#include "MapData.h"
 #include "imgui.h"
 
 #include <SDL.h>
@@ -62,6 +63,10 @@ void EditorUI::draw(int currentMapID, const Camera& camera, bool noclip) {
 void EditorUI::drawMenuBar() {
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("File")) {
+            if (ImGui::MenuItem("Save Map", "Ctrl+S", false, mapData_ != nullptr && mapData_->dirty)) {
+                if (saveCallback_) saveCallback_();
+            }
+            ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Ctrl+Q")) {
                 SDL_Event quit;
                 quit.type = SDL_QUIT;
@@ -92,6 +97,10 @@ void EditorUI::drawMapInfo(int currentMapID) {
     ImGui::Text("Lines: %d", render->numLines);
     ImGui::Text("Sprites: %d + %dz",
                 render->numNormalSprites, render->numZSprites);
+
+    if (mapData_ && mapData_->dirty) {
+        ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.0f, 1.0f), "[Modified]");
+    }
 }
 
 void EditorUI::drawMapList() {
@@ -259,13 +268,64 @@ void EditorUI::drawTileInspector() {
 
     ImGui::Text("Tile [%d, %d] (#%d)", col, row, selectedTileIdx_);
 
-    uint8_t flags = render->mapFlags[selectedTileIdx_];
-    ImGui::Text("Flags: 0x%02X %s%s", flags,
-                (flags & 0x1) ? "[Solid] " : "",
-                (flags & 0x40) ? "[Event]" : "");
+    if (mapData_) {
+        // Editable mode
+        TileData& tile = mapData_->tiles[selectedTileIdx_];
 
-    int height = render->heightMap[selectedTileIdx_];
-    ImGui::Text("Height: %d (world: %d)", height, height << 3);
+        int height = tile.height;
+        if (ImGui::InputInt("Height", &height)) {
+            if (height < 0) height = 0;
+            if (height > 255) height = 255;
+            tile.height = (uint8_t)height;
+            mapData_->dirty = true;
+        }
+        ImGui::Text("World height: %d", tile.height << 3);
+
+        bool solid = (tile.flags & 0x1) != 0;
+        if (ImGui::Checkbox("Solid", &solid)) {
+            if (solid)
+                tile.flags |= 0x1;
+            else
+                tile.flags &= ~0x1;
+            mapData_->dirty = true;
+        }
+
+        bool hasEvent = (tile.flags & 0x40) != 0;
+        ImGui::SameLine();
+        ImGui::BeginDisabled();
+        ImGui::Checkbox("Event", &hasEvent);
+        ImGui::EndDisabled();
+
+        int wallTex = tile.wallTexture;
+        if (ImGui::InputInt("Wall Tex", &wallTex)) {
+            if (wallTex < 0) wallTex = 0;
+            if (wallTex > 511) wallTex = 511;
+            tile.wallTexture = wallTex;
+            mapData_->dirty = true;
+        }
+
+        int floorTex = tile.floorTexture;
+        if (ImGui::InputInt("Floor Tex", &floorTex)) {
+            if (floorTex < 0) floorTex = 0;
+            if (floorTex > 511) floorTex = 511;
+            tile.floorTexture = floorTex;
+            mapData_->dirty = true;
+        }
+
+        if (ImGui::Button("Set Spawn Here")) {
+            mapData_->spawnIndex = (uint16_t)selectedTileIdx_;
+            mapData_->dirty = true;
+        }
+    } else {
+        // Read-only fallback (no MapData loaded)
+        uint8_t flags = render->mapFlags[selectedTileIdx_];
+        ImGui::Text("Flags: 0x%02X %s%s", flags,
+                    (flags & 0x1) ? "[Solid] " : "",
+                    (flags & 0x40) ? "[Event]" : "");
+
+        int height = render->heightMap[selectedTileIdx_];
+        ImGui::Text("Height: %d (world: %d)", height, height << 3);
+    }
 }
 
 const char* EditorUI::entityTypeName(int eType) {

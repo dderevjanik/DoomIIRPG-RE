@@ -1,5 +1,7 @@
 #include "Camera.h"
 #include "EditorUI.h"
+#include "MapData.h"
+#include "MapDataIO.h"
 
 #include <SDL.h>
 #include <SDL_opengl.h>
@@ -41,6 +43,14 @@ static Camera camera;
 static EditorUI ui;
 static int currentMapID = 0;
 static bool noclip = false;
+static MapData mapData;
+static std::string currentMapPath;
+
+static std::string mapFilePath(int mapID) {
+	char buf[32];
+	std::snprintf(buf, sizeof(buf), "map%02d.bin", mapID - 1);
+	return std::string(buf);
+}
 
 static void editorLoadMap(int mapID) {
 	if (mapID < 1 || mapID > 10) {
@@ -113,6 +123,18 @@ static void editorLoadMap(int mapID) {
 
 	currentMapID = mapID;
 
+	// Load editable MapData from the same .bin
+	currentMapPath = mapFilePath(mapID);
+	std::string loadErr;
+	mapData = MapData{}; // reset
+	if (MapDataIO::loadFromBin(currentMapPath, mapData, loadErr)) {
+		ui.setMapData(&mapData);
+		std::fprintf(stderr, "MapData loaded from %s\n", currentMapPath.c_str());
+	} else {
+		ui.setMapData(nullptr);
+		std::fprintf(stderr, "MapData load failed: %s\n", loadErr.c_str());
+	}
+
 	// Place camera at player spawn point
 	int spawnTileX = app->render->mapSpawnIndex % 32;
 	int spawnTileY = app->render->mapSpawnIndex / 32;
@@ -134,6 +156,22 @@ static void editorLoadMap(int mapID) {
 
 static void editorLoadMapByID(int mapID) {
 	editorLoadMap(mapID);
+}
+
+static void editorSaveMap() {
+	if (currentMapID <= 0 || currentMapPath.empty()) return;
+
+	std::string err;
+	if (!MapDataIO::saveToBin(mapData, currentMapPath, err)) {
+		std::fprintf(stderr, "Save failed: %s\n", err.c_str());
+		return;
+	}
+
+	std::fprintf(stderr, "Saved %s\n", currentMapPath.c_str());
+	mapData.dirty = false;
+
+	// Reload in engine to see changes
+	editorLoadMap(currentMapID);
 }
 
 int main(int argc, char* argv[]) {
@@ -241,6 +279,7 @@ int main(int argc, char* argv[]) {
 	// Init editor UI
 	ui.init(nullptr);
 	ui.setLoadCallback([](int mapID) { editorLoadMapByID(mapID); });
+	ui.setSaveCallback([]() { editorSaveMap(); });
 
 	// Load initial map
 	editorLoadMap(initialMap);
@@ -268,6 +307,8 @@ int main(int argc, char* argv[]) {
 						noclip = !noclip;
 					} else if (event.key.keysym.sym == SDLK_t) {
 						ui.showEntities = !ui.showEntities;
+					} else if (event.key.keysym.sym == SDLK_s && (event.key.keysym.mod & KMOD_CTRL)) {
+						editorSaveMap();
 					} else if (event.key.keysym.sym == SDLK_q && (event.key.keysym.mod & KMOD_CTRL)) {
 						running = false;
 					}

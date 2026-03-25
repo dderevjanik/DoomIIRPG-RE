@@ -60,7 +60,72 @@ struct RawLine {
 
 // ---- Wall geometry generation ----
 
-// Generate wall quads and floor quads from the tile grid
+// Helper: generate a collision line on a tile edge
+static RawLine makeEdgeLine(int col, int row, int dc, int dr, uint8_t flags = 0x0) {
+    RawLine line;
+    line.flags = flags;
+    if (dc == 1) {
+        uint8_t wx = (uint8_t)((col + 1) * 8);
+        line.x1 = wx; line.x2 = wx;
+        line.y1 = (uint8_t)(row * 8);
+        line.y2 = (uint8_t)((row + 1) * 8);
+    } else if (dc == -1) {
+        uint8_t wx = (uint8_t)(col * 8);
+        line.x1 = wx; line.x2 = wx;
+        line.y1 = (uint8_t)(row * 8);
+        line.y2 = (uint8_t)((row + 1) * 8);
+    } else if (dr == 1) {
+        uint8_t wy = (uint8_t)((row + 1) * 8);
+        line.x1 = (uint8_t)(col * 8);
+        line.x2 = (uint8_t)((col + 1) * 8);
+        line.y1 = wy; line.y2 = wy;
+    } else {
+        uint8_t wy = (uint8_t)(row * 8);
+        line.x1 = (uint8_t)(col * 8);
+        line.x2 = (uint8_t)((col + 1) * 8);
+        line.y1 = wy; line.y2 = wy;
+    }
+    return line;
+}
+
+// Helper: generate a wall quad on a tile edge between two Z levels
+// dc,dr define the edge direction. zLo/zHi are world coords.
+static RawPolygon makeWallQuad(int col, int row, int dc, int dr,
+                                int zLo, int zHi, int tileNum) {
+    RawPolygon poly;
+    poly.tileNum = tileNum;
+    poly.isWall = true;
+
+    // Edge world coordinates
+    int wx0, wy0, wx1, wy1;
+    if (dc == 1) {       // East
+        wx0 = (col + 1) * 64; wy0 = row * 64;
+        wx1 = (col + 1) * 64; wy1 = (row + 1) * 64;
+    } else if (dc == -1) { // West
+        wx0 = col * 64; wy0 = (row + 1) * 64;
+        wx1 = col * 64; wy1 = row * 64;
+    } else if (dr == 1) { // South
+        wx0 = (col + 1) * 64; wy0 = (row + 1) * 64;
+        wx1 = col * 64;       wy1 = (row + 1) * 64;
+    } else {              // North
+        wx0 = col * 64;       wy0 = row * 64;
+        wx1 = (col + 1) * 64; wy1 = row * 64;
+    }
+
+    uint8_t bx0 = (uint8_t)(wx0 >> 7), by0 = (uint8_t)(wy0 >> 7);
+    uint8_t bx1 = (uint8_t)(wx1 >> 7), by1 = (uint8_t)(wy1 >> 7);
+    uint8_t bzl = (uint8_t)(zLo >> 7),  bzh = (uint8_t)(zHi >> 7);
+
+    // UV: s along edge length, t along height
+    RawPolygon::Vertex v0 = {bx0, by0, bzl, 0, 0};
+    RawPolygon::Vertex v1 = {bx1, by1, bzl, 1, 0};
+    RawPolygon::Vertex v2 = {bx1, by1, bzh, 1, 1};
+    RawPolygon::Vertex v3 = {bx0, by0, bzh, 0, 1};
+    poly.verts = {v0, v1, v2, v3};
+    return poly;
+}
+
+// Generate wall quads, floor quads, and height-step walls from the tile grid
 static void generateGeometry(const MapData& map,
                              std::vector<RawPolygon>& polys,
                              std::vector<RawLine>& lines) {
@@ -74,136 +139,66 @@ static void generateGeometry(const MapData& map,
         return map.tiles[row * MAP_SIZE + col].height;
     };
 
+    struct Dir { int dc, dr; };
+    Dir dirs[] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+
     for (int row = 0; row < MAP_SIZE; row++) {
         for (int col = 0; col < MAP_SIZE; col++) {
             const TileData& tile = map.tiles[row * MAP_SIZE + col];
             bool solid = (tile.flags & 0x1) != 0;
 
             if (solid) {
-                // Generate wall quads on edges adjacent to non-solid tiles.
-                //
-                // Coordinate systems:
-                // - Polygon vertices: uint8_t, world = byte << 7 (128 per byte unit)
-                //   Tile is 64 world units, so 1 tile = 0.5 byte. Byte range: 0-16 for 32 tiles.
-                //   Single-tile precision requires grouping walls at 2-tile boundaries.
-                // - Lines: uint8_t, 8 per tile (256 for full map), used for collision/automap.
-                // - Node bounds: same as vertex bytes (world >> 7).
-                //
-                // MVP: Polygon walls at 2-tile granularity. Lines at per-tile precision.
-
-                int wallH = WALL_HEIGHT;
-
-                // Check each of 4 neighbors
-                struct Dir { int dc, dr; };
-                Dir dirs[] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
-
+                // Generate wall quads on edges adjacent to non-solid tiles
                 for (auto& d : dirs) {
                     int nc = col + d.dc;
                     int nr = row + d.dr;
                     if (!isSolid(nc, nr)) {
-                        // Generate wall quad on this edge
-                        // Convert to byte coords: tile boundary * 64 / 128 = tile / 2
-                        // For wall on east edge (dc=1): x = (col+1) / 2
-                        // For wall on west edge (dc=-1): x = col / 2
-                        // For wall on south edge (dr=1): y = (row+1) / 2
-                        // For wall on north edge (dr=-1): y = row / 2
+                        uint8_t neighborH = tileHeight(nc, nr);
+                        int zLo = neighborH * 8;
+                        int zHi = zLo + WALL_HEIGHT;
 
-                        // Floor height of adjacent non-solid tile
-                        uint8_t floorH = tileHeight(nc, nr);
-                        uint8_t zh = (uint8_t)((floorH * 8 + wallH) / 128); // wall top in byte coords
-                        uint8_t zl = (uint8_t)(floorH * 8 / 128);            // floor in byte coords
-
-                        // Generate line for this wall edge
-                        RawLine line;
-                        line.flags = 0x0; // standard wall
-                        if (d.dc == 1) {
-                            // East wall
-                            uint8_t wx = (uint8_t)((col + 1) * 8); // line coords: 8 per tile
-                            line.x1 = wx; line.x2 = wx;
-                            line.y1 = (uint8_t)(row * 8);
-                            line.y2 = (uint8_t)((row + 1) * 8);
-                        } else if (d.dc == -1) {
-                            // West wall
-                            uint8_t wx = (uint8_t)(col * 8);
-                            line.x1 = wx; line.x2 = wx;
-                            line.y1 = (uint8_t)(row * 8);
-                            line.y2 = (uint8_t)((row + 1) * 8);
-                        } else if (d.dr == 1) {
-                            // South wall
-                            uint8_t wy = (uint8_t)((row + 1) * 8);
-                            line.x1 = (uint8_t)(col * 8);
-                            line.x2 = (uint8_t)((col + 1) * 8);
-                            line.y1 = wy; line.y2 = wy;
-                        } else {
-                            // North wall
-                            uint8_t wy = (uint8_t)(row * 8);
-                            line.x1 = (uint8_t)(col * 8);
-                            line.x2 = (uint8_t)((col + 1) * 8);
-                            line.y1 = wy; line.y2 = wy;
-                        }
-                        lines.push_back(line);
-
-                        // Generate wall polygon (4-vertex quad)
-                        // Use explicit 4-vertex polygon to handle odd tile boundaries
-                        RawPolygon poly;
-                        poly.tileNum = tile.wallTexture;
-                        poly.isWall = true;
-
-                        // Wall coordinates in byte units (worldCoord >> 7)
-                        // Since tiles are 64 world, and byte = world/128:
-                        // For even col: byte = col * 64 / 128 = col/2 (exact)
-                        // For odd col: byte = col * 64 / 128 = col/2 (truncated)
-                        // We'll use the nearest byte values
-
-                        // For now, store as-is and let the polygon packer handle encoding
-                        // We use line coords (8 per tile) and convert to vertex coords later
-
-                        // Skip polygon generation for now in favor of simpler approach
-                        // (see bulk polygon generation below)
+                        lines.push_back(makeEdgeLine(col, row, d.dc, d.dr));
+                        polys.push_back(makeWallQuad(col, row, d.dc, d.dr,
+                                                     zLo, zHi, tile.wallTexture));
                     }
                 }
             } else {
-                // Non-solid tile: generate floor quad
-                uint8_t h = tile.height;
+                // Floor quad
+                int wx0 = col * 64, wy0 = row * 64;
+                int wx1 = (col + 1) * 64, wy1 = (row + 1) * 64;
+                int wz = tile.height * 8;
 
-                // Floor polygon at this tile's height
                 RawPolygon poly;
                 poly.tileNum = tile.floorTexture;
                 poly.isFloor = true;
 
-                // Floor quad corners (in line coords: 8 per tile)
-                // Will be converted to vertex byte coords during packing
-                RawPolygon::Vertex v0, v1, v2, v3;
-                // Using "line coord scale" (8 per tile) here, will convert during packing
-                uint8_t bx0 = col * 8;
-                uint8_t by0 = row * 8;
-                uint8_t bx1 = (col + 1) * 8;
-                uint8_t by1 = (row + 1) * 8;
-
-                // Convert to vertex byte coords (world/128):
-                // world = lineCoord * 8 (since lineCoord = world/8... wait no)
-                // Actually line coords: each unit = 1/8 tile = 64/8 = 8 world units
-                // So lineCoord * 8 = world. And vertexByte = world / 128 = lineCoord * 8 / 128
-                // = lineCoord / 16.
-                // col*8 / 16 = col/2. Same fractional problem.
-
-                // OK let me just compute world coords and divide.
-                // Floor at tile (col, row):
-                //   World corners: (col*64, row*64) to ((col+1)*64, (row+1)*64)
-                //   Height: tile.height << 3
-
-                int wx0 = col * 64;
-                int wy0 = row * 64;
-                int wx1 = (col + 1) * 64;
-                int wy1 = (row + 1) * 64;
-                int wz = tile.height * 8; // height in world units
-
-                v0 = {(uint8_t)(wx0 >> 7), (uint8_t)(wy0 >> 7), (uint8_t)(wz >> 7), 0, 0};
-                v1 = {(uint8_t)(wx1 >> 7), (uint8_t)(wy0 >> 7), (uint8_t)(wz >> 7), 1, 0};
-                v2 = {(uint8_t)(wx1 >> 7), (uint8_t)(wy1 >> 7), (uint8_t)(wz >> 7), 1, 1};
-                v3 = {(uint8_t)(wx0 >> 7), (uint8_t)(wy1 >> 7), (uint8_t)(wz >> 7), 0, 1};
+                RawPolygon::Vertex v0 = {(uint8_t)(wx0 >> 7), (uint8_t)(wy0 >> 7), (uint8_t)(wz >> 7), 0, 0};
+                RawPolygon::Vertex v1 = {(uint8_t)(wx1 >> 7), (uint8_t)(wy0 >> 7), (uint8_t)(wz >> 7), 1, 0};
+                RawPolygon::Vertex v2 = {(uint8_t)(wx1 >> 7), (uint8_t)(wy1 >> 7), (uint8_t)(wz >> 7), 1, 1};
+                RawPolygon::Vertex v3 = {(uint8_t)(wx0 >> 7), (uint8_t)(wy1 >> 7), (uint8_t)(wz >> 7), 0, 1};
                 poly.verts = {v0, v1, v2, v3};
                 polys.push_back(poly);
+
+                // Height-step walls: vertical face between adjacent non-solid tiles
+                // at different heights
+                for (auto& d : dirs) {
+                    int nc = col + d.dc;
+                    int nr = row + d.dr;
+                    if (nc < 0 || nc >= MAP_SIZE || nr < 0 || nr >= MAP_SIZE) continue;
+                    if (isSolid(nc, nr)) continue;
+
+                    uint8_t neighborH = tileHeight(nc, nr);
+                    if (neighborH == tile.height) continue;
+
+                    // Only generate the step wall from the higher tile to avoid duplicates
+                    if (tile.height < neighborH) continue;
+
+                    int zLo = neighborH * 8;
+                    int zHi = tile.height * 8;
+
+                    polys.push_back(makeWallQuad(col, row, d.dc, d.dr,
+                                                 zLo, zHi, tile.wallTexture));
+                }
             }
         }
     }
@@ -384,10 +379,11 @@ static void packPolygons(
             auto& poly = polys[pi];
             int numVerts = (int)poly.verts.size();
 
-            // Determine if we can use 2-vertex compression
-            // For simplicity in MVP, always use explicit vertices
-            uint8_t polyFlags = (uint8_t)((numVerts - 2) & 0x7);
-            // No axis flag, no swapXY, no uvDelta for explicit verts
+            // Vertex count in lower 3 bits, axis flag in bits 3-4
+            // AXIS_NONE (24) = explicit vertices, no 2-vert compression
+            uint8_t polyFlags = (uint8_t)(((numVerts - 2) & 0x7) | 24); // POLY_FLAG_AXIS_NONE
+            if (poly.isWall)
+                polyFlags |= 32; // POLY_FLAG_WALL_TEXTURE
             polyData.push_back(polyFlags);
 
             for (auto& v : poly.verts) {
