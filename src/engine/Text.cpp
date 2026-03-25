@@ -558,7 +558,7 @@ void Localization::getCharIndices(char c, int* i, int* i2)
 // --------------------
 
 Text::Text(int countChars) {
-	printf("Text::init\n");
+	printf("[text] init\n");
 
 	this->chars = new char[countChars];
 	std::memset(this->chars, 0, countChars);
@@ -571,7 +571,7 @@ Text::~Text() {
 }
 
 bool Text::startup() {
-	printf("Text::startup\n");
+	printf("[text] startup\n");
 
 	return false;
 }

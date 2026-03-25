@@ -46,9 +46,9 @@ MenuSystem::~MenuSystem() {
 bool MenuSystem::startup() {
 	this->app = CAppContainer::getInstance()->app;
 	Applet* app = this->app;
-	printf("MenuSystem::startup\n");
+	printf("[menu] startup\n");
 
-	printf("MenuSystem: loading from menus.yaml\n");
+	printf("[menu] loading from menus.yaml\n");
 	if (!this->loadMenusFromYAML("menus.yaml")) {
 		app->Error("Failed to load menus.yaml\n");
 		return false;
@@ -459,13 +459,13 @@ bool MenuSystem::loadMenusFromYAML(const char* path) {
 	try {
 		config = YAML::LoadFile(path);
 	} catch (const YAML::Exception& e) {
-		printf("MenuSystem: failed to load %s: %s\n", path, e.what());
+		printf("[menu] failed to load %s: %s\n", path, e.what());
 		return false;
 	}
 
 	YAML::Node menus = config["menus"];
 	if (!menus || !menus.IsSequence() || menus.size() == 0) {
-		printf("MenuSystem: menus.yaml has missing or empty 'menus' array\n");
+		printf("[menu] menus.yaml has missing or empty 'menus' array\n");
 		return false;
 	}
 
@@ -516,7 +516,7 @@ bool MenuSystem::loadMenusFromYAML(const char* path) {
 	this->menuItems = new uint32_t[itemWords.size() > 0 ? itemWords.size() : 1];
 	std::memcpy(this->menuItems, itemWords.data(), itemWords.size() * sizeof(uint32_t));
 
-	printf("MenuSystem: loaded %d menus, %d item words from %s\n", this->menuDataCount, this->menuItemsCount, path);
+	printf("[menu] loaded %d menus, %d item words from %s\n", this->menuDataCount, this->menuItemsCount, path);
 	return true;
 }
 
@@ -869,7 +869,7 @@ void MenuSystem::back() {
 void MenuSystem::setMenu(int menu) {
 
 
-	printf("menu %d\n", menu);
+	printf("[menu] menu %d\n", menu);
 	this->cheatCombo = 0;
 	this->menuMode = 0;
 	if ((menu == Menus::MENU_MAIN_BEGIN || menu == Menus::MENU_INGAME) || (menu == Menus::MENU_INGAME_KICKING)) {

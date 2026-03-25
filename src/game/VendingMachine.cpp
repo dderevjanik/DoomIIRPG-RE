@@ -29,7 +29,7 @@ VendingMachine::~VendingMachine() {
 }
 
 bool VendingMachine::startup() {
-	printf("VendingMachine::startup\n");
+	printf("[vending] startup\n");
 
 	this->app = CAppContainer::getInstance()->app;
 

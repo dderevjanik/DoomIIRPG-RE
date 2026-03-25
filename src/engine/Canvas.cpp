@@ -58,7 +58,7 @@ bool Canvas::startup() {
 	int viewWidth, viewHeight;
 	fmButton* button;
 
-	printf("Canvas::startup\n");
+	printf("[canvas] startup\n");
 
 	this->displayRect[0] = 0;
 	this->displayRect[1] = 0;
@@ -1083,9 +1083,37 @@ void Canvas::startShake(int i, int i2, int i3) {
 	}
 }
 
+static const char* canvasStateName(int state) {
+	switch (state) {
+		case Canvas::ST_MENU: return "MENU";
+		case Canvas::ST_INTRO_MOVIE: return "INTRO_MOVIE";
+		case Canvas::ST_PLAYING: return "PLAYING";
+		case Canvas::ST_INTER_CAMERA: return "INTER_CAMERA";
+		case Canvas::ST_COMBAT: return "COMBAT";
+		case Canvas::ST_AUTOMAP: return "AUTOMAP";
+		case Canvas::ST_LOADING: return "LOADING";
+		case Canvas::ST_DIALOG: return "DIALOG";
+		case Canvas::ST_INTRO: return "INTRO";
+		case Canvas::ST_MINI_GAME: return "MINI_GAME";
+		case Canvas::ST_DYING: return "DYING";
+		case Canvas::ST_EPILOGUE: return "EPILOGUE";
+		case Canvas::ST_CREDITS: return "CREDITS";
+		case Canvas::ST_SAVING: return "SAVING";
+		case Canvas::ST_CAMERA: return "CAMERA";
+		case Canvas::ST_ERROR: return "ERROR";
+		case Canvas::ST_TRAVELMAP: return "TRAVELMAP";
+		case Canvas::ST_CHARACTER_SELECTION: return "CHARACTER_SELECTION";
+		case Canvas::ST_LOOTING: return "LOOTING";
+		case Canvas::ST_TREADMILL: return "TREADMILL";
+		case Canvas::ST_BOT_DYING: return "BOT_DYING";
+		case Canvas::ST_LOGO: return "LOGO";
+		default: return "UNKNOWN";
+	}
+}
+
 void Canvas::setState(int state) {
 
-
+	printf("[canvas] setState: %s -> %s\n", canvasStateName(this->state), canvasStateName(state));
 	this->stateChanged = true;
 	for (int i = 0; i < 9; ++i) {
 		this->stateVars[i] = 0;
@@ -1816,7 +1844,7 @@ void Canvas::saveState(int saveType, short n, short n2) {
 
 void Canvas::loadMap(int loadMapID, bool b, bool tm_NewGame) {
 
-
+	printf("[canvas] loadMap: id=%d newGame=%d\n", loadMapID, tm_NewGame);
 	if (loadMapID > 0 && loadMapID < 11) {
 		bool b2 = false;
 		int n = loadMapID - 1;
@@ -3045,7 +3073,7 @@ void Canvas::runInputEvents() {
 
 bool Canvas::loadMedia() {
 
-	printf("Canvas::loadMedia\n");
+	printf("[canvas] loadMedia\n");
 
 	//printf("Canvas::isLoaded %d\n", Canvas::isLoaded);
 	if (Canvas::isLoaded == false) {
@@ -3902,7 +3930,7 @@ void Canvas::logoState() {
 		if (mg) {
 			mg->playFromMainMenu();
 		} else {
-			printf("Unknown minigame: %s\n", mgName);
+			printf("[canvas] Unknown minigame: %s\n", mgName);
 		}
 		return;
 	}

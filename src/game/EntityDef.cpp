@@ -442,11 +442,11 @@ EntityDefManager::EntityDefManager() {
 EntityDefManager::~EntityDefManager() {}
 
 bool EntityDefManager::startup() {
-	printf("EntityDefManager::startup\n");
+	printf("[entitydef] startup\n");
 
 	this->numDefs = 0;
 
-	printf("EntityDefManager: loading from entities.yaml\n");
+	printf("[entitydef] loading from entities.yaml\n");
 	return this->loadFromYAML("entities.yaml");
 }
 
@@ -634,7 +634,7 @@ bool EntityDefManager::loadFromYAML(const char* path) {
 		#undef R_BOOL
 	}
 
-	printf("EntityDefManager: loaded %d entities from %s\n", this->numDefs, path);
+	printf("[entitydef] loaded %d entities from %s\n", this->numDefs, path);
 
 	return true;
 }

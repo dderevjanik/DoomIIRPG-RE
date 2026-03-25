@@ -13,7 +13,7 @@
 #include "CAppContainer.h"
 
 void DoomIIRPGGame::createGameObjects(Applet* app) {
-	printf("DoomIIRPGGame::createGameObjects\n");
+	printf("[game] createGameObjects\n");
 	app->game = new Game;
 	app->player = new Player;
 	app->combat = new Combat;
@@ -25,7 +25,7 @@ void DoomIIRPGGame::createGameObjects(Applet* app) {
 }
 
 bool DoomIIRPGGame::startup(Applet* app) {
-	printf("DoomIIRPGGame::startup\n");
+	printf("[game] DoomIIRPGGame::startup\n");
 	if (!app->entityDefManager->startup()) return false;
 	if (!app->player->startup()) return false;
 	if (!app->game->startup()) return false;
@@ -50,7 +50,7 @@ void DoomIIRPGGame::loadConfig(Applet* app) {
 }
 
 void DoomIIRPGGame::shutdown(Applet* app) {
-	printf("DoomIIRPGGame::shutdown\n");
+	printf("[game] DoomIIRPGGame::shutdown\n");
 }
 
 void DoomIIRPGGame::registerOpcodes(Applet* app) {

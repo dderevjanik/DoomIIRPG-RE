@@ -41,7 +41,7 @@ Game::~Game() {}
 bool Game::startup() {
 	this->app = CAppContainer::getInstance()->app;
 	Applet* app = this->app;
-	printf("Game::startup\n");
+	printf("[game] startup\n");
 
 	this->maxEntities = CAppContainer::getInstance()->gameConfig.maxEntities;
 	this->entities = new Entity[this->maxEntities];
@@ -332,7 +332,7 @@ void Game::trace(int n, int n2, int n3, int traceCollisionX, int traceCollisionY
 
 void Game::loadMapEntities() {
 
-
+	printf("[game] loadMapEntities: mapId=%d\n", app->canvas->loadMapID);
 	this->interpolatingMonsters = false;
 	this->monstersTurn = 0;
 	for (int i = 0; i < 4; ++i) {
@@ -505,6 +505,7 @@ void Game::loadMapEntities() {
 			}
 		}
 	}
+	printf("[game] loadMapEntities: loaded %d entities, %d monsters\n", this->numEntities, this->numMonsters);
 }
 
 void Game::loadTableCamera(int i, int i2) {
@@ -941,6 +942,7 @@ void Game::monsterLerp() {
 
 void Game::spawnPlayer() {
 
+	printf("[game] spawnPlayer: mapId=%d\n", app->canvas->loadMapID);
 	int n;
 	int n2;
 	int mapSpawnDir;
@@ -1223,6 +1225,11 @@ bool Game::CanCloseDoor(Entity* entity) {
 
 void Game::advanceTurn() {
 
+	printf("[game] advanceTurn: playerMoves=%d hp=%d/%d pos=(%d,%d)\n",
+		app->player->totalMoves,
+		app->player->ce->getStat(Enums::STAT_HEALTH),
+		app->player->ce->getStat(Enums::STAT_MAX_HEALTH),
+		app->canvas->viewX, app->canvas->viewY);
 	this->queueAdvanceTurn = false;
 	if (this->interpolatingMonsters) {
 		app->Error(95); // ERR_NONSNAPPEDMONSTERS
@@ -1719,6 +1726,7 @@ void Game::saveWorldState(OutputStream* OS, bool b) {
 
 void Game::loadWorldState() {
 
+	printf("[game] loadWorldState: mapId=%d activeLoadType=%d\n", app->canvas->loadMapID, this->activeLoadType);
 	const char* name;
 	InputStream IS;
 
@@ -2346,6 +2354,7 @@ void Game::saveState(int lastMapID, int loadMapID, int viewX, int viewY, int vie
 	const char* name;
 	OutputStream OS;
 
+	printf("[game] saveState: lastMap=%d loadMap=%d saveType=%d\n", lastMapID, loadMapID, saveType);
 	app->canvas->recentBriefSave = ((saveType & 0x20) != 0x0);
 	bool briefSave = app->canvas->recentBriefSave;
 	app->canvas->freeRuntimeData();
@@ -3783,6 +3792,7 @@ void Game::updateScriptVars() {
 void Game::awardSecret(bool b) {
 
 
+	printf("[game] awardSecret: %d/%d on map %d\n", this->mapSecretsFound + 1, this->totalSecrets, app->canvas->loadMapID);
 	app->hud->addMessage((short)119);
 	this->mapSecretsFound++;
 

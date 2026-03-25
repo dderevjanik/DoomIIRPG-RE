@@ -27,7 +27,7 @@ Sound::~Sound() {
 
 bool Sound::startup() {
 	this->app = CAppContainer::getInstance()->app;
-	printf("Sound::startup\n");
+	printf("[sound] startup\n");
 
 	this->field_0x162 = 0;
 	this->app = app;
@@ -43,7 +43,7 @@ bool Sound::startup() {
 
 	// Load sound definitions from sounds.yaml, fall back to hardcoded defaults
 	if (!Sounds::loadFromYAML("sounds.yaml")) {
-		printf("Sound: sounds.yaml not found, using built-in defaults\n");
+		printf("[sound] sounds.yaml not found, using built-in defaults\n");
 		Sounds::loadDefaults();
 	}
 
@@ -61,7 +61,7 @@ bool Sound::startup() {
 
 void Sound::openAL_Init() {
 	ALenum error;
-	printf("Sound::openAL_Init\n");
+	printf("[sound] openAL_Init\n");
 
 	alGetError();
 	if (alcGetCurrentContext()) {
@@ -183,7 +183,7 @@ void Sound::openAL_PlaySound(ALuint source, ALint loop) {
 
 void Sound::openAL_LoadSound(int resID, Sound::SoundStream* channel) {
 	ALenum error;
-	printf("openAL_LoadSound... resID: %d buffer: %d\n", resID, channel->bufferId);
+	printf("[sound] openAL_LoadSound: resID=%d buffer=%d\n", resID, channel->bufferId);
 	int index = (uint16_t)(resID - 1000);
 	OpenAL_ERROR(596);
 
@@ -193,7 +193,7 @@ void Sound::openAL_LoadSound(int resID, Sound::SoundStream* channel) {
 		return;
 	}
 
-	printf("Loading sound...\nName: %s\nResourceID: %d\nAL buffer: %d\n", fileName, resID, channel->bufferId);
+	printf("[sound] Loading sound: name=%s resID=%d buffer=%d\n", fileName, resID, channel->bufferId);
 	if (this->openAL_LoadWAVFromFile(channel->bufferId, fileName)) {
 		OpenAL_ERROR(606);
 	} else {
@@ -209,7 +209,7 @@ bool Sound::openAL_LoadWAVFromFile(ALuint bufferId, const char* fileName) {
 	ALenum format;
 
 	data = nullptr;
-	printf("Loading wav: %s\n", fileName);
+	printf("[sound] Loading wav: %s\n", fileName);
 	if (this->openAL_LoadAudioFileData(fileName, &format, &data, &size, &freq)) {
 		alBufferData(bufferId, format, data, size, freq);
 		std::free(data);

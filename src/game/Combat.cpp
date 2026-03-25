@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <algorithm>
+#include <cstdio>
 
 #include "CAppContainer.h"
 #include "App.h"
@@ -44,7 +45,7 @@ short Combat::getWeaponWeakness(int n, int n2, int n3) {
 bool Combat::startup() {
 	this->app = CAppContainer::getInstance()->app;
 	Applet* app = this->app;
-	printf("Combat::startup\n");
+	printf("[combat] startup\n");
 
 	this->monsters = new CombatEntity*[this->monsterSlotCount];
 	for (int n = 0, i = 0; i < this->monsterSlotCount; ++i, n += 6) {
@@ -66,7 +67,10 @@ bool Combat::startup() {
 
 void Combat::performAttack(Entity* curAttacker, Entity* curTarget, int attackX, int attackY, bool b) {
 
-
+    printf("[combat] performAttack: attacker=%s target=%s at (%d,%d)\n",
+        curAttacker ? "monster" : "player",
+        curTarget ? "monster" : "player",
+        attackX, attackY);
     this->attackX = attackX;
     this->attackY = attackY;
     this->curAttacker = curAttacker;
@@ -807,6 +811,7 @@ int Combat::calcHit(Entity* entity) {
 
 void Combat::explodeOnMonster() {
 
+    printf("[combat] explodeOnMonster: weaponId=%d dmg=%d hit=%d\n", this->attackerWeaponId, this->totalDamage, this->hitType);
     if (this->explodeThread != nullptr) {
         this->explodeThread->run();
         this->explodeThread = nullptr;
@@ -873,6 +878,7 @@ void Combat::explodeOnMonster() {
 
 void Combat::explodeOnPlayer() {
 
+    printf("[combat] explodeOnPlayer: dmg=%d armorDmg=%d hit=%d\n", this->totalDamage, this->totalArmorDamage, this->gotHit);
     if (this->curTarget != nullptr) {
         return;
     }

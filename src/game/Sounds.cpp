@@ -11,7 +11,7 @@ bool Sounds::loadFromYAML(const char* path) {
 		YAML::Node config = YAML::LoadFile(path);
 		YAML::Node sounds = config["sounds"];
 		if (!sounds || !sounds.IsMap()) {
-			printf("sounds.yaml: missing or invalid 'sounds' map\n");
+			printf("[sounds] sounds.yaml: missing or invalid 'sounds' map\n");
 			return false;
 		}
 
@@ -36,10 +36,10 @@ bool Sounds::loadFromYAML(const char* path) {
 			}
 		}
 
-		printf("Sounds: loaded %d sound definitions from %s\n", (int)soundFileNames.size(), path);
+		printf("[sounds] loaded %d sound definitions from %s\n", (int)soundFileNames.size(), path);
 		return true;
 	} catch (const YAML::Exception& e) {
-		printf("sounds.yaml: %s\n", e.what());
+		printf("[sounds] sounds.yaml: %s\n", e.what());
 		return false;
 	}
 }
@@ -51,7 +51,7 @@ void Sounds::loadDefaults() {
 	for (int i = 0; i < DEFAULT_COUNT; i++) {
 		soundFileNames.push_back(DEFAULT_FILE_NAMES[i]);
 	}
-	printf("Sounds: loaded %d default sound definitions\n", DEFAULT_COUNT);
+	printf("[sounds] loaded %d default sound definitions\n", DEFAULT_COUNT);
 }
 
 const char* Sounds::getFileName(int index) {

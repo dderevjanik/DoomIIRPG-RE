@@ -47,7 +47,7 @@ void Applet::setGameModule(IGameModule* module) {
 }
 
 bool Applet::startup() {
-	printf("Applet::startup\n");
+	printf("[app] Applet::startup\n");
 
 	this->closeApplet = false;
 	this->fontType = 0;
@@ -80,7 +80,7 @@ bool Applet::startup() {
 	this->backBuffer->height = CAppContainer::getInstance()->sdlGL->vidHeight;
 	this->backBuffer->pitch = CAppContainer::getInstance()->sdlGL->vidWidth;
 
-	printf("w: %d || h: %d\n", backBuffer->width, backBuffer->height);
+	printf("[app] w: %d || h: %d\n", backBuffer->width, backBuffer->height);
 
 	this->initLoadImages = false;
 	this->time = 0;
@@ -100,7 +100,7 @@ bool Applet::startup() {
 
 	// Game objects — created by the active game module
 	if (this->gameModule) {
-		printf("Applet: creating game objects via %s module\n", this->gameModule->getName());
+		printf("[app] creating game objects via %s module\n", this->gameModule->getName());
 		this->gameModule->createGameObjects(this);
 	} else {
 		this->Error("No game module set. Call setGameModule() before startup().");
@@ -114,24 +114,24 @@ bool Applet::startup() {
 	this->startupMemory = Applet::MAXMEMORY;
 
 	// Engine subsystem startup
-	if (!this->canvas->startup()) { printf("error fatal: canvas\n"); return false; }
+	if (!this->canvas->startup()) { printf("[app] error fatal: canvas\n"); return false; }
 	this->testImg = Applet::loadImage("cockpit.bmp", true);
 	this->canvas->loadMiniGameImages();
-	if (!this->localization->startup()) { printf("error fatal: localization\n"); return false; }
-	if (!this->render->startup()) { printf("error fatal: render\n"); return false; }
+	if (!this->localization->startup()) { printf("[app] error fatal: localization\n"); return false; }
+	if (!this->render->startup()) { printf("[app] error fatal: render\n"); return false; }
 	this->resource->initTableLoading();
 	this->loadTables();
 	if (!this->tinyGL->startup(this->render->screenWidth, this->render->screenHeight)) {
-		printf("error fatal: tinyGL\n"); return false;
+		printf("[app] error fatal: tinyGL\n"); return false;
 	}
 
 	// Game module startup (EntityDefManager -> Player -> Game -> Combat)
-	if (!this->gameModule->startup(this)) { printf("error fatal: game module\n"); return false; }
+	if (!this->gameModule->startup(this)) { printf("[app] error fatal: game module\n"); return false; }
 
 	// Remaining engine subsystems that depend on game objects
-	if (!this->menuSystem->startup()) { printf("error fatal: menuSystem\n"); return false; }
-	if (!this->sound->startup()) { printf("error fatal: sound\n"); return false; }
-	if (!this->particleSystem->startup()) { printf("error fatal: particleSystem\n"); return false; }
+	if (!this->menuSystem->startup()) { printf("[app] error fatal: menuSystem\n"); return false; }
+	if (!this->sound->startup()) { printf("[app] error fatal: sound\n"); return false; }
+	if (!this->particleSystem->startup()) { printf("[app] error fatal: particleSystem\n"); return false; }
 
 	// Game module post-startup
 	this->gameModule->loadConfig(this);
@@ -154,8 +154,8 @@ bool Applet::startup() {
 	this->accelerationIndex = 0;
 	this->field_0x290 = false;
 	this->field_0x291 = '\0';
-	printf("**** Startup took %i ms\n", this->upTimeMs - time);
-	printf("**** Fragment size %i ms\n", 0);
+	printf("[app] Startup took %i ms\n", this->upTimeMs - time);
+	printf("[app] Fragment size %i ms\n", 0);
 
 	return true;
 }
@@ -387,7 +387,7 @@ void Applet::Error(const char* fmt, ...) {
 }
 
 void Applet::Error(int id) {
-	std::printf("Error id: %i\n", id);
+	std::printf("[app] Error id: %i\n", id);
 	this->Error("App Error");
 	this->idError = id;
 }
@@ -397,12 +397,12 @@ void Applet::beginImageLoading() {}
 void Applet::endImageLoading() {}
 
 void Applet::loadTables() {
-	printf("Applet::loadTables: loading from tables.yaml\n");
+	printf("[app] loadTables: loading from tables.yaml\n");
 	if (!this->loadTablesFromYAML("tables.yaml")) {
 		this->Error("Failed to load tables.yaml\n");
 	}
 	this->loadAnimationsFromYAML("animations.yaml");
-	printf("Applet::loadTables: loading from weapons.yaml\n");
+	printf("[app] loadTables: loading from weapons.yaml\n");
 	if (!this->loadWeaponsFromYAML("weapons.yaml")) {
 		this->Error("Failed to load weapons.yaml\n");
 	}
@@ -410,7 +410,7 @@ void Applet::loadTables() {
 	this->loadEffectsFromYAML("effects.yaml");
 	this->loadItemsFromYAML("items.yaml", "effects.yaml");
 	this->loadDialogStylesFromYAML("dialogs.yaml");
-	printf("Applet::loadTables: loading from monsters.yaml\n");
+	printf("[app] loadTables: loading from monsters.yaml\n");
 	if (!this->loadMonstersFromYAML("monsters.yaml")) {
 		this->Error("Failed to load monsters.yaml\n");
 	}
@@ -496,7 +496,7 @@ static int tileFromName(const std::string& name) {
 	if (it != tileNameMap.end())
 		return it->second;
 	try { return std::stoi(name); } catch (...) {
-		printf("Warning: unknown tile name '%s'\n", name.c_str());
+		printf("[app] Warning: unknown tile name '%s'\n", name.c_str());
 		return 0;
 	}
 }
@@ -522,7 +522,7 @@ bool Applet::loadAnimationsFromYAML(const char* path) {
 	try {
 		config = YAML::LoadFile(path);
 	} catch (const YAML::Exception&) {
-		printf("Warning: could not load %s\n", path);
+		printf("[app] Warning: could not load %s\n", path);
 		return false;
 	}
 
@@ -534,7 +534,7 @@ bool Applet::loadAnimationsFromYAML(const char* path) {
 		tileNameMap[it->first.as<std::string>()] = it->second.as<int>();
 	}
 
-	printf("Animations: loaded %d tile names from %s\n", (int)tileNameMap.size(), path);
+	printf("[app] Animations: loaded %d tile names from %s\n", (int)tileNameMap.size(), path);
 
 	YAML::Node spriteAnims = config["sprite_anims"];
 	if (spriteAnims && spriteAnims.IsMap()) {
@@ -558,7 +558,7 @@ bool Applet::loadAnimationsFromYAML(const char* path) {
 			def.posOffset = sa["pos_offset"].as<int>(0);
 			gSpriteAnimDefs[tileId] = def;
 		}
-		printf("Animations: loaded %d sprite anim overrides\n", (int)gSpriteAnimDefs.size());
+		printf("[app] Animations: loaded %d sprite anim overrides\n", (int)gSpriteAnimDefs.size());
 	}
 
 	return true;
@@ -810,7 +810,7 @@ bool Applet::loadWeaponsFromYAML(const char* path) {
 		this->combat->familiarAmmoType = this->combat->weapons[famW * 9 + Combat::WEAPON_FIELD_AMMOTYPE];
 	}
 
-	printf("Weapons: loaded %d weapon definitions (%d familiars) from %s\n",
+	printf("[app] Weapons: loaded %d weapon definitions (%d familiars) from %s\n",
 		(int)weapons.size(), (int)famDefs.size(), path);
 	return true;
 }
@@ -820,18 +820,18 @@ bool Applet::loadProjectilesFromYAML(const char* path) {
 	try {
 		config = YAML::LoadFile(path);
 	} catch (const YAML::Exception&) {
-		printf("Warning: projectiles.yaml not found, using defaults\n");
+		printf("[app] Warning: projectiles.yaml not found, using defaults\n");
 		return true; // Not fatal — code defaults still work
 	}
 
 	if (!config["projectiles"]) {
-		printf("Warning: projectiles.yaml empty, using defaults\n");
+		printf("[app] Warning: projectiles.yaml empty, using defaults\n");
 		return true;
 	}
 
 	YAML::Node projectiles = config["projectiles"];
 	if (!projectiles.IsMap()) {
-		printf("Warning: projectiles section is not a map\n");
+		printf("[app] Warning: projectiles section is not a map\n");
 		return true;
 	}
 	int count = (int)projectiles.size();
@@ -912,7 +912,7 @@ bool Applet::loadProjectilesFromYAML(const char* path) {
 		}
 	}
 
-	printf("Projectiles: loaded %d types from %s\n", count, path);
+	printf("[app] Projectiles: loaded %d types from %s\n", count, path);
 	return true;
 }
 
@@ -944,7 +944,7 @@ bool Applet::loadEffectsFromYAML(const char* path) {
 	try {
 		config = YAML::LoadFile(path);
 	} catch (const YAML::Exception&) {
-		printf("Warning: effects.yaml not found, using defaults\n");
+		printf("[app] Warning: effects.yaml not found, using defaults\n");
 		return true;
 	}
 
@@ -953,7 +953,7 @@ bool Applet::loadEffectsFromYAML(const char* path) {
 	}
 
 	if (!config["buffs"]) {
-		printf("Warning: effects.yaml has no buffs section, using defaults\n");
+		printf("[app] Warning: effects.yaml has no buffs section, using defaults\n");
 		return true;
 	}
 
@@ -1014,7 +1014,7 @@ bool Applet::loadEffectsFromYAML(const char* path) {
 		p->buffPerTurnHealByAmount[i] = (perTurn == "heal_by_amount");
 	}
 
-	printf("Effects: loaded %d buffs from %s\n", count, path);
+	printf("[app] Effects: loaded %d buffs from %s\n", count, path);
 	return true;
 }
 
@@ -1054,12 +1054,12 @@ bool Applet::loadDialogStylesFromYAML(const char* path) {
 	try {
 		config = YAML::LoadFile(path);
 	} catch (const YAML::Exception&) {
-		printf("Warning: dialogs.yaml not found, using defaults\n");
+		printf("[app] Warning: dialogs.yaml not found, using defaults\n");
 		return true;
 	}
 
 	if (!config["dialog_styles"]) {
-		printf("Warning: dialogs.yaml has no dialog_styles section\n");
+		printf("[app] Warning: dialogs.yaml has no dialog_styles section\n");
 		return true;
 	}
 
@@ -1084,7 +1084,7 @@ bool Applet::loadDialogStylesFromYAML(const char* path) {
 			def.positionTop = s["position_top"].as<bool>(def.positionTop);
 	}
 
-	printf("Dialog styles: loaded from %s\n", path);
+	printf("[app] Dialog styles: loaded from %s\n", path);
 	return true;
 }
 
@@ -1151,12 +1151,12 @@ bool Applet::loadItemsFromYAML(const char* path, const char* effectsPath) {
 	try {
 		config = YAML::LoadFile(path);
 	} catch (const YAML::Exception&) {
-		printf("Warning: items.yaml not found, useItem will use hardcoded fallback\n");
+		printf("[app] Warning: items.yaml not found, useItem will use hardcoded fallback\n");
 		return false;
 	}
 
 	if (!config["items"]) {
-		printf("Warning: items.yaml has no items section\n");
+		printf("[app] Warning: items.yaml has no items section\n");
 		return false;
 	}
 
@@ -1203,7 +1203,7 @@ bool Applet::loadItemsFromYAML(const char* path, const char* effectsPath) {
 		p->itemDefs->push_back(def);
 	}
 
-	printf("Items: loaded %d item definitions from %s\n", (int)p->itemDefs->size(), path);
+	printf("[app] Items: loaded %d item definitions from %s\n", (int)p->itemDefs->size(), path);
 	return true;
 }
 
@@ -1320,7 +1320,7 @@ bool Applet::loadTablesFromYAML(const char* path) {
 		}
 	}
 
-	printf("Applet::loadTables: loaded tables from %s\n", path);
+	printf("[app] loadTables: loaded tables from %s\n", path);
 	return true;
 }
 
@@ -1566,7 +1566,7 @@ bool Applet::loadMonstersFromYAML(const char* path) {
 		}
 	}
 
-	printf("Applet::loadMonstersFromYAML: loaded %d monsters from %s\n", (int)monsters.size(), path);
+	printf("[app] loadMonstersFromYAML: loaded %d monsters from %s\n", (int)monsters.size(), path);
 	return true;
 }
 

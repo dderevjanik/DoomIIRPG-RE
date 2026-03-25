@@ -31,7 +31,7 @@ Hud::~Hud() {
 bool Hud::startup() {
 	this->app = CAppContainer::getInstance()->app;
 	Applet* app = this->app;
-	printf("Hud::startup\n");
+	printf("[hud] startup\n");
 
 	for (int i = 0; i < Hud::MAX_MESSAGES; i++) {
 		this->messages[i] = new Text(Hud::MS_PER_CHAR);
@@ -1266,7 +1266,7 @@ void Hud::handleUserTouch(int pressX, int pressY, bool highlighted) {
 							app->canvas->handlePlayingEvents(0, Enums::ACTION_QUESTLOG);
 							break;
 						default:
-							printf("ERROR: undefined touch button ID: %d \n", buttonID_1);
+							printf("[hud] ERROR: undefined touch button ID: %d\n", buttonID_1);
 							break;
 					}
 				}

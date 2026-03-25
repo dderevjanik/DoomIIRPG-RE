@@ -90,7 +90,7 @@ void LogoState::update(Canvas* canvas) {
 		if (mg) {
 			mg->playFromMainMenu();
 		} else {
-			printf("Unknown minigame: %s\n", mgName);
+			printf("[logostate] Unknown minigame: %s\n", mgName);
 		}
 		return;
 	}

@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <algorithm>
+#include <cstdio>
 
 #include "CAppContainer.h"
 #include "App.h"
@@ -27,7 +28,7 @@ Player::~Player() {
 }
 
 bool Player::startup() {
-	printf("Player::startup\n");
+	printf("[player] startup\n");
 	this->app = CAppContainer::getInstance()->app;
 	Applet* app = this->app;
 	this->isFamiliar = false;
@@ -139,7 +140,7 @@ void Player::readyWeapon() {
 
 void Player::selectWeapon(int i) {
 
-
+	printf("[player] selectWeapon: %d -> %d\n", this->ce->weapon, i);
 	if (this->isFamiliar) {
 		return;
 	}
@@ -273,7 +274,7 @@ bool Player::requireItem(int n, int n2, int n3, int n4) {
 
 void Player::addXP(int xp) {
 
-
+	printf("[player] addXP: %d (total=%d, nextLevel=%d)\n", xp, this->currentXP + xp, this->nextLevelXP);
 	app->localization->resetTextArgs();
 	app->localization->addTextArg(xp);
 	if (xp < 0) {
@@ -294,6 +295,7 @@ void Player::addLevel() {
 	Text* textBuff;
 	int stat;
 
+	printf("[player] levelUp: %d -> %d\n", this->level, this->level + 1);
 	this->level++;
 	this->nextLevelXP = this->calcLevelXP(this->level);
 
@@ -668,6 +670,7 @@ void Player::painEvent(Entity* entity, bool b) {
 
 void Player::pain(int n, Entity* entity, bool b) {
 
+	printf("[player] pain: dmg=%d hp=%d/%d\n", n, this->ce->getStat(Enums::STAT_HEALTH), this->ce->getStat(Enums::STAT_MAX_HEALTH));
 	if (this->god) {
 		return;
 	}
@@ -722,7 +725,7 @@ void Player::pain(int n, Entity* entity, bool b) {
 
 void Player::died() {
 
-
+	printf("[player] died: totalDeaths=%d mapId=%d\n", this->totalDeaths + 1, app->canvas->loadMapID);
 	if (app->canvas->state == Canvas::ST_DYING) {
 		return;
 	}
@@ -1208,6 +1211,7 @@ void Player::drawBuffs(Graphics* graphics) {
 
 void Player::setCharacterChoice(short i) {
 
+	printf("[player] setCharacterChoice: %d\n", i);
 	this->characterChoice = i;
 	app->game->scriptStateVars[14] = i;
 }

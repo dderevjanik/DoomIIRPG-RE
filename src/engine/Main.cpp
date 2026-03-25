@@ -75,9 +75,12 @@ int main(int argc, char* args[]) {
 	if (headless) {
 		CAppContainer::getInstance()->headless = true;
 	}
+	if (customMap) {
+		CAppContainer::getInstance()->skipTravelMap = true;
+	}
 	if (hasSeed) {
 		std::srand(seed);
-		printf("Seed: %u\n", seed);
+		printf("[main] Seed: %u\n", seed);
 	}
 
 	// --game <name> is sugar for --gamedir games/<name>
@@ -86,17 +89,17 @@ int main(int argc, char* args[]) {
 	if (gameName) {
 		gameDirStr = std::string("games/") + gameName;
 		gameDir = gameDirStr.c_str();
-		printf("Game: %s (directory: %s)\n", gameName, gameDir);
+		printf("[main] Game: %s (directory: %s)\n", gameName, gameDir);
 	} else if (strcmp(gameDir, ".") == 0) {
 		// Auto-detect: if games/doom2rpg exists, use it
 		if (access("games/doom2rpg/game.yaml", F_OK) == 0) {
 			gameDirStr = "games/doom2rpg";
 			gameDir = gameDirStr.c_str();
-			printf("Auto-detected game directory: %s\n", gameDir);
+			printf("[main] Auto-detected game directory: %s\n", gameDir);
 		} else if (access("Doom 2 RPG.ipa", F_OK) == 0) {
 			// IPA found but not yet converted — run converter automatically
-			printf("Found 'Doom 2 RPG.ipa' but no converted assets.\n");
-			printf("Running doom2rpg-convert to extract game assets...\n");
+			printf("[main] Found 'Doom 2 RPG.ipa' but no converted assets.\n");
+			printf("[main] Running doom2rpg-convert to extract game assets...\n");
 
 			// Find converter next to engine binary, or fall back to PATH
 			std::string converterCmd;
@@ -142,11 +145,11 @@ int main(int argc, char* args[]) {
 			}
 
 			std::string cmd = converterCmd + " --ipa \"Doom 2 RPG.ipa\" --output games/doom2rpg";
-			printf("  %s\n", cmd.c_str());
+			printf("[main]   %s\n", cmd.c_str());
 			int ret = system(cmd.c_str());
 			if (ret != 0) {
-				printf("Error: converter failed (exit code %d).\n", ret);
-				printf("You can also run it manually:\n  %s\n", cmd.c_str());
+				printf("[main] Error: converter failed (exit code %d).\n", ret);
+				printf("[main] You can also run it manually:\n  %s\n", cmd.c_str());
 				return 1;
 			}
 
@@ -154,9 +157,9 @@ int main(int argc, char* args[]) {
 			if (access("games/doom2rpg/game.yaml", F_OK) == 0) {
 				gameDirStr = "games/doom2rpg";
 				gameDir = gameDirStr.c_str();
-				printf("Auto-conversion complete. Game directory: %s\n", gameDir);
+				printf("[main] Auto-conversion complete. Game directory: %s\n", gameDir);
 			} else {
-				printf("Error: conversion ran but game.yaml not found.\n");
+				printf("[main] Error: conversion ran but game.yaml not found.\n");
 				return 1;
 			}
 		}
@@ -175,10 +178,10 @@ int main(int argc, char* args[]) {
 	// Change working directory to gamedir so config files are found there
 	if (strcmp(gameDir, ".") != 0) {
 		if (chdir(gameDir) != 0) {
-			printf("Error: cannot change to gamedir '%s'\n", gameDir);
+			printf("[main] Error: cannot change to gamedir '%s'\n", gameDir);
 			return 1;
 		}
-		printf("Working directory: %s\n", gameDir);
+		printf("[main] Working directory: %s\n", gameDir);
 	}
 
 	// Load game.yaml early (before VFS) for game name, save dir, etc.
@@ -293,11 +296,11 @@ int main(int argc, char* args[]) {
 					}
 				}
 
-				printf("Game: %s (save: %s)\n", gc.name.c_str(), gc.saveDir.c_str());
+				printf("[main] Game: %s (save: %s)\n", gc.name.c_str(), gc.saveDir.c_str());
 			}
 		} catch (const YAML::Exception& e) {
-			printf("Error: could not load game.yaml: %s\n", e.what());
-			printf("Run doom2rpg-convert to extract game assets first.\n");
+			printf("[main] Error: could not load game.yaml: %s\n", e.what());
+			printf("[main] Run doom2rpg-convert to extract game assets first.\n");
 			return 1;
 		}
 	}
@@ -336,7 +339,7 @@ int main(int argc, char* args[]) {
 
 	if (customMap) {
 		CAppContainer::getInstance()->customMapFile = customMap;
-		printf("Custom map: %s\n", customMap);
+		printf("[main] Custom map: %s\n", customMap);
 	}
 
 	// Load script if specified (works in both headless and windowed modes)
@@ -345,7 +348,7 @@ int main(int argc, char* args[]) {
 	if (scriptFile) {
 		hasScript = script.loadFromFile(scriptFile);
 		if (!hasScript) {
-			printf("Error: failed to load script '%s'\n", scriptFile);
+			printf("[main] Error: failed to load script '%s'\n", scriptFile);
 			return 1;
 		}
 		// Auto-set ticks from script if not explicitly given
@@ -422,7 +425,7 @@ int main(int argc, char* args[]) {
 		}
 	}
 
-	printf("APP_QUIT\n");
+	printf("[main] APP_QUIT\n");
 	CAppContainer::getInstance()->~CAppContainer();
 	sdlGL.~SDLGL();
 	input.~Input();
