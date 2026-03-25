@@ -109,6 +109,7 @@ class CAppContainer {
 	const char* minigameName;     // --minigame override
 	int pendingEquipLevel;         // deferred equipForLevel after --map load (0 = none)
 	bool skipTravelMap;            // --skip-travel-map
+	bool skipIntro;                // --skip-intro
 	bool headless;                 // --headless mode (no rendering, no audio)
 	uint32_t headlessTimeMs;       // deterministic tick counter for headless mode
 	static CAppContainer* getInstance();

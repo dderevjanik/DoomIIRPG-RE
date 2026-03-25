@@ -62,6 +62,8 @@ int main(int argc, char* args[]) {
 			CAppContainer::getInstance()->minigameName = args[++i];
 		} else if (strcmp(args[i], "--skip-travel-map") == 0) {
 			CAppContainer::getInstance()->skipTravelMap = true;
+		} else if (strcmp(args[i], "--skip-intro") == 0) {
+			CAppContainer::getInstance()->skipIntro = true;
 		} else if (strcmp(args[i], "--headless") == 0) {
 			headless = true;
 		} else if (strcmp(args[i], "--ticks") == 0 && i + 1 < argc) {

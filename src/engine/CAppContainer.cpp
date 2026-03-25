@@ -23,6 +23,7 @@ CAppContainer::CAppContainer() {
 	this->minigameName = nullptr;
 	this->pendingEquipLevel = 0;
 	this->skipTravelMap = false;
+	this->skipIntro = false;
 	this->headless = false;
 	this->headlessTimeMs = 0;
 }

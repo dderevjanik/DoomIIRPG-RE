@@ -175,7 +175,7 @@ bool Canvas::startup() {
 		this->setAnimFrames(10);
 
 		this->startupMap = 1;
-		this->skipIntro = false;
+		this->skipIntro = CAppContainer::getInstance()->skipIntro;
 		this->tellAFriend = false;
 
 		app->beginImageLoading();
