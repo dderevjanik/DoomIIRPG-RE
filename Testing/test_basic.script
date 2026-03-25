@@ -1,0 +1,36 @@
+# Basic smoke test — wait for game to load, then perform some actions
+#
+# Usage:
+#   ./DoomIIRPG --game doom2rpg --script Testing/test_basic.script --seed 42
+#   ./DoomIIRPG --game doom2rpg --script Testing/test_basic.script --seed 42 --headless
+
+# Wait for logo/intro screens to pass (SELECT to skip)
+tick 30: SELECT
+tick 60: SELECT
+tick 90: SELECT
+tick 120: SELECT
+tick 150: SELECT
+
+# Game should be loaded by now — move forward
+tick 200: UP
+tick 220: UP
+tick 240: UP
+
+# Turn right
+tick 260: RIGHT
+
+# Move forward
+tick 280: UP
+tick 300: UP
+
+# Fire weapon
+tick 320: FIRE
+
+# Open automap
+tick 350: AUTOMAP
+
+# Close automap
+tick 380: AUTOMAP
+
+# Pass turn
+tick 400: PASSTURN
