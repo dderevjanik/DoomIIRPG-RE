@@ -2,6 +2,11 @@
 
 Guidelines for AI agents working on this codebase.
 
+## Overview
+
+- Don't directly edit games/doom2rpg/ assets. They are converted from original game files and should remain unchanged for reference. Instead
+edit `src/converter` scripts to modify how assets are processed.
+
 ## After bigger refactors
 
 When completing a significant refactor (engine changes, asset pipeline, entity system, rendering, level loading), always run the map loading smoke test to verify nothing is broken:
