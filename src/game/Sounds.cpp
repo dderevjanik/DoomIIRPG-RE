@@ -44,15 +44,6 @@ bool Sounds::loadFromYAML(const char* path) {
 	}
 }
 
-void Sounds::loadDefaults() {
-	soundFileNames.clear();
-	soundFileNames.reserve(DEFAULT_COUNT);
-	soundNameToIndex.clear();
-	for (int i = 0; i < DEFAULT_COUNT; i++) {
-		soundFileNames.push_back(DEFAULT_FILE_NAMES[i]);
-	}
-	printf("[sounds] loaded %d default sound definitions\n", DEFAULT_COUNT);
-}
 
 const char* Sounds::getFileName(int index) {
 	if (index < 0 || index >= (int)soundFileNames.size()) {

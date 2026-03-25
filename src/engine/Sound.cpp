@@ -41,10 +41,10 @@ bool Sound::startup() {
 	this->soundsLoaded = false;
 	this->alContext = nullptr;
 
-	// Load sound definitions from sounds.yaml, fall back to hardcoded defaults
+	// Load sound definitions from sounds.yaml
 	if (!Sounds::loadFromYAML("sounds.yaml")) {
-		printf("[sound] sounds.yaml not found, using built-in defaults\n");
-		Sounds::loadDefaults();
+		this->app->Error("sounds.yaml is required but could not be loaded");
+		return false;
 	}
 
 	for (int i = 0; i < 10; i++) {
