@@ -76,14 +76,6 @@ bool EntityNames::loadWeaponNames(const char* weaponsPath) {
 				if (index >= 0) weaponNames[name] = index;
 			}
 		}
-		// Also load explicit monster_attacks section (if present, for non-weapon attack names)
-		// These are merged into the same weapon names map
-		if (YAML::Node attacks = config["monster_attacks"]) {
-			for (auto it = attacks.begin(); it != attacks.end(); ++it) {
-				weaponNames[it->first.as<std::string>()] = it->second.as<int>(0);
-			}
-		}
-
 		loadSection(config, "ammo_parms", ammoParms);
 		buildIndexVector(weaponNames, weaponNamesByIndex);
 

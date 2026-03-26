@@ -1342,13 +1342,6 @@ static bool convertTables(ZipFile& zip, const std::string& outDir) {
 
 		wout << YAML::EndMap;
 
-		// Monster attack name → index lookup (indices 15-31)
-		wout << YAML::Key << "monster_attacks" << YAML::Value << YAML::BeginMap;
-		for (int i = NUM_PLAYER_WEAPONS; i < WeaponNames::COUNT; i++) {
-			wout << YAML::Key << WeaponNames::TABLE[i] << YAML::Value << i;
-		}
-		wout << YAML::EndMap;
-
 		// Ammo parm name → index lookup
 		wout << YAML::Key << "ammo_parms" << YAML::Value << YAML::BeginMap;
 		for (int i = 0; i < NUM_AMMO_PARMS; i++) {
