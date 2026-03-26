@@ -6,8 +6,17 @@
 
 set -euo pipefail
 
-BUILD_DIR="${1:-build}"
-GAME="${2:-doom2rpg}"
+HEADLESS=""
+POSITIONAL=()
+for arg in "$@"; do
+    case "$arg" in
+        --headless) HEADLESS="--headless" ;;
+        *) POSITIONAL+=("$arg") ;;
+    esac
+done
+
+BUILD_DIR="${POSITIONAL[0]:-build}"
+GAME="${POSITIONAL[1]:-doom2rpg}"
 BINARY="$BUILD_DIR/src/DoomIIRPG"
 TIMEOUT_SEC=3
 PASSED=0
@@ -48,7 +57,7 @@ for MAP_PATH in "${MAPS[@]}"; do
     set +e
 
     # Launch game in background, kill after timeout
-    "$BINARY" --game "$GAME" --skip-travel-map --map "$MAP_NAME" >"$LOG" 2>&1 &
+    "$BINARY" --game "$GAME" --skip-travel-map $HEADLESS --map "$MAP_NAME" >"$LOG" 2>&1 &
     PID=$!
 
     # Wait up to TIMEOUT_SEC for the process
