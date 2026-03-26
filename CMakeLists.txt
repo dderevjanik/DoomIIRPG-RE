@@ -5,6 +5,19 @@ project(DoomIIRPG VERSION 0.1.0)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# Default to RelWithDebInfo so stack traces have symbols
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+	set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Build type" FORCE)
+	message(STATUS "Build type not set — defaulting to RelWithDebInfo")
+endif()
+
+# Optional AddressSanitizer for catching memory bugs
+option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
+if(ENABLE_ASAN)
+	add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+	add_link_options(-fsanitize=address)
+endif()
+
 add_compile_options(
     -fsigned-char         # Force char to be signed
 )

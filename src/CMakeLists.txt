@@ -58,3 +58,6 @@ add_subdirectory(converter)
 
 # Map editor
 add_subdirectory(editor)
+
+# Assets manager
+add_subdirectory(assets-manager)

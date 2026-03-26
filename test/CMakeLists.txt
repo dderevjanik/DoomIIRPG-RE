@@ -16,4 +16,6 @@ target_include_directories(${TEST_MAPDATA_TGT} PRIVATE
 	${CMAKE_SOURCE_DIR}/src/editor
 )
 
+target_link_libraries(${TEST_MAPDATA_TGT} yaml-cpp)
+
 add_test(NAME mapdata-roundtrip COMMAND ${TEST_MAPDATA_TGT})
