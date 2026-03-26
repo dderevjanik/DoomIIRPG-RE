@@ -35,6 +35,7 @@
 #include "Enums.h"
 #include "Sounds.h"
 #include "SpriteDefs.h"
+#include "ItemDefs.h"
 #include "WeaponNames.h"
 
 Applet::Applet() {
@@ -405,6 +406,7 @@ void Applet::loadTables() {
 	SpriteDefs::loadFromYAML("sprites.yaml");
 	this->render->initSpriteDefs();
 	this->loadSpriteAnimsFromYAML("sprites.yaml");
+	ItemDefs::loadFromYAML("items.yaml");
 	printf("[app] loadTables: loading from weapons.yaml\n");
 	if (!this->loadWeaponsFromYAML("weapons.yaml")) {
 		this->Error("Failed to load weapons.yaml\n");
@@ -461,29 +463,9 @@ static int projTypeFromName(const std::string& name) {
 }
 
 static int ammoTypeFromName(const std::string& name) {
-	if (name == "none")
-		return 0;
-	if (name == "bullets")
-		return 1;
-	if (name == "shells")
-		return 2;
-	if (name == "holy_water")
-		return 3;
-	if (name == "cells")
-		return 4;
-	if (name == "rockets")
-		return 5;
-	if (name == "soul_cube")
-		return 6;
-	if (name == "sentry_bot")
-		return 7;
-	if (name == "item")
-		return 8;
-	try {
-		return std::stoi(name);
-	} catch (...) {
-		return 0;
-	}
+	int idx = ItemDefs::getAmmoIndex(name);
+	if (idx >= 0) return idx;
+	try { return std::stoi(name); } catch (...) { return 0; }
 }
 
 // Global sprite animation overrides, populated from sprites.yaml sprite_anims section

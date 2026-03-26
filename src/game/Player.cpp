@@ -20,6 +20,7 @@
 #include <yaml-cpp/yaml.h>
 #include "SoundNames.h"
 #include "Sounds.h"
+#include "ItemDefs.h"
 
 Player::Player() {
 	std::memset(this, 0, sizeof(Player));
@@ -1652,35 +1653,6 @@ void Player::equipForLevel(int highestMap) {
 				}
 			} catch (...) {}
 
-			// Inventory name→index lookup
-			auto inventoryFromName = [](const std::string& name) -> int {
-				if (name == "health_pack")      return Enums::INV_HEALTH_PACK;
-				if (name == "health_ration_bar") return Enums::INV_HEALTH_RATION_BAR;
-				if (name == "armor_large")       return Enums::INV_ARMOR_LARGE;
-				if (name == "armor_small")       return Enums::INV_ARMOR_SMALL;
-				if (name == "uac_credit")        return Enums::INV_ONE_UAC_CREDIT;
-				if (name == "bottled_water")     return Enums::INV_BOTTLED_WATER;
-				if (name == "journal")           return Enums::INV_OTHER_JOURNAL;
-				if (name == "red_key")           return Enums::INV_OTHER_RED_KEY;
-				if (name == "blue_key")          return Enums::INV_OTHER_BLUE_KEY;
-				if (name == "empty_syringe")     return Enums::INV_EMPTY_SYRINGE;
-				if (name == "holy_water")        return Enums::INV_OTHER_HOLY_WATER;
-				if (name == "pack")              return Enums::INV_OTHER_PACK;
-				try { return std::stoi(name); } catch (...) { return -1; }
-			};
-
-			// Ammo name→index lookup
-			auto ammoFromName = [](const std::string& name) -> int {
-				if (name == "bullets")    return Enums::AMMO_BULLETS;
-				if (name == "shells")     return Enums::AMMO_SHELLS;
-				if (name == "holy_water") return Enums::AMMO_HOLY_WATER;
-				if (name == "cells")      return Enums::AMMO_CELLS;
-				if (name == "rockets")    return Enums::AMMO_ROCKETS;
-				if (name == "soul_cube")  return Enums::AMMO_SOUL_CUBE;
-				if (name == "sentry_bot") return Enums::AMMO_SENTRY_BOT;
-				try { return std::stoi(name); } catch (...) { return -1; }
-			};
-
 			// Resolve weapon name or index
 			auto resolveWeapon = [&](const YAML::Node& node) -> int {
 				if (node.IsScalar()) {
@@ -1717,14 +1689,14 @@ void Player::equipForLevel(int highestMap) {
 				// Inventory items
 				if (YAML::Node inv = r["inventory"]) {
 					for (auto it = inv.begin(); it != inv.end(); ++it) {
-						int idx = inventoryFromName(it->first.as<std::string>());
+						int idx = ItemDefs::getInventoryIndex(it->first.as<std::string>());
 						if (idx >= 0) this->give(0, idx, it->second.as<int>());
 					}
 				}
 				// Ammo
 				if (YAML::Node ammo = r["ammo"]) {
 					for (auto it = ammo.begin(); it != ammo.end(); ++it) {
-						int idx = ammoFromName(it->first.as<std::string>());
+						int idx = ItemDefs::getAmmoIndex(it->first.as<std::string>());
 						if (idx >= 0) this->give(2, idx, it->second.as<int>());
 					}
 				}
