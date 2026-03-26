@@ -31,6 +31,7 @@
 #include <fstream>
 #include "SoundNames.h"
 #include "Sounds.h"
+#include "ConfigEnums.h"
 
 Game::Game() {
 	std::memset(this, 0, sizeof(Game));
@@ -1898,84 +1899,7 @@ bool Game::loadWorldState(InputStream* IS) {
 
 // --- Human-readable config helpers ---
 
-static const char* difficultyNames[] = {"normal", "difficult", nullptr, "nightmare"};
-static const int difficultyValues[] = {1, 2, 0, 4};
-static const int numDifficulties = 4;
-
-static const char* difficultyToString(int difficulty) {
-	for (int i = 0; i < numDifficulties; i++) {
-		if (difficultyValues[i] == difficulty && difficultyNames[i]) {
-			return difficultyNames[i];
-		}
-	}
-	return "normal";
-}
-
-static int difficultyFromString(const std::string& str) {
-	for (int i = 0; i < numDifficulties; i++) {
-		if (difficultyNames[i] && str == difficultyNames[i]) {
-			return difficultyValues[i];
-		}
-	}
-	return 1;
-}
-
-static const char* languageNames[] = {"english", "french", "german", "italian", "spanish"};
-static const int numLanguages = 5;
-
-static const char* languageToString(int lang) {
-	if (lang >= 0 && lang < numLanguages) {
-		return languageNames[lang];
-	}
-	return "english";
-}
-
-static int languageFromString(const std::string& str) {
-	for (int i = 0; i < numLanguages; i++) {
-		if (str == languageNames[i]) {
-			return i;
-		}
-	}
-	return 0;
-}
-
-static const char* windowModeNames[] = {"windowed", "borderless", "fullscreen"};
-static const int numWindowModes = 3;
-
-static const char* windowModeToString(int mode) {
-	if (mode >= 0 && mode < numWindowModes) {
-		return windowModeNames[mode];
-	}
-	return "windowed";
-}
-
-static int windowModeFromString(const std::string& str) {
-	for (int i = 0; i < numWindowModes; i++) {
-		if (str == windowModeNames[i]) {
-			return i;
-		}
-	}
-	return 0;
-}
-
-static const char* controlLayoutNames[] = {"chevrons", "arrows", "classic"};
-static const int numControlLayouts = 3;
-
-static const char* controlLayoutToString(int layout) {
-	if (layout >= 0 && layout < numControlLayouts) {
-		return controlLayoutNames[layout];
-	}
-	return "chevrons";
-}
-
-static int controlLayoutFromString(const std::string& str) {
-	for (int i = 0; i < numControlLayouts; i++) {
-		if (str == controlLayoutNames[i]) {
-			return i;
-		}
-	}
-	return 0;
-}
+// Config enum name↔value lookups are now data-driven via config_enums.yaml and ConfigEnums class
 
 static std::string resolutionToString(int index) {
 	if (index >= 0 && index < 18) {
@@ -2169,8 +2093,8 @@ void Game::saveConfig() {
 
 	// General
 	out << YAML::Key << "version" << YAML::Value << 11;
-	out << YAML::Key << "difficulty" << YAML::Value << difficultyToString(this->difficulty);
-	out << YAML::Key << "language" << YAML::Value << languageToString(app->localization->defaultLanguage);
+	out << YAML::Key << "difficulty" << YAML::Value << ConfigEnums::difficultyToString(this->difficulty);
+	out << YAML::Key << "language" << YAML::Value << ConfigEnums::languageToString(app->localization->defaultLanguage);
 
 	// Sound
 	out << YAML::Key << "sound_enabled" << YAML::Value << app->sound->allowSounds;
@@ -2180,13 +2104,13 @@ void Game::saveConfig() {
 	// Controls
 	out << YAML::Key << "vibrate_enabled" << YAML::Value << app->canvas->vibrateEnabled;
 	out << YAML::Key << "vibration_intensity" << YAML::Value << gVibrationIntensity;
-	out << YAML::Key << "control_layout" << YAML::Value << controlLayoutToString(app->canvas->m_controlLayout);
+	out << YAML::Key << "control_layout" << YAML::Value << ConfigEnums::controlLayoutToString(app->canvas->m_controlLayout);
 	out << YAML::Key << "control_alpha" << YAML::Value << app->canvas->m_controlAlpha;
 	out << YAML::Key << "flip_controls" << YAML::Value << app->canvas->isFlipControls;
 	out << YAML::Key << "dead_zone" << YAML::Value << gDeadZone;
 
 	// Display
-	out << YAML::Key << "window_mode" << YAML::Value << windowModeToString(sdlGL->windowMode);
+	out << YAML::Key << "window_mode" << YAML::Value << ConfigEnums::windowModeToString(sdlGL->windowMode);
 	out << YAML::Key << "vsync" << YAML::Value << sdlGL->vSync;
 	out << YAML::Key << "resolution" << YAML::Value << resolutionToString(sdlGL->resolutionIndex);
 	out << YAML::Key << "anim_frames" << YAML::Value << app->canvas->animFrames;
@@ -2264,8 +2188,8 @@ void Game::loadConfig() {
 	}
 
 	// General
-	this->difficulty = difficultyFromString(cfg["difficulty"].as<std::string>("normal"));
-	int lang = languageFromString(cfg["language"].as<std::string>("english"));
+	this->difficulty = ConfigEnums::difficultyFromString(cfg["difficulty"].as<std::string>("normal"));
+	int lang = ConfigEnums::languageFromString(cfg["language"].as<std::string>("english"));
 	if (lang != app->localization->defaultLanguage) {
 		app->localization->setLanguage(lang);
 	}
@@ -2279,7 +2203,7 @@ void Game::loadConfig() {
 	// Controls
 	app->canvas->vibrateEnabled = cfg["vibrate_enabled"].as<bool>(true);
 	gVibrationIntensity = cfg["vibration_intensity"].as<int>(100);
-	app->canvas->m_controlLayout = controlLayoutFromString(cfg["control_layout"].as<std::string>("chevrons"));
+	app->canvas->m_controlLayout = ConfigEnums::controlLayoutFromString(cfg["control_layout"].as<std::string>("chevrons"));
 	if (app->canvas->m_controlLayout > 2) {
 		app->canvas->m_controlLayout = 0;
 	}
@@ -2288,7 +2212,7 @@ void Game::loadConfig() {
 	gDeadZone = cfg["dead_zone"].as<int>(8000);
 
 	// Display
-	sdlGL->windowMode = windowModeFromString(cfg["window_mode"].as<std::string>("windowed"));
+	sdlGL->windowMode = ConfigEnums::windowModeFromString(cfg["window_mode"].as<std::string>("windowed"));
 	sdlGL->vSync = cfg["vsync"].as<bool>(true);
 	sdlGL->resolutionIndex = resolutionFromString(cfg["resolution"].as<std::string>("480x320"));
 	int animFrames = cfg["anim_frames"].as<int>(8);
@@ -2610,7 +2534,7 @@ void Game::saveEmptyConfig() {
 	// General - reset difficulty to normal, keep language
 	out << YAML::Key << "version" << YAML::Value << 11;
 	out << YAML::Key << "difficulty" << YAML::Value << "normal";
-	out << YAML::Key << "language" << YAML::Value << languageToString(app->localization->defaultLanguage);
+	out << YAML::Key << "language" << YAML::Value << ConfigEnums::languageToString(app->localization->defaultLanguage);
 
 	// Sound - keep current settings
 	out << YAML::Key << "sound_enabled" << YAML::Value << app->sound->allowSounds;
@@ -2620,13 +2544,13 @@ void Game::saveEmptyConfig() {
 	// Controls - keep current settings
 	out << YAML::Key << "vibrate_enabled" << YAML::Value << app->canvas->vibrateEnabled;
 	out << YAML::Key << "vibration_intensity" << YAML::Value << gVibrationIntensity;
-	out << YAML::Key << "control_layout" << YAML::Value << controlLayoutToString(app->canvas->m_controlLayout);
+	out << YAML::Key << "control_layout" << YAML::Value << ConfigEnums::controlLayoutToString(app->canvas->m_controlLayout);
 	out << YAML::Key << "control_alpha" << YAML::Value << app->canvas->m_controlAlpha;
 	out << YAML::Key << "flip_controls" << YAML::Value << app->canvas->isFlipControls;
 	out << YAML::Key << "dead_zone" << YAML::Value << gDeadZone;
 
 	// Display - keep current settings
-	out << YAML::Key << "window_mode" << YAML::Value << windowModeToString(sdlGL->windowMode);
+	out << YAML::Key << "window_mode" << YAML::Value << ConfigEnums::windowModeToString(sdlGL->windowMode);
 	out << YAML::Key << "vsync" << YAML::Value << sdlGL->vSync;
 	out << YAML::Key << "resolution" << YAML::Value << resolutionToString(sdlGL->resolutionIndex);
 	out << YAML::Key << "anim_frames" << YAML::Value << app->canvas->animFrames;

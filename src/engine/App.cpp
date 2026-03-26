@@ -36,7 +36,8 @@
 #include "Sounds.h"
 #include "SpriteDefs.h"
 #include "ItemDefs.h"
-#include "WeaponNames.h"
+#include "EntityNames.h"
+#include "ConfigEnums.h"
 
 Applet::Applet() {
 	std::memset(this, 0, sizeof(Applet));
@@ -407,6 +408,9 @@ void Applet::loadTables() {
 	this->render->initSpriteDefs();
 	this->loadSpriteAnimsFromYAML("sprites.yaml");
 	ItemDefs::loadFromYAML("items.yaml");
+	EntityNames::loadEntityTypes("entities.yaml");
+	EntityNames::loadWeaponNames("weapons.yaml");
+	ConfigEnums::loadFromYAML("game.yaml");
 	printf("[app] loadTables: loading from weapons.yaml\n");
 	if (!this->loadWeaponsFromYAML("weapons.yaml")) {
 		this->Error("Failed to load weapons.yaml\n");
@@ -1416,13 +1420,13 @@ bool Applet::loadMonstersFromYAML(const char* path) {
 				mb.onHitPoisonPower = poison["power"].as<int>(3);
 			}
 			std::string kbWeapon = beh["knockback_weapon"].as<std::string>("none");
-			mb.knockbackWeaponId = (kbWeapon == "none") ? -1 : WeaponNames::toIndex(kbWeapon);
+			mb.knockbackWeaponId = (kbWeapon == "none") ? -1 : EntityNames::weaponToIndex(kbWeapon);
 			std::string ws = beh["walk_sound"].as<std::string>("none");
 			mb.walkSoundResId = (ws == "none") ? -1 : Sounds::getResIDByName(ws);
 			if (YAML::Node wmods = beh["weakness_modifiers"]) {
 				for (auto wit = wmods.begin(); wit != wmods.end(); ++wit) {
 					std::string wname = wit->first.as<std::string>();
-					int weaponIdx = WeaponNames::toIndex(wname);
+					int weaponIdx = EntityNames::weaponToIndex(wname);
 					if (weaponIdx >= 0 && weaponIdx < MonsterBehaviors::MAX_WEAKNESS_MODS) {
 						std::string val = wit->second.as<std::string>("0");
 						if (val == "immune") {
@@ -1468,8 +1472,8 @@ bool Applet::loadMonstersFromYAML(const char* path) {
 				// Attacks (3 shorts per tier, 9 per type)
 				if (YAML::Node atk = tier["attacks"]) {
 					int atkBase = idx * 9 + p * 3;
-					this->combat->monsterAttacks[atkBase + 0] = (short)WeaponNames::toIndex(atk["attack1"].as<std::string>("0").c_str());
-					this->combat->monsterAttacks[atkBase + 1] = (short)WeaponNames::toIndex(atk["attack2"].as<std::string>("0").c_str());
+					this->combat->monsterAttacks[atkBase + 0] = (short)EntityNames::weaponToIndex(atk["attack1"].as<std::string>("0").c_str());
+					this->combat->monsterAttacks[atkBase + 1] = (short)EntityNames::weaponToIndex(atk["attack2"].as<std::string>("0").c_str());
 					this->combat->monsterAttacks[atkBase + 2] = (short)atk["chance"].as<int>(0);
 				}
 
@@ -1485,7 +1489,7 @@ bool Applet::loadMonstersFromYAML(const char* path) {
 						for (auto it = weak.begin(); it != weak.end(); ++it) {
 							std::string wname = it->first.as<std::string>();
 							double pct = it->second.as<double>(100.0);
-							int weaponIdx = WeaponNames::toIndex(wname);
+							int weaponIdx = EntityNames::weaponToIndex(wname);
 							if (weaponIdx >= 0 && weaponIdx < 16) {
 								int nibble = std::max(0, std::min(15, (int)(pct / 12.5) - 1));
 								int byteIdx = weaponIdx / 2;

@@ -35,10 +35,22 @@
 #include "GameScript.h"
 #include "CrashHandler.h"
 
+#include <signal.h>
+
+static void handleSIGTERM(int) {
+	// Gracefully request shutdown instead of letting the signal kill the process
+	if (CAppContainer::getInstance() && CAppContainer::getInstance()->app) {
+		CAppContainer::getInstance()->app->shutdown();
+	} else {
+		_exit(0);
+	}
+}
+
 void drawView(SDLGL* sdlGL);
 
 int main(int argc, char* args[]) {
 	CrashHandler_Init();
+	signal(SIGTERM, handleSIGTERM);
 
 	int UpTime = 0;
 
@@ -431,8 +443,6 @@ int main(int argc, char* args[]) {
 
 	printf("[main] APP_QUIT\n");
 	CAppContainer::getInstance()->~CAppContainer();
-	sdlGL.~SDLGL();
-	input.~Input();
 	return 0;
 }
 

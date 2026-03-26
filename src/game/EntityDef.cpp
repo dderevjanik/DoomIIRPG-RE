@@ -6,146 +6,13 @@
 #include "CAppContainer.h"
 #include "App.h"
 #include "EntityDef.h"
+#include "EntityNames.h"
 #include "Enums.h"
 #include "SpriteDefs.h"
 #include "Combat.h"
 #include "JavaStream.h"
 #include "Resource.h"
 #include <yaml-cpp/yaml.h>
-
-// --- Entity type name tables ---
-
-static const char* entityTypeNames[] = {
-    "world",                     // 0  ET_WORLD
-    "player",                    // 1  ET_PLAYER
-    "monster",                   // 2  ET_MONSTER
-    "npc",                       // 3  ET_NPC
-    "playerclip",                // 4  ET_PLAYERCLIP
-    "door",                      // 5  ET_DOOR
-    "item",                      // 6  ET_ITEM
-    "decor",                     // 7  ET_DECOR
-    "env_damage",                // 8  ET_ENV_DAMAGE
-    "corpse",                    // 9  ET_CORPSE
-    "attack_interactive",        // 10 ET_ATTACK_INTERACTIVE
-    "monsterblock_item",         // 11 ET_MONSTERBLOCK_ITEM
-    "spritewall",                // 12 ET_SPRITEWALL
-    "nonobstructing_spritewall", // 13 ET_NONOBSTRUCTING_SPRITEWALL
-    "decor_noclip"               // 14 ET_DECOR_NOCLIP
-};
-static const int numEntityTypes = Enums::ET_MAX;
-
-static const char* entityTypeToString(int type) {
-	if (type >= 0 && type < numEntityTypes) {
-		return entityTypeNames[type];
-	}
-	return "unknown";
-}
-
-static int entityTypeFromString(const std::string& str) {
-	for (int i = 0; i < numEntityTypes; i++) {
-		if (str == entityTypeNames[i]) {
-			return i;
-		}
-	}
-	// Fallback: try parsing as integer
-	try {
-		return std::stoi(str);
-	} catch (...) {
-		return 0;
-	}
-}
-
-// --- Named subtype/parm lookup tables ---
-
-static const char* monsterSubtypeNames[] = {
-    "zombie", "zombie_commando", "lost_soul", "imp", "sawcubus", "pinky",
-    "cacodemon", "sentinel", "mancubus", "revenant", "arch_vile", "sentry_bot",
-    "cyberdemon", "mastermind", "phantom", "boss_vios", "boss_vios2"
-};
-static const int numMonsterSubtypes = 17;
-
-static const char* itemSubtypeNames[] = {
-    "inventory", "weapon", "ammo", "food", "sack", "c_note", "c_string"
-};
-static const int numItemSubtypes = 7;
-
-static const char* doorSubtypeNames[] = {"", "locked", "unlocked"};
-static const int numDoorSubtypes = 3;
-
-static const char* decorSubtypeNames[] = {"misc", "exithall", "mixing", "statue", "", "tombstone", "dynamite", "water_spout", "treadmill"};
-static const int numDecorSubtypes = 9;
-
-static const char* weaponParmNames[] = {
-    "assault_rifle", "chainsaw", "holy_water_pistol",
-    "shooting_sentry_bot", "exploding_sentry_bot",
-    "red_shooting_sentry_bot", "red_exploding_sentry_bot",
-    "super_shotgun", "chaingun", "assault_rifle_with_scope",
-    "plasma_gun", "rocket_launcher", "bfg", "soul_cube", "item"
-};
-static const int numWeaponParms = 15;
-
-static const char* ammoParmNames[] = {"none", "bullets", "shells", "holy_water", "cells", "rockets", "soul_cube"};
-static const int numAmmoParms = 7;
-
-static int lookupName(const std::string& str, const char* names[], int count) {
-	for (int i = 0; i < count; i++) {
-		if (names[i][0] != '\0' && str == names[i])
-			return i;
-	}
-	try {
-		return std::stoi(str);
-	} catch (...) {
-		return 0;
-	}
-}
-
-static int lookupMonsterName(const std::string& str) {
-	// Try dynamic map first (loaded from monsters.yaml)
-	Applet* app = CAppContainer::getInstance()->app;
-	if (app && app->combat) {
-		auto it = app->combat->monsterNameToIndex.find(str);
-		if (it != app->combat->monsterNameToIndex.end())
-			return it->second;
-	}
-	// Fall back to hardcoded table
-	return lookupName(str, monsterSubtypeNames, numMonsterSubtypes);
-}
-
-static int resolveSubtype(int eType, const std::string& str) {
-	switch (eType) {
-		case Enums::ET_MONSTER:
-		case Enums::ET_CORPSE:
-			return lookupMonsterName(str);
-		case Enums::ET_ITEM:
-		case Enums::ET_MONSTERBLOCK_ITEM:
-			return lookupName(str, itemSubtypeNames, numItemSubtypes);
-		case Enums::ET_DOOR:
-			return lookupName(str, doorSubtypeNames, numDoorSubtypes);
-		case Enums::ET_DECOR:
-		case Enums::ET_DECOR_NOCLIP:
-			return lookupName(str, decorSubtypeNames, numDecorSubtypes);
-		default:
-			try {
-				return std::stoi(str);
-			} catch (...) {
-				return 0;
-			}
-	}
-}
-
-static int resolveParm(int eType, int eSubType, const std::string& str) {
-	if (eType == Enums::ET_ITEM || eType == Enums::ET_MONSTERBLOCK_ITEM) {
-		if (eSubType == Enums::ITEM_WEAPON)
-			return lookupName(str, weaponParmNames, numWeaponParms);
-		if (eSubType == Enums::ITEM_AMMO)
-			return lookupName(str, ammoParmNames, numAmmoParms);
-	}
-	try {
-		return std::stoi(str);
-	} catch (...) {
-		return 0;
-	}
-}
 
 // Auto-compute render flags from tile index (for backward compat with binary data and INI defaults)
 static uint32_t computeRenderFlags(int16_t tileIndex) {
@@ -477,9 +344,9 @@ bool EntityDefManager::loadFromYAML(const char* path) {
 		YAML::Node e = eit->second;
 
 		this->list[i].tileIndex = (int16_t)e["tile_index"].as<int>(0);
-		this->list[i].eType = (uint8_t)entityTypeFromString(e["type"].as<std::string>("world").c_str());
-		this->list[i].eSubType = (uint8_t)resolveSubtype(this->list[i].eType, e["subtype"].as<std::string>("0"));
-		this->list[i].parm = (uint8_t)resolveParm(this->list[i].eType, this->list[i].eSubType, e["parm"].as<std::string>("0"));
+		this->list[i].eType = (uint8_t)EntityNames::entityTypeFromString(e["type"].as<std::string>("world"));
+		this->list[i].eSubType = (uint8_t)EntityNames::lookupSubtype(this->list[i].eType, e["subtype"].as<std::string>("0"));
+		this->list[i].parm = (uint8_t)EntityNames::lookupParm(this->list[i].eType, this->list[i].eSubType, e["parm"].as<std::string>("0"));
 
 		// Text resource IDs: support both nested text: group and flat fields
 		if (YAML::Node text = e["text"]) {
