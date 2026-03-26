@@ -31,6 +31,38 @@ struct GameConfig {
 	int xpLinear = 500;
 	int xpCubic = 100;
 
+	// Player starting stats
+	int startingMaxHealth = 100;
+
+	// Level-up stat grants
+	int levelUpHealth = 10;
+	int levelUpDefense = 1;
+	int levelUpStrength = 2;
+	int levelUpAccuracy = 1;
+	int levelUpAgility = 3;
+
+	// Chainsaw strength bonus: every N kills with chainsaw grants +bonusAmount strength
+	int chainsawBonusKills = 30;
+	int chainsawBonusStrength = 2;
+
+	// Out-of-combat cooldown (turns since last combat before "inCombat" clears)
+	int outOfCombatTurns = 4;
+
+	// Scoring formula constants
+	int scorePerLevel = 1000;
+	int scoreAllLevelsBonus = 1000;
+	int scoreNoDeathsBonus = 1000;
+	int scoreDeathPenaltyBase = 5;
+	int scoreDeathPenaltyMult = 50;
+	int scoreManyDeathsPenalty = 250;
+	int scoreDeathThreshold = 10;
+	int scoreTimeBonusMinutes = 120;
+	int scoreTimeBonusMult = 15;
+	int scoreMoveThreshold = 5000;
+	int scoreMoveDivisor = 2;
+	int scorePerSecret = 1000;
+	int scoreAllSecretsBonus = 1000;
+
 	// Entity limits
 	int maxEntities = 275;
 

@@ -227,6 +227,39 @@ int main(int argc, char* args[]) {
 				gc.maxEntities = game["max_entities"].as<int>(gc.maxEntities);
 				gc.maxWeaponButtons = game["max_weapon_buttons"].as<int>(gc.maxWeaponButtons);
 
+				// Player balance
+				gc.startingMaxHealth = game["starting_max_health"].as<int>(gc.startingMaxHealth);
+				gc.outOfCombatTurns = game["out_of_combat_turns"].as<int>(gc.outOfCombatTurns);
+
+				if (YAML::Node lu = game["level_up"]) {
+					gc.levelUpHealth = lu["health"].as<int>(gc.levelUpHealth);
+					gc.levelUpDefense = lu["defense"].as<int>(gc.levelUpDefense);
+					gc.levelUpStrength = lu["strength"].as<int>(gc.levelUpStrength);
+					gc.levelUpAccuracy = lu["accuracy"].as<int>(gc.levelUpAccuracy);
+					gc.levelUpAgility = lu["agility"].as<int>(gc.levelUpAgility);
+				}
+
+				if (YAML::Node cs = game["chainsaw_bonus"]) {
+					gc.chainsawBonusKills = cs["kills"].as<int>(gc.chainsawBonusKills);
+					gc.chainsawBonusStrength = cs["strength"].as<int>(gc.chainsawBonusStrength);
+				}
+
+				if (YAML::Node sc = game["scoring"]) {
+					gc.scorePerLevel = sc["per_level"].as<int>(gc.scorePerLevel);
+					gc.scoreAllLevelsBonus = sc["all_levels_bonus"].as<int>(gc.scoreAllLevelsBonus);
+					gc.scoreNoDeathsBonus = sc["no_deaths_bonus"].as<int>(gc.scoreNoDeathsBonus);
+					gc.scoreDeathPenaltyBase = sc["death_penalty_base"].as<int>(gc.scoreDeathPenaltyBase);
+					gc.scoreDeathPenaltyMult = sc["death_penalty_mult"].as<int>(gc.scoreDeathPenaltyMult);
+					gc.scoreManyDeathsPenalty = sc["many_deaths_penalty"].as<int>(gc.scoreManyDeathsPenalty);
+					gc.scoreDeathThreshold = sc["death_threshold"].as<int>(gc.scoreDeathThreshold);
+					gc.scoreTimeBonusMinutes = sc["time_bonus_minutes"].as<int>(gc.scoreTimeBonusMinutes);
+					gc.scoreTimeBonusMult = sc["time_bonus_mult"].as<int>(gc.scoreTimeBonusMult);
+					gc.scoreMoveThreshold = sc["move_threshold"].as<int>(gc.scoreMoveThreshold);
+					gc.scoreMoveDivisor = sc["move_divisor"].as<int>(gc.scoreMoveDivisor);
+					gc.scorePerSecret = sc["per_secret"].as<int>(gc.scorePerSecret);
+					gc.scoreAllSecretsBonus = sc["all_secrets_bonus"].as<int>(gc.scoreAllSecretsBonus);
+				}
+
 				if (YAML::Node xp = game["xp_formula"]) {
 					gc.xpLinear = xp["linear"].as<int>(gc.xpLinear);
 					gc.xpCubic = xp["cubic"].as<int>(gc.xpCubic);

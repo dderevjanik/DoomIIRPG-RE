@@ -890,7 +890,42 @@ static bool convertEntities(ZipFile& zip, const std::string& outDir) {
 	out << YAML::Comment("Entity definitions");
 	out << YAML::Comment(std::to_string(count) + " entities with type, rendering, and animation data");
 	out << YAML::Newline;
+
+	// Emit entity type/subtype lookup tables (used by EntityNames at runtime)
 	out << YAML::BeginMap;
+
+	out << YAML::Key << "entity_types" << YAML::Value << YAML::BeginMap;
+	for (int i = 0; i < NUM_ENTITY_TYPES; i++) {
+		out << YAML::Key << ENTITY_TYPE_NAMES[i] << YAML::Value << i;
+	}
+	out << YAML::EndMap;
+
+	out << YAML::Key << "monster_subtypes" << YAML::Value << YAML::BeginMap;
+	for (int i = 0; i < NUM_MONSTER_NAMES; i++) {
+		out << YAML::Key << MONSTER_NAMES[i] << YAML::Value << i;
+	}
+	out << YAML::EndMap;
+
+	out << YAML::Key << "item_subtypes" << YAML::Value << YAML::BeginMap;
+	for (int i = 0; i < NUM_ITEM_SUBTYPES; i++) {
+		out << YAML::Key << ITEM_SUBTYPE_NAMES[i] << YAML::Value << i;
+	}
+	out << YAML::EndMap;
+
+	out << YAML::Key << "door_subtypes" << YAML::Value << YAML::BeginMap;
+	for (int i = 0; i < NUM_DOOR_SUBTYPES; i++) {
+		if (DOOR_SUBTYPE_NAMES[i][0] != '\0')
+			out << YAML::Key << DOOR_SUBTYPE_NAMES[i] << YAML::Value << i;
+	}
+	out << YAML::EndMap;
+
+	out << YAML::Key << "decor_subtypes" << YAML::Value << YAML::BeginMap;
+	for (int i = 0; i < NUM_DECOR_SUBTYPES; i++) {
+		if (DECOR_SUBTYPE_NAMES[i][0] != '\0')
+			out << YAML::Key << DECOR_SUBTYPE_NAMES[i] << YAML::Value << i;
+	}
+	out << YAML::EndMap;
+
 	out << YAML::Key << "entities" << YAML::Value;
 	out << YAML::BeginMap;
 
@@ -1091,6 +1126,17 @@ static bool convertTables(ZipFile& zip, const std::string& outDir) {
 			wout << YAML::Key << weaponName(i) << YAML::Value << YAML::BeginMap;
 			wout << YAML::Key << "index" << YAML::Value << i;
 
+			// View tile (first-person weapon sprite tile index)
+			if (i < NUM_PLAYER_WEAPONS) {
+				int vt;
+				switch (i) {
+					case 5:  vt = 13; break; // red_shooting_sentry_bot
+					case 6:  vt = 14; break; // red_exploding_sentry_bot
+					default: vt = 1 + i; break;
+				}
+				wout << YAML::Key << "view_tile" << YAML::Value << std::to_string(vt);
+			}
+
 			// Attack sound (hardcoded defaults per weapon)
 			{
 				const char* snd = nullptr;
@@ -1184,6 +1230,21 @@ static bool convertTables(ZipFile& zip, const std::string& outDir) {
 		}
 
 		wout << YAML::EndMap;
+
+		// Monster attack name → index lookup (indices 15-31)
+		wout << YAML::Key << "monster_attacks" << YAML::Value << YAML::BeginMap;
+		for (int i = NUM_PLAYER_WEAPONS; i < WeaponNames::COUNT; i++) {
+			wout << YAML::Key << WeaponNames::TABLE[i] << YAML::Value << i;
+		}
+		wout << YAML::EndMap;
+
+		// Ammo parm name → index lookup
+		wout << YAML::Key << "ammo_parms" << YAML::Value << YAML::BeginMap;
+		for (int i = 0; i < NUM_AMMO_PARMS; i++) {
+			wout << YAML::Key << AMMO_PARM_NAMES[i] << YAML::Value << i;
+		}
+		wout << YAML::EndMap;
+
 		wout << YAML::EndMap;
 
 		std::string wpPath = outDir + "/weapons.yaml";
@@ -2218,6 +2279,74 @@ static bool generateGameYaml(const std::string& outDir) {
 	yaml += "      items: [15, 16, 17, 18, 19]\n";
 	yaml += "    - map: 10\n";
 	yaml += "      items: [9, 10, 11, 12, 13]\n";
+	yaml += "\n";
+	yaml += "  # Player starting stats\n";
+	yaml += "  starting_max_health: 100\n";
+	yaml += "\n";
+	yaml += "  # Level-up stat grants\n";
+	yaml += "  level_up:\n";
+	yaml += "    health: 10\n";
+	yaml += "    defense: 1\n";
+	yaml += "    strength: 2\n";
+	yaml += "    accuracy: 1\n";
+	yaml += "    agility: 3\n";
+	yaml += "\n";
+	yaml += "  # Chainsaw strength bonus: every N kills grants +strength\n";
+	yaml += "  chainsaw_bonus:\n";
+	yaml += "    kills: 30\n";
+	yaml += "    strength: 2\n";
+	yaml += "\n";
+	yaml += "  # Out-of-combat cooldown (turns since last combat)\n";
+	yaml += "  out_of_combat_turns: 4\n";
+	yaml += "\n";
+	yaml += "  # XP formula coefficients: linear*n + cubic*((n-1)^3 + (n-1))\n";
+	yaml += "  xp_formula:\n";
+	yaml += "    linear: 500\n";
+	yaml += "    cubic: 100\n";
+	yaml += "\n";
+	yaml += "  # Inventory/ammo capacity caps\n";
+	yaml += "  caps:\n";
+	yaml += "    credits: 9999\n";
+	yaml += "    inventory: 999\n";
+	yaml += "    ammo: 100\n";
+	yaml += "    bot_fuel: 5\n";
+	yaml += "\n";
+	yaml += "  # Scoring formula constants\n";
+	yaml += "  scoring:\n";
+	yaml += "    per_level: 1000\n";
+	yaml += "    all_levels_bonus: 1000\n";
+	yaml += "    no_deaths_bonus: 1000\n";
+	yaml += "    death_penalty_base: 5\n";
+	yaml += "    death_penalty_mult: 50\n";
+	yaml += "    many_deaths_penalty: 250\n";
+	yaml += "    death_threshold: 10\n";
+	yaml += "    time_bonus_minutes: 120\n";
+	yaml += "    time_bonus_mult: 15\n";
+	yaml += "    move_threshold: 5000\n";
+	yaml += "    move_divisor: 2\n";
+	yaml += "    per_secret: 1000\n";
+	yaml += "    all_secrets_bonus: 1000\n";
+	yaml += "\n";
+	yaml += "# Config enum name/value mappings (used by settings UI)\n";
+	yaml += "config_enums:\n";
+	yaml += "  difficulty:\n";
+	yaml += "    baby: 0\n";
+	yaml += "    normal: 1\n";
+	yaml += "    hard: 2\n";
+	yaml += "    nightmare: 3\n";
+	yaml += "  language:\n";
+	yaml += "    english: 0\n";
+	yaml += "    french: 1\n";
+	yaml += "    german: 2\n";
+	yaml += "    italian: 3\n";
+	yaml += "    spanish: 4\n";
+	yaml += "  window_mode:\n";
+	yaml += "    windowed: 0\n";
+	yaml += "    fullscreen: 1\n";
+	yaml += "    borderless: 2\n";
+	yaml += "  control_layout:\n";
+	yaml += "    chevrons: 0\n";
+	yaml += "    dpad: 1\n";
 
 	std::string path = outDir + "/game.yaml";
 	if (!writeString(path, yaml)) {

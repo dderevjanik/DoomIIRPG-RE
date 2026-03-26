@@ -89,7 +89,7 @@ void Player::advanceTurn() {
 		b = true;
 	}
 
-	if (this->inCombat && this->totalMoves - this->lastCombatTurn >= 4) {
+	if (this->inCombat && this->totalMoves - this->lastCombatTurn >= CAppContainer::getInstance()->gameConfig.outOfCombatTurns) {
 		this->inCombat = false;
 	}
 
@@ -308,7 +308,8 @@ void Player::addLevel() {
 	app->localization->addTextArg(this->level);
 	app->localization->composeText((short)0, (short)104, textBuff);
 
-	int n = 10;
+	const GameConfig& gc = CAppContainer::getInstance()->gameConfig;
+	int n = gc.levelUpHealth;
 	stat = this->baseCe->getStat(1);
 	if (stat + n > 999) {
 		n = 999 - stat;
@@ -321,7 +322,7 @@ void Player::addLevel() {
 	}
 
 	this->baseCe->getStat(Enums::STAT_DEFENSE);
-	stat = this->modifyStat(Enums::STAT_DEFENSE, 1);
+	stat = this->modifyStat(Enums::STAT_DEFENSE, gc.levelUpDefense);
 	if (stat != 0) {
 		app->localization->resetTextArgs();
 		app->localization->addTextArg(stat);
@@ -329,7 +330,7 @@ void Player::addLevel() {
 	}
 
 	this->baseCe->getStat(Enums::STAT_STRENGTH);
-	stat = this->modifyStat(Enums::STAT_STRENGTH, 2);
+	stat = this->modifyStat(Enums::STAT_STRENGTH, gc.levelUpStrength);
 	if (stat != 0) {
 		app->localization->resetTextArgs();
 		app->localization->addTextArg(stat);
@@ -337,7 +338,7 @@ void Player::addLevel() {
 	}
 
 	this->baseCe->getStat(Enums::STAT_ACCURACY);
-	stat = this->modifyStat(Enums::STAT_ACCURACY, 1);
+	stat = this->modifyStat(Enums::STAT_ACCURACY, gc.levelUpAccuracy);
 	if (stat != 0) {
 		app->localization->resetTextArgs();
 		app->localization->addTextArg(stat);
@@ -345,7 +346,7 @@ void Player::addLevel() {
 	}
 
 	this->baseCe->getStat(Enums::STAT_AGILITY);
-	stat = this->modifyStat(Enums::STAT_AGILITY, 3);
+	stat = this->modifyStat(Enums::STAT_AGILITY, gc.levelUpAgility);
 	if (stat != 0) {
 		app->localization->resetTextArgs();
 		app->localization->addTextArg(stat);
@@ -377,45 +378,46 @@ int Player::calcLevelXP(int n) {
 }
 
 int Player::calcScore() {
+	const GameConfig& gc = CAppContainer::getInstance()->gameConfig;
 
 	int n = 0;
 	bool b = true;
 	int i;
 	for (i = 0; i <= 8; ++i) {
 		if ((this->killedMonstersLevels & 1 << i) != 0x0) {
-			n += 1000;
+			n += gc.scorePerLevel;
 		} else {
 			b = false;
 		}
 	}
 	if (b) {
-		n += 1000;
+		n += gc.scoreAllLevelsBonus;
 	}
 	if (this->totalDeaths == 0) {
-		n += 1000;
-	} else if (this->totalDeaths < 10) {
-		n += (5 - this->totalDeaths) * 50;
+		n += gc.scoreNoDeathsBonus;
+	} else if (this->totalDeaths < gc.scoreDeathThreshold) {
+		n += (gc.scoreDeathPenaltyBase - this->totalDeaths) * gc.scoreDeathPenaltyMult;
 	} else {
-		n -= 250;
+		n -= gc.scoreManyDeathsPenalty;
 	}
 	int n2 = (this->totalTime + (app->gameTime - this->playTime)) / 60000;
-	if (n2 < 120) {
-		n += (120 - n2) * 15;
+	if (n2 < gc.scoreTimeBonusMinutes) {
+		n += (gc.scoreTimeBonusMinutes - n2) * gc.scoreTimeBonusMult;
 	}
-	if (this->totalMoves < 5000) {
-		n += (5000 - this->totalMoves) / 2;
+	if (this->totalMoves < gc.scoreMoveThreshold) {
+		n += (gc.scoreMoveThreshold - this->totalMoves) / gc.scoreMoveDivisor;
 	}
 	bool b2 = true;
 	while (i <= 8) {
 		if ((this->foundSecretsLevels & 1 << i) != 0x0) {
-			n += 1000;
+			n += gc.scorePerSecret;
 		} else {
 			b2 = false;
 		}
 		++i;
 	}
 	if (b2) {
-		n += 1000;
+		n += gc.scoreAllSecretsBonus;
 	}
 	return n;
 }
@@ -564,13 +566,16 @@ void Player::reset() {
 	this->weapons = 0;
 	this->foundSecretsLevels = 0;
 	this->killedMonstersLevels = 0;
-	this->baseCe->setStat(Enums::STAT_MAX_HEALTH, 100);
-	this->setStatsAccordingToCharacterChoice();
-	if (app->game->difficulty == Enums::DIFFICULTY_NORMAL) {
-		this->baseCe->setStat(Enums::STAT_DEFENSE, 0);
+	{
+		const GameConfig& gc = CAppContainer::getInstance()->gameConfig;
+		this->baseCe->setStat(Enums::STAT_MAX_HEALTH, gc.startingMaxHealth);
+		this->setStatsAccordingToCharacterChoice();
+		if (app->game->difficulty == Enums::DIFFICULTY_NORMAL) {
+			this->baseCe->setStat(Enums::STAT_DEFENSE, 0);
+		}
+		this->updateStats();
+		this->ce->setStat(Enums::STAT_HEALTH, gc.startingMaxHealth);
 	}
-	this->updateStats();
-	this->ce->setStat(Enums::STAT_HEALTH, 100);
 	this->baseCe->setStat(Enums::STAT_ARMOR, 0);
 	this->ce->setStat(Enums::STAT_ARMOR, 0);
 	this->totalTime = 0;
@@ -2381,13 +2386,14 @@ void Player::exitTargetPractice() {
 void Player::usedChainsaw(bool b) {
 
 
+	const GameConfig& gc = CAppContainer::getInstance()->gameConfig;
 	this->chainsawStrengthBonusCount++;
 	if (b && (app->combat->crFlags & 0x2) != 0x0) {
 		this->chainsawStrengthBonusCount++;
 	}
-	if (this->chainsawStrengthBonusCount >= 30) {
-		this->chainsawStrengthBonusCount %= 30;
-		int modifyStat = this->modifyStat(4, 2);
+	if (this->chainsawStrengthBonusCount >= gc.chainsawBonusKills) {
+		this->chainsawStrengthBonusCount %= gc.chainsawBonusKills;
+		int modifyStat = this->modifyStat(4, gc.chainsawBonusStrength);
 		if (modifyStat != 0) {
 			app->localization->resetTextArgs();
 			app->localization->addTextArg(modifyStat);
