@@ -334,6 +334,13 @@ int main(int argc, char* args[]) {
 					}
 				}
 
+				if (YAML::Node rm = game["render_modes"]) {
+					gc.renderModes.clear();
+					for (auto it = rm.begin(); it != rm.end(); ++it) {
+						gc.renderModes[it->first.as<std::string>()] = it->second.as<int>(0);
+					}
+				}
+
 				if (YAML::Node ji = game["joke_items"]) {
 					for (const auto& entry : ji) {
 						int mapId = entry["map"].as<int>();

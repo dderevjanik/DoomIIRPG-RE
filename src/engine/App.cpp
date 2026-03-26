@@ -488,18 +488,9 @@ static int tileFromName(const std::string& name) {
 }
 
 static int renderModeFromName(const std::string& name) {
-	if (name == "normal") return 0;
-	if (name == "blend25") return 1;
-	if (name == "blend50") return 2;
-	if (name == "add") return 3;
-	if (name == "add75") return 4;
-	if (name == "add50") return 5;
-	if (name == "add25") return 6;
-	if (name == "sub") return 7;
-	if (name == "perf") return 9;
-	if (name == "none") return 10;
-	if (name == "blend75") return 12;
-	if (name == "blend_special_alpha") return 13;
+	auto& modes = CAppContainer::getInstance()->gameConfig.renderModes;
+	auto it = modes.find(name);
+	if (it != modes.end()) return it->second;
 	try { return std::stoi(name); } catch (...) { return 0; }
 }
 

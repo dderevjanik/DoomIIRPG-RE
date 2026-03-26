@@ -197,6 +197,77 @@ static const int NUM_DECOR_SUBTYPES = 9;
 // Player weapon names (first 15 of WeaponNames::TABLE)
 static const int NUM_PLAYER_WEAPONS = 15;
 
+// Weapon HUD data (tex_row, show_ammo)
+struct WeaponHudData { int texRow; bool showAmmo; };
+static const WeaponHudData WEAPON_HUD[] = {
+	{0, true},   // 0: assault_rifle
+	{1, false},  // 1: chainsaw
+	{2, true},   // 2: holy_water_pistol
+	{10, true},  // 3: shooting_sentry_bot
+	{10, true},  // 4: exploding_sentry_bot
+	{11, true},  // 5: red_shooting_sentry_bot
+	{11, true},  // 6: red_exploding_sentry_bot
+	{3, true},   // 7: super_shotgun
+	{4, true},   // 8: chaingun
+	{5, true},   // 9: assault_rifle_with_scope
+	{6, true},   // 10: plasma_gun
+	{7, true},   // 11: rocket_launcher
+	{8, true},   // 12: bfg
+	{9, true},   // 13: soul_cube
+	{12, true},  // 14: item
+};
+
+// Weapon behavior flags per weapon index
+struct WeaponBehaviorData {
+	bool vibrateAnim;
+	bool chainsawHitEvent;
+	bool isThrowableItem;
+	bool showFlashFrame;
+	bool hasFlashSprite;
+	bool soulAmmoDisplay;
+	bool isMelee;
+	bool noRecoil;
+	bool splashDamage;
+	int splashDivisor;
+	bool noBloodOnHit;
+	bool drawDoubleSprite;
+	bool consumeOnUse;
+	bool chargeAttack;
+	bool flipSpriteOnEnd;
+};
+static const WeaponBehaviorData WEAPON_BEHAVIOR[] = {
+	// 0: assault_rifle
+	{false, false, false, false, true,  false, false, false, false, 0, false, false, false, false, false},
+	// 1: chainsaw
+	{true,  true,  false, false, false, false, true,  true,  false, 0, false, false, false, false, false},
+	// 2: holy_water_pistol
+	{false, false, false, false, false, false, false, false, false, 0, true,  false, false, false, false},
+	// 3: shooting_sentry_bot
+	{false, false, false, false, false, false, false, false, false, 0, false, false, false, false, false},
+	// 4: exploding_sentry_bot
+	{false, false, false, false, false, false, false, true,  true,  2, false, false, true,  false, false},
+	// 5: red_shooting_sentry_bot
+	{false, false, false, false, false, false, false, false, false, 0, false, false, false, false, false},
+	// 6: red_exploding_sentry_bot
+	{false, false, false, false, false, false, false, true,  true,  2, false, false, true,  false, false},
+	// 7: super_shotgun
+	{false, false, false, false, true,  false, false, false, false, 0, false, false, false, false, false},
+	// 8: chaingun
+	{false, false, false, true,  true,  false, false, false, false, 0, false, true,  false, false, false},
+	// 9: assault_rifle_with_scope
+	{false, false, false, false, false, false, false, false, false, 0, false, false, false, false, false},
+	// 10: plasma_gun
+	{false, false, false, false, false, false, false, false, false, 0, false, false, false, false, false},
+	// 11: rocket_launcher
+	{false, false, false, false, false, false, false, false, true,  2, false, false, false, false, false},
+	// 12: bfg
+	{false, false, false, false, false, false, false, false, true,  4, false, false, false, false, false},
+	// 13: soul_cube
+	{false, false, false, true,  false, true,  false, false, false, 0, false, false, false, true,  true},
+	// 14: item
+	{false, false, true,  false, false, false, false, false, false, 0, false, false, true,  false, false},
+};
+
 // Ammo parm names (ammo subtype parm values)
 static const char* AMMO_PARM_NAMES[] = {"none", "bullets", "shells", "holy_water", "cells", "rockets", "soul_cube"};
 static const int NUM_AMMO_PARMS = 7;
@@ -1226,6 +1297,46 @@ static bool convertTables(ZipFile& zip, const std::string& outDir) {
 				}
 			}
 
+			// HUD data (player weapons only)
+			if (i < NUM_PLAYER_WEAPONS) {
+				const auto& h = WEAPON_HUD[i];
+				wout << YAML::Key << "hud" << YAML::Value << YAML::BeginMap;
+				wout << YAML::Key << "tex_row" << YAML::Value << h.texRow;
+				wout << YAML::Key << "show_ammo" << YAML::Value << h.showAmmo;
+				wout << YAML::EndMap;
+			}
+
+			// Behavior flags (player weapons only)
+			if (i < NUM_PLAYER_WEAPONS) {
+				const auto& b = WEAPON_BEHAVIOR[i];
+				bool anySet = b.vibrateAnim || b.chainsawHitEvent || b.isThrowableItem ||
+					b.showFlashFrame || b.hasFlashSprite || b.soulAmmoDisplay ||
+					b.isMelee || b.noRecoil || b.splashDamage || b.noBloodOnHit ||
+					b.drawDoubleSprite || b.consumeOnUse || b.chargeAttack ||
+					b.flipSpriteOnEnd;
+				if (anySet) {
+					wout << YAML::Key << "behavior" << YAML::Value << YAML::BeginMap;
+					if (b.vibrateAnim) wout << YAML::Key << "vibrate_anim" << YAML::Value << true;
+					if (b.chainsawHitEvent) wout << YAML::Key << "chainsaw_hit_event" << YAML::Value << true;
+					if (b.isThrowableItem) wout << YAML::Key << "is_throwable_item" << YAML::Value << true;
+					if (b.showFlashFrame) wout << YAML::Key << "show_flash_frame" << YAML::Value << true;
+					if (b.hasFlashSprite) wout << YAML::Key << "has_flash_sprite" << YAML::Value << true;
+					if (b.soulAmmoDisplay) wout << YAML::Key << "soul_ammo_display" << YAML::Value << true;
+					if (b.isMelee) wout << YAML::Key << "is_melee" << YAML::Value << true;
+					if (b.noRecoil) wout << YAML::Key << "no_recoil" << YAML::Value << true;
+					if (b.splashDamage) {
+						wout << YAML::Key << "splash_damage" << YAML::Value << true;
+						wout << YAML::Key << "splash_divisor" << YAML::Value << b.splashDivisor;
+					}
+					if (b.noBloodOnHit) wout << YAML::Key << "no_blood_on_hit" << YAML::Value << true;
+					if (b.drawDoubleSprite) wout << YAML::Key << "draw_double_sprite" << YAML::Value << true;
+					if (b.consumeOnUse) wout << YAML::Key << "consume_on_use" << YAML::Value << true;
+					if (b.chargeAttack) wout << YAML::Key << "charge_attack" << YAML::Value << true;
+					if (b.flipSpriteOnEnd) wout << YAML::Key << "flip_sprite_on_end" << YAML::Value << true;
+					wout << YAML::EndMap;
+				}
+			}
+
 			wout << YAML::EndMap;
 		}
 
@@ -1939,19 +2050,30 @@ static bool convertMenus(ZipFile& zip, const std::string& outDir) {
 
 	YAML::Emitter out;
 	out << YAML::Comment("Menu definitions for DoomIIRPG");
-	out << YAML::Comment("");
-	out << YAML::Comment("Menu types: default, list, confirm, confirm2, main,");
-	out << YAML::Comment("            help, vcenter, notebook, main_list, vending_machine");
-	out << YAML::Comment("");
-	out << YAML::Comment("Item flags: normal, noselect, nodehyphenate, disabled,");
-	out << YAML::Comment("            align_center, showdetails, divider, selector,");
-	out << YAML::Comment("            block_text, highlight, checked,");
-	out << YAML::Comment("            right_arrow, left_arrow, hidden");
-	out << YAML::Comment("");
 	out << YAML::Comment("string_id values are indices into menu strings (group 3)");
 	out << YAML::Comment("goto targets reference menu names instead of numeric IDs");
 	out << YAML::Newline;
 	out << YAML::BeginMap;
+
+	// Emit lookup tables for menu types, actions, and item flags
+	out << YAML::Key << "menu_types" << YAML::Value << YAML::BeginMap;
+	for (int i = 0; i < 10; i++) {
+		out << YAML::Key << MENU_TYPE_NAMES[i] << YAML::Value << i;
+	}
+	out << YAML::EndMap;
+
+	out << YAML::Key << "actions" << YAML::Value << YAML::BeginMap;
+	for (const auto& e : ACTION_TABLE) {
+		out << YAML::Key << e.name << YAML::Value << e.id;
+	}
+	out << YAML::EndMap;
+
+	out << YAML::Key << "item_flags" << YAML::Value << YAML::BeginMap;
+	for (const auto& e : FLAG_TABLE) {
+		out << YAML::Key << e.name << YAML::Value << e.bit;
+	}
+	out << YAML::EndMap;
+
 	out << YAML::Key << "menus" << YAML::Value << YAML::BeginSeq;
 
 	for (int i = 0; i < menuDataCount; i++) {
@@ -2326,6 +2448,21 @@ static bool generateGameYaml(const std::string& outDir) {
 	yaml += "    move_divisor: 2\n";
 	yaml += "    per_secret: 1000\n";
 	yaml += "    all_secrets_bonus: 1000\n";
+	yaml += "\n";
+	yaml += "  # Render mode name -> ID lookup\n";
+	yaml += "  render_modes:\n";
+	yaml += "    normal: 0\n";
+	yaml += "    blend25: 1\n";
+	yaml += "    blend50: 2\n";
+	yaml += "    add: 3\n";
+	yaml += "    add75: 4\n";
+	yaml += "    add50: 5\n";
+	yaml += "    add25: 6\n";
+	yaml += "    sub: 7\n";
+	yaml += "    perf: 9\n";
+	yaml += "    none: 10\n";
+	yaml += "    blend75: 12\n";
+	yaml += "    blend_special_alpha: 13\n";
 	yaml += "\n";
 	yaml += "# Config enum name/value mappings (used by settings UI)\n";
 	yaml += "config_enums:\n";

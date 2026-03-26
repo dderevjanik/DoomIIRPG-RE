@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #include "CAppContainer.h"
 #include <yaml-cpp/yaml.h>
@@ -244,77 +245,62 @@ bool MenuSystem::startup() {
 	return true;
 }
 
-// --- Menu type name tables ---
-static const char* menuTypeNames[] = {
-	"default", "list", "confirm", "confirm2", "main",
-	"help", "vcenter", "notebook", "main_list", "vending_machine"
-};
-static const int numMenuTypes = 10;
+// --- Menu type/action/flag lookup maps (loaded from menus.yaml) ---
+static std::unordered_map<std::string, int> s_menuTypes;
+static std::vector<std::string> s_menuTypesByIndex;
+static std::unordered_map<std::string, int> s_actions;
+static std::unordered_map<int, std::string> s_actionsByValue;
+static std::unordered_map<std::string, int> s_flags;
+
+static void loadMenuLookups(const YAML::Node& config) {
+	if (YAML::Node types = config["menu_types"]) {
+		for (auto it = types.begin(); it != types.end(); ++it) {
+			std::string name = it->first.as<std::string>();
+			int val = it->second.as<int>(0);
+			s_menuTypes[name] = val;
+			if (val >= (int)s_menuTypesByIndex.size())
+				s_menuTypesByIndex.resize(val + 1);
+			s_menuTypesByIndex[val] = name;
+		}
+	}
+	if (YAML::Node acts = config["actions"]) {
+		for (auto it = acts.begin(); it != acts.end(); ++it) {
+			std::string name = it->first.as<std::string>();
+			int val = it->second.as<int>(0);
+			s_actions[name] = val;
+			s_actionsByValue[val] = name;
+		}
+	}
+	if (YAML::Node fl = config["item_flags"]) {
+		for (auto it = fl.begin(); it != fl.end(); ++it) {
+			s_flags[it->first.as<std::string>()] = it->second.as<int>(0);
+		}
+	}
+}
 
 static int menuTypeFromString(const std::string& str) {
-	for (int i = 0; i < numMenuTypes; i++) {
-		if (str == menuTypeNames[i]) return i;
-	}
+	auto it = s_menuTypes.find(str);
+	if (it != s_menuTypes.end()) return it->second;
 	try { return std::stoi(str); } catch (...) { return 0; }
 }
 
 static const char* menuTypeToString(int type) {
-	if (type >= 0 && type < numMenuTypes) return menuTypeNames[type];
+	if (type >= 0 && type < (int)s_menuTypesByIndex.size() && !s_menuTypesByIndex[type].empty())
+		return s_menuTypesByIndex[type].c_str();
 	return "default";
 }
 
-// --- Action name tables ---
-struct ActionEntry { int id; const char* name; };
-static const ActionEntry actionTable[] = {
-	{0, "none"}, {1, "goto"}, {2, "back"}, {3, "load"}, {4, "save"},
-	{5, "backtomain"}, {6, "togsound"}, {7, "newgame"}, {8, "exit"},
-	{9, "changestate"}, {10, "difficulty"}, {11, "returntogame"},
-	{12, "restartlevel"}, {13, "savequit"}, {14, "offersuccess"},
-	{15, "changesfxvolume"}, {16, "showdetails"}, {17, "changemap"},
-	{18, "useitemweapon"}, {19, "select_language"}, {20, "useitemsyring"},
-	{21, "useitemother"}, {22, "continue"}, {23, "main_special"},
-	{24, "confirmuse"}, {25, "saveexit"}, {26, "backtwo"}, {27, "minigame"},
-	{28, "confirmbuy"}, {29, "buydrink"}, {30, "buysnack"},
-	{33, "return_to_player"}, {35, "flip_controls"}, {36, "control_layout"},
-	{37, "changemusicvolume"}, {38, "changealpha"}, {39, "change_vid_mode"},
-	{40, "tog_vsync"}, {41, "change_resolution"}, {42, "apply_changes"},
-	{43, "set_binding"}, {44, "default_bindings"}, {45, "tog_vibration"},
-	{46, "change_vibration_intensity"}, {47, "change_deadzone"}, {48, "tog_tinygl"},
-	{100, "debug"}, {102, "giveall"}, {103, "givemap"}, {104, "noclip"},
-	{105, "disableai"}, {106, "nohelp"}, {107, "godmode"}, {108, "showlocation"},
-	{109, "rframes"}, {110, "rspeeds"}, {111, "rskipflats"}, {112, "rskipcull"},
-	{114, "rskipbsp"}, {115, "rskiplines"}, {116, "rskipsprites"},
-	{117, "ronlyrender"}, {118, "rskipdecals"}, {119, "rskip2dstretch"},
-	{120, "driving_mode"}, {121, "render_mode"}, {122, "equipformap"},
-	{123, "oneshot"}, {124, "debug_font"}, {125, "sys_test"},
-	{126, "skip_minigames"}, {127, "show_heap"},
-};
-static const int numActions = sizeof(actionTable) / sizeof(actionTable[0]);
-
 static int actionFromString(const std::string& str) {
-	for (int i = 0; i < numActions; i++) {
-		if (str == actionTable[i].name) return actionTable[i].id;
-	}
+	auto it = s_actions.find(str);
+	if (it != s_actions.end()) return it->second;
 	try { return std::stoi(str); } catch (...) { return 0; }
 }
 
 static const char* actionToString(int id) {
-	for (int i = 0; i < numActions; i++) {
-		if (actionTable[i].id == id) return actionTable[i].name;
-	}
+	auto it = s_actionsByValue.find(id);
+	if (it != s_actionsByValue.end()) return it->second.c_str();
 	return "none";
 }
-
-// --- Flag name tables ---
-struct FlagEntry { int bit; const char* name; };
-static const FlagEntry flagTable[] = {
-	{0x0001, "noselect"}, {0x0002, "nodehyphenate"}, {0x0004, "disabled"},
-	{0x0008, "align_center"}, {0x0020, "showdetails"}, {0x0040, "divider"},
-	{0x0080, "selector"}, {0x0100, "block_text"}, {0x0200, "highlight"},
-	{0x0400, "checked"}, {0x2000, "right_arrow"}, {0x4000, "left_arrow"},
-	{0x8000, "hidden"},
-};
-static const int numFlags = sizeof(flagTable) / sizeof(flagTable[0]);
 
 static int flagsFromString(const std::string& str) {
 	if (str == "normal" || str == "0") return 0;
@@ -324,14 +310,12 @@ static int flagsFromString(const std::string& str) {
 		size_t end = str.find(',', start);
 		if (end == std::string::npos) end = str.size();
 		std::string token = str.substr(start, end - start);
-		// trim
 		while (!token.empty() && token[0] == ' ') token.erase(0, 1);
 		while (!token.empty() && token.back() == ' ') token.pop_back();
-		bool found = false;
-		for (int i = 0; i < numFlags; i++) {
-			if (token == flagTable[i].name) { result |= flagTable[i].bit; found = true; break; }
-		}
-		if (!found) {
+		auto it = s_flags.find(token);
+		if (it != s_flags.end()) {
+			result |= it->second;
+		} else {
 			try { result |= std::stoi(token, nullptr, 0); } catch (...) {}
 		}
 		start = end + 1;
@@ -342,10 +326,10 @@ static int flagsFromString(const std::string& str) {
 static std::string flagsToString(int flags) {
 	if (flags == 0) return "normal";
 	std::string result;
-	for (int i = 0; i < numFlags; i++) {
-		if (flags & flagTable[i].bit) {
+	for (auto& kv : s_flags) {
+		if (flags & kv.second) {
 			if (!result.empty()) result += ",";
-			result += flagTable[i].name;
+			result += kv.first;
 		}
 	}
 	return result.empty() ? "normal" : result;
@@ -462,6 +446,9 @@ bool MenuSystem::loadMenusFromYAML(const char* path) {
 		printf("[menu] failed to load %s: %s\n", path, e.what());
 		return false;
 	}
+
+	// Load lookup tables from YAML sections (menu_types, actions, item_flags)
+	loadMenuLookups(config);
 
 	YAML::Node menus = config["menus"];
 	if (!menus || !menus.IsSequence() || menus.size() == 0) {
