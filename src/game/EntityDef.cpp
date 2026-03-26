@@ -7,297 +7,10 @@
 #include "App.h"
 #include "EntityDef.h"
 #include "EntityNames.h"
-#include "Enums.h"
-#include "SpriteDefs.h"
 #include "Combat.h"
 #include "JavaStream.h"
 #include "Resource.h"
 #include <yaml-cpp/yaml.h>
-
-// Auto-compute render flags from tile index (for backward compat with binary data and INI defaults)
-static uint32_t computeRenderFlags(int16_t tileIndex) {
-	uint32_t flags = EntityDef::RFLAG_NONE;
-	int n = tileIndex;
-
-	// Floaters: Sentinel (44-46), Lost Soul (29-31), Cacodemon (41-43)
-	if ((n >= SpriteDefs::getIndex("monster_sentinel") && n <= SpriteDefs::getIndex("monster_sentinel3")) ||
-	    (n >= SpriteDefs::getIndex("monster_lost_soul") && n <= SpriteDefs::getIndex("monster_lost_soul3")) ||
-	    (n >= SpriteDefs::getIndex("monster_cacodemon") && n <= SpriteDefs::getIndex("monster_cacodemon3"))) {
-		flags |= EntityDef::RFLAG_FLOATER;
-	}
-
-	// Gun flare: Mancubus (38-40), Revenant (35-37), Sentry Bot (19), Red Sentry Bot (18),
-	//            Cyberdemon (54), Mastermind (57)
-	if ((n >= SpriteDefs::getIndex("monster_mancubus") && n <= SpriteDefs::getIndex("monster_mancubus3")) ||
-	    (n >= SpriteDefs::getIndex("monster_revenant") && n <= SpriteDefs::getIndex("monster_revenant3")) ||
-	    n == SpriteDefs::getIndex("monster_sentry_bot") || n == SpriteDefs::getIndex("monster_red_sentry_bot") ||
-	    n == SpriteDefs::getIndex("boss_cyberdemon") || n == SpriteDefs::getIndex("boss_mastermind")) {
-		flags |= EntityDef::RFLAG_GUN_FLARE;
-	}
-
-	// Special boss: Mastermind (57), Arachnotron (53), Boss Pinky (56), VIOS (58-62)
-	if (n == SpriteDefs::getIndex("boss_mastermind") || n == SpriteDefs::getIndex("monster_arachnotron") ||
-	    n == SpriteDefs::getIndex("boss_pinky") || (n >= SpriteDefs::getIndex("boss_vios") && n <= SpriteDefs::getIndex("boss_vios5"))) {
-		flags |= EntityDef::RFLAG_SPECIAL_BOSS;
-	}
-
-	// NPC: tile range 65-80
-	if (n >= SpriteDefs::getRange("first_npc") && n <= SpriteDefs::getRange("last_npc")) {
-		flags |= EntityDef::RFLAG_NPC;
-	}
-
-	// Imp-like: Imp (20-22)
-	if (n >= SpriteDefs::getIndex("monster_imp") && n <= SpriteDefs::getIndex("monster_imp3")) {
-		flags |= EntityDef::RFLAG_IMP_TYPE;
-	}
-
-	// Revenant-like: Revenant (35-37)
-	if (n >= SpriteDefs::getIndex("monster_revenant") && n <= SpriteDefs::getIndex("monster_revenant3")) {
-		flags |= EntityDef::RFLAG_REVENANT_TYPE;
-	}
-
-	return flags;
-}
-
-// Auto-compute default fear eye offsets from monster subtype
-static EntityDef::FearEyeData computeDefaultFearEyes(uint8_t eSubType) {
-	EntityDef::FearEyeData d;
-	switch (eSubType) {
-		case Enums::MONSTER_ARCH_VILE:
-			d.eyeL = -3;
-			d.eyeR = 3;
-			d.zAdd = 403;
-			d.zIdlePre = 48;
-			break;
-		case Enums::MONSTER_SAW_GOBLIN:
-			d.eyeL = -3;
-			d.eyeR = 3;
-			d.zAdd = 388;
-			break;
-		case Enums::MONSTER_IMP:
-			d.eyeL = -3;
-			d.eyeR = 3;
-			d.zAdd = 294;
-			break;
-		case Enums::MONSTER_LOST_SOUL:
-			d.eyeL = -4;
-			d.eyeR = 4;
-			d.zAdd = -192;
-			d.zAlwaysPre = 192;
-			break;
-		case Enums::MONSTER_MANCUBUS:
-			d.eyeL = -3;
-			d.eyeR = 3;
-			d.zAdd = 280;
-			break;
-		case Enums::MONSTER_PINKY:
-			d.eyeL = -5;
-			d.eyeR = 5;
-			d.zAdd = 35;
-			break;
-		case Enums::MONSTER_CACODEMON:
-			d.eyeL = 0;
-			d.eyeR = -1;
-			d.zAdd = 32;
-			d.singleEye = true;
-			break;
-		case Enums::MONSTER_REVENANT:
-			d.eyeL = -2;
-			d.eyeR = 5;
-			d.zAdd = 324;
-			d.zAlwaysPre = 160;
-			d.zIdlePre = 32;
-			d.eyeLFlip = -5;
-			d.eyeRFlip = 2;
-			break;
-		case Enums::MONSTER_SENTINEL:
-			d.eyeL = -1;
-			d.eyeR = 4;
-			d.zAdd = 274;
-			break;
-		default:
-			break;
-	}
-	return d;
-}
-
-// Auto-compute default gun flare offsets from monster subtype
-static EntityDef::GunFlareData computeDefaultGunFlare(uint8_t eSubType) {
-	EntityDef::GunFlareData d;
-	switch (eSubType) {
-		case Enums::MONSTER_MANCUBUS:
-			d.dualFlare = true;
-			d.flash1X = -24;
-			d.flash1Z = 160;
-			d.flash2X = 22;
-			d.flash2Z = 128;
-			break;
-		case Enums::MONSTER_REVENANT:
-			d.dualFlare = true;
-			d.flash1X = -9;
-			d.flash1Z = 736;
-			d.flash2X = 15;
-			d.flash2Z = 736;
-			break;
-		case Enums::MONSTER_SENTRY_BOT:
-			d.flash2Z = -64;
-			break;
-		case Enums::BOSS_CYBERDEMON:
-			d.flash2X = 14;
-			d.flash2Z = 352;
-			break;
-		default:
-			break;
-	}
-	return d;
-}
-
-// Auto-compute default body part offsets from monster subtype and entity type
-static EntityDef::BodyPartData computeDefaultBodyParts(uint8_t eType, uint8_t eSubType) {
-	EntityDef::BodyPartData d;
-	if (eType == Enums::ET_MONSTER) {
-		switch (eSubType) {
-			case Enums::MONSTER_REVENANT:
-				d.idleTorsoZ = -30;
-				d.idleHeadZ = 140;
-				d.walkHeadZ = 160;
-				d.attackHeadZ = 20;
-				d.attackHeadX = 2;
-				d.attackRevAtk2TorsoZ = 130;
-				break;
-			case Enums::MONSTER_ARCH_VILE:
-				d.idleTorsoZ = -36;
-				d.idleHeadZ = 109;
-				d.walkTorsoZ = -36;
-				d.walkHeadZ = 109;
-				d.flipTorsoWalk = true;
-				d.attackTorsoZF0 = 288;
-				d.noHeadOnAttack = true; // ArchVile hides head in attack (n19=0)
-				break;
-			case Enums::MONSTER_SAW_GOBLIN:
-				d.attackTorsoZF0 = 96;
-				d.attackTorsoZF1 = -100;
-				d.attackHeadZ = 16;
-				d.attackHeadX = 0;
-				break;
-			case Enums::MONSTER_MANCUBUS:
-				d.attackHeadZ = -112;
-				d.attackHeadX = 7;
-				d.noHeadOnMancAtk = true;
-				break;
-			case Enums::MONSTER_PINKY:
-				d.noHeadOnBack = true;
-				break;
-			case Enums::MONSTER_ZOMBIE:
-				d.noHeadOnAttack = true;
-				break;
-			case Enums::MONSTER_IMP:
-				d.noHeadOnAttack = true;
-				break;
-			case Enums::MONSTER_SENTRY_BOT:
-				d.sentryHeadFlip = true;
-				break;
-			case Enums::BOSS_CYBERDEMON:
-				d.idleTorsoZ = -30;
-				d.idleHeadZ = -15;
-				break;
-			default:
-				break;
-		}
-	} else if (eType == Enums::ET_NPC) {
-		// NPC defaults (specific NPCs get overrides in INI)
-		d.idleTorsoZ = -18;
-		d.flipTorsoWalk = true;
-	}
-	return d;
-}
-
-// Auto-compute default floater rendering data from monster subtype
-static EntityDef::FloaterData computeDefaultFloater(uint8_t eSubType) {
-	EntityDef::FloaterData d;
-	switch (eSubType) {
-		case Enums::MONSTER_SENTINEL:
-			d.type = EntityDef::FloaterData::FLOATER_MULTIPART;
-			d.backViewFrame = 6;
-			d.idleFrontFrame = 2;
-			d.headZOffset = -11;
-			d.hasDeadLoot = true;
-			break;
-		case Enums::MONSTER_LOST_SOUL:
-			d.zOffset = 192;
-			d.hasIdleFrameIncrement = true;
-			break;
-		case Enums::MONSTER_CACODEMON:
-			d.hasBackExtraSprite = true;
-			d.backExtraSpriteIdx = 7;
-			break;
-		default:
-			break;
-	}
-	return d;
-}
-
-// Auto-compute default special boss rendering data from tile index and subtype
-static EntityDef::SpecialBossData computeDefaultSpecialBoss(int16_t tileIndex, uint8_t eSubType) {
-	EntityDef::SpecialBossData d;
-	if (tileIndex == SpriteDefs::getIndex("boss_pinky")) {
-		d.type = EntityDef::SpecialBossData::BOSS_MULTIPART;
-		d.torsoZ = 384;
-		d.idleSpriteIdx = 3;
-		d.attackSpriteIdx = 8;
-		d.painSpriteIdx = 12;
-	} else if (tileIndex >= SpriteDefs::getIndex("boss_vios") && tileIndex <= SpriteDefs::getIndex("boss_vios5")) {
-		d.type = EntityDef::SpecialBossData::BOSS_ETHEREAL;
-		d.renderModeOverride = 3;
-		d.painRenderMode = 5;
-	} else if (tileIndex == SpriteDefs::getIndex("boss_mastermind")) {
-		d.type = EntityDef::SpecialBossData::BOSS_SPIDER;
-		d.legLateral = -44;
-		d.legBaseZ = 6;
-		d.idleTorsoZ = 35;
-		d.idleBobDiv = 1;
-		d.idleTorsoZBase = 0;
-		d.walkTorsoZ = 35;
-		d.attackTorsoZ = 40;
-		d.painTorsoZ = 70;
-		d.painLegsZ = 100;
-		d.painLegPos = 2;
-		d.hasAttackFlare = true;
-		d.flareZOffset = 288;
-		d.flareLateralPos = 0;
-		d.flareTorsoZExtra = 10;
-	} else if (tileIndex == SpriteDefs::getIndex("monster_arachnotron")) {
-		d.type = EntityDef::SpecialBossData::BOSS_SPIDER;
-		d.legLateral = -29;
-		d.legBaseZ = 6;
-		d.idleTorsoZ = 50;
-		d.idleBobDiv = 2;
-		d.idleTorsoZBase = 50;
-		d.walkTorsoZ = 50;
-		d.attackTorsoZ = 50;
-		d.painTorsoZ = 100;
-		d.painLegsZ = 70;
-		d.painLegPos = 1;
-		d.hasAttackFlare = false;
-	}
-	return d;
-}
-
-// Auto-compute default sprite anim overrides
-static EntityDef::SpriteAnimData computeDefaultSpriteAnim(int16_t tileIndex, uint8_t eSubType) {
-	EntityDef::SpriteAnimData d;
-	if (tileIndex == SpriteDefs::getIndex("boss_cyberdemon")) {
-		d.clampScale = true;
-		d.attackLegOffset = -3;
-		d.attackLegOffsetOnFlip = true;
-	} else if (eSubType == Enums::MONSTER_SAW_GOBLIN) {
-		d.hasFrameDependentHead = true;
-		d.headZFrame0 = 17;
-		d.headXFrame0 = 2;
-		d.headZFrame1 = 16;
-	}
-	return d;
-}
 
 // -----------------------
 // EntityDefManager Class
@@ -359,32 +72,11 @@ bool EntityDefManager::loadFromYAML(const char* path) {
 			this->list[i].description = (int16_t)e["description"].as<int>(0);
 		}
 
-		// Load render flags, fall back to auto-computed defaults
-		uint32_t defaultFlags = computeRenderFlags(this->list[i].tileIndex);
-		this->list[i].renderFlags = EntityDef::RFLAG_NONE;
-		if (e["is_floater"].as<bool>((defaultFlags & EntityDef::RFLAG_FLOATER) != 0)) {
-			this->list[i].renderFlags |= EntityDef::RFLAG_FLOATER;
-		}
-		if (e["has_gun_flare"].as<bool>((defaultFlags & EntityDef::RFLAG_GUN_FLARE) != 0)) {
-			this->list[i].renderFlags |= EntityDef::RFLAG_GUN_FLARE;
-		}
-		if (e["is_special_boss"].as<bool>((defaultFlags & EntityDef::RFLAG_SPECIAL_BOSS) != 0)) {
-			this->list[i].renderFlags |= EntityDef::RFLAG_SPECIAL_BOSS;
-		}
-		if (e["is_npc"].as<bool>((defaultFlags & EntityDef::RFLAG_NPC) != 0)) {
-			this->list[i].renderFlags |= EntityDef::RFLAG_NPC;
-		}
-		if (e["is_imp_type"].as<bool>((defaultFlags & EntityDef::RFLAG_IMP_TYPE) != 0)) {
-			this->list[i].renderFlags |= EntityDef::RFLAG_IMP_TYPE;
-		}
-		if (e["is_revenant_type"].as<bool>((defaultFlags & EntityDef::RFLAG_REVENANT_TYPE) != 0)) {
-			this->list[i].renderFlags |= EntityDef::RFLAG_REVENANT_TYPE;
-		}
-
-		// Rendering data: nested rendering: group or flat keys, with computeDefault*() fallback
+		// Rendering data: all values come from YAML, zero-initialized defaults
 		YAML::Node r = e["rendering"];
 
-		// Render flags from nested rendering.flags array
+		// Render flags from rendering.flags array
+		this->list[i].renderFlags = EntityDef::RFLAG_NONE;
 		if (r && r["flags"]) {
 			for (int fi = 0; fi < (int)r["flags"].size(); fi++) {
 				std::string flag = r["flags"][fi].as<std::string>("");
@@ -404,7 +96,7 @@ bool EntityDefManager::loadFromYAML(const char* path) {
 			((r && r[section] && r[section][key]) ? r[section][key].as<bool>(def) : e[flat].as<bool>(def))
 
 		// Fear eye offsets
-		EntityDef::FearEyeData defEyes = computeDefaultFearEyes(this->list[i].eSubType);
+		EntityDef::FearEyeData defEyes;
 		this->list[i].fearEyes.eyeL = (int8_t)R_INT("fear_eyes", "eye_l", "fear_eye_l", defEyes.eyeL);
 		this->list[i].fearEyes.eyeR = (int8_t)R_INT("fear_eyes", "eye_r", "fear_eye_r", defEyes.eyeR);
 		this->list[i].fearEyes.zAdd = (int16_t)R_INT("fear_eyes", "z_add", "fear_eye_z_add", defEyes.zAdd);
@@ -415,7 +107,7 @@ bool EntityDefManager::loadFromYAML(const char* path) {
 		this->list[i].fearEyes.eyeRFlip = (int8_t)R_INT("fear_eyes", "eye_r_flip", "fear_eye_r_flip", defEyes.eyeRFlip);
 
 		// Gun flare offsets
-		EntityDef::GunFlareData defFlare = computeDefaultGunFlare(this->list[i].eSubType);
+		EntityDef::GunFlareData defFlare;
 		this->list[i].gunFlare.dualFlare = R_BOOL("gun_flare", "dual", "gun_flare_dual", defFlare.dualFlare);
 		this->list[i].gunFlare.flash1X = (int8_t)R_INT("gun_flare", "flash1_x", "gun_flare1_x", defFlare.flash1X);
 		this->list[i].gunFlare.flash1Z = (int16_t)R_INT("gun_flare", "flash1_z", "gun_flare1_z", defFlare.flash1Z);
@@ -423,7 +115,7 @@ bool EntityDefManager::loadFromYAML(const char* path) {
 		this->list[i].gunFlare.flash2Z = (int16_t)R_INT("gun_flare", "flash2_z", "gun_flare2_z", defFlare.flash2Z);
 
 		// Body part offsets
-		EntityDef::BodyPartData defBody = computeDefaultBodyParts(this->list[i].eType, this->list[i].eSubType);
+		EntityDef::BodyPartData defBody;
 		this->list[i].bodyParts.idleTorsoZ = (int16_t)R_INT("body_parts", "idle_torso_z", "idle_torso_z", defBody.idleTorsoZ);
 		this->list[i].bodyParts.idleHeadZ = (int16_t)R_INT("body_parts", "idle_head_z", "idle_head_z", defBody.idleHeadZ);
 		this->list[i].bodyParts.walkTorsoZ = (int16_t)R_INT("body_parts", "walk_torso_z", "walk_torso_z", defBody.walkTorsoZ);
@@ -440,7 +132,7 @@ bool EntityDefManager::loadFromYAML(const char* path) {
 		this->list[i].bodyParts.attackRevAtk2TorsoZ = (int16_t)R_INT("body_parts", "attack_rev_atk2_torso_z", "attack_rev_atk2_torso_z", defBody.attackRevAtk2TorsoZ);
 
 		// Floater rendering data
-		EntityDef::FloaterData defFloat = computeDefaultFloater(this->list[i].eSubType);
+		EntityDef::FloaterData defFloat;
 		this->list[i].floater.type = (EntityDef::FloaterData::Type)R_INT("floater", "type", "floater_type", (int)defFloat.type);
 		this->list[i].floater.zOffset = (int16_t)R_INT("floater", "z_offset", "floater_z_offset", defFloat.zOffset);
 		this->list[i].floater.hasIdleFrameIncrement = R_BOOL("floater", "has_idle_frame_increment", "floater_idle_frame_inc", defFloat.hasIdleFrameIncrement);
@@ -452,7 +144,7 @@ bool EntityDefManager::loadFromYAML(const char* path) {
 		this->list[i].floater.hasDeadLoot = R_BOOL("floater", "has_dead_loot", "floater_dead_loot", defFloat.hasDeadLoot);
 
 		// Special boss rendering data
-		EntityDef::SpecialBossData defBoss = computeDefaultSpecialBoss(this->list[i].tileIndex, this->list[i].eSubType);
+		EntityDef::SpecialBossData defBoss;
 		// Parse type as string or int
 		{
 			int bossType = (int)defBoss.type;
@@ -489,7 +181,7 @@ bool EntityDefManager::loadFromYAML(const char* path) {
 		this->list[i].specialBoss.flareTorsoZExtra = (int16_t)R_INT("special_boss", "flare_torso_z_extra", "boss_flare_torso_z_extra", defBoss.flareTorsoZExtra);
 
 		// Sprite anim overrides
-		EntityDef::SpriteAnimData defAnim = computeDefaultSpriteAnim(this->list[i].tileIndex, this->list[i].eSubType);
+		EntityDef::SpriteAnimData defAnim;
 		this->list[i].spriteAnim.clampScale = R_BOOL("sprite_anim", "clamp_scale", "anim_clamp_scale", defAnim.clampScale);
 		this->list[i].spriteAnim.attackLegOffset = (int8_t)R_INT("sprite_anim", "attack_leg_offset", "anim_attack_leg_offset", defAnim.attackLegOffset);
 		this->list[i].spriteAnim.attackLegOffsetOnFlip = R_BOOL("sprite_anim", "attack_leg_offset_on_flip", "anim_attack_leg_on_flip", defAnim.attackLegOffsetOnFlip);
