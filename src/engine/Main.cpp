@@ -483,7 +483,7 @@ int main(int argc, char* args[]) {
 
 	printf("[main] APP_QUIT\n");
 	CAppContainer::getInstance()->~CAppContainer();
-	return 0;
+	_exit(0);
 }
 
 static uint32_t lastTimems = 0;
