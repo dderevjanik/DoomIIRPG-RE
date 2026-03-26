@@ -1621,7 +1621,7 @@ static bool generateAnimationsYaml(const std::string& outDir) {
 	out << YAML::EndMap;
 	out << YAML::EndMap;
 
-	std::string path = outDir + "/animations.yaml";
+	std::string path = outDir + "/sprites.yaml";
 	FILE* f = fopen(path.c_str(), "w");
 	if (!f) return false;
 	fprintf(f, "%s\n", out.c_str());
@@ -2640,7 +2640,7 @@ int main(int argc, char* argv[]) {
 	printf("Converting tables...\n");
 	ok &= convertTables(zip, outputDir);
 
-	printf("Generating animations.yaml...\n");
+	printf("Generating sprites.yaml...\n");
 	ok &= generateAnimationsYaml(outputDir);
 
 	printf("Generating projectiles.yaml...\n");

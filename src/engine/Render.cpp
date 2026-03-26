@@ -25,6 +25,70 @@
 #include "Sound.h"
 #include "Span.h"
 #include "EntityDef.h"
+#include "SpriteDefs.h"
+
+void Render::initSpriteDefs() {
+	TILE_SKY_BOX = SpriteDefs::getIndex("sky_box");
+	TILE_BOSS_VIOS = SpriteDefs::getIndex("boss_vios");
+	TILE_BOSS_VIOS5 = SpriteDefs::getIndex("boss_vios5");
+	TILE_OBJ_CRATE = SpriteDefs::getIndex("obj_crate");
+	TILE_TERMINAL_TARGET = SpriteDefs::getIndex("terminal_target");
+	TILE_TERMINAL_HACKING = SpriteDefs::getIndex("terminal_hacking");
+	TILE_CLOSED_PORTAL_EYE = SpriteDefs::getIndex("closed_portal_eye");
+	TILE_EYE_PORTAL = SpriteDefs::getIndex("eye_portal");
+	TILE_PORTAL_SOCKET = SpriteDefs::getIndex("portal_socket");
+	TILE_RED_DOOR_LOCKED = SpriteDefs::getIndex("red_door_locked");
+	TILE_BLUE_DOOR_UNLOCKED = SpriteDefs::getIndex("blue_door_unlocked");
+	TILE_FLAT_LAVA = SpriteDefs::getIndex("flat_lava");
+	TILE_FLAT_LAVA2 = SpriteDefs::getIndex("flat_lava2");
+	TILE_HELL_HANDS = SpriteDefs::getIndex("hell_hands");
+	TILE_FADE = SpriteDefs::getIndex("fade");
+	TILE_SCORCH_MARK = SpriteDefs::getIndex("scorch_mark");
+	TILE_WATER_STREAM = SpriteDefs::getIndex("water_stream");
+	TILE_OBJ_FIRE = SpriteDefs::getIndex("obj_fire");
+	TILE_OBJ_TORCHIERE = SpriteDefs::getIndex("obj_torchiere");
+	TILE_SFX_LIGHTGLOW1 = SpriteDefs::getIndex("sfx_lightglow1");
+	TILE_WATER_SPOUT = SpriteDefs::getIndex("water_spout");
+	TILE_TREE_TOP = SpriteDefs::getIndex("tree_top");
+	TILE_TREE_TRUNK = SpriteDefs::getIndex("tree_trunk");
+	TILE_PRACTICE_TARGET = SpriteDefs::getIndex("practice_target");
+	TILE_OBJ_CORPSE = SpriteDefs::getIndex("obj_corpse");
+	TILE_OBJ_OTHER_CORPSE = SpriteDefs::getIndex("obj_other_corpse");
+	TILE_OBJ_SCIENTIST_CORPSE = SpriteDefs::getIndex("obj_scientist_corpse");
+	TILE_MONSTER_SENTRY_BOT = SpriteDefs::getIndex("monster_sentry_bot");
+	TILE_MONSTER_RED_SENTRY_BOT = SpriteDefs::getIndex("monster_red_sentry_bot");
+	TILE_TREADMILL_SIDE = SpriteDefs::getIndex("treadmill_side");
+	TILE_SENTINEL_SPIKES_DUMMY = SpriteDefs::getIndex("sentinel_spikes_dummy");
+	TILE_SHADOW = SpriteDefs::getIndex("shadow");
+	TILE_GLASS = SpriteDefs::getIndex("glass");
+	TILE_FIRST_NPC = SpriteDefs::getRange("first_npc");
+	TILE_LAST_NPC = SpriteDefs::getRange("last_npc");
+	TILE_LAST_MONSTER = SpriteDefs::getRange("last_monster");
+	TILE_MONSTER_IMP = SpriteDefs::getIndex("monster_imp");
+	TILE_MONSTER_IMP3 = SpriteDefs::getIndex("monster_imp3");
+	TILE_MONSTER_SENTINEL = SpriteDefs::getIndex("monster_sentinel");
+	TILE_MONSTER_SENTINEL3 = SpriteDefs::getIndex("monster_sentinel3");
+	TILE_MONSTER_PINKY = SpriteDefs::getIndex("monster_pinky");
+	TILE_MONSTER_PINKY3 = SpriteDefs::getIndex("monster_pinky3");
+	TILE_MONSTER_REVENANT = SpriteDefs::getIndex("monster_revenant");
+	TILE_MONSTER_REVENANT3 = SpriteDefs::getIndex("monster_revenant3");
+	TILE_MONSTER_MANCUBUS = SpriteDefs::getIndex("monster_mancubus");
+	TILE_MONSTER_MANCUBUS3 = SpriteDefs::getIndex("monster_mancubus3");
+	TILE_MONSTER_ARCH_VILE = SpriteDefs::getIndex("monster_arch_vile");
+	TILE_MONSTER_ARCH_VILE3 = SpriteDefs::getIndex("monster_arch_vile3");
+	TILE_MONSTER_SAW_GOBLIN = SpriteDefs::getIndex("monster_saw_goblin");
+	TILE_MONSTER_SAW_GOBLIN3 = SpriteDefs::getIndex("monster_saw_goblin3");
+	TILE_MONSTER_CACODEMON = SpriteDefs::getIndex("monster_cacodemon");
+	TILE_MONSTER_CACODEMON3 = SpriteDefs::getIndex("monster_cacodemon3");
+	TILE_MONSTER_LOST_SOUL = SpriteDefs::getIndex("monster_lost_soul");
+	TILE_MONSTER_LOST_SOUL3 = SpriteDefs::getIndex("monster_lost_soul3");
+	TILE_MONSTER_ZOMBIE = SpriteDefs::getIndex("monster_zombie");
+	TILE_MONSTER_ZOMBIE3 = SpriteDefs::getIndex("monster_zombie3");
+	TILE_BOSS_CYBERDEMON = SpriteDefs::getIndex("boss_cyberdemon");
+	TILE_BOSS_MASTERMIND = SpriteDefs::getIndex("boss_mastermind");
+	TILE_BOSS_PINKY = SpriteDefs::getIndex("boss_pinky");
+	TILE_MONSTER_ARACHNOTRON = SpriteDefs::getIndex("monster_arachnotron");
+}
 
 Render::Render() {
 	std::memset(this, 0, sizeof(Render));
@@ -633,7 +697,7 @@ bool Render::beginLoadMap(int mapNameID) {
 	app->resource->readIntArray(&IS, this->mediaTexelSizes, 0, Render::MEDIA_MAX_IMAGES);
 	IS.close();
 
-	this->mediaMappings[Enums::TILENUM_SKY_BOX] =
+	this->mediaMappings[TILE_SKY_BOX] =
 	    (gles::MAX_MEDIA - 1); // Readjust the index so it doesn't interfere with the fade texture.
 
 	app->canvas->updateLoadingBar(false);
@@ -982,7 +1046,7 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 	}
 
 	// [GEC] Exclusivo para el VIOS ya que se ve mejor en su color multiplicado
-	if ((tileNum >= Enums::TILENUM_BOSS_VIOS) && (tileNum <= Enums::TILENUM_BOSS_VIOS5)) {
+	if ((tileNum >= TILE_BOSS_VIOS) && (tileNum <= TILE_BOSS_VIOS5)) {
 		renderFlags |= Render::RENDER_FLAG_MULTYPLYSHIFT;
 	}
 
@@ -1018,7 +1082,7 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 		n17 += 10;
 		x -= n17 * this->viewCos >> 16;
 		y += n17 * this->viewSin >> 16;
-		if (tileNum == Enums::TILENUM_OBJ_CRATE) {
+		if (tileNum == TILE_OBJ_CRATE) {
 			z -= 224;
 		}
 		for (int i = 0; i < n18; ++i) {
@@ -1060,11 +1124,11 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 		}
 	} else {
 
-		if (tileNum >= Enums::TILENUM_TERMINAL_TARGET && tileNum <= Enums::TILENUM_TERMINAL_HACKING) {
+		if (tileNum >= TILE_TERMINAL_TARGET && tileNum <= TILE_TERMINAL_HACKING) {
 			z -= 256;
 		}
 
-		if (tileNum >= Enums::TILENUM_CLOSED_PORTAL_EYE && tileNum <= Enums::TILENUM_EYE_PORTAL) {
+		if (tileNum >= TILE_CLOSED_PORTAL_EYE && tileNum <= TILE_EYE_PORTAL) {
 			z -= 128;
 		}
 
@@ -1079,8 +1143,8 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 			n23 = 6;
 		}
 		if ((app->tinyGL->textureBaseSize == app->tinyGL->sWidth * app->tinyGL->tHeight) ||
-		    (tileNum == Enums::TILENUM_CLOSED_PORTAL_EYE) || (tileNum == Enums::TILENUM_EYE_PORTAL) ||
-		    (tileNum == Enums::TILENUM_PORTAL_SOCKET)) {
+		    (tileNum == TILE_CLOSED_PORTAL_EYE) || (tileNum == TILE_EYE_PORTAL) ||
+		    (tileNum == TILE_PORTAL_SOCKET)) {
 			int n24;
 			int n25;
 			if (app->tinyGL->tHeight == 256 && app->tinyGL->sWidth == 256) {
@@ -1126,7 +1190,7 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 
 			int n32 = n31;
 			if ((flags & 0x80000000) != 0x0) {
-				if (tileNum >= Enums::TILENUM_RED_DOOR_LOCKED && tileNum <= Enums::TILENUM_BLUE_DOOR_UNLOCKED) {
+				if (tileNum >= TILE_RED_DOOR_LOCKED && tileNum <= TILE_BLUE_DOOR_UNLOCKED) {
 					int n33 = n16;
 					n31 = (n10 * n31) / 65536;
 					n16 = (n10 * n16) / 65536;
@@ -1139,8 +1203,8 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 				}
 			}
 
-			if (tileNum >= Enums::TILENUM_RED_DOOR_LOCKED &&
-			    tileNum <= Enums::TILENUM_BLUE_DOOR_UNLOCKED) { // Slip Door
+			if (tileNum >= TILE_RED_DOOR_LOCKED &&
+			    tileNum <= TILE_BLUE_DOOR_UNLOCKED) { // Slip Door
 				int n35 = n16 >> 1;
 				int n36 = n31 >> 1;
 				int n37 = n32 >> 1;
@@ -1188,10 +1252,10 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 					tglVert5->z = z;
 					tglVert5->s = n13 + n47 * n14;
 					tglVert5->t = n15 + n46 * n16;
-					if (tileNum == Enums::TILENUM_FLAT_LAVA) {
+					if (tileNum == TILE_FLAT_LAVA) {
 						tglVert5->s += (app->time / 8 & 0x3FF);
 						tglVert5->t += (app->time / 16 & 0x3FF);
-					} else if (tileNum == Enums::TILENUM_FLAT_LAVA2) {
+					} else if (tileNum == TILE_FLAT_LAVA2) {
 						tglVert5->t += (app->time / 2 & 0x3FF);
 					}
 				}
@@ -1473,24 +1537,24 @@ void Render::drawNodeGeometry(short n) {
 		iVar10 = Render::RENDER_NORMAL;
 		app->tinyGL->faceCull = TinyGL::CULL_CCW;
 
-		if (uVar7 == Enums::TILENUM_HELL_HANDS) {
+		if (uVar7 == TILE_HELL_HANDS) {
 			iVar10 = Render::RENDER_BLEND50;
-		} else if ((uVar7 == Enums::TILENUM_FADE) || (uVar7 == Enums::TILENUM_SCORCH_MARK)) {
+		} else if ((uVar7 == TILE_FADE) || (uVar7 == TILE_SCORCH_MARK)) {
 			iVar10 = Render::RENDER_NORMAL;
 			if (!this->_gles->isInit) {
 				iVar10 = Render::RENDER_SUB; // [GEC] TinyGL Only like J2ME/BREW
 			}
-		} else if ((uVar7 == Enums::TILENUM_FLAT_LAVA) || (uVar7 == Enums::TILENUM_FLAT_LAVA2)) {
+		} else if ((uVar7 == TILE_FLAT_LAVA) || (uVar7 == TILE_FLAT_LAVA2)) {
 			iVar10 = Render::RENDER_NORMAL;
 			app->tinyGL->faceCull = TinyGL::CULL_NONE;
 		}
 
 		this->setupTexture(uVar7, 0, iVar10, 0);
-		if (uVar7 == Enums::TILENUM_FLAT_LAVA) {
+		if (uVar7 == TILE_FLAT_LAVA) {
 			z = 2 * (this->sinTable[app->time / 2 & 0x3FF] - this->sinTable[256]) >> 14;
 			s = (app->time / 16 & 0x3FF);
 			t = (app->time / 32 & 0x3FF);
-		} else if (uVar7 == Enums::TILENUM_FLAT_LAVA2) {
+		} else if (uVar7 == TILE_FLAT_LAVA2) {
 			z = 0;
 			s = 0;
 			t = (app->time / 4 & 0x3FF);
@@ -2042,12 +2106,12 @@ void Render::renderSpriteObject(int n) {
 		n7 = (n + app->time / 100) % n7;
 	}
 
-	if (n3 == Enums::TILENUM_WATER_STREAM) { // 240
+	if (n3 == TILE_WATER_STREAM) { // 240
 		this->renderStreamSprite(n);
 		return;
 	}
 
-	if (n3 == Enums::TILENUM_OBJ_FIRE && x == app->canvas->viewX && y == app->canvas->viewY) {
+	if (n3 == TILE_OBJ_FIRE && x == app->canvas->viewX && y == app->canvas->viewY) {
 		x += (app->canvas->viewStepX >> 6) * 18;
 		y += (app->canvas->viewStepY >> 6) * 18;
 		z -= 512;
@@ -2121,7 +2185,7 @@ void Render::renderSpriteObject(int n) {
 			this->renderSpriteAnim(n, n7, x, y, z, n3, n2, renderMode, scaleFactor, n10);
 			return;
 		}
-		if (n3 == Enums::TILENUM_EYE_PORTAL) {
+		if (n3 == TILE_EYE_PORTAL) {
 			this->portalInView = true;
 			if (this->checkPortalVisibility(x, y, z)) {
 				n7 = 1;
@@ -2134,20 +2198,20 @@ void Render::renderSpriteObject(int n) {
 			if ((n2 & 0xF000000) == 0x0) {
 				z += 288;
 			}
-		} else if (n3 == Enums::TILENUM_OBJ_TORCHIERE) {
+		} else if (n3 == TILE_OBJ_TORCHIERE) {
 			int zheight = ((10 * scaleFactor) / 65536) << 4;
 			n2 ^= (n7 & 0x1) << 17;
-			this->renderSprite(x, y, z + zheight, Enums::TILENUM_SFX_LIGHTGLOW1, 0, n2, Render::RENDER_ADD50,
+			this->renderSprite(x, y, z + zheight, TILE_SFX_LIGHTGLOW1, 0, n2, Render::RENDER_ADD50,
 			                   scaleFactor, n10);
 		} else {
-			if (n3 == Enums::TILENUM_WATER_SPOUT) {
+			if (n3 == TILE_WATER_SPOUT) {
 				int n15 = app->time / 128;
 				this->renderSprite(x, y, z, n3, (n15 & 0x1), n2, renderMode, scaleFactor, n10);
 				return;
 			}
-			if (n3 == Enums::TILENUM_TREE_TOP) {
+			if (n3 == TILE_TREE_TOP) {
 				int zheight = ((36 * scaleFactor) / 65536) << 4;
-				this->renderSprite(x, y, z, Enums::TILENUM_TREE_TRUNK, n7, n2, renderMode, scaleFactor, n10);
+				this->renderSprite(x, y, z, TILE_TREE_TRUNK, n7, n2, renderMode, scaleFactor, n10);
 				this->renderSprite(x, y, z + zheight, n3, n7, n2, renderMode, scaleFactor, n10);
 				return;
 			}
@@ -2163,7 +2227,7 @@ void Render::renderSpriteObject(int n) {
 				}
 				return;
 			}
-			if (n3 == Enums::TILENUM_PRACTICE_TARGET) {
+			if (n3 == TILE_PRACTICE_TARGET) {
 				int n19 = n2 & 0xFFFDFFFF;
 
 				if (app->canvas->legShotTime) {
@@ -2199,17 +2263,17 @@ void Render::renderSpriteObject(int n) {
 				this->renderSprite(x, y, z, n3, app->canvas->isZoomedIn ? 1 : 4, n19, renderMode, scaleFactor, n10);
 				return;
 			}
-			if (n3 == Enums::TILENUM_OBJ_CORPSE || n3 == Enums::TILENUM_OBJ_OTHER_CORPSE ||
-			    n3 == Enums::TILENUM_OBJ_SCIENTIST_CORPSE) {
+			if (n3 == TILE_OBJ_CORPSE || n3 == TILE_OBJ_OTHER_CORPSE ||
+			    n3 == TILE_OBJ_SCIENTIST_CORPSE) {
 				if (entity->param == 0 && app->canvas->state != Canvas::ST_CAMERA && !entity->hasEmptyLootSet()) {
 					this->renderSprite(x, y, z, n3, n7, n2, 0, 18 * scaleFactor >> 4, 512);
 				}
-			} else if ((n3 == Enums::TILENUM_MONSTER_SENTRY_BOT || n3 == Enums::TILENUM_MONSTER_RED_SENTRY_BOT) &&
+			} else if ((n3 == TILE_MONSTER_SENTRY_BOT || n3 == TILE_MONSTER_RED_SENTRY_BOT) &&
 			           entity != nullptr && entity->isDroppedEntity()) {
 				if (entity->param == 0 && app->canvas->state != Canvas::ST_CAMERA) {
 					this->renderSprite(x, y, z, n3, n7, n2, 0, (18 * scaleFactor) >> 4, 512);
 				}
-			} else if (n3 == Enums::TILENUM_TREADMILL_SIDE || n3 == Enums::TILENUM_SENTINEL_SPIKES_DUMMY) {
+			} else if (n3 == TILE_TREADMILL_SIDE || n3 == TILE_SENTINEL_SPIKES_DUMMY) {
 				return;
 			}
 		}
@@ -2554,7 +2618,7 @@ void Render::setupTexture(int n, int n2, int renderMode, int renderFlags) {
 
 	int n5;
 	int n6;
-	if (n == Enums::TILENUM_SKY_BOX) {
+	if (n == TILE_SKY_BOX) {
 		app->tinyGL->textureBase = this->skyMapTexels;
 		app->tinyGL->paletteBase = this->skyMapPalette;
 		app->tinyGL->textureBaseSize = 256 * 256; // new
@@ -3435,57 +3499,57 @@ bool Render::isNPC(int n) {
 	EntityDef* def = app->entityDefManager->lookup(n);
 	if (def)
 		return def->hasRenderFlag(EntityDef::RFLAG_NPC);
-	return n >= Enums::TILENUM_FIRST_NPC && n <= Enums::TILENUM_LAST_NPC;
+	return n >= TILE_FIRST_NPC && n <= TILE_LAST_NPC;
 }
 
 bool Render::isImp(int n) {
 	EntityDef* def = app->entityDefManager->lookup(n);
 	if (def)
 		return def->hasRenderFlag(EntityDef::RFLAG_IMP_TYPE);
-	return n >= Enums::TILENUM_MONSTER_IMP && n <= Enums::TILENUM_MONSTER_IMP3;
+	return n >= TILE_MONSTER_IMP && n <= TILE_MONSTER_IMP3;
 }
 
 bool Render::isSentinel(int n) {
-	return n >= Enums::TILENUM_MONSTER_SENTINEL && n <= Enums::TILENUM_MONSTER_SENTINEL3;
+	return n >= TILE_MONSTER_SENTINEL && n <= TILE_MONSTER_SENTINEL3;
 }
 
 bool Render::isPinky(int n) {
-	return n >= Enums::TILENUM_MONSTER_PINKY && n <= Enums::TILENUM_MONSTER_PINKY3;
+	return n >= TILE_MONSTER_PINKY && n <= TILE_MONSTER_PINKY3;
 }
 
 bool Render::isRevenant(int n) {
 	EntityDef* def = app->entityDefManager->lookup(n);
 	if (def)
 		return def->hasRenderFlag(EntityDef::RFLAG_REVENANT_TYPE);
-	return n >= Enums::TILENUM_MONSTER_REVENANT && n <= Enums::TILENUM_MONSTER_REVENANT3;
+	return n >= TILE_MONSTER_REVENANT && n <= TILE_MONSTER_REVENANT3;
 }
 
 bool Render::isMancubus(int n) {
-	return n >= Enums::TILENUM_MONSTER_MANCUBUS && n <= Enums::TILENUM_MONSTER_MANCUBUS3;
+	return n >= TILE_MONSTER_MANCUBUS && n <= TILE_MONSTER_MANCUBUS3;
 }
 
 bool Render::isArchVile(int n) {
-	return n >= Enums::TILENUM_MONSTER_ARCH_VILE && n <= Enums::TILENUM_MONSTER_ARCH_VILE3;
+	return n >= TILE_MONSTER_ARCH_VILE && n <= TILE_MONSTER_ARCH_VILE3;
 }
 
 bool Render::isChainsawGoblin(int n) {
-	return n >= Enums::TILENUM_MONSTER_SAW_GOBLIN && n <= Enums::TILENUM_MONSTER_SAW_GOBLIN3;
+	return n >= TILE_MONSTER_SAW_GOBLIN && n <= TILE_MONSTER_SAW_GOBLIN3;
 }
 
 bool Render::isCacodemon(int n) {
-	return n >= Enums::TILENUM_MONSTER_CACODEMON && n <= Enums::TILENUM_MONSTER_CACODEMON3;
+	return n >= TILE_MONSTER_CACODEMON && n <= TILE_MONSTER_CACODEMON3;
 }
 
 bool Render::isLostSoul(int n) {
-	return n >= Enums::TILENUM_MONSTER_LOST_SOUL && n <= Enums::TILENUM_MONSTER_LOST_SOUL3;
+	return n >= TILE_MONSTER_LOST_SOUL && n <= TILE_MONSTER_LOST_SOUL3;
 }
 
 bool Render::isSentryBot(int n) {
-	return n == Enums::TILENUM_MONSTER_SENTRY_BOT || n == Enums::TILENUM_MONSTER_RED_SENTRY_BOT;
+	return n == TILE_MONSTER_SENTRY_BOT || n == TILE_MONSTER_RED_SENTRY_BOT;
 }
 
 bool Render::isZombie(int n) {
-	return n >= Enums::TILENUM_MONSTER_ZOMBIE && n <= Enums::TILENUM_MONSTER_ZOMBIE3;
+	return n >= TILE_MONSTER_ZOMBIE && n <= TILE_MONSTER_ZOMBIE3;
 }
 
 bool Render::hasGunFlare(int n) {
@@ -3494,8 +3558,8 @@ bool Render::hasGunFlare(int n) {
 	if (def)
 		return def->hasRenderFlag(EntityDef::RFLAG_GUN_FLARE);
 	// Fallback for unknown tiles
-	return isMancubus(n) || isRevenant(n) || isSentryBot(n) || n == Enums::TILENUM_BOSS_CYBERDEMON ||
-	       n == Enums::TILENUM_BOSS_MASTERMIND;
+	return isMancubus(n) || isRevenant(n) || isSentryBot(n) || n == TILE_BOSS_CYBERDEMON ||
+	       n == TILE_BOSS_MASTERMIND;
 }
 
 bool Render::isFloater(int n) {
@@ -3513,8 +3577,8 @@ bool Render::isSpecialBoss(int n) {
 	if (def)
 		return def->hasRenderFlag(EntityDef::RFLAG_SPECIAL_BOSS);
 	// Fallback for unknown tiles
-	return n == Enums::TILENUM_BOSS_MASTERMIND || n == Enums::TILENUM_MONSTER_ARACHNOTRON ||
-	       n == Enums::TILENUM_BOSS_PINKY || (n >= Enums::TILENUM_BOSS_VIOS && n <= Enums::TILENUM_BOSS_VIOS5);
+	return n == TILE_BOSS_MASTERMIND || n == TILE_MONSTER_ARACHNOTRON ||
+	       n == TILE_BOSS_PINKY || (n >= TILE_BOSS_VIOS && n <= TILE_BOSS_VIOS5);
 }
 
 void Render::renderFearEyes(Entity* entity, int frame, int x, int y, int z, int scaleFactor, bool flipH) {
@@ -3642,7 +3706,7 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 			int n21 = n20 * 26;
 
 			// Shadow
-			this->renderSprite(x, y, n13, Enums::TILENUM_SHADOW, 0, flags, renderMode, n14, renderFlags);
+			this->renderSprite(x, y, n13, TILE_SHADOW, 0, flags, renderMode, n14, renderFlags);
 			// Legs
 			this->renderSprite(x, y, z, tileNum, n12, flags, renderMode, scaleFactor, renderFlags);
 
@@ -3677,7 +3741,7 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 		case Enums::MANIM_WALK_FRONT: {
 			int n22 = ((frame & 0x2) >> 1 ^ 0x1) << 17;
 			// Shadow
-			this->renderSprite(x, y, n13, Enums::TILENUM_SHADOW, 0, flags, renderMode, n14, renderFlags);
+			this->renderSprite(x, y, n13, TILE_SHADOW, 0, flags, renderMode, n14, renderFlags);
 			// Legs
 			this->renderSprite(x, y, z, tileNum, n12 + (frame & 0x1), flags ^ n22, renderMode, scaleFactor,
 			                   renderFlags);
@@ -3721,8 +3785,8 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 				n26 = 10;
 			}
 			// Shadow
-			this->renderSprite(x, y, n13, Enums::TILENUM_SHADOW, 0, flags, renderMode, n14, renderFlags);
-			if (tileNum > Enums::TILENUM_LAST_MONSTER) {
+			this->renderSprite(x, y, n13, TILE_SHADOW, 0, flags, renderMode, n14, renderFlags);
+			if (tileNum > TILE_LAST_MONSTER) {
 				this->renderSprite(x, y, z, tileNum, n26, flags, renderMode, scaleFactor, renderFlags);
 				break;
 			}
@@ -3845,7 +3909,7 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 		}
 		case Enums::MANIM_PAIN:
 		case Enums::MANIM_SLAP: {
-			this->renderSprite(x, y, n13, Enums::TILENUM_SHADOW, 0, flags, renderMode, n14, renderFlags);
+			this->renderSprite(x, y, n13, TILE_SHADOW, 0, flags, renderMode, n14, renderFlags);
 			this->renderSprite(x, y, z + n15, tileNum, 12, flags, renderMode, scaleFactor, renderFlags);
 			break;
 		}
@@ -3858,7 +3922,7 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 			break;
 		}
 		case Enums::MANIM_NPC_BACK_ACTION: {
-			this->renderSprite(x, y, n13, Enums::TILENUM_SHADOW, 0, flags, renderMode, n14, renderFlags);
+			this->renderSprite(x, y, n13, TILE_SHADOW, 0, flags, renderMode, n14, renderFlags);
 			this->renderSprite(x, y, z, tileNum, 8 + frame, flags, renderMode, scaleFactor, renderFlags);
 			break;
 		}

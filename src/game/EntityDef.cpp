@@ -7,6 +7,7 @@
 #include "App.h"
 #include "EntityDef.h"
 #include "Enums.h"
+#include "SpriteDefs.h"
 #include "Combat.h"
 #include "JavaStream.h"
 #include "Resource.h"
@@ -152,39 +153,39 @@ static uint32_t computeRenderFlags(int16_t tileIndex) {
 	int n = tileIndex;
 
 	// Floaters: Sentinel (44-46), Lost Soul (29-31), Cacodemon (41-43)
-	if ((n >= Enums::TILENUM_MONSTER_SENTINEL && n <= Enums::TILENUM_MONSTER_SENTINEL3) ||
-	    (n >= Enums::TILENUM_MONSTER_LOST_SOUL && n <= Enums::TILENUM_MONSTER_LOST_SOUL3) ||
-	    (n >= Enums::TILENUM_MONSTER_CACODEMON && n <= Enums::TILENUM_MONSTER_CACODEMON3)) {
+	if ((n >= SpriteDefs::getIndex("monster_sentinel") && n <= SpriteDefs::getIndex("monster_sentinel3")) ||
+	    (n >= SpriteDefs::getIndex("monster_lost_soul") && n <= SpriteDefs::getIndex("monster_lost_soul3")) ||
+	    (n >= SpriteDefs::getIndex("monster_cacodemon") && n <= SpriteDefs::getIndex("monster_cacodemon3"))) {
 		flags |= EntityDef::RFLAG_FLOATER;
 	}
 
 	// Gun flare: Mancubus (38-40), Revenant (35-37), Sentry Bot (19), Red Sentry Bot (18),
 	//            Cyberdemon (54), Mastermind (57)
-	if ((n >= Enums::TILENUM_MONSTER_MANCUBUS && n <= Enums::TILENUM_MONSTER_MANCUBUS3) ||
-	    (n >= Enums::TILENUM_MONSTER_REVENANT && n <= Enums::TILENUM_MONSTER_REVENANT3) ||
-	    n == Enums::TILENUM_MONSTER_SENTRY_BOT || n == Enums::TILENUM_MONSTER_RED_SENTRY_BOT ||
-	    n == Enums::TILENUM_BOSS_CYBERDEMON || n == Enums::TILENUM_BOSS_MASTERMIND) {
+	if ((n >= SpriteDefs::getIndex("monster_mancubus") && n <= SpriteDefs::getIndex("monster_mancubus3")) ||
+	    (n >= SpriteDefs::getIndex("monster_revenant") && n <= SpriteDefs::getIndex("monster_revenant3")) ||
+	    n == SpriteDefs::getIndex("monster_sentry_bot") || n == SpriteDefs::getIndex("monster_red_sentry_bot") ||
+	    n == SpriteDefs::getIndex("boss_cyberdemon") || n == SpriteDefs::getIndex("boss_mastermind")) {
 		flags |= EntityDef::RFLAG_GUN_FLARE;
 	}
 
 	// Special boss: Mastermind (57), Arachnotron (53), Boss Pinky (56), VIOS (58-62)
-	if (n == Enums::TILENUM_BOSS_MASTERMIND || n == Enums::TILENUM_MONSTER_ARACHNOTRON ||
-	    n == Enums::TILENUM_BOSS_PINKY || (n >= Enums::TILENUM_BOSS_VIOS && n <= Enums::TILENUM_BOSS_VIOS5)) {
+	if (n == SpriteDefs::getIndex("boss_mastermind") || n == SpriteDefs::getIndex("monster_arachnotron") ||
+	    n == SpriteDefs::getIndex("boss_pinky") || (n >= SpriteDefs::getIndex("boss_vios") && n <= SpriteDefs::getIndex("boss_vios5"))) {
 		flags |= EntityDef::RFLAG_SPECIAL_BOSS;
 	}
 
 	// NPC: tile range 65-80
-	if (n >= Enums::TILENUM_FIRST_NPC && n <= Enums::TILENUM_LAST_NPC) {
+	if (n >= SpriteDefs::getRange("first_npc") && n <= SpriteDefs::getRange("last_npc")) {
 		flags |= EntityDef::RFLAG_NPC;
 	}
 
 	// Imp-like: Imp (20-22)
-	if (n >= Enums::TILENUM_MONSTER_IMP && n <= Enums::TILENUM_MONSTER_IMP3) {
+	if (n >= SpriteDefs::getIndex("monster_imp") && n <= SpriteDefs::getIndex("monster_imp3")) {
 		flags |= EntityDef::RFLAG_IMP_TYPE;
 	}
 
 	// Revenant-like: Revenant (35-37)
-	if (n >= Enums::TILENUM_MONSTER_REVENANT && n <= Enums::TILENUM_MONSTER_REVENANT3) {
+	if (n >= SpriteDefs::getIndex("monster_revenant") && n <= SpriteDefs::getIndex("monster_revenant3")) {
 		flags |= EntityDef::RFLAG_REVENANT_TYPE;
 	}
 
@@ -372,17 +373,17 @@ static EntityDef::FloaterData computeDefaultFloater(uint8_t eSubType) {
 // Auto-compute default special boss rendering data from tile index and subtype
 static EntityDef::SpecialBossData computeDefaultSpecialBoss(int16_t tileIndex, uint8_t eSubType) {
 	EntityDef::SpecialBossData d;
-	if (tileIndex == Enums::TILENUM_BOSS_PINKY) {
+	if (tileIndex == SpriteDefs::getIndex("boss_pinky")) {
 		d.type = EntityDef::SpecialBossData::BOSS_MULTIPART;
 		d.torsoZ = 384;
 		d.idleSpriteIdx = 3;
 		d.attackSpriteIdx = 8;
 		d.painSpriteIdx = 12;
-	} else if (tileIndex >= Enums::TILENUM_BOSS_VIOS && tileIndex <= Enums::TILENUM_BOSS_VIOS5) {
+	} else if (tileIndex >= SpriteDefs::getIndex("boss_vios") && tileIndex <= SpriteDefs::getIndex("boss_vios5")) {
 		d.type = EntityDef::SpecialBossData::BOSS_ETHEREAL;
 		d.renderModeOverride = 3;
 		d.painRenderMode = 5;
-	} else if (tileIndex == Enums::TILENUM_BOSS_MASTERMIND) {
+	} else if (tileIndex == SpriteDefs::getIndex("boss_mastermind")) {
 		d.type = EntityDef::SpecialBossData::BOSS_SPIDER;
 		d.legLateral = -44;
 		d.legBaseZ = 6;
@@ -398,7 +399,7 @@ static EntityDef::SpecialBossData computeDefaultSpecialBoss(int16_t tileIndex, u
 		d.flareZOffset = 288;
 		d.flareLateralPos = 0;
 		d.flareTorsoZExtra = 10;
-	} else if (tileIndex == Enums::TILENUM_MONSTER_ARACHNOTRON) {
+	} else if (tileIndex == SpriteDefs::getIndex("monster_arachnotron")) {
 		d.type = EntityDef::SpecialBossData::BOSS_SPIDER;
 		d.legLateral = -29;
 		d.legBaseZ = 6;
@@ -418,7 +419,7 @@ static EntityDef::SpecialBossData computeDefaultSpecialBoss(int16_t tileIndex, u
 // Auto-compute default sprite anim overrides
 static EntityDef::SpriteAnimData computeDefaultSpriteAnim(int16_t tileIndex, uint8_t eSubType) {
 	EntityDef::SpriteAnimData d;
-	if (tileIndex == Enums::TILENUM_BOSS_CYBERDEMON) {
+	if (tileIndex == SpriteDefs::getIndex("boss_cyberdemon")) {
 		d.clampScale = true;
 		d.attackLegOffset = -3;
 		d.attackLegOffsetOnFlip = true;

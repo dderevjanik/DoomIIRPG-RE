@@ -18,6 +18,7 @@
 #include "ParticleSystem.h"
 #include "JavaStream.h"
 #include "Enums.h"
+#include "SpriteDefs.h"
 #include "Sound.h"
 #include "SoundNames.h"
 #include "Sounds.h"
@@ -85,14 +86,14 @@ void Entity::initspawn() {
     }
     else if (eType == Enums::ET_DECOR && eSubType != Enums::DECOR_STATUE) {
         app->render->mapSpriteInfo[sprite] &= ~0x10000;
-        if (tileNum == Enums::TILENUM_SWITCH) {
+        if (tileNum == SpriteDefs::getIndex("switch")) {
             app->render->mapSprites[app->render->S_SCALEFACTOR + sprite] = 32;
         }
     }
     else if (eType == Enums::ET_ATTACK_INTERACTIVE) {
         this->info |= 0x20000;
 #if 0 // J2ME
-        if (eSubType == Enums::TILENUM_OBJ_CRATE) {
+        if (eSubType == SpriteDefs::getIndex("obj_crate")) {
             app->render->mapSprites[app->render->S_Z + sprite] -= 224;
         }
 #endif
@@ -1449,7 +1450,7 @@ bool Entity::isBinaryEntity(int* array) {
         }
         case Enums::ET_NONOBSTRUCTING_SPRITEWALL: {
            int sprite = this->getSprite();
-            if ((app->render->mapSpriteInfo[sprite] & 0xFF) == Enums::TILENUM_NONOBSTRUCTING_SPRITEWALL2) {
+            if ((app->render->mapSpriteInfo[sprite] & 0xFF) == SpriteDefs::getIndex("fence")) {
                 if ((app->render->mapSpriteInfo[sprite] & 0x10000) != 0x0) {
                     b = true;
                 }
@@ -1592,7 +1593,7 @@ void Entity::loadState(InputStream* IS, int n) {
     }
     else {
         app->render->mapSpriteInfo[sprite] |= 0x10000;
-        if ((this->info & 0x100000) != 0x0 && this->def->eType != Enums::ET_DOOR && (n2 < Enums::TILENUM_DUMMY_START || n2 > Enums::TILENUM_DUMMY_END)) {
+        if ((this->info & 0x100000) != 0x0 && this->def->eType != Enums::ET_DOOR && (n2 < SpriteDefs::getRange("dummy_start") || n2 > SpriteDefs::getRange("dummy_end"))) {
             app->game->unlinkEntity(this);
         }
         else if (this->def->eType == Enums::ET_ATTACK_INTERACTIVE && this->def->eSubType != Enums::INTERACT_PICKUP) {

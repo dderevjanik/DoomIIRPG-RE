@@ -266,7 +266,7 @@ void AssetBrowser::loadEffects() {
 
 void AssetBrowser::loadAnimations() {
 	try {
-		YAML::Node root = YAML::LoadFile(gameDir_ + "/animations.yaml");
+		YAML::Node root = YAML::LoadFile(gameDir_ + "/sprites.yaml");
 		YAML::Node tiles = root["tiles"];
 		if (!tiles) return;
 
@@ -279,7 +279,7 @@ void AssetBrowser::loadAnimations() {
 		}
 		std::fprintf(stderr, "Loaded %zu animations/tiles\n", animations_.size());
 	} catch (const YAML::Exception& ex) {
-		std::fprintf(stderr, "Failed to load animations.yaml: %s\n", ex.what());
+		std::fprintf(stderr, "Failed to load sprites.yaml: %s\n", ex.what());
 	}
 }
 
@@ -929,7 +929,7 @@ void AssetBrowser::drawWeaponDetail(const WeaponEntry& w) {
 	ImGui::TextDisabled("(index: %d)", w.index);
 	ImGui::Separator();
 
-	// Weapon sprite preview — look up tile index from animations.yaml
+	// Weapon sprite preview — look up tile index from sprites.yaml
 	auto tileIt = tileNameToIndex_.find(w.name);
 	if (tileIt != tileNameToIndex_.end()) {
 		drawAnimatedSprite(tileIt->second, 4.0f);

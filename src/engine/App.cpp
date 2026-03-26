@@ -34,6 +34,7 @@
 #include "Input.h"
 #include "Enums.h"
 #include "Sounds.h"
+#include "SpriteDefs.h"
 #include "WeaponNames.h"
 
 Applet::Applet() {
@@ -401,7 +402,9 @@ void Applet::loadTables() {
 	if (!this->loadTablesFromYAML("tables.yaml")) {
 		this->Error("Failed to load tables.yaml\n");
 	}
-	this->loadAnimationsFromYAML("animations.yaml");
+	SpriteDefs::loadFromYAML("sprites.yaml");
+	this->render->initSpriteDefs();
+	this->loadSpriteAnimsFromYAML("sprites.yaml");
 	printf("[app] loadTables: loading from weapons.yaml\n");
 	if (!this->loadWeaponsFromYAML("weapons.yaml")) {
 		this->Error("Failed to load weapons.yaml\n");
@@ -483,18 +486,15 @@ static int ammoTypeFromName(const std::string& name) {
 	}
 }
 
-// Global tile name -> index map, populated from animations.yaml
-static std::map<std::string, int> tileNameMap;
-
-// Global sprite animation overrides, populated from animations.yaml sprite_anims section
+// Global sprite animation overrides, populated from sprites.yaml sprite_anims section
 std::map<int, SpriteAnimDef> gSpriteAnimDefs;
 
 static int tileFromName(const std::string& name) {
 	if (name.empty() || name == "0" || name == "none")
 		return 0;
-	auto it = tileNameMap.find(name);
-	if (it != tileNameMap.end())
-		return it->second;
+	int idx = SpriteDefs::getIndex(name);
+	if (idx != 0)
+		return idx;
 	try { return std::stoi(name); } catch (...) {
 		printf("[app] Warning: unknown tile name '%s'\n", name.c_str());
 		return 0;
@@ -517,7 +517,7 @@ static int renderModeFromName(const std::string& name) {
 	try { return std::stoi(name); } catch (...) { return 0; }
 }
 
-bool Applet::loadAnimationsFromYAML(const char* path) {
+bool Applet::loadSpriteAnimsFromYAML(const char* path) {
 	YAML::Node config;
 	try {
 		config = YAML::LoadFile(path);
@@ -525,16 +525,6 @@ bool Applet::loadAnimationsFromYAML(const char* path) {
 		printf("[app] Warning: could not load %s\n", path);
 		return false;
 	}
-
-	YAML::Node tiles = config["tiles"];
-	if (!tiles || !tiles.IsMap())
-		return false;
-
-	for (auto it = tiles.begin(); it != tiles.end(); ++it) {
-		tileNameMap[it->first.as<std::string>()] = it->second.as<int>();
-	}
-
-	printf("[app] Animations: loaded %d tile names from %s\n", (int)tileNameMap.size(), path);
 
 	YAML::Node spriteAnims = config["sprite_anims"];
 	if (spriteAnims && spriteAnims.IsMap()) {

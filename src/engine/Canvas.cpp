@@ -30,6 +30,7 @@
 #include "SoundNames.h"
 #include "Resource.h"
 #include "Enums.h"
+#include "SpriteDefs.h"
 #include "Utils.h"
 #include "Menus.h"
 #include "Input.h"
@@ -7981,9 +7982,9 @@ void Canvas::touchSwipe(int swDir) {
 void Canvas::turnEntityIntoWaterSpout(Entity* entity) {
 
 	int sprite = entity->getSprite();
-	entity->def = app->entityDefManager->lookup(Enums::TILENUM_WATER_SPOUT);
+	entity->def = app->entityDefManager->lookup(SpriteDefs::getIndex("water_spout"));
 	entity->name = (short)(entity->def->name | 0x400);
-	app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFFFF00) | Enums::TILENUM_WATER_SPOUT);
+	app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFFFF00) | SpriteDefs::getIndex("water_spout"));
 	entity->info |= 0x400000;
 }
 

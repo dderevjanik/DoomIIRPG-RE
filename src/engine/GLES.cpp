@@ -10,6 +10,7 @@
 #include "TinyGL.h"
 #include "TGLVert.h"
 #include "Enums.h"
+#include "SpriteDefs.h"
 #include "Image.h"
 #include "Utils.h"
 
@@ -469,7 +470,7 @@ void gles::UnloadSkyMap() {
 
 	if (this->render->mediaMappings)
 	{
-		int index = this->render->mediaMappings[Enums::TILENUM_SKY_BOX];
+		int index = this->render->mediaMappings[this->render->TILE_SKY_BOX];
 		if (this->chains[index].texnum)
 		{
 			chain = &this->chains[index];
@@ -604,8 +605,8 @@ void gles::SetupTexture(int n, int n2, int renderMode, int flags) {
 
 	int mediaID = this->render->mediaMappings[n] + n2;
 
-	if (n == Enums::TILENUM_ELECTRIC_SLIDE) {
-		mediaID = this->render->mediaMappings[Enums::TILENUM_ELECTRIC_SLIDE];
+	if (n == SpriteDefs::getIndex("electric_slide")) {
+		mediaID = this->render->mediaMappings[SpriteDefs::getIndex("electric_slide")];
 	}
 
 	assert(mediaID >= 0 && mediaID < MAX_MEDIA);
@@ -625,7 +626,7 @@ void gles::SetupTexture(int n, int n2, int renderMode, int flags) {
 	this->chains[mediaID].next = next;
 	prev->next = chain;
 
-	if (n == Enums::TILENUM_SCORCH_MARK) {
+	if (n == this->render->TILE_SCORCH_MARK) {
 		renderMode = Render::RENDER_SUB;
 	}
 
@@ -840,8 +841,8 @@ void gles::CreateTextureForMediaID(int n, int mediaID, bool b) {
 
 	v70 = b;
 	render = this->render;
-	v5 = render->mediaMappings[Enums::TILENUM_SKY_BOX];
-	if (mediaID == render->mediaMappings[Enums::TILENUM_FADE] && n == Enums::TILENUM_FADE) {
+	v5 = render->mediaMappings[this->render->TILE_SKY_BOX];
+	if (mediaID == render->mediaMappings[render->TILE_FADE] && n == render->TILE_FADE) {
 		this->CreateFadeTexture(mediaID);
 		return;
 	}
@@ -870,7 +871,7 @@ void gles::CreateTextureForMediaID(int n, int mediaID, bool b) {
 		v8 = v12 & 0xF;
 		v10 = (v12 >> 4) & 0xF;
 
-		if (mediaID == render->mediaMappings[Enums::TILENUM_ANIM_WATER] && n == Enums::TILENUM_ANIM_WATER) {
+		if (mediaID == render->mediaMappings[SpriteDefs::getIndex("anim_water")] && n == SpriteDefs::getIndex("anim_water")) {
 			printf("TILENUM_ANIM_WATER %d\n", mediaID);
 		}
 	}
@@ -1165,7 +1166,7 @@ bool gles::DrawSkyMap() {
 	GLVert v5[4]; // [sp+4h] [bp-D0h] BYREF
 
 	if (this->isInit) {
-		this->SetupTexture(Enums::TILENUM_SKY_BOX, 0, 0, 0);
+		this->SetupTexture(this->render->TILE_SKY_BOX, 0, 0, 0);
 		v5[0].x = -100;
 		v5[0].y = -100;
 		v5[0].w = 100;

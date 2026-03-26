@@ -148,7 +148,7 @@ private:
 	bool animPlaying_ = true;
 	int selectedPose_ = 0; // 0=idle, 1=walk, 2=attack1, 3=attack2, 4=idle_back, 5=walk_back
 
-	// Tile name -> tile index mapping (from animations.yaml)
+	// Tile name -> tile index mapping (from sprites.yaml)
 	std::unordered_map<std::string, int> tileNameToIndex_;
 
 	// Filter
