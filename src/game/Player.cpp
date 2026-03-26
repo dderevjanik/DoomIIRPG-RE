@@ -1,6 +1,8 @@
 #include <stdexcept>
 #include <algorithm>
 #include <cstdio>
+#include <map>
+#include <string>
 
 #include "CAppContainer.h"
 #include "App.h"
@@ -1635,37 +1637,96 @@ void Player::equipForLevel(int highestMap) {
 
 	// Load map starting loadout from YAML
 	try {
-		YAML::Node config = YAML::LoadFile("map_starting_loadout.yaml");
-		YAML::Node rewards = config["map_starting_loadout"];
-		if (!rewards || !rewards.IsMap()) {
-			app->Error("map_starting_loadout.yaml: missing or invalid 'map_starting_loadout' map");
+		YAML::Node config = YAML::LoadFile("levels.yaml");
+		YAML::Node levels = config["levels"];
+		if (!levels || !levels.IsMap()) {
+			app->Error("levels.yaml: missing or invalid 'levels' map");
 		} else {
+			// Build weapon name→index lookup from weapons.yaml
+			std::map<std::string, int> weaponNameToIndex;
+			try {
+				YAML::Node wpConfig = YAML::LoadFile("weapons.yaml");
+				if (YAML::Node wpNode = wpConfig["weapons"]) {
+					for (auto it = wpNode.begin(); it != wpNode.end(); ++it)
+						weaponNameToIndex[it->first.as<std::string>()] = it->second["index"].as<int>(-1);
+				}
+			} catch (...) {}
+
+			// Inventory name→index lookup
+			auto inventoryFromName = [](const std::string& name) -> int {
+				if (name == "health_pack")      return Enums::INV_HEALTH_PACK;
+				if (name == "health_ration_bar") return Enums::INV_HEALTH_RATION_BAR;
+				if (name == "armor_large")       return Enums::INV_ARMOR_LARGE;
+				if (name == "armor_small")       return Enums::INV_ARMOR_SMALL;
+				if (name == "uac_credit")        return Enums::INV_ONE_UAC_CREDIT;
+				if (name == "bottled_water")     return Enums::INV_BOTTLED_WATER;
+				if (name == "journal")           return Enums::INV_OTHER_JOURNAL;
+				if (name == "red_key")           return Enums::INV_OTHER_RED_KEY;
+				if (name == "blue_key")          return Enums::INV_OTHER_BLUE_KEY;
+				if (name == "empty_syringe")     return Enums::INV_EMPTY_SYRINGE;
+				if (name == "holy_water")        return Enums::INV_OTHER_HOLY_WATER;
+				if (name == "pack")              return Enums::INV_OTHER_PACK;
+				try { return std::stoi(name); } catch (...) { return -1; }
+			};
+
+			// Ammo name→index lookup
+			auto ammoFromName = [](const std::string& name) -> int {
+				if (name == "bullets")    return Enums::AMMO_BULLETS;
+				if (name == "shells")     return Enums::AMMO_SHELLS;
+				if (name == "holy_water") return Enums::AMMO_HOLY_WATER;
+				if (name == "cells")      return Enums::AMMO_CELLS;
+				if (name == "rockets")    return Enums::AMMO_ROCKETS;
+				if (name == "soul_cube")  return Enums::AMMO_SOUL_CUBE;
+				if (name == "sentry_bot") return Enums::AMMO_SENTRY_BOT;
+				try { return std::stoi(name); } catch (...) { return -1; }
+			};
+
+			// Resolve weapon name or index
+			auto resolveWeapon = [&](const YAML::Node& node) -> int {
+				if (node.IsScalar()) {
+					std::string s = node.as<std::string>();
+					auto it = weaponNameToIndex.find(s);
+					if (it != weaponNameToIndex.end()) return it->second;
+					try { return std::stoi(s); } catch (...) { return -1; }
+				}
+				return node.as<int>(-1);
+			};
+
 			// Map 10 uses map 9 loadout
 			int lookupMap = (highestMap == 10) ? 9 : highestMap;
-			YAML::Node r = rewards[lookupMap];
+			YAML::Node level = levels[lookupMap];
+			YAML::Node r = level ? level["starting_loadout"] : YAML::Node();
 			if (r && r.IsDefined() && !r.IsNull()) {
 				// Weapons
 				if (YAML::Node weapons = r["weapons"]) {
-					for (size_t w = 0; w < weapons.size(); w++)
-						this->give(1, weapons[w].as<int>(), 1);
+					for (size_t w = 0; w < weapons.size(); w++) {
+						int idx = resolveWeapon(weapons[w]);
+						if (idx >= 0) this->give(1, idx, 1);
+					}
 				}
 				// Weapons given with specific ammo amounts
 				if (YAML::Node wa = r["weapon_ammo"]) {
-					for (auto it = wa.begin(); it != wa.end(); ++it)
-						this->give(1, it->first.as<int>(), it->second.as<int>());
+					for (auto it = wa.begin(); it != wa.end(); ++it) {
+						int idx = resolveWeapon(it->first);
+						if (idx >= 0) this->give(1, idx, it->second.as<int>());
+					}
 				}
 				// Armor
 				if (r["armor"])
 					this->addArmor(r["armor"].as<int>());
 				// Inventory items
 				if (YAML::Node inv = r["inventory"]) {
-					for (auto it = inv.begin(); it != inv.end(); ++it)
-						this->give(0, it->first.as<int>(), it->second.as<int>());
+					for (auto it = inv.begin(); it != inv.end(); ++it) {
+						int idx = inventoryFromName(it->first.as<std::string>());
+						if (idx >= 0) this->give(0, idx, it->second.as<int>());
+					}
 				}
 				// Ammo
 				if (YAML::Node ammo = r["ammo"]) {
-					for (auto it = ammo.begin(); it != ammo.end(); ++it)
-						this->give(2, it->first.as<int>(), it->second.as<int>());
+					for (auto it = ammo.begin(); it != ammo.end(); ++it) {
+						int idx = ammoFromName(it->first.as<std::string>());
+						if (idx >= 0) this->give(2, idx, it->second.as<int>());
+					}
 				}
 				// XP
 				if (r["xp"])
@@ -1683,7 +1744,7 @@ void Player::equipForLevel(int highestMap) {
 			}
 		}
 	} catch (const YAML::Exception& e) {
-		app->Error("map_starting_loadout.yaml: %s", e.what());
+		app->Error("levels.yaml: %s", e.what());
 	}
 	this->give(0, 18, 1);
 	this->enableHelp = enableHelp;

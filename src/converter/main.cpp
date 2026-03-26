@@ -2271,6 +2271,126 @@ static bool generateCharactersYaml(const std::string& outDir) {
 }
 
 // ========================================================================
+// Generate levels.yaml
+// ========================================================================
+static bool generateLevelsYaml(const std::string& outDir) {
+	// Hardcoded loadout data from the original game binary.
+	// Each entry represents the starting equipment when entering a map.
+	struct LoadoutEntry {
+		int map;
+		std::vector<int> weapons;           // weapon indices (give with amount=1)
+		std::vector<std::pair<int,int>> weapon_ammo; // weapon index, amount
+		int armor;
+		std::vector<std::pair<int,int>> inventory;   // inv index, amount
+		std::vector<std::pair<int,int>> ammo;        // ammo type, amount
+		int xp;
+		int defense, strength, accuracy, agility, iq;
+		int vios_mallocs;
+	};
+
+	// Inventory index → name
+	auto invName = [](int idx) -> std::string {
+		switch (idx) {
+			case 11: return "armor_large";
+			case 12: return "armor_small";
+			case 16: return "health_ration_bar";
+			case 17: return "health_pack";
+			case 24: return "uac_credit";
+			default: return std::to_string(idx);
+		}
+	};
+
+	// Ammo index → name
+	auto ammoName = [](int idx) -> std::string {
+		switch (idx) {
+			case 1: return "bullets";
+			case 2: return "shells";
+			case 3: return "holy_water";
+			case 4: return "cells";
+			case 5: return "rockets";
+			case 6: return "soul_cube";
+			case 7: return "sentry_bot";
+			default: return std::to_string(idx);
+		}
+	};
+
+	LoadoutEntry entries[] = {
+		{2, {1,0}, {}, 33, {{17,23},{11,4},{12,3},{24,4}}, {{1,100}}, 638, 4,2,11,0,4, 0},
+		{3, {2,1,0}, {{3,100}}, 4, {{17,34},{11,12},{12,6},{24,39}}, {{1,100},{3,90}}, 1519, 13,5,10,6,10, 1},
+		{4, {7,2,1,0}, {{4,100}}, 4, {{17,44},{11,5},{12,26},{24,59}}, {{1,73},{3,30},{2,24}}, 2622, 14,10,9,14,20, 1},
+		{5, {9,8,7,2,1,0}, {{5,100}}, 34, {{17,79},{16,31},{11,9},{12,40},{24,73}}, {{1,84},{3,85},{2,88},{4,55}}, 3594, 14,12,9,18,28, 2},
+		{6, {10,9,8,7,2,1,0}, {{5,100}}, 24, {{17,116},{16,54},{11,22},{12,2},{24,101}}, {{1,88},{3,60},{2,100},{4,100},{5,20}}, 4749, 24,13,9,18,34, 3},
+		{7, {11,10,9,8,7,2,1,0}, {{5,100}}, 44, {{17,132},{16,72},{11,23},{12,12},{24,168}}, {{1,70},{3,40},{2,66},{4,60},{5,63}}, 5971, 25,14,8,18,40, 3},
+		{8, {12,11,10,9,8,7,2,1,0}, {{5,100}}, 38, {{17,146},{16,94},{11,27},{12,20},{24,168}}, {{1,89},{3,25},{2,94},{4,52},{5,100}}, 7198, 27,16,8,22,46, 4},
+		{9, {13,12,11,10,9,8,7,2,1,0}, {{5,100}}, 27, {{17,160},{16,90},{11,23},{12,28},{24,174}}, {{1,29},{3,8},{2,44},{4,55},{5,90},{6,5}}, 8281, 27,17,8,22,46, 4},
+	};
+
+	std::string yaml;
+	yaml += "# Per-level configuration.\n";
+	yaml += "# Each key under \"levels:\" is a map number.\n";
+	yaml += "\n";
+	yaml += "levels:\n";
+
+	for (const auto& e : entries) {
+		yaml += "  " + std::to_string(e.map) + ":\n";
+		yaml += "    starting_loadout:\n";
+
+		// Weapons
+		yaml += "      weapons: [";
+		for (size_t i = 0; i < e.weapons.size(); i++) {
+			if (i > 0) yaml += ", ";
+			yaml += weaponName(e.weapons[i]);
+		}
+		yaml += "]\n";
+
+		// Weapon ammo
+		if (!e.weapon_ammo.empty()) {
+			yaml += "      weapon_ammo:\n";
+			for (const auto& wa : e.weapon_ammo)
+				yaml += "        " + weaponName(wa.first) + ": " + std::to_string(wa.second) + "\n";
+		}
+
+		// Armor
+		yaml += "      armor: " + std::to_string(e.armor) + "\n";
+
+		// Inventory
+		yaml += "      inventory:\n";
+		for (const auto& inv : e.inventory)
+			yaml += "        " + invName(inv.first) + ": " + std::to_string(inv.second) + "\n";
+
+		// Ammo
+		yaml += "      ammo:\n";
+		for (const auto& a : e.ammo)
+			yaml += "        " + ammoName(a.first) + ": " + std::to_string(a.second) + "\n";
+
+		// XP
+		yaml += "      xp: " + std::to_string(e.xp) + "\n";
+
+		// Stats
+		yaml += "      stats:\n";
+		yaml += "        defense: " + std::to_string(e.defense) + "\n";
+		yaml += "        strength: " + std::to_string(e.strength) + "\n";
+		yaml += "        accuracy: " + std::to_string(e.accuracy) + "\n";
+		if (e.agility > 0)
+			yaml += "        agility: " + std::to_string(e.agility) + "\n";
+		yaml += "        iq: " + std::to_string(e.iq) + "\n";
+
+		// VIOS mallocs
+		yaml += "      vios_mallocs: " + std::to_string(e.vios_mallocs) + "\n";
+
+		yaml += "\n";
+	}
+
+	std::string path = outDir + "/levels.yaml";
+	if (!writeString(path, yaml)) {
+		fprintf(stderr, "  Failed to write %s\n", path.c_str());
+		return false;
+	}
+	printf("  -> %s\n", path.c_str());
+	return true;
+}
+
+// ========================================================================
 // Copy all BMP image files from the IPA Packages directory
 // ========================================================================
 // Determine the output subdirectory for a BMP file based on its filename
@@ -2543,6 +2663,9 @@ int main(int argc, char* argv[]) {
 
 	printf("Generating characters.yaml...\n");
 	ok &= generateCharactersYaml(outputDir);
+
+	printf("Generating levels.yaml...\n");
+	ok &= generateLevelsYaml(outputDir);
 
 	// Copy binary assets that still need the original format
 	printf("\nCopying binary assets (maps, textures, models)...\n");
