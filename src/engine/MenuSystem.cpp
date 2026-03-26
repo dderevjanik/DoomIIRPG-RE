@@ -38,10 +38,16 @@
 #include "Sounds.h"
 
 MenuSystem::MenuSystem() {
+	// Save vector/map members before memset (they have non-trivial constructors)
+	// Then placement-new them back after zeroing the POD fields
 	std::memset(this, 0, sizeof(MenuSystem));
+	new (&yamlMenuDefs) std::vector<YAMLMenuDef>();
+	new (&yamlMenuById) std::unordered_map<int, int>();
 }
 
 MenuSystem::~MenuSystem() {
+	yamlMenuDefs.~vector();
+	yamlMenuById.~unordered_map();
 }
 
 bool MenuSystem::startup() {
@@ -148,47 +154,13 @@ bool MenuSystem::startup() {
 	this->slideAnim2 = 0;
 	this->animTime = 0;
 
-	this->m_menuButtons = new fmButtonContainer();
-
-	int posY = 139;
-	for (int i = 0; i < 9; i++) {
-		fmButton* btnMenu = new fmButton(i, 159, posY, 162, 46, 1027 /*1086*/);
-		btnMenu->drawButton = false;
-		btnMenu->SetImage(this->imgMenuBtnBackground, false);
-		btnMenu->SetHighlightImage(this->imgMenuBtnBackgroundOn, false);
-		btnMenu->normalRenderMode = 1;
-		btnMenu->highlightRenderMode = 0;
-		this->m_menuButtons->AddButton(btnMenu);
-		posY += 46;
+	// Load UI definitions (widget mappings + button containers) from ui.yaml
+	// Must be called after images are loaded since it references them for button creation
+	printf("[menu] loading from ui.yaml\n");
+	if (!this->loadUIFromYAML("ui.yaml")) {
+		app->Error("Failed to load ui.yaml\n");
+		return false;
 	}
-
-	fmButton* btnMenuArrowUp = new fmButton(9, 331, 190 - this->imgMenuArrowUp->height, this->imgMenuArrowUp->width, this->imgMenuArrowUp->height, 1027);
-	btnMenuArrowUp->drawButton = false;
-	btnMenuArrowUp->SetImage(this->imgMenuArrowUp, false);
-	this->m_menuButtons->AddButton(btnMenuArrowUp);
-
-	fmButton* btnMenuArrowDown = new fmButton(10, 331, 210, this->imgMenuArrowDown->width, this->imgMenuArrowDown->height, 1027);
-	btnMenuArrowDown->drawButton = false;
-	btnMenuArrowDown->SetImage(this->imgMenuArrowDown, false);
-	this->m_menuButtons->AddButton(btnMenuArrowDown);
-
-	fmButton* btnSwitchLeft = new fmButton(11, 0, 256, 52, 64, 1122);
-	btnSwitchLeft->drawButton = false;
-	btnSwitchLeft->SetImage(this->imgSwitchLeftNormal, false);
-	btnSwitchLeft->SetHighlightImage(this->imgSwitchLeftActive, false);
-	this->m_menuButtons->AddButton(btnSwitchLeft);
-
-	fmButton* btn01 = new fmButton(12, 0, 0, 0, 0, 1027);  // volume scroll bar
-	btn01->drawButton = false;
-	this->m_menuButtons->AddButton(btn01);
-
-	fmButton* btn02 = new fmButton(13, 0, 0, 0, 0, 1027);  // music scroll bar
-	btn02->drawButton = false;
-	this->m_menuButtons->AddButton(btn02);
-
-	fmButton* btn03 = new fmButton(14, 0, 0, 0, 0, 1027);  // alpha scroll bar
-	btn03->drawButton = false;
-	this->m_menuButtons->AddButton(btn03);
 
 	this->sliderID = 0;
 	this->sfxVolumeScroll = 0;
@@ -197,50 +169,6 @@ bool MenuSystem::startup() {
 	this->vibrationIntensityScroll = 0; // [GEC]
 	this->deadzoneScroll = 0; // [GEC]
 	this->updateSlider = false;
-
-	fmButton* btnSwitchRight = new fmButton(15, 428, 256, 52, 64, 1122);
-	btnSwitchRight->drawButton = 0;
-	btnSwitchRight->SetImage(nullptr, false);
-	btnSwitchRight->SetHighlightImage(nullptr, false);
-	this->m_menuButtons->AddButton(btnSwitchRight);
-
-	fmButton* btn04 = new fmButton(16, 0, 0, 0, 0, 1027);  // [GEC] vibration intensity scroll bar
-	btn03->drawButton = false;
-	this->m_menuButtons->AddButton(btn04);
-
-	fmButton* btn05 = new fmButton(17, 0, 0, 0, 0, 1027);  // [GEC] deadzone intensity scroll bar
-	btn03->drawButton = false;
-	this->m_menuButtons->AddButton(btn05);
-
-	this->m_scrollBar = new fmScrollButton(0, 0, 0, 0, true, 1065);
-
-	this->m_infoButtons = new fmButtonContainer();
-
-	for (int i = 0; i < 9; i++) {
-		fmButton* btnGameMenuInfo = new fmButton(i, 0, 0, 0, 0, 1027);
-		btnGameMenuInfo->drawButton = 0;
-		btnGameMenuInfo->SetImage(this->imgGameMenuInfoButtonNormal, false);
-		btnGameMenuInfo->SetHighlightImage(this->imgGameMenuInfoButtonPressed, false);
-		btnGameMenuInfo->normalRenderMode = 1;
-		btnGameMenuInfo->highlightRenderMode = 0;
-		this->m_infoButtons->AddButton(btnGameMenuInfo);
-	}
-
-	this->m_vendingButtons = new fmButtonContainer();
-
-	fmButton* btnVendingArrowUpGlow = new fmButton(0, 320, 130, this->imgVendingArrowUpGlow->width, this->imgVendingArrowUpGlow->height, 1027);
-	btnVendingArrowUpGlow->drawButton = true;
-	btnVendingArrowUpGlow->SetImage(this->imgVendingArrowUpGlow, false);
-	btnVendingArrowUpGlow->normalRenderMode = 1;
-	btnVendingArrowUpGlow->highlightRenderMode = 0;
-	this->m_vendingButtons->AddButton(btnVendingArrowUpGlow);
-
-	fmButton* btnVendingArrowDownGlow = new fmButton(1, 320, this->imgMenuArrowUp->height + 150, this->imgVendingArrowDownGlow->width, this->imgVendingArrowDownGlow->height, 1027);
-	btnVendingArrowDownGlow->drawButton = true;
-	btnVendingArrowDownGlow->SetImage(this->imgVendingArrowDownGlow, false);
-	btnVendingArrowDownGlow->normalRenderMode = 1;
-	btnVendingArrowDownGlow->highlightRenderMode = 0;
-	this->m_vendingButtons->AddButton(btnVendingArrowDownGlow);
 
 	return true;
 }
@@ -381,6 +309,9 @@ static const MenuNameEntry menuNameTable[] = {
 	{85, "MENU_VENDING_MACHINE_SNACKS"}, {86, "MENU_VENDING_MACHINE_CONFIRM"},
 	{87, "MENU_VENDING_MACHINE_CANT_BUY"}, {88, "MENU_VENDING_MACHINE_DETAILS"},
 	{89, "MENU_COMIC_BOOK"},
+	{54, "MENU_INGAME_BINDINGS"}, {55, "MENU_INGAME_OPTIONS_SOUND"},
+	{56, "MENU_INGAME_OPTIONS_VIDEO"}, {63, "MENU_INGAME_OPTIONS_INPUT"},
+	{64, "MENU_INGAME_CONTROLLER"},
 };
 static const int numMenuNames = sizeof(menuNameTable) / sizeof(menuNameTable[0]);
 
@@ -426,6 +357,9 @@ static const struct { const char* name; int id; } menuNameLookup[] = {
 	{"vending_machine_snacks", 85}, {"vending_machine_confirm", 86},
 	{"vending_machine_cant_buy", 87}, {"vending_machine_details", 88},
 	{"comic_book", 89},
+	{"ingame_bindings", 54}, {"ingame_options_sound", 55},
+	{"ingame_options_video", 56}, {"ingame_options_input", 63},
+	{"ingame_controller", 64},
 };
 static const int numMenuNameLookup = sizeof(menuNameLookup) / sizeof(menuNameLookup[0]);
 
@@ -436,6 +370,352 @@ static int menuNameToId(const std::string& name) {
 	// Try parsing as integer fallback
 	try { return std::stoi(name); } catch (...) {}
 	return 0;
+}
+
+// --- Widget flag mapping (loaded from ui.yaml) ---
+static std::unordered_map<std::string, std::string> s_widgetFlagMapping;
+
+bool MenuSystem::loadUIFromYAML(const char* path) {
+	YAML::Node config;
+	try {
+		config = YAML::LoadFile(path);
+	} catch (const YAML::Exception& e) {
+		printf("[menu] failed to load %s: %s\n", path, e.what());
+		return false;
+	}
+
+	// Load widget_flag_mapping
+	if (YAML::Node mapping = config["widget_flag_mapping"]) {
+		for (auto it = mapping.begin(); it != mapping.end(); ++it) {
+			s_widgetFlagMapping[it->first.as<std::string>()] = it->second.as<std::string>("");
+		}
+	}
+
+	// Build image name -> Image* lookup from member variables
+	// Maps ui.yaml image names to the already-loaded and processed member images
+	std::unordered_map<std::string, Image*> imageMap;
+	imageMap["menu_btn_bg"] = this->imgMenuBtnBackground;
+	imageMap["menu_btn_bg_on"] = this->imgMenuBtnBackgroundOn;
+	imageMap["menu_arrow_down"] = this->imgMenuArrowDown;
+	imageMap["menu_arrow_up"] = this->imgMenuArrowUp;
+	imageMap["switch_left_normal"] = this->imgSwitchLeftNormal;
+	imageMap["switch_left_active"] = this->imgSwitchLeftActive;
+	imageMap["slider_bar"] = this->imgMenuOptionSliderBar;
+	imageMap["slider_on"] = this->imgMenuOptionSliderON;
+	imageMap["slider_off"] = this->imgMenuOptionSliderOFF;
+	imageMap["info_btn_normal"] = this->imgGameMenuInfoButtonNormal;
+	imageMap["info_btn_pressed"] = this->imgGameMenuInfoButtonPressed;
+	imageMap["vending_arrow_up_glow"] = this->imgVendingArrowUpGlow;
+	imageMap["vending_arrow_down_glow"] = this->imgVendingArrowDownGlow;
+	imageMap["vending_btn_large"] = this->imgVendingButtonLarge;
+	imageMap["vending_btn_help"] = this->imgVendingButtonHelp;
+	imageMap["ingame_option_btn"] = this->imgInGameMenuOptionButton;
+	imageMap["menu_dial"] = this->imgMenuDial;
+	imageMap["menu_dial_knob"] = this->imgMenuDialKnob;
+	imageMap["menu_main_box"] = this->imgMenuMainBOX;
+	imageMap["main_menu_overlay"] = this->imgMainMenuOverLay;
+	imageMap["main_help_overlay"] = this->imgMainHelpOverLay;
+	imageMap["main_about_overlay"] = this->imgMainAboutOverLay;
+	imageMap["menu_yesno_box"] = this->imgMenuYesNoBOX;
+	imageMap["menu_choose_diff_box"] = this->imgMenuChooseDIFFBOX;
+	imageMap["menu_language_box"] = this->imgMenuLanguageBOX;
+	imageMap["menu_option_box3"] = this->imgMenuOptionBOX3;
+	imageMap["menu_option_box4"] = this->imgMenuOptionBOX4;
+	imageMap["hud_numbers"] = this->imgHudNumbers;
+	imageMap["game_menu_panel_bottom"] = this->imgGameMenuPanelbottom;
+	imageMap["game_menu_panel_bottom_sentry"] = this->imgGameMenuPanelBottomSentrybot;
+	imageMap["game_menu_health"] = this->imgGameMenuHealth;
+	imageMap["game_menu_shield"] = this->imgGameMenuShield;
+	imageMap["game_menu_torn_page"] = this->imgGameMenuTornPage;
+	imageMap["game_menu_background"] = this->imgGameMenuBackground;
+	imageMap["main_menu_dial_a_anim"] = this->imgMainMenuDialA_Anim;
+	imageMap["main_menu_dial_c_anim"] = this->imgMainMenuDialC_Anim;
+	imageMap["main_menu_slide_anim"] = this->imgMainMenuSlide_Anim;
+	imageMap["game_menu_scrollbar"] = this->imgGameMenuScrollBar;
+	imageMap["game_menu_top_slider"] = this->imgGameMenuTopSlider;
+	imageMap["game_menu_mid_slider"] = this->imgGameMenuMidSlider;
+	imageMap["game_menu_bottom_slider"] = this->imgGameMenuBottomSlider;
+	imageMap["vending_scrollbar"] = this->imgVendingScrollBar;
+	imageMap["vending_scroll_btn_top"] = this->imgVendingScrollButtonTop;
+	imageMap["vending_scroll_btn_mid"] = this->imgVendingScrollButtonMiddle;
+	imageMap["vending_scroll_btn_bottom"] = this->imgVendingScrollButtonBottom;
+	imageMap["logo"] = this->imgLogo;
+
+	// Build sound name -> ID lookup
+	std::unordered_map<std::string, int> soundMap;
+	if (YAML::Node sounds = config["sounds"]) {
+		for (auto it = sounds.begin(); it != sounds.end(); ++it) {
+			soundMap[it->first.as<std::string>()] = it->second.as<int>(0);
+		}
+	}
+
+	// Load button containers
+	if (YAML::Node containers = config["containers"]) {
+		auto resolveSound = [&](const YAML::Node& btn) -> int {
+			std::string sndName = btn["sound"].as<std::string>("");
+			auto sit = soundMap.find(sndName);
+			return (sit != soundMap.end()) ? sit->second : 0;
+		};
+
+		auto resolveImage = [&](const std::string& imgName) -> Image* {
+			auto iit = imageMap.find(imgName);
+			return (iit != imageMap.end()) ? iit->second : nullptr;
+		};
+
+		auto createButton = [&](const YAML::Node& btn, int id, int x, int y, int w, int h) -> fmButton* {
+			int soundId = resolveSound(btn);
+			fmButton* button = new fmButton(id, x, y, w, h, soundId);
+
+			bool visible = btn["visible"].as<bool>(true);
+			button->drawButton = visible;
+
+			// Set normal image
+			std::string imgName = btn["image"].as<std::string>("");
+			if (!imgName.empty()) {
+				Image* img = resolveImage(imgName);
+				if (img) {
+					button->SetImage(img, false);
+				}
+			}
+
+			// Set highlight image
+			std::string imgHighName = btn["image_highlight"].as<std::string>("");
+			if (!imgHighName.empty()) {
+				Image* imgH = resolveImage(imgHighName);
+				if (imgH) {
+					button->SetHighlightImage(imgH, false);
+				}
+			}
+
+			// Render modes
+			button->normalRenderMode = btn["render_mode"].as<int>(0);
+			button->highlightRenderMode = btn["highlight_render_mode"].as<int>(0);
+
+			return button;
+		};
+
+		// menu_buttons container
+		if (YAML::Node menuBtns = containers["menu_buttons"]) {
+			if (this->m_menuButtons) {
+				delete this->m_menuButtons;
+			}
+			this->m_menuButtons = new fmButtonContainer();
+
+			if (YAML::Node buttons = menuBtns["buttons"]) {
+				for (size_t i = 0; i < buttons.size(); i++) {
+					YAML::Node btn = buttons[i];
+
+					if (YAML::Node range = btn["id_range"]) {
+						// Range of buttons (e.g. menu items 0-8)
+						int startId = range[0].as<int>(0);
+						int endId = range[1].as<int>(0);
+						int x = btn["x"].as<int>(0);
+						int startY = btn["start_y"].as<int>(0);
+						int stepY = btn["step_y"].as<int>(0);
+						int w = btn["width"].as<int>(0);
+						int h = btn["height"].as<int>(0);
+
+						int posY = startY;
+						for (int id = startId; id <= endId; id++) {
+							fmButton* button = createButton(btn, id, x, posY, w, h);
+							this->m_menuButtons->AddButton(button);
+							posY += stepY;
+						}
+					} else {
+						int id = btn["id"].as<int>(0);
+						int x = btn["x"].as<int>(0);
+						int w = btn["width"].as<int>(0);
+						int h = btn["height"].as<int>(0);
+						int y = 0;
+
+						bool sizeFromImage = btn["size_from_image"].as<bool>(false);
+						std::string imgName = btn["image"].as<std::string>("");
+						Image* img = resolveImage(imgName);
+
+						if (sizeFromImage && img) {
+							w = img->width;
+							h = img->height;
+						}
+
+						// Handle special y positioning
+						std::string yStr = btn["y"].as<std::string>("");
+						if (yStr == "image_relative") {
+							int yBase = btn["y_base"].as<int>(0);
+							std::string yOffset = btn["y_offset"].as<std::string>("");
+							if (yOffset == "-height" && img) {
+								y = yBase - img->height;
+							} else {
+								// Handle "menu_arrow_up.height" style references
+								std::string refImg = yOffset.substr(0, yOffset.find('.'));
+								Image* refImage = resolveImage(refImg);
+								if (refImage) {
+									y = yBase + refImage->height;
+								} else {
+									y = yBase;
+								}
+							}
+						} else {
+							y = btn["y"].as<int>(0);
+						}
+
+						fmButton* button = createButton(btn, id, x, y, w, h);
+						this->m_menuButtons->AddButton(button);
+					}
+				}
+			}
+		}
+
+		// info_buttons container
+		if (YAML::Node infoBtns = containers["info_buttons"]) {
+			if (this->m_infoButtons) {
+				delete this->m_infoButtons;
+			}
+			this->m_infoButtons = new fmButtonContainer();
+
+			if (YAML::Node buttons = infoBtns["buttons"]) {
+				for (size_t i = 0; i < buttons.size(); i++) {
+					YAML::Node btn = buttons[i];
+
+					if (YAML::Node range = btn["id_range"]) {
+						int startId = range[0].as<int>(0);
+						int endId = range[1].as<int>(0);
+						int x = btn["x"].as<int>(0);
+						int y = btn["y"].as<int>(0);
+						int w = btn["width"].as<int>(0);
+						int h = btn["height"].as<int>(0);
+
+						for (int id = startId; id <= endId; id++) {
+							fmButton* button = createButton(btn, id, x, y, w, h);
+							this->m_infoButtons->AddButton(button);
+						}
+					}
+				}
+			}
+		}
+
+		// vending_buttons container
+		if (YAML::Node vendBtns = containers["vending_buttons"]) {
+			if (this->m_vendingButtons) {
+				delete this->m_vendingButtons;
+			}
+			this->m_vendingButtons = new fmButtonContainer();
+
+			if (YAML::Node buttons = vendBtns["buttons"]) {
+				for (size_t i = 0; i < buttons.size(); i++) {
+					YAML::Node btn = buttons[i];
+					int id = btn["id"].as<int>(0);
+					int x = btn["x"].as<int>(0);
+					int w = btn["width"].as<int>(0);
+					int h = btn["height"].as<int>(0);
+					int y = 0;
+
+					bool sizeFromImage = btn["size_from_image"].as<bool>(false);
+					std::string imgName = btn["image"].as<std::string>("");
+					Image* img = resolveImage(imgName);
+
+					if (sizeFromImage && img) {
+						w = img->width;
+						h = img->height;
+					}
+
+					// Handle special y positioning
+					std::string yStr = btn["y"].as<std::string>("");
+					if (yStr == "image_relative") {
+						int yBase = btn["y_base"].as<int>(0);
+						std::string yOffset = btn["y_offset"].as<std::string>("");
+						std::string refImg = yOffset.substr(0, yOffset.find('.'));
+						Image* refImage = resolveImage(refImg);
+						if (refImage) {
+							y = yBase + refImage->height;
+						} else {
+							y = yBase;
+						}
+					} else {
+						y = btn["y"].as<int>(0);
+					}
+
+					fmButton* button = createButton(btn, id, x, y, w, h);
+					this->m_vendingButtons->AddButton(button);
+				}
+			}
+		}
+
+		// scrollbar
+		if (YAML::Node scrollbar = containers["scrollbar"]) {
+			if (this->m_scrollBar) {
+				delete this->m_scrollBar;
+			}
+			std::string sndName = scrollbar["sound"].as<std::string>("");
+			int soundId = 0;
+			auto sit = soundMap.find(sndName);
+			if (sit != soundMap.end()) soundId = sit->second;
+			bool vertical = scrollbar["vertical"].as<bool>(true);
+			this->m_scrollBar = new fmScrollButton(0, 0, 0, 0, vertical, soundId);
+		}
+	}
+
+	int containerCount = (this->m_menuButtons ? 1 : 0) + (this->m_infoButtons ? 1 : 0) + (this->m_vendingButtons ? 1 : 0);
+	printf("[menu] loaded %d widget types, %d containers from %s\n", (int)s_widgetFlagMapping.size(), containerCount, path);
+	return true;
+}
+
+static int widgetToFlags(const std::string& widget) {
+	auto it = s_widgetFlagMapping.find(widget);
+	if (it != s_widgetFlagMapping.end()) {
+		return flagsFromString(it->second);
+	}
+	return 0;
+}
+
+bool MenuSystem::loadYAMLMenuItems(int menuId) {
+	auto it = this->yamlMenuById.find(menuId);
+	if (it == this->yamlMenuById.end()) return false;
+
+	const YAMLMenuDef& def = this->yamlMenuDefs[it->second];
+	Applet* app = this->app;
+	Text* textbuff = app->localization->getSmallBuffer();
+
+	if (def.maxItems > 0) {
+		this->maxItems = def.maxItems;
+	}
+
+	int argIndex = 0;
+	for (const auto& item : def.items) {
+		int textField = MenuSystem::EMPTY_TEXT;
+		int textField2 = MenuSystem::EMPTY_TEXT;
+		int flags = item.flags;
+		int action = item.action;
+		int param = item.param;
+		int helpField = item.helpField;
+
+		if (item.textField != 0) {
+			textField = item.textField;
+		}
+		if (item.textField2 != 0) {
+			textField2 = item.textField2;
+		}
+
+		// Handle inline text via addTextArg
+		if (!item.text.empty()) {
+			textField = Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1 + argIndex);
+			textbuff->setLength(0);
+			textbuff->append(item.text.c_str());
+			app->localization->addTextArg(textbuff);
+			argIndex++;
+		}
+		if (!item.text2.empty()) {
+			textField2 = Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1 + argIndex);
+			textbuff->setLength(0);
+			textbuff->append(item.text2.c_str());
+			app->localization->addTextArg(textbuff);
+			argIndex++;
+		}
+
+		this->items[this->numItems++].Set(textField, textField2, flags, action, param, helpField);
+	}
+
+	textbuff->dispose();
+	return true;
 }
 
 bool MenuSystem::loadMenusFromYAML(const char* path) {
@@ -463,21 +743,77 @@ bool MenuSystem::loadMenusFromYAML(const char* path) {
 	std::vector<uint32_t> itemWords;
 	int itemOffset = 0;
 
+	int yamlMenuCount = 0;
+
 	for (int i = 0; i < count; i++) {
 		YAML::Node menu = menus[i];
 
 		int menuId = menu["menu_id"].as<int>(0);
+		std::string menuName = menu["name"].as<std::string>("");
 		int menuType = menuTypeFromString(menu["type"].as<std::string>("default").c_str());
+		int menuMaxItems = menu["max_items"].as<int>(0);
 
 		YAML::Node items = menu["items"];
 		int itemCount = (items && items.IsSequence()) ? (int)items.size() : 0;
 
+		// Check if this menu uses extended features (widget, text, text2, or GEC extended flags)
+		bool hasExtendedFeatures = false;
+		for (int j = 0; j < itemCount && !hasExtendedFeatures; j++) {
+			YAML::Node item = items[j];
+			if (item["widget"] || item["text"] || item["text2"]) {
+				hasExtendedFeatures = true;
+			}
+			int flags = flagsFromString(item["flags"].as<std::string>("normal").c_str());
+			if (flags > 0xFFFF) {
+				hasExtendedFeatures = true;
+			}
+		}
+
+		// Store in binary-packed format (for loadMenuItems compatibility)
 		uint8_t storedId = (uint8_t)(menuId & 0xFF);
 		int endOffset = itemOffset + itemCount * 2;
 		this->menuData[i] = (uint32_t)storedId
 			| (uint32_t)((endOffset & 0xFFFF) << 8)
 			| (uint32_t)((menuType & 0xFF) << 24);
 
+		// Also store in YAML-native format if extended features are used
+		if (hasExtendedFeatures) {
+			YAMLMenuDef def;
+			def.name = menuName;
+			def.menuId = menuId;
+			def.type = menuType;
+			def.maxItems = menuMaxItems;
+
+			for (int j = 0; j < itemCount; j++) {
+				YAML::Node item = items[j];
+
+				YAMLMenuItem mi = {};
+				mi.textField = item["string_id"].as<int>(0);
+				mi.flags = flagsFromString(item["flags"].as<std::string>("normal").c_str());
+				mi.action = actionFromString(item["action"].as<std::string>("none").c_str());
+				mi.param = item["param"].as<int>(0);
+				if (YAML::Node gotoNode = item["goto"]) {
+					mi.param = menuNameToId(gotoNode.as<std::string>(""));
+				}
+				mi.helpField = item["help_string"].as<int>(0);
+				mi.text = item["text"].as<std::string>("");
+				mi.text2 = item["text2"].as<std::string>("");
+				mi.widget = item["widget"].as<std::string>("");
+
+				// Apply widget flag mapping
+				if (!mi.widget.empty()) {
+					mi.flags |= widgetToFlags(mi.widget);
+				}
+
+				def.items.push_back(mi);
+			}
+
+			this->yamlMenuById[menuId] = (int)this->yamlMenuDefs.size();
+			this->yamlMenuDefs.push_back(std::move(def));
+			yamlMenuCount++;
+		}
+
+		// Always pack items into binary format too (for non-extended menus)
 		for (int j = 0; j < itemCount; j++) {
 			YAML::Node item = items[j];
 
@@ -485,7 +821,6 @@ bool MenuSystem::loadMenusFromYAML(const char* path) {
 			int flags = flagsFromString(item["flags"].as<std::string>("normal").c_str());
 			int action = actionFromString(item["action"].as<std::string>("none").c_str());
 			int param = item["param"].as<int>(0);
-			// Named goto target overrides numeric param
 			if (YAML::Node gotoNode = item["goto"]) {
 				param = menuNameToId(gotoNode.as<std::string>(""));
 			}
@@ -503,7 +838,8 @@ bool MenuSystem::loadMenusFromYAML(const char* path) {
 	this->menuItems = new uint32_t[itemWords.size() > 0 ? itemWords.size() : 1];
 	std::memcpy(this->menuItems, itemWords.data(), itemWords.size() * sizeof(uint32_t));
 
-	printf("[menu] loaded %d menus, %d item words from %s\n", this->menuDataCount, this->menuItemsCount, path);
+	printf("[menu] loaded %d menus (%d extended), %d item words from %s\n",
+		this->menuDataCount, yamlMenuCount, this->menuItemsCount, path);
 	return true;
 }
 
@@ -1607,97 +1943,10 @@ void MenuSystem::initMenu(int menu) {
 		}
 		case Menus::MENU_INGAME_OPTIONS: // [GEC]
 		case Menus::MENU_MAIN_OPTIONS: {
-			//this->loadMenuItems(menu, 0, -1);
-			/*this->items[0].textField2 = (Localization::STRINGID(Strings::FILE_TRANSLATIONS, Languages::ENGLISH));
-			this->items[0].param = 23;
-			this->items[1].textField2 = this->onOffValue(app->canvas->vibrateEnabled);
-			if (HasVibration() != 0) { break; }
-			this->numItems -= 1;*/
-
 			if (menu == Menus::MENU_MAIN_OPTIONS) {
-				/*if (this->oldMenu != menu) {
-					this->scrollIndex = 0;
-					this->selectedIndex = 2;
-				}*/
-				this->drawLogo = true; // [GEC]
-				this->items[this->numItems++].Set(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_PADDING, 0, 14, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER, 0, 0, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT2), MenuSystem::EMPTY_TEXT, Menus::ITEM_ALIGN_CENTER, Menus::ACTION_GOTO, Menus::MENU_MAIN_OPTIONS_SOUND, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), MenuSystem::EMPTY_TEXT, Menus::ITEM_ALIGN_CENTER, Menus::ACTION_GOTO, Menus::MENU_MAIN_OPTIONS_VIDEO, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT4), MenuSystem::EMPTY_TEXT, Menus::ITEM_ALIGN_CENTER, Menus::ACTION_GOTO, Menus::MENU_MAIN_OPTIONS_INPUT, MenuSystem::EMPTY_TEXT);
+				this->drawLogo = true;
 			}
-			else {
-				/*if (this->oldMenu != menu) {
-					this->scrollIndex = 0;
-					this->selectedIndex = 1;
-				}*/
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER | Menus::ITEM_DIVIDER, 0, 0, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT2), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_GOTO, Menus::MENU_INGAME_OPTIONS_SOUND, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_GOTO, Menus::MENU_INGAME_OPTIONS_VIDEO, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT4), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_GOTO, Menus::MENU_INGAME_OPTIONS_INPUT, MenuSystem::EMPTY_TEXT);
-			}
-
-			// ARGUMENT1
-			textbuff->setLength(0);
-			textbuff->append("Options");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT2
-			textbuff->setLength(0);
-			textbuff->append("Sound");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT3
-			textbuff->setLength(0);
-			textbuff->append("Video");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT4
-			textbuff->setLength(0);
-			textbuff->append("Input");
-			app->localization->addTextArg(textbuff);
-
-			/*this->items[this->numItems++].Set(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_PADDING, 0, 16, MenuSystem::EMPTY_TEXT);
-			this->items[this->numItems++].Set(Localization::STRINGID(MenuSystem::INDEX_OTHER, MenuStrings::OPTIONS_ITEM), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER, 0, 0, MenuSystem::EMPTY_TEXT);
-			this->items[this->numItems++].Set(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT, 0, 0, MenuSystem::EMPTY_TEXT);
-			this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_SCROLLBARTWO, Menus::ACTION_CHANGESFXVOLUME, 1, MenuSystem::EMPTY_TEXT);
-			this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT2), MenuSystem::EMPTY_TEXT, Menus::ITEM_SCROLLBARTWO, Menus::ACTION_CHANGEMUSICVOLUME, 2, MenuSystem::EMPTY_TEXT);
-
-			textbuff->setLength(0);
-			textbuff->append("SoundFx Volume:");
-			app->localization->addTextArg(textbuff);
-			textbuff->setLength(0);
-			textbuff->append("Music Volume:");
-			app->localization->addTextArg(textbuff);
-			if (!isUserMusicOn()) {
-				this->items[3].flags |= Menus::ITEM_DISABLEDTWO;
-			}*/
-
-			/*
-			this->drawLogo = true; // [GEC]
-
-			if (this->oldMenu != menu) {
-				this->scrollIndex = 0;
-				this->selectedIndex = 2;
-			}
-			this->maxItems = 0;
-
-			this->items[this->numItems++].Set(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_PADDING, 0, 16, MenuSystem::EMPTY_TEXT);
-			this->items[this->numItems++].Set(Localization::STRINGID(MenuSystem::INDEX_OTHER, MenuStrings::OPTIONS_ITEM), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER, 0, 0, MenuSystem::EMPTY_TEXT);
-			this->items[this->numItems++].Set(Localization::STRINGID(MenuSystem::INDEX_OTHER, MenuStrings::CONTROLS_LABEL), MenuSystem::EMPTY_TEXT, Menus::ITEM_ALIGN_CENTER, -1, 0, MenuSystem::EMPTY_TEXT);
-			this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_SCROLLBARTWO, Menus::ACTION_CHANGESFXVOLUME, 1, MenuSystem::EMPTY_TEXT);
-			this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT2), MenuSystem::EMPTY_TEXT, Menus::ITEM_SCROLLBARTWO, Menus::ACTION_CHANGEMUSICVOLUME, 2, MenuSystem::EMPTY_TEXT);
-
-			textbuff->setLength(0);
-			textbuff->append("SoundFx Volume:");
-			app->localization->addTextArg(textbuff);
-			textbuff->setLength(0);
-			textbuff->append("Music Volume:");
-			app->localization->addTextArg(textbuff);
-			if (!isUserMusicOn()) {
-				this->items[3].flags |= Menus::ITEM_DISABLEDTWO;
-			}*/
-
+			this->loadYAMLMenuItems(menu);
 			break;
 		}
 		case Menus::MENU_MAIN_MORE_GAMES: {
@@ -2540,413 +2789,114 @@ void MenuSystem::initMenu(int menu) {
 		case Menus::MENU_INGAME_OPTIONS_SOUND:
 		case Menus::MENU_MAIN_OPTIONS_SOUND: {  // [GEC]
 			if (menu == Menus::MENU_MAIN_OPTIONS_SOUND) {
-				/*if (this->oldMenu != menu) {
-					this->scrollIndex = 0;
-					this->selectedIndex = 3;
-				}*/
 				this->drawLogo = true;
-				this->items[this->numItems++].Set(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_PADDING, 0, 14, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER, 0, 0, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT, 0, 0, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT2), MenuSystem::EMPTY_TEXT, Menus::ITEM_SCROLLBARTWO, Menus::ACTION_CHANGESFXVOLUME, 1, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), MenuSystem::EMPTY_TEXT, Menus::ITEM_SCROLLBARTWO, Menus::ACTION_CHANGEMUSICVOLUME, 2, MenuSystem::EMPTY_TEXT);
 			}
-			else {
-				/*if (this->oldMenu != menu) {
-					this->scrollIndex = 0;
-					this->selectedIndex = 2;
-				}*/
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER | Menus::ITEM_DIVIDER, 0, 0, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT, 0, 0, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT2), MenuSystem::EMPTY_TEXT, Menus::ITEM_SCROLLBAR, Menus::ACTION_CHANGESFXVOLUME, 1, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT, 0, 0, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), MenuSystem::EMPTY_TEXT, Menus::ITEM_SCROLLBAR, Menus::ACTION_CHANGEMUSICVOLUME, 2, MenuSystem::EMPTY_TEXT);
-			}
-
-			textbuff->setLength(0);
-			textbuff->append("Sound Options");
-			app->localization->addTextArg(textbuff);
-			textbuff->setLength(0);
-			textbuff->append("SoundFx Volume:");
-			app->localization->addTextArg(textbuff);
-			textbuff->setLength(0);
-			textbuff->append("Music Volume:");
-			app->localization->addTextArg(textbuff);
+			this->loadYAMLMenuItems(menu);
 			if (!isUserMusicOn()) {
 				this->items[3].flags |= Menus::ITEM_DISABLEDTWO;
 			}
-
 			break;
 		}
 
 		case Menus::MENU_INGAME_OPTIONS_VIDEO:
 		case Menus::MENU_MAIN_OPTIONS_VIDEO: {  // [GEC]
+			this->loadYAMLMenuItems(menu);
 
-			if (menu == Menus::MENU_MAIN_OPTIONS_VIDEO) {
-				/*if (this->oldMenu != menu) {
-					this->scrollIndex = 0;
-					this->selectedIndex = 1;
-				}*/
-				//this->drawLogo = true;
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER, 0, 0, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT2), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), 0, Menus::ACTION_CHANGE_VID_MODE, 0, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT4), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_TOG_VSYNC, 0, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT5), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT6), 0, Menus::ACTION_CHANGE_RESOLUTION, 0, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT7), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_TOG_TINYGL, 0, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT8), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_APPLY_CHANGES, 0, MenuSystem::EMPTY_TEXT);
+			// Dynamic runtime value updates for text2 fields
+			{
+				int argIdx = app->localization->numTextArgs;
+
+				// Window mode value (text2 of item 1)
+				int windowMode = CAppContainer::getInstance()->sdlGL->windowMode;
+				textbuff->setLength(0);
+				if (windowMode == 0) textbuff->append("Windowed");
+				else if (windowMode == 1) textbuff->append("Borderless");
+				else if (windowMode == 2) textbuff->append("FullScreen");
+				app->localization->addTextArg(textbuff);
+				this->items[1].textField2 = Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1 + argIdx);
+				argIdx++;
+
+				// VSync value (text2 of item 2)
+				this->items[2].textField2 = this->onOffValue(CAppContainer::getInstance()->sdlGL->vSync);
+
+				// Resolution value (text2 of item 3)
+				int resolutionIndex = CAppContainer::getInstance()->sdlGL->resolutionIndex;
+				textbuff->setLength(0);
+				textbuff->append("(")->append(sdlResVideoModes[resolutionIndex].width)->append("x")->append(sdlResVideoModes[resolutionIndex].height)->append(")");
+				app->localization->addTextArg(textbuff);
+				this->items[3].textField2 = Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1 + argIdx);
+				argIdx++;
+
+				// TinyGL value (text2 of item 4)
+				if (!_glesObj->isInit) {
+					this->items[4].textField2 = Localization::STRINGID(Strings::FILE_MENUSTRINGS, (short)197);
+				}
+				else {
+					this->items[4].textField2 = Localization::STRINGID(Strings::FILE_MENUSTRINGS, (short)198);
+				}
 			}
-			else {
-				/*if (this->oldMenu != menu) {
-					this->scrollIndex = 0;
-					this->selectedIndex = 1;
-				}*/
-				this->maxItems = 5;
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER | Menus::ITEM_DIVIDER, 0, 0, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT2), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), 0, Menus::ACTION_CHANGE_VID_MODE, 0, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT4), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_TOG_VSYNC, 0, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT5), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT6), 0, Menus::ACTION_CHANGE_RESOLUTION, 0, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT7), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_TOG_TINYGL, 0, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT8), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_APPLY_CHANGES, 0, MenuSystem::EMPTY_TEXT);
-			}
-			// ARGUMENT1
-			textbuff->setLength(0);
-			textbuff->append("Video Options");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT2, ARGUMENT3
-			textbuff->setLength(0);
-			textbuff->append("Window Mode:");
-			app->localization->addTextArg(textbuff);
-			int windowMode = CAppContainer::getInstance()->sdlGL->windowMode;
-			textbuff->setLength(0);
-			if (windowMode == 0) {
-				textbuff->append("Windowed");
-			}
-			else if (windowMode == 1) {
-				textbuff->append("Borderless");
-			}
-			else if (windowMode == 2) {
-				textbuff->append("FullScreen");
-			}
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT4
-			textbuff->setLength(0);
-			textbuff->append("VSync:");
-			app->localization->addTextArg(textbuff);
-			this->items[2].textField2 = this->onOffValue(CAppContainer::getInstance()->sdlGL->vSync);
-
-			// ARGUMENT5,  ARGUMENT6
-			int resolutionIndex = CAppContainer::getInstance()->sdlGL->resolutionIndex;
-			textbuff->setLength(0);
-			textbuff->append("Resolution:");
-			app->localization->addTextArg(textbuff);
-			textbuff->setLength(0);
-			textbuff->append("(")->append(sdlResVideoModes[resolutionIndex].width)->append("x")->append(sdlResVideoModes[resolutionIndex].height)->append(")");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT7
-			textbuff->setLength(0);
-			textbuff->append("TinyGL:");
-			app->localization->addTextArg(textbuff);
-
-			if (!_glesObj->isInit) {
-				this->items[4].textField2 = Localization::STRINGID(Strings::FILE_MENUSTRINGS, (short)197);
-			}
-			else {
-				this->items[4].textField2 = Localization::STRINGID(Strings::FILE_MENUSTRINGS, (short)198);
-			}
-
-			// ARGUMENT8
-			textbuff->setLength(0);
-			textbuff->append("Apply Changes");
-			app->localization->addTextArg(textbuff);
-
 			break;
 		}
 
 		case Menus::MENU_INGAME_OPTIONS_INPUT:
 		case Menus::MENU_MAIN_OPTIONS_INPUT: {  // [GEC]
-
 			this->nextMsgTime = 0;
 			this->nextMsg = 0;
-
 			if (menu == Menus::MENU_MAIN_OPTIONS_INPUT) {
 				this->drawLogo = true;
-				this->items[this->numItems++].Set(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_PADDING, 0, 14, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER, 0, 0, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT2), MenuSystem::EMPTY_TEXT, Menus::ITEM_ALIGN_CENTER, Menus::ACTION_GOTO, Menus::MENU_MAIN_CONTROLS, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), MenuSystem::EMPTY_TEXT, Menus::ITEM_ALIGN_CENTER, Menus::ACTION_GOTO, Menus::MENU_MAIN_BINDINGS, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT4), MenuSystem::EMPTY_TEXT, Menus::ITEM_ALIGN_CENTER, Menus::ACTION_GOTO, Menus::MENU_MAIN_CONTROLLER, MenuSystem::EMPTY_TEXT);
 			}
-			else {
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER | Menus::ITEM_DIVIDER, 0, 0, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT2), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_GOTO, Menus::MENU_INGAME_CONTROLS, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_GOTO, Menus::MENU_INGAME_BINDINGS, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT4), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_GOTO, Menus::MENU_INGAME_CONTROLLER, MenuSystem::EMPTY_TEXT);
-			}
-			// ARGUMENT1
-			textbuff->setLength(0);
-			textbuff->append("Input Options");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT2
-			textbuff->setLength(0);
-			textbuff->append("Touch Controls");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT3
-			textbuff->setLength(0);
-			textbuff->append("Bindings      ");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT4
-			textbuff->setLength(0);
-			textbuff->append("Controller    ");
-			app->localization->addTextArg(textbuff);
+			this->loadYAMLMenuItems(menu);
 			break;
 		}
 
 		case Menus::MENU_INGAME_CONTROLS:  // [GEC]
 		case Menus::MENU_MAIN_CONTROLS: {  // [GEC]
-
-			int itemIndx = 2;
 			if (menu == Menus::MENU_MAIN_CONTROLS) {
 				this->drawLogo = true;
-				this->items[this->numItems++].Set(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_PADDING, 0, 14, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER, 0, 0, MenuSystem::EMPTY_TEXT);
 			}
-			else {
-				itemIndx = 1;
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER | Menus::ITEM_DIVIDER, 0, 0, MenuSystem::EMPTY_TEXT);
-			}
-			
-			// ARGUMENT1
-			textbuff->setLength(0);
-			textbuff->append("Touch Controls Options");
-			app->localization->addTextArg(textbuff);
+			this->loadYAMLMenuItems(menu);
 
-			this->loadMenuItems(Menus::MENU_INGAME_CONTROLS, 0, -1);
-			textbuff->setLength(0);
-			if (app->canvas->m_controlLayout == 0) {
-				this->items[itemIndx].textField2 = Localization::STRINGID(Strings::FILE_MENUSTRINGS, (short)392);
-			}
-			else if (app->canvas->m_controlLayout == 1) {
-				this->items[itemIndx].textField2 = Localization::STRINGID(Strings::FILE_MENUSTRINGS, (short)393);
-			}
-			else if (app->canvas->m_controlLayout == 2) {
-				this->items[itemIndx].textField2 = Localization::STRINGID(Strings::FILE_MENUSTRINGS, (short)394);
-			}
-
-			if (app->canvas->isFlipControls) {
-				this->items[itemIndx + 1].textField2 = Localization::STRINGID(Strings::FILE_MENUSTRINGS, (short)197);
-			}
-			else {
-				this->items[itemIndx + 1].textField2 = Localization::STRINGID(Strings::FILE_MENUSTRINGS, (short)198);
-			}
-
-			// [GEC]
+			// Dynamic runtime value updates for control layout and flip controls
 			{
-				if (menu == Menus::MENU_MAIN_CONTROLS) {
-					this->items[this->numItems++].Set(Localization::STRINGID(MenuSystem::INDEX_OTHER, MenuStrings::ARGUMENT2), MenuSystem::EMPTY_TEXT, Menus::ITEM_SCROLLBARTWO, Menus::ACTION_CHANGEALPHA, 3, MenuSystem::EMPTY_TEXT);
-					this->items[this->numItems++].Set(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, 1, 0, 0, MenuSystem::EMPTY_TEXT);
+				int itemIndx = (menu == Menus::MENU_MAIN_CONTROLS) ? 2 : 1;
+				if (app->canvas->m_controlLayout == 0) {
+					this->items[itemIndx].textField2 = Localization::STRINGID(Strings::FILE_MENUSTRINGS, (short)392);
+				}
+				else if (app->canvas->m_controlLayout == 1) {
+					this->items[itemIndx].textField2 = Localization::STRINGID(Strings::FILE_MENUSTRINGS, (short)393);
+				}
+				else if (app->canvas->m_controlLayout == 2) {
+					this->items[itemIndx].textField2 = Localization::STRINGID(Strings::FILE_MENUSTRINGS, (short)394);
+				}
+
+				if (app->canvas->isFlipControls) {
+					this->items[itemIndx + 1].textField2 = Localization::STRINGID(Strings::FILE_MENUSTRINGS, (short)197);
 				}
 				else {
-					this->items[this->numItems++].Set(Localization::STRINGID(MenuSystem::INDEX_OTHER, MenuStrings::ARGUMENT2), MenuSystem::EMPTY_TEXT, Menus::ITEM_SCROLLBAR, Menus::ACTION_CHANGEALPHA, 3, MenuSystem::EMPTY_TEXT);
-					this->items[this->numItems++].Set(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, 1, 0, 0, MenuSystem::EMPTY_TEXT);
+					this->items[itemIndx + 1].textField2 = Localization::STRINGID(Strings::FILE_MENUSTRINGS, (short)198);
 				}
-
-				// ARGUMENT2
-				textbuff->setLength(0);
-				textbuff->append("Alpha:");
-				app->localization->addTextArg(textbuff);
 			}
 			break;
 		}
 
 		case Menus::MENU_INGAME_BINDINGS:
 		case Menus::MENU_MAIN_BINDINGS: {  // [GEC]
-			if (menu == Menus::MENU_MAIN_BINDINGS) {
-				this->maxItems = 8;
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER, 0, 0, MenuSystem::EMPTY_TEXT);
-			}
-			else {
-				this->maxItems = 5;
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER | Menus::ITEM_DIVIDER, 0, 0, MenuSystem::EMPTY_TEXT);
-			}
-			this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT2), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER | Menus::ITEM_DIVIDER, 0, 0, MenuSystem::EMPTY_TEXT);
-			this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT4), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 0, MenuSystem::EMPTY_TEXT);
-			this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT5), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 1, MenuSystem::EMPTY_TEXT);
-			this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT6), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 4, MenuSystem::EMPTY_TEXT);
-			this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT7), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 5, MenuSystem::EMPTY_TEXT);
-			this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT8), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 2, MenuSystem::EMPTY_TEXT);
-			this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT9), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 3, MenuSystem::EMPTY_TEXT);
-			this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT10), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER | Menus::ITEM_DIVIDER, 0, 0, MenuSystem::EMPTY_TEXT);
-			this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT11), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 8, MenuSystem::EMPTY_TEXT);
-			this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT12), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 6, MenuSystem::EMPTY_TEXT);
-			this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT13), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 7, MenuSystem::EMPTY_TEXT);
-			this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT14), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 9, MenuSystem::EMPTY_TEXT);
-			this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT15), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 10, MenuSystem::EMPTY_TEXT);
-			this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT16), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 11, MenuSystem::EMPTY_TEXT);
-			this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT17), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 12, MenuSystem::EMPTY_TEXT);
-			this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT18), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 13, MenuSystem::EMPTY_TEXT);
-			this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT19), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 14, MenuSystem::EMPTY_TEXT);
-			this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT20), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 15, MenuSystem::EMPTY_TEXT);
-			this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT21), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_DEFAULT_BINDINGS, 0, MenuSystem::EMPTY_TEXT);
-			this->items[this->numItems++].Set(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT, 0, 0, MenuSystem::EMPTY_TEXT);
-
-			// ARGUMENT1
-			textbuff->setLength(0);
-			textbuff->append("Bindings Options");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT2
-			textbuff->setLength(0);
-			textbuff->append("MOVEMENT");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT3
-			textbuff->setLength(0);
-			textbuff->append("Unbound");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT4
-			textbuff->setLength(0);
-			textbuff->append("Move Forward:");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT5
-			textbuff->setLength(0);
-			textbuff->append("Move Backward:");
-			app->localization->addTextArg(textbuff);
-			
-			// ARGUMENT6
-			textbuff->setLength(0);
-			textbuff->append("Move Left:");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT7
-			textbuff->setLength(0);
-			textbuff->append("Move Right:");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT8
-			textbuff->setLength(0);
-			textbuff->append("Turn Left:");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT9
-			textbuff->setLength(0);
-			textbuff->append("Turn Right:");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT10
-			textbuff->setLength(0);
-			textbuff->append("OTHER");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT11
-			textbuff->setLength(0);
-			textbuff->append("Atk/Talk/Use:");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT12
-			textbuff->setLength(0);
-			textbuff->append("Next Weapon:");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT13
-			textbuff->setLength(0);
-			textbuff->append("Prev Weapon:");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT14
-			textbuff->setLength(0);
-			textbuff->append("Pass Turn:");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT15
-			textbuff->setLength(0);
-			textbuff->append("Automap:");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT16
-			textbuff->setLength(0);
-			textbuff->append("Menu Open/Back:");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT17
-			textbuff->setLength(0);
-			textbuff->append("Menu Items/Info:");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT18
-			textbuff->setLength(0);
-			textbuff->append("Menu Drinks:");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT19
-			textbuff->setLength(0);
-			textbuff->append("Menu PDA:");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT20
-			textbuff->setLength(0);
-			textbuff->append("Bot Dis/Ret:");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT21
-			textbuff->setLength(0);
-			textbuff->append("Reset Binds");
-			app->localization->addTextArg(textbuff);
-
+			this->loadYAMLMenuItems(menu);
 			break;
 		}
 
 		case Menus::MENU_INGAME_CONTROLLER:
 		case Menus::MENU_MAIN_CONTROLLER: {  // [GEC]
-
-			int itemIndx = 2;
 			if (menu == Menus::MENU_MAIN_CONTROLLER) {
 				this->drawLogo = true;
-				this->items[this->numItems++].Set(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_PADDING, 0, 14, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER, 0, 0, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT2), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_TOG_VIBRATION, 0, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), MenuSystem::EMPTY_TEXT, Menus::ITEM_SCROLLBARTWO, Menus::ACTION_CHANGE_VIBRATION_INTENSITY, 4, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT4), MenuSystem::EMPTY_TEXT, Menus::ITEM_SCROLLBARTWO, Menus::ACTION_CHANGE_DEADZONE, 5, MenuSystem::EMPTY_TEXT);
 			}
-			else {
-				itemIndx = 1;
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER, 0, 0, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT2), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_TOG_VIBRATION, 0, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), MenuSystem::EMPTY_TEXT, Menus::ITEM_SCROLLBAR, Menus::ACTION_CHANGE_VIBRATION_INTENSITY, 4, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, 0, 0, 0, MenuSystem::EMPTY_TEXT);
-				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT4), MenuSystem::EMPTY_TEXT, Menus::ITEM_SCROLLBAR, Menus::ACTION_CHANGE_DEADZONE, 5, MenuSystem::EMPTY_TEXT);
+			this->loadYAMLMenuItems(menu);
+
+			// Dynamic runtime value: vibration on/off
+			{
+				int itemIndx = (menu == Menus::MENU_MAIN_CONTROLLER) ? 2 : 1;
+				this->items[itemIndx].textField2 = this->onOffValue(app->canvas->vibrateEnabled);
 			}
-
-
-			this->items[itemIndx].textField2 = this->onOffValue(app->canvas->vibrateEnabled);
-
-			// ARGUMENT1
-			textbuff->setLength(0);
-			textbuff->append("Controller Options");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT2
-			textbuff->setLength(0);
-			textbuff->append("Vibration");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT3
-			textbuff->setLength(0);
-			textbuff->append("Vibration Intensity");
-			app->localization->addTextArg(textbuff);
-
-			// ARGUMENT4
-			textbuff->setLength(0);
-			textbuff->append("Deadzone");
-			app->localization->addTextArg(textbuff);
-		
 			break;
 		}
 

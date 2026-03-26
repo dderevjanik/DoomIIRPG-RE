@@ -449,6 +449,8 @@ static const FlagEntry FLAG_TABLE[] = {
     {0x0020, "showdetails"}, {0x0040, "divider"},       {0x0080, "selector"},    {0x0100, "block_text"},
     {0x0200, "highlight"},   {0x0400, "checked"},       {0x2000, "right_arrow"}, {0x4000, "left_arrow"},
     {0x8000, "hidden"},
+    {0x20000, "scrollbar"},    {0x40000, "scrollbartwo"}, {0x80000, "disabledtwo"},
+    {0x100000, "padding"},     {0x200000, "binding"},
 };
 
 static std::string flagsToNames(int flags) {

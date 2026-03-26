@@ -4,6 +4,9 @@
 #include "Text.h"
 #include "MenuItem.h"
 #include "MenuStrings.h"
+#include <string>
+#include <vector>
+#include <unordered_map>
 
 class Applet;
 class EntityDef;
@@ -246,6 +249,31 @@ public:
     int deadzoneScroll; // [GEC]
     int resolutionIndex; // [GEC]
 
+    // YAML-native menu definitions for extended (GEC) menus
+    // These avoid the 16-bit flag truncation of the binary-packed format
+    struct YAMLMenuItem {
+        int textField;      // string_id or 0 if using inline text
+        int textField2;     // secondary string_id or 0
+        int flags;          // full 32-bit flags including GEC extended
+        int action;
+        int param;
+        int helpField;
+        std::string text;   // inline text (empty if using string_id)
+        std::string text2;  // inline secondary text
+        std::string widget; // widget type name from ui.yaml
+    };
+
+    struct YAMLMenuDef {
+        std::string name;
+        int menuId;
+        int type;
+        int maxItems;       // max visible items (0 = default)
+        std::vector<YAMLMenuItem> items;
+    };
+
+    std::vector<YAMLMenuDef> yamlMenuDefs;
+    std::unordered_map<int, int> yamlMenuById; // menuId -> index in yamlMenuDefs
+
 	// Constructor
 	MenuSystem();
 	// Destructor
@@ -253,6 +281,8 @@ public:
 
 	bool startup();
 	bool loadMenusFromYAML(const char* path);
+	bool loadUIFromYAML(const char* path);
+	bool loadYAMLMenuItems(int menuId);
     void buildDivider(Text* text, int i);
     bool enterDigit(int i);
     void scrollDown();
