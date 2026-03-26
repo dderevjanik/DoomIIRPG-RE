@@ -1616,16 +1616,8 @@ int Combat::getWeaponTileNum(int n) {
     if (this->wpViewTile != nullptr && n >= 0 && n < this->numWeaponViewTiles && this->wpViewTile[n] != 0) {
         return this->wpViewTile[n];
     }
-    // Fallback to hardcoded formula
-    if (n < 5) {
-        return 1 + n;
-    }
-    switch (n) {
-        case 5: return 13;
-        case 6: return 14;
-        case 14: return 15;
-        default: return 1 + n - 2;
-    }
+    // Fallback: view_tile should be set in weapons.yaml for all weapons
+    return 1 + n;
 }
 
 const Combat::FamiliarDef* Combat::getFamiliarDefByWeapon(int weaponIndex) const {
