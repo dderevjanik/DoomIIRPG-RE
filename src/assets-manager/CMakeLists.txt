@@ -24,6 +24,8 @@ add_executable(${ASSETS_MGR_TGT_NAME}
 	main.cpp
 	AssetBrowser.cpp
 	SpriteLoader.cpp
+	ImageLoader.cpp
+	${CMAKE_SOURCE_DIR}/third_party_libs/stb/stb_image_impl.cpp
 	${IMGUI_SOURCES}
 )
 
@@ -36,6 +38,8 @@ set_target_properties(${ASSETS_MGR_TGT_NAME} PROPERTIES
 target_include_directories(${ASSETS_MGR_TGT_NAME} PRIVATE
 	${imgui_am_SOURCE_DIR}
 	${imgui_am_SOURCE_DIR}/backends
+	${CMAKE_SOURCE_DIR}/third_party_libs/stb
+	${CMAKE_SOURCE_DIR}/src/game
 )
 
 target_link_libraries(${ASSETS_MGR_TGT_NAME}

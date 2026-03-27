@@ -1783,7 +1783,11 @@ static bool generateAnimationsYaml(const std::string& outDir) {
 	out << YAML::BeginMap;
 	out << YAML::Key << "tiles" << YAML::Value << YAML::BeginMap;
 	for (const auto& e : entries) {
-		out << YAML::Key << e.name << YAML::Value << e.index;
+		out << YAML::Key << e.name << YAML::Value << YAML::Flow << YAML::BeginMap;
+		out << YAML::Key << "type" << YAML::Value << "bin";
+		out << YAML::Key << "file" << YAML::Value << "tables.bin";
+		out << YAML::Key << "id" << YAML::Value << e.index;
+		out << YAML::EndMap;
 	}
 	out << YAML::EndMap;
 

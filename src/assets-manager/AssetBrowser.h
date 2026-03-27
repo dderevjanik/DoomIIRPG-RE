@@ -9,6 +9,8 @@
 #include <yaml-cpp/yaml.h>
 
 #include "SpriteLoader.h"
+#include "ImageLoader.h"
+#include "SpriteDefs.h"
 
 // Asset category tabs
 enum class AssetCategory {
@@ -103,6 +105,8 @@ struct BuffEntry {
 struct AnimationEntry {
 	std::string name;
 	int tileIndex;
+	SpriteSourceType sourceType = SpriteSourceType::Bin;
+	std::string pngFile; // only set for PNG type
 };
 
 // Menu item (from menus.yaml)
@@ -240,6 +244,9 @@ private:
 
 	// Sprite loader
 	SpriteLoader sprites_;
+
+	// Image loader for PNG sprites
+	ImageLoader imageLoader_;
 
 	// Animation playback
 	float animTime_ = 0.0f;

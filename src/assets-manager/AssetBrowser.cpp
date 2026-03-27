@@ -278,7 +278,25 @@ void AssetBrowser::loadAnimations() {
 		for (auto it = tiles.begin(); it != tiles.end(); ++it) {
 			AnimationEntry a;
 			a.name = it->first.as<std::string>();
-			a.tileIndex = it->second.as<int>();
+
+			if (it->second.IsScalar()) {
+				// Simple format: zombie: 20
+				a.tileIndex = it->second.as<int>();
+				a.sourceType = SpriteSourceType::Bin;
+			} else if (it->second.IsMap()) {
+				// Extended format
+				YAML::Node entry = it->second;
+				std::string typeStr = entry["type"].as<std::string>("bin");
+				if (typeStr == "png") {
+					a.sourceType = SpriteSourceType::Png;
+					a.tileIndex = -1;
+					a.pngFile = entry["file"].as<std::string>("");
+				} else {
+					a.sourceType = SpriteSourceType::Bin;
+					a.tileIndex = entry["id"].as<int>(0);
+				}
+			}
+
 			animations_.push_back(a);
 			tileNameToIndex_[a.name] = a.tileIndex;
 		}
@@ -1101,10 +1119,14 @@ void AssetBrowser::drawAnimationsPanel() {
 		if (!matchesFilter(a.name, filterText_)) continue;
 
 		bool selected = (selectedAnimation_ == i);
-		int frames = sprites_.getFrameCount(a.tileIndex);
 
 		// Show a small sprite thumbnail in the list
-		GLuint thumb = sprites_.getTextureForTile(a.tileIndex);
+		GLuint thumb = 0;
+		if (a.sourceType == SpriteSourceType::Png) {
+			thumb = imageLoader_.loadTexture(gameDir_ + "/sprites/" + a.pngFile);
+		} else {
+			thumb = sprites_.getTextureForTile(a.tileIndex);
+		}
 		if (thumb) {
 			ImGui::Image((ImTextureID)(intptr_t)thumb, ImVec2(16, 16));
 			ImGui::SameLine();
@@ -1115,7 +1137,12 @@ void AssetBrowser::drawAnimationsPanel() {
 			animTime_ = 0.0f;
 		}
 		ImGui::SameLine(listWidth - 70);
-		ImGui::TextDisabled("%d (%df)", a.tileIndex, frames);
+		if (a.sourceType == SpriteSourceType::Png) {
+			ImGui::TextDisabled("png");
+		} else {
+			int frames = sprites_.getFrameCount(a.tileIndex);
+			ImGui::TextDisabled("%d (%df)", a.tileIndex, frames);
+		}
 	}
 	ImGui::EndChild();
 
@@ -1126,10 +1153,25 @@ void AssetBrowser::drawAnimationsPanel() {
 		auto& a = animations_[selectedAnimation_];
 		ImGui::Text("%s", a.name.c_str());
 		ImGui::SameLine();
-		ImGui::TextDisabled("(tile: %d, frames: %d)", a.tileIndex,
-		                    sprites_.getFrameCount(a.tileIndex));
-		ImGui::Separator();
-		drawAnimatedSprite(a.tileIndex, 4.0f);
+		if (a.sourceType == SpriteSourceType::Png) {
+			ImGui::TextDisabled("(png: %s)", a.pngFile.c_str());
+			ImGui::Separator();
+			int w = 0, h = 0;
+			GLuint tex = imageLoader_.loadTexture(gameDir_ + "/sprites/" + a.pngFile, w, h);
+			if (tex && w > 0 && h > 0) {
+				float scale = 4.0f;
+				ImGui::Image((ImTextureID)(intptr_t)tex,
+				             ImVec2(w * scale, h * scale));
+				ImGui::Text("Size: %dx%d", w, h);
+			} else {
+				ImGui::TextDisabled("(failed to load %s)", a.pngFile.c_str());
+			}
+		} else {
+			ImGui::TextDisabled("(tile: %d, frames: %d)", a.tileIndex,
+			                    sprites_.getFrameCount(a.tileIndex));
+			ImGui::Separator();
+			drawAnimatedSprite(a.tileIndex, 4.0f);
+		}
 	} else {
 		ImGui::TextDisabled("Select an animation/tile from the list");
 	}
