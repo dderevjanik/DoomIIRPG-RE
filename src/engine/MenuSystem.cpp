@@ -1605,10 +1605,11 @@ void MenuSystem::paint(Graphics* graphics) {
 					this->menu == Menus::MENU_MAIN_POWER_UP_HELP);
 				if (isHelpMenu) {
 					fallback = {85, 0, 300, 320, false, true};
-				} else if (this->menu < 0) {
-					// GEC menus: use setMenuSettings layout, only apply clip
+				} else if (this->menu < 0 && !this->drawLogo) {
+					// GEC menus without logo (video, bindings): preserve setMenuSettings layout
 					fallback = {menuRect[0], menuRect[1], menuRect[2], menuRect[3], false, true};
 				} else {
+					// Main menus with logo + GEC menus with logo (sound, input, controls, controller)
 					fallback = {menuRect[0], 126, menuRect[2], 176, false, true};
 				}
 			} else if (this->menu <= Menus::MENU_ITEMS_HOLY_WATER_MAX) {
