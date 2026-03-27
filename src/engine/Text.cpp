@@ -6,7 +6,7 @@
 #include "CAppContainer.h"
 #include "App.h"
 #include "Text.h"
-#include <yaml-cpp/yaml.h>
+#include "DataNode.h"
 
 // --------------------
 // Localization Class
@@ -84,11 +84,9 @@ static std::string unescapeString(const std::string& s) {
 }
 
 bool Localization::loadFromYAML(const char* path) {
-	YAML::Node* root = new YAML::Node();
-	try {
-		*root = YAML::LoadFile(path);
-	} catch (const YAML::Exception& e) {
-		printf("Localization: failed to load %s: %s\n", path, e.what());
+	DataNode* root = new DataNode(DataNode::loadFile(path));
+	if (!*root) {
+		printf("Localization: failed to load %s\n", path);
 		delete root;
 		return false;
 	}
@@ -108,20 +106,21 @@ bool Localization::loadFromYAML(const char* path) {
 
 void Localization::loadGroupFromYAML(int language, int group) {
 	if (!this->yamlData) return;
-	YAML::Node* root = (YAML::Node*)this->yamlData;
-	YAML::Node strings = (*root)["strings"];
-	if (!strings || !strings.IsSequence()) return;
+	DataNode* root = (DataNode*)this->yamlData;
+	DataNode strings = (*root)["strings"];
+	if (!strings || !strings.isSequence()) return;
 
 	// Find the matching language/group entry
-	YAML::Node values;
-	for (const auto& entry : strings) {
-		if (entry["language"].as<int>(-1) == language && entry["group"].as<int>(-1) == group) {
+	DataNode values;
+	for (auto it = strings.begin(); it != strings.end(); ++it) {
+		DataNode entry = it.value();
+		if (entry["language"].asInt(-1) == language && entry["group"].asInt(-1) == group) {
 			values = entry["values"];
 			break;
 		}
 	}
 
-	int count = values && values.IsSequence() ? (int)values.size() : 0;
+	int count = values && values.isSequence() ? (int)values.size() : 0;
 	if (count <= 0) {
 		// Empty group — allocate minimal buffers
 		this->textSizes[group] = 1;
@@ -142,7 +141,7 @@ void Localization::loadGroupFromYAML(int language, int group) {
 	std::string* strs = new std::string[count];
 	int totalSize = 0;
 	for (int i = 0; i < count; i++) {
-		std::string val = values[i].as<std::string>("");
+		std::string val = values[i].asString("");
 		strs[i] = unescapeString(val);
 		totalSize += (int)strs[i].size() + 1;
 	}

@@ -17,7 +17,7 @@
 #include "TinyGL.h"
 #include "JavaStream.h"
 #include "Sound.h"
-#include <yaml-cpp/yaml.h>
+#include "DataNode.h"
 #include "SoundNames.h"
 #include "Sounds.h"
 #include "ItemDefs.h"
@@ -466,10 +466,10 @@ void Player::setStatsAccordingToCharacterChoice() {
 		return;
 	}
 
-	try {
-		YAML::Node config = YAML::LoadFile("characters.yaml");
-		YAML::Node chars = config["characters"];
-		if (!chars || !chars.IsMap()) {
+	DataNode config = DataNode::loadFile("characters.yaml");
+	if (config) {
+		DataNode chars = config["characters"];
+		if (!chars || !chars.isMap()) {
 			app->Error("characters.yaml: missing or invalid 'characters' map");
 			return;
 		}
@@ -478,20 +478,18 @@ void Player::setStatsAccordingToCharacterChoice() {
 		int ci = 0;
 		for (auto it = chars.begin(); it != chars.end(); ++it, ++ci) {
 			if (ci == idx) {
-				YAML::Node c = it->second;
-				this->baseCe->setStat(Enums::STAT_DEFENSE, c["defense"].as<int>());
-				this->baseCe->setStat(Enums::STAT_STRENGTH, c["strength"].as<int>());
-				this->baseCe->setStat(Enums::STAT_ACCURACY, c["accuracy"].as<int>());
-				this->baseCe->setStat(Enums::STAT_AGILITY, c["agility"].as<int>());
-				this->baseCe->setStat(Enums::STAT_IQ, c["iq"].as<int>());
-				int n = c["credits"].as<int>();
+				DataNode c = it.value();
+				this->baseCe->setStat(Enums::STAT_DEFENSE, c["defense"].asInt());
+				this->baseCe->setStat(Enums::STAT_STRENGTH, c["strength"].asInt());
+				this->baseCe->setStat(Enums::STAT_ACCURACY, c["accuracy"].asInt());
+				this->baseCe->setStat(Enums::STAT_AGILITY, c["agility"].asInt());
+				this->baseCe->setStat(Enums::STAT_IQ, c["iq"].asInt());
+				int n = c["credits"].asInt();
 				this->give(0, 24, n, true);
 				return;
 			}
 		}
 		app->Error("characters.yaml: character index %d not found", idx);
-	} catch (const YAML::Exception& e) {
-		app->Error("characters.yaml: %s", e.what());
 	}
 }
 
@@ -1642,86 +1640,90 @@ void Player::equipForLevel(int highestMap) {
 	app->game->numMallocsForVIOS = 0;
 
 	// Load map starting loadout from YAML
-	try {
-		YAML::Node config = YAML::LoadFile("levels.yaml");
-		YAML::Node levels = config["levels"];
-		if (!levels || !levels.IsMap()) {
+	DataNode config2 = DataNode::loadFile("levels.yaml");
+	if (config2) {
+		DataNode levels = config2["levels"];
+		if (!levels || !levels.isMap()) {
 			app->Error("levels.yaml: missing or invalid 'levels' map");
 		} else {
 			// Build weapon name→index lookup from weapons.yaml
 			std::map<std::string, int> weaponNameToIndex;
-			try {
-				YAML::Node wpConfig = YAML::LoadFile("weapons.yaml");
-				if (YAML::Node wpNode = wpConfig["weapons"]) {
+			DataNode wpConfig = DataNode::loadFile("weapons.yaml");
+			if (wpConfig) {
+				DataNode wpNode = wpConfig["weapons"];
+				if (wpNode) {
 					for (auto it = wpNode.begin(); it != wpNode.end(); ++it)
-						weaponNameToIndex[it->first.as<std::string>()] = it->second["index"].as<int>(-1);
+						weaponNameToIndex[it.key().asString()] = it.value()["index"].asInt(-1);
 				}
-			} catch (...) {}
+			}
 
 			// Resolve weapon name or index
-			auto resolveWeapon = [&](const YAML::Node& node) -> int {
-				if (node.IsScalar()) {
-					std::string s = node.as<std::string>();
+			auto resolveWeapon = [&](const DataNode& node) -> int {
+				if (node.isScalar()) {
+					std::string s = node.asString();
 					auto it = weaponNameToIndex.find(s);
 					if (it != weaponNameToIndex.end()) return it->second;
 					try { return std::stoi(s); } catch (...) { return -1; }
 				}
-				return node.as<int>(-1);
+				return node.asInt(-1);
 			};
 
 			// Map 10 uses map 9 loadout
 			int lookupMap = (highestMap == 10) ? 9 : highestMap;
-			YAML::Node level = levels[lookupMap];
-			YAML::Node r = level ? level["starting_loadout"] : YAML::Node();
-			if (r && r.IsDefined() && !r.IsNull()) {
+			DataNode level = levels[lookupMap];
+			DataNode r = level ? level["starting_loadout"] : DataNode();
+			if (r) {
 				// Weapons
-				if (YAML::Node weapons = r["weapons"]) {
-					for (size_t w = 0; w < weapons.size(); w++) {
+				DataNode weapons = r["weapons"];
+				if (weapons) {
+					for (int w = 0; w < weapons.size(); w++) {
 						int idx = resolveWeapon(weapons[w]);
 						if (idx >= 0) this->give(1, idx, 1);
 					}
 				}
 				// Weapons given with specific ammo amounts
-				if (YAML::Node wa = r["weapon_ammo"]) {
+				DataNode wa = r["weapon_ammo"];
+				if (wa) {
 					for (auto it = wa.begin(); it != wa.end(); ++it) {
-						int idx = resolveWeapon(it->first);
-						if (idx >= 0) this->give(1, idx, it->second.as<int>());
+						int idx = resolveWeapon(it.key());
+						if (idx >= 0) this->give(1, idx, it.value().asInt());
 					}
 				}
 				// Armor
 				if (r["armor"])
-					this->addArmor(r["armor"].as<int>());
+					this->addArmor(r["armor"].asInt());
 				// Inventory items
-				if (YAML::Node inv = r["inventory"]) {
+				DataNode inv = r["inventory"];
+				if (inv) {
 					for (auto it = inv.begin(); it != inv.end(); ++it) {
-						int idx = ItemDefs::getInventoryIndex(it->first.as<std::string>());
-						if (idx >= 0) this->give(0, idx, it->second.as<int>());
+						int idx = ItemDefs::getInventoryIndex(it.key().asString());
+						if (idx >= 0) this->give(0, idx, it.value().asInt());
 					}
 				}
 				// Ammo
-				if (YAML::Node ammo = r["ammo"]) {
+				DataNode ammo = r["ammo"];
+				if (ammo) {
 					for (auto it = ammo.begin(); it != ammo.end(); ++it) {
-						int idx = ItemDefs::getAmmoIndex(it->first.as<std::string>());
-						if (idx >= 0) this->give(2, idx, it->second.as<int>());
+						int idx = ItemDefs::getAmmoIndex(it.key().asString());
+						if (idx >= 0) this->give(2, idx, it.value().asInt());
 					}
 				}
 				// XP
 				if (r["xp"])
-					this->addXP(r["xp"].as<int>());
+					this->addXP(r["xp"].asInt());
 				// Stats
-				if (YAML::Node stats = r["stats"]) {
-					if (stats["defense"])  this->modifyStat(Enums::STAT_DEFENSE, stats["defense"].as<int>());
-					if (stats["strength"]) this->modifyStat(Enums::STAT_STRENGTH, stats["strength"].as<int>());
-					if (stats["accuracy"]) this->modifyStat(Enums::STAT_ACCURACY, stats["accuracy"].as<int>());
-					if (stats["agility"])  this->modifyStat(Enums::STAT_AGILITY, stats["agility"].as<int>());
-					if (stats["iq"])       this->modifyStat(Enums::STAT_IQ, stats["iq"].as<int>());
+				DataNode stats = r["stats"];
+				if (stats) {
+					if (stats["defense"])  this->modifyStat(Enums::STAT_DEFENSE, stats["defense"].asInt());
+					if (stats["strength"]) this->modifyStat(Enums::STAT_STRENGTH, stats["strength"].asInt());
+					if (stats["accuracy"]) this->modifyStat(Enums::STAT_ACCURACY, stats["accuracy"].asInt());
+					if (stats["agility"])  this->modifyStat(Enums::STAT_AGILITY, stats["agility"].asInt());
+					if (stats["iq"])       this->modifyStat(Enums::STAT_IQ, stats["iq"].asInt());
 				}
 				// VIOS mallocs
-				app->game->numMallocsForVIOS = r["vios_mallocs"].as<int>(0);
+				app->game->numMallocsForVIOS = r["vios_mallocs"].asInt(0);
 			}
 		}
-	} catch (const YAML::Exception& e) {
-		app->Error("levels.yaml: %s", e.what());
 	}
 	this->give(0, 18, 1);
 	this->enableHelp = enableHelp;

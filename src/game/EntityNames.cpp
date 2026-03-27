@@ -1,9 +1,9 @@
 #include "EntityNames.h"
+#include "DataNode.h"
 #include "Enums.h"
 #include "CAppContainer.h"
 #include "App.h"
 #include "Combat.h"
-#include <yaml-cpp/yaml.h>
 #include <cstdio>
 
 // Static member definitions
@@ -17,13 +17,13 @@ std::unordered_map<std::string, int> EntityNames::ammoParms;
 std::vector<std::string> EntityNames::entityTypesByIndex;
 std::vector<std::string> EntityNames::weaponNamesByIndex;
 
-static void loadSection(const YAML::Node& config, const char* key,
+static void loadSection(const DataNode& config, const char* key,
 						std::unordered_map<std::string, int>& map) {
 	map.clear();
-	YAML::Node section = config[key];
-	if (section && section.IsMap()) {
+	DataNode section = config[key];
+	if (section && section.isMap()) {
 		for (auto it = section.begin(); it != section.end(); ++it) {
-			map[it->first.as<std::string>()] = it->second.as<int>(0);
+			map[it.key().asString()] = it.value().asInt(0);
 		}
 	}
 }
@@ -42,55 +42,36 @@ static void buildIndexVector(const std::unordered_map<std::string, int>& map,
 	}
 }
 
-bool EntityNames::loadEntityTypes(const char* entitiesPath) {
-	try {
-		YAML::Node config = YAML::LoadFile(entitiesPath);
-		return loadEntityTypesFromNode(config);
-	} catch (const YAML::Exception& e) {
-		printf("[entity_names] %s: %s\n", entitiesPath, e.what());
-		return false;
-	}
-}
+bool EntityNames::parseTypes(const DataNode& config) {
+	loadSection(config, "entity_types", EntityNames::entityTypes);
+	loadSection(config, "monster_subtypes", EntityNames::monsterSubtypes);
+	loadSection(config, "item_subtypes", EntityNames::itemSubtypes);
+	loadSection(config, "door_subtypes", EntityNames::doorSubtypes);
+	loadSection(config, "decor_subtypes", EntityNames::decorSubtypes);
 
-bool EntityNames::loadEntityTypesFromNode(const YAML::Node& config) {
-	loadSection(config, "entity_types", entityTypes);
-	loadSection(config, "monster_subtypes", monsterSubtypes);
-	loadSection(config, "item_subtypes", itemSubtypes);
-	loadSection(config, "door_subtypes", doorSubtypes);
-	loadSection(config, "decor_subtypes", decorSubtypes);
-
-	buildIndexVector(entityTypes, entityTypesByIndex);
+	buildIndexVector(EntityNames::entityTypes, EntityNames::entityTypesByIndex);
 
 	printf("[entity_names] loaded %d entity types, %d monster subtypes\n",
-		(int)entityTypes.size(), (int)monsterSubtypes.size());
+		(int)EntityNames::entityTypes.size(), (int)EntityNames::monsterSubtypes.size());
 	return true;
 }
 
-bool EntityNames::loadWeaponNames(const char* weaponsPath) {
-	try {
-		YAML::Node config = YAML::LoadFile(weaponsPath);
-		return loadWeaponNamesFromNode(config);
-	} catch (const YAML::Exception& e) {
-		printf("[entity_names] %s: %s\n", weaponsPath, e.what());
-		return false;
-	}
-}
-
-bool EntityNames::loadWeaponNamesFromNode(const YAML::Node& config) {
+bool EntityNames::parseWeapons(const DataNode& config) {
 	// Build weapon name map from weapons: section (each weapon has name -> index)
-	weaponNames.clear();
-	if (YAML::Node weapons = config["weapons"]) {
+	EntityNames::weaponNames.clear();
+	DataNode weapons = config["weapons"];
+	if (weapons) {
 		for (auto it = weapons.begin(); it != weapons.end(); ++it) {
-			std::string name = it->first.as<std::string>();
-			int index = it->second["index"].as<int>(-1);
-			if (index >= 0) weaponNames[name] = index;
+			std::string name = it.key().asString();
+			int index = it.value()["index"].asInt(-1);
+			if (index >= 0) EntityNames::weaponNames[name] = index;
 		}
 	}
-	loadSection(config, "ammo_parms", ammoParms);
-	buildIndexVector(weaponNames, weaponNamesByIndex);
+	loadSection(config, "ammo_parms", EntityNames::ammoParms);
+	buildIndexVector(EntityNames::weaponNames, EntityNames::weaponNamesByIndex);
 
 	printf("[entity_names] loaded %d weapon names, %d ammo parms\n",
-		(int)weaponNames.size(), (int)ammoParms.size());
+		(int)EntityNames::weaponNames.size(), (int)EntityNames::ammoParms.size());
 	return true;
 }
 

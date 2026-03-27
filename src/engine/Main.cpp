@@ -12,7 +12,7 @@
 #include <SDL.h>
 #include "SDLGL.h"
 #include "VFS.h"
-#include <yaml-cpp/yaml.h>
+#include "DataNode.h"
 
 #include "CAppContainer.h"
 #include "App.h"
@@ -35,6 +35,7 @@
 #include "GameScript.h"
 #include "CrashHandler.h"
 
+#include <dirent.h>
 #include <signal.h>
 
 static void handleSIGTERM(int) {
@@ -107,21 +108,39 @@ int main(int argc, char* args[]) {
 		gameDir = gameDirStr.c_str();
 		printf("[main] Game: %s (directory: %s)\n", gameName, gameDir);
 	} else if (strcmp(gameDir, ".") == 0) {
-		// Auto-detect: if games/doom2rpg exists, use it
-		if (access("games/doom2rpg/game.yaml", F_OK) == 0) {
-			gameDirStr = "games/doom2rpg";
+		// Auto-detect: scan games/ for directories containing game.yaml
+		std::vector<std::string> detectedGames;
+		DIR* gamesDir = opendir("games");
+		if (gamesDir) {
+			struct dirent* entry;
+			while ((entry = readdir(gamesDir)) != nullptr) {
+				if (entry->d_name[0] == '.') continue;
+				std::string yamlPath = std::string("games/") + entry->d_name + "/game.yaml";
+				if (access(yamlPath.c_str(), F_OK) == 0) {
+					detectedGames.push_back(entry->d_name);
+				}
+			}
+			closedir(gamesDir);
+		}
+
+		if (detectedGames.size() == 1) {
+			gameDirStr = "games/" + detectedGames[0];
 			gameDir = gameDirStr.c_str();
-			printf("[main] Auto-detected game directory: %s\n", gameDir);
+			printf("[main] Auto-detected game: %s\n", detectedGames[0].c_str());
+		} else if (detectedGames.size() > 1) {
+			printf("[main] Multiple games found. Use --game <name> to select one:\n");
+			for (const auto& g : detectedGames) {
+				printf("  --game %s\n", g.c_str());
+			}
+			return 1;
 		} else if (access("Doom 2 RPG.ipa", F_OK) == 0) {
 			// IPA found but not yet converted — run converter automatically
 			printf("[main] Found 'Doom 2 RPG.ipa' but no converted assets.\n");
 			printf("[main] Running doom2rpg-convert to extract game assets...\n");
 
-			// Find converter next to engine binary, or fall back to PATH
 			std::string converterCmd;
 			std::string selfDir;
 			{
-				// Try to find converter next to this executable
 				char selfPath[4096] = {};
 #ifdef __APPLE__
 				uint32_t selfPathSize = sizeof(selfPath);
@@ -144,7 +163,6 @@ int main(int argc, char* args[]) {
 			}
 
 			if (!selfDir.empty()) {
-				// Check same directory, then converter/ sibling
 				std::string candidates[] = {
 					selfDir + "doom2rpg-convert",
 					selfDir + "converter/doom2rpg-convert",
@@ -169,7 +187,6 @@ int main(int argc, char* args[]) {
 				return 1;
 			}
 
-			// Re-check after conversion
 			if (access("games/doom2rpg/game.yaml", F_OK) == 0) {
 				gameDirStr = "games/doom2rpg";
 				gameDir = gameDirStr.c_str();
@@ -202,162 +219,185 @@ int main(int argc, char* args[]) {
 
 	// Load game.yaml early (before VFS) for game name, save dir, etc.
 	{
-		try {
-			YAML::Node config = YAML::LoadFile("game.yaml");
-			if (YAML::Node game = config["game"]) {
-				GameConfig& gc = CAppContainer::getInstance()->gameConfig;
-				if (game["name"]) gc.name = game["name"].as<std::string>();
-				if (game["window_title"]) gc.windowTitle = game["window_title"].as<std::string>();
-				else gc.windowTitle = gc.name;
-				if (game["save_dir"]) gc.saveDir = game["save_dir"].as<std::string>();
-				if (game["entry_map"]) gc.entryMap = game["entry_map"].as<std::string>();
+		DataNode config = DataNode::loadFile("game.yaml");
+		if (!config) {
+			printf("[main] Error: could not load game.yaml in '%s'\n", gameDir);
+			printf("[main] Use --game <name> to select a game from games/ directory.\n");
+			return 1;
+		}
+		DataNode game = config["game"];
+		if (game) {
+			GameConfig& gc = CAppContainer::getInstance()->gameConfig;
+			if (game["module"]) gc.module = game["module"].asString();
+			if (game["name"]) gc.name = game["name"].asString();
+			if (game["window_title"]) gc.windowTitle = game["window_title"].asString();
+			else gc.windowTitle = gc.name;
+			if (game["save_dir"]) gc.saveDir = game["save_dir"].asString();
+			if (game["entry_map"]) gc.entryMap = game["entry_map"].asString();
 
-				if (game["no_fog_maps"]) {
-					for (const auto& id : game["no_fog_maps"]) {
-						gc.noFogMaps.push_back(id.as<int>());
-					}
+			DataNode nfm = game["no_fog_maps"];
+			if (nfm) {
+				for (auto it = nfm.begin(); it != nfm.end(); ++it) {
+					gc.noFogMaps.push_back(it.value().asInt(0));
 				}
+			}
 
-				if (game["search_dirs"]) {
-					for (const auto& dir : game["search_dirs"]) {
-						gc.searchDirs.push_back(dir.as<std::string>());
-					}
+			DataNode searchDirs = game["search_dirs"];
+			if (searchDirs) {
+				for (auto it = searchDirs.begin(); it != searchDirs.end(); ++it) {
+					gc.searchDirs.push_back(it.value().asString());
 				}
+			}
 
-				gc.maxEntities = game["max_entities"].as<int>(gc.maxEntities);
-				gc.maxWeaponButtons = game["max_weapon_buttons"].as<int>(gc.maxWeaponButtons);
+			gc.maxEntities = game["max_entities"].asInt(gc.maxEntities);
+			gc.maxWeaponButtons = game["max_weapon_buttons"].asInt(gc.maxWeaponButtons);
 
-				// Player balance
-				gc.startingMaxHealth = game["starting_max_health"].as<int>(gc.startingMaxHealth);
-				gc.outOfCombatTurns = game["out_of_combat_turns"].as<int>(gc.outOfCombatTurns);
+			// Player balance
+			gc.startingMaxHealth = game["starting_max_health"].asInt(gc.startingMaxHealth);
+			gc.outOfCombatTurns = game["out_of_combat_turns"].asInt(gc.outOfCombatTurns);
 
-				if (YAML::Node lu = game["level_up"]) {
-					gc.levelUpHealth = lu["health"].as<int>(gc.levelUpHealth);
-					gc.levelUpDefense = lu["defense"].as<int>(gc.levelUpDefense);
-					gc.levelUpStrength = lu["strength"].as<int>(gc.levelUpStrength);
-					gc.levelUpAccuracy = lu["accuracy"].as<int>(gc.levelUpAccuracy);
-					gc.levelUpAgility = lu["agility"].as<int>(gc.levelUpAgility);
+			DataNode lu = game["level_up"];
+			if (lu) {
+				gc.levelUpHealth = lu["health"].asInt(gc.levelUpHealth);
+				gc.levelUpDefense = lu["defense"].asInt(gc.levelUpDefense);
+				gc.levelUpStrength = lu["strength"].asInt(gc.levelUpStrength);
+				gc.levelUpAccuracy = lu["accuracy"].asInt(gc.levelUpAccuracy);
+				gc.levelUpAgility = lu["agility"].asInt(gc.levelUpAgility);
+			}
+
+			DataNode cs = game["chainsaw_bonus"];
+			if (cs) {
+				gc.chainsawBonusKills = cs["kills"].asInt(gc.chainsawBonusKills);
+				gc.chainsawBonusStrength = cs["strength"].asInt(gc.chainsawBonusStrength);
+			}
+
+			DataNode sc = game["scoring"];
+			if (sc) {
+				gc.scorePerLevel = sc["per_level"].asInt(gc.scorePerLevel);
+				gc.scoreAllLevelsBonus = sc["all_levels_bonus"].asInt(gc.scoreAllLevelsBonus);
+				gc.scoreNoDeathsBonus = sc["no_deaths_bonus"].asInt(gc.scoreNoDeathsBonus);
+				gc.scoreDeathPenaltyBase = sc["death_penalty_base"].asInt(gc.scoreDeathPenaltyBase);
+				gc.scoreDeathPenaltyMult = sc["death_penalty_mult"].asInt(gc.scoreDeathPenaltyMult);
+				gc.scoreManyDeathsPenalty = sc["many_deaths_penalty"].asInt(gc.scoreManyDeathsPenalty);
+				gc.scoreDeathThreshold = sc["death_threshold"].asInt(gc.scoreDeathThreshold);
+				gc.scoreTimeBonusMinutes = sc["time_bonus_minutes"].asInt(gc.scoreTimeBonusMinutes);
+				gc.scoreTimeBonusMult = sc["time_bonus_mult"].asInt(gc.scoreTimeBonusMult);
+				gc.scoreMoveThreshold = sc["move_threshold"].asInt(gc.scoreMoveThreshold);
+				gc.scoreMoveDivisor = sc["move_divisor"].asInt(gc.scoreMoveDivisor);
+				gc.scorePerSecret = sc["per_secret"].asInt(gc.scorePerSecret);
+				gc.scoreAllSecretsBonus = sc["all_secrets_bonus"].asInt(gc.scoreAllSecretsBonus);
+			}
+
+			DataNode xp = game["xp_formula"];
+			if (xp) {
+				gc.xpLinear = xp["linear"].asInt(gc.xpLinear);
+				gc.xpCubic = xp["cubic"].asInt(gc.xpCubic);
+			}
+
+			DataNode caps = game["caps"];
+			if (caps) {
+				gc.capCredits = caps["credits"].asInt(gc.capCredits);
+				gc.capInventory = caps["inventory"].asInt(gc.capInventory);
+				gc.capAmmo = caps["ammo"].asInt(gc.capAmmo);
+				gc.capBotFuel = caps["bot_fuel"].asInt(gc.capBotFuel);
+			}
+
+			DataNode dvd = game["damage_vignette_dirs"];
+			if (dvd) {
+				gc.damageVignetteDirs.clear();
+				for (auto it = dvd.begin(); it != dvd.end(); ++it) {
+					gc.damageVignetteDirs.push_back(it.value().asInt(0));
 				}
+			}
 
-				if (YAML::Node cs = game["chainsaw_bonus"]) {
-					gc.chainsawBonusKills = cs["kills"].as<int>(gc.chainsawBonusKills);
-					gc.chainsawBonusStrength = cs["strength"].as<int>(gc.chainsawBonusStrength);
+			DataNode bc = game["bubble_colors"];
+			if (bc) {
+				gc.bubbleColors.clear();
+				for (auto it = bc.begin(); it != bc.end(); ++it) {
+					DataNode entry = it.value();
+					unsigned int color = static_cast<unsigned int>(entry["color"].asLongLong(0));
+					gc.bubbleColors.push_back({
+						color,
+						entry["offset"].asInt(0),
+						entry["tail_width"].asInt(0)
+					});
 				}
+			}
 
-				if (YAML::Node sc = game["scoring"]) {
-					gc.scorePerLevel = sc["per_level"].as<int>(gc.scorePerLevel);
-					gc.scoreAllLevelsBonus = sc["all_levels_bonus"].as<int>(gc.scoreAllLevelsBonus);
-					gc.scoreNoDeathsBonus = sc["no_deaths_bonus"].as<int>(gc.scoreNoDeathsBonus);
-					gc.scoreDeathPenaltyBase = sc["death_penalty_base"].as<int>(gc.scoreDeathPenaltyBase);
-					gc.scoreDeathPenaltyMult = sc["death_penalty_mult"].as<int>(gc.scoreDeathPenaltyMult);
-					gc.scoreManyDeathsPenalty = sc["many_deaths_penalty"].as<int>(gc.scoreManyDeathsPenalty);
-					gc.scoreDeathThreshold = sc["death_threshold"].as<int>(gc.scoreDeathThreshold);
-					gc.scoreTimeBonusMinutes = sc["time_bonus_minutes"].as<int>(gc.scoreTimeBonusMinutes);
-					gc.scoreTimeBonusMult = sc["time_bonus_mult"].as<int>(gc.scoreTimeBonusMult);
-					gc.scoreMoveThreshold = sc["move_threshold"].as<int>(gc.scoreMoveThreshold);
-					gc.scoreMoveDivisor = sc["move_divisor"].as<int>(gc.scoreMoveDivisor);
-					gc.scorePerSecret = sc["per_secret"].as<int>(gc.scorePerSecret);
-					gc.scoreAllSecretsBonus = sc["all_secrets_bonus"].as<int>(gc.scoreAllSecretsBonus);
-				}
+			DataNode tp = game["target_practice"];
+			if (tp) {
+				gc.tpHeadPoints = tp["head_points"].asInt(gc.tpHeadPoints);
+				gc.tpBodyPoints = tp["body_points"].asInt(gc.tpBodyPoints);
+				gc.tpLegPoints = tp["leg_points"].asInt(gc.tpLegPoints);
+				gc.tpHitDisplayMs = tp["hit_display_ms"].asInt(gc.tpHitDisplayMs);
+				gc.tpWeaponIdx = tp["weapon_index"].asInt(gc.tpWeaponIdx);
+				gc.tpAmmoType = tp["ammo_type"].asInt(gc.tpAmmoType);
+				gc.tpAmmoCount = tp["ammo_count"].asInt(gc.tpAmmoCount);
+			}
 
-				if (YAML::Node xp = game["xp_formula"]) {
-					gc.xpLinear = xp["linear"].as<int>(gc.xpLinear);
-					gc.xpCubic = xp["cubic"].as<int>(gc.xpCubic);
-				}
-
-				if (YAML::Node caps = game["caps"]) {
-					gc.capCredits = caps["credits"].as<int>(gc.capCredits);
-					gc.capInventory = caps["inventory"].as<int>(gc.capInventory);
-					gc.capAmmo = caps["ammo"].as<int>(gc.capAmmo);
-					gc.capBotFuel = caps["bot_fuel"].as<int>(gc.capBotFuel);
-				}
-
-				if (YAML::Node dvd = game["damage_vignette_dirs"]) {
-					gc.damageVignetteDirs.clear();
-					for (const auto& val : dvd) {
-						gc.damageVignetteDirs.push_back(val.as<int>());
-					}
-				}
-
-				if (YAML::Node bc = game["bubble_colors"]) {
-					gc.bubbleColors.clear();
-					for (const auto& entry : bc) {
-						unsigned int color = static_cast<unsigned int>(entry["color"].as<long long>());
-						gc.bubbleColors.push_back({
-							color,
-							entry["offset"].as<int>(),
-							entry["tail_width"].as<int>()
+			DataNode vm = game["vending_machine"];
+			if (vm) {
+				gc.vendSliderMin = vm["slider_min"].asInt(gc.vendSliderMin);
+				gc.vendSliderMax = vm["slider_max"].asInt(gc.vendSliderMax);
+				gc.vendSliderStart = vm["slider_start"].asInt(gc.vendSliderStart);
+				DataNode hints = vm["iq_hints"];
+				if (hints) {
+					gc.vendIQHints.clear();
+					for (auto it = hints.begin(); it != hints.end(); ++it) {
+						DataNode h = it.value();
+						gc.vendIQHints.push_back({
+							h["iq"].asInt(0),
+							h["hints"].asInt(0)
 						});
 					}
 				}
-
-				if (YAML::Node tp = game["target_practice"]) {
-					gc.tpHeadPoints = tp["head_points"].as<int>(gc.tpHeadPoints);
-					gc.tpBodyPoints = tp["body_points"].as<int>(gc.tpBodyPoints);
-					gc.tpLegPoints = tp["leg_points"].as<int>(gc.tpLegPoints);
-					gc.tpHitDisplayMs = tp["hit_display_ms"].as<int>(gc.tpHitDisplayMs);
-					gc.tpWeaponIdx = tp["weapon_index"].as<int>(gc.tpWeaponIdx);
-					gc.tpAmmoType = tp["ammo_type"].as<int>(gc.tpAmmoType);
-					gc.tpAmmoCount = tp["ammo_count"].as<int>(gc.tpAmmoCount);
-				}
-
-				if (YAML::Node vm = game["vending_machine"]) {
-					gc.vendSliderMin = vm["slider_min"].as<int>(gc.vendSliderMin);
-					gc.vendSliderMax = vm["slider_max"].as<int>(gc.vendSliderMax);
-					gc.vendSliderStart = vm["slider_start"].as<int>(gc.vendSliderStart);
-					if (YAML::Node hints = vm["iq_hints"]) {
-						gc.vendIQHints.clear();
-						for (const auto& h : hints) {
-							gc.vendIQHints.push_back({
-								h["iq"].as<int>(),
-								h["hints"].as<int>()
-							});
-						}
-					}
-				}
-
-				if (YAML::Node am = game["automap"]) {
-					if (YAML::Node dc = am["door_colors"]) {
-						gc.automapDoorColors.clear();
-						for (const auto& entry : dc) {
-							int16_t tile = (int16_t)entry["tile"].as<int>();
-							uint32_t color = (uint32_t)entry["color"].as<unsigned long>();
-							gc.automapDoorColors.push_back({tile, color});
-						}
-					}
-					gc.automapDoorDefault = (uint32_t)am["door_default_color"].as<unsigned long>(gc.automapDoorDefault);
-					if (YAML::Node hd = am["hidden_decors"]) {
-						gc.automapHiddenDecors.clear();
-						for (const auto& entry : hd) {
-							gc.automapHiddenDecors.push_back((int16_t)entry.as<int>());
-						}
-					}
-				}
-
-				if (YAML::Node rm = game["render_modes"]) {
-					gc.renderModes.clear();
-					for (auto it = rm.begin(); it != rm.end(); ++it) {
-						gc.renderModes[it->first.as<std::string>()] = it->second.as<int>(0);
-					}
-				}
-
-				if (YAML::Node ji = game["joke_items"]) {
-					for (const auto& entry : ji) {
-						int mapId = entry["map"].as<int>();
-						std::vector<int> items;
-						for (const auto& item : entry["items"]) {
-							items.push_back(item.as<int>());
-						}
-						gc.jokeItems[mapId] = std::move(items);
-					}
-				}
-
-				printf("[main] Game: %s (save: %s)\n", gc.name.c_str(), gc.saveDir.c_str());
 			}
-		} catch (const YAML::Exception& e) {
-			printf("[main] Error: could not load game.yaml: %s\n", e.what());
-			printf("[main] Run doom2rpg-convert to extract game assets first.\n");
-			return 1;
+
+			DataNode am = game["automap"];
+			if (am) {
+				DataNode dc = am["door_colors"];
+				if (dc) {
+					gc.automapDoorColors.clear();
+					for (auto it = dc.begin(); it != dc.end(); ++it) {
+						DataNode entry = it.value();
+						int16_t tile = (int16_t)entry["tile"].asInt(0);
+						uint32_t color = (uint32_t)entry["color"].asULong(0);
+						gc.automapDoorColors.push_back({tile, color});
+					}
+				}
+				gc.automapDoorDefault = (uint32_t)am["door_default_color"].asULong(gc.automapDoorDefault);
+				DataNode hd = am["hidden_decors"];
+				if (hd) {
+					gc.automapHiddenDecors.clear();
+					for (auto it = hd.begin(); it != hd.end(); ++it) {
+						gc.automapHiddenDecors.push_back((int16_t)it.value().asInt(0));
+					}
+				}
+			}
+
+			DataNode rm = game["render_modes"];
+			if (rm) {
+				gc.renderModes.clear();
+				for (auto it = rm.begin(); it != rm.end(); ++it) {
+					gc.renderModes[it.key().asString()] = it.value().asInt(0);
+				}
+			}
+
+			DataNode ji = game["joke_items"];
+			if (ji) {
+				for (auto it = ji.begin(); it != ji.end(); ++it) {
+					DataNode entry = it.value();
+					int mapId = entry["map"].asInt(0);
+					std::vector<int> items;
+					DataNode itemList = entry["items"];
+					for (auto it2 = itemList.begin(); it2 != itemList.end(); ++it2) {
+						items.push_back(it2.value().asInt(0));
+					}
+					gc.jokeItems[mapId] = std::move(items);
+				}
+			}
+
+			printf("[main] Game: %s (save: %s)\n", gc.name.c_str(), gc.saveDir.c_str());
 		}
 	}
 

@@ -1,42 +1,32 @@
 #include "ItemDefs.h"
-#include <yaml-cpp/yaml.h>
+#include "DataNode.h"
 #include <cstdio>
 
 // Static member definitions
 std::unordered_map<std::string, int> ItemDefs::inventoryNameToIndex;
 std::unordered_map<std::string, int> ItemDefs::ammoNameToIndex;
 
-bool ItemDefs::loadFromYAML(const char* path) {
-	try {
-		YAML::Node config = YAML::LoadFile(path);
-		return loadFromNode(config);
-	} catch (const YAML::Exception& e) {
-		printf("[items] %s: %s\n", path, e.what());
-		return false;
-	}
-}
-
-bool ItemDefs::loadFromNode(const YAML::Node& config) {
+bool ItemDefs::parse(const DataNode& config) {
 	// Load inventory section
-	YAML::Node inventory = config["inventory"];
-	inventoryNameToIndex.clear();
-	if (inventory && inventory.IsMap()) {
+	DataNode inventory = config["inventory"];
+	ItemDefs::inventoryNameToIndex.clear();
+	if (inventory && inventory.isMap()) {
 		for (auto it = inventory.begin(); it != inventory.end(); ++it) {
-			inventoryNameToIndex[it->first.as<std::string>()] = it->second.as<int>(0);
+			ItemDefs::inventoryNameToIndex[it.key().asString()] = it.value().asInt(0);
 		}
 	}
 
 	// Load ammo section
-	YAML::Node ammo = config["ammo"];
-	ammoNameToIndex.clear();
-	if (ammo && ammo.IsMap()) {
+	DataNode ammo = config["ammo"];
+	ItemDefs::ammoNameToIndex.clear();
+	if (ammo && ammo.isMap()) {
 		for (auto it = ammo.begin(); it != ammo.end(); ++it) {
-			ammoNameToIndex[it->first.as<std::string>()] = it->second.as<int>(0);
+			ItemDefs::ammoNameToIndex[it.key().asString()] = it.value().asInt(0);
 		}
 	}
 
 	printf("[items] loaded %d inventory names, %d ammo names\n",
-		(int)inventoryNameToIndex.size(), (int)ammoNameToIndex.size());
+		(int)ItemDefs::inventoryNameToIndex.size(), (int)ItemDefs::ammoNameToIndex.size());
 	return true;
 }
 

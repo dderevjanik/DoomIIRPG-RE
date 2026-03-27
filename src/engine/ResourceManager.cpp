@@ -1,16 +1,69 @@
 #include "ResourceManager.h"
+#include "DataNode.h"
 #include "VFS.h"
 #include <yaml-cpp/yaml.h>
 #include <cstdio>
 #include <cstdlib>
 #include <algorithm>
 
+// --- Cache implementation (hides YAML types from header) ---
+
+struct ResourceManager::CacheImpl {
+	std::unordered_map<std::string, YAML::Node*> yamlCache;
+
+	~CacheImpl() {
+		for (auto& kv : yamlCache) {
+			delete kv.second;
+		}
+	}
+
+	const YAML::Node* loadYAML(const char* path, ResourceManager* rm) {
+		auto it = yamlCache.find(path);
+		if (it != yamlCache.end()) {
+			return it->second;
+		}
+
+		std::string content = rm->readFileAsString(path);
+		if (content.empty()) {
+			printf("[resource] failed to read %s via VFS\n", path);
+			return nullptr;
+		}
+
+		try {
+			YAML::Node* node = new YAML::Node(YAML::Load(content));
+			yamlCache[path] = node;
+			printf("[resource] loaded %s via VFS\n", path);
+			return node;
+		} catch (const YAML::Exception& e) {
+			printf("[resource] YAML parse error in %s: %s\n", path, e.what());
+			return nullptr;
+		}
+	}
+
+	void invalidate(const char* path) {
+		auto it = yamlCache.find(path);
+		if (it != yamlCache.end()) {
+			delete it->second;
+			yamlCache.erase(it);
+		}
+	}
+
+	void invalidateAll() {
+		for (auto& kv : yamlCache) {
+			delete kv.second;
+		}
+		yamlCache.clear();
+	}
+};
+
+// --- ResourceManager ---
+
 ResourceManager::ResourceManager()
-	: vfs(nullptr), loadersSorted(false) {
+	: vfs(nullptr), cache(new CacheImpl()), entriesSorted(false) {
 }
 
 ResourceManager::~ResourceManager() {
-	invalidateAll();
+	delete cache;
 }
 
 void ResourceManager::init(VFS* vfs) {
@@ -32,68 +85,81 @@ std::string ResourceManager::readFileAsString(const char* path) {
 	return result;
 }
 
-const YAML::Node* ResourceManager::loadYAML(const char* path) {
-	// Check cache first
-	auto it = yamlCache.find(path);
-	if (it != yamlCache.end()) {
-		return it->second;
-	}
-
-	// Read through VFS
-	std::string content = readFileAsString(path);
-	if (content.empty()) {
-		printf("[resource] failed to read %s via VFS\n", path);
-		return nullptr;
-	}
-
-	try {
-		YAML::Node* node = new YAML::Node(YAML::Load(content));
-		yamlCache[path] = node;
-		printf("[resource] loaded %s via VFS\n", path);
-		return node;
-	} catch (const YAML::Exception& e) {
-		printf("[resource] YAML parse error in %s: %s\n", path, e.what());
-		return nullptr;
-	}
+DataNode ResourceManager::loadData(const char* path) {
+	const YAML::Node* node = cache->loadYAML(path, this);
+	if (!node) return DataNode();
+	return DataNode::fromYAML(*node);
 }
 
-void ResourceManager::invalidateYAML(const char* path) {
-	auto it = yamlCache.find(path);
-	if (it != yamlCache.end()) {
-		delete it->second;
-		yamlCache.erase(it);
-	}
+void ResourceManager::invalidateData(const char* path) {
+	cache->invalidate(path);
 }
 
 void ResourceManager::invalidateAll() {
-	for (auto& kv : yamlCache) {
-		delete kv.second;
-	}
-	yamlCache.clear();
+	cache->invalidateAll();
+}
+
+void ResourceManager::registerParser(const char* name, const char* dataPath,
+									 std::function<bool(const DataNode&)> parser,
+									 int priority, bool optional) {
+	DefinitionEntry e;
+	e.name = name;
+	e.dataPath = dataPath;
+	e.parser = parser;
+	e.priority = priority;
+	e.optional = optional;
+	entries.push_back(std::move(e));
+	entriesSorted = false;
 }
 
 void ResourceManager::registerLoader(const char* name,
 									 std::function<bool(ResourceManager*)> loader,
 									 int priority) {
-	loaders.push_back({name, loader, priority});
-	loadersSorted = false;
+	DefinitionEntry e;
+	e.name = name;
+	e.loader = loader;
+	e.priority = priority;
+	e.optional = false;
+	entries.push_back(std::move(e));
+	entriesSorted = false;
 }
 
 bool ResourceManager::loadAllDefinitions() {
-	if (!loadersSorted) {
-		std::sort(loaders.begin(), loaders.end(),
-				  [](const LoaderEntry& a, const LoaderEntry& b) {
+	if (!entriesSorted) {
+		std::sort(entries.begin(), entries.end(),
+				  [](const DefinitionEntry& a, const DefinitionEntry& b) {
 					  return a.priority < b.priority;
 				  });
-		loadersSorted = true;
+		entriesSorted = true;
 	}
 
-	printf("[resource] loading %d registered definitions\n", (int)loaders.size());
+	printf("[resource] loading %d registered definitions\n", (int)entries.size());
 
-	for (auto& entry : loaders) {
-		printf("[resource] running loader: %s (priority %d)\n", entry.name.c_str(), entry.priority);
-		if (!entry.loader(this)) {
-			printf("[resource] loader failed: %s\n", entry.name.c_str());
+	for (auto& entry : entries) {
+		printf("[resource] running: %s (priority %d)\n", entry.name.c_str(), entry.priority);
+
+		bool ok;
+		if (!entry.dataPath.empty()) {
+			// Parser: ResourceManager loads the data, then calls the parser
+			DataNode data = loadData(entry.dataPath.c_str());
+			if (!data) {
+				if (entry.optional) {
+					printf("[resource] %s: %s not found (optional, skipping)\n",
+						   entry.name.c_str(), entry.dataPath.c_str());
+					continue;
+				}
+				printf("[resource] %s: failed to load %s\n",
+					   entry.name.c_str(), entry.dataPath.c_str());
+				return false;
+			}
+			ok = entry.parser(data);
+		} else {
+			// Raw loader: callback handles everything
+			ok = entry.loader(this);
+		}
+
+		if (!ok) {
+			printf("[resource] failed: %s\n", entry.name.c_str());
 			return false;
 		}
 	}

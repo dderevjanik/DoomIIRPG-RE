@@ -1,8 +1,6 @@
 #ifndef __ENTITYDEF_H__
 #define __ENTITYDEF_H__
 
-namespace YAML { class Node; }
-
 class EntityDef;
 
 // -----------------------
@@ -14,9 +12,6 @@ class EntityDefManager {
 	EntityDef* list;
 	int numDefs;
 
-	bool loadFromYAML(const char* path);
-	bool loadFromNode(const YAML::Node& config);
-
   public:
 	// Constructor
 	EntityDefManager();
@@ -24,6 +19,9 @@ class EntityDefManager {
 	~EntityDefManager();
 
 	bool startup();
+
+	// Parse entity definitions from a DataNode (called by ResourceManager)
+	static bool parse(EntityDefManager* mgr, const class DataNode& config);
 	EntityDef* find(int eType, int eSubType);
 	EntityDef* find(int eType, int eSubType, int parm);
 	EntityDef* lookup(int tileIndex);

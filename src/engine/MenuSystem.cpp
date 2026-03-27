@@ -5,7 +5,7 @@
 #include <unordered_map>
 
 #include "CAppContainer.h"
-#include <yaml-cpp/yaml.h>
+#include "DataNode.h"
 #include "App.h"
 #include "Hud.h"
 #include "Game.h"
@@ -189,28 +189,31 @@ static std::unordered_map<std::string, int> s_actions;
 static std::unordered_map<int, std::string> s_actionsByValue;
 static std::unordered_map<std::string, int> s_flags;
 
-static void loadMenuLookups(const YAML::Node& config) {
-	if (YAML::Node types = config["menu_types"]) {
+static void loadMenuLookups(const DataNode& config) {
+	DataNode types = config["menu_types"];
+	if (types) {
 		for (auto it = types.begin(); it != types.end(); ++it) {
-			std::string name = it->first.as<std::string>();
-			int val = it->second.as<int>(0);
+			std::string name = it.key().asString();
+			int val = it.value().asInt(0);
 			s_menuTypes[name] = val;
 			if (val >= (int)s_menuTypesByIndex.size())
 				s_menuTypesByIndex.resize(val + 1);
 			s_menuTypesByIndex[val] = name;
 		}
 	}
-	if (YAML::Node acts = config["actions"]) {
+	DataNode acts = config["actions"];
+	if (acts) {
 		for (auto it = acts.begin(); it != acts.end(); ++it) {
-			std::string name = it->first.as<std::string>();
-			int val = it->second.as<int>(0);
+			std::string name = it.key().asString();
+			int val = it.value().asInt(0);
 			s_actions[name] = val;
 			s_actionsByValue[val] = name;
 		}
 	}
-	if (YAML::Node fl = config["item_flags"]) {
+	DataNode fl = config["item_flags"];
+	if (fl) {
 		for (auto it = fl.begin(); it != fl.end(); ++it) {
-			s_flags[it->first.as<std::string>()] = it->second.as<int>(0);
+			s_flags[it.key().asString()] = it.value().asInt(0);
 		}
 	}
 }
@@ -385,18 +388,17 @@ static int menuNameToId(const std::string& name) {
 static std::unordered_map<std::string, std::string> s_widgetFlagMapping;
 
 bool MenuSystem::loadUIFromYAML(const char* path) {
-	YAML::Node config;
-	try {
-		config = YAML::LoadFile(path);
-	} catch (const YAML::Exception& e) {
-		printf("[menu] failed to load %s: %s\n", path, e.what());
+	DataNode config = DataNode::loadFile(path);
+	if (!config) {
+		printf("[menu] failed to load %s\n", path);
 		return false;
 	}
 
 	// Load widget_flag_mapping
-	if (YAML::Node mapping = config["widget_flag_mapping"]) {
+	DataNode mapping = config["widget_flag_mapping"];
+	if (mapping) {
 		for (auto it = mapping.begin(); it != mapping.end(); ++it) {
-			s_widgetFlagMapping[it->first.as<std::string>()] = it->second.as<std::string>("");
+			s_widgetFlagMapping[it.key().asString()] = it.value().asString("");
 		}
 	}
 
@@ -454,25 +456,27 @@ bool MenuSystem::loadUIFromYAML(const char* path) {
 
 	// Build UI sound alias -> ResID lookup from sounds.yaml ui_sounds section
 	std::unordered_map<std::string, int> soundMap;
-	try {
-		YAML::Node sndConfig = YAML::LoadFile("sounds.yaml");
-		if (YAML::Node uiSounds = sndConfig["ui_sounds"]) {
+	{
+		DataNode sndConfig = DataNode::loadFile("sounds.yaml");
+		DataNode uiSounds = sndConfig["ui_sounds"];
+		if (uiSounds) {
 			for (auto it = uiSounds.begin(); it != uiSounds.end(); ++it) {
-				std::string alias = it->first.as<std::string>();
-				std::string soundName = it->second.as<std::string>("");
+				std::string alias = it.key().asString();
+				std::string soundName = it.value().asString("");
 				int resId = Sounds::getResIDByName(soundName);
 				if (resId >= 0) {
 					soundMap[alias] = resId;
 				}
 			}
 		}
-	} catch (const YAML::Exception& e) {
-		printf("[menu] warning: could not load ui_sounds from sounds.yaml: %s\n", e.what());
+		if (!sndConfig) {
+			printf("[menu] warning: could not load ui_sounds from sounds.yaml\n");
+		}
 	}
 
 	// Button creation helpers
-	auto resolveSound = [&](const YAML::Node& btn) -> int {
-		std::string sndName = btn["sound"].as<std::string>("");
+	auto resolveSound = [&](const DataNode& btn) -> int {
+		std::string sndName = btn["sound"].asString("");
 		auto sit = soundMap.find(sndName);
 		return (sit != soundMap.end()) ? sit->second : 0;
 	};
@@ -482,40 +486,41 @@ bool MenuSystem::loadUIFromYAML(const char* path) {
 		return (iit != imageMap.end()) ? iit->second : nullptr;
 	};
 
-	auto createButton = [&](const YAML::Node& btn, int id, int x, int y, int w, int h) -> fmButton* {
+	auto createButton = [&](const DataNode& btn, int id, int x, int y, int w, int h) -> fmButton* {
 		int soundId = resolveSound(btn);
 		fmButton* button = new fmButton(id, x, y, w, h, soundId);
 
-		bool visible = btn["visible"].as<bool>(true);
+		bool visible = btn["visible"].asBool(true);
 		button->drawButton = visible;
 
-		std::string imgName = btn["image"].as<std::string>("");
+		std::string imgName = btn["image"].asString("");
 		if (!imgName.empty()) {
 			Image* img = resolveImage(imgName);
 			if (img) button->SetImage(img, false);
 		}
 
-		std::string imgHighName = btn["image_highlight"].as<std::string>("");
+		std::string imgHighName = btn["image_highlight"].asString("");
 		if (!imgHighName.empty()) {
 			Image* imgH = resolveImage(imgHighName);
 			if (imgH) button->SetHighlightImage(imgH, false);
 		}
 
-		button->normalRenderMode = btn["render_mode"].as<int>(0);
-		button->highlightRenderMode = btn["highlight_render_mode"].as<int>(0);
+		button->normalRenderMode = btn["render_mode"].asInt(0);
+		button->highlightRenderMode = btn["highlight_render_mode"].asInt(0);
 
 		return button;
 	};
 
-	auto parseButtonNode = [&](const YAML::Node& btn, fmButtonContainer* container) {
-		if (YAML::Node range = btn["id_range"]) {
-			int startId = range[0].as<int>(0);
-			int endId = range[1].as<int>(0);
-			int x = btn["x"].as<int>(0);
-			int startY = btn["start_y"].as<int>(0);
-			int stepY = btn["step_y"].as<int>(0);
-			int w = btn["width"].as<int>(0);
-			int h = btn["height"].as<int>(0);
+	auto parseButtonNode = [&](const DataNode& btn, fmButtonContainer* container) {
+		DataNode range = btn["id_range"];
+		if (range) {
+			int startId = range[0].asInt(0);
+			int endId = range[1].asInt(0);
+			int x = btn["x"].asInt(0);
+			int startY = btn["start_y"].asInt(0);
+			int stepY = btn["step_y"].asInt(0);
+			int w = btn["width"].asInt(0);
+			int h = btn["height"].asInt(0);
 
 			int posY = startY;
 			for (int id = startId; id <= endId; id++) {
@@ -524,14 +529,14 @@ bool MenuSystem::loadUIFromYAML(const char* path) {
 				posY += stepY;
 			}
 		} else {
-			int id = btn["id"].as<int>(0);
-			int x = btn["x"].as<int>(0);
-			int w = btn["width"].as<int>(0);
-			int h = btn["height"].as<int>(0);
+			int id = btn["id"].asInt(0);
+			int x = btn["x"].asInt(0);
+			int w = btn["width"].asInt(0);
+			int h = btn["height"].asInt(0);
 			int y = 0;
 
-			bool sizeFromImage = btn["size_from_image"].as<bool>(false);
-			std::string imgName = btn["image"].as<std::string>("");
+			bool sizeFromImage = btn["size_from_image"].asBool(false);
+			std::string imgName = btn["image"].asString("");
 			Image* img = resolveImage(imgName);
 
 			if (sizeFromImage && img) {
@@ -539,10 +544,10 @@ bool MenuSystem::loadUIFromYAML(const char* path) {
 				h = img->height;
 			}
 
-			std::string yStr = btn["y"].as<std::string>("");
+			std::string yStr = btn["y"].asString("");
 			if (yStr == "image_relative") {
-				int yBase = btn["y_base"].as<int>(0);
-				std::string yOffset = btn["y_offset"].as<std::string>("");
+				int yBase = btn["y_base"].asInt(0);
+				std::string yOffset = btn["y_offset"].asString("");
 				if (yOffset == "-height" && img) {
 					y = yBase - img->height;
 				} else {
@@ -551,7 +556,7 @@ bool MenuSystem::loadUIFromYAML(const char* path) {
 					y = refImage ? yBase + refImage->height : yBase;
 				}
 			} else {
-				y = btn["y"].as<int>(0);
+				y = btn["y"].asInt(0);
 			}
 
 			fmButton* button = createButton(btn, id, x, y, w, h);
@@ -560,27 +565,22 @@ bool MenuSystem::loadUIFromYAML(const char* path) {
 	};
 
 	// Load components (reusable visual styles)
-	std::unordered_map<std::string, YAML::Node> components;
-	if (YAML::Node comps = config["components"]) {
+	std::unordered_map<std::string, DataNode> components;
+	DataNode comps = config["components"];
+	if (comps) {
 		for (auto it = comps.begin(); it != comps.end(); ++it) {
-			components[it->first.as<std::string>()] = it->second;
+			components[it.key().asString()] = it.value();
 		}
 	}
 
 	// Merge component defaults with button instance overrides
-	auto mergeNodes = [](const YAML::Node& base, const YAML::Node& overlay) -> YAML::Node {
-		YAML::Node result = YAML::Clone(base);
-		for (auto it = overlay.begin(); it != overlay.end(); ++it) {
-			std::string key = it->first.as<std::string>();
-			if (key != "component") {
-				result[key] = it->second;
-			}
-		}
-		return result;
+	auto mergeNodes = [](const DataNode& base, const DataNode& overlay) -> DataNode {
+		return DataNode::merge(base, overlay, "component");
 	};
 
 	// Load screens, routing buttons to the right container
-	if (YAML::Node screens = config["screens"]) {
+	DataNode screens = config["screens"];
+	if (screens) {
 		if (this->m_menuButtons) delete this->m_menuButtons;
 		if (this->m_infoButtons) delete this->m_infoButtons;
 		if (this->m_vendingButtons) delete this->m_vendingButtons;
@@ -589,19 +589,20 @@ bool MenuSystem::loadUIFromYAML(const char* path) {
 		this->m_vendingButtons = new fmButtonContainer();
 
 		for (auto sit = screens.begin(); sit != screens.end(); ++sit) {
-			YAML::Node screen = sit->second;
-			std::string containerName = screen["container"].as<std::string>("");
+			DataNode screen = sit.value();
+			std::string containerName = screen["container"].asString("");
 			fmButtonContainer* target = nullptr;
 			if (containerName == "menu") target = this->m_menuButtons;
 			else if (containerName == "info") target = this->m_infoButtons;
 			else if (containerName == "vending") target = this->m_vendingButtons;
 			if (!target) continue;
 
-			if (YAML::Node buttons = screen["buttons"]) {
+			DataNode buttons = screen["buttons"];
+			if (buttons) {
 				for (auto bit = buttons.begin(); bit != buttons.end(); ++bit) {
-					YAML::Node btnRaw = bit->second;
-					std::string compName = btnRaw["component"].as<std::string>("");
-					YAML::Node btn;
+					DataNode btnRaw = bit.value();
+					std::string compName = btnRaw["component"].asString("");
+					DataNode btn;
 					auto compIt = components.find(compName);
 					if (compIt != components.end()) {
 						btn = mergeNodes(compIt->second, btnRaw);
@@ -616,78 +617,83 @@ bool MenuSystem::loadUIFromYAML(const char* path) {
 
 	// scrollbar (from components)
 	if (components.count("scrollbar")) {
-		YAML::Node scrollbar = components["scrollbar"];
+		DataNode scrollbar = components["scrollbar"];
 		if (this->m_scrollBar) delete this->m_scrollBar;
-		std::string sndName = scrollbar["sound"].as<std::string>("");
+		std::string sndName = scrollbar["sound"].asString("");
 		int soundId = 0;
 		auto sit = soundMap.find(sndName);
 		if (sit != soundMap.end()) soundId = sit->second;
-		bool vertical = scrollbar["vertical"].as<bool>(true);
+		bool vertical = scrollbar["vertical"].asBool(true);
 		this->m_scrollBar = new fmScrollButton(0, 0, 0, 0, vertical, soundId);
 	}
 
 	// Load themes (button appearance per menu context)
-	if (YAML::Node themes = config["themes"]) {
+	DataNode themes = config["themes"];
+	if (themes) {
 		for (auto it = themes.begin(); it != themes.end(); ++it) {
-			std::string themeName = it->first.as<std::string>();
-			YAML::Node themeNode = it->second;
+			std::string themeName = it.key().asString();
+			DataNode themeNode = it.value();
 			MenuTheme theme;
 
 			// Resolve menu_button (can be a component name string or inline map)
-			if (YAML::Node mb = themeNode["menu_button"]) {
-				YAML::Node resolved;
-				if (mb.IsScalar()) {
-					auto cit = components.find(mb.as<std::string>());
+			DataNode mb = themeNode["menu_button"];
+			if (mb) {
+				DataNode resolved;
+				if (mb.isScalar()) {
+					auto cit = components.find(mb.asString());
 					if (cit != components.end()) resolved = cit->second;
 				} else {
 					resolved = mb;
 				}
 				if (resolved) {
-					theme.btnImage = resolveImage(resolved["image"].as<std::string>(""));
-					theme.btnHighlightImage = resolveImage(resolved["image_highlight"].as<std::string>(""));
-					theme.btnRenderMode = resolved["render_mode"].as<int>(0);
-					theme.btnHighlightRenderMode = resolved["highlight_render_mode"].as<int>(0);
+					theme.btnImage = resolveImage(resolved["image"].asString(""));
+					theme.btnHighlightImage = resolveImage(resolved["image_highlight"].asString(""));
+					theme.btnRenderMode = resolved["render_mode"].asInt(0);
+					theme.btnHighlightRenderMode = resolved["highlight_render_mode"].asInt(0);
 				}
 			}
 
 			// Resolve info_button
-			if (YAML::Node ib = themeNode["info_button"]) {
-				YAML::Node resolved;
-				if (ib.IsScalar()) {
-					auto cit = components.find(ib.as<std::string>());
+			DataNode ib = themeNode["info_button"];
+			if (ib) {
+				DataNode resolved;
+				if (ib.isScalar()) {
+					auto cit = components.find(ib.asString());
 					if (cit != components.end()) resolved = cit->second;
 				} else {
 					resolved = ib;
 				}
 				if (resolved) {
-					theme.infoBtnImage = resolveImage(resolved["image"].as<std::string>(""));
-					theme.infoBtnHighlightImage = resolveImage(resolved["image_highlight"].as<std::string>(""));
-					theme.infoBtnRenderMode = resolved["render_mode"].as<int>(0);
-					theme.infoBtnHighlightRenderMode = resolved["highlight_render_mode"].as<int>(0);
+					theme.infoBtnImage = resolveImage(resolved["image"].asString(""));
+					theme.infoBtnHighlightImage = resolveImage(resolved["image_highlight"].asString(""));
+					theme.infoBtnRenderMode = resolved["render_mode"].asInt(0);
+					theme.infoBtnHighlightRenderMode = resolved["highlight_render_mode"].asInt(0);
 				}
 			}
 
-			theme.itemWidth = themeNode["item_width"].as<int>(0);
-			theme.itemHeight = themeNode["item_height"].as<int>(46);
-			theme.itemPaddingBottom = themeNode["item_padding_bottom"].as<int>(0);
+			theme.itemWidth = themeNode["item_width"].asInt(0);
+			theme.itemHeight = themeNode["item_height"].asInt(46);
+			theme.itemPaddingBottom = themeNode["item_padding_bottom"].asInt(0);
 
 			// Parse scrollbar config
-			if (YAML::Node sb = themeNode["scrollbar"]) {
-				std::string style = sb["style"].as<std::string>("");
+			DataNode sb = themeNode["scrollbar"];
+			if (sb) {
+				std::string style = sb["style"].asString("");
 				if (style == "dial") {
 					theme.scrollbar.style = SB_DIAL;
-					theme.scrollbar.defaultX = sb["default_x"].as<int>(408);
-					theme.scrollbar.defaultY = sb["default_y"].as<int>(81);
+					theme.scrollbar.defaultX = sb["default_x"].asInt(408);
+					theme.scrollbar.defaultY = sb["default_y"].asInt(81);
 				} else if (style == "bar") {
 					theme.scrollbar.style = SB_BAR;
-					theme.scrollbar.x = sb["x"].as<int>(0);
-					theme.scrollbar.width = sb["width"].as<int>(50);
-					if (YAML::Node imgs = sb["images"]) {
+					theme.scrollbar.x = sb["x"].asInt(0);
+					theme.scrollbar.width = sb["width"].asInt(50);
+					DataNode imgs = sb["images"];
+					if (imgs) {
 						if (imgs.size() >= 4) {
-							theme.scrollbar.barImg = resolveImage(imgs[0].as<std::string>(""));
-							theme.scrollbar.topImg = resolveImage(imgs[1].as<std::string>(""));
-							theme.scrollbar.midImg = resolveImage(imgs[2].as<std::string>(""));
-							theme.scrollbar.bottomImg = resolveImage(imgs[3].as<std::string>(""));
+							theme.scrollbar.barImg = resolveImage(imgs[0].asString(""));
+							theme.scrollbar.topImg = resolveImage(imgs[1].asString(""));
+							theme.scrollbar.midImg = resolveImage(imgs[2].asString(""));
+							theme.scrollbar.bottomImg = resolveImage(imgs[3].asString(""));
 						}
 					}
 				}
@@ -797,13 +803,13 @@ static MenuSystem::LayoutValueMode parseLayoutMode(const std::string& s) {
 	return MenuSystem::LVM_LITERAL;
 }
 
-static void parseLayoutValue(const YAML::Node& node, MenuSystem::LayoutValueMode& mode, int& val) {
+static void parseLayoutValue(const DataNode& node, MenuSystem::LayoutValueMode& mode, int& val) {
 	if (!node) return;
-	if (node.IsScalar()) {
-		std::string s = node.as<std::string>("");
+	if (node.isScalar()) {
+		std::string s = node.asString("");
 		// Try as integer first
 		try {
-			val = node.as<int>();
+			val = std::stoi(s);
 			mode = MenuSystem::LVM_LITERAL;
 			return;
 		} catch (...) {}
@@ -812,9 +818,9 @@ static void parseLayoutValue(const YAML::Node& node, MenuSystem::LayoutValueMode
 	}
 }
 
-static MenuSystem::MenuLayout parseLayout(const YAML::Node& node) {
+static MenuSystem::MenuLayout parseLayout(const DataNode& node) {
 	MenuSystem::MenuLayout layout;
-	if (!node || !node.IsMap()) return layout;
+	if (!node || !node.isMap()) return layout;
 	layout.isSet = true;
 	parseLayoutValue(node["x"], layout.xMode, layout.xVal);
 	parseLayoutValue(node["y"], layout.yMode, layout.yVal);
@@ -824,11 +830,9 @@ static MenuSystem::MenuLayout parseLayout(const YAML::Node& node) {
 }
 
 bool MenuSystem::loadMenusFromYAML(const char* path) {
-	YAML::Node config;
-	try {
-		config = YAML::LoadFile(path);
-	} catch (const YAML::Exception& e) {
-		printf("[menu] failed to load %s: %s\n", path, e.what());
+	DataNode config = DataNode::loadFile(path);
+	if (!config) {
+		printf("[menu] failed to load %s\n", path);
 		return false;
 	}
 
@@ -836,38 +840,40 @@ bool MenuSystem::loadMenusFromYAML(const char* path) {
 	loadMenuLookups(config);
 
 	// Parse layout presets
-	if (YAML::Node presets = config["layout_presets"]) {
+	DataNode presets = config["layout_presets"];
+	if (presets) {
 		for (auto it = presets.begin(); it != presets.end(); ++it) {
-			std::string name = it->first.as<std::string>();
-			MenuLayout layout = parseLayout(it->second);
+			std::string name = it.key().asString();
+			MenuLayout layout = parseLayout(it.value());
 			this->layoutPresets_[name] = layout;
 		}
 		printf("[menu] loaded %d layout presets\n", (int)this->layoutPresets_.size());
 	}
 
 	// Parse draw_layout_presets
-	if (YAML::Node dlPresets = config["draw_layout_presets"]) {
+	DataNode dlPresets = config["draw_layout_presets"];
+	if (dlPresets) {
 		for (auto it = dlPresets.begin(); it != dlPresets.end(); ++it) {
-			std::string name = it->first.as<std::string>();
-			YAML::Node node = it->second;
+			std::string name = it.key().asString();
+			DataNode node = it.value();
 			DrawLayout dl;
-			std::string xStr = node["x"].as<std::string>("keep");
-			std::string yStr = node["y"].as<std::string>("keep");
-			std::string wStr = node["w"].as<std::string>("keep");
-			std::string hStr = node["h"].as<std::string>("keep");
+			std::string xStr = node["x"].asString("keep");
+			std::string yStr = node["y"].asString("keep");
+			std::string wStr = node["w"].asString("keep");
+			std::string hStr = node["h"].asString("keep");
 			dl.x = (xStr == "keep") ? -1 : std::stoi(xStr);
 			dl.y = (yStr == "keep") ? -1 : std::stoi(yStr);
 			dl.w = (wStr == "keep") ? -1 : std::stoi(wStr);
 			dl.h = (hStr == "keep") ? -1 : std::stoi(hStr);
-			dl.clip = node["clip"].as<bool>(false);
+			dl.clip = node["clip"].asBool(false);
 			dl.isSet = true;
 			this->drawLayoutPresets_[name] = dl;
 		}
 		printf("[menu] loaded %d draw layout presets\n", (int)this->drawLayoutPresets_.size());
 	}
 
-	YAML::Node menus = config["menus"];
-	if (!menus || !menus.IsSequence() || menus.size() == 0) {
+	DataNode menus = config["menus"];
+	if (!menus || !menus.isSequence() || menus.size() == 0) {
 		printf("[menu] menus.yaml has missing or empty 'menus' array\n");
 		return false;
 	}
@@ -882,28 +888,28 @@ bool MenuSystem::loadMenusFromYAML(const char* path) {
 	int yamlMenuCount = 0;
 
 	for (int i = 0; i < count; i++) {
-		YAML::Node menu = menus[i];
+		DataNode menu = menus[i];
 
-		int menuId = menu["menu_id"].as<int>(0);
-		std::string menuName = menu["name"].as<std::string>("");
-		int menuType = menuTypeFromString(menu["type"].as<std::string>("default").c_str());
-		int menuMaxItems = menu["max_items"].as<int>(0);
-		std::string menuTheme = menu["theme"].as<std::string>("");
+		int menuId = menu["menu_id"].asInt(0);
+		std::string menuName = menu["name"].asString("");
+		int menuType = menuTypeFromString(menu["type"].asString("default").c_str());
+		int menuMaxItems = menu["max_items"].asInt(0);
+		std::string menuTheme = menu["theme"].asString("");
 		if (menuId != 0 && !menuTheme.empty()) {
 			this->menuThemeByMenuId_[menuId] = menuTheme;
 		}
 
-		YAML::Node items = menu["items"];
-		int itemCount = (items && items.IsSequence()) ? (int)items.size() : 0;
+		DataNode items = menu["items"];
+		int itemCount = (items && items.isSequence()) ? (int)items.size() : 0;
 
 		// Check if this menu uses extended features (widget, text, text2, or GEC extended flags)
 		bool hasExtendedFeatures = false;
 		for (int j = 0; j < itemCount && !hasExtendedFeatures; j++) {
-			YAML::Node item = items[j];
+			DataNode item = items[j];
 			if (item["widget"] || item["text"] || item["text2"]) {
 				hasExtendedFeatures = true;
 			}
-			int flags = flagsFromString(item["flags"].as<std::string>("normal").c_str());
+			int flags = flagsFromString(item["flags"].asString("normal").c_str());
 			if (flags > 0xFFFF) {
 				hasExtendedFeatures = true;
 			}
@@ -926,38 +932,42 @@ bool MenuSystem::loadMenusFromYAML(const char* path) {
 			def.theme = menuTheme;
 
 			// Parse presentation properties
-			def.background = menu["background"].as<std::string>("");
-			def.drawLogo = menu["draw_logo"].as<bool>(false);
-			def.helpResource = menu["help_resource"].as<int>(-1);
-			def.selectedIndex = menu["selected_index"].as<int>(-1);
-			def.showInfoButtons = menu["show_info_buttons"].as<bool>(false);
-			def.itemWidth = menu["item_width"].as<int>(0);
-			def.vibrationY = menu["vibration_y"].as<int>(-1);
+			def.background = menu["background"].asString("");
+			def.drawLogo = menu["draw_logo"].asBool(false);
+			def.helpResource = menu["help_resource"].asInt(-1);
+			def.selectedIndex = menu["selected_index"].asInt(-1);
+			def.showInfoButtons = menu["show_info_buttons"].asBool(false);
+			def.itemWidth = menu["item_width"].asInt(0);
+			def.vibrationY = menu["vibration_y"].asInt(-1);
 
 			// Parse per-menu scrollbar position offset
-			if (YAML::Node sbOff = menu["scrollbar_offset"]) {
-				def.scrollbarXOffset = sbOff["x"].as<int>(-1);
-				def.scrollbarYOffset = sbOff["y"].as<int>(-1);
+			DataNode sbOff = menu["scrollbar_offset"];
+			if (sbOff) {
+				def.scrollbarXOffset = sbOff["x"].asInt(-1);
+				def.scrollbarYOffset = sbOff["y"].asInt(-1);
 			}
 
 			// Parse visible_buttons array
-			if (YAML::Node vb = menu["visible_buttons"]) {
-				for (size_t v = 0; v < vb.size(); v++) {
-					def.visibleButtons.push_back(vb[v].as<int>());
+			DataNode vb = menu["visible_buttons"];
+			if (vb) {
+				for (int v = 0; v < vb.size(); v++) {
+					def.visibleButtons.push_back(vb[v].asInt());
 				}
 			}
 
 			// Parse visible_buttons_conditional (e.g., {13: music_on})
-			if (YAML::Node vbc = menu["visible_buttons_conditional"]) {
+			DataNode vbc = menu["visible_buttons_conditional"];
+			if (vbc) {
 				for (auto it = vbc.begin(); it != vbc.end(); ++it) {
-					def.visibleButtonsConditional.push_back(it->first.as<int>());
+					def.visibleButtonsConditional.push_back(it.key().asInt());
 				}
 			}
 
 			// Parse layout — either a preset name (string) or inline map
-			if (YAML::Node layoutNode = menu["layout"]) {
-				if (layoutNode.IsScalar()) {
-					std::string presetName = layoutNode.as<std::string>("");
+			DataNode layoutNode = menu["layout"];
+			if (layoutNode) {
+				if (layoutNode.isScalar()) {
+					std::string presetName = layoutNode.asString("");
 					auto pit = this->layoutPresets_.find(presetName);
 					if (pit != this->layoutPresets_.end()) {
 						def.layout = pit->second;
@@ -965,15 +975,16 @@ bool MenuSystem::loadMenusFromYAML(const char* path) {
 						printf("[menu] warning: unknown layout preset '%s' for menu '%s'\n",
 							presetName.c_str(), menuName.c_str());
 					}
-				} else if (layoutNode.IsMap()) {
+				} else if (layoutNode.isMap()) {
 					def.layout = parseLayout(layoutNode);
 				}
 			}
 
 			// Parse draw_layout — either a preset name (string) or inline map
-			if (YAML::Node dlNode = menu["draw_layout"]) {
-				if (dlNode.IsScalar()) {
-					std::string presetName = dlNode.as<std::string>("");
+			DataNode dlNode = menu["draw_layout"];
+			if (dlNode) {
+				if (dlNode.isScalar()) {
+					std::string presetName = dlNode.asString("");
 					auto pit = this->drawLayoutPresets_.find(presetName);
 					if (pit != this->drawLayoutPresets_.end()) {
 						def.drawLayout = pit->second;
@@ -981,17 +992,17 @@ bool MenuSystem::loadMenusFromYAML(const char* path) {
 						printf("[menu] warning: unknown draw_layout preset '%s' for menu '%s'\n",
 							presetName.c_str(), menuName.c_str());
 					}
-				} else if (dlNode.IsMap()) {
+				} else if (dlNode.isMap()) {
 					DrawLayout dl;
-					std::string xStr = dlNode["x"].as<std::string>("keep");
-					std::string yStr = dlNode["y"].as<std::string>("keep");
-					std::string wStr = dlNode["w"].as<std::string>("keep");
-					std::string hStr = dlNode["h"].as<std::string>("keep");
+					std::string xStr = dlNode["x"].asString("keep");
+					std::string yStr = dlNode["y"].asString("keep");
+					std::string wStr = dlNode["w"].asString("keep");
+					std::string hStr = dlNode["h"].asString("keep");
 					dl.x = (xStr == "keep") ? -1 : std::stoi(xStr);
 					dl.y = (yStr == "keep") ? -1 : std::stoi(yStr);
 					dl.w = (wStr == "keep") ? -1 : std::stoi(wStr);
 					dl.h = (hStr == "keep") ? -1 : std::stoi(hStr);
-					dl.clip = dlNode["clip"].as<bool>(false);
+					dl.clip = dlNode["clip"].asBool(false);
 					dl.isSet = true;
 					def.drawLayout = dl;
 				}
@@ -1000,20 +1011,21 @@ bool MenuSystem::loadMenusFromYAML(const char* path) {
 			// Parse items for extended menus (widget, text, text2, or GEC extended flags)
 			if (hasExtendedFeatures) {
 				for (int j = 0; j < itemCount; j++) {
-					YAML::Node item = items[j];
+					DataNode item = items[j];
 
 					YAMLMenuItem mi = {};
-					mi.textField = item["string_id"].as<int>(0);
-					mi.flags = flagsFromString(item["flags"].as<std::string>("normal").c_str());
-					mi.action = actionFromString(item["action"].as<std::string>("none").c_str());
-					mi.param = item["param"].as<int>(0);
-					if (YAML::Node gotoNode = item["goto"]) {
-						mi.param = menuNameToId(gotoNode.as<std::string>(""));
+					mi.textField = item["string_id"].asInt(0);
+					mi.flags = flagsFromString(item["flags"].asString("normal").c_str());
+					mi.action = actionFromString(item["action"].asString("none").c_str());
+					mi.param = item["param"].asInt(0);
+					DataNode gotoNode = item["goto"];
+					if (gotoNode) {
+						mi.param = menuNameToId(gotoNode.asString(""));
 					}
-					mi.helpField = item["help_string"].as<int>(0);
-					mi.text = item["text"].as<std::string>("");
-					mi.text2 = item["text2"].as<std::string>("");
-					mi.widget = item["widget"].as<std::string>("");
+					mi.helpField = item["help_string"].asInt(0);
+					mi.text = item["text"].asString("");
+					mi.text2 = item["text2"].asString("");
+					mi.widget = item["widget"].asString("");
 
 					// Apply widget flag mapping
 					if (!mi.widget.empty()) {
@@ -1031,16 +1043,17 @@ bool MenuSystem::loadMenusFromYAML(const char* path) {
 
 		// Always pack items into binary format too (for non-extended menus)
 		for (int j = 0; j < itemCount; j++) {
-			YAML::Node item = items[j];
+			DataNode item = items[j];
 
-			int stringId = item["string_id"].as<int>(0);
-			int flags = flagsFromString(item["flags"].as<std::string>("normal").c_str());
-			int action = actionFromString(item["action"].as<std::string>("none").c_str());
-			int param = item["param"].as<int>(0);
-			if (YAML::Node gotoNode = item["goto"]) {
-				param = menuNameToId(gotoNode.as<std::string>(""));
+			int stringId = item["string_id"].asInt(0);
+			int flags = flagsFromString(item["flags"].asString("normal").c_str());
+			int action = actionFromString(item["action"].asString("none").c_str());
+			int param = item["param"].asInt(0);
+			DataNode gotoNode = item["goto"];
+			if (gotoNode) {
+				param = menuNameToId(gotoNode.asString(""));
 			}
-			int helpString = item["help_string"].as<int>(0);
+			int helpString = item["help_string"].asInt(0);
 
 			itemWords.push_back((uint32_t)((stringId & 0xFFFF) << 16) | (uint32_t)(flags & 0xFFFF));
 			itemWords.push_back((uint32_t)((helpString & 0xFFFF) << 16)

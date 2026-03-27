@@ -1,5 +1,5 @@
 #include "SpriteDefs.h"
-#include <yaml-cpp/yaml.h>
+#include "DataNode.h"
 #include <cstdio>
 
 // Static member definitions
@@ -8,81 +8,71 @@ std::unordered_map<int, std::string> SpriteDefs::tileIndexToName;
 std::unordered_map<std::string, SpriteSource> SpriteDefs::tileNameToSource;
 std::unordered_map<std::string, int> SpriteDefs::ranges;
 
-bool SpriteDefs::loadFromYAML(const char* path) {
-	try {
-		YAML::Node config = YAML::LoadFile(path);
-		return loadFromNode(config);
-	} catch (const YAML::Exception& e) {
-		printf("[sprites] %s: %s\n", path, e.what());
-		return false;
-	}
-}
-
-bool SpriteDefs::loadFromNode(const YAML::Node& config) {
+bool SpriteDefs::parse(const DataNode& config) {
 	// Load tiles section
-	YAML::Node tiles = config["tiles"];
-	if (!tiles || !tiles.IsMap()) {
+	DataNode tiles = config["tiles"];
+	if (!tiles || !tiles.isMap()) {
 		printf("[sprites] missing or invalid 'tiles' map\n");
 		return false;
 	}
 
-	tileNameToIndex.clear();
-	tileIndexToName.clear();
-	tileNameToSource.clear();
+	SpriteDefs::tileNameToIndex.clear();
+	SpriteDefs::tileIndexToName.clear();
+	SpriteDefs::tileNameToSource.clear();
 
 	for (auto it = tiles.begin(); it != tiles.end(); ++it) {
-		std::string name = it->first.as<std::string>();
+		std::string name = it.key().asString();
 		SpriteSource src;
 
-		if (it->second.IsScalar()) {
+		if (it.value().isScalar()) {
 			// Simple format: zombie: 20
 			src.type = SpriteSourceType::Bin;
-			src.id = it->second.as<int>(0);
-			tileNameToIndex[name] = src.id;
-			if (tileIndexToName.find(src.id) == tileIndexToName.end()) {
-				tileIndexToName[src.id] = name;
+			src.id = it.value().asInt(0);
+			SpriteDefs::tileNameToIndex[name] = src.id;
+			if (SpriteDefs::tileIndexToName.find(src.id) == SpriteDefs::tileIndexToName.end()) {
+				SpriteDefs::tileIndexToName[src.id] = name;
 			}
-		} else if (it->second.IsMap()) {
+		} else if (it.value().isMap()) {
 			// Extended format: chainsaw: { type: bin, file: tables.bin, id: 2 }
-			YAML::Node entry = it->second;
-			std::string typeStr = entry["type"].as<std::string>("bin");
-			src.file = entry["file"].as<std::string>("");
+			DataNode entry = it.value();
+			std::string typeStr = entry["type"].asString("bin");
+			src.file = entry["file"].asString("");
 
 			if (typeStr == "png") {
 				src.type = SpriteSourceType::Png;
-				tileNameToIndex[name] = SPRITE_INDEX_EXTERNAL;
+				SpriteDefs::tileNameToIndex[name] = SpriteDefs::SPRITE_INDEX_EXTERNAL;
 			} else {
 				src.type = SpriteSourceType::Bin;
-				src.id = entry["id"].as<int>(0);
-				tileNameToIndex[name] = src.id;
-				if (tileIndexToName.find(src.id) == tileIndexToName.end()) {
-					tileIndexToName[src.id] = name;
+				src.id = entry["id"].asInt(0);
+				SpriteDefs::tileNameToIndex[name] = src.id;
+				if (SpriteDefs::tileIndexToName.find(src.id) == SpriteDefs::tileIndexToName.end()) {
+					SpriteDefs::tileIndexToName[src.id] = name;
 				}
 			}
 		}
 
-		tileNameToSource[name] = src;
+		SpriteDefs::tileNameToSource[name] = src;
 	}
 
 	// Load ranges section
-	YAML::Node rangesNode = config["ranges"];
-	ranges.clear();
-	if (rangesNode && rangesNode.IsMap()) {
+	DataNode rangesNode = config["ranges"];
+	SpriteDefs::ranges.clear();
+	if (rangesNode && rangesNode.isMap()) {
 		for (auto it = rangesNode.begin(); it != rangesNode.end(); ++it) {
-			std::string name = it->first.as<std::string>();
-			int value = it->second.as<int>(0);
-			ranges[name] = value;
+			std::string name = it.key().asString();
+			int value = it.value().asInt(0);
+			SpriteDefs::ranges[name] = value;
 		}
 	}
 
 	int pngCount = 0;
-	for (const auto& [k, v] : tileNameToSource) {
+	for (const auto& [k, v] : SpriteDefs::tileNameToSource) {
 		if (v.type == SpriteSourceType::Png) pngCount++;
 	}
 	printf("[sprites] loaded %d tile names (%d bin, %d png), %d ranges\n",
-		(int)tileNameToIndex.size(),
-		(int)tileNameToIndex.size() - pngCount, pngCount,
-		(int)ranges.size());
+		(int)SpriteDefs::tileNameToIndex.size(),
+		(int)SpriteDefs::tileNameToIndex.size() - pngCount, pngCount,
+		(int)SpriteDefs::ranges.size());
 	return true;
 }
 

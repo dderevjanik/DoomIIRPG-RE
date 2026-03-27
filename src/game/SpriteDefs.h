@@ -4,8 +4,6 @@
 #include <string>
 #include <unordered_map>
 
-namespace YAML { class Node; }
-
 enum class SpriteSourceType { Bin, Png };
 
 struct SpriteSource {
@@ -31,12 +29,8 @@ class SpriteDefs {
 	// Range boundaries (populated from sprites.yaml "ranges" section)
 	static std::unordered_map<std::string, int> ranges;
 
-	// Load sprite definitions from sprites.yaml
-	// Returns true if loaded successfully, false on error
-	static bool loadFromYAML(const char* path);
-
-	// Load sprite definitions from a pre-parsed YAML node
-	static bool loadFromNode(const YAML::Node& config);
+	// Parse sprite definitions from a DataNode (called by ResourceManager)
+	static bool parse(const class DataNode& config);
 
 	// Get tile index by name, returns 0 if not found (returns -1 for PNG sprites)
 	static int getIndex(const std::string& name);

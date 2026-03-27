@@ -18,6 +18,7 @@ class ResourceManager;
 struct GameConfig {
 	std::string name = "Doom II RPG";
 	std::string windowTitle = "Doom II RPG";
+	std::string module = "doom2rpg";
 	std::string saveDir = "Doom2rpg.app";
 	std::string entryMap = "map00";
 	std::vector<int> noFogMaps;  // Map IDs where fog is disabled (e.g. outdoor maps)

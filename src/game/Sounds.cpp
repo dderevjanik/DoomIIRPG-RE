@@ -1,50 +1,40 @@
 #include "Sounds.h"
-#include <yaml-cpp/yaml.h>
+#include "DataNode.h"
 #include <cstdio>
 
 // Static member definitions
 std::vector<std::string> Sounds::soundFileNames;
 std::unordered_map<std::string, int> Sounds::soundNameToIndex;
 
-bool Sounds::loadFromYAML(const char* path) {
-	try {
-		YAML::Node config = YAML::LoadFile(path);
-		return loadFromNode(config);
-	} catch (const YAML::Exception& e) {
-		printf("[sounds] %s: %s\n", path, e.what());
-		return false;
-	}
-}
-
-bool Sounds::loadFromNode(const YAML::Node& config) {
-	YAML::Node sounds = config["sounds"];
-	if (!sounds || !sounds.IsMap()) {
+bool Sounds::parse(const DataNode& config) {
+	DataNode sounds = config["sounds"];
+	if (!sounds || !sounds.isMap()) {
 		printf("[sounds] missing or invalid 'sounds' map\n");
 		return false;
 	}
 
-	soundFileNames.clear();
-	soundFileNames.reserve(sounds.size());
-	soundNameToIndex.clear();
+	Sounds::soundFileNames.clear();
+	Sounds::soundFileNames.reserve(sounds.size());
+	Sounds::soundNameToIndex.clear();
 
 	int i = 0;
 	for (auto it = sounds.begin(); it != sounds.end(); ++it, ++i) {
-		std::string name = it->first.as<std::string>();
+		std::string name = it.key().asString();
 		std::string file;
 
-		if (it->second.IsMap()) {
-			file = it->second["file"].as<std::string>("");
-		} else if (it->second.IsScalar()) {
-			file = it->second.as<std::string>("");
+		if (it.value().isMap()) {
+			file = it.value()["file"].asString("");
+		} else if (it.value().isScalar()) {
+			file = it.value().asString("");
 		}
 
-		soundFileNames.push_back(file);
+		Sounds::soundFileNames.push_back(file);
 		if (!name.empty()) {
-			soundNameToIndex[name] = i;
+			Sounds::soundNameToIndex[name] = i;
 		}
 	}
 
-	printf("[sounds] loaded %d sound definitions\n", (int)soundFileNames.size());
+	printf("[sounds] loaded %d sound definitions\n", (int)Sounds::soundFileNames.size());
 	return true;
 }
 

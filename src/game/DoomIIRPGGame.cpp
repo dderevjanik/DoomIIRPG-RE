@@ -1,5 +1,7 @@
 #include <cstdio>
 #include "DoomIIRPGGame.h"
+#include "GameModuleRegistry.h"
+#include "GameDataParsers.h"
 #include "App.h"
 #include "Game.h"
 #include "Player.h"
@@ -12,13 +14,15 @@
 #include "Canvas.h"
 #include "CAppContainer.h"
 #include "ResourceManager.h"
+#include "DataNode.h"
 #include "SpriteDefs.h"
 #include "ItemDefs.h"
 #include "EntityNames.h"
 #include "Sounds.h"
 #include "ConfigEnums.h"
 #include "Render.h"
-#include <yaml-cpp/yaml.h>
+
+REGISTER_GAME_MODULE("doom2rpg", DoomIIRPGGame);
 
 void DoomIIRPGGame::createGameObjects(Applet* app) {
 	printf("[game] createGameObjects\n");
@@ -64,110 +68,74 @@ void DoomIIRPGGame::shutdown(Applet* app) {
 void DoomIIRPGGame::registerLoaders(ResourceManager* rm) {
 	Applet* app = CAppContainer::getInstance()->app;
 
-	// tables.yaml — game data tables (priority 10, must be first)
-	rm->registerLoader("tables", [app](ResourceManager* rm) {
-		const YAML::Node* node = rm->loadYAML("tables.yaml");
-		if (!node) return false;
-		return app->loadTablesFromNode(*node);
-	}, 10);
+	// tables.yaml — game data tables (must be first)
+	rm->registerParser("tables", "tables.yaml",
+		[app](const DataNode& d) { return parseTables(app, d); }, 10);
 
-	// sprites.yaml — sprite definitions + sprite anims (priority 20)
-	rm->registerLoader("sprites", [app](ResourceManager* rm) {
-		const YAML::Node* node = rm->loadYAML("sprites.yaml");
-		if (!node) return false;
-		if (!SpriteDefs::loadFromNode(*node)) return false;
-		app->render->initSpriteDefs();
-		app->loadSpriteAnimsFromNode(*node);
-		return true;
-	}, 20);
+	// sprites.yaml — sprite definitions + sprite anims
+	rm->registerParser("sprites", "sprites.yaml",
+		[app](const DataNode& d) {
+			if (!SpriteDefs::parse(d)) return false;
+			app->render->initSpriteDefs();
+			return parseSpriteAnims(app, d);
+		}, 20);
 
-	// items.yaml — item name definitions (priority 30, optional)
-	rm->registerLoader("item_defs", [](ResourceManager* rm) {
-		const YAML::Node* node = rm->loadYAML("items.yaml");
-		if (!node) return true; // optional file
-		return ItemDefs::loadFromNode(*node);
-	}, 30);
+	// items.yaml — item name definitions (optional)
+	rm->registerParser("item_defs", "items.yaml",
+		[](const DataNode& d) { return ItemDefs::parse(d); }, 30, true);
 
-	// entities.yaml — entity type/subtype names (priority 40)
-	rm->registerLoader("entity_names", [](ResourceManager* rm) {
-		const YAML::Node* node = rm->loadYAML("entities.yaml");
-		if (!node) return false;
-		return EntityNames::loadEntityTypesFromNode(*node);
-	}, 40);
+	// entities.yaml — entity type/subtype names + entity definitions
+	rm->registerParser("entity_names", "entities.yaml",
+		[app](const DataNode& d) {
+			if (!EntityNames::parseTypes(d)) return false;
+			return EntityDefManager::parse(app->entityDefManager, d);
+		}, 40);
 
-	// weapons.yaml — weapon names (priority 50)
-	rm->registerLoader("weapon_names", [](ResourceManager* rm) {
-		const YAML::Node* node = rm->loadYAML("weapons.yaml");
-		if (!node) return false;
-		return EntityNames::loadWeaponNamesFromNode(*node);
-	}, 50);
+	// weapons.yaml — weapon names (before entity defs, needed for parm resolution)
+	rm->registerParser("weapon_names", "weapons.yaml",
+		[](const DataNode& d) { return EntityNames::parseWeapons(d); }, 35);
 
-	// sounds.yaml — sound definitions (priority 60)
-	rm->registerLoader("sounds", [](ResourceManager* rm) {
-		const YAML::Node* node = rm->loadYAML("sounds.yaml");
-		if (!node) return false;
-		return Sounds::loadFromNode(*node);
-	}, 60);
+	// sounds.yaml — sound definitions
+	rm->registerParser("sounds", "sounds.yaml",
+		[](const DataNode& d) { return Sounds::parse(d); }, 60);
 
-	// game.yaml — config enums (priority 70)
-	rm->registerLoader("config_enums", [](ResourceManager* rm) {
-		const YAML::Node* node = rm->loadYAML("game.yaml");
-		if (!node) return false;
-		return ConfigEnums::loadFromNode(*node);
-	}, 70);
+	// game.yaml — config enums
+	rm->registerParser("config_enums", "game.yaml",
+		[](const DataNode& d) { return ConfigEnums::parse(d); }, 70);
 
-	// weapons.yaml — weapon data (priority 80, after sounds for sound lookups)
-	rm->registerLoader("weapons", [app](ResourceManager* rm) {
-		const YAML::Node* node = rm->loadYAML("weapons.yaml");
-		if (!node) return false;
-		return app->loadWeaponsFromNode(*node);
-	}, 80);
+	// weapons.yaml — weapon data (after sounds for sound lookups)
+	rm->registerParser("weapons", "weapons.yaml",
+		[app](const DataNode& d) { return parseWeapons(app, d); }, 80);
 
-	// projectiles.yaml (priority 90)
-	rm->registerLoader("projectiles", [app](ResourceManager* rm) {
-		const YAML::Node* node = rm->loadYAML("projectiles.yaml");
-		if (!node) {
-			printf("[resource] projectiles.yaml not found, using defaults\n");
-			return true;
-		}
-		return app->loadProjectilesFromNode(*node);
-	}, 90);
+	// projectiles.yaml (optional)
+	rm->registerParser("projectiles", "projectiles.yaml",
+		[app](const DataNode& d) { return parseProjectiles(app, d); }, 90, true);
 
-	// effects.yaml (priority 100)
+	// effects.yaml (optional — parser runs with empty node to init defaults)
 	rm->registerLoader("effects", [app](ResourceManager* rm) {
-		const YAML::Node* node = rm->loadYAML("effects.yaml");
-		if (!node) {
-			printf("[resource] effects.yaml not found, using defaults\n");
-			return true;
-		}
-		return app->loadEffectsFromNode(*node);
+		DataNode data = rm->loadData("effects.yaml");
+		if (!data) data = DataNode();
+		return parseEffects(app, data);
 	}, 100);
 
-	// items.yaml + effects.yaml — item use definitions (priority 110, optional)
+	// items.yaml + effects.yaml — item use definitions (multi-file)
 	rm->registerLoader("items", [app](ResourceManager* rm) {
-		const YAML::Node* itemsNode = rm->loadYAML("items.yaml");
-		if (!itemsNode) return true; // optional file
-		const YAML::Node* effectsNode = rm->loadYAML("effects.yaml");
-		YAML::Node emptyNode;
-		return app->loadItemsFromNode(*itemsNode, effectsNode ? *effectsNode : emptyNode);
+		DataNode itemsData = rm->loadData("items.yaml");
+		if (!itemsData) return true; // optional
+		DataNode effectsData = rm->loadData("effects.yaml");
+		return parseItems(app, itemsData, effectsData);
 	}, 110);
 
-	// dialogs.yaml (priority 120)
+	// dialogs.yaml (optional — parser runs with empty node to init defaults)
 	rm->registerLoader("dialogs", [app](ResourceManager* rm) {
-		const YAML::Node* node = rm->loadYAML("dialogs.yaml");
-		if (!node) {
-			printf("[resource] dialogs.yaml not found, using defaults\n");
-			return true;
-		}
-		return app->loadDialogStylesFromNode(*node);
+		DataNode data = rm->loadData("dialogs.yaml");
+		if (!data) data = DataNode();
+		return parseDialogStyles(app, data);
 	}, 120);
 
-	// monsters.yaml (priority 130, after weapons and sounds)
-	rm->registerLoader("monsters", [app](ResourceManager* rm) {
-		const YAML::Node* node = rm->loadYAML("monsters.yaml");
-		if (!node) return false;
-		return app->loadMonstersFromNode(*node);
-	}, 130);
+	// monsters.yaml (after weapons and sounds)
+	rm->registerParser("monsters", "monsters.yaml",
+		[app](const DataNode& d) { return parseMonsters(app, d); }, 130);
 }
 
 void DoomIIRPGGame::registerOpcodes(Applet* app) {

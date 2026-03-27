@@ -1,5 +1,5 @@
 #include "ConfigEnums.h"
-#include <yaml-cpp/yaml.h>
+#include "DataNode.h"
 #include <cstdio>
 
 // Static member definitions
@@ -12,43 +12,33 @@ std::unordered_map<int, std::string> ConfigEnums::languageByValue;
 std::unordered_map<int, std::string> ConfigEnums::windowModeByValue;
 std::unordered_map<int, std::string> ConfigEnums::controlLayoutByValue;
 
-static void loadSection(const YAML::Node& config, const char* key,
+static void loadSection(const DataNode& config, const char* key,
 						std::unordered_map<std::string, int>& map,
 						std::unordered_map<int, std::string>& reverseMap) {
 	map.clear();
 	reverseMap.clear();
-	YAML::Node section = config[key];
-	if (section && section.IsMap()) {
+	DataNode section = config[key];
+	if (section && section.isMap()) {
 		for (auto it = section.begin(); it != section.end(); ++it) {
-			std::string name = it->first.as<std::string>();
-			int value = it->second.as<int>(0);
+			std::string name = it.key().asString();
+			int value = it.value().asInt(0);
 			map[name] = value;
 			reverseMap[value] = name;
 		}
 	}
 }
 
-bool ConfigEnums::loadFromYAML(const char* path) {
-	try {
-		YAML::Node root = YAML::LoadFile(path);
-		return loadFromNode(root);
-	} catch (const YAML::Exception& e) {
-		printf("[config_enums] %s: %s\n", path, e.what());
-		return false;
-	}
-}
-
-bool ConfigEnums::loadFromNode(const YAML::Node& root) {
-	YAML::Node config = root["config_enums"];
-	if (!config || !config.IsMap()) {
+bool ConfigEnums::parse(const DataNode& root) {
+	DataNode config = root["config_enums"];
+	if (!config || !config.isMap()) {
 		printf("[config_enums] no config_enums section\n");
 		return false;
 	}
 
-	loadSection(config, "difficulty", difficulty, difficultyByValue);
-	loadSection(config, "language", language, languageByValue);
-	loadSection(config, "window_mode", windowMode, windowModeByValue);
-	loadSection(config, "control_layout", controlLayout, controlLayoutByValue);
+	loadSection(config, "difficulty", ConfigEnums::difficulty, ConfigEnums::difficultyByValue);
+	loadSection(config, "language", ConfigEnums::language, ConfigEnums::languageByValue);
+	loadSection(config, "window_mode", ConfigEnums::windowMode, ConfigEnums::windowModeByValue);
+	loadSection(config, "control_layout", ConfigEnums::controlLayout, ConfigEnums::controlLayoutByValue);
 
 	printf("[config_enums] loaded\n");
 	return true;

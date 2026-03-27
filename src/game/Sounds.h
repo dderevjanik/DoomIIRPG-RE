@@ -5,8 +5,6 @@
 #include <unordered_map>
 #include <vector>
 
-namespace YAML { class Node; }
-
 class Sounds {
   public:
 	// Runtime-loaded sound filenames (populated from sounds.yaml)
@@ -15,12 +13,8 @@ class Sounds {
 	// Name-to-index lookup map (populated from sounds.yaml)
 	static std::unordered_map<std::string, int> soundNameToIndex;
 
-	// Load sound definitions from sounds.yaml
-	// Returns true if loaded successfully, false on error
-	static bool loadFromYAML(const char* path);
-
-	// Load sound definitions from a pre-parsed YAML node
-	static bool loadFromNode(const YAML::Node& config);
+	// Parse sound definitions from a DataNode (called by ResourceManager)
+	static bool parse(const class DataNode& config);
 
 	// Get filename for a sound index, with bounds checking
 	static const char* getFileName(int index);

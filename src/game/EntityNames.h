@@ -5,8 +5,6 @@
 #include <unordered_map>
 #include <vector>
 
-namespace YAML { class Node; }
-
 class EntityNames {
   public:
 	// Bidirectional maps for each category
@@ -22,12 +20,10 @@ class EntityNames {
 	static std::vector<std::string> entityTypesByIndex;
 	static std::vector<std::string> weaponNamesByIndex;
 
-	// Load entity type/subtype names from entities.yaml
-	static bool loadEntityTypes(const char* entitiesPath);
-	static bool loadEntityTypesFromNode(const YAML::Node& config);
-	// Load weapon names and ammo parms from weapons.yaml
-	static bool loadWeaponNames(const char* weaponsPath);
-	static bool loadWeaponNamesFromNode(const YAML::Node& config);
+	// Parse entity type/subtype names from a DataNode (called by ResourceManager)
+	static bool parseTypes(const class DataNode& config);
+	// Parse weapon names and ammo parms from a DataNode (called by ResourceManager)
+	static bool parseWeapons(const class DataNode& config);
 
 	// Entity type lookups
 	static int entityTypeFromString(const std::string& name);

@@ -7,8 +7,7 @@
 #include <functional>
 #include <cstdint>
 
-namespace YAML { class Node; }
-
+class DataNode;
 class VFS;
 
 class ResourceManager {
@@ -26,29 +25,35 @@ public:
 	// Read a file as a string through VFS.
 	std::string readFileAsString(const char* path);
 
-	// --- YAML loading with caching ---
+	// --- Data loading with caching (YAML-free public API) ---
 
-	// Load and cache a YAML document by logical path.
-	// Returns pointer to cached Node, or nullptr on failure.
-	const YAML::Node* loadYAML(const char* path);
+	// Load and cache a data document by logical path.
+	// Returns a DataNode wrapping the parsed content.
+	// Returns an empty (falsy) DataNode on failure.
+	DataNode loadData(const char* path);
 
-	// Invalidate a cached YAML document (for future hot-reload).
-	void invalidateYAML(const char* path);
+	// Invalidate a cached document (for future hot-reload).
+	void invalidateData(const char* path);
 
 	// Invalidate all cached resources.
 	void invalidateAll();
 
-	// --- Registered loader pattern ---
+	// --- Registered loader/parser pattern ---
 
-	// Register a definition loader. Called during initialization.
-	// name: human-readable name for logging
-	// loader: function that performs the actual loading
-	// priority: lower runs first (0 = highest priority)
+	// Register a parser for a data file. ResourceManager handles loadData()
+	// and calls the parser with the resulting DataNode.
+	// If optional=true, a missing file is not an error (parser is skipped).
+	void registerParser(const char* name, const char* dataPath,
+						std::function<bool(const DataNode&)> parser,
+						int priority = 100, bool optional = false);
+
+	// Register a loader callback for multi-file or custom loading scenarios.
+	// The loader receives ResourceManager* and handles loadData() itself.
 	void registerLoader(const char* name,
 						std::function<bool(ResourceManager*)> loader,
 						int priority = 100);
 
-	// Run all registered loaders in priority order. Returns false if any fail.
+	// Run all registered parsers and loaders in priority order. Returns false if any fail.
 	bool loadAllDefinitions();
 
 	// --- Utility ---
@@ -59,17 +64,21 @@ public:
 private:
 	VFS* vfs;
 
-	// Cached YAML documents
-	std::unordered_map<std::string, YAML::Node*> yamlCache;
+	// Opaque cache — implementation in ResourceManager.cpp
+	struct CacheImpl;
+	CacheImpl* cache;
 
-	// Registered definition loaders, sorted by priority on load
-	struct LoaderEntry {
+	// Unified entry for both parsers and loaders, sorted by priority on load
+	struct DefinitionEntry {
 		std::string name;
-		std::function<bool(ResourceManager*)> loader;
+		std::string dataPath;                              // empty for raw loaders
+		std::function<bool(const DataNode&)> parser;       // used when dataPath is set
+		std::function<bool(ResourceManager*)> loader;      // used when dataPath is empty
 		int priority;
+		bool optional;
 	};
-	std::vector<LoaderEntry> loaders;
-	bool loadersSorted;
+	std::vector<DefinitionEntry> entries;
+	bool entriesSorted;
 };
 
 #endif
