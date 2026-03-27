@@ -1786,6 +1786,57 @@ static bool generateAnimationsYaml(const std::string& outDir) {
 		out << YAML::Key << e.name << YAML::Value << e.index;
 	}
 	out << YAML::EndMap;
+
+	// UI image assets (BMP files referenced by ui.yaml)
+	out << YAML::Key << "images" << YAML::Value << YAML::BeginMap;
+	out << YAML::Key << "menu_btn_bg" << YAML::Value << "menu_button_background.bmp";
+	out << YAML::Key << "menu_btn_bg_on" << YAML::Value << "menu_button_background_on.bmp";
+	out << YAML::Key << "menu_arrow_down" << YAML::Value << "menu_arrow_down.bmp";
+	out << YAML::Key << "menu_arrow_up" << YAML::Value << "menu_arrow_up.bmp";
+	out << YAML::Key << "switch_left_normal" << YAML::Value << "Switch_Left_Normal.bmp";
+	out << YAML::Key << "switch_left_active" << YAML::Value << "Switch_Left_Active.bmp";
+	out << YAML::Key << "slider_bar" << YAML::Value << "Menu_Option_SliderBar.bmp";
+	out << YAML::Key << "slider_on" << YAML::Value << "Menu_Option_SliderON.bmp";
+	out << YAML::Key << "slider_off" << YAML::Value << "Menu_Option_SliderOFF.bmp";
+	out << YAML::Key << "info_btn_normal" << YAML::Value << "gameMenu_infoButton_Normal.bmp";
+	out << YAML::Key << "info_btn_pressed" << YAML::Value << "gameMenu_infoButton_Pressed.bmp";
+	out << YAML::Key << "vending_arrow_up_glow" << YAML::Value << "vending_arrow_up_glow.bmp";
+	out << YAML::Key << "vending_arrow_down_glow" << YAML::Value << "vending_arrow_down_glow.bmp";
+	out << YAML::Key << "vending_btn_large" << YAML::Value << "vending_button_large.bmp";
+	out << YAML::Key << "vending_btn_help" << YAML::Value << "vending_button_help.bmp";
+	out << YAML::Key << "ingame_option_btn" << YAML::Value << "inGame_menu_option_button.bmp";
+	out << YAML::Key << "menu_dial" << YAML::Value << "Menu_Dial.bmp";
+	out << YAML::Key << "menu_dial_knob" << YAML::Value << "Menu_Dial_Knob.bmp";
+	out << YAML::Key << "menu_main_box" << YAML::Value << "Menu_Main_BOX.bmp";
+	out << YAML::Key << "main_menu_overlay" << YAML::Value << "Main_Menu_OverLay.bmp";
+	out << YAML::Key << "main_help_overlay" << YAML::Value << "Main_Help_OverLay.bmp";
+	out << YAML::Key << "main_about_overlay" << YAML::Value << "Main_About_OverLay.bmp";
+	out << YAML::Key << "menu_yesno_box" << YAML::Value << "Menu_YesNo_BOX.bmp";
+	out << YAML::Key << "menu_choose_diff_box" << YAML::Value << "Menu_ChooseDIFF_BOX.bmp";
+	out << YAML::Key << "menu_language_box" << YAML::Value << "Menu_Language_BOX.bmp";
+	out << YAML::Key << "menu_option_box3" << YAML::Value << "Menu_Option_BOX3.bmp";
+	out << YAML::Key << "menu_option_box4" << YAML::Value << "Menu_Option_BOX4.bmp";
+	out << YAML::Key << "hud_numbers" << YAML::Value << "Hud_Numbers.bmp";
+	out << YAML::Key << "game_menu_panel_bottom" << YAML::Value << "gameMenu_Panel_bottom.bmp";
+	out << YAML::Key << "game_menu_panel_bottom_sentry" << YAML::Value << "gameMenu_Panel_bottom_sentrybot.bmp";
+	out << YAML::Key << "game_menu_health" << YAML::Value << "gameMenu_Health.bmp";
+	out << YAML::Key << "game_menu_shield" << YAML::Value << "gameMenu_Shield.bmp";
+	out << YAML::Key << "game_menu_torn_page" << YAML::Value << "gameMenu_TornPage.bmp";
+	out << YAML::Key << "game_menu_background" << YAML::Value << "gameMenu_Background.bmp";
+	out << YAML::Key << "main_menu_dial_a_anim" << YAML::Value << "Main_Menu_DialA_anim.bmp";
+	out << YAML::Key << "main_menu_dial_c_anim" << YAML::Value << "Main_Menu_DialC_anim.bmp";
+	out << YAML::Key << "main_menu_slide_anim" << YAML::Value << "Main_Menu_Slide_anim.bmp";
+	out << YAML::Key << "game_menu_scrollbar" << YAML::Value << "gameMenu_ScrollBar.bmp";
+	out << YAML::Key << "game_menu_top_slider" << YAML::Value << "gameMenu_topSlider.bmp";
+	out << YAML::Key << "game_menu_mid_slider" << YAML::Value << "gameMenu_midSlider.bmp";
+	out << YAML::Key << "game_menu_bottom_slider" << YAML::Value << "gameMenu_bottomSlider.bmp";
+	out << YAML::Key << "vending_scrollbar" << YAML::Value << "vending_scroll_bar.bmp";
+	out << YAML::Key << "vending_scroll_btn_top" << YAML::Value << "vending_scroll_button_top.bmp";
+	out << YAML::Key << "vending_scroll_btn_mid" << YAML::Value << "vending_scroll_button_middle.bmp";
+	out << YAML::Key << "vending_scroll_btn_bottom" << YAML::Value << "vending_scroll_button_bottom.bmp";
+	out << YAML::Key << "logo" << YAML::Value << "logo2.bmp";
+	out << YAML::EndMap;
+
 	out << YAML::EndMap;
 
 	std::string path = outDir + "/sprites.yaml";
@@ -2092,6 +2143,21 @@ static bool convertMenus(ZipFile& zip, const std::string& outDir) {
 			out << YAML::Key << "type" << YAML::Value << mtype;
 		}
 
+		// Emit theme based on menu_id ranges
+		if (signedId != 0) {
+			const char* themeName = nullptr;
+			if (signedId >= 83 && signedId <= 88) {
+				themeName = "vending";
+			} else if (signedId >= 29 && signedId <= 82) {
+				themeName = "ingame";
+			} else if (signedId >= 1 && signedId <= 28) {
+				themeName = "main";
+			}
+			if (themeName) {
+				out << YAML::Key << "theme" << YAML::Value << themeName;
+			}
+		}
+
 		if (numItems > 0) {
 			out << YAML::Key << "items" << YAML::Value << YAML::BeginSeq;
 			for (int j = 0; j < numItems; j++) {
@@ -2324,6 +2390,16 @@ static bool convertSounds(ZipFile& zip, const std::string& outDir) {
 		out << YAML::EndMap;
 	}
 	out << YAML::EndMap;
+
+	// UI sound aliases (referenced by ui.yaml button definitions)
+	out << YAML::Newline;
+	out << YAML::Comment("UI sound aliases - maps descriptive names to sound entries above");
+	out << YAML::Key << "ui_sounds" << YAML::Value << YAML::BeginMap;
+	out << YAML::Key << "menu_highlight" << YAML::Value << "dialog_help";
+	out << YAML::Key << "softkey_click" << YAML::Value << "switch_exit";
+	out << YAML::Key << "scroll" << YAML::Value << "menu_scroll";
+	out << YAML::EndMap;
+
 	out << YAML::EndMap;
 
 	std::string path = outDir + "/sounds.yaml";
@@ -2481,6 +2557,229 @@ static bool generateGameYaml(const std::string& outDir) {
 	yaml += "    dpad: 1\n";
 
 	std::string path = outDir + "/game.yaml";
+	if (!writeString(path, yaml)) {
+		fprintf(stderr, "  Failed to write %s\n", path.c_str());
+		return false;
+	}
+	printf("  -> %s\n", path.c_str());
+	return true;
+}
+
+// ========================================================================
+// Generate ui.yaml
+// ========================================================================
+static bool generateUIYaml(const std::string& outDir) {
+	std::string yaml;
+	yaml += "# UI element definitions for DoomIIRPG\n";
+	yaml += "# Describes all UI widget types, button instances, and their properties\n";
+	yaml += "\n";
+	yaml += "# Reusable visual styles\n";
+	yaml += "components:\n";
+	yaml += "  menu_button:\n";
+	yaml += "    image: menu_btn_bg\n";
+	yaml += "    image_highlight: menu_btn_bg_on\n";
+	yaml += "    sound: menu_highlight\n";
+	yaml += "    render_mode: 1\n";
+	yaml += "    highlight_render_mode: 0\n";
+	yaml += "\n";
+	yaml += "  info_button:\n";
+	yaml += "    image: info_btn_normal\n";
+	yaml += "    image_highlight: info_btn_pressed\n";
+	yaml += "    sound: menu_highlight\n";
+	yaml += "    render_mode: 1\n";
+	yaml += "    highlight_render_mode: 0\n";
+	yaml += "\n";
+	yaml += "  scroll_arrow:\n";
+	yaml += "    sound: menu_highlight\n";
+	yaml += "    size_from_image: true\n";
+	yaml += "\n";
+	yaml += "  softkey:\n";
+	yaml += "    sound: softkey_click\n";
+	yaml += "\n";
+	yaml += "  slider_touch:\n";
+	yaml += "    sound: menu_highlight\n";
+	yaml += "\n";
+	yaml += "  vending_arrow:\n";
+	yaml += "    sound: menu_highlight\n";
+	yaml += "    size_from_image: true\n";
+	yaml += "    render_mode: 1\n";
+	yaml += "    highlight_render_mode: 0\n";
+	yaml += "\n";
+	yaml += "  scrollbar:\n";
+	yaml += "    sound: scroll\n";
+	yaml += "    vertical: true\n";
+	yaml += "\n";
+	yaml += "# Themes — button appearance per menu context\n";
+	yaml += "themes:\n";
+	yaml += "  main:\n";
+	yaml += "    menu_button: menu_button\n";
+	yaml += "    info_button: info_button\n";
+	yaml += "    item_width: 162\n";
+	yaml += "    item_height: 46\n";
+	yaml += "    scrollbar:\n";
+	yaml += "      style: dial\n";
+	yaml += "      default_x: 408\n";
+	yaml += "      default_y: 81\n";
+	yaml += "\n";
+	yaml += "  main_wide:\n";
+	yaml += "    menu_button:\n";
+	yaml += "      image: menu_btn_bg_ext\n";
+	yaml += "      image_highlight: menu_btn_bg_ext_on\n";
+	yaml += "      render_mode: 1\n";
+	yaml += "      highlight_render_mode: 0\n";
+	yaml += "    info_button: info_button\n";
+	yaml += "    item_width: 296\n";
+	yaml += "    item_height: 46\n";
+	yaml += "\n";
+	yaml += "  ingame:\n";
+	yaml += "    menu_button:\n";
+	yaml += "      image: ingame_option_btn\n";
+	yaml += "      render_mode: 1\n";
+	yaml += "      highlight_render_mode: 0\n";
+	yaml += "    info_button: info_button\n";
+	yaml += "    item_padding_bottom: 10\n";
+	yaml += "    scrollbar:\n";
+	yaml += "      style: bar\n";
+	yaml += "      images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider]\n";
+	yaml += "      x: 430\n";
+	yaml += "      width: 50\n";
+	yaml += "\n";
+	yaml += "  vending:\n";
+	yaml += "    menu_button:\n";
+	yaml += "      image: vending_btn_large\n";
+	yaml += "      render_mode: 1\n";
+	yaml += "      highlight_render_mode: 0\n";
+	yaml += "    info_button:\n";
+	yaml += "      image: vending_btn_help\n";
+	yaml += "      render_mode: 2\n";
+	yaml += "      highlight_render_mode: 0\n";
+	yaml += "    item_padding_bottom: 3\n";
+	yaml += "    scrollbar:\n";
+	yaml += "      style: bar\n";
+	yaml += "      images: [vending_scrollbar, vending_top, vending_mid, vending_bottom]\n";
+	yaml += "      x: 350\n";
+	yaml += "\n";
+	yaml += "# Screen layouts — compose components with placement\n";
+	yaml += "# container maps to C++ fmButtonContainer (menu | info | vending)\n";
+	yaml += "screens:\n";
+	yaml += "  menu:\n";
+	yaml += "    container: menu\n";
+	yaml += "    buttons:\n";
+	yaml += "      menu_items:\n";
+	yaml += "        component: menu_button\n";
+	yaml += "        id_range: [0, 8]\n";
+	yaml += "        x: 159\n";
+	yaml += "        start_y: 139\n";
+	yaml += "        step_y: 46\n";
+	yaml += "        width: 162\n";
+	yaml += "        height: 46\n";
+	yaml += "        visible: false\n";
+	yaml += "\n";
+	yaml += "      arrow_up:\n";
+	yaml += "        component: scroll_arrow\n";
+	yaml += "        id: 9\n";
+	yaml += "        x: 331\n";
+	yaml += "        y: image_relative\n";
+	yaml += "        y_base: 190\n";
+	yaml += "        y_offset: -height\n";
+	yaml += "        image: menu_arrow_up\n";
+	yaml += "        visible: false\n";
+	yaml += "\n";
+	yaml += "      arrow_down:\n";
+	yaml += "        component: scroll_arrow\n";
+	yaml += "        id: 10\n";
+	yaml += "        x: 331\n";
+	yaml += "        y: 210\n";
+	yaml += "        image: menu_arrow_down\n";
+	yaml += "        visible: false\n";
+	yaml += "\n";
+	yaml += "      softkey_left:\n";
+	yaml += "        component: softkey\n";
+	yaml += "        id: 11\n";
+	yaml += "        x: 0\n";
+	yaml += "        y: 256\n";
+	yaml += "        width: 52\n";
+	yaml += "        height: 64\n";
+	yaml += "        image: switch_left_normal\n";
+	yaml += "        image_highlight: switch_left_active\n";
+	yaml += "        visible: false\n";
+	yaml += "\n";
+	yaml += "      sfx_volume_slider:\n";
+	yaml += "        component: slider_touch\n";
+	yaml += "        id: 12\n";
+	yaml += "        visible: false\n";
+	yaml += "\n";
+	yaml += "      music_volume_slider:\n";
+	yaml += "        component: slider_touch\n";
+	yaml += "        id: 13\n";
+	yaml += "        visible: false\n";
+	yaml += "\n";
+	yaml += "      alpha_slider:\n";
+	yaml += "        component: slider_touch\n";
+	yaml += "        id: 14\n";
+	yaml += "        visible: false\n";
+	yaml += "\n";
+	yaml += "      softkey_right:\n";
+	yaml += "        component: softkey\n";
+	yaml += "        id: 15\n";
+	yaml += "        x: 428\n";
+	yaml += "        y: 256\n";
+	yaml += "        width: 52\n";
+	yaml += "        height: 64\n";
+	yaml += "        visible: false\n";
+	yaml += "\n";
+	yaml += "      # Controller sliders [GEC]\n";
+	yaml += "      vibration_slider:\n";
+	yaml += "        component: slider_touch\n";
+	yaml += "        id: 16\n";
+	yaml += "        visible: false\n";
+	yaml += "\n";
+	yaml += "      deadzone_slider:\n";
+	yaml += "        component: slider_touch\n";
+	yaml += "        id: 17\n";
+	yaml += "        visible: false\n";
+	yaml += "\n";
+	yaml += "  info:\n";
+	yaml += "    container: info\n";
+	yaml += "    buttons:\n";
+	yaml += "      info_items:\n";
+	yaml += "        component: info_button\n";
+	yaml += "        id_range: [0, 8]\n";
+	yaml += "        visible: false\n";
+	yaml += "\n";
+	yaml += "  vending:\n";
+	yaml += "    container: vending\n";
+	yaml += "    buttons:\n";
+	yaml += "      arrow_up:\n";
+	yaml += "        component: vending_arrow\n";
+	yaml += "        id: 0\n";
+	yaml += "        x: 320\n";
+	yaml += "        y: 130\n";
+	yaml += "        image: vending_arrow_up_glow\n";
+	yaml += "        visible: true\n";
+	yaml += "\n";
+	yaml += "      arrow_down:\n";
+	yaml += "        component: vending_arrow\n";
+	yaml += "        id: 1\n";
+	yaml += "        x: 320\n";
+	yaml += "        y: image_relative\n";
+	yaml += "        y_base: 150\n";
+	yaml += "        y_offset: menu_arrow_up.height\n";
+	yaml += "        image: vending_arrow_down_glow\n";
+	yaml += "        visible: true\n";
+	yaml += "\n";
+	yaml += "# Bridge between widget types (menus.yaml) and item_flags\n";
+	yaml += "widget_flag_mapping:\n";
+	yaml += "  label: noselect\n";
+	yaml += "  divider: noselect,divider\n";
+	yaml += "  toggle: checked\n";
+	yaml += "  slider: scrollbar\n";
+	yaml += "  slider_image: scrollbartwo\n";
+	yaml += "  keybinding: binding\n";
+	yaml += "  padding: noselect,padding\n";
+	yaml += "  block_text: block_text\n";
+
+	std::string path = outDir + "/ui.yaml";
 	if (!writeString(path, yaml)) {
 		fprintf(stderr, "  Failed to write %s\n", path.c_str());
 		return false;
@@ -2921,6 +3220,9 @@ int main(int argc, char* argv[]) {
 
 	printf("Generating game.yaml...\n");
 	ok &= generateGameYaml(outputDir);
+
+	printf("Generating ui.yaml...\n");
+	ok &= generateUIYaml(outputDir);
 
 	printf("Generating characters.yaml...\n");
 	ok &= generateCharactersYaml(outputDir);

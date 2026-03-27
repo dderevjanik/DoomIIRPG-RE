@@ -410,6 +410,7 @@ void Applet::loadTables() {
 	ItemDefs::loadFromYAML("items.yaml");
 	EntityNames::loadEntityTypes("entities.yaml");
 	EntityNames::loadWeaponNames("weapons.yaml");
+	Sounds::loadFromYAML("sounds.yaml");
 	ConfigEnums::loadFromYAML("game.yaml");
 	printf("[app] loadTables: loading from weapons.yaml\n");
 	if (!this->loadWeaponsFromYAML("weapons.yaml")) {

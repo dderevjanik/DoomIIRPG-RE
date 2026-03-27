@@ -24,6 +24,7 @@
 #include "Resource.h"
 #include "Button.h"
 #include "Image.h"
+#include "Sounds.h"
 #include "Render.h"
 #include "Combat.h"
 #include "ComicBook.h"
@@ -43,11 +44,19 @@ MenuSystem::MenuSystem() {
 	std::memset(this, 0, sizeof(MenuSystem));
 	new (&yamlMenuDefs) std::vector<YAMLMenuDef>();
 	new (&yamlMenuById) std::unordered_map<int, int>();
+	new (&menuThemes_) std::unordered_map<std::string, MenuTheme>();
+	new (&menuThemeByMenuId_) std::unordered_map<int, std::string>();
+	new (&layoutPresets_) std::unordered_map<std::string, MenuLayout>();
+	new (&drawLayoutPresets_) std::unordered_map<std::string, DrawLayout>();
 }
 
 MenuSystem::~MenuSystem() {
 	yamlMenuDefs.~vector();
 	yamlMenuById.~unordered_map();
+	menuThemes_.~unordered_map();
+	menuThemeByMenuId_.~unordered_map();
+	layoutPresets_.~unordered_map();
+	drawLayoutPresets_.~unordered_map();
 }
 
 bool MenuSystem::startup() {
@@ -410,6 +419,8 @@ bool MenuSystem::loadUIFromYAML(const char* path) {
 	imageMap["vending_btn_large"] = this->imgVendingButtonLarge;
 	imageMap["vending_btn_help"] = this->imgVendingButtonHelp;
 	imageMap["ingame_option_btn"] = this->imgInGameMenuOptionButton;
+	imageMap["menu_btn_bg_ext"] = this->imgMenuButtonBackgroundExt;
+	imageMap["menu_btn_bg_ext_on"] = this->imgMenuButtonBackgroundExtOn;
 	imageMap["menu_dial"] = this->imgMenuDial;
 	imageMap["menu_dial_knob"] = this->imgMenuDialKnob;
 	imageMap["menu_main_box"] = this->imgMenuMainBOX;
@@ -441,221 +452,273 @@ bool MenuSystem::loadUIFromYAML(const char* path) {
 	imageMap["vending_scroll_btn_bottom"] = this->imgVendingScrollButtonBottom;
 	imageMap["logo"] = this->imgLogo;
 
-	// Build sound name -> ID lookup
+	// Build UI sound alias -> ResID lookup from sounds.yaml ui_sounds section
 	std::unordered_map<std::string, int> soundMap;
-	if (YAML::Node sounds = config["sounds"]) {
-		for (auto it = sounds.begin(); it != sounds.end(); ++it) {
-			soundMap[it->first.as<std::string>()] = it->second.as<int>(0);
+	try {
+		YAML::Node sndConfig = YAML::LoadFile("sounds.yaml");
+		if (YAML::Node uiSounds = sndConfig["ui_sounds"]) {
+			for (auto it = uiSounds.begin(); it != uiSounds.end(); ++it) {
+				std::string alias = it->first.as<std::string>();
+				std::string soundName = it->second.as<std::string>("");
+				int resId = Sounds::getResIDByName(soundName);
+				if (resId >= 0) {
+					soundMap[alias] = resId;
+				}
+			}
+		}
+	} catch (const YAML::Exception& e) {
+		printf("[menu] warning: could not load ui_sounds from sounds.yaml: %s\n", e.what());
+	}
+
+	// Button creation helpers
+	auto resolveSound = [&](const YAML::Node& btn) -> int {
+		std::string sndName = btn["sound"].as<std::string>("");
+		auto sit = soundMap.find(sndName);
+		return (sit != soundMap.end()) ? sit->second : 0;
+	};
+
+	auto resolveImage = [&](const std::string& imgName) -> Image* {
+		auto iit = imageMap.find(imgName);
+		return (iit != imageMap.end()) ? iit->second : nullptr;
+	};
+
+	auto createButton = [&](const YAML::Node& btn, int id, int x, int y, int w, int h) -> fmButton* {
+		int soundId = resolveSound(btn);
+		fmButton* button = new fmButton(id, x, y, w, h, soundId);
+
+		bool visible = btn["visible"].as<bool>(true);
+		button->drawButton = visible;
+
+		std::string imgName = btn["image"].as<std::string>("");
+		if (!imgName.empty()) {
+			Image* img = resolveImage(imgName);
+			if (img) button->SetImage(img, false);
+		}
+
+		std::string imgHighName = btn["image_highlight"].as<std::string>("");
+		if (!imgHighName.empty()) {
+			Image* imgH = resolveImage(imgHighName);
+			if (imgH) button->SetHighlightImage(imgH, false);
+		}
+
+		button->normalRenderMode = btn["render_mode"].as<int>(0);
+		button->highlightRenderMode = btn["highlight_render_mode"].as<int>(0);
+
+		return button;
+	};
+
+	auto parseButtonNode = [&](const YAML::Node& btn, fmButtonContainer* container) {
+		if (YAML::Node range = btn["id_range"]) {
+			int startId = range[0].as<int>(0);
+			int endId = range[1].as<int>(0);
+			int x = btn["x"].as<int>(0);
+			int startY = btn["start_y"].as<int>(0);
+			int stepY = btn["step_y"].as<int>(0);
+			int w = btn["width"].as<int>(0);
+			int h = btn["height"].as<int>(0);
+
+			int posY = startY;
+			for (int id = startId; id <= endId; id++) {
+				fmButton* button = createButton(btn, id, x, posY, w, h);
+				container->AddButton(button);
+				posY += stepY;
+			}
+		} else {
+			int id = btn["id"].as<int>(0);
+			int x = btn["x"].as<int>(0);
+			int w = btn["width"].as<int>(0);
+			int h = btn["height"].as<int>(0);
+			int y = 0;
+
+			bool sizeFromImage = btn["size_from_image"].as<bool>(false);
+			std::string imgName = btn["image"].as<std::string>("");
+			Image* img = resolveImage(imgName);
+
+			if (sizeFromImage && img) {
+				w = img->width;
+				h = img->height;
+			}
+
+			std::string yStr = btn["y"].as<std::string>("");
+			if (yStr == "image_relative") {
+				int yBase = btn["y_base"].as<int>(0);
+				std::string yOffset = btn["y_offset"].as<std::string>("");
+				if (yOffset == "-height" && img) {
+					y = yBase - img->height;
+				} else {
+					std::string refImg = yOffset.substr(0, yOffset.find('.'));
+					Image* refImage = resolveImage(refImg);
+					y = refImage ? yBase + refImage->height : yBase;
+				}
+			} else {
+				y = btn["y"].as<int>(0);
+			}
+
+			fmButton* button = createButton(btn, id, x, y, w, h);
+			container->AddButton(button);
+		}
+	};
+
+	// Load components (reusable visual styles)
+	std::unordered_map<std::string, YAML::Node> components;
+	if (YAML::Node comps = config["components"]) {
+		for (auto it = comps.begin(); it != comps.end(); ++it) {
+			components[it->first.as<std::string>()] = it->second;
 		}
 	}
 
-	// Load button containers
-	if (YAML::Node containers = config["containers"]) {
-		auto resolveSound = [&](const YAML::Node& btn) -> int {
-			std::string sndName = btn["sound"].as<std::string>("");
-			auto sit = soundMap.find(sndName);
-			return (sit != soundMap.end()) ? sit->second : 0;
-		};
-
-		auto resolveImage = [&](const std::string& imgName) -> Image* {
-			auto iit = imageMap.find(imgName);
-			return (iit != imageMap.end()) ? iit->second : nullptr;
-		};
-
-		auto createButton = [&](const YAML::Node& btn, int id, int x, int y, int w, int h) -> fmButton* {
-			int soundId = resolveSound(btn);
-			fmButton* button = new fmButton(id, x, y, w, h, soundId);
-
-			bool visible = btn["visible"].as<bool>(true);
-			button->drawButton = visible;
-
-			// Set normal image
-			std::string imgName = btn["image"].as<std::string>("");
-			if (!imgName.empty()) {
-				Image* img = resolveImage(imgName);
-				if (img) {
-					button->SetImage(img, false);
-				}
+	// Merge component defaults with button instance overrides
+	auto mergeNodes = [](const YAML::Node& base, const YAML::Node& overlay) -> YAML::Node {
+		YAML::Node result = YAML::Clone(base);
+		for (auto it = overlay.begin(); it != overlay.end(); ++it) {
+			std::string key = it->first.as<std::string>();
+			if (key != "component") {
+				result[key] = it->second;
 			}
+		}
+		return result;
+	};
 
-			// Set highlight image
-			std::string imgHighName = btn["image_highlight"].as<std::string>("");
-			if (!imgHighName.empty()) {
-				Image* imgH = resolveImage(imgHighName);
-				if (imgH) {
-					button->SetHighlightImage(imgH, false);
-				}
-			}
+	// Load screens, routing buttons to the right container
+	if (YAML::Node screens = config["screens"]) {
+		if (this->m_menuButtons) delete this->m_menuButtons;
+		if (this->m_infoButtons) delete this->m_infoButtons;
+		if (this->m_vendingButtons) delete this->m_vendingButtons;
+		this->m_menuButtons = new fmButtonContainer();
+		this->m_infoButtons = new fmButtonContainer();
+		this->m_vendingButtons = new fmButtonContainer();
 
-			// Render modes
-			button->normalRenderMode = btn["render_mode"].as<int>(0);
-			button->highlightRenderMode = btn["highlight_render_mode"].as<int>(0);
+		for (auto sit = screens.begin(); sit != screens.end(); ++sit) {
+			YAML::Node screen = sit->second;
+			std::string containerName = screen["container"].as<std::string>("");
+			fmButtonContainer* target = nullptr;
+			if (containerName == "menu") target = this->m_menuButtons;
+			else if (containerName == "info") target = this->m_infoButtons;
+			else if (containerName == "vending") target = this->m_vendingButtons;
+			if (!target) continue;
 
-			return button;
-		};
-
-		// menu_buttons container
-		if (YAML::Node menuBtns = containers["menu_buttons"]) {
-			if (this->m_menuButtons) {
-				delete this->m_menuButtons;
-			}
-			this->m_menuButtons = new fmButtonContainer();
-
-			if (YAML::Node buttons = menuBtns["buttons"]) {
-				for (size_t i = 0; i < buttons.size(); i++) {
-					YAML::Node btn = buttons[i];
-
-					if (YAML::Node range = btn["id_range"]) {
-						// Range of buttons (e.g. menu items 0-8)
-						int startId = range[0].as<int>(0);
-						int endId = range[1].as<int>(0);
-						int x = btn["x"].as<int>(0);
-						int startY = btn["start_y"].as<int>(0);
-						int stepY = btn["step_y"].as<int>(0);
-						int w = btn["width"].as<int>(0);
-						int h = btn["height"].as<int>(0);
-
-						int posY = startY;
-						for (int id = startId; id <= endId; id++) {
-							fmButton* button = createButton(btn, id, x, posY, w, h);
-							this->m_menuButtons->AddButton(button);
-							posY += stepY;
-						}
+			if (YAML::Node buttons = screen["buttons"]) {
+				for (auto bit = buttons.begin(); bit != buttons.end(); ++bit) {
+					YAML::Node btnRaw = bit->second;
+					std::string compName = btnRaw["component"].as<std::string>("");
+					YAML::Node btn;
+					auto compIt = components.find(compName);
+					if (compIt != components.end()) {
+						btn = mergeNodes(compIt->second, btnRaw);
 					} else {
-						int id = btn["id"].as<int>(0);
-						int x = btn["x"].as<int>(0);
-						int w = btn["width"].as<int>(0);
-						int h = btn["height"].as<int>(0);
-						int y = 0;
-
-						bool sizeFromImage = btn["size_from_image"].as<bool>(false);
-						std::string imgName = btn["image"].as<std::string>("");
-						Image* img = resolveImage(imgName);
-
-						if (sizeFromImage && img) {
-							w = img->width;
-							h = img->height;
-						}
-
-						// Handle special y positioning
-						std::string yStr = btn["y"].as<std::string>("");
-						if (yStr == "image_relative") {
-							int yBase = btn["y_base"].as<int>(0);
-							std::string yOffset = btn["y_offset"].as<std::string>("");
-							if (yOffset == "-height" && img) {
-								y = yBase - img->height;
-							} else {
-								// Handle "menu_arrow_up.height" style references
-								std::string refImg = yOffset.substr(0, yOffset.find('.'));
-								Image* refImage = resolveImage(refImg);
-								if (refImage) {
-									y = yBase + refImage->height;
-								} else {
-									y = yBase;
-								}
-							}
-						} else {
-							y = btn["y"].as<int>(0);
-						}
-
-						fmButton* button = createButton(btn, id, x, y, w, h);
-						this->m_menuButtons->AddButton(button);
+						btn = btnRaw;
 					}
+					parseButtonNode(btn, target);
 				}
 			}
 		}
+	}
 
-		// info_buttons container
-		if (YAML::Node infoBtns = containers["info_buttons"]) {
-			if (this->m_infoButtons) {
-				delete this->m_infoButtons;
+	// scrollbar (from components)
+	if (components.count("scrollbar")) {
+		YAML::Node scrollbar = components["scrollbar"];
+		if (this->m_scrollBar) delete this->m_scrollBar;
+		std::string sndName = scrollbar["sound"].as<std::string>("");
+		int soundId = 0;
+		auto sit = soundMap.find(sndName);
+		if (sit != soundMap.end()) soundId = sit->second;
+		bool vertical = scrollbar["vertical"].as<bool>(true);
+		this->m_scrollBar = new fmScrollButton(0, 0, 0, 0, vertical, soundId);
+	}
+
+	// Load themes (button appearance per menu context)
+	if (YAML::Node themes = config["themes"]) {
+		for (auto it = themes.begin(); it != themes.end(); ++it) {
+			std::string themeName = it->first.as<std::string>();
+			YAML::Node themeNode = it->second;
+			MenuTheme theme;
+
+			// Resolve menu_button (can be a component name string or inline map)
+			if (YAML::Node mb = themeNode["menu_button"]) {
+				YAML::Node resolved;
+				if (mb.IsScalar()) {
+					auto cit = components.find(mb.as<std::string>());
+					if (cit != components.end()) resolved = cit->second;
+				} else {
+					resolved = mb;
+				}
+				if (resolved) {
+					theme.btnImage = resolveImage(resolved["image"].as<std::string>(""));
+					theme.btnHighlightImage = resolveImage(resolved["image_highlight"].as<std::string>(""));
+					theme.btnRenderMode = resolved["render_mode"].as<int>(0);
+					theme.btnHighlightRenderMode = resolved["highlight_render_mode"].as<int>(0);
+				}
 			}
-			this->m_infoButtons = new fmButtonContainer();
 
-			if (YAML::Node buttons = infoBtns["buttons"]) {
-				for (size_t i = 0; i < buttons.size(); i++) {
-					YAML::Node btn = buttons[i];
+			// Resolve info_button
+			if (YAML::Node ib = themeNode["info_button"]) {
+				YAML::Node resolved;
+				if (ib.IsScalar()) {
+					auto cit = components.find(ib.as<std::string>());
+					if (cit != components.end()) resolved = cit->second;
+				} else {
+					resolved = ib;
+				}
+				if (resolved) {
+					theme.infoBtnImage = resolveImage(resolved["image"].as<std::string>(""));
+					theme.infoBtnHighlightImage = resolveImage(resolved["image_highlight"].as<std::string>(""));
+					theme.infoBtnRenderMode = resolved["render_mode"].as<int>(0);
+					theme.infoBtnHighlightRenderMode = resolved["highlight_render_mode"].as<int>(0);
+				}
+			}
 
-					if (YAML::Node range = btn["id_range"]) {
-						int startId = range[0].as<int>(0);
-						int endId = range[1].as<int>(0);
-						int x = btn["x"].as<int>(0);
-						int y = btn["y"].as<int>(0);
-						int w = btn["width"].as<int>(0);
-						int h = btn["height"].as<int>(0);
+			theme.itemWidth = themeNode["item_width"].as<int>(0);
+			theme.itemHeight = themeNode["item_height"].as<int>(46);
+			theme.itemPaddingBottom = themeNode["item_padding_bottom"].as<int>(0);
 
-						for (int id = startId; id <= endId; id++) {
-							fmButton* button = createButton(btn, id, x, y, w, h);
-							this->m_infoButtons->AddButton(button);
+			// Parse scrollbar config
+			if (YAML::Node sb = themeNode["scrollbar"]) {
+				std::string style = sb["style"].as<std::string>("");
+				if (style == "dial") {
+					theme.scrollbar.style = SB_DIAL;
+					theme.scrollbar.defaultX = sb["default_x"].as<int>(408);
+					theme.scrollbar.defaultY = sb["default_y"].as<int>(81);
+				} else if (style == "bar") {
+					theme.scrollbar.style = SB_BAR;
+					theme.scrollbar.x = sb["x"].as<int>(0);
+					theme.scrollbar.width = sb["width"].as<int>(50);
+					if (YAML::Node imgs = sb["images"]) {
+						if (imgs.size() >= 4) {
+							theme.scrollbar.barImg = resolveImage(imgs[0].as<std::string>(""));
+							theme.scrollbar.topImg = resolveImage(imgs[1].as<std::string>(""));
+							theme.scrollbar.midImg = resolveImage(imgs[2].as<std::string>(""));
+							theme.scrollbar.bottomImg = resolveImage(imgs[3].as<std::string>(""));
 						}
 					}
 				}
 			}
+
+			this->menuThemes_[themeName] = theme;
 		}
+	}
 
-		// vending_buttons container
-		if (YAML::Node vendBtns = containers["vending_buttons"]) {
-			if (this->m_vendingButtons) {
-				delete this->m_vendingButtons;
-			}
-			this->m_vendingButtons = new fmButtonContainer();
-
-			if (YAML::Node buttons = vendBtns["buttons"]) {
-				for (size_t i = 0; i < buttons.size(); i++) {
-					YAML::Node btn = buttons[i];
-					int id = btn["id"].as<int>(0);
-					int x = btn["x"].as<int>(0);
-					int w = btn["width"].as<int>(0);
-					int h = btn["height"].as<int>(0);
-					int y = 0;
-
-					bool sizeFromImage = btn["size_from_image"].as<bool>(false);
-					std::string imgName = btn["image"].as<std::string>("");
-					Image* img = resolveImage(imgName);
-
-					if (sizeFromImage && img) {
-						w = img->width;
-						h = img->height;
-					}
-
-					// Handle special y positioning
-					std::string yStr = btn["y"].as<std::string>("");
-					if (yStr == "image_relative") {
-						int yBase = btn["y_base"].as<int>(0);
-						std::string yOffset = btn["y_offset"].as<std::string>("");
-						std::string refImg = yOffset.substr(0, yOffset.find('.'));
-						Image* refImage = resolveImage(refImg);
-						if (refImage) {
-							y = yBase + refImage->height;
-						} else {
-							y = yBase;
-						}
-					} else {
-						y = btn["y"].as<int>(0);
-					}
-
-					fmButton* button = createButton(btn, id, x, y, w, h);
-					this->m_vendingButtons->AddButton(button);
-				}
-			}
-		}
-
-		// scrollbar
-		if (YAML::Node scrollbar = containers["scrollbar"]) {
-			if (this->m_scrollBar) {
-				delete this->m_scrollBar;
-			}
-			std::string sndName = scrollbar["sound"].as<std::string>("");
-			int soundId = 0;
-			auto sit = soundMap.find(sndName);
-			if (sit != soundMap.end()) soundId = sit->second;
-			bool vertical = scrollbar["vertical"].as<bool>(true);
-			this->m_scrollBar = new fmScrollButton(0, 0, 0, 0, vertical, soundId);
-		}
+	// Register GEC extension menus with themes (negative IDs, not in menus.yaml)
+	if (this->menuThemes_.count("main_wide")) {
+		this->menuThemeByMenuId_[Menus::MENU_MAIN_OPTIONS_VIDEO] = "main_wide";
+		this->menuThemeByMenuId_[Menus::MENU_MAIN_BINDINGS] = "main_wide";
+	}
+	if (this->menuThemes_.count("main")) {
+		this->menuThemeByMenuId_[Menus::MENU_MAIN_OPTIONS_SOUND] = "main";
+		this->menuThemeByMenuId_[Menus::MENU_MAIN_OPTIONS_INPUT] = "main";
+		this->menuThemeByMenuId_[Menus::MENU_MAIN_CONTROLLER] = "main";
+		this->menuThemeByMenuId_[Menus::MENU_MAIN_CONTROLS] = "main";
+	}
+	if (this->menuThemes_.count("ingame")) {
+		this->menuThemeByMenuId_[Menus::MENU_INGAME_BINDINGS] = "ingame";
+		this->menuThemeByMenuId_[Menus::MENU_INGAME_OPTIONS_VIDEO] = "ingame";
+		this->menuThemeByMenuId_[Menus::MENU_INGAME_OPTIONS_SOUND] = "ingame";
+		this->menuThemeByMenuId_[Menus::MENU_INGAME_OPTIONS_INPUT] = "ingame";
+		this->menuThemeByMenuId_[Menus::MENU_INGAME_CONTROLLER] = "ingame";
 	}
 
 	int containerCount = (this->m_menuButtons ? 1 : 0) + (this->m_infoButtons ? 1 : 0) + (this->m_vendingButtons ? 1 : 0);
-	printf("[menu] loaded %d widget types, %d containers from %s\n", (int)s_widgetFlagMapping.size(), containerCount, path);
+	printf("[menu] loaded %d components, %d screens, %d themes from %s\n",
+		(int)components.size(), containerCount, (int)this->menuThemes_.size(), path);
 	return true;
 }
 
@@ -718,6 +781,48 @@ bool MenuSystem::loadYAMLMenuItems(int menuId) {
 	return true;
 }
 
+static MenuSystem::LayoutValueMode parseLayoutMode(const std::string& s) {
+	if (s == "center") return MenuSystem::LVM_CENTER;
+	if (s == "btn_width") return MenuSystem::LVM_BTN_WIDTH;
+	if (s == "btn_h_x4") return MenuSystem::LVM_BTN_H_X4;
+	if (s == "btn_h_x5") return MenuSystem::LVM_BTN_H_X5;
+	if (s == "panel_h") return MenuSystem::LVM_PANEL_H;
+	if (s == "yesno_h") return MenuSystem::LVM_YESNO_H;
+	if (s == "lang_h") return MenuSystem::LVM_LANG_H;
+	if (s == "logo_box") return MenuSystem::LVM_LOGO_BOX;
+	if (s == "logo_yesno") return MenuSystem::LVM_LOGO_YESNO;
+	if (s == "logo_diff") return MenuSystem::LVM_LOGO_DIFF;
+	if (s == "logo_lang") return MenuSystem::LVM_LOGO_LANG;
+	if (s == "logo_15") return MenuSystem::LVM_LOGO_15;
+	return MenuSystem::LVM_LITERAL;
+}
+
+static void parseLayoutValue(const YAML::Node& node, MenuSystem::LayoutValueMode& mode, int& val) {
+	if (!node) return;
+	if (node.IsScalar()) {
+		std::string s = node.as<std::string>("");
+		// Try as integer first
+		try {
+			val = node.as<int>();
+			mode = MenuSystem::LVM_LITERAL;
+			return;
+		} catch (...) {}
+		// Parse as named mode
+		mode = parseLayoutMode(s);
+	}
+}
+
+static MenuSystem::MenuLayout parseLayout(const YAML::Node& node) {
+	MenuSystem::MenuLayout layout;
+	if (!node || !node.IsMap()) return layout;
+	layout.isSet = true;
+	parseLayoutValue(node["x"], layout.xMode, layout.xVal);
+	parseLayoutValue(node["y"], layout.yMode, layout.yVal);
+	parseLayoutValue(node["w"], layout.wMode, layout.wVal);
+	parseLayoutValue(node["h"], layout.hMode, layout.hVal);
+	return layout;
+}
+
 bool MenuSystem::loadMenusFromYAML(const char* path) {
 	YAML::Node config;
 	try {
@@ -729,6 +834,37 @@ bool MenuSystem::loadMenusFromYAML(const char* path) {
 
 	// Load lookup tables from YAML sections (menu_types, actions, item_flags)
 	loadMenuLookups(config);
+
+	// Parse layout presets
+	if (YAML::Node presets = config["layout_presets"]) {
+		for (auto it = presets.begin(); it != presets.end(); ++it) {
+			std::string name = it->first.as<std::string>();
+			MenuLayout layout = parseLayout(it->second);
+			this->layoutPresets_[name] = layout;
+		}
+		printf("[menu] loaded %d layout presets\n", (int)this->layoutPresets_.size());
+	}
+
+	// Parse draw_layout_presets
+	if (YAML::Node dlPresets = config["draw_layout_presets"]) {
+		for (auto it = dlPresets.begin(); it != dlPresets.end(); ++it) {
+			std::string name = it->first.as<std::string>();
+			YAML::Node node = it->second;
+			DrawLayout dl;
+			std::string xStr = node["x"].as<std::string>("keep");
+			std::string yStr = node["y"].as<std::string>("keep");
+			std::string wStr = node["w"].as<std::string>("keep");
+			std::string hStr = node["h"].as<std::string>("keep");
+			dl.x = (xStr == "keep") ? -1 : std::stoi(xStr);
+			dl.y = (yStr == "keep") ? -1 : std::stoi(yStr);
+			dl.w = (wStr == "keep") ? -1 : std::stoi(wStr);
+			dl.h = (hStr == "keep") ? -1 : std::stoi(hStr);
+			dl.clip = node["clip"].as<bool>(false);
+			dl.isSet = true;
+			this->drawLayoutPresets_[name] = dl;
+		}
+		printf("[menu] loaded %d draw layout presets\n", (int)this->drawLayoutPresets_.size());
+	}
 
 	YAML::Node menus = config["menus"];
 	if (!menus || !menus.IsSequence() || menus.size() == 0) {
@@ -752,6 +888,10 @@ bool MenuSystem::loadMenusFromYAML(const char* path) {
 		std::string menuName = menu["name"].as<std::string>("");
 		int menuType = menuTypeFromString(menu["type"].as<std::string>("default").c_str());
 		int menuMaxItems = menu["max_items"].as<int>(0);
+		std::string menuTheme = menu["theme"].as<std::string>("");
+		if (menuId != 0 && !menuTheme.empty()) {
+			this->menuThemeByMenuId_[menuId] = menuTheme;
+		}
 
 		YAML::Node items = menu["items"];
 		int itemCount = (items && items.IsSequence()) ? (int)items.size() : 0;
@@ -776,41 +916,117 @@ bool MenuSystem::loadMenusFromYAML(const char* path) {
 			| (uint32_t)((endOffset & 0xFFFF) << 8)
 			| (uint32_t)((menuType & 0xFF) << 24);
 
-		// Also store in YAML-native format if extended features are used
-		if (hasExtendedFeatures) {
+		// Store YAML-native menu definition for all menus with a valid ID
+		{
 			YAMLMenuDef def;
 			def.name = menuName;
 			def.menuId = menuId;
 			def.type = menuType;
 			def.maxItems = menuMaxItems;
+			def.theme = menuTheme;
 
-			for (int j = 0; j < itemCount; j++) {
-				YAML::Node item = items[j];
+			// Parse presentation properties
+			def.background = menu["background"].as<std::string>("");
+			def.drawLogo = menu["draw_logo"].as<bool>(false);
+			def.helpResource = menu["help_resource"].as<int>(-1);
+			def.selectedIndex = menu["selected_index"].as<int>(-1);
+			def.showInfoButtons = menu["show_info_buttons"].as<bool>(false);
+			def.itemWidth = menu["item_width"].as<int>(0);
+			def.vibrationY = menu["vibration_y"].as<int>(-1);
 
-				YAMLMenuItem mi = {};
-				mi.textField = item["string_id"].as<int>(0);
-				mi.flags = flagsFromString(item["flags"].as<std::string>("normal").c_str());
-				mi.action = actionFromString(item["action"].as<std::string>("none").c_str());
-				mi.param = item["param"].as<int>(0);
-				if (YAML::Node gotoNode = item["goto"]) {
-					mi.param = menuNameToId(gotoNode.as<std::string>(""));
+			// Parse per-menu scrollbar position offset
+			if (YAML::Node sbOff = menu["scrollbar_offset"]) {
+				def.scrollbarXOffset = sbOff["x"].as<int>(-1);
+				def.scrollbarYOffset = sbOff["y"].as<int>(-1);
+			}
+
+			// Parse visible_buttons array
+			if (YAML::Node vb = menu["visible_buttons"]) {
+				for (size_t v = 0; v < vb.size(); v++) {
+					def.visibleButtons.push_back(vb[v].as<int>());
 				}
-				mi.helpField = item["help_string"].as<int>(0);
-				mi.text = item["text"].as<std::string>("");
-				mi.text2 = item["text2"].as<std::string>("");
-				mi.widget = item["widget"].as<std::string>("");
+			}
 
-				// Apply widget flag mapping
-				if (!mi.widget.empty()) {
-					mi.flags |= widgetToFlags(mi.widget);
+			// Parse visible_buttons_conditional (e.g., {13: music_on})
+			if (YAML::Node vbc = menu["visible_buttons_conditional"]) {
+				for (auto it = vbc.begin(); it != vbc.end(); ++it) {
+					def.visibleButtonsConditional.push_back(it->first.as<int>());
 				}
+			}
 
-				def.items.push_back(mi);
+			// Parse layout — either a preset name (string) or inline map
+			if (YAML::Node layoutNode = menu["layout"]) {
+				if (layoutNode.IsScalar()) {
+					std::string presetName = layoutNode.as<std::string>("");
+					auto pit = this->layoutPresets_.find(presetName);
+					if (pit != this->layoutPresets_.end()) {
+						def.layout = pit->second;
+					} else {
+						printf("[menu] warning: unknown layout preset '%s' for menu '%s'\n",
+							presetName.c_str(), menuName.c_str());
+					}
+				} else if (layoutNode.IsMap()) {
+					def.layout = parseLayout(layoutNode);
+				}
+			}
+
+			// Parse draw_layout — either a preset name (string) or inline map
+			if (YAML::Node dlNode = menu["draw_layout"]) {
+				if (dlNode.IsScalar()) {
+					std::string presetName = dlNode.as<std::string>("");
+					auto pit = this->drawLayoutPresets_.find(presetName);
+					if (pit != this->drawLayoutPresets_.end()) {
+						def.drawLayout = pit->second;
+					} else {
+						printf("[menu] warning: unknown draw_layout preset '%s' for menu '%s'\n",
+							presetName.c_str(), menuName.c_str());
+					}
+				} else if (dlNode.IsMap()) {
+					DrawLayout dl;
+					std::string xStr = dlNode["x"].as<std::string>("keep");
+					std::string yStr = dlNode["y"].as<std::string>("keep");
+					std::string wStr = dlNode["w"].as<std::string>("keep");
+					std::string hStr = dlNode["h"].as<std::string>("keep");
+					dl.x = (xStr == "keep") ? -1 : std::stoi(xStr);
+					dl.y = (yStr == "keep") ? -1 : std::stoi(yStr);
+					dl.w = (wStr == "keep") ? -1 : std::stoi(wStr);
+					dl.h = (hStr == "keep") ? -1 : std::stoi(hStr);
+					dl.clip = dlNode["clip"].as<bool>(false);
+					dl.isSet = true;
+					def.drawLayout = dl;
+				}
+			}
+
+			// Parse items for extended menus (widget, text, text2, or GEC extended flags)
+			if (hasExtendedFeatures) {
+				for (int j = 0; j < itemCount; j++) {
+					YAML::Node item = items[j];
+
+					YAMLMenuItem mi = {};
+					mi.textField = item["string_id"].as<int>(0);
+					mi.flags = flagsFromString(item["flags"].as<std::string>("normal").c_str());
+					mi.action = actionFromString(item["action"].as<std::string>("none").c_str());
+					mi.param = item["param"].as<int>(0);
+					if (YAML::Node gotoNode = item["goto"]) {
+						mi.param = menuNameToId(gotoNode.as<std::string>(""));
+					}
+					mi.helpField = item["help_string"].as<int>(0);
+					mi.text = item["text"].as<std::string>("");
+					mi.text2 = item["text2"].as<std::string>("");
+					mi.widget = item["widget"].as<std::string>("");
+
+					// Apply widget flag mapping
+					if (!mi.widget.empty()) {
+						mi.flags |= widgetToFlags(mi.widget);
+					}
+
+					def.items.push_back(mi);
+				}
+				yamlMenuCount++;
 			}
 
 			this->yamlMenuById[menuId] = (int)this->yamlMenuDefs.size();
 			this->yamlMenuDefs.push_back(std::move(def));
-			yamlMenuCount++;
 		}
 
 		// Always pack items into binary format too (for non-extended menus)
@@ -1251,10 +1467,6 @@ void MenuSystem::paint(Graphics* graphics) {
 	int yPos; // r10
 	bool v17; // zf
 	bool v22; // zf
-	int v23; // r3
-	bool v24; // zf
-	bool v25; // zf
-	bool v26; // zf
 	int v29; // r3
 	bool v30; // zf
 	bool v31; // zf
@@ -1373,65 +1585,50 @@ void MenuSystem::paint(Graphics* graphics) {
 		this->drawButtonFrame(graphics); // Usado en Wolfenstein RPG
 	}
 
-	if ((this->menu == Menus::MENU_MAIN_BINDINGS) || (this->menu == Menus::MENU_MAIN_OPTIONS_VIDEO)) // [GEC]
+	// Data-driven draw-time layout override
 	{
-		app->canvas->setMenuDimentions(menuRect[0], menuRect[1], menuRect[2], Applet::IOS_HEIGHT);
-		goto LABEL_61;
-	}
+		const YAMLMenuDef* drawDef = getMenuDef(this->menu);
+		const DrawLayout* dl = (drawDef && drawDef->drawLayout.isSet) ? &drawDef->drawLayout : nullptr;
 
-	if ((this->menu == Menus::MENU_END_RANKING) || (this->menu == Menus::MENU_LEVEL_STATS))
-	{
-		app->canvas->setMenuDimentions(menuRect[0], 0, menuRect[2], Applet::IOS_HEIGHT);
-		goto LABEL_61;
-	}
-	if (this->menu < Menus::MENU_INGAME)
-	{
-		app->canvas->setMenuDimentions(menuRect[0], 126, menuRect[2], 176);
-		graphics->setClipRect(screenRect[0], menuRect[1] - 15, screenRect[2], menuRect[3] + 30);
-		v23 = this->menu;
-		v24 = v23 == Menus::MENU_MAIN_ABOUT;
-		if (v23 != Menus::MENU_MAIN_ABOUT)
-			v24 = v23 == Menus::MENU_MAIN_ARMORHELP;
-		if (!v24)
-		{
-			v25 = v23 == Menus::MENU_MAIN_EFFECTHELP;
-			if (v23 != Menus::MENU_MAIN_EFFECTHELP)
-				v25 = v23 == Menus::MENU_MAIN_ITEMHELP;
-			if (!v25 && v23 != Menus::MENU_MAIN_ABOUT)
-			{
-				v26 = v23 == Menus::MENU_MAIN_GENERAL;
-				if (v23 != Menus::MENU_MAIN_GENERAL)
-					v26 = v23 == Menus::MENU_MAIN_MOVE;
-				if (!v26)
-				{
-					v26 = v23 == Menus::MENU_MAIN_ATTACK;
-					if (v23 != Menus::MENU_MAIN_ATTACK)
-					{
-						v26 = v23 == Menus::MENU_MAIN_SNIPER;
-						if (v23 != Menus::MENU_MAIN_SNIPER)
-						{
-							v26 = v23 == Menus::MENU_MAIN_HACKER_HELP;
-							if (v23 != Menus::MENU_MAIN_HACKER_HELP)
-								v26 = v23 == Menus::MENU_MAIN_MATRIX_SKIP_HELP;
-						}
-					}
+		// Fallback for menus without explicit draw_layout
+		DrawLayout fallback;
+		if (!dl) {
+			if (this->menu == Menus::MENU_END_RANKING || this->menu == Menus::MENU_LEVEL_STATS) {
+				fallback = {menuRect[0], 0, menuRect[2], (int)Applet::IOS_HEIGHT, false, false};
+			} else if (this->menu < Menus::MENU_INGAME) {
+				// Check for help menus that need special layout
+				bool isHelpMenu = (this->menu == Menus::MENU_MAIN_ABOUT || this->menu == Menus::MENU_MAIN_ARMORHELP ||
+					this->menu == Menus::MENU_MAIN_EFFECTHELP || this->menu == Menus::MENU_MAIN_ITEMHELP ||
+					this->menu == Menus::MENU_MAIN_GENERAL || this->menu == Menus::MENU_MAIN_MOVE ||
+					this->menu == Menus::MENU_MAIN_ATTACK || this->menu == Menus::MENU_MAIN_SNIPER ||
+					this->menu == Menus::MENU_MAIN_HACKER_HELP || this->menu == Menus::MENU_MAIN_MATRIX_SKIP_HELP ||
+					this->menu == Menus::MENU_MAIN_POWER_UP_HELP);
+				if (isHelpMenu) {
+					fallback = {85, 0, 300, 320, false, true};
+				} else if (this->menu < 0) {
+					// GEC menus: use setMenuSettings layout, only apply clip
+					fallback = {menuRect[0], menuRect[1], menuRect[2], menuRect[3], false, true};
+				} else {
+					fallback = {menuRect[0], 126, menuRect[2], 176, false, true};
 				}
-				if (!v26 && v23 != Menus::MENU_MAIN_POWER_UP_HELP)
-					goto LABEL_61;
+			} else if (this->menu <= Menus::MENU_ITEMS_HOLY_WATER_MAX) {
+				fallback = {menuRect[0], 10, menuRect[2], 241, true, true};
+			} else {
+				fallback = {70, 11, 203, 250, true, true};
 			}
+			dl = &fallback;
 		}
-		app->canvas->setMenuDimentions(85, 0, 300, 320);
-		goto LABEL_60;
-	}
-	if (this->menu <= Menus::MENU_ITEMS_HOLY_WATER_MAX) {
-		app->canvas->setMenuDimentions(menuRect[0], 10, menuRect[2], 241);
-		goto LABEL_60;
-	}
-	app->canvas->setMenuDimentions(70, 11, 203, 250);
-LABEL_60:
-	graphics->setClipRect(screenRect[0], menuRect[1], screenRect[2], menuRect[3]);
 
-LABEL_61:
+		int dx = (dl->x >= 0) ? dl->x : menuRect[0];
+		int dy = (dl->y >= 0) ? dl->y : menuRect[1];
+		int dw = (dl->w >= 0) ? dl->w : menuRect[2];
+		int dh = (dl->h >= 0) ? dl->h : menuRect[3];
+		app->canvas->setMenuDimentions(dx, dy, dw, dh);
+
+		if (dl->clip) {
+			graphics->setClipRect(screenRect[0], menuRect[1], screenRect[2], menuRect[3]);
+		}
+	}
 	this->drawTouchButtons(graphics, false);
 
 	if (this->menu != Menus::MENU_MAIN_OPTIONS) {
@@ -1819,6 +2016,26 @@ void MenuSystem::initMenu(int menu) {
 	app->localization->resetTextArgs();
 	//printf("initMenu %d\n", menu);
 	this->setMenuSettings();
+
+	// Try YAML-driven help menus first (early return if handled)
+	const YAMLMenuDef* menuDef = getMenuDef(menu);
+	if (menuDef && menuDef->helpResource >= 0) {
+		if (!menuDef->background.empty()) {
+			if (menuDef->background == "main_bg") {
+				this->background = this->imgMainBG;
+			} else if (menuDef->background == "none") {
+				this->background = nullptr;
+			}
+		}
+		this->drawLogo = menuDef->drawLogo;
+		this->type = menuDef->type;
+		this->LoadHelpResource((short)menuDef->helpResource);
+		if (menu == Menus::MENU_MAIN_EFFECTHELP) {
+			this->addItem(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, 1, 0, 0, MenuSystem::EMPTY_TEXT);
+		}
+		return;
+	}
+
 	switch (menu) {
 		case Menus::MENU_LEVEL_STATS: {
 			this->loadMenuItems(menu, 0, -1);
@@ -1840,8 +2057,6 @@ void MenuSystem::initMenu(int menu) {
 			}
 			this->background = this->imgMainBG;
 			this->drawLogo = true;
-			//this->loadMenuItems(menu, 0, -1); // Original Load all items
-
 			// [GEC] Don't load "other games" item
 			{
 				this->loadMenuItems(menu, 0, 2);
@@ -1864,6 +2079,7 @@ void MenuSystem::initMenu(int menu) {
 			this->loadMenuItems(menu, 1, -1);
 			break;
 		}
+		// Help menus: YAML-driven path handles these above, these are fallback
 		case Menus::MENU_MAIN_ARMORHELP: {
 			this->type = 5;
 			this->background = this->imgMainBG;
@@ -1946,7 +2162,25 @@ void MenuSystem::initMenu(int menu) {
 			if (menu == Menus::MENU_MAIN_OPTIONS) {
 				this->drawLogo = true;
 			}
-			this->loadYAMLMenuItems(menu);
+			if (!this->loadYAMLMenuItems(menu) || this->numItems == 0) {
+				// Fallback: original hardcoded GEC options items
+				if (menu == Menus::MENU_MAIN_OPTIONS) {
+					this->items[this->numItems++].Set(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_PADDING, 0, 14, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER, 0, 0, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT2), MenuSystem::EMPTY_TEXT, Menus::ITEM_ALIGN_CENTER, Menus::ACTION_GOTO, Menus::MENU_MAIN_OPTIONS_SOUND, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), MenuSystem::EMPTY_TEXT, Menus::ITEM_ALIGN_CENTER, Menus::ACTION_GOTO, Menus::MENU_MAIN_OPTIONS_VIDEO, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT4), MenuSystem::EMPTY_TEXT, Menus::ITEM_ALIGN_CENTER, Menus::ACTION_GOTO, Menus::MENU_MAIN_OPTIONS_INPUT, MenuSystem::EMPTY_TEXT);
+				} else {
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER | Menus::ITEM_DIVIDER, 0, 0, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT2), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_GOTO, Menus::MENU_INGAME_OPTIONS_SOUND, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_GOTO, Menus::MENU_INGAME_OPTIONS_VIDEO, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT4), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_GOTO, Menus::MENU_INGAME_OPTIONS_INPUT, MenuSystem::EMPTY_TEXT);
+				}
+				textbuff->setLength(0); textbuff->append("Options"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Sound"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Video"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Input"); app->localization->addTextArg(textbuff);
+			}
 			break;
 		}
 		case Menus::MENU_MAIN_MORE_GAMES: {
@@ -2143,47 +2377,8 @@ void MenuSystem::initMenu(int menu) {
 		}
 #endif
 
-		case Menus::MENU_INGAME_GENERAL: {
-			this->type = 5;
-			this->LoadHelpResource((short)1);
-			break;
-		}
-
-		case Menus::MENU_INGAME_MOVE: {
-			this->type = 5;
-			this->LoadHelpResource((short)2);
-			break;
-		}
-
-		case Menus::MENU_INGAME_ATTACK: {
-			this->type = 5;
-			this->LoadHelpResource((short)3);
-			break;
-		}
-
-		case Menus::MENU_INGAME_SNIPER: {
-			this->type = 5;
-			this->LoadHelpResource((short)7);
-			break;
-		}
-
-		case Menus::MENU_INGAME_ARMORHELP: {
-			this->type = 5;
-			this->LoadHelpResource((short)4);
-			break;
-		}
-
-		case Menus::MENU_INGAME_EFFECTHELP: {
-			this->type = 5;
-			this->LoadHelpResource((short)5);
-			break;
-		}
-
-		case Menus::MENU_INGAME_ITEMHELP: {
-			this->type = 5;
-			this->LoadHelpResource((short)6);
-			break;
-		}
+		// Ingame help menus (general, move, attack, sniper, armorhelp, effecthelp, itemhelp)
+		// are now handled by YAML-driven help_resource above
 
 		case Menus::MENU_INGAME_QUESTLOG: {
 			this->LoadNotebook();
@@ -2229,23 +2424,8 @@ void MenuSystem::initMenu(int menu) {
 			break;
 		}
 
-		case Menus::MENU_INGAME_HACKER_HELP: {
-			this->type = 5;
-			this->LoadHelpResource((short)8);
-			break;
-		}
-
-		case Menus::MENU_INGAME_MATRIX_SKIP_HELP: {
-			this->type = 5;
-			this->LoadHelpResource((short)9);
-			break;
-		}
-
-		case Menus::MENU_INGAME_POWER_UP_HELP: {
-			this->type = 5;
-			this->LoadHelpResource((short)10);
-			break;
-		}
+		// Ingame hacker_help, matrix_skip_help, power_up_help
+		// are now handled by YAML-driven help_resource above
 
 #if 0 // Old
 		case Menus::MENU_INGAME_CONTROLS: {
@@ -2788,10 +2968,26 @@ void MenuSystem::initMenu(int menu) {
 					
 		case Menus::MENU_INGAME_OPTIONS_SOUND:
 		case Menus::MENU_MAIN_OPTIONS_SOUND: {  // [GEC]
-			if (menu == Menus::MENU_MAIN_OPTIONS_SOUND) {
-				this->drawLogo = true;
+			if (!this->loadYAMLMenuItems(menu) || this->numItems == 0) {
+				// Fallback: original hardcoded sound options
+				if (menu == Menus::MENU_MAIN_OPTIONS_SOUND) {
+					this->drawLogo = true;
+					this->items[this->numItems++].Set(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_PADDING, 0, 14, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER, 0, 0, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT, 0, 0, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT2), MenuSystem::EMPTY_TEXT, Menus::ITEM_SCROLLBARTWO, Menus::ACTION_CHANGESFXVOLUME, 1, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), MenuSystem::EMPTY_TEXT, Menus::ITEM_SCROLLBARTWO, Menus::ACTION_CHANGEMUSICVOLUME, 2, MenuSystem::EMPTY_TEXT);
+				} else {
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER | Menus::ITEM_DIVIDER, 0, 0, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT, 0, 0, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT2), MenuSystem::EMPTY_TEXT, Menus::ITEM_SCROLLBAR, Menus::ACTION_CHANGESFXVOLUME, 1, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT, 0, 0, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), MenuSystem::EMPTY_TEXT, Menus::ITEM_SCROLLBAR, Menus::ACTION_CHANGEMUSICVOLUME, 2, MenuSystem::EMPTY_TEXT);
+				}
+				textbuff->setLength(0); textbuff->append("Sound Options"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("SoundFx Volume:"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Music Volume:"); app->localization->addTextArg(textbuff);
 			}
-			this->loadYAMLMenuItems(menu);
 			if (!isUserMusicOn()) {
 				this->items[3].flags |= Menus::ITEM_DISABLEDTWO;
 			}
@@ -2800,8 +2996,51 @@ void MenuSystem::initMenu(int menu) {
 
 		case Menus::MENU_INGAME_OPTIONS_VIDEO:
 		case Menus::MENU_MAIN_OPTIONS_VIDEO: {  // [GEC]
-			this->loadYAMLMenuItems(menu);
-
+			if (!this->loadYAMLMenuItems(menu) || this->numItems == 0) {
+				// Fallback: original hardcoded video options
+				if (menu == Menus::MENU_MAIN_OPTIONS_VIDEO) {
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER, 0, 0, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT2), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), 0, Menus::ACTION_CHANGE_VID_MODE, 0, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT4), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_TOG_VSYNC, 0, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT5), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT6), 0, Menus::ACTION_CHANGE_RESOLUTION, 0, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT7), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_TOG_TINYGL, 0, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT8), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_APPLY_CHANGES, 0, MenuSystem::EMPTY_TEXT);
+				} else {
+					this->maxItems = 5;
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER | Menus::ITEM_DIVIDER, 0, 0, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT2), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), 0, Menus::ACTION_CHANGE_VID_MODE, 0, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT4), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_TOG_VSYNC, 0, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT5), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT6), 0, Menus::ACTION_CHANGE_RESOLUTION, 0, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT7), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_TOG_TINYGL, 0, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT8), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_APPLY_CHANGES, 0, MenuSystem::EMPTY_TEXT);
+				}
+				textbuff->setLength(0); textbuff->append("Video Options"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Window Mode:"); app->localization->addTextArg(textbuff);
+				{
+					int windowMode = CAppContainer::getInstance()->sdlGL->windowMode;
+					textbuff->setLength(0);
+					if (windowMode == 0) textbuff->append("Windowed");
+					else if (windowMode == 1) textbuff->append("Borderless");
+					else if (windowMode == 2) textbuff->append("FullScreen");
+					app->localization->addTextArg(textbuff);
+				}
+				textbuff->setLength(0); textbuff->append("VSync:"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Resolution:"); app->localization->addTextArg(textbuff);
+				{
+					int resolutionIndex = CAppContainer::getInstance()->sdlGL->resolutionIndex;
+					textbuff->setLength(0);
+					textbuff->append("(")->append(sdlResVideoModes[resolutionIndex].width)->append("x")->append(sdlResVideoModes[resolutionIndex].height)->append(")");
+					app->localization->addTextArg(textbuff);
+				}
+				textbuff->setLength(0); textbuff->append("TinyGL:"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Apply Changes"); app->localization->addTextArg(textbuff);
+				this->items[2].textField2 = this->onOffValue(CAppContainer::getInstance()->sdlGL->vSync);
+				if (!_glesObj->isInit) {
+					this->items[4].textField2 = Localization::STRINGID(Strings::FILE_MENUSTRINGS, (short)197);
+				} else {
+					this->items[4].textField2 = Localization::STRINGID(Strings::FILE_MENUSTRINGS, (short)198);
+				}
+			} else {
 			// Dynamic runtime value updates for text2 fields
 			{
 				int argIdx = app->localization->numTextArgs;
@@ -2835,6 +3074,7 @@ void MenuSystem::initMenu(int menu) {
 					this->items[4].textField2 = Localization::STRINGID(Strings::FILE_MENUSTRINGS, (short)198);
 				}
 			}
+			} // end else (YAML items present)
 			break;
 		}
 
@@ -2842,19 +3082,53 @@ void MenuSystem::initMenu(int menu) {
 		case Menus::MENU_MAIN_OPTIONS_INPUT: {  // [GEC]
 			this->nextMsgTime = 0;
 			this->nextMsg = 0;
-			if (menu == Menus::MENU_MAIN_OPTIONS_INPUT) {
-				this->drawLogo = true;
+			if (!this->loadYAMLMenuItems(menu) || this->numItems == 0) {
+				// Fallback: original hardcoded input options
+				if (menu == Menus::MENU_MAIN_OPTIONS_INPUT) {
+					this->drawLogo = true;
+					this->items[this->numItems++].Set(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_PADDING, 0, 14, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER, 0, 0, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT2), MenuSystem::EMPTY_TEXT, Menus::ITEM_ALIGN_CENTER, Menus::ACTION_GOTO, Menus::MENU_MAIN_CONTROLS, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), MenuSystem::EMPTY_TEXT, Menus::ITEM_ALIGN_CENTER, Menus::ACTION_GOTO, Menus::MENU_MAIN_BINDINGS, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT4), MenuSystem::EMPTY_TEXT, Menus::ITEM_ALIGN_CENTER, Menus::ACTION_GOTO, Menus::MENU_MAIN_CONTROLLER, MenuSystem::EMPTY_TEXT);
+				} else {
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER | Menus::ITEM_DIVIDER, 0, 0, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT2), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_GOTO, Menus::MENU_INGAME_CONTROLS, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_GOTO, Menus::MENU_INGAME_BINDINGS, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT4), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_GOTO, Menus::MENU_INGAME_CONTROLLER, MenuSystem::EMPTY_TEXT);
+				}
+				textbuff->setLength(0); textbuff->append("Input Options"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Touch Controls"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Bindings      "); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Controller    "); app->localization->addTextArg(textbuff);
 			}
-			this->loadYAMLMenuItems(menu);
 			break;
 		}
 
 		case Menus::MENU_INGAME_CONTROLS:  // [GEC]
 		case Menus::MENU_MAIN_CONTROLS: {  // [GEC]
-			if (menu == Menus::MENU_MAIN_CONTROLS) {
-				this->drawLogo = true;
+			if (!this->loadYAMLMenuItems(menu) || this->numItems == 0) {
+				// Fallback: original hardcoded controls
+				int itemIndx = 2;
+				if (menu == Menus::MENU_MAIN_CONTROLS) {
+					this->drawLogo = true;
+					this->items[this->numItems++].Set(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_PADDING, 0, 14, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER, 0, 0, MenuSystem::EMPTY_TEXT);
+				} else {
+					itemIndx = 1;
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER | Menus::ITEM_DIVIDER, 0, 0, MenuSystem::EMPTY_TEXT);
+				}
+				textbuff->setLength(0); textbuff->append("Touch Controls Options"); app->localization->addTextArg(textbuff);
+				this->loadMenuItems(Menus::MENU_INGAME_CONTROLS, 0, -1);
+				if (menu == Menus::MENU_MAIN_CONTROLS) {
+					this->items[this->numItems++].Set(Localization::STRINGID(MenuSystem::INDEX_OTHER, MenuStrings::ARGUMENT2), MenuSystem::EMPTY_TEXT, Menus::ITEM_SCROLLBARTWO, Menus::ACTION_CHANGEALPHA, 3, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, 1, 0, 0, MenuSystem::EMPTY_TEXT);
+				} else {
+					this->items[this->numItems++].Set(Localization::STRINGID(MenuSystem::INDEX_OTHER, MenuStrings::ARGUMENT2), MenuSystem::EMPTY_TEXT, Menus::ITEM_SCROLLBAR, Menus::ACTION_CHANGEALPHA, 3, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, 1, 0, 0, MenuSystem::EMPTY_TEXT);
+				}
+				textbuff->setLength(0); textbuff->append("Alpha:"); app->localization->addTextArg(textbuff);
 			}
-			this->loadYAMLMenuItems(menu);
 
 			// Dynamic runtime value updates for control layout and flip controls
 			{
@@ -2881,16 +3155,83 @@ void MenuSystem::initMenu(int menu) {
 
 		case Menus::MENU_INGAME_BINDINGS:
 		case Menus::MENU_MAIN_BINDINGS: {  // [GEC]
-			this->loadYAMLMenuItems(menu);
+			if (!this->loadYAMLMenuItems(menu) || this->numItems == 0) {
+				// Fallback: original hardcoded bindings
+				if (menu == Menus::MENU_MAIN_BINDINGS) {
+					this->maxItems = 8;
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER, 0, 0, MenuSystem::EMPTY_TEXT);
+				} else {
+					this->maxItems = 5;
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER | Menus::ITEM_DIVIDER, 0, 0, MenuSystem::EMPTY_TEXT);
+				}
+				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT2), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER | Menus::ITEM_DIVIDER, 0, 0, MenuSystem::EMPTY_TEXT);
+				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT4), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 0, MenuSystem::EMPTY_TEXT);
+				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT5), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 1, MenuSystem::EMPTY_TEXT);
+				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT6), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 4, MenuSystem::EMPTY_TEXT);
+				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT7), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 5, MenuSystem::EMPTY_TEXT);
+				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT8), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 2, MenuSystem::EMPTY_TEXT);
+				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT9), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 3, MenuSystem::EMPTY_TEXT);
+				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT10), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER | Menus::ITEM_DIVIDER, 0, 0, MenuSystem::EMPTY_TEXT);
+				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT11), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 8, MenuSystem::EMPTY_TEXT);
+				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT12), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 6, MenuSystem::EMPTY_TEXT);
+				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT13), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 7, MenuSystem::EMPTY_TEXT);
+				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT14), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 9, MenuSystem::EMPTY_TEXT);
+				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT15), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 10, MenuSystem::EMPTY_TEXT);
+				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT16), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 11, MenuSystem::EMPTY_TEXT);
+				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT17), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 12, MenuSystem::EMPTY_TEXT);
+				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT18), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 13, MenuSystem::EMPTY_TEXT);
+				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT19), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 14, MenuSystem::EMPTY_TEXT);
+				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT20), Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), Menus::ITEM_BINDING, Menus::ACTION_SET_BINDING, 15, MenuSystem::EMPTY_TEXT);
+				this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT21), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_DEFAULT_BINDINGS, 0, MenuSystem::EMPTY_TEXT);
+				this->items[this->numItems++].Set(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT, 0, 0, MenuSystem::EMPTY_TEXT);
+				textbuff->setLength(0); textbuff->append("Bindings Options"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("MOVEMENT"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Unbound"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Move Forward:"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Move Backward:"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Move Left:"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Move Right:"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Turn Left:"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Turn Right:"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("OTHER"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Atk/Talk/Use:"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Pass Turn:"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Automap:"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Next Weapon:"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Prev Weapon:"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Menu Open/Back:"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Menu Items/Info:"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Menu Drinks:"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Menu PDA:"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Bot Dis/Ret:"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Reset Binds"); app->localization->addTextArg(textbuff);
+			}
 			break;
 		}
 
 		case Menus::MENU_INGAME_CONTROLLER:
 		case Menus::MENU_MAIN_CONTROLLER: {  // [GEC]
-			if (menu == Menus::MENU_MAIN_CONTROLLER) {
-				this->drawLogo = true;
+			if (!this->loadYAMLMenuItems(menu) || this->numItems == 0) {
+				// Fallback: original hardcoded controller options
+				if (menu == Menus::MENU_MAIN_CONTROLLER) {
+					this->drawLogo = true;
+					this->items[this->numItems++].Set(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_PADDING, 0, 14, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER, 0, 0, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT2), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_TOG_VIBRATION, 0, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), MenuSystem::EMPTY_TEXT, Menus::ITEM_SCROLLBARTWO, Menus::ACTION_CHANGE_VIBRATION_INTENSITY, 4, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT4), MenuSystem::EMPTY_TEXT, Menus::ITEM_SCROLLBARTWO, Menus::ACTION_CHANGE_DEADZONE, 5, MenuSystem::EMPTY_TEXT);
+				} else {
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1), MenuSystem::EMPTY_TEXT, Menus::ITEM_NOSELECT | Menus::ITEM_ALIGN_CENTER, 0, 0, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT2), MenuSystem::EMPTY_TEXT, 0, Menus::ACTION_TOG_VIBRATION, 0, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT3), MenuSystem::EMPTY_TEXT, Menus::ITEM_SCROLLBAR, Menus::ACTION_CHANGE_VIBRATION_INTENSITY, 4, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(MenuSystem::EMPTY_TEXT, MenuSystem::EMPTY_TEXT, 0, 0, 0, MenuSystem::EMPTY_TEXT);
+					this->items[this->numItems++].Set(Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT4), MenuSystem::EMPTY_TEXT, Menus::ITEM_SCROLLBAR, Menus::ACTION_CHANGE_DEADZONE, 5, MenuSystem::EMPTY_TEXT);
+				}
+				textbuff->setLength(0); textbuff->append("Controller Options"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Vibration"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Vibration Intensity"); app->localization->addTextArg(textbuff);
+				textbuff->setLength(0); textbuff->append("Deadzone"); app->localization->addTextArg(textbuff);
 			}
-			this->loadYAMLMenuItems(menu);
 
 			// Dynamic runtime value: vibration on/off
 			{
@@ -2902,7 +3243,6 @@ void MenuSystem::initMenu(int menu) {
 
 		case Menus::MENU_END_:
 		case Menus::MENU_END_FINALQUIT: {
-			this->drawLogo = true;
 			this->loadMenuItems(menu, 0, -1);
 			break;
 		}
@@ -2941,24 +3281,30 @@ void MenuSystem::initMenu(int menu) {
 	if (app->canvas->menuRect[3] < iVar18) {
 		//printf("true\n");
 		this->m_scrollBar->SetScrollBarImages(nullptr, nullptr, nullptr, nullptr);
-		if ((menu == Menus::MENU_LEVEL_STATS || menu >= Menus::MENU_INGAME) || (menu == Menus::MENU_END_RANKING)) {
-			h = this->imgGameMenuScrollBar->height;
+
+		// Data-driven scrollbar configuration from theme
+		const MenuTheme* sbTheme = getThemeForMenu(menu);
+		const YAMLMenuDef* sbDef = getMenuDef(menu);
+		ScrollbarStyle sbStyle = (sbTheme && sbTheme->scrollbar.style != SB_NONE) ? sbTheme->scrollbar.style : SB_DIAL;
+
+		if (sbStyle == SB_BAR) {
+			const ScrollbarConfig& sbc = sbTheme->scrollbar;
+			h = sbc.barImg ? sbc.barImg->height : 0;
 			y = app->canvas->menuRect[1] + (app->canvas->menuRect[3] - h >> 1);
-			this->m_scrollBar->SetScrollBarImages(this->imgGameMenuScrollBar, this->imgGameMenuTopSlider,
-				this->imgGameMenuMidSlider, this->imgGameMenuBottomSlider);
-			iVar16 = 430;
-			iVar14 = 50;
+			this->m_scrollBar->SetScrollBarImages(sbc.barImg, sbc.topImg, sbc.midImg, sbc.bottomImg);
+			iVar16 = sbc.x;
+			iVar14 = sbc.width;
 			oldMenu = 0;
-		}
-		else {
-			if ((menu == Menus::MENU_MAIN) || (menu == Menus::MENU_MAIN_HELP)) {
-				iVar16 = app->canvas->menuRect[0];
-				y = app->canvas->menuRect[1] + -0xf;
-				iVar16 = iVar16 + 0xd7;
-			}
-			else {
-				iVar16 = 0x198;
-				y = 0x51;
+		} else {
+			// Dial scrollbar (main menu style)
+			if (sbDef && sbDef->scrollbarXOffset >= 0) {
+				iVar16 = app->canvas->menuRect[0] + sbDef->scrollbarXOffset;
+				y = app->canvas->menuRect[1] + sbDef->scrollbarYOffset;
+			} else {
+				int defX = (sbTheme) ? sbTheme->scrollbar.defaultX : 408;
+				int defY = (sbTheme) ? sbTheme->scrollbar.defaultY : 81;
+				iVar16 = defX;
+				y = defY;
 			}
 			iVar14 = this->imgMenuDial->width;
 			h = this->imgMenuDial->height;
@@ -2972,11 +3318,6 @@ void MenuSystem::initMenu(int menu) {
 
 		this->m_scrollBar->field_0x0_ = 1;
 		this->m_scrollBar->barRect.Set(iVar16, y, iVar14, h);
-		if (menu >= Menus::MENU_VENDING_MACHINE) {
-			this->m_scrollBar->barRect.Set(350, this->m_scrollBar->barRect.y, this->m_scrollBar->barRect.w, this->m_scrollBar->barRect.h);
-			this->m_scrollBar->SetScrollBarImages(this->imgVendingScrollBar, this->imgVendingScrollButtonTop,
-				this->imgVendingScrollButtonMiddle, this->imgVendingScrollButtonBottom);
-		}
 		if (oldMenu == 0) {
 			this->m_scrollBar->SetScrollBox
 			(app->canvas->menuRect[0], app->canvas->menuRect[1], app->canvas->menuRect[2],
@@ -4351,6 +4692,71 @@ void MenuSystem::fillVendingMachineSnacks(int i, Text* text) {
 
 //--------------------------------------------------------------------------
 
+const MenuSystem::MenuTheme* MenuSystem::getThemeForMenu(int menuId) const {
+	auto tmit = menuThemeByMenuId_.find(menuId);
+	if (tmit != menuThemeByMenuId_.end()) {
+		auto tit = menuThemes_.find(tmit->second);
+		if (tit != menuThemes_.end()) return &tit->second;
+	}
+	return nullptr;
+}
+
+const MenuSystem::YAMLMenuDef* MenuSystem::getMenuDef(int menuId) const {
+	auto it = yamlMenuById.find(menuId);
+	if (it != yamlMenuById.end() && it->second >= 0 && it->second < (int)yamlMenuDefs.size()) {
+		return &yamlMenuDefs[it->second];
+	}
+	return nullptr;
+}
+
+int MenuSystem::resolveLayoutValue(LayoutValueMode mode, int literal, int w) const {
+	switch (mode) {
+		case LVM_LITERAL: return literal;
+		case LVM_CENTER: return (Applet::IOS_WIDTH - w) / 2;
+		case LVM_BTN_WIDTH:
+			return this->imgMenuBtnBackground ? this->imgMenuBtnBackground->width : 162;
+		case LVM_BTN_H_X4:
+			return this->imgMenuBtnBackground ? this->imgMenuBtnBackground->height * 4 : 184;
+		case LVM_BTN_H_X5:
+			return this->imgMenuBtnBackground ? this->imgMenuBtnBackground->height * 5 : 230;
+		case LVM_PANEL_H:
+			return 320 - (this->imgGameMenuPanelbottom ? this->imgGameMenuPanelbottom->height : 0);
+		case LVM_YESNO_H:
+			return this->imgMenuYesNoBOX ? this->imgMenuYesNoBOX->height : 100;
+		case LVM_LANG_H:
+			return this->imgMenuLanguageBOX ? this->imgMenuLanguageBOX->height : 200;
+		case LVM_LOGO_BOX: {
+			int imgH = this->imgLogo ? (Applet::IOS_HEIGHT - this->imgLogo->height) : Applet::IOS_HEIGHT;
+			int logoY = this->imgLogo ? this->imgLogo->height : 0;
+			int boxH = this->imgMenuMainBOX ? this->imgMenuMainBOX->height : 100;
+			return logoY + ((imgH - boxH) / 2) - 2;
+		}
+		case LVM_LOGO_YESNO: {
+			int imgH = this->imgLogo ? (Applet::IOS_HEIGHT - this->imgLogo->height) : Applet::IOS_HEIGHT;
+			int logoY = this->imgLogo ? this->imgLogo->height : 0;
+			int boxH = this->imgMenuYesNoBOX ? this->imgMenuYesNoBOX->height : 100;
+			return logoY + ((imgH - boxH) / 2);
+		}
+		case LVM_LOGO_DIFF: {
+			int imgH = this->imgLogo ? (Applet::IOS_HEIGHT - this->imgLogo->height) : Applet::IOS_HEIGHT;
+			int logoY = this->imgLogo ? this->imgLogo->height : 0;
+			int boxH = this->imgMenuChooseDIFFBOX ? this->imgMenuChooseDIFFBOX->height : 100;
+			return logoY + ((imgH - boxH) / 2);
+		}
+		case LVM_LOGO_LANG: {
+			int imgH = this->imgLogo ? (Applet::IOS_HEIGHT - this->imgLogo->height) : Applet::IOS_HEIGHT;
+			int logoY = this->imgLogo ? this->imgLogo->height : 0;
+			int boxH = this->imgMenuLanguageBOX ? this->imgMenuLanguageBOX->height : 200;
+			return logoY + ((imgH - boxH) / 2);
+		}
+		case LVM_LOGO_15: {
+			int logoY = this->imgLogo ? this->imgLogo->height : 0;
+			return logoY + 15;
+		}
+	}
+	return literal;
+}
+
 void MenuSystem::setMenuSettings() {
 
 	fmButton* button;
@@ -4366,6 +4772,13 @@ void MenuSystem::setMenuSettings() {
 	this->imgMenuBtnBackground = this->imgMenuButtonBackground; // [GEC] Default
 	this->imgMenuBtnBackgroundOn = this->imgMenuButtonBackgroundOn;  // [GEC] Default
 
+	// Resolve theme for current menu (overrides defaults if available)
+	const MenuTheme* theme = getThemeForMenu(this->menu);
+	if (theme && theme->btnImage) {
+		this->imgMenuBtnBackground = theme->btnImage;
+		this->imgMenuBtnBackgroundOn = theme->btnHighlightImage ? theme->btnHighlightImage : theme->btnImage;
+	}
+
 	app->canvas->setMenuDimentions(0, 0, Applet::IOS_WIDTH, Applet::IOS_HEIGHT);
 
 	for (int i = 0; i < 9; i++) {
@@ -4376,52 +4789,83 @@ void MenuSystem::setMenuSettings() {
 
 	if (this->menu >= Menus::MENU_INGAME) {
 		app->canvas->setMenuDimentions(70, 0, 340, Applet::IOS_HEIGHT - this->imgGameMenuPanelbottom->height);
+	}
+
+	// Apply theme item dimensions (or fallback to original logic)
+	if (theme) {
+		if (theme->itemWidth > 0) {
+			this->menuItem_width = theme->itemWidth;
+		} else if (theme->btnImage) {
+			this->menuItem_width = theme->btnImage->width;
+		}
+		if (theme->itemHeight > 0) this->menuItem_height = theme->itemHeight;
+		this->menuItem_paddingBottom = theme->itemPaddingBottom;
+	} else if (this->menu >= Menus::MENU_INGAME) {
 		this->menuItem_width = this->imgInGameMenuOptionButton->width;
 		this->menuItem_paddingBottom = 10;
 	}
 
-	if (this->menu <= Menus::MENU_ITEMS_HOLY_WATER_MAX)
-	{
-		for (int i = 0; i != 9; i++)
-		{
+	// Apply info button theme (or fallback to original logic)
+	if (theme && theme->infoBtnImage) {
+		for (int i = 0; i != 9; i++) {
 			button = this->m_infoButtons->GetButton(i);
-			button->SetImage(this->imgGameMenuInfoButtonNormal, false);
-			button->SetHighlightImage(this->imgGameMenuInfoButtonPressed, false);
-			button->normalRenderMode = 0;
-			button->highlightRenderMode = 0;
+			button->SetImage(theme->infoBtnImage, false);
+			button->SetHighlightImage(theme->infoBtnHighlightImage, false);
+			button->normalRenderMode = theme->infoBtnRenderMode;
+			button->highlightRenderMode = theme->infoBtnHighlightRenderMode;
 		}
-	}
-	else
-	{
-		this->menuItem_width = this->imgVendingButtonLarge->width;
-		this->menuItem_paddingBottom = 3;
-		for (int i = 0; i != 9; i++)
-		{
-			button = this->m_infoButtons->GetButton(i);
-			button->SetImage(this->imgVendingButtonHelp, false);
-			button->SetHighlightImage(nullptr, false);
-			button->normalRenderMode = 2;
-			button->highlightRenderMode = 0;
+	} else {
+		if (this->menu <= Menus::MENU_ITEMS_HOLY_WATER_MAX) {
+			for (int i = 0; i != 9; i++) {
+				button = this->m_infoButtons->GetButton(i);
+				button->SetImage(this->imgGameMenuInfoButtonNormal, false);
+				button->SetHighlightImage(this->imgGameMenuInfoButtonPressed, false);
+				button->normalRenderMode = 0;
+				button->highlightRenderMode = 0;
+			}
+		} else {
+			this->menuItem_width = this->imgVendingButtonLarge->width;
+			this->menuItem_paddingBottom = 3;
+			for (int i = 0; i != 9; i++) {
+				button = this->m_infoButtons->GetButton(i);
+				button->SetImage(this->imgVendingButtonHelp, false);
+				button->SetHighlightImage(nullptr, false);
+				button->normalRenderMode = 2;
+				button->highlightRenderMode = 0;
+			}
 		}
 	}
 
+	// Try data-driven layout from YAML first
+	const YAMLMenuDef* def = getMenuDef(this->menu);
+	if (def && def->layout.isSet) {
+		if (def->itemWidth > 0) {
+			this->menuItem_width = def->itemWidth;
+		}
+		w = resolveLayoutValue(def->layout.wMode, def->layout.wVal);
+		h = resolveLayoutValue(def->layout.hMode, def->layout.hVal);
+		x = resolveLayoutValue(def->layout.xMode, def->layout.xVal, w);
+		y = resolveLayoutValue(def->layout.yMode, def->layout.yVal);
+		if (def->vibrationY >= 0 && this->HasVibration()) {
+			y = def->vibrationY;
+		}
+		app->canvas->setMenuDimentions(x, y, w, h);
+		return;
+	}
+
+	// Fallback: original switch for menus without YAML layout
 	if (this->imgLogo) {
 		imgH = Applet::IOS_HEIGHT - this->imgLogo->height;
 		y = this->imgLogo->height;
-	}
-	else {
+	} else {
 		imgH = 0;
 		y = 0;
 	}
 
-	//printf("setMenuSettings->menu %d\n", this->menu);
 	switch (this->menu) {
 		case Menus::MENU_LEVEL_STATS:
 		case Menus::MENU_END_RANKING: {
-			w = 407;
-			h = 320;
-			x = 23;
-			y = 0;
+			w = 407; h = 320; x = 23; y = 0;
 			break;
 		}
 		case Menus::MENU_MAIN:
@@ -4443,10 +4887,7 @@ void MenuSystem::setMenuSettings() {
 		case Menus::MENU_MAIN_HACKER_HELP:
 		case Menus::MENU_MAIN_MATRIX_SKIP_HELP:
 		case Menus::MENU_MAIN_POWER_UP_HELP: {
-			w = 323;
-			h = 281;
-			x = 77;
-			y = 10;
+			w = 323; h = 281; x = 77; y = 10;
 			break;
 		}
 		case Menus::MENU_MAIN_EXIT:
@@ -4476,15 +4917,11 @@ void MenuSystem::setMenuSettings() {
 			y += ((imgH - this->imgMenuChooseDIFFBOX->height) >> 1);
 			break;
 		}
-
 		case Menus::MENU_MAIN_OPTIONS: {
 			x = (480 - this->imgMenuBtnBackground->width) >> 1;
 			y = 184;
-			if (this->HasVibration()) {
-				y = 169;
-			}
+			if (this->HasVibration()) y = 169;
 			w = this->imgMenuBtnBackground->width;
-			//h = this->imgMenuBtnBackground->height << 1;
 			h = 300;
 			break;
 		}
@@ -4495,27 +4932,17 @@ void MenuSystem::setMenuSettings() {
 			y += ((imgH - h) >> 1);
 			break;
 		}
-
-
-		case Menus::MENU_INGAME_BINDINGS: { // [GEC]
+		case Menus::MENU_INGAME_BINDINGS:
+		case Menus::MENU_INGAME_OPTIONS_VIDEO: {
 			w = this->imgInGameMenuOptionButton->width;
 			h = 320 - this->imgGameMenuPanelbottom->height;
 			x = (480 - w) >> 1;
 			y = 0;
 			break;
 		}
-
-		case Menus::MENU_INGAME_OPTIONS_VIDEO: { // [GEC]
-			w = this->imgInGameMenuOptionButton->width;
-			h = 320 - this->imgGameMenuPanelbottom->height;
-			x = (480 - w) >> 1;
-			y = 0;
-			break;
-		}
-
-		case Menus::MENU_INGAME_CONTROLLER: // [GEC]
-		case Menus::MENU_INGAME_OPTIONS_SOUND: // [GEC]
-		case Menus::MENU_INGAME_OPTIONS_INPUT: // [GEC]
+		case Menus::MENU_INGAME_CONTROLLER:
+		case Menus::MENU_INGAME_OPTIONS_SOUND:
+		case Menus::MENU_INGAME_OPTIONS_INPUT:
 		case Menus::MENU_INGAME_OPTIONS:
 		case Menus::MENU_INGAME_EXIT:
 		case Menus::MENU_INGAME_LOAD:
@@ -4523,11 +4950,11 @@ void MenuSystem::setMenuSettings() {
 		case Menus::MENU_INGAME_RESTARTLVL:
 		case Menus::MENU_INGAME_SAVEQUIT:
 		case Menus::MENU_INGAME_CONTROLS:
-		case Menus::MENU_ITEMS_CONFIRM: 
-		case Menus::MENU_ITEMS_HEALTHMSG: // [GEC] centra el boton
-		case Menus::MENU_ITEMS_ARMORMSG: // [GEC] centra el boton
-		case Menus::MENU_ITEMS_SYRINGEMSG: // [GEC] centra el boton
-		case Menus::MENU_ITEMS_HOLY_WATER_MAX: { // [GEC] centra el boton
+		case Menus::MENU_ITEMS_CONFIRM:
+		case Menus::MENU_ITEMS_HEALTHMSG:
+		case Menus::MENU_ITEMS_ARMORMSG:
+		case Menus::MENU_ITEMS_SYRINGEMSG:
+		case Menus::MENU_ITEMS_HOLY_WATER_MAX: {
 			w = this->imgInGameMenuOptionButton->width;
 			h = 320;
 			x = (480 - w) >> 1;
@@ -4545,28 +4972,23 @@ void MenuSystem::setMenuSettings() {
 		case Menus::MENU_INGAME_HACKER_HELP:
 		case Menus::MENU_INGAME_MATRIX_SKIP_HELP:
 		case Menus::MENU_INGAME_POWER_UP_HELP: {
-			x = 23;
-			y = 0;
+			x = 23; y = 0;
 			h = 320 - this->imgGameMenuPanelbottom->height;
 			w = 434;
 			break;
 		}
-
-		case Menus::MENU_MAIN_OPTIONS_SOUND: { // [GEC]
+		case Menus::MENU_MAIN_OPTIONS_SOUND: {
 			this->menuItem_width = 204;
 			x = (480 - this->imgMenuBtnBackground->width) >> 1;
 			y = 184;
-			if (this->HasVibration()) {
-				y = 169;
-			}
+			if (this->HasVibration()) y = 169;
 			w = this->imgMenuBtnBackground->width;
 			h = 300;
 			break;
 		}
-		case Menus::MENU_MAIN_OPTIONS_VIDEO: { // [GEC]
-			this->imgMenuBtnBackground = this->imgMenuButtonBackgroundExt; // [GEC] enlarged button image
-			this->imgMenuBtnBackgroundOn = this->imgMenuButtonBackgroundExtOn; // [GEC] enlarged button image
-
+		case Menus::MENU_MAIN_OPTIONS_VIDEO: {
+			this->imgMenuBtnBackground = this->imgMenuButtonBackgroundExt;
+			this->imgMenuBtnBackgroundOn = this->imgMenuButtonBackgroundExtOn;
 			this->menuItem_width = 296;
 			x = (480 - this->imgMenuBtnBackground->width) >> 1;
 			y = 0;
@@ -4574,17 +4996,15 @@ void MenuSystem::setMenuSettings() {
 			h = 300;
 			break;
 		}
-
-		case Menus::MENU_MAIN_OPTIONS_INPUT: { // [GEC]
+		case Menus::MENU_MAIN_OPTIONS_INPUT: {
 			x = (480 - this->imgMenuBtnBackground->width) >> 1;
 			y = 184;
 			w = this->imgMenuBtnBackground->width;
 			h = 300;
 			break;
 		}
-
 		case Menus::MENU_MAIN_CONTROLLER:
-		case Menus::MENU_MAIN_CONTROLS: { // [GEC]
+		case Menus::MENU_MAIN_CONTROLS: {
 			this->menuItem_width = 204;
 			x = (480 - this->imgMenuBtnBackground->width) >> 1;
 			y = 184;
@@ -4592,11 +5012,9 @@ void MenuSystem::setMenuSettings() {
 			h = 300;
 			break;
 		}
-
-		case Menus::MENU_MAIN_BINDINGS: { // [GEC]
-			this->imgMenuBtnBackground = this->imgMenuButtonBackgroundExt; // [GEC] enlarged button image
-			this->imgMenuBtnBackgroundOn = this->imgMenuButtonBackgroundExtOn; // [GEC] enlarged button image
-
+		case Menus::MENU_MAIN_BINDINGS: {
+			this->imgMenuBtnBackground = this->imgMenuButtonBackgroundExt;
+			this->imgMenuBtnBackgroundOn = this->imgMenuButtonBackgroundExtOn;
 			this->menuItem_width = 296;
 			x = (480 - this->imgMenuBtnBackground->width) >> 1;
 			y = 0;
@@ -4604,12 +5022,10 @@ void MenuSystem::setMenuSettings() {
 			h = 300;
 			break;
 		}
-
 		default: {
-			return;
+			return; // No layout adjustment needed
 		}
 	}
-
 	app->canvas->setMenuDimentions(x, y, w, h);
 }
 
@@ -4634,22 +5050,32 @@ void MenuSystem::updateTouchButtonState() {
 		button02->normalRenderMode = 2;
 		button02->highlightRenderMode = 0;
 
-		if (this->menu <= Menus::MENU_INHERIT_BACKMENU) {
-			button01->SetImage(this->imgMenuBtnBackground, false);
-			button01->SetHighlightImage(this->imgMenuBtnBackgroundOn, false);
-			button01->normalRenderMode = 1;
-			button01->highlightRenderMode = 0;
-		}
-		else {
-			if (this->menu <= Menus::MENU_ITEMS_HOLY_WATER_MAX) {
-				button01->SetImage(this->imgInGameMenuOptionButton, false);
+		// Apply theme-driven button images, with original fallback
+		const MenuTheme* theme = getThemeForMenu(this->menu);
+		if (theme && theme->btnImage) {
+			button01->SetImage(theme->btnImage, false);
+			button01->SetHighlightImage(theme->btnHighlightImage, false);
+			button01->normalRenderMode = theme->btnRenderMode;
+			button01->highlightRenderMode = theme->btnHighlightRenderMode;
+		} else {
+			// Fallback: original button image setup by menu ID range
+			if (this->menu <= Menus::MENU_INHERIT_BACKMENU) {
+				button01->SetImage(this->imgMenuBtnBackground, false);
+				button01->SetHighlightImage(this->imgMenuBtnBackgroundOn, false);
+				button01->normalRenderMode = 1;
+				button01->highlightRenderMode = 0;
 			}
 			else {
-				button01->SetImage(this->imgVendingButtonLarge, false);
+				if (this->menu <= Menus::MENU_ITEMS_HOLY_WATER_MAX) {
+					button01->SetImage(this->imgInGameMenuOptionButton, false);
+				}
+				else {
+					button01->SetImage(this->imgVendingButtonLarge, false);
+				}
+				button01->normalRenderMode = 1;
+				button01->highlightRenderMode = 0;
+				button01->SetHighlightImage(nullptr, false);
 			}
-			button01->normalRenderMode = 1;
-			button01->highlightRenderMode = 0;
-			button01->SetHighlightImage(nullptr, false);
 		}
 
 		button01->drawTouchArea = false;
@@ -4662,16 +5088,24 @@ void MenuSystem::updateTouchButtonState() {
 			button01 = this->m_menuButtons->GetButton(buttonID);
 			button01->drawButton = true;
 
-			uint32_t uVar2 = this->menu;
-			bool bVar5 = Menus::MENU_INGAME_LANGUAGE < uVar2;
-			if (uVar2 != Menus::MENU_INGAME_HELP) {
-				bVar5 = uVar2 != Menus::MENU_INGAME;
-			}
-			if (((((!bVar5 || (uVar2 == Menus::MENU_INGAME_HELP || uVar2 == Menus::MENU_INGAME_STATUS)) || (uVar2 == Menus::MENU_INGAME_HELP)) || (uVar2 == Menus::MENU_ITEMS)) ||
-				((uVar2 == Menus::MENU_ITEMS_WEAPONS || (uVar2 == Menus::MENU_ITEMS_DRINKS)))) ||
-				((uVar2 == Menus::MENU_VENDING_MACHINE_CONFIRM || ((uVar2 == Menus::MENU_VENDING_MACHINE_DRINKS || (uVar2 == Menus::MENU_VENDING_MACHINE_SNACKS)))))) {
+			// Data-driven info button visibility, with original fallback
+			const YAMLMenuDef* infoDef = getMenuDef(this->menu);
+			if (infoDef && infoDef->showInfoButtons) {
 				button02 = this->m_infoButtons->GetButton(buttonID);
 				button02->drawButton = true;
+			} else if (!infoDef) {
+				// Fallback: original hardcoded info button check
+				uint32_t uVar2 = this->menu;
+				bool bVar5 = Menus::MENU_INGAME_LANGUAGE < uVar2;
+				if (uVar2 != Menus::MENU_INGAME_HELP) {
+					bVar5 = uVar2 != Menus::MENU_INGAME;
+				}
+				if (((((!bVar5 || (uVar2 == Menus::MENU_INGAME_HELP || uVar2 == Menus::MENU_INGAME_STATUS)) || (uVar2 == Menus::MENU_INGAME_HELP)) || (uVar2 == Menus::MENU_ITEMS)) ||
+					((uVar2 == Menus::MENU_ITEMS_WEAPONS || (uVar2 == Menus::MENU_ITEMS_DRINKS)))) ||
+					((uVar2 == Menus::MENU_VENDING_MACHINE_CONFIRM || ((uVar2 == Menus::MENU_VENDING_MACHINE_DRINKS || (uVar2 == Menus::MENU_VENDING_MACHINE_SNACKS)))))) {
+					button02 = this->m_infoButtons->GetButton(buttonID);
+					button02->drawButton = true;
+				}
 			}
 
 			buttonID++;
@@ -4682,135 +5116,141 @@ void MenuSystem::updateTouchButtonState() {
 		this->m_menuButtons->GetButton(i)->SetHighlighted(false);
 	}
 
-	this->m_menuButtons->GetButton(11)->drawButton = false;
-	this->m_menuButtons->GetButton(12)->drawButton = false;
-	this->m_menuButtons->GetButton(13)->drawButton = false;
-	this->m_menuButtons->GetButton(14)->drawButton = false;
-	this->m_menuButtons->GetButton(15)->drawButton = false;
-	this->m_menuButtons->GetButton(16)->drawButton = false; // [GEC]
-	this->m_menuButtons->GetButton(17)->drawButton = false; // [GEC]
+	// Reset button visibility for buttons 11-17
+	for (int i = 11; i <= 17; i++) {
+		this->m_menuButtons->GetButton(i)->drawButton = false;
+	}
 
-	switch (this->menu) {
-	default:
-		break;
-	case Menus::MENU_MAIN_OPTIONS:
-	case Menus::MENU_MAIN_OPTIONS_VIDEO: // [GEC]
-	case Menus::MENU_MAIN_OPTIONS_INPUT: // [GEC]
-	case Menus::MENU_MAIN_BINDINGS: // [GEC]
-		this->m_menuButtons->GetButton(11)->drawButton = true;
-		break;
-	case Menus::MENU_MAIN_OPTIONS_SOUND: // [GEC]
-		this->m_menuButtons->GetButton(11)->drawButton = true;
-		this->m_menuButtons->GetButton(12)->drawButton = true;
-		if (isUserMusicOn()) {
-			this->m_menuButtons->GetButton(13)->drawButton = true;
+	// Data-driven button visibility from YAML, with original fallback
+	const YAMLMenuDef* btnDef = getMenuDef(this->menu);
+	if (btnDef && !btnDef->visibleButtons.empty()) {
+		for (int btnId : btnDef->visibleButtons) {
+			this->m_menuButtons->GetButton(btnId)->drawButton = true;
 		}
-		break;
-	case Menus::MENU_MAIN_CONTROLS: // [GEC]
-		this->m_menuButtons->GetButton(11)->drawButton = true;
-		this->m_menuButtons->GetButton(14)->drawButton = true;
-		break;
-	case Menus::MENU_MAIN_CONTROLLER: // [GEC]
-		this->m_menuButtons->GetButton(11)->drawButton = true;
-		this->m_menuButtons->GetButton(16)->drawButton = true;
-		this->m_menuButtons->GetButton(17)->drawButton = true;
-		break;
-	case Menus::MENU_INGAME:
-	case Menus::MENU_INGAME_STATUS:
-	case Menus::MENU_INGAME_PLAYER:
-	case Menus::MENU_INGAME_LEVEL:
-	case Menus::MENU_INGAME_GRADES:
-	case Menus::MENU_INGAME_LANGUAGE:
-	case Menus::MENU_INGAME_HELP:
-	case Menus::MENU_INGAME_GENERAL:
-	case Menus::MENU_INGAME_MOVE:
-	case Menus::MENU_INGAME_ATTACK:
-	case Menus::MENU_INGAME_SNIPER:
-	case Menus::MENU_INGAME_ARMORHELP:
-	case Menus::MENU_INGAME_EFFECTHELP:
-	case Menus::MENU_INGAME_ITEMHELP:
-	case Menus::MENU_INGAME_QUESTLOG:
-	case Menus::MENU_INGAME_RECIPES:
-	case Menus::MENU_INGAME_KICKING:
-	case Menus::MENU_INGAME_SPECIAL_EXIT:
-	case Menus::MENU_INGAME_HACKER_HELP:
-	case Menus::MENU_INGAME_MATRIX_SKIP_HELP:
-	case Menus::MENU_INGAME_POWER_UP_HELP:
-	case Menus::MENU_DEBUG:
-	case Menus::MENU_DEBUG_MAPS:
-	case Menus::MENU_DEBUG_STATS:
-	case Menus::MENU_DEBUG_SYS:
-	case Menus::MENU_SHOWDETAILS:
-	case Menus::MENU_ITEMS:
-	case Menus::MENU_ITEMS_WEAPONS:
-	case Menus::MENU_ITEMS_DRINKS:
-		this->m_menuButtons->GetButton(15)->drawButton = true;
-		this->m_menuButtons->GetButton(11)->drawButton = true;
-		break;
-	case Menus::MENU_MAIN_HELP:
-	case Menus::MENU_MAIN_ARMORHELP:
-	case Menus::MENU_MAIN_EFFECTHELP:
-	case Menus::MENU_MAIN_ITEMHELP:
-	case Menus::MENU_MAIN_ABOUT:
-	case Menus::MENU_MAIN_GENERAL:
-	case Menus::MENU_MAIN_MOVE:
-	case Menus::MENU_MAIN_ATTACK:
-	case Menus::MENU_MAIN_SNIPER:
-	case Menus::MENU_MAIN_DIFFICULTY:
-	case Menus::MENU_MAIN_MINIGAME:
-	case Menus::MENU_MAIN_MORE_GAMES:
-	case Menus::MENU_MAIN_HACKER_HELP:
-	case Menus::MENU_MAIN_MATRIX_SKIP_HELP:
-	case Menus::MENU_MAIN_POWER_UP_HELP:
-	case Menus::MENU_SELECT_LANGUAGE:
-		this->m_menuButtons->GetButton(11)->drawButton = true;
-		break;
-	case Menus::MENU_INGAME_OPTIONS_VIDEO: // [GEC]
-	case Menus::MENU_INGAME_OPTIONS_INPUT: // [GEC]
-	case Menus::MENU_INGAME_BINDINGS: // [GEC]
-		this->m_menuButtons->GetButton(11)->drawButton = true;
-		this->m_menuButtons->GetButton(15)->drawButton = true;
-		break;
-
-	case Menus::MENU_INGAME_OPTIONS_SOUND: // [GEC]
-		this->m_menuButtons->GetButton(11)->drawButton = true;
-		this->m_menuButtons->GetButton(15)->drawButton = true;
-		this->m_menuButtons->GetButton(12)->drawButton = true;
-		if (isUserMusicOn()) {
-			this->m_menuButtons->GetButton(13)->drawButton = true;
+		// Conditional buttons (e.g., music slider visible only when music is on)
+		for (int btnId : btnDef->visibleButtonsConditional) {
+			if (isUserMusicOn()) {
+				this->m_menuButtons->GetButton(btnId)->drawButton = true;
+			}
 		}
-		break;
-	case Menus::MENU_INGAME_OPTIONS:
-		this->m_menuButtons->GetButton(11)->drawButton = true;
-		this->m_menuButtons->GetButton(15)->drawButton = true;
-		/*this->m_menuButtons->GetButton(12)->drawButton = true;
-		if (isUserMusicOn()) {
-			this->m_menuButtons->GetButton(13)->drawButton = true;
-		}*/
-		break;
-	case Menus::MENU_INGAME_CONTROLS:
-		this->m_menuButtons->GetButton(11)->drawButton = true;
-		this->m_menuButtons->GetButton(15)->drawButton = true;
-		this->m_menuButtons->GetButton(14)->drawButton = true;
-		break;
-
-	case Menus::MENU_INGAME_CONTROLLER: // [GEC]
-		this->m_menuButtons->GetButton(11)->drawButton = true;
-		this->m_menuButtons->GetButton(15)->drawButton = true;
-		this->m_menuButtons->GetButton(16)->drawButton = true;
-		this->m_menuButtons->GetButton(17)->drawButton = true;
-		break;
-	case Menus::MENU_VENDING_MACHINE:
-		this->m_menuButtons->GetButton(15)->drawButton = true;
-		break;
-	case Menus::MENU_VENDING_MACHINE_DRINKS:
-	case Menus::MENU_VENDING_MACHINE_SNACKS:
-	case Menus::MENU_VENDING_MACHINE_CONFIRM:
-	case Menus::MENU_VENDING_MACHINE_CANT_BUY:
-	case Menus::MENU_VENDING_MACHINE_DETAILS:
-		this->m_menuButtons->GetButton(11)->drawButton = true;
-		this->m_menuButtons->GetButton(15)->drawButton = true;
-		break;
+	} else {
+		// Fallback: original switch for button visibility
+		switch (this->menu) {
+		default:
+			break;
+		case Menus::MENU_MAIN_OPTIONS:
+		case Menus::MENU_MAIN_OPTIONS_VIDEO: // [GEC]
+		case Menus::MENU_MAIN_OPTIONS_INPUT: // [GEC]
+		case Menus::MENU_MAIN_BINDINGS: // [GEC]
+			this->m_menuButtons->GetButton(11)->drawButton = true;
+			break;
+		case Menus::MENU_MAIN_OPTIONS_SOUND: // [GEC]
+			this->m_menuButtons->GetButton(11)->drawButton = true;
+			this->m_menuButtons->GetButton(12)->drawButton = true;
+			if (isUserMusicOn()) {
+				this->m_menuButtons->GetButton(13)->drawButton = true;
+			}
+			break;
+		case Menus::MENU_MAIN_CONTROLS: // [GEC]
+			this->m_menuButtons->GetButton(11)->drawButton = true;
+			this->m_menuButtons->GetButton(14)->drawButton = true;
+			break;
+		case Menus::MENU_MAIN_CONTROLLER: // [GEC]
+			this->m_menuButtons->GetButton(11)->drawButton = true;
+			this->m_menuButtons->GetButton(16)->drawButton = true;
+			this->m_menuButtons->GetButton(17)->drawButton = true;
+			break;
+		case Menus::MENU_INGAME:
+		case Menus::MENU_INGAME_STATUS:
+		case Menus::MENU_INGAME_PLAYER:
+		case Menus::MENU_INGAME_LEVEL:
+		case Menus::MENU_INGAME_GRADES:
+		case Menus::MENU_INGAME_LANGUAGE:
+		case Menus::MENU_INGAME_HELP:
+		case Menus::MENU_INGAME_GENERAL:
+		case Menus::MENU_INGAME_MOVE:
+		case Menus::MENU_INGAME_ATTACK:
+		case Menus::MENU_INGAME_SNIPER:
+		case Menus::MENU_INGAME_ARMORHELP:
+		case Menus::MENU_INGAME_EFFECTHELP:
+		case Menus::MENU_INGAME_ITEMHELP:
+		case Menus::MENU_INGAME_QUESTLOG:
+		case Menus::MENU_INGAME_RECIPES:
+		case Menus::MENU_INGAME_KICKING:
+		case Menus::MENU_INGAME_SPECIAL_EXIT:
+		case Menus::MENU_INGAME_HACKER_HELP:
+		case Menus::MENU_INGAME_MATRIX_SKIP_HELP:
+		case Menus::MENU_INGAME_POWER_UP_HELP:
+		case Menus::MENU_DEBUG:
+		case Menus::MENU_DEBUG_MAPS:
+		case Menus::MENU_DEBUG_STATS:
+		case Menus::MENU_DEBUG_SYS:
+		case Menus::MENU_SHOWDETAILS:
+		case Menus::MENU_ITEMS:
+		case Menus::MENU_ITEMS_WEAPONS:
+		case Menus::MENU_ITEMS_DRINKS:
+			this->m_menuButtons->GetButton(15)->drawButton = true;
+			this->m_menuButtons->GetButton(11)->drawButton = true;
+			break;
+		case Menus::MENU_MAIN_HELP:
+		case Menus::MENU_MAIN_ARMORHELP:
+		case Menus::MENU_MAIN_EFFECTHELP:
+		case Menus::MENU_MAIN_ITEMHELP:
+		case Menus::MENU_MAIN_ABOUT:
+		case Menus::MENU_MAIN_GENERAL:
+		case Menus::MENU_MAIN_MOVE:
+		case Menus::MENU_MAIN_ATTACK:
+		case Menus::MENU_MAIN_SNIPER:
+		case Menus::MENU_MAIN_DIFFICULTY:
+		case Menus::MENU_MAIN_MINIGAME:
+		case Menus::MENU_MAIN_MORE_GAMES:
+		case Menus::MENU_MAIN_HACKER_HELP:
+		case Menus::MENU_MAIN_MATRIX_SKIP_HELP:
+		case Menus::MENU_MAIN_POWER_UP_HELP:
+		case Menus::MENU_SELECT_LANGUAGE:
+			this->m_menuButtons->GetButton(11)->drawButton = true;
+			break;
+		case Menus::MENU_INGAME_OPTIONS_VIDEO: // [GEC]
+		case Menus::MENU_INGAME_OPTIONS_INPUT: // [GEC]
+		case Menus::MENU_INGAME_BINDINGS: // [GEC]
+			this->m_menuButtons->GetButton(11)->drawButton = true;
+			this->m_menuButtons->GetButton(15)->drawButton = true;
+			break;
+		case Menus::MENU_INGAME_OPTIONS_SOUND: // [GEC]
+			this->m_menuButtons->GetButton(11)->drawButton = true;
+			this->m_menuButtons->GetButton(15)->drawButton = true;
+			this->m_menuButtons->GetButton(12)->drawButton = true;
+			if (isUserMusicOn()) {
+				this->m_menuButtons->GetButton(13)->drawButton = true;
+			}
+			break;
+		case Menus::MENU_INGAME_OPTIONS:
+			this->m_menuButtons->GetButton(11)->drawButton = true;
+			this->m_menuButtons->GetButton(15)->drawButton = true;
+			break;
+		case Menus::MENU_INGAME_CONTROLS:
+			this->m_menuButtons->GetButton(11)->drawButton = true;
+			this->m_menuButtons->GetButton(15)->drawButton = true;
+			this->m_menuButtons->GetButton(14)->drawButton = true;
+			break;
+		case Menus::MENU_INGAME_CONTROLLER: // [GEC]
+			this->m_menuButtons->GetButton(11)->drawButton = true;
+			this->m_menuButtons->GetButton(15)->drawButton = true;
+			this->m_menuButtons->GetButton(16)->drawButton = true;
+			this->m_menuButtons->GetButton(17)->drawButton = true;
+			break;
+		case Menus::MENU_VENDING_MACHINE:
+			this->m_menuButtons->GetButton(15)->drawButton = true;
+			break;
+		case Menus::MENU_VENDING_MACHINE_DRINKS:
+		case Menus::MENU_VENDING_MACHINE_SNACKS:
+		case Menus::MENU_VENDING_MACHINE_CONFIRM:
+		case Menus::MENU_VENDING_MACHINE_CANT_BUY:
+		case Menus::MENU_VENDING_MACHINE_DETAILS:
+			this->m_menuButtons->GetButton(11)->drawButton = true;
+			this->m_menuButtons->GetButton(15)->drawButton = true;
+			break;
+		}
 	}
 }
 

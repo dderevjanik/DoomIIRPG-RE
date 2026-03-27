@@ -19,6 +19,11 @@ enum class AssetCategory {
 	Characters,
 	Effects,
 	Animations,
+	Menus,
+	UI,
+	Sounds,
+	Game,
+	Levels,
 	COUNT
 };
 
@@ -100,6 +105,90 @@ struct AnimationEntry {
 	int tileIndex;
 };
 
+// Menu item (from menus.yaml)
+struct MenuItemEntry {
+	int stringId = 0;
+	std::string flags;
+	std::string action;
+	std::string gotoMenu;
+	int param = 0;
+	int helpString = 0;
+	std::string text;
+	std::string text2;
+	std::string widget;
+};
+
+struct MenuEntry {
+	std::string name;
+	int menuId = 0;
+	std::string type;
+	std::string theme;
+	int maxItems = 0;
+	// Presentation properties
+	std::string background;
+	bool drawLogo = false;
+	int helpResource = -1;
+	int selectedIndex = -1;
+	bool showInfoButtons = false;
+	std::string layout;
+	std::string drawLayout;
+	std::vector<int> visibleButtons;
+	std::vector<MenuItemEntry> items;
+};
+
+// UI button (from ui.yaml)
+struct UIButtonEntry {
+	int id = -1;
+	int idRangeStart = -1;
+	int idRangeEnd = -1;
+	std::string name;
+	std::string screen;
+	std::string component;
+	int x = 0, y = 0, width = 0, height = 0;
+	std::string sound;
+	std::string image;
+	std::string imageHighlight;
+	int renderMode = 0;
+	int highlightRenderMode = 0;
+	bool visible = true;
+	bool sizeFromImage = false;
+};
+
+struct UIWidgetMapping {
+	std::string widget;
+	std::string flags;
+};
+
+// Sound entry (from sounds.yaml)
+struct SoundEntry {
+	std::string name;
+	std::string file;
+	int index = 0; // position in array
+};
+
+// Game config (from game.yaml)
+struct GameConfig {
+	std::string name;
+	std::string description;
+	std::string version;
+	std::string windowTitle;
+	std::string saveDir;
+	std::string entryMap;
+	int startingMaxHealth = 100;
+	struct { int health, defense, strength, accuracy, agility; } levelUp = {};
+	struct { int kills, strength; } chainsawBonus = {};
+	struct { int credits, inventory, ammo, botFuel; } caps = {};
+};
+
+// Level entry (from levels.yaml)
+struct LevelEntry {
+	int mapNumber = 0;
+	std::vector<std::string> weapons;
+	int armor = 0;
+	int xp = 0;
+	struct { int defense, strength, accuracy, iq; } stats = {};
+};
+
 class AssetBrowser {
 public:
 	void init(const std::string& gameDir);
@@ -114,6 +203,11 @@ private:
 	void loadCharacters();
 	void loadEffects();
 	void loadAnimations();
+	void loadMenus();
+	void loadUI();
+	void loadSounds();
+	void loadGame();
+	void loadLevels();
 
 	// Panel drawing
 	void drawCategoryTabs();
@@ -124,6 +218,11 @@ private:
 	void drawCharactersPanel();
 	void drawEffectsPanel();
 	void drawAnimationsPanel();
+	void drawMenusPanel();
+	void drawUIPanel();
+	void drawSoundsPanel();
+	void drawGamePanel();
+	void drawLevelsPanel();
 	void drawEntityDetail(const EntityEntry& e);
 	void drawMonsterDetail(const MonsterEntry& m);
 	void drawWeaponDetail(const WeaponEntry& w);
@@ -162,6 +261,10 @@ private:
 	int selectedCharacter_ = -1;
 	int selectedBuff_ = -1;
 	int selectedAnimation_ = -1;
+	int selectedMenu_ = -1;
+	int selectedButton_ = -1;
+	int selectedSound_ = -1;
+	int selectedLevel_ = -1;
 
 	// Data
 	std::vector<EntityEntry> entities_;
@@ -171,4 +274,10 @@ private:
 	std::vector<CharacterEntry> characters_;
 	std::vector<BuffEntry> buffs_;
 	std::vector<AnimationEntry> animations_;
+	std::vector<MenuEntry> menus_;
+	std::vector<UIButtonEntry> uiButtons_;
+	std::vector<UIWidgetMapping> uiWidgetMappings_;
+	std::vector<SoundEntry> sounds_;
+	GameConfig gameConfig_;
+	std::vector<LevelEntry> levels_;
 };

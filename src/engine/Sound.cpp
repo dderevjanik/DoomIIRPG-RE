@@ -41,11 +41,7 @@ bool Sound::startup() {
 	this->soundsLoaded = false;
 	this->alContext = nullptr;
 
-	// Load sound definitions from sounds.yaml
-	if (!Sounds::loadFromYAML("sounds.yaml")) {
-		this->app->Error("sounds.yaml is required but could not be loaded");
-		return false;
-	}
+	// sounds.yaml is already loaded in loadTables() (before menuSystem needs it)
 
 	for (int i = 0; i < 10; i++) {
 		this->channel[i].resID = -1;

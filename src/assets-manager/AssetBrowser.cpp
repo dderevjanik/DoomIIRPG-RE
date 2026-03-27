@@ -40,6 +40,11 @@ void AssetBrowser::init(const std::string& gameDir) {
 	loadCharacters();
 	loadEffects();
 	loadAnimations();
+	loadMenus();
+	loadUI();
+	loadSounds();
+	loadGame();
+	loadLevels();
 	loaded_ = true;
 }
 
@@ -575,8 +580,8 @@ void AssetBrowser::draw() {
 	ImGui::SameLine();
 	if (ImGui::Button("Clear")) filterText_[0] = '\0';
 	ImGui::SameLine();
-	ImGui::TextDisabled("(%zu entities, %zu monsters, %zu weapons)",
-		entities_.size(), monsters_.size(), weapons_.size());
+	ImGui::TextDisabled("(%zu entities, %zu monsters, %zu weapons, %zu menus, %zu sounds)",
+		entities_.size(), monsters_.size(), weapons_.size(), menus_.size(), sounds_.size());
 
 	ImGui::Separator();
 
@@ -620,6 +625,31 @@ void AssetBrowser::drawCategoryTabs() {
 		if (ImGui::BeginTabItem("Animations")) {
 			currentCategory_ = AssetCategory::Animations;
 			drawAnimationsPanel();
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Menus")) {
+			currentCategory_ = AssetCategory::Menus;
+			drawMenusPanel();
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("UI")) {
+			currentCategory_ = AssetCategory::UI;
+			drawUIPanel();
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Sounds")) {
+			currentCategory_ = AssetCategory::Sounds;
+			drawSoundsPanel();
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Game")) {
+			currentCategory_ = AssetCategory::Game;
+			drawGamePanel();
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Levels")) {
+			currentCategory_ = AssetCategory::Levels;
+			drawLevelsPanel();
 			ImGui::EndTabItem();
 		}
 		ImGui::EndTabBar();
@@ -1102,6 +1132,559 @@ void AssetBrowser::drawAnimationsPanel() {
 		drawAnimatedSprite(a.tileIndex, 4.0f);
 	} else {
 		ImGui::TextDisabled("Select an animation/tile from the list");
+	}
+	ImGui::EndChild();
+}
+
+// ─── Menus Loading & Panel ──────────────────────────────────────────────────
+
+void AssetBrowser::loadMenus() {
+	try {
+		YAML::Node root = YAML::LoadFile(gameDir_ + "/menus.yaml");
+		YAML::Node menusNode = root["menus"];
+		if (!menusNode || !menusNode.IsSequence()) return;
+
+		for (size_t i = 0; i < menusNode.size(); i++) {
+			auto m = menusNode[i];
+			MenuEntry entry;
+			entry.name = yamlStr(m, "name");
+			entry.menuId = yamlInt(m, "menu_id");
+			entry.type = yamlStr(m, "type", "default");
+			entry.theme = yamlStr(m, "theme");
+			entry.maxItems = yamlInt(m, "max_items");
+			entry.background = yamlStr(m, "background");
+			entry.drawLogo = m["draw_logo"].as<bool>(false);
+			entry.helpResource = yamlInt(m, "help_resource", -1);
+			entry.selectedIndex = yamlInt(m, "selected_index", -1);
+			entry.showInfoButtons = m["show_info_buttons"].as<bool>(false);
+			entry.layout = yamlStr(m, "layout");
+			entry.drawLayout = yamlStr(m, "draw_layout");
+			if (m["visible_buttons"] && m["visible_buttons"].IsSequence()) {
+				for (size_t v = 0; v < m["visible_buttons"].size(); v++) {
+					entry.visibleButtons.push_back(m["visible_buttons"][v].as<int>(0));
+				}
+			}
+
+			if (m["items"] && m["items"].IsSequence()) {
+				for (size_t j = 0; j < m["items"].size(); j++) {
+					auto item = m["items"][j];
+					MenuItemEntry mi;
+					mi.stringId = yamlInt(item, "string_id");
+					mi.flags = yamlStr(item, "flags");
+					mi.action = yamlStr(item, "action");
+					mi.gotoMenu = yamlStr(item, "goto");
+					mi.param = yamlInt(item, "param");
+					mi.helpString = yamlInt(item, "help_string");
+					mi.text = yamlStr(item, "text");
+					mi.text2 = yamlStr(item, "text2");
+					mi.widget = yamlStr(item, "widget");
+					entry.items.push_back(std::move(mi));
+				}
+			}
+			// Skip placeholder "none" menus with no items
+			if (entry.name != "none" || !entry.items.empty()) {
+				menus_.push_back(std::move(entry));
+			}
+		}
+		std::fprintf(stderr, "Loaded %zu menus\n", menus_.size());
+	} catch (const YAML::Exception& ex) {
+		std::fprintf(stderr, "Failed to load menus.yaml: %s\n", ex.what());
+	}
+}
+
+static ImVec4 menuTypeColor(const std::string& type) {
+	if (type == "main")            return ImVec4(0.3f, 0.8f, 1.0f, 1.0f);
+	if (type == "main_list")       return ImVec4(0.3f, 0.7f, 0.9f, 1.0f);
+	if (type == "list")            return ImVec4(0.5f, 0.8f, 0.5f, 1.0f);
+	if (type == "confirm")         return ImVec4(1.0f, 0.6f, 0.3f, 1.0f);
+	if (type == "confirm2")        return ImVec4(1.0f, 0.5f, 0.2f, 1.0f);
+	if (type == "vending_machine") return ImVec4(0.9f, 0.9f, 0.3f, 1.0f);
+	if (type == "help")            return ImVec4(0.7f, 0.5f, 0.9f, 1.0f);
+	return ImVec4(0.7f, 0.7f, 0.7f, 1.0f);
+}
+
+void AssetBrowser::drawMenusPanel() {
+	float listWidth = 280.0f;
+
+	ImGui::BeginChild("MenuList", ImVec2(listWidth, 0), true);
+	for (int i = 0; i < (int)menus_.size(); i++) {
+		auto& m = menus_[i];
+		if (!matchesFilter(m.name, filterText_)) continue;
+
+		bool selected = (selectedMenu_ == i);
+		char label[128];
+		std::snprintf(label, sizeof(label), "%s (%d)", m.name.c_str(), m.menuId);
+		if (ImGui::Selectable(label, selected))
+			selectedMenu_ = i;
+		ImGui::SameLine(listWidth - 80);
+		ImGui::TextColored(menuTypeColor(m.type), "%s", m.type.c_str());
+	}
+	ImGui::EndChild();
+
+	ImGui::SameLine();
+
+	ImGui::BeginChild("MenuDetail", ImVec2(0, 0), true);
+	if (selectedMenu_ >= 0 && selectedMenu_ < (int)menus_.size()) {
+		auto& m = menus_[selectedMenu_];
+		ImGui::TextColored(ImVec4(0.3f, 0.8f, 1.0f, 1.0f), "%s", m.name.c_str());
+		ImGui::SameLine();
+		ImGui::TextDisabled("(id: %d, type: %s, theme: %s)", m.menuId, m.type.c_str(),
+			m.theme.empty() ? "-" : m.theme.c_str());
+		if (m.maxItems > 0) {
+			ImGui::SameLine();
+			ImGui::TextDisabled("max_items: %d", m.maxItems);
+		}
+
+		// Presentation properties
+		if (!m.background.empty() || m.drawLogo || m.helpResource >= 0 ||
+			!m.layout.empty() || !m.drawLayout.empty() || m.showInfoButtons ||
+			!m.visibleButtons.empty()) {
+			ImGui::Spacing();
+			if (!m.background.empty()) { ImGui::BulletText("background: %s", m.background.c_str()); }
+			if (m.drawLogo) { ImGui::BulletText("draw_logo: true"); }
+			if (m.helpResource >= 0) { ImGui::BulletText("help_resource: %d", m.helpResource); }
+			if (m.selectedIndex >= 0) { ImGui::BulletText("selected_index: %d", m.selectedIndex); }
+			if (m.showInfoButtons) { ImGui::BulletText("show_info_buttons: true"); }
+			if (!m.layout.empty()) { ImGui::BulletText("layout: %s", m.layout.c_str()); }
+			if (!m.drawLayout.empty()) { ImGui::BulletText("draw_layout: %s", m.drawLayout.c_str()); }
+			if (!m.visibleButtons.empty()) {
+				std::string btns;
+				for (int b : m.visibleButtons) {
+					if (!btns.empty()) btns += ", ";
+					btns += std::to_string(b);
+				}
+				ImGui::BulletText("visible_buttons: [%s]", btns.c_str());
+			}
+		}
+		ImGui::Separator();
+
+		if (!m.items.empty()) {
+			if (ImGui::BeginTable("MenuItems", 6,
+				ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable |
+				ImGuiTableFlags_ScrollY)) {
+				ImGui::TableSetupScrollFreeze(0, 1);
+				ImGui::TableSetupColumn("#", ImGuiTableColumnFlags_WidthFixed, 25);
+				ImGui::TableSetupColumn("Text / StringID");
+				ImGui::TableSetupColumn("Widget");
+				ImGui::TableSetupColumn("Flags");
+				ImGui::TableSetupColumn("Action");
+				ImGui::TableSetupColumn("Param / Goto");
+				ImGui::TableHeadersRow();
+
+				for (int j = 0; j < (int)m.items.size(); j++) {
+					auto& item = m.items[j];
+					ImGui::TableNextRow();
+					ImGui::TableNextColumn();
+					ImGui::Text("%d", j);
+					ImGui::TableNextColumn();
+					if (!item.text.empty())
+						ImGui::Text("\"%s\"", item.text.c_str());
+					else if (item.stringId > 0)
+						ImGui::Text("#%d", item.stringId);
+					else
+						ImGui::TextDisabled("-");
+					if (!item.text2.empty()) {
+						ImGui::SameLine();
+						ImGui::TextDisabled("| \"%s\"", item.text2.c_str());
+					}
+					ImGui::TableNextColumn();
+					if (!item.widget.empty())
+						ImGui::TextColored(ImVec4(0.4f, 0.9f, 0.6f, 1.0f), "%s", item.widget.c_str());
+					else
+						ImGui::TextDisabled("-");
+					ImGui::TableNextColumn();
+					if (!item.flags.empty())
+						ImGui::Text("%s", item.flags.c_str());
+					else
+						ImGui::TextDisabled("-");
+					ImGui::TableNextColumn();
+					if (!item.action.empty())
+						ImGui::Text("%s", item.action.c_str());
+					else
+						ImGui::TextDisabled("-");
+					ImGui::TableNextColumn();
+					if (!item.gotoMenu.empty())
+						ImGui::TextColored(ImVec4(0.5f, 0.8f, 1.0f, 1.0f), "-> %s", item.gotoMenu.c_str());
+					else if (item.param != 0)
+						ImGui::Text("%d", item.param);
+					else
+						ImGui::TextDisabled("-");
+				}
+				ImGui::EndTable();
+			}
+		} else {
+			ImGui::TextDisabled("No items (dynamic or empty menu)");
+		}
+	} else {
+		ImGui::TextDisabled("Select a menu from the list");
+	}
+	ImGui::EndChild();
+}
+
+// ─── UI Loading & Panel ─────────────────────────────────────────────────────
+
+void AssetBrowser::loadUI() {
+	try {
+		YAML::Node root = YAML::LoadFile(gameDir_ + "/ui.yaml");
+
+		// Widget flag mappings
+		if (root["widget_flag_mapping"]) {
+			for (auto it = root["widget_flag_mapping"].begin(); it != root["widget_flag_mapping"].end(); ++it) {
+				UIWidgetMapping wm;
+				wm.widget = it->first.as<std::string>();
+				wm.flags = it->second.as<std::string>("");
+				uiWidgetMappings_.push_back(std::move(wm));
+			}
+		}
+
+		// Screens (each screen has a container and buttons that reference components)
+		if (root["screens"] && root["screens"].IsMap()) {
+			for (auto sit = root["screens"].begin(); sit != root["screens"].end(); ++sit) {
+				std::string screenName = sit->first.as<std::string>();
+				auto screen = sit->second;
+				if (!screen["buttons"] || !screen["buttons"].IsMap()) continue;
+				for (auto bit = screen["buttons"].begin(); bit != screen["buttons"].end(); ++bit) {
+					auto btn = bit->second;
+					UIButtonEntry b;
+					b.name = bit->first.as<std::string>();
+					b.screen = screenName;
+					b.component = yamlStr(btn, "component");
+					if (btn["id_range"]) {
+						b.idRangeStart = btn["id_range"][0].as<int>(0);
+						b.idRangeEnd = btn["id_range"][1].as<int>(0);
+					} else if (btn["id"]) {
+						b.id = btn["id"].as<int>(0);
+					}
+					b.x = yamlInt(btn, "x");
+					b.width = yamlInt(btn, "width");
+					b.height = yamlInt(btn, "height");
+					b.sound = yamlStr(btn, "sound");
+					b.image = yamlStr(btn, "image");
+					b.imageHighlight = yamlStr(btn, "image_highlight");
+					b.renderMode = yamlInt(btn, "render_mode");
+					b.highlightRenderMode = yamlInt(btn, "highlight_render_mode");
+					if (btn["visible"]) b.visible = btn["visible"].as<bool>(true);
+					if (btn["size_from_image"]) b.sizeFromImage = btn["size_from_image"].as<bool>(false);
+					uiButtons_.push_back(std::move(b));
+				}
+			}
+		}
+
+		std::fprintf(stderr, "Loaded %zu UI buttons, %zu widget mappings\n",
+			uiButtons_.size(), uiWidgetMappings_.size());
+	} catch (const YAML::Exception& ex) {
+		std::fprintf(stderr, "Failed to load ui.yaml: %s\n", ex.what());
+	}
+}
+
+void AssetBrowser::drawUIPanel() {
+	// Widget flag mappings section
+	if (ImGui::CollapsingHeader("Widget Flag Mappings", ImGuiTreeNodeFlags_DefaultOpen)) {
+		if (ImGui::BeginTable("WidgetMap", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders)) {
+			ImGui::TableSetupColumn("Widget");
+			ImGui::TableSetupColumn("Implied Flags");
+			ImGui::TableHeadersRow();
+			for (auto& wm : uiWidgetMappings_) {
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				ImGui::TextColored(ImVec4(0.4f, 0.9f, 0.6f, 1.0f), "%s", wm.widget.c_str());
+				ImGui::TableNextColumn();
+				ImGui::Text("%s", wm.flags.c_str());
+			}
+			ImGui::EndTable();
+		}
+	}
+
+	// Buttons
+	if (ImGui::CollapsingHeader("Buttons", ImGuiTreeNodeFlags_DefaultOpen)) {
+		if (ImGui::BeginTable("Buttons", 9,
+			ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY)) {
+			ImGui::TableSetupScrollFreeze(0, 1);
+			ImGui::TableSetupColumn("ID", ImGuiTableColumnFlags_WidthFixed, 50);
+			ImGui::TableSetupColumn("Name");
+			ImGui::TableSetupColumn("Screen", ImGuiTableColumnFlags_WidthFixed, 70);
+			ImGui::TableSetupColumn("Component", ImGuiTableColumnFlags_WidthFixed, 100);
+			ImGui::TableSetupColumn("Pos", ImGuiTableColumnFlags_WidthFixed, 60);
+			ImGui::TableSetupColumn("Size", ImGuiTableColumnFlags_WidthFixed, 70);
+			ImGui::TableSetupColumn("Image");
+			ImGui::TableSetupColumn("Sound", ImGuiTableColumnFlags_WidthFixed, 100);
+			ImGui::TableSetupColumn("Vis", ImGuiTableColumnFlags_WidthFixed, 30);
+			ImGui::TableHeadersRow();
+
+			for (auto& b : uiButtons_) {
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				if (b.idRangeStart >= 0)
+					ImGui::Text("%d-%d", b.idRangeStart, b.idRangeEnd);
+				else
+					ImGui::Text("%d", b.id);
+				ImGui::TableNextColumn();
+				ImGui::Text("%s", b.name.c_str());
+				ImGui::TableNextColumn();
+				ImGui::Text("%s", b.screen.c_str());
+				ImGui::TableNextColumn();
+				ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "%s", b.component.c_str());
+				ImGui::TableNextColumn();
+				ImGui::Text("%d,%d", b.x, b.y);
+				ImGui::TableNextColumn();
+				if (b.sizeFromImage)
+					ImGui::TextDisabled("(image)");
+				else
+					ImGui::Text("%dx%d", b.width, b.height);
+				ImGui::TableNextColumn();
+				if (!b.image.empty())
+					ImGui::Text("%s", b.image.c_str());
+				else
+					ImGui::TextDisabled("-");
+				ImGui::TableNextColumn();
+				ImGui::Text("%s", b.sound.c_str());
+				ImGui::TableNextColumn();
+				ImGui::TextColored(b.visible ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.5f, 0.5f, 0.5f, 1.0f),
+					"%s", b.visible ? "Y" : "N");
+			}
+			ImGui::EndTable();
+		}
+	}
+}
+
+// ─── Sounds Loading & Panel ─────────────────────────────────────────────────
+
+void AssetBrowser::loadSounds() {
+	try {
+		YAML::Node root = YAML::LoadFile(gameDir_ + "/sounds.yaml");
+		YAML::Node snd = root["sounds"];
+		if (!snd) return;
+
+		int idx = 0;
+		for (auto it = snd.begin(); it != snd.end(); ++it) {
+			SoundEntry s;
+			s.name = it->first.as<std::string>();
+			s.file = yamlStr(it->second, "file");
+			s.index = idx++;
+			sounds_.push_back(std::move(s));
+		}
+		std::fprintf(stderr, "Loaded %zu sounds\n", sounds_.size());
+	} catch (const YAML::Exception& ex) {
+		std::fprintf(stderr, "Failed to load sounds.yaml: %s\n", ex.what());
+	}
+}
+
+void AssetBrowser::drawSoundsPanel() {
+	if (ImGui::BeginTable("Sounds", 4,
+		ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable |
+		ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable)) {
+		ImGui::TableSetupScrollFreeze(0, 1);
+		ImGui::TableSetupColumn("Index", ImGuiTableColumnFlags_WidthFixed, 50);
+		ImGui::TableSetupColumn("ResID", ImGuiTableColumnFlags_WidthFixed, 50);
+		ImGui::TableSetupColumn("Name");
+		ImGui::TableSetupColumn("File");
+		ImGui::TableHeadersRow();
+
+		for (auto& s : sounds_) {
+			if (!matchesFilter(s.name, filterText_) && !matchesFilter(s.file, filterText_))
+				continue;
+
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn(); ImGui::Text("%d", s.index);
+			ImGui::TableNextColumn(); ImGui::Text("%d", s.index + 1000);
+			ImGui::TableNextColumn(); ImGui::Text("%s", s.name.c_str());
+			ImGui::TableNextColumn(); ImGui::TextDisabled("%s", s.file.c_str());
+		}
+		ImGui::EndTable();
+	}
+}
+
+// ─── Game Config Loading & Panel ────────────────────────────────────────────
+
+void AssetBrowser::loadGame() {
+	try {
+		YAML::Node root = YAML::LoadFile(gameDir_ + "/game.yaml");
+		YAML::Node game = root["game"];
+		if (!game) return;
+
+		gameConfig_.name = yamlStr(game, "name");
+		gameConfig_.description = yamlStr(game, "description");
+		gameConfig_.version = yamlStr(game, "version");
+		gameConfig_.windowTitle = yamlStr(game, "window_title");
+		gameConfig_.saveDir = yamlStr(game, "save_dir");
+		gameConfig_.entryMap = yamlStr(game, "entry_map");
+		gameConfig_.startingMaxHealth = yamlInt(game, "starting_max_health", 100);
+
+		if (game["level_up"]) {
+			auto lu = game["level_up"];
+			gameConfig_.levelUp.health = yamlInt(lu, "health");
+			gameConfig_.levelUp.defense = yamlInt(lu, "defense");
+			gameConfig_.levelUp.strength = yamlInt(lu, "strength");
+			gameConfig_.levelUp.accuracy = yamlInt(lu, "accuracy");
+			gameConfig_.levelUp.agility = yamlInt(lu, "agility");
+		}
+		if (game["chainsaw_bonus"]) {
+			auto cb = game["chainsaw_bonus"];
+			gameConfig_.chainsawBonus.kills = yamlInt(cb, "kills");
+			gameConfig_.chainsawBonus.strength = yamlInt(cb, "strength");
+		}
+		if (game["caps"]) {
+			auto caps = game["caps"];
+			gameConfig_.caps.credits = yamlInt(caps, "credits");
+			gameConfig_.caps.inventory = yamlInt(caps, "inventory");
+			gameConfig_.caps.ammo = yamlInt(caps, "ammo");
+			gameConfig_.caps.botFuel = yamlInt(caps, "bot_fuel");
+		}
+		std::fprintf(stderr, "Loaded game config: %s\n", gameConfig_.name.c_str());
+	} catch (const YAML::Exception& ex) {
+		std::fprintf(stderr, "Failed to load game.yaml: %s\n", ex.what());
+	}
+}
+
+void AssetBrowser::drawGamePanel() {
+	auto& g = gameConfig_;
+
+	ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "%s", g.name.c_str());
+	ImGui::TextDisabled("%s", g.description.c_str());
+	ImGui::Separator();
+
+	if (ImGui::BeginTable("GameProps", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH)) {
+		ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 180);
+		ImGui::TableSetupColumn("Value");
+
+		auto row = [](const char* label, const char* fmt, ...) {
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn(); ImGui::TextDisabled("%s", label);
+			ImGui::TableNextColumn();
+			va_list args; va_start(args, fmt);
+			ImGui::TextV(fmt, args);
+			va_end(args);
+		};
+
+		row("Version", "%s", g.version.c_str());
+		row("Window Title", "%s", g.windowTitle.c_str());
+		row("Save Dir", "%s", g.saveDir.c_str());
+		row("Entry Map", "%s", g.entryMap.c_str());
+		row("Starting Max Health", "%d", g.startingMaxHealth);
+		ImGui::EndTable();
+	}
+
+	if (ImGui::CollapsingHeader("Level-Up Gains", ImGuiTreeNodeFlags_DefaultOpen)) {
+		auto statBar = [](const char* name, int val, int maxVal, ImVec4 color) {
+			ImGui::Text("  %-10s +%d", name, val);
+			ImGui::SameLine(160);
+			float frac = (maxVal > 0) ? (float)val / (float)maxVal : 0.0f;
+			ImGui::PushStyleColor(ImGuiCol_PlotHistogram, color);
+			ImGui::ProgressBar(frac, ImVec2(150, 14), "");
+			ImGui::PopStyleColor();
+		};
+		statBar("Health", g.levelUp.health, 20, ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
+		statBar("Defense", g.levelUp.defense, 5, ImVec4(0.3f, 0.6f, 0.9f, 1.0f));
+		statBar("Strength", g.levelUp.strength, 5, ImVec4(0.9f, 0.5f, 0.1f, 1.0f));
+		statBar("Accuracy", g.levelUp.accuracy, 5, ImVec4(0.9f, 0.9f, 0.2f, 1.0f));
+		statBar("Agility", g.levelUp.agility, 5, ImVec4(0.2f, 0.8f, 0.2f, 1.0f));
+	}
+
+	if (ImGui::CollapsingHeader("Chainsaw Bonus", ImGuiTreeNodeFlags_DefaultOpen)) {
+		ImGui::Text("  Every %d kills: +%d Strength", g.chainsawBonus.kills, g.chainsawBonus.strength);
+	}
+
+	if (ImGui::CollapsingHeader("Capacity Caps", ImGuiTreeNodeFlags_DefaultOpen)) {
+		ImGui::Text("  Credits:   %d", g.caps.credits);
+		ImGui::Text("  Inventory: %d", g.caps.inventory);
+		ImGui::Text("  Ammo:      %d", g.caps.ammo);
+		ImGui::Text("  Bot Fuel:  %d", g.caps.botFuel);
+	}
+}
+
+// ─── Levels Loading & Panel ─────────────────────────────────────────────────
+
+void AssetBrowser::loadLevels() {
+	try {
+		YAML::Node root = YAML::LoadFile(gameDir_ + "/levels.yaml");
+		YAML::Node lvls = root["levels"];
+		if (!lvls) return;
+
+		for (auto it = lvls.begin(); it != lvls.end(); ++it) {
+			LevelEntry lev;
+			lev.mapNumber = it->first.as<int>();
+			auto& v = it->second;
+			if (v["starting_loadout"]) {
+				auto sl = v["starting_loadout"];
+				if (sl["weapons"]) {
+					for (const auto& w : sl["weapons"])
+						lev.weapons.push_back(w.as<std::string>());
+				}
+				lev.armor = yamlInt(sl, "armor");
+				lev.xp = yamlInt(sl, "xp");
+				if (sl["stats"]) {
+					auto st = sl["stats"];
+					lev.stats.defense = yamlInt(st, "defense");
+					lev.stats.strength = yamlInt(st, "strength");
+					lev.stats.accuracy = yamlInt(st, "accuracy");
+					lev.stats.iq = yamlInt(st, "iq");
+				}
+			}
+			levels_.push_back(std::move(lev));
+		}
+		// Sort by map number
+		std::sort(levels_.begin(), levels_.end(),
+			[](const LevelEntry& a, const LevelEntry& b) { return a.mapNumber < b.mapNumber; });
+		std::fprintf(stderr, "Loaded %zu levels\n", levels_.size());
+	} catch (const YAML::Exception& ex) {
+		std::fprintf(stderr, "Failed to load levels.yaml: %s\n", ex.what());
+	}
+}
+
+void AssetBrowser::drawLevelsPanel() {
+	float listWidth = 180.0f;
+
+	ImGui::BeginChild("LevelList", ImVec2(listWidth, 0), true);
+	for (int i = 0; i < (int)levels_.size(); i++) {
+		auto& lev = levels_[i];
+		char label[64];
+		std::snprintf(label, sizeof(label), "Map %02d", lev.mapNumber);
+
+		bool selected = (selectedLevel_ == i);
+		if (ImGui::Selectable(label, selected))
+			selectedLevel_ = i;
+	}
+	ImGui::EndChild();
+
+	ImGui::SameLine();
+
+	ImGui::BeginChild("LevelDetail", ImVec2(0, 0), true);
+	if (selectedLevel_ >= 0 && selectedLevel_ < (int)levels_.size()) {
+		auto& lev = levels_[selectedLevel_];
+		ImGui::TextColored(ImVec4(0.3f, 0.8f, 1.0f, 1.0f), "Map %02d", lev.mapNumber);
+		ImGui::Separator();
+
+		if (!lev.weapons.empty()) {
+			ImGui::Text("Starting Weapons:");
+			for (auto& w : lev.weapons) {
+				ImGui::BulletText("%s", w.c_str());
+			}
+		}
+
+		if (ImGui::BeginTable("LevelProps", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH)) {
+			ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 100);
+			ImGui::TableSetupColumn("Value");
+
+			auto row = [](const char* label, const char* fmt, ...) {
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn(); ImGui::TextDisabled("%s", label);
+				ImGui::TableNextColumn();
+				va_list args; va_start(args, fmt);
+				ImGui::TextV(fmt, args);
+				va_end(args);
+			};
+
+			row("Armor", "%d", lev.armor);
+			row("XP", "%d", lev.xp);
+			row("Defense", "%d", lev.stats.defense);
+			row("Strength", "%d", lev.stats.strength);
+			row("Accuracy", "%d", lev.stats.accuracy);
+			row("IQ", "%d", lev.stats.iq);
+
+			ImGui::EndTable();
+		}
+	} else {
+		ImGui::TextDisabled("Select a level from the list");
 	}
 	ImGui::EndChild();
 }
