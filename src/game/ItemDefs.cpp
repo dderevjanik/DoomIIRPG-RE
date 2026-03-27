@@ -9,32 +9,35 @@ std::unordered_map<std::string, int> ItemDefs::ammoNameToIndex;
 bool ItemDefs::loadFromYAML(const char* path) {
 	try {
 		YAML::Node config = YAML::LoadFile(path);
-
-		// Load inventory section
-		YAML::Node inventory = config["inventory"];
-		inventoryNameToIndex.clear();
-		if (inventory && inventory.IsMap()) {
-			for (auto it = inventory.begin(); it != inventory.end(); ++it) {
-				inventoryNameToIndex[it->first.as<std::string>()] = it->second.as<int>(0);
-			}
-		}
-
-		// Load ammo section
-		YAML::Node ammo = config["ammo"];
-		ammoNameToIndex.clear();
-		if (ammo && ammo.IsMap()) {
-			for (auto it = ammo.begin(); it != ammo.end(); ++it) {
-				ammoNameToIndex[it->first.as<std::string>()] = it->second.as<int>(0);
-			}
-		}
-
-		printf("[items] loaded %d inventory names, %d ammo names from %s\n",
-			(int)inventoryNameToIndex.size(), (int)ammoNameToIndex.size(), path);
-		return true;
+		return loadFromNode(config);
 	} catch (const YAML::Exception& e) {
-		printf("[items] items.yaml: %s\n", e.what());
+		printf("[items] %s: %s\n", path, e.what());
 		return false;
 	}
+}
+
+bool ItemDefs::loadFromNode(const YAML::Node& config) {
+	// Load inventory section
+	YAML::Node inventory = config["inventory"];
+	inventoryNameToIndex.clear();
+	if (inventory && inventory.IsMap()) {
+		for (auto it = inventory.begin(); it != inventory.end(); ++it) {
+			inventoryNameToIndex[it->first.as<std::string>()] = it->second.as<int>(0);
+		}
+	}
+
+	// Load ammo section
+	YAML::Node ammo = config["ammo"];
+	ammoNameToIndex.clear();
+	if (ammo && ammo.IsMap()) {
+		for (auto it = ammo.begin(); it != ammo.end(); ++it) {
+			ammoNameToIndex[it->first.as<std::string>()] = it->second.as<int>(0);
+		}
+	}
+
+	printf("[items] loaded %d inventory names, %d ammo names\n",
+		(int)inventoryNameToIndex.size(), (int)ammoNameToIndex.size());
+	return true;
 }
 
 int ItemDefs::getInventoryIndex(const std::string& name) {

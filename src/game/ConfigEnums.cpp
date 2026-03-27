@@ -31,23 +31,27 @@ static void loadSection(const YAML::Node& config, const char* key,
 bool ConfigEnums::loadFromYAML(const char* path) {
 	try {
 		YAML::Node root = YAML::LoadFile(path);
-		YAML::Node config = root["config_enums"];
-		if (!config || !config.IsMap()) {
-			printf("[config_enums] no config_enums section in %s\n", path);
-			return false;
-		}
-
-		loadSection(config, "difficulty", difficulty, difficultyByValue);
-		loadSection(config, "language", language, languageByValue);
-		loadSection(config, "window_mode", windowMode, windowModeByValue);
-		loadSection(config, "control_layout", controlLayout, controlLayoutByValue);
-
-		printf("[config_enums] loaded from %s\n", path);
-		return true;
+		return loadFromNode(root);
 	} catch (const YAML::Exception& e) {
 		printf("[config_enums] %s: %s\n", path, e.what());
 		return false;
 	}
+}
+
+bool ConfigEnums::loadFromNode(const YAML::Node& root) {
+	YAML::Node config = root["config_enums"];
+	if (!config || !config.IsMap()) {
+		printf("[config_enums] no config_enums section\n");
+		return false;
+	}
+
+	loadSection(config, "difficulty", difficulty, difficultyByValue);
+	loadSection(config, "language", language, languageByValue);
+	loadSection(config, "window_mode", windowMode, windowModeByValue);
+	loadSection(config, "control_layout", controlLayout, controlLayoutByValue);
+
+	printf("[config_enums] loaded\n");
+	return true;
 }
 
 static std::string lookupByValue(const std::unordered_map<int, std::string>& map,

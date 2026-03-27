@@ -7,6 +7,8 @@
 
 #include "IDIB.h"
 
+namespace YAML { class Node; }
+
 struct SpriteAnimDef {
 	int renderMode = -1;  // -1 = don't override
 	int scale = -1;       // -1 = don't override
@@ -141,13 +143,21 @@ public:
 	void Error(int id);
 	void loadTables();
 	bool loadTablesFromYAML(const char* path);
+	bool loadTablesFromNode(const YAML::Node& config);
 	bool loadSpriteAnimsFromYAML(const char* path);
+	bool loadSpriteAnimsFromNode(const YAML::Node& config);
 	bool loadWeaponsFromYAML(const char* path);
+	bool loadWeaponsFromNode(const YAML::Node& config);
 	bool loadProjectilesFromYAML(const char* path);
+	bool loadProjectilesFromNode(const YAML::Node& config);
 	bool loadEffectsFromYAML(const char* path);
+	bool loadEffectsFromNode(const YAML::Node& config);
 	bool loadItemsFromYAML(const char* path, const char* effectsPath);
+	bool loadItemsFromNode(const YAML::Node& itemsConfig, const YAML::Node& effectsConfig);
 	bool loadMonstersFromYAML(const char* path);
+	bool loadMonstersFromNode(const YAML::Node& config);
 	bool loadDialogStylesFromYAML(const char* path);
+	bool loadDialogStylesFromNode(const YAML::Node& config);
 
 	void loadRuntimeImages();
 	void freeRuntimeImages();

@@ -9,39 +9,43 @@ std::unordered_map<std::string, int> Sounds::soundNameToIndex;
 bool Sounds::loadFromYAML(const char* path) {
 	try {
 		YAML::Node config = YAML::LoadFile(path);
-		YAML::Node sounds = config["sounds"];
-		if (!sounds || !sounds.IsMap()) {
-			printf("[sounds] sounds.yaml: missing or invalid 'sounds' map\n");
-			return false;
-		}
-
-		soundFileNames.clear();
-		soundFileNames.reserve(sounds.size());
-		soundNameToIndex.clear();
-
-		int i = 0;
-		for (auto it = sounds.begin(); it != sounds.end(); ++it, ++i) {
-			std::string name = it->first.as<std::string>();
-			std::string file;
-
-			if (it->second.IsMap()) {
-				file = it->second["file"].as<std::string>("");
-			} else if (it->second.IsScalar()) {
-				file = it->second.as<std::string>("");
-			}
-
-			soundFileNames.push_back(file);
-			if (!name.empty()) {
-				soundNameToIndex[name] = i;
-			}
-		}
-
-		printf("[sounds] loaded %d sound definitions from %s\n", (int)soundFileNames.size(), path);
-		return true;
+		return loadFromNode(config);
 	} catch (const YAML::Exception& e) {
-		printf("[sounds] sounds.yaml: %s\n", e.what());
+		printf("[sounds] %s: %s\n", path, e.what());
 		return false;
 	}
+}
+
+bool Sounds::loadFromNode(const YAML::Node& config) {
+	YAML::Node sounds = config["sounds"];
+	if (!sounds || !sounds.IsMap()) {
+		printf("[sounds] missing or invalid 'sounds' map\n");
+		return false;
+	}
+
+	soundFileNames.clear();
+	soundFileNames.reserve(sounds.size());
+	soundNameToIndex.clear();
+
+	int i = 0;
+	for (auto it = sounds.begin(); it != sounds.end(); ++it, ++i) {
+		std::string name = it->first.as<std::string>();
+		std::string file;
+
+		if (it->second.IsMap()) {
+			file = it->second["file"].as<std::string>("");
+		} else if (it->second.IsScalar()) {
+			file = it->second.as<std::string>("");
+		}
+
+		soundFileNames.push_back(file);
+		if (!name.empty()) {
+			soundNameToIndex[name] = i;
+		}
+	}
+
+	printf("[sounds] loaded %d sound definitions\n", (int)soundFileNames.size());
+	return true;
 }
 
 

@@ -4,6 +4,8 @@
 #include <string>
 #include <unordered_map>
 
+namespace YAML { class Node; }
+
 class ConfigEnums {
   public:
 	static std::unordered_map<std::string, int> difficulty;
@@ -18,6 +20,7 @@ class ConfigEnums {
 	static std::unordered_map<int, std::string> controlLayoutByValue;
 
 	static bool loadFromYAML(const char* path);
+	static bool loadFromNode(const YAML::Node& root);
 
 	static int difficultyFromString(const std::string& name);
 	static std::string difficultyToString(int value);

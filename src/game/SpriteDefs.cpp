@@ -11,76 +11,79 @@ std::unordered_map<std::string, int> SpriteDefs::ranges;
 bool SpriteDefs::loadFromYAML(const char* path) {
 	try {
 		YAML::Node config = YAML::LoadFile(path);
+		return loadFromNode(config);
+	} catch (const YAML::Exception& e) {
+		printf("[sprites] %s: %s\n", path, e.what());
+		return false;
+	}
+}
 
-		// Load tiles section
-		YAML::Node tiles = config["tiles"];
-		if (!tiles || !tiles.IsMap()) {
-			printf("[sprites] sprites.yaml: missing or invalid 'tiles' map\n");
-			return false;
-		}
+bool SpriteDefs::loadFromNode(const YAML::Node& config) {
+	// Load tiles section
+	YAML::Node tiles = config["tiles"];
+	if (!tiles || !tiles.IsMap()) {
+		printf("[sprites] missing or invalid 'tiles' map\n");
+		return false;
+	}
 
-		tileNameToIndex.clear();
-		tileIndexToName.clear();
-		tileNameToSource.clear();
+	tileNameToIndex.clear();
+	tileIndexToName.clear();
+	tileNameToSource.clear();
 
-		for (auto it = tiles.begin(); it != tiles.end(); ++it) {
-			std::string name = it->first.as<std::string>();
-			SpriteSource src;
+	for (auto it = tiles.begin(); it != tiles.end(); ++it) {
+		std::string name = it->first.as<std::string>();
+		SpriteSource src;
 
-			if (it->second.IsScalar()) {
-				// Simple format: zombie: 20
+		if (it->second.IsScalar()) {
+			// Simple format: zombie: 20
+			src.type = SpriteSourceType::Bin;
+			src.id = it->second.as<int>(0);
+			tileNameToIndex[name] = src.id;
+			if (tileIndexToName.find(src.id) == tileIndexToName.end()) {
+				tileIndexToName[src.id] = name;
+			}
+		} else if (it->second.IsMap()) {
+			// Extended format: chainsaw: { type: bin, file: tables.bin, id: 2 }
+			YAML::Node entry = it->second;
+			std::string typeStr = entry["type"].as<std::string>("bin");
+			src.file = entry["file"].as<std::string>("");
+
+			if (typeStr == "png") {
+				src.type = SpriteSourceType::Png;
+				tileNameToIndex[name] = SPRITE_INDEX_EXTERNAL;
+			} else {
 				src.type = SpriteSourceType::Bin;
-				src.id = it->second.as<int>(0);
+				src.id = entry["id"].as<int>(0);
 				tileNameToIndex[name] = src.id;
 				if (tileIndexToName.find(src.id) == tileIndexToName.end()) {
 					tileIndexToName[src.id] = name;
 				}
-			} else if (it->second.IsMap()) {
-				// Extended format: chainsaw: { type: bin, file: tables.bin, id: 2 }
-				YAML::Node entry = it->second;
-				std::string typeStr = entry["type"].as<std::string>("bin");
-				src.file = entry["file"].as<std::string>("");
-
-				if (typeStr == "png") {
-					src.type = SpriteSourceType::Png;
-					tileNameToIndex[name] = SPRITE_INDEX_EXTERNAL;
-				} else {
-					src.type = SpriteSourceType::Bin;
-					src.id = entry["id"].as<int>(0);
-					tileNameToIndex[name] = src.id;
-					if (tileIndexToName.find(src.id) == tileIndexToName.end()) {
-						tileIndexToName[src.id] = name;
-					}
-				}
-			}
-
-			tileNameToSource[name] = src;
-		}
-
-		// Load ranges section
-		YAML::Node rangesNode = config["ranges"];
-		ranges.clear();
-		if (rangesNode && rangesNode.IsMap()) {
-			for (auto it = rangesNode.begin(); it != rangesNode.end(); ++it) {
-				std::string name = it->first.as<std::string>();
-				int value = it->second.as<int>(0);
-				ranges[name] = value;
 			}
 		}
 
-		int pngCount = 0;
-		for (const auto& [k, v] : tileNameToSource) {
-			if (v.type == SpriteSourceType::Png) pngCount++;
-		}
-		printf("[sprites] loaded %d tile names (%d bin, %d png), %d ranges from %s\n",
-			(int)tileNameToIndex.size(),
-			(int)tileNameToIndex.size() - pngCount, pngCount,
-			(int)ranges.size(), path);
-		return true;
-	} catch (const YAML::Exception& e) {
-		printf("[sprites] sprites.yaml: %s\n", e.what());
-		return false;
+		tileNameToSource[name] = src;
 	}
+
+	// Load ranges section
+	YAML::Node rangesNode = config["ranges"];
+	ranges.clear();
+	if (rangesNode && rangesNode.IsMap()) {
+		for (auto it = rangesNode.begin(); it != rangesNode.end(); ++it) {
+			std::string name = it->first.as<std::string>();
+			int value = it->second.as<int>(0);
+			ranges[name] = value;
+		}
+	}
+
+	int pngCount = 0;
+	for (const auto& [k, v] : tileNameToSource) {
+		if (v.type == SpriteSourceType::Png) pngCount++;
+	}
+	printf("[sprites] loaded %d tile names (%d bin, %d png), %d ranges\n",
+		(int)tileNameToIndex.size(),
+		(int)tileNameToIndex.size() - pngCount, pngCount,
+		(int)ranges.size());
+	return true;
 }
 
 int SpriteDefs::getIndex(const std::string& name) {

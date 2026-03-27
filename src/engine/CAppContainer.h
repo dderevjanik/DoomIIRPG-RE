@@ -12,6 +12,7 @@ class VFS;
 class SDLGL;
 class Applet;
 class IGameModule;
+class ResourceManager;
 
 // Game-level configuration loaded from game.yaml
 struct GameConfig {
@@ -142,7 +143,8 @@ class CAppContainer {
 	Applet* app;
 	SDLGL* sdlGL;
 	VFS* vfs;
-	GameConfig gameConfig;         // Loaded from game.ini
+	ResourceManager* resourceManager;
+	GameConfig gameConfig;         // Loaded from game.yaml
 	OpcodeRegistry opcodeRegistry; // Extension script opcodes (128-254)
 	MinigameRegistry minigameRegistry; // Minigame dispatch registry
 	const char* customMapFile;     // --map override

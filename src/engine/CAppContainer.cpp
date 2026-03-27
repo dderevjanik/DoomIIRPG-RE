@@ -2,6 +2,7 @@
 
 #include "SDLGL.h"
 #include "VFS.h"
+#include "ResourceManager.h"
 #include "App.h"
 #include "Canvas.h"
 #include "Game.h"
@@ -26,6 +27,7 @@ CAppContainer::CAppContainer() {
 	this->skipIntro = false;
 	this->headless = false;
 	this->headlessTimeMs = 0;
+	this->resourceManager = nullptr;
 }
 
 CAppContainer::~CAppContainer() {
@@ -43,6 +45,9 @@ CAppContainer::~CAppContainer() {
 		this->sdlGL->~SDLGL();
 		this->sdlGL = nullptr;
 	}
+
+	delete this->resourceManager;
+	this->resourceManager = nullptr;
 }
 
 CAppContainer* CAppContainer::getInstance() {
@@ -191,6 +196,9 @@ void CAppContainer::Construct(SDLGL* sdlGL, VFS* vfs, IGameModule* gameModule) {
 	printf("CAppContainer::Construct\n");
 	this->sdlGL = sdlGL;
 	this->vfs = vfs;
+
+	this->resourceManager = new ResourceManager();
+	this->resourceManager->init(vfs);
 
 	this->app = new Applet();
 	if (gameModule) {

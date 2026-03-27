@@ -5,6 +5,7 @@
 
 #include "CAppContainer.h"
 #include "App.h"
+#include "ResourceManager.h"
 #include "EntityDef.h"
 #include "EntityNames.h"
 #include "Combat.h"
@@ -28,19 +29,32 @@ bool EntityDefManager::startup() {
 	this->numDefs = 0;
 
 	printf("[entitydef] loading from entities.yaml\n");
+
+	// Use ResourceManager for VFS-backed loading if available
+	ResourceManager* rm = CAppContainer::getInstance()->resourceManager;
+	if (rm) {
+		const YAML::Node* node = rm->loadYAML("entities.yaml");
+		if (node) {
+			return this->loadFromNode(*node);
+		}
+	}
 	return this->loadFromYAML("entities.yaml");
 }
 
 bool EntityDefManager::loadFromYAML(const char* path) {
-	Applet* app = CAppContainer::getInstance()->app;
-
 	YAML::Node config;
 	try {
 		config = YAML::LoadFile(path);
 	} catch (const YAML::Exception& e) {
+		Applet* app = CAppContainer::getInstance()->app;
 		app->Error("Failed to load %s: %s\n", path, e.what());
 		return false;
 	}
+	return loadFromNode(config);
+}
+
+bool EntityDefManager::loadFromNode(const YAML::Node& config) {
+	Applet* app = CAppContainer::getInstance()->app;
 
 	YAML::Node entities = config["entities"];
 	if (!entities || !entities.IsMap() || entities.size() == 0) {
@@ -194,7 +208,7 @@ bool EntityDefManager::loadFromYAML(const char* path) {
 		#undef R_BOOL
 	}
 
-	printf("[entitydef] loaded %d entities from %s\n", this->numDefs, path);
+	printf("[entitydef] loaded %d entities\n", this->numDefs);
 
 	return true;
 }

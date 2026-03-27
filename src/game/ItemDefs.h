@@ -4,6 +4,8 @@
 #include <string>
 #include <unordered_map>
 
+namespace YAML { class Node; }
+
 class ItemDefs {
   public:
 	// Inventory name-to-index map (populated from items.yaml "inventory" section)
@@ -15,6 +17,9 @@ class ItemDefs {
 	// Load item definitions from items.yaml
 	// Returns true if loaded successfully, false on error
 	static bool loadFromYAML(const char* path);
+
+	// Load item definitions from a pre-parsed YAML node
+	static bool loadFromNode(const YAML::Node& config);
 
 	// Get inventory item index by name, returns -1 if not found
 	static int getInventoryIndex(const std::string& name);

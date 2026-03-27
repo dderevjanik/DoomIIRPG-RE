@@ -1,6 +1,8 @@
 #ifndef __ENTITYDEF_H__
 #define __ENTITYDEF_H__
 
+namespace YAML { class Node; }
+
 class EntityDef;
 
 // -----------------------
@@ -13,6 +15,7 @@ class EntityDefManager {
 	int numDefs;
 
 	bool loadFromYAML(const char* path);
+	bool loadFromNode(const YAML::Node& config);
 
   public:
 	// Constructor

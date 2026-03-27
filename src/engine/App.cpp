@@ -38,6 +38,7 @@
 #include "ItemDefs.h"
 #include "EntityNames.h"
 #include "ConfigEnums.h"
+#include "ResourceManager.h"
 
 Applet::Applet() {
 	std::memset(this, 0, sizeof(Applet));
@@ -400,6 +401,19 @@ void Applet::beginImageLoading() {}
 void Applet::endImageLoading() {}
 
 void Applet::loadTables() {
+	ResourceManager* rm = CAppContainer::getInstance()->resourceManager;
+
+	// Register game-specific loaders and run them through ResourceManager
+	if (rm && this->gameModule) {
+		this->gameModule->registerLoaders(rm);
+		if (!rm->loadAllDefinitions()) {
+			// loadAllDefinitions already printed which loader failed
+			this->Error("ResourceManager: failed to load definitions (check console for details)\n");
+		}
+		return;
+	}
+
+	// Fallback: direct loading (no ResourceManager available)
 	printf("[app] loadTables: loading from tables.yaml\n");
 	if (!this->loadTablesFromYAML("tables.yaml")) {
 		this->Error("Failed to load tables.yaml\n");
@@ -503,7 +517,10 @@ bool Applet::loadSpriteAnimsFromYAML(const char* path) {
 		printf("[app] Warning: could not load %s\n", path);
 		return false;
 	}
+	return loadSpriteAnimsFromNode(config);
+}
 
+bool Applet::loadSpriteAnimsFromNode(const YAML::Node& config) {
 	YAML::Node spriteAnims = config["sprite_anims"];
 	if (spriteAnims && spriteAnims.IsMap()) {
 		for (auto it = spriteAnims.begin(); it != spriteAnims.end(); ++it) {
@@ -539,7 +556,10 @@ bool Applet::loadWeaponsFromYAML(const char* path) {
 	} catch (const YAML::Exception&) {
 		return false;
 	}
+	return loadWeaponsFromNode(config);
+}
 
+bool Applet::loadWeaponsFromNode(const YAML::Node& config) {
 	YAML::Node weapons = config["weapons"];
 	if (!weapons || !weapons.IsMap()) {
 		return false;
@@ -778,8 +798,8 @@ bool Applet::loadWeaponsFromYAML(const char* path) {
 		this->combat->familiarAmmoType = this->combat->weapons[famW * 9 + Combat::WEAPON_FIELD_AMMOTYPE];
 	}
 
-	printf("[app] Weapons: loaded %d weapon definitions (%d familiars) from %s\n",
-		(int)weapons.size(), (int)famDefs.size(), path);
+	printf("[app] Weapons: loaded %d weapon definitions (%d familiars)\n",
+		(int)weapons.size(), (int)famDefs.size());
 	return true;
 }
 
@@ -789,9 +809,12 @@ bool Applet::loadProjectilesFromYAML(const char* path) {
 		config = YAML::LoadFile(path);
 	} catch (const YAML::Exception&) {
 		printf("[app] Warning: projectiles.yaml not found, using defaults\n");
-		return true; // Not fatal — code defaults still work
+		return true;
 	}
+	return loadProjectilesFromNode(config);
+}
 
+bool Applet::loadProjectilesFromNode(const YAML::Node& config) {
 	if (!config["projectiles"]) {
 		printf("[app] Warning: projectiles.yaml empty, using defaults\n");
 		return true;
@@ -880,11 +903,22 @@ bool Applet::loadProjectilesFromYAML(const char* path) {
 		}
 	}
 
-	printf("[app] Projectiles: loaded %d types from %s\n", count, path);
+	printf("[app] Projectiles: loaded %d types\n", count);
 	return true;
 }
 
 bool Applet::loadEffectsFromYAML(const char* path) {
+	YAML::Node config;
+	try {
+		config = YAML::LoadFile(path);
+	} catch (const YAML::Exception&) {
+		printf("[app] Warning: effects.yaml not found, using defaults\n");
+		return loadEffectsFromNode(config); // init defaults with empty node
+	}
+	return loadEffectsFromNode(config);
+}
+
+bool Applet::loadEffectsFromNode(const YAML::Node& config) {
 	// Initialize defaults matching original hardcoded values
 	Player* p = this->player;
 	for (int i = 0; i < 15; i++) {
@@ -907,14 +941,6 @@ bool Applet::loadEffectsFromYAML(const char* path) {
 	p->buffNoAmountMask = Enums::BUFF_NO_AMOUNT;
 	p->buffAmtNotDrawnMask = Enums::BUFF_AMT_NOT_DRAWN;
 	p->buffWarningTime = Enums::BUFF_WARNING_TIME;
-
-	YAML::Node config;
-	try {
-		config = YAML::LoadFile(path);
-	} catch (const YAML::Exception&) {
-		printf("[app] Warning: effects.yaml not found, using defaults\n");
-		return true;
-	}
 
 	if (config["warning_time"]) {
 		p->buffWarningTime = config["warning_time"].as<int>(10);
@@ -982,11 +1008,22 @@ bool Applet::loadEffectsFromYAML(const char* path) {
 		p->buffPerTurnHealByAmount[i] = (perTurn == "heal_by_amount");
 	}
 
-	printf("[app] Effects: loaded %d buffs from %s\n", count, path);
+	printf("[app] Effects: loaded %d buffs\n", count);
 	return true;
 }
 
 bool Applet::loadDialogStylesFromYAML(const char* path) {
+	YAML::Node config;
+	try {
+		config = YAML::LoadFile(path);
+	} catch (const YAML::Exception&) {
+		printf("[app] Warning: dialogs.yaml not found, using defaults\n");
+		return loadDialogStylesFromNode(config); // init defaults with empty node
+	}
+	return loadDialogStylesFromNode(config);
+}
+
+bool Applet::loadDialogStylesFromNode(const YAML::Node& config) {
 	Canvas* c = this->canvas;
 
 	// Initialize with hardcoded defaults
@@ -1018,14 +1055,6 @@ bool Applet::loadDialogStylesFromYAML(const char* path) {
 	c->dialogStyleDefCount = defaultCount;
 	std::copy(defaults, defaults + defaultCount, c->dialogStyleDefs);
 
-	YAML::Node config;
-	try {
-		config = YAML::LoadFile(path);
-	} catch (const YAML::Exception&) {
-		printf("[app] Warning: dialogs.yaml not found, using defaults\n");
-		return true;
-	}
-
 	if (!config["dialog_styles"]) {
 		printf("[app] Warning: dialogs.yaml has no dialog_styles section\n");
 		return true;
@@ -1052,44 +1081,55 @@ bool Applet::loadDialogStylesFromYAML(const char* path) {
 			def.positionTop = s["position_top"].as<bool>(def.positionTop);
 	}
 
-	printf("[app] Dialog styles: loaded from %s\n", path);
+	printf("[app] Dialog styles: loaded\n");
 	return true;
 }
 
 bool Applet::loadItemsFromYAML(const char* path, const char* effectsPath) {
+	YAML::Node config;
+	try {
+		config = YAML::LoadFile(path);
+	} catch (const YAML::Exception&) {
+		printf("[app] Warning: items.yaml not found, useItem will use hardcoded fallback\n");
+		return false;
+	}
+
+	YAML::Node effectsConfig;
+	try {
+		effectsConfig = YAML::LoadFile(effectsPath);
+	} catch (const YAML::Exception&) {
+		// Fallback: empty node, loadItemsFromNode handles it
+	}
+
+	return loadItemsFromNode(config, effectsConfig);
+}
+
+bool Applet::loadItemsFromNode(const YAML::Node& config, const YAML::Node& effectsConfig) {
 	Player* p = this->player;
 	if (!p->itemDefs) {
 		p->itemDefs = new std::vector<ItemDef>();
 	}
 	p->itemDefs->clear();
 
-	// Build buff name→index map from effects.yaml order
+	// Build buff name→index map from effects config order
 	std::map<std::string, int> buffNameToIndex;
-	{
-		YAML::Node effectsConfig;
-		try {
-			effectsConfig = YAML::LoadFile(effectsPath);
-		} catch (const YAML::Exception&) {
-			// Fallback: use hardcoded buff names matching Enums.h order
-		}
-		if (effectsConfig["buffs"]) {
-			int bi = 0;
-			for (auto it = effectsConfig["buffs"].begin(); it != effectsConfig["buffs"].end() && bi < 15; ++it, ++bi) {
-				std::string name = it->first.as<std::string>("");
-				if (!name.empty()) {
-					buffNameToIndex[name] = bi;
-				}
+	if (effectsConfig["buffs"]) {
+		int bi = 0;
+		for (auto it = effectsConfig["buffs"].begin(); it != effectsConfig["buffs"].end() && bi < 15; ++it, ++bi) {
+			std::string name = it->first.as<std::string>("");
+			if (!name.empty()) {
+				buffNameToIndex[name] = bi;
 			}
 		}
-		if (buffNameToIndex.empty()) {
-			// Hardcoded fallback
-			buffNameToIndex = {
-				{"reflect", 0}, {"purify", 1}, {"haste", 2}, {"regen", 3},
-				{"defense", 4}, {"strength", 5}, {"agility", 6}, {"focus", 7},
-				{"anger", 8}, {"antifire", 9}, {"fortitude", 10}, {"fear", 11},
-				{"wp_poison", 12}, {"fire", 13}, {"disease", 14}
-			};
-		}
+	}
+	if (buffNameToIndex.empty()) {
+		// Hardcoded fallback
+		buffNameToIndex = {
+			{"reflect", 0}, {"purify", 1}, {"haste", 2}, {"regen", 3},
+			{"defense", 4}, {"strength", 5}, {"agility", 6}, {"focus", 7},
+			{"anger", 8}, {"antifire", 9}, {"fortitude", 10}, {"fear", 11},
+			{"wp_poison", 12}, {"fire", 13}, {"disease", 14}
+		};
 	}
 
 	auto resolveBuff = [&](const std::string& name) -> int {
@@ -1114,14 +1154,6 @@ bool Applet::loadItemsFromYAML(const char* path, const char* effectsPath) {
 		}
 		return e;
 	};
-
-	YAML::Node config;
-	try {
-		config = YAML::LoadFile(path);
-	} catch (const YAML::Exception&) {
-		printf("[app] Warning: items.yaml not found, useItem will use hardcoded fallback\n");
-		return false;
-	}
 
 	if (!config["items"]) {
 		printf("[app] Warning: items.yaml has no items section\n");
@@ -1171,7 +1203,7 @@ bool Applet::loadItemsFromYAML(const char* path, const char* effectsPath) {
 		p->itemDefs->push_back(def);
 	}
 
-	printf("[app] Items: loaded %d item definitions from %s\n", (int)p->itemDefs->size(), path);
+	printf("[app] Items: loaded %d item definitions\n", (int)p->itemDefs->size());
 	return true;
 }
 
@@ -1203,7 +1235,10 @@ bool Applet::loadTablesFromYAML(const char* path) {
 	} catch (const YAML::Exception&) {
 		return false;
 	}
+	return loadTablesFromNode(config);
+}
 
+bool Applet::loadTablesFromNode(const YAML::Node& config) {
 	// === CombatMasks ===
 	if (YAML::Node masks = config["combat_masks"]) {
 		int count = (int)masks.size();
@@ -1288,7 +1323,7 @@ bool Applet::loadTablesFromYAML(const char* path) {
 		}
 	}
 
-	printf("[app] loadTables: loaded tables from %s\n", path);
+	printf("[app] loadTables: loaded tables\n");
 	return true;
 }
 
@@ -1299,7 +1334,10 @@ bool Applet::loadMonstersFromYAML(const char* path) {
 	} catch (const YAML::Exception&) {
 		return false;
 	}
+	return loadMonstersFromNode(config);
+}
 
+bool Applet::loadMonstersFromNode(const YAML::Node& config) {
 	YAML::Node monsters = config["monsters"];
 	if (!monsters || !monsters.IsMap()) {
 		return false;
@@ -1534,7 +1572,7 @@ bool Applet::loadMonstersFromYAML(const char* path) {
 		}
 	}
 
-	printf("[app] loadMonstersFromYAML: loaded %d monsters from %s\n", (int)monsters.size(), path);
+	printf("[app] loadMonstersFromYAML: loaded %d monsters\n", (int)monsters.size());
 	return true;
 }
 

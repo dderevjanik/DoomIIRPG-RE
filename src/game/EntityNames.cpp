@@ -45,47 +45,53 @@ static void buildIndexVector(const std::unordered_map<std::string, int>& map,
 bool EntityNames::loadEntityTypes(const char* entitiesPath) {
 	try {
 		YAML::Node config = YAML::LoadFile(entitiesPath);
-
-		loadSection(config, "entity_types", entityTypes);
-		loadSection(config, "monster_subtypes", monsterSubtypes);
-		loadSection(config, "item_subtypes", itemSubtypes);
-		loadSection(config, "door_subtypes", doorSubtypes);
-		loadSection(config, "decor_subtypes", decorSubtypes);
-
-		buildIndexVector(entityTypes, entityTypesByIndex);
-
-		printf("[entity_names] loaded %d entity types, %d monster subtypes from %s\n",
-			(int)entityTypes.size(), (int)monsterSubtypes.size(), entitiesPath);
-		return true;
+		return loadEntityTypesFromNode(config);
 	} catch (const YAML::Exception& e) {
 		printf("[entity_names] %s: %s\n", entitiesPath, e.what());
 		return false;
 	}
 }
 
+bool EntityNames::loadEntityTypesFromNode(const YAML::Node& config) {
+	loadSection(config, "entity_types", entityTypes);
+	loadSection(config, "monster_subtypes", monsterSubtypes);
+	loadSection(config, "item_subtypes", itemSubtypes);
+	loadSection(config, "door_subtypes", doorSubtypes);
+	loadSection(config, "decor_subtypes", decorSubtypes);
+
+	buildIndexVector(entityTypes, entityTypesByIndex);
+
+	printf("[entity_names] loaded %d entity types, %d monster subtypes\n",
+		(int)entityTypes.size(), (int)monsterSubtypes.size());
+	return true;
+}
+
 bool EntityNames::loadWeaponNames(const char* weaponsPath) {
 	try {
 		YAML::Node config = YAML::LoadFile(weaponsPath);
-
-		// Build weapon name map from weapons: section (each weapon has name -> index)
-		weaponNames.clear();
-		if (YAML::Node weapons = config["weapons"]) {
-			for (auto it = weapons.begin(); it != weapons.end(); ++it) {
-				std::string name = it->first.as<std::string>();
-				int index = it->second["index"].as<int>(-1);
-				if (index >= 0) weaponNames[name] = index;
-			}
-		}
-		loadSection(config, "ammo_parms", ammoParms);
-		buildIndexVector(weaponNames, weaponNamesByIndex);
-
-		printf("[entity_names] loaded %d weapon names, %d ammo parms from %s\n",
-			(int)weaponNames.size(), (int)ammoParms.size(), weaponsPath);
-		return true;
+		return loadWeaponNamesFromNode(config);
 	} catch (const YAML::Exception& e) {
 		printf("[entity_names] %s: %s\n", weaponsPath, e.what());
 		return false;
 	}
+}
+
+bool EntityNames::loadWeaponNamesFromNode(const YAML::Node& config) {
+	// Build weapon name map from weapons: section (each weapon has name -> index)
+	weaponNames.clear();
+	if (YAML::Node weapons = config["weapons"]) {
+		for (auto it = weapons.begin(); it != weapons.end(); ++it) {
+			std::string name = it->first.as<std::string>();
+			int index = it->second["index"].as<int>(-1);
+			if (index >= 0) weaponNames[name] = index;
+		}
+	}
+	loadSection(config, "ammo_parms", ammoParms);
+	buildIndexVector(weaponNames, weaponNamesByIndex);
+
+	printf("[entity_names] loaded %d weapon names, %d ammo parms\n",
+		(int)weaponNames.size(), (int)ammoParms.size());
+	return true;
 }
 
 int EntityNames::lookupInMap(const std::unordered_map<std::string, int>& map,

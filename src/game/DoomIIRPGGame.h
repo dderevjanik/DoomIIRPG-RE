@@ -22,6 +22,7 @@ public:
 	bool startup(Applet* app) override;
 	void loadConfig(Applet* app) override;
 	void shutdown(Applet* app) override;
+	void registerLoaders(class ResourceManager* rm) override;
 	void registerOpcodes(Applet* app) override;
 	const char* getName() const override { return "Doom II RPG"; }
 };
