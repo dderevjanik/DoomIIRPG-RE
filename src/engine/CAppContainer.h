@@ -23,6 +23,7 @@ struct GameConfig {
 	std::string entryMap = "map00";
 	std::vector<int> noFogMaps;  // Map IDs where fog is disabled (e.g. outdoor maps)
 	std::vector<std::string> searchDirs;  // VFS search subdirectories for asset resolution
+	std::unordered_map<int, std::string> stringFiles;  // group index -> YAML file path (from game.yaml strings:)
 
 	// Inventory/ammo capacity caps
 	int capCredits = 9999;

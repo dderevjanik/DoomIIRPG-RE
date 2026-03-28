@@ -2736,19 +2736,29 @@ static bool convertStrings(ZipFile& zip, const std::string& outDir) {
 
 	printf("  strings.idx: %d index entries, %d real groups\n", totalEntries, n4);
 
-	// Build YAML using manual string building for better control of string quoting
-	std::string yaml;
-	yaml += "# String tables for DoomIIRPG\n";
-	yaml += "# Special character escapes:\n";
-	yaml += "#   \\x80 = line separator    \\x84 = cursor2      \\x85 = ellipsis\n";
-	yaml += "#   \\x87 = checkmark         \\x88 = mini-dash    \\x89 = grey line\n";
-	yaml += "#   \\x8A = cursor            \\x8B = shield       \\x8D = heart\n";
-	yaml += "#   \\x90 = pointer           \\xA0 = hard space\n";
-	yaml += "#   | = newline (in-game)     - = soft hyphen (word-break hint)\n";
-	yaml += "#\n";
-	yaml += "# String IDs in code: STRINGID(group, index) = (group << 10) | index\n";
-	yaml += "\n";
-	yaml += "strings:\n";
+	static const char* GROUP_DESCRIPTIONS[] = {
+		"UI messages, combat text, system strings",
+		"Entity/NPC names and descriptions",
+		"File/story strings and mission updates",
+		"Menu labels, button text, help screens",
+		"Level 1 dialog and story text",
+		"Level 2 dialog and story text",
+		"Level 3 dialog and story text",
+		"Level 4 dialog and story text",
+		"Level 5 dialog and story text",
+		"Level 6 dialog and story text",
+		"Level 7 dialog and story text",
+		"Level 8 dialog and story text",
+		"Level 9 dialog and story text",
+		"Test strings",
+		"Translation overrides",
+	};
+
+	// Collect all strings per group per language
+	struct GroupData {
+		std::vector<std::string> strings[MAX_LANGUAGES];
+	};
+	GroupData groupData[MAXTEXT];
 
 	int totalStrings = 0;
 	for (int lang = 0; lang < MAX_LANGUAGES; lang++) {
@@ -2763,8 +2773,6 @@ static bool convertStrings(ZipFile& zip, const std::string& outDir) {
 			if (!chunks[chunkId])
 				continue;
 
-			// Count and extract strings
-			std::vector<std::string> strings;
 			int pos = byteOffset;
 			int endPos = byteOffset + byteSize;
 			while (pos < endPos) {
@@ -2772,20 +2780,57 @@ static bool convertStrings(ZipFile& zip, const std::string& outDir) {
 				while (nul < endPos && chunks[chunkId][nul] != 0)
 					nul++;
 				int len = nul - pos;
-				strings.push_back(escapeString(chunks[chunkId] + pos, len));
+				groupData[grp].strings[lang].push_back(escapeString(chunks[chunkId] + pos, len));
 				pos = nul + 1;
 			}
-
-			yaml += "  # " + std::string(LANGUAGE_NAMES[lang]) + " / " + GROUP_NAMES[grp] + "\n";
-			yaml += "  - language: " + std::to_string(lang) + "\n";
-			yaml += "    group: " + std::to_string(grp) + "\n";
-			yaml += "    values:\n";
-			for (const auto& s : strings) {
-				yaml += "      - \"" + s + "\"\n";
-			}
-
-			totalStrings += (int)strings.size();
+			totalStrings += (int)groupData[grp].strings[lang].size();
 		}
+	}
+
+	// Create strings/ directory
+	std::string stringsDir = outDir + "/strings";
+#ifdef _WIN32
+	_mkdir(stringsDir.c_str());
+#else
+	mkdir(stringsDir.c_str(), 0755);
+#endif
+
+	// Write one file per group
+	for (int grp = 0; grp < MAXTEXT; grp++) {
+		std::string yaml;
+		yaml += "# " + std::string(GROUP_NAMES[grp]) + " (group " + std::to_string(grp) + ") — " + GROUP_DESCRIPTIONS[grp] + "\n";
+		yaml += "# STRINGID(" + std::to_string(grp) + ", index)\n";
+		yaml += "#\n";
+		yaml += "# Special character escapes:\n";
+		yaml += "#   \\x80 = line separator    \\x84 = cursor2      \\x85 = ellipsis\n";
+		yaml += "#   \\x87 = checkmark         \\x88 = mini-dash    \\x89 = grey line\n";
+		yaml += "#   \\x8A = cursor            \\x8B = shield       \\x8D = heart\n";
+		yaml += "#   \\x90 = pointer           \\xA0 = hard space\n";
+		yaml += "#   | = newline (in-game)     - = soft hyphen (word-break hint)\n";
+		yaml += "\n";
+
+		bool hasData = false;
+		for (int lang = 0; lang < MAX_LANGUAGES; lang++) {
+			if (!groupData[grp].strings[lang].empty()) {
+				hasData = true;
+				yaml += std::string(LANGUAGE_NAMES[lang]) + ":\n";
+				for (const auto& s : groupData[grp].strings[lang]) {
+					yaml += "  - \"" + s + "\"\n";
+				}
+			}
+		}
+		if (!hasData) {
+			yaml += "english:\n  []\n";
+		}
+
+		std::string filePath = stringsDir + "/" + GROUP_NAMES[grp] + ".yaml";
+		if (!writeString(filePath, yaml)) {
+			fprintf(stderr, "  Failed to write %s\n", filePath.c_str());
+			return false;
+		}
+		int grpTotal = 0;
+		for (int l = 0; l < MAX_LANGUAGES; l++) grpTotal += (int)groupData[grp].strings[l].size();
+		printf("  -> strings/%s.yaml (%d strings)\n", GROUP_NAMES[grp], grpTotal);
 	}
 
 	free(idxData);
@@ -2794,12 +2839,7 @@ static bool convertStrings(ZipFile& zip, const std::string& outDir) {
 			free(chunks[i]);
 	}
 
-	std::string path = outDir + "/strings.yaml";
-	if (!writeString(path, yaml)) {
-		fprintf(stderr, "  Failed to write %s\n", path.c_str());
-		return false;
-	}
-	printf("  -> %s (%d strings)\n", path.c_str(), totalStrings);
+	printf("  -> strings/ (%d total strings)\n", totalStrings);
 	return true;
 }
 
@@ -2904,6 +2944,13 @@ static bool generateGameYaml(const std::string& outDir) {
 	yaml += "\n";
 	yaml += "  # Map IDs where fog is disabled (e.g. outdoor maps)\n";
 	yaml += "  no_fog_maps: [2]\n";
+	yaml += "\n";
+	yaml += "  # String tables — maps group index to YAML file path.\n";
+	yaml += "  # Modders can add/reorder groups or point to custom files.\n";
+	yaml += "  strings:\n";
+	for (int g = 0; g < MAXTEXT; g++) {
+		yaml += "    " + std::to_string(g) + ": strings/" + GROUP_NAMES[g] + ".yaml\n";
+	}
 	yaml += "\n";
 	yaml += "  # Subdirectories to search when resolving asset files.\n";
 	yaml += "  # The engine tries the exact path first, then searches these dirs in order.\n";

@@ -47,7 +47,8 @@ public:
 	int textCount[Localization::MAXTEXT];
 	char** text;
 	uint16_t** textMap;
-	void* yamlData; // YAML::Node* for string data
+	void* yamlData; // Legacy: single YAML::Node* for old strings.yaml format
+	void* groupYamlData[Localization::MAXTEXT]; // Per-group DataNode* for split files
 
 	// Constructor
 	Localization();

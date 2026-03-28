@@ -17,6 +17,16 @@ Localization::Localization() {
 }
 
 Localization::~Localization() {
+	if (this->yamlData) {
+		delete (DataNode*)this->yamlData;
+		this->yamlData = nullptr;
+	}
+	for (int i = 0; i < Localization::MAXTEXT; i++) {
+		if (this->groupYamlData[i]) {
+			delete (DataNode*)this->groupYamlData[i];
+			this->groupYamlData[i] = nullptr;
+		}
+	}
 }
 
 bool Localization::startup() {
@@ -83,16 +93,40 @@ static std::string unescapeString(const std::string& s) {
 	return result;
 }
 
-bool Localization::loadFromYAML(const char* path) {
-	DataNode* root = new DataNode(DataNode::loadFile(path));
-	if (!*root) {
-		printf("Localization: failed to load %s\n", path);
-		delete root;
-		return false;
-	}
+static const char* LANGUAGE_NAMES[] = {"english", "french", "german", "italian", "spanish"};
+static const int MAX_LANGUAGES = 5;
 
-	this->yamlData = root;
+bool Localization::loadFromYAML(const char* path) {
 	this->defaultLanguage = 0;
+
+	// Try loading from game.yaml strings: section first
+	const auto& stringFiles = CAppContainer::getInstance()->gameConfig.stringFiles;
+	if (!stringFiles.empty()) {
+		int loaded = 0;
+		for (const auto& [groupId, filePath] : stringFiles) {
+			if (groupId < 0 || groupId >= Localization::MAXTEXT) continue;
+			DataNode* node = new DataNode(DataNode::loadFile(filePath.c_str()));
+			if (*node) {
+				this->groupYamlData[groupId] = node;
+				loaded++;
+			} else {
+				printf("Localization: warning: could not load %s (group %d)\n", filePath.c_str(), groupId);
+				delete node;
+				this->groupYamlData[groupId] = nullptr;
+			}
+		}
+		printf("Localization: loaded %d group files from game.yaml strings\n", loaded);
+	} else {
+		// Legacy: load single strings.yaml
+		DataNode* root = new DataNode(DataNode::loadFile(path));
+		if (!*root) {
+			printf("Localization: failed to load %s\n", path);
+			delete root;
+			return false;
+		}
+		this->yamlData = root;
+		printf("Localization: loaded strings from %s (legacy format)\n", path);
+	}
 
 	// Load initial groups (0, 1, 3, 14) — same as binary startup
 	int initialGroups[] = { 0, 1, 3, 14 };
@@ -100,24 +134,33 @@ bool Localization::loadFromYAML(const char* path) {
 		this->loadGroupFromYAML(this->defaultLanguage, initialGroups[g]);
 	}
 
-	printf("Localization: loaded strings from %s\n", path);
 	return true;
 }
 
 void Localization::loadGroupFromYAML(int language, int group) {
-	if (!this->yamlData) return;
-	DataNode* root = (DataNode*)this->yamlData;
-	DataNode strings = (*root)["strings"];
-	if (!strings || !strings.isSequence()) return;
-
-	// Find the matching language/group entry
 	DataNode values;
-	for (auto it = strings.begin(); it != strings.end(); ++it) {
-		DataNode entry = it.value();
-		if (entry["language"].asInt(-1) == language && entry["group"].asInt(-1) == group) {
-			values = entry["values"];
-			break;
+
+	if (this->groupYamlData[group]) {
+		// Split file format: root is {english: [...], french: [...], ...}
+		DataNode* root = (DataNode*)this->groupYamlData[group];
+		if (language >= 0 && language < MAX_LANGUAGES) {
+			values = (*root)[LANGUAGE_NAMES[language]];
 		}
+	} else if (this->yamlData) {
+		// Legacy single-file format
+		DataNode* root = (DataNode*)this->yamlData;
+		DataNode strings = (*root)["strings"];
+		if (!strings || !strings.isSequence()) return;
+
+		for (auto it = strings.begin(); it != strings.end(); ++it) {
+			DataNode entry = it.value();
+			if (entry["language"].asInt(-1) == language && entry["group"].asInt(-1) == group) {
+				values = entry["values"];
+				break;
+			}
+		}
+	} else {
+		return;
 	}
 
 	int count = values && values.isSequence() ? (int)values.size() : 0;

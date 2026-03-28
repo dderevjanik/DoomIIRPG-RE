@@ -249,6 +249,17 @@ int main(int argc, char* args[]) {
 				}
 			}
 
+			DataNode stringsNode = game["strings"];
+			if (stringsNode && stringsNode.isMap()) {
+				for (auto it = stringsNode.begin(); it != stringsNode.end(); ++it) {
+					int groupId = std::atoi(it.key().asString().c_str());
+					std::string filePath = it.value().asString("");
+					if (!filePath.empty()) {
+						gc.stringFiles[groupId] = filePath;
+					}
+				}
+			}
+
 			gc.maxEntities = game["max_entities"].asInt(gc.maxEntities);
 			gc.maxWeaponButtons = game["max_weapon_buttons"].asInt(gc.maxWeaponButtons);
 
