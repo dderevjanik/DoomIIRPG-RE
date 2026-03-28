@@ -44,33 +44,17 @@ MenuSystem::MenuSystem() {
 	std::memset(this, 0, sizeof(MenuSystem));
 	new (&yamlMenuDefs) std::vector<YAMLMenuDef>();
 	new (&yamlMenuById) std::unordered_map<int, int>();
-	new (&presMenus_) std::unordered_map<std::string, DataNode>();
 }
 
 MenuSystem::~MenuSystem() {
 	yamlMenuDefs.~vector();
 	yamlMenuById.~unordered_map();
-	presMenus_.~unordered_map();
 }
 
 bool MenuSystem::startup() {
 	this->app = CAppContainer::getInstance()->app;
 	Applet* app = this->app;
 	printf("[menu] startup\n");
-
-	// Pre-load menu presentation from ui.yaml (needed by loadMenusFromYAML)
-	{
-		DataNode uiConfig = DataNode::loadFile("ui.yaml");
-		if (uiConfig) {
-			DataNode presNode = uiConfig["menu_presentation"];
-			if (presNode) {
-				for (auto it = presNode.begin(); it != presNode.end(); ++it) {
-					this->presMenus_[it.key().asString()] = it.value();
-				}
-				printf("[menu] loaded %d menu presentation entries from ui.yaml\n", (int)this->presMenus_.size());
-			}
-		}
-	}
 
 	printf("[menu] loading from menus.yaml\n");
 	if (!this->loadMenusFromYAML("menus.yaml")) {
@@ -645,13 +629,10 @@ bool MenuSystem::loadUIFromYAML(const char* path) {
 		return node;
 	};
 
+	// Resolve inline theme from each menu's sourceNode (stored during loadMenusFromYAML)
 	int resolvedCount = 0;
 	for (auto& def : this->yamlMenuDefs) {
-		auto pit = this->presMenus_.find(def.name);
-		if (pit == this->presMenus_.end()) continue;
-
-		DataNode pres = pit->second;
-		DataNode btnNode = pres["button"];
+		DataNode btnNode = def.sourceNode["button"];
 		if (!btnNode) continue;
 
 		MenuTheme theme;
@@ -664,7 +645,7 @@ bool MenuSystem::loadUIFromYAML(const char* path) {
 			theme.btnHighlightRenderMode = resolved["highlight_render_mode"].asInt(0);
 		}
 
-		DataNode ibResolved = resolveComponent(pres["info_button"]);
+		DataNode ibResolved = resolveComponent(def.sourceNode["info_button"]);
 		if (ibResolved) {
 			theme.infoBtnImage = resolveImage(ibResolved["image"].asString(""));
 			theme.infoBtnHighlightImage = resolveImage(ibResolved["image_highlight"].asString(""));
@@ -672,10 +653,10 @@ bool MenuSystem::loadUIFromYAML(const char* path) {
 			theme.infoBtnHighlightRenderMode = ibResolved["highlight_render_mode"].asInt(0);
 		}
 
-		theme.itemHeight = pres["item_height"].asInt(46);
-		theme.itemPaddingBottom = pres["item_padding_bottom"].asInt(0);
+		theme.itemHeight = def.sourceNode["item_height"].asInt(46);
+		theme.itemPaddingBottom = def.sourceNode["item_padding_bottom"].asInt(0);
 
-		DataNode sb = pres["scrollbar"];
+		DataNode sb = def.sourceNode["scrollbar"];
 		if (sb) {
 			std::string style = sb["style"].asString("");
 			if (style == "dial") {
@@ -824,87 +805,116 @@ bool MenuSystem::loadMenusFromYAML(const char* path) {
 	// Load lookup tables from YAML sections (menu_types, actions, item_flags)
 	loadMenuLookups(config);
 
-	// Menu presentation was already loaded from ui.yaml into presMenus_
-	auto& presMenus = this->presMenus_;
-
 	DataNode menus = config["menus"];
-	if (!menus || !menus.isSequence() || menus.size() == 0) {
-		printf("[menu] menus.yaml has missing or empty 'menus' array\n");
+	if (!menus || !menus.isMap() || menus.size() == 0) {
+		printf("[menu] menus.yaml has missing or empty 'menus' map\n");
 		return false;
 	}
 
-	int count = (int)menus.size();
-	this->menuDataCount = (uint32_t)count;
-	this->menuData = new uint32_t[count];
+	int totalCount = (int)menus.size();
+
+	// Pre-count non-inject entries for binary menuData allocation
+	int binaryCount = 0;
+	for (auto it = menus.begin(); it != menus.end(); ++it) {
+		if (!it.value()["inject"].asBool(false)) binaryCount++;
+	}
+
+	this->menuDataCount = (uint32_t)binaryCount;
+	this->menuData = new uint32_t[binaryCount > 0 ? binaryCount : 1];
 
 	std::vector<uint32_t> itemWords;
 	int itemOffset = 0;
-
+	int binaryIndex = 0;
 	int yamlMenuCount = 0;
+	int injectCount = 0;
 
-	for (int i = 0; i < count; i++) {
-		DataNode menu = menus[i];
+	for (auto it = menus.begin(); it != menus.end(); ++it) {
+		DataNode menu = it.value();
+		std::string menuName = it.key().asString();
 
+		bool isInjected = menu["inject"].asBool(false);
 		int menuId = menu["menu_id"].asInt(0);
-		std::string menuName = menu["name"].asString("");
 		int menuType = menuTypeFromString(menu["type"].asString("default").c_str());
 		int menuMaxItems = menu["max_items"].asInt(0);
 
 		DataNode items = menu["items"];
 		int itemCount = (items && items.isSequence()) ? (int)items.size() : 0;
 
-		// Check if this menu uses extended features (widget, text, text2, or GEC extended flags)
-		bool hasExtendedFeatures = false;
-		for (int j = 0; j < itemCount && !hasExtendedFeatures; j++) {
-			DataNode item = items[j];
-			if (item["widget"] || item["text"] || item["text2"]) {
-				hasExtendedFeatures = true;
+		if (!isInjected) {
+			// Check if this menu uses extended features (widget, text, text2, or GEC extended flags)
+			bool hasExtendedFeatures = false;
+			for (int j = 0; j < itemCount && !hasExtendedFeatures; j++) {
+				DataNode item = items[j];
+				if (item["widget"] || item["text"] || item["text2"]) {
+					hasExtendedFeatures = true;
+				}
+				int flags = flagsFromString(item["flags"].asString("normal").c_str());
+				if (flags > 0xFFFF) {
+					hasExtendedFeatures = true;
+				}
 			}
-			int flags = flagsFromString(item["flags"].asString("normal").c_str());
-			if (flags > 0xFFFF) {
-				hasExtendedFeatures = true;
+
+			// Store in binary-packed format (for loadMenuItems compatibility)
+			uint8_t storedId = (uint8_t)(menuId & 0xFF);
+			int endOffset = itemOffset + itemCount * 2;
+			this->menuData[binaryIndex] = (uint32_t)storedId
+				| (uint32_t)((endOffset & 0xFFFF) << 8)
+				| (uint32_t)((menuType & 0xFF) << 24);
+			binaryIndex++;
+
+			// Parse items for extended menus (widget, text, text2, or GEC extended flags)
+			// (stored in YAMLMenuDef below, but hasExtendedFeatures is only for binary menus)
+			// We need this flag for the YAMLMenuItem parsing block below
+			menuMaxItems = menuMaxItems; // keep for def
+
+			// Always pack items into binary format too (for non-extended menus)
+			for (int j = 0; j < itemCount; j++) {
+				DataNode item = items[j];
+				int stringId = item["string_id"].asInt(0);
+				int flags = flagsFromString(item["flags"].asString("normal").c_str());
+				int action = actionFromString(item["action"].asString("none").c_str());
+				int param = item["param"].asInt(0);
+				DataNode gotoNode = item["goto"];
+				if (gotoNode) {
+					param = menuNameToId(gotoNode.asString(""));
+				}
+				int helpString = item["help_string"].asInt(0);
+				itemWords.push_back((uint32_t)((stringId & 0xFFFF) << 16) | (uint32_t)(flags & 0xFFFF));
+				itemWords.push_back((uint32_t)((helpString & 0xFFFF) << 16)
+					| (uint32_t)((action & 0xFF) << 8)
+					| (uint32_t)(param & 0xFF));
+				itemOffset += 2;
 			}
-		}
 
-		// Store in binary-packed format (for loadMenuItems compatibility)
-		uint8_t storedId = (uint8_t)(menuId & 0xFF);
-		int endOffset = itemOffset + itemCount * 2;
-		this->menuData[i] = (uint32_t)storedId
-			| (uint32_t)((endOffset & 0xFFFF) << 8)
-			| (uint32_t)((menuType & 0xFF) << 24);
+			// Check extended features for YAML items
+			if (hasExtendedFeatures) yamlMenuCount++;
 
-		// Store YAML-native menu definition for all menus with a valid ID
-		{
+			// Store YAML-native menu definition
 			YAMLMenuDef def;
 			def.name = menuName;
 			def.menuId = menuId;
 			def.type = menuType;
 			def.maxItems = menuMaxItems;
+			def.sourceNode = menu;
 
-			// Use presentation overlay if available, otherwise fall back to menu node itself
-			auto presIt = presMenus.find(menuName);
-			DataNode pres = (presIt != presMenus.end()) ? presIt->second : menu;
+			// Parse presentation properties (inline on the menu entry)
+			def.background = menu["background"].asString("");
+			def.drawLogo = menu["draw_logo"].asBool(false);
+			def.helpResource = menu["help_resource"].asInt(-1);
+			def.selectedIndex = menu["selected_index"].asInt(-1);
+			def.showInfoButtons = menu["show_info_buttons"].asBool(false);
+			def.itemWidth = menu["item_width"].asInt(0);
+			def.vibrationY = menu["vibration_y"].asInt(-1);
+			def.loadStartItem = menu["load_start_item"].asInt(0);
+			def.scrollIndex = menu["scroll_index"].asInt(-1);
 
-			// Parse presentation properties (from overlay or inline)
-			def.background = pres["background"].asString("");
-			def.drawLogo = pres["draw_logo"].asBool(false);
-			def.helpResource = pres["help_resource"].asInt(-1);
-			def.selectedIndex = pres["selected_index"].asInt(-1);
-			def.showInfoButtons = pres["show_info_buttons"].asBool(false);
-			def.itemWidth = pres["item_width"].asInt(0);
-			def.vibrationY = pres["vibration_y"].asInt(-1);
-			def.loadStartItem = pres["load_start_item"].asInt(0);
-			def.scrollIndex = pres["scroll_index"].asInt(-1);
-
-			// Parse per-menu scrollbar position offset
-			DataNode sbOff = pres["scrollbar_offset"];
+			DataNode sbOff = menu["scrollbar_offset"];
 			if (sbOff) {
 				def.scrollbarXOffset = sbOff["x"].asInt(-1);
 				def.scrollbarYOffset = sbOff["y"].asInt(-1);
 			}
 
-			// Parse yesno dialog parameters
-			DataNode yn = pres["yesno"];
+			DataNode yn = menu["yesno"];
 			if (yn) {
 				def.yesnoStringId = yn["string_id"].asInt(-1);
 				def.yesnoSelectYes = yn["select_yes"].asBool(false) ? 1 : 0;
@@ -915,33 +925,26 @@ bool MenuSystem::loadMenusFromYAML(const char* path) {
 				def.yesnoClearStack = yn["clear_stack"].asBool(false);
 			}
 
-			// Parse visible_buttons array
-			DataNode vb = pres["visible_buttons"];
+			DataNode vb = menu["visible_buttons"];
 			if (vb) {
-				for (int v = 0; v < vb.size(); v++) {
+				for (int v = 0; v < vb.size(); v++)
 					def.visibleButtons.push_back(vb[v].asInt());
-				}
 			}
-
-			// Parse visible_buttons_conditional (e.g., {13: music_on})
-			DataNode vbc = pres["visible_buttons_conditional"];
+			DataNode vbc = menu["visible_buttons_conditional"];
 			if (vbc) {
-				for (auto it = vbc.begin(); it != vbc.end(); ++it) {
+				for (auto it = vbc.begin(); it != vbc.end(); ++it)
 					def.visibleButtonsConditional.push_back(it.key().asInt());
-				}
 			}
 
-			// Parse layout (inline {x, y, w, h} map)
-			DataNode layoutNode = pres["layout"];
+			DataNode layoutNode = menu["layout"];
 			if (layoutNode && layoutNode.isMap()) {
 				def.layout = parseLayout(layoutNode);
 			}
 
-			// Parse items for extended menus (widget, text, text2, or GEC extended flags)
+			// Parse items for extended menus
 			if (hasExtendedFeatures) {
 				for (int j = 0; j < itemCount; j++) {
 					DataNode item = items[j];
-
 					YAMLMenuItem mi = {};
 					mi.textField = item["string_id"].asInt(0);
 					mi.flags = flagsFromString(item["flags"].asString("normal").c_str());
@@ -955,40 +958,66 @@ bool MenuSystem::loadMenusFromYAML(const char* path) {
 					mi.text = item["text"].asString("");
 					mi.text2 = item["text2"].asString("");
 					mi.widget = item["widget"].asString("");
-
-					// Apply widget flag mapping
 					if (!mi.widget.empty()) {
 						mi.flags |= widgetToFlags(mi.widget);
 					}
-
 					def.items.push_back(mi);
 				}
-				yamlMenuCount++;
 			}
 
 			this->yamlMenuById[menuId] = (int)this->yamlMenuDefs.size();
 			this->yamlMenuDefs.push_back(std::move(def));
-		}
+		} else {
+			// Inject menu — no binary data, just YAMLMenuDef
+			if (this->yamlMenuById.find(menuId) != this->yamlMenuById.end()) continue;
 
-		// Always pack items into binary format too (for non-extended menus)
-		for (int j = 0; j < itemCount; j++) {
-			DataNode item = items[j];
+			YAMLMenuDef def;
+			def.name = menuName;
+			def.menuId = menuId;
+			def.type = menuType;
+			def.isMissing = true;
+			def.sourceNode = menu;
 
-			int stringId = item["string_id"].asInt(0);
-			int flags = flagsFromString(item["flags"].asString("normal").c_str());
-			int action = actionFromString(item["action"].asString("none").c_str());
-			int param = item["param"].asInt(0);
-			DataNode gotoNode = item["goto"];
-			if (gotoNode) {
-				param = menuNameToId(gotoNode.asString(""));
+			def.background = menu["background"].asString("");
+			def.drawLogo = menu["draw_logo"].asBool(false);
+			def.helpResource = menu["help_resource"].asInt(-1);
+			def.selectedIndex = menu["selected_index"].asInt(-1);
+			def.showInfoButtons = menu["show_info_buttons"].asBool(false);
+			def.itemWidth = menu["item_width"].asInt(0);
+			def.vibrationY = menu["vibration_y"].asInt(-1);
+			def.loadStartItem = menu["load_start_item"].asInt(0);
+			def.scrollIndex = menu["scroll_index"].asInt(-1);
+
+			DataNode yn = menu["yesno"];
+			if (yn) {
+				def.yesnoStringId = yn["string_id"].asInt(-1);
+				def.yesnoSelectYes = yn["select_yes"].asBool(false) ? 1 : 0;
+				def.yesnoYesAction = actionFromString(yn["yes_action"].asString("0"));
+				def.yesnoYesParam = yn["yes_param"].asInt(0);
+				def.yesnoNoAction = actionFromString(yn["no_action"].asString("back"));
+				def.yesnoNoParam = yn["no_param"].asInt(0);
+				def.yesnoClearStack = yn["clear_stack"].asBool(false);
 			}
-			int helpString = item["help_string"].asInt(0);
 
-			itemWords.push_back((uint32_t)((stringId & 0xFFFF) << 16) | (uint32_t)(flags & 0xFFFF));
-			itemWords.push_back((uint32_t)((helpString & 0xFFFF) << 16)
-				| (uint32_t)((action & 0xFF) << 8)
-				| (uint32_t)(param & 0xFF));
-			itemOffset += 2;
+			DataNode vb = menu["visible_buttons"];
+			if (vb) {
+				for (int v = 0; v < vb.size(); v++)
+					def.visibleButtons.push_back(vb[v].asInt());
+			}
+			DataNode vbc = menu["visible_buttons_conditional"];
+			if (vbc) {
+				for (auto it = vbc.begin(); it != vbc.end(); ++it)
+					def.visibleButtonsConditional.push_back(it.key().asInt());
+			}
+
+			DataNode layoutNode = menu["layout"];
+			if (layoutNode && layoutNode.isMap()) {
+				def.layout = parseLayout(layoutNode);
+			}
+
+			this->yamlMenuById[menuId] = (int)this->yamlMenuDefs.size();
+			this->yamlMenuDefs.push_back(std::move(def));
+			injectCount++;
 		}
 	}
 
@@ -996,67 +1025,8 @@ bool MenuSystem::loadMenusFromYAML(const char* path) {
 	this->menuItems = new uint32_t[itemWords.size() > 0 ? itemWords.size() : 1];
 	std::memcpy(this->menuItems, itemWords.data(), itemWords.size() * sizeof(uint32_t));
 
-	// Inject menus marked with inject: true (menus not in binary menuData)
-	int injectCount = 0;
-	for (auto& kv : presMenus) {
-		DataNode p = kv.second;
-		if (!p["inject"].asBool(false)) continue;
-
-		int mmId = p["menu_id"].asInt(0);
-		if (this->yamlMenuById.find(mmId) != this->yamlMenuById.end()) continue;
-
-		std::string mmName = kv.first;
-		int mmType = menuTypeFromString(p["type"].asString("default").c_str());
-
-		YAMLMenuDef def;
-		def.name = mmName;
-		def.menuId = mmId;
-		def.type = mmType;
-		def.isMissing = true;
-		def.background = p["background"].asString("");
-		def.drawLogo = p["draw_logo"].asBool(false);
-		def.helpResource = p["help_resource"].asInt(-1);
-		def.selectedIndex = p["selected_index"].asInt(-1);
-		def.showInfoButtons = p["show_info_buttons"].asBool(false);
-		def.itemWidth = p["item_width"].asInt(0);
-		def.vibrationY = p["vibration_y"].asInt(-1);
-		def.loadStartItem = p["load_start_item"].asInt(0);
-		def.scrollIndex = p["scroll_index"].asInt(-1);
-
-		DataNode yn = p["yesno"];
-		if (yn) {
-			def.yesnoStringId = yn["string_id"].asInt(-1);
-			def.yesnoSelectYes = yn["select_yes"].asBool(false) ? 1 : 0;
-			def.yesnoYesAction = actionFromString(yn["yes_action"].asString("0"));
-			def.yesnoYesParam = yn["yes_param"].asInt(0);
-			def.yesnoNoAction = actionFromString(yn["no_action"].asString("back"));
-			def.yesnoNoParam = yn["no_param"].asInt(0);
-			def.yesnoClearStack = yn["clear_stack"].asBool(false);
-		}
-
-		DataNode vb = p["visible_buttons"];
-		if (vb) {
-			for (int v = 0; v < vb.size(); v++)
-				def.visibleButtons.push_back(vb[v].asInt());
-		}
-		DataNode vbc = p["visible_buttons_conditional"];
-		if (vbc) {
-			for (auto it = vbc.begin(); it != vbc.end(); ++it)
-				def.visibleButtonsConditional.push_back(it.key().asInt());
-		}
-
-		DataNode layoutNode = p["layout"];
-		if (layoutNode && layoutNode.isMap()) {
-			def.layout = parseLayout(layoutNode);
-		}
-
-		this->yamlMenuById[mmId] = (int)this->yamlMenuDefs.size();
-		this->yamlMenuDefs.push_back(std::move(def));
-		injectCount++;
-	}
-
 	printf("[menu] loaded %d menus (%d extended) + %d injected, %d item words from %s\n",
-		this->menuDataCount, yamlMenuCount, injectCount, this->menuItemsCount, path);
+		binaryCount, yamlMenuCount, injectCount, this->menuItemsCount, path);
 	return true;
 }
 

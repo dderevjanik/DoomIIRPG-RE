@@ -351,6 +351,8 @@ public:
         int yesnoNoAction = 2;
         int yesnoNoParam = 0;
         bool yesnoClearStack = false;
+        // Raw YAML node for deferred theme resolution (DataNode uses shared_ptr, safe to store)
+        DataNode sourceNode;
         // Resolved theme (populated after images load)
         MenuTheme resolvedTheme;
         bool hasTheme = false;
@@ -358,7 +360,6 @@ public:
 
     std::vector<YAMLMenuDef> yamlMenuDefs;
     std::unordered_map<int, int> yamlMenuById; // menuId -> index in yamlMenuDefs
-    std::unordered_map<std::string, DataNode> presMenus_; // menu presentation from ui.yaml
 
 	// Constructor
 	MenuSystem();
