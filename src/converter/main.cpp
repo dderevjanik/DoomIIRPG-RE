@@ -1781,7 +1781,7 @@ static bool generateAnimationsYaml(const std::string& outDir) {
 	};
 
 	out << YAML::BeginMap;
-	out << YAML::Key << "tiles" << YAML::Value << YAML::BeginMap;
+	out << YAML::Key << "sprites" << YAML::Value << YAML::BeginMap;
 	for (const auto& e : entries) {
 		out << YAML::Key << e.name << YAML::Value << YAML::Flow << YAML::BeginMap;
 		out << YAML::Key << "type" << YAML::Value << "bin";
@@ -1789,56 +1789,63 @@ static bool generateAnimationsYaml(const std::string& outDir) {
 		out << YAML::Key << "id" << YAML::Value << e.index;
 		out << YAML::EndMap;
 	}
-	out << YAML::EndMap;
 
 	// UI image assets (BMP files referenced by ui.yaml)
-	out << YAML::Key << "images" << YAML::Value << YAML::BeginMap;
-	out << YAML::Key << "menu_btn_bg" << YAML::Value << "menu_button_background.bmp";
-	out << YAML::Key << "menu_btn_bg_on" << YAML::Value << "menu_button_background_on.bmp";
-	out << YAML::Key << "menu_arrow_down" << YAML::Value << "menu_arrow_down.bmp";
-	out << YAML::Key << "menu_arrow_up" << YAML::Value << "menu_arrow_up.bmp";
-	out << YAML::Key << "switch_left_normal" << YAML::Value << "Switch_Left_Normal.bmp";
-	out << YAML::Key << "switch_left_active" << YAML::Value << "Switch_Left_Active.bmp";
-	out << YAML::Key << "slider_bar" << YAML::Value << "Menu_Option_SliderBar.bmp";
-	out << YAML::Key << "slider_on" << YAML::Value << "Menu_Option_SliderON.bmp";
-	out << YAML::Key << "slider_off" << YAML::Value << "Menu_Option_SliderOFF.bmp";
-	out << YAML::Key << "info_btn_normal" << YAML::Value << "gameMenu_infoButton_Normal.bmp";
-	out << YAML::Key << "info_btn_pressed" << YAML::Value << "gameMenu_infoButton_Pressed.bmp";
-	out << YAML::Key << "vending_arrow_up_glow" << YAML::Value << "vending_arrow_up_glow.bmp";
-	out << YAML::Key << "vending_arrow_down_glow" << YAML::Value << "vending_arrow_down_glow.bmp";
-	out << YAML::Key << "vending_btn_large" << YAML::Value << "vending_button_large.bmp";
-	out << YAML::Key << "vending_btn_help" << YAML::Value << "vending_button_help.bmp";
-	out << YAML::Key << "ingame_option_btn" << YAML::Value << "inGame_menu_option_button.bmp";
-	out << YAML::Key << "menu_dial" << YAML::Value << "Menu_Dial.bmp";
-	out << YAML::Key << "menu_dial_knob" << YAML::Value << "Menu_Dial_Knob.bmp";
-	out << YAML::Key << "menu_main_box" << YAML::Value << "Menu_Main_BOX.bmp";
-	out << YAML::Key << "main_menu_overlay" << YAML::Value << "Main_Menu_OverLay.bmp";
-	out << YAML::Key << "main_help_overlay" << YAML::Value << "Main_Help_OverLay.bmp";
-	out << YAML::Key << "main_about_overlay" << YAML::Value << "Main_About_OverLay.bmp";
-	out << YAML::Key << "menu_yesno_box" << YAML::Value << "Menu_YesNo_BOX.bmp";
-	out << YAML::Key << "menu_choose_diff_box" << YAML::Value << "Menu_ChooseDIFF_BOX.bmp";
-	out << YAML::Key << "menu_language_box" << YAML::Value << "Menu_Language_BOX.bmp";
-	out << YAML::Key << "menu_option_box3" << YAML::Value << "Menu_Option_BOX3.bmp";
-	out << YAML::Key << "menu_option_box4" << YAML::Value << "Menu_Option_BOX4.bmp";
-	out << YAML::Key << "hud_numbers" << YAML::Value << "Hud_Numbers.bmp";
-	out << YAML::Key << "game_menu_panel_bottom" << YAML::Value << "gameMenu_Panel_bottom.bmp";
-	out << YAML::Key << "game_menu_panel_bottom_sentry" << YAML::Value << "gameMenu_Panel_bottom_sentrybot.bmp";
-	out << YAML::Key << "game_menu_health" << YAML::Value << "gameMenu_Health.bmp";
-	out << YAML::Key << "game_menu_shield" << YAML::Value << "gameMenu_Shield.bmp";
-	out << YAML::Key << "game_menu_torn_page" << YAML::Value << "gameMenu_TornPage.bmp";
-	out << YAML::Key << "game_menu_background" << YAML::Value << "gameMenu_Background.bmp";
-	out << YAML::Key << "main_menu_dial_a_anim" << YAML::Value << "Main_Menu_DialA_anim.bmp";
-	out << YAML::Key << "main_menu_dial_c_anim" << YAML::Value << "Main_Menu_DialC_anim.bmp";
-	out << YAML::Key << "main_menu_slide_anim" << YAML::Value << "Main_Menu_Slide_anim.bmp";
-	out << YAML::Key << "game_menu_scrollbar" << YAML::Value << "gameMenu_ScrollBar.bmp";
-	out << YAML::Key << "game_menu_top_slider" << YAML::Value << "gameMenu_topSlider.bmp";
-	out << YAML::Key << "game_menu_mid_slider" << YAML::Value << "gameMenu_midSlider.bmp";
-	out << YAML::Key << "game_menu_bottom_slider" << YAML::Value << "gameMenu_bottomSlider.bmp";
-	out << YAML::Key << "vending_scrollbar" << YAML::Value << "vending_scroll_bar.bmp";
-	out << YAML::Key << "vending_scroll_btn_top" << YAML::Value << "vending_scroll_button_top.bmp";
-	out << YAML::Key << "vending_scroll_btn_mid" << YAML::Value << "vending_scroll_button_middle.bmp";
-	out << YAML::Key << "vending_scroll_btn_bottom" << YAML::Value << "vending_scroll_button_bottom.bmp";
-	out << YAML::Key << "logo" << YAML::Value << "logo2.bmp";
+	struct BmpEntry { const char* name; const char* file; };
+	static const BmpEntry bmpEntries[] = {
+		{"menu_btn_bg", "menu_button_background.bmp"},
+		{"menu_btn_bg_on", "menu_button_background_on.bmp"},
+		{"menu_arrow_down", "menu_arrow_down.bmp"},
+		{"menu_arrow_up", "menu_arrow_up.bmp"},
+		{"switch_left_normal", "Switch_Left_Normal.bmp"},
+		{"switch_left_active", "Switch_Left_Active.bmp"},
+		{"slider_bar", "Menu_Option_SliderBar.bmp"},
+		{"slider_on", "Menu_Option_SliderON.bmp"},
+		{"slider_off", "Menu_Option_SliderOFF.bmp"},
+		{"info_btn_normal", "gameMenu_infoButton_Normal.bmp"},
+		{"info_btn_pressed", "gameMenu_infoButton_Pressed.bmp"},
+		{"vending_arrow_up_glow", "vending_arrow_up_glow.bmp"},
+		{"vending_arrow_down_glow", "vending_arrow_down_glow.bmp"},
+		{"vending_btn_large", "vending_button_large.bmp"},
+		{"vending_btn_help", "vending_button_help.bmp"},
+		{"ingame_option_btn", "inGame_menu_option_button.bmp"},
+		{"menu_dial", "Menu_Dial.bmp"},
+		{"menu_dial_knob", "Menu_Dial_Knob.bmp"},
+		{"menu_main_box", "Menu_Main_BOX.bmp"},
+		{"main_menu_overlay", "Main_Menu_OverLay.bmp"},
+		{"main_help_overlay", "Main_Help_OverLay.bmp"},
+		{"main_about_overlay", "Main_About_OverLay.bmp"},
+		{"menu_yesno_box", "Menu_YesNo_BOX.bmp"},
+		{"menu_choose_diff_box", "Menu_ChooseDIFF_BOX.bmp"},
+		{"menu_language_box", "Menu_Language_BOX.bmp"},
+		{"menu_option_box3", "Menu_Option_BOX3.bmp"},
+		{"menu_option_box4", "Menu_Option_BOX4.bmp"},
+		{"hud_numbers", "Hud_Numbers.bmp"},
+		{"game_menu_panel_bottom", "gameMenu_Panel_bottom.bmp"},
+		{"game_menu_panel_bottom_sentry", "gameMenu_Panel_bottom_sentrybot.bmp"},
+		{"game_menu_health", "gameMenu_Health.bmp"},
+		{"game_menu_shield", "gameMenu_Shield.bmp"},
+		{"game_menu_torn_page", "gameMenu_TornPage.bmp"},
+		{"game_menu_background", "gameMenu_Background.bmp"},
+		{"main_menu_dial_a_anim", "Main_Menu_DialA_anim.bmp"},
+		{"main_menu_dial_c_anim", "Main_Menu_DialC_anim.bmp"},
+		{"main_menu_slide_anim", "Main_Menu_Slide_anim.bmp"},
+		{"game_menu_scrollbar", "gameMenu_ScrollBar.bmp"},
+		{"game_menu_top_slider", "gameMenu_topSlider.bmp"},
+		{"game_menu_mid_slider", "gameMenu_midSlider.bmp"},
+		{"game_menu_bottom_slider", "gameMenu_bottomSlider.bmp"},
+		{"vending_scrollbar", "vending_scroll_bar.bmp"},
+		{"vending_scroll_btn_top", "vending_scroll_button_top.bmp"},
+		{"vending_scroll_btn_mid", "vending_scroll_button_middle.bmp"},
+		{"vending_scroll_btn_bottom", "vending_scroll_button_bottom.bmp"},
+		{"logo", "logo2.bmp"},
+	};
+	for (const auto& img : bmpEntries) {
+		out << YAML::Key << img.name << YAML::Value << YAML::Flow << YAML::BeginMap;
+		out << YAML::Key << "type" << YAML::Value << "bmp";
+		out << YAML::Key << "file" << YAML::Value << img.file;
+		out << YAML::EndMap;
+	}
 	out << YAML::EndMap;
 
 	out << YAML::EndMap;

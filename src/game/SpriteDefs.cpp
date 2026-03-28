@@ -9,10 +9,13 @@ std::unordered_map<std::string, SpriteSource> SpriteDefs::tileNameToSource;
 std::unordered_map<std::string, int> SpriteDefs::ranges;
 
 bool SpriteDefs::parse(const DataNode& config) {
-	// Load tiles section
-	DataNode tiles = config["tiles"];
+	// Load sprites section (fall back to "tiles" for backwards compat)
+	DataNode tiles = config["sprites"];
 	if (!tiles || !tiles.isMap()) {
-		printf("[sprites] missing or invalid 'tiles' map\n");
+		tiles = config["tiles"];
+	}
+	if (!tiles || !tiles.isMap()) {
+		printf("[sprites] missing or invalid 'sprites' map\n");
 		return false;
 	}
 
@@ -38,8 +41,8 @@ bool SpriteDefs::parse(const DataNode& config) {
 			std::string typeStr = entry["type"].asString("bin");
 			src.file = entry["file"].asString("");
 
-			if (typeStr == "png") {
-				src.type = SpriteSourceType::Png;
+			if (typeStr == "png" || typeStr == "bmp") {
+				src.type = (typeStr == "bmp") ? SpriteSourceType::Bmp : SpriteSourceType::Png;
 				SpriteDefs::tileNameToIndex[name] = SpriteDefs::SPRITE_INDEX_EXTERNAL;
 			} else {
 				src.type = SpriteSourceType::Bin;
@@ -65,13 +68,15 @@ bool SpriteDefs::parse(const DataNode& config) {
 		}
 	}
 
-	int pngCount = 0;
+	int pngCount = 0, bmpCount = 0;
 	for (const auto& [k, v] : SpriteDefs::tileNameToSource) {
 		if (v.type == SpriteSourceType::Png) pngCount++;
+		if (v.type == SpriteSourceType::Bmp) bmpCount++;
 	}
-	printf("[sprites] loaded %d tile names (%d bin, %d png), %d ranges\n",
+	int binCount = (int)SpriteDefs::tileNameToIndex.size() - pngCount - bmpCount;
+	printf("[sprites] loaded %d sprite names (%d bin, %d png, %d bmp), %d ranges\n",
 		(int)SpriteDefs::tileNameToIndex.size(),
-		(int)SpriteDefs::tileNameToIndex.size() - pngCount, pngCount,
+		binCount, pngCount, bmpCount,
 		(int)SpriteDefs::ranges.size());
 	return true;
 }
@@ -95,6 +100,16 @@ const SpriteSource* SpriteDefs::getSource(const std::string& name) {
 bool SpriteDefs::isPng(const std::string& name) {
 	const SpriteSource* src = getSource(name);
 	return src && src->type == SpriteSourceType::Png;
+}
+
+bool SpriteDefs::isBmp(const std::string& name) {
+	const SpriteSource* src = getSource(name);
+	return src && src->type == SpriteSourceType::Bmp;
+}
+
+bool SpriteDefs::isExternal(const std::string& name) {
+	const SpriteSource* src = getSource(name);
+	return src && (src->type == SpriteSourceType::Png || src->type == SpriteSourceType::Bmp);
 }
 
 int SpriteDefs::getRange(const std::string& name) {

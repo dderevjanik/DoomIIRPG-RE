@@ -4,7 +4,7 @@
 #include <string>
 #include <unordered_map>
 
-enum class SpriteSourceType { Bin, Png };
+enum class SpriteSourceType { Bin, Png, Bmp };
 
 struct SpriteSource {
 	SpriteSourceType type = SpriteSourceType::Bin;
@@ -16,8 +16,8 @@ class SpriteDefs {
   public:
 	static constexpr int SPRITE_INDEX_EXTERNAL = -1;
 
-	// Name-to-index map (populated from sprites.yaml "tiles" section)
-	// PNG sprites are mapped to SPRITE_INDEX_EXTERNAL (-1)
+	// Name-to-index map (populated from sprites.yaml "sprites" section)
+	// PNG/BMP sprites are mapped to SPRITE_INDEX_EXTERNAL (-1)
 	static std::unordered_map<std::string, int> tileNameToIndex;
 
 	// Index-to-name reverse map (for debugging/logging)
@@ -40,6 +40,12 @@ class SpriteDefs {
 
 	// Check if a sprite is a PNG source
 	static bool isPng(const std::string& name);
+
+	// Check if a sprite is a BMP image source
+	static bool isBmp(const std::string& name);
+
+	// Check if a sprite is external (PNG or BMP, not from bin)
+	static bool isExternal(const std::string& name);
 
 	// Get range value by name, returns 0 if not found
 	static int getRange(const std::string& name);
