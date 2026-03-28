@@ -2966,29 +2966,6 @@ static bool generateGameYaml(const std::string& outDir) {
 	yaml += "    - comicbook\n";
 	yaml += "    - data\n";
 	yaml += "\n";
-	yaml += "  # Joke items dropped by corpses on each map\n";
-	yaml += "  joke_items:\n";
-	yaml += "    - map: 1\n";
-	yaml += "      items: [180, 181, 182, 183, 184]\n";
-	yaml += "    - map: 2\n";
-	yaml += "      items: [149, 150, 151, 152, 153]\n";
-	yaml += "    - map: 3\n";
-	yaml += "      items: [130, 131, 132, 133, 134]\n";
-	yaml += "    - map: 4\n";
-	yaml += "      items: [129, 130, 131, 132, 133]\n";
-	yaml += "    - map: 5\n";
-	yaml += "      items: [131, 132, 133, 134, 135]\n";
-	yaml += "    - map: 6\n";
-	yaml += "      items: [78, 79, 80, 81, 82]\n";
-	yaml += "    - map: 7\n";
-	yaml += "      items: [24, 25, 26, 27, 28]\n";
-	yaml += "    - map: 8\n";
-	yaml += "      items: [34, 35, 36, 37, 38]\n";
-	yaml += "    - map: 9\n";
-	yaml += "      items: [15, 16, 17, 18, 19]\n";
-	yaml += "    - map: 10\n";
-	yaml += "      items: [9, 10, 11, 12, 13]\n";
-	yaml += "\n";
 	yaml += "  # Player starting stats\n";
 	yaml += "  starting_max_health: 100\n";
 	yaml += "\n";
@@ -3321,14 +3298,62 @@ static bool generateLevelsYaml(const std::string& outDir) {
 		{9, {13,12,11,10,9,8,7,2,1,0}, {{5,100}}, 27, {{17,160},{16,90},{11,23},{12,28},{24,174}}, {{1,29},{3,8},{2,44},{4,55},{5,90},{6,5}}, 8281, 27,17,8,22,46, 4},
 	};
 
+	// Joke items dropped by corpses on each map
+	struct JokeEntry { int map; std::vector<int> items; };
+	JokeEntry jokeEntries[] = {
+		{1, {180, 181, 182, 183, 184}},
+		{2, {149, 150, 151, 152, 153}},
+		{3, {130, 131, 132, 133, 134}},
+		{4, {129, 130, 131, 132, 133}},
+		{5, {131, 132, 133, 134, 135}},
+		{6, {78, 79, 80, 81, 82}},
+		{7, {24, 25, 26, 27, 28}},
+		{8, {34, 35, 36, 37, 38}},
+		{9, {15, 16, 17, 18, 19}},
+		{10, {9, 10, 11, 12, 13}},
+	};
+	std::map<int, std::vector<int>> jokeMap;
+	for (const auto& je : jokeEntries) {
+		jokeMap[je.map] = je.items;
+	}
+
 	std::string yaml;
 	yaml += "# Per-level configuration.\n";
 	yaml += "# Each key under \"levels:\" is a map number.\n";
 	yaml += "\n";
 	yaml += "levels:\n";
 
+	// Emit levels that only have joke_items (no loadout)
+	for (const auto& je : jokeEntries) {
+		bool hasLoadout = false;
+		for (const auto& e : entries) {
+			if (e.map == je.map) { hasLoadout = true; break; }
+		}
+		if (!hasLoadout) {
+			yaml += "  " + std::to_string(je.map) + ":\n";
+			yaml += "    joke_items: [";
+			for (size_t i = 0; i < je.items.size(); i++) {
+				if (i > 0) yaml += ", ";
+				yaml += std::to_string(je.items[i]);
+			}
+			yaml += "]\n\n";
+		}
+	}
+
 	for (const auto& e : entries) {
 		yaml += "  " + std::to_string(e.map) + ":\n";
+
+		// Joke items for this level
+		auto jit = jokeMap.find(e.map);
+		if (jit != jokeMap.end()) {
+			yaml += "    joke_items: [";
+			for (size_t i = 0; i < jit->second.size(); i++) {
+				if (i > 0) yaml += ", ";
+				yaml += std::to_string(jit->second[i]);
+			}
+			yaml += "]\n";
+		}
+
 		yaml += "    starting_loadout:\n";
 
 		// Weapons

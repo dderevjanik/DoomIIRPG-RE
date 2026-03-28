@@ -394,21 +394,27 @@ int main(int argc, char* args[]) {
 				}
 			}
 
-			DataNode ji = game["joke_items"];
-			if (ji) {
-				for (auto it = ji.begin(); it != ji.end(); ++it) {
-					DataNode entry = it.value();
-					int mapId = entry["map"].asInt(0);
-					std::vector<int> items;
-					DataNode itemList = entry["items"];
-					for (auto it2 = itemList.begin(); it2 != itemList.end(); ++it2) {
-						items.push_back(it2.value().asInt(0));
+			printf("[main] Game: %s (save: %s)\n", gc.name.c_str(), gc.saveDir.c_str());
+		}
+
+		// Load joke_items from levels.yaml (per-level data)
+		DataNode levelsConfig = DataNode::loadFile("levels.yaml");
+		if (levelsConfig) {
+			GameConfig& gc2 = CAppContainer::getInstance()->gameConfig;
+			DataNode levels = levelsConfig["levels"];
+			if (levels && levels.isMap()) {
+				for (auto it = levels.begin(); it != levels.end(); ++it) {
+					int mapId = std::atoi(it.key().asString().c_str());
+					DataNode jiNode = it.value()["joke_items"];
+					if (jiNode && jiNode.isSequence()) {
+						std::vector<int> items;
+						for (auto it2 = jiNode.begin(); it2 != jiNode.end(); ++it2) {
+							items.push_back(it2.value().asInt(0));
+						}
+						gc2.jokeItems[mapId] = std::move(items);
 					}
-					gc.jokeItems[mapId] = std::move(items);
 				}
 			}
-
-			printf("[main] Game: %s (save: %s)\n", gc.name.c_str(), gc.saveDir.c_str());
 		}
 	}
 
