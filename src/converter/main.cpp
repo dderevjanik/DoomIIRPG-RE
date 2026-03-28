@@ -2105,29 +2105,27 @@ static bool convertMenus(ZipFile& zip, const std::string& outDir) {
 	out << YAML::Newline;
 	out << YAML::BeginMap;
 
-	// Emit lookup tables for menu types, actions, and item flags
-	out << YAML::Key << "menu_types" << YAML::Value << YAML::BeginMap;
-	for (int i = 0; i < 10; i++) {
-		out << YAML::Key << MENU_TYPE_NAMES[i] << YAML::Value << i;
-	}
-	out << YAML::EndMap;
-
-	out << YAML::Key << "actions" << YAML::Value << YAML::BeginMap;
-	for (const auto& e : ACTION_TABLE) {
-		out << YAML::Key << e.name << YAML::Value << e.id;
-	}
-	out << YAML::EndMap;
-
-	out << YAML::Key << "item_flags" << YAML::Value << YAML::BeginMap;
-	for (const auto& e : FLAG_TABLE) {
-		out << YAML::Key << e.name << YAML::Value << e.bit;
-	}
-	out << YAML::EndMap;
-
 	// Helper lambdas for theme emission
-	auto emitThemeMain = [](YAML::Emitter& e) {
-		e << YAML::Key << "button" << YAML::Value << "menu_button";
-		e << YAML::Key << "info_button" << YAML::Value << "info_button";
+	// Emit inlined button/info_button theme properties (no component references)
+	auto emitButtonMain = [](YAML::Emitter& e) {
+		e << YAML::Key << "button" << YAML::Value << YAML::Flow << YAML::BeginMap;
+		e << YAML::Key << "image" << YAML::Value << "menu_btn_bg";
+		e << YAML::Key << "image_highlight" << YAML::Value << "menu_btn_bg_on";
+		e << YAML::Key << "render_mode" << YAML::Value << 1;
+		e << YAML::Key << "highlight_render_mode" << YAML::Value << 0;
+		e << YAML::EndMap;
+	};
+	auto emitInfoButton = [](YAML::Emitter& e) {
+		e << YAML::Key << "info_button" << YAML::Value << YAML::Flow << YAML::BeginMap;
+		e << YAML::Key << "image" << YAML::Value << "info_btn_normal";
+		e << YAML::Key << "image_highlight" << YAML::Value << "info_btn_pressed";
+		e << YAML::Key << "render_mode" << YAML::Value << 1;
+		e << YAML::Key << "highlight_render_mode" << YAML::Value << 0;
+		e << YAML::EndMap;
+	};
+	auto emitThemeMain = [&](YAML::Emitter& e) {
+		emitButtonMain(e);
+		emitInfoButton(e);
 		e << YAML::Key << "item_height" << YAML::Value << 46;
 		e << YAML::Key << "scrollbar" << YAML::Value << YAML::Flow << YAML::BeginMap;
 		e << YAML::Key << "style" << YAML::Value << "dial";
@@ -2135,23 +2133,23 @@ static bool convertMenus(ZipFile& zip, const std::string& outDir) {
 		e << YAML::Key << "default_y" << YAML::Value << 81;
 		e << YAML::EndMap;
 	};
-	auto emitThemeMainWide = [](YAML::Emitter& e) {
-		e << YAML::Key << "button" << YAML::Value << YAML::BeginMap;
+	auto emitThemeMainWide = [&](YAML::Emitter& e) {
+		e << YAML::Key << "button" << YAML::Value << YAML::Flow << YAML::BeginMap;
 		e << YAML::Key << "image" << YAML::Value << "menu_btn_bg_ext";
 		e << YAML::Key << "image_highlight" << YAML::Value << "menu_btn_bg_ext_on";
 		e << YAML::Key << "render_mode" << YAML::Value << 1;
 		e << YAML::Key << "highlight_render_mode" << YAML::Value << 0;
 		e << YAML::EndMap;
-		e << YAML::Key << "info_button" << YAML::Value << "info_button";
+		emitInfoButton(e);
 		e << YAML::Key << "item_height" << YAML::Value << 46;
 	};
-	auto emitThemeIngame = [](YAML::Emitter& e) {
-		e << YAML::Key << "button" << YAML::Value << YAML::BeginMap;
+	auto emitThemeIngame = [&](YAML::Emitter& e) {
+		e << YAML::Key << "button" << YAML::Value << YAML::Flow << YAML::BeginMap;
 		e << YAML::Key << "image" << YAML::Value << "ingame_option_btn";
 		e << YAML::Key << "render_mode" << YAML::Value << 1;
 		e << YAML::Key << "highlight_render_mode" << YAML::Value << 0;
 		e << YAML::EndMap;
-		e << YAML::Key << "info_button" << YAML::Value << "info_button";
+		emitInfoButton(e);
 		e << YAML::Key << "item_padding_bottom" << YAML::Value << 10;
 		e << YAML::Key << "scrollbar" << YAML::Value << YAML::Flow << YAML::BeginMap;
 		e << YAML::Key << "style" << YAML::Value << "bar";
@@ -2178,7 +2176,24 @@ static bool convertMenus(ZipFile& zip, const std::string& outDir) {
 		e << YAML::EndMap;
 	};
 	auto emitVisibleButtons2 = [](YAML::Emitter& e) {
-		e << YAML::Key << "visible_buttons" << YAML::Value << YAML::Flow << YAML::BeginSeq << 11 << 15 << YAML::EndSeq;
+		e << YAML::Key << "visible_buttons" << YAML::Value << YAML::Flow << YAML::BeginSeq << "softkey_left" << "softkey_right" << YAML::EndSeq;
+	};
+	auto emitBgItem = [](YAML::Emitter& e) {
+		e << YAML::BeginMap;
+		e << YAML::Key << "type" << YAML::Value << "background";
+		e << YAML::Key << "image" << YAML::Value << "main_bg";
+		e << YAML::Key << "x" << YAML::Value << 240;
+		e << YAML::Key << "y" << YAML::Value << 160;
+		e << YAML::Key << "anchor" << YAML::Value << "center";
+		e << YAML::EndMap;
+	};
+	auto emitLogoItem = [](YAML::Emitter& e) {
+		e << YAML::BeginMap;
+		e << YAML::Key << "type" << YAML::Value << "image";
+		e << YAML::Key << "image" << YAML::Value << "logo";
+		e << YAML::Key << "x" << YAML::Value << "center";
+		e << YAML::Key << "y" << YAML::Value << 0;
+		e << YAML::EndMap;
 	};
 
 	out << YAML::Key << "menus" << YAML::Value << YAML::BeginMap;
@@ -2204,36 +2219,33 @@ static bool convertMenus(ZipFile& zip, const std::string& outDir) {
 
 		// --- Emit presentation properties based on menu name ---
 		std::string mn(mname ? mname : "");
+		bool needsBg = false, needsLogo = false;
 
-		// Main menus with draw_logo, background, visible_buttons [11]
+		// Main menus with logo, background, visible_buttons [11]
 		if (mn == "main" || mn == "main_more_games" || mn == "main_options" || mn == "select_language") {
 			emitThemeMain(out);
 			emitLayoutStr(out, "center", 126, "btn_width", 176);
-			out << YAML::Key << "draw_logo" << YAML::Value << true;
-			out << YAML::Key << "background" << YAML::Value << "main_bg";
-			out << YAML::Key << "visible_buttons" << YAML::Value << YAML::Flow << YAML::BeginSeq << 11 << YAML::EndSeq;
+			needsLogo = true; needsBg = true;
+			out << YAML::Key << "visible_buttons" << YAML::Value << YAML::Flow << YAML::BeginSeq << "softkey_left" << YAML::EndSeq;
 		} else if (mn == "main_help") {
 			emitThemeMain(out);
 			emitLayoutStr(out, "center", 126, "btn_width", 176);
-			out << YAML::Key << "draw_logo" << YAML::Value << true;
-			out << YAML::Key << "background" << YAML::Value << "main_bg";
+			needsLogo = true; needsBg = true;
 			out << YAML::Key << "load_start_item" << YAML::Value << 1;
-			out << YAML::Key << "visible_buttons" << YAML::Value << YAML::Flow << YAML::BeginSeq << 11 << YAML::EndSeq;
+			out << YAML::Key << "visible_buttons" << YAML::Value << YAML::Flow << YAML::BeginSeq << "softkey_left" << YAML::EndSeq;
 		} else if (mn == "main_minigame" || mn == "main_difficulty") {
 			emitThemeMain(out);
 			emitLayoutStr(out, "center", 126, "btn_width", 176);
-			out << YAML::Key << "draw_logo" << YAML::Value << true;
-			out << YAML::Key << "background" << YAML::Value << "main_bg";
+			needsLogo = true; needsBg = true;
 			out << YAML::Key << "selected_index" << YAML::Value << 1;
 			out << YAML::Key << "load_start_item" << YAML::Value << 1;
-			out << YAML::Key << "visible_buttons" << YAML::Value << YAML::Flow << YAML::BeginSeq << 11 << YAML::EndSeq;
+			out << YAML::Key << "visible_buttons" << YAML::Value << YAML::Flow << YAML::BeginSeq << "softkey_left" << YAML::EndSeq;
 		}
 		// Main YesNo menus
 		else if (mn == "main_exit") {
 			emitThemeMain(out);
 			emitLayoutStr(out, "center", 126, "btn_width", 176);
-			out << YAML::Key << "draw_logo" << YAML::Value << true;
-			out << YAML::Key << "background" << YAML::Value << "main_bg";
+			needsLogo = true; needsBg = true;
 			out << YAML::Key << "yesno" << YAML::Value << YAML::BeginMap;
 			out << YAML::Key << "string_id" << YAML::Value << 106;
 			out << YAML::Key << "select_yes" << YAML::Value << false;
@@ -2243,8 +2255,7 @@ static bool convertMenus(ZipFile& zip, const std::string& outDir) {
 		} else if (mn == "main_confirmnew") {
 			emitThemeMain(out);
 			emitLayoutStr(out, "center", 126, "btn_width", 176);
-			out << YAML::Key << "draw_logo" << YAML::Value << true;
-			out << YAML::Key << "background" << YAML::Value << "main_bg";
+			needsLogo = true; needsBg = true;
 			out << YAML::Key << "yesno" << YAML::Value << YAML::BeginMap;
 			out << YAML::Key << "string_id" << YAML::Value << 107;
 			out << YAML::Key << "select_yes" << YAML::Value << false;
@@ -2254,7 +2265,7 @@ static bool convertMenus(ZipFile& zip, const std::string& outDir) {
 		} else if (mn == "main_confirmnew2") {
 			emitThemeMain(out);
 			emitLayoutStr(out, "center", 126, "btn_width", 176);
-			out << YAML::Key << "background" << YAML::Value << "main_bg";
+			needsBg = true;
 			out << YAML::Key << "yesno" << YAML::Value << YAML::BeginMap;
 			out << YAML::Key << "string_id" << YAML::Value << 108;
 			out << YAML::Key << "select_yes" << YAML::Value << false;
@@ -2264,8 +2275,7 @@ static bool convertMenus(ZipFile& zip, const std::string& outDir) {
 		} else if (mn == "enable_sounds") {
 			emitThemeMain(out);
 			emitLayoutStr(out, "center", 126, "btn_width", 176);
-			out << YAML::Key << "draw_logo" << YAML::Value << true;
-			out << YAML::Key << "background" << YAML::Value << "main_bg";
+			needsLogo = true; needsBg = true;
 			out << YAML::Key << "yesno" << YAML::Value << YAML::BeginMap;
 			out << YAML::Key << "string_id" << YAML::Value << 168;
 			out << YAML::Key << "select_yes" << YAML::Value << true;
@@ -2280,7 +2290,6 @@ static bool convertMenus(ZipFile& zip, const std::string& outDir) {
 		else if (mn == "end_ranking") {
 			emitThemeMain(out);
 			emitLayoutInt(out, 23, 0, 407, 320);
-			out << YAML::Key << "background" << YAML::Value << "none";
 		} else if (mn == "end" || mn == "end_finalquit") {
 			emitThemeMain(out);
 			emitLayoutStr(out, "center", 126, "btn_width", 176);
@@ -2353,8 +2362,10 @@ static bool convertMenus(ZipFile& zip, const std::string& outDir) {
 			emitVisibleButtons2(out);
 		}
 
-		if (numItems > 0) {
+		if (numItems > 0 || needsBg || needsLogo) {
 			out << YAML::Key << "items" << YAML::Value << YAML::BeginSeq;
+			if (needsBg) emitBgItem(out);
+			if (needsLogo) emitLogoItem(out);
 			for (int j = 0; j < numItems; j++) {
 				int idx = itemStart + j * 2;
 				uint32_t w0 = menuItems[idx];
@@ -2412,9 +2423,11 @@ static bool convertMenus(ZipFile& zip, const std::string& outDir) {
 		out << YAML::Key << "type" << YAML::Value << "help";
 		emitThemeMain(out);
 		emitLayoutInt(out, 85, 0, 300, 320);
-		out << YAML::Key << "background" << YAML::Value << "main_bg";
-		out << YAML::Key << "visible_buttons" << YAML::Value << YAML::Flow << YAML::BeginSeq << 11 << YAML::EndSeq;
+		out << YAML::Key << "visible_buttons" << YAML::Value << YAML::Flow << YAML::BeginSeq << "softkey_left" << YAML::EndSeq;
 		out << YAML::Key << "help_resource" << YAML::Value << h.res;
+		out << YAML::Key << "items" << YAML::Value << YAML::BeginSeq;
+		emitBgItem(out);
+		out << YAML::EndSeq;
 		out << YAML::EndMap;
 	}
 
@@ -2537,14 +2550,15 @@ static bool convertMenus(ZipFile& zip, const std::string& outDir) {
 	out << YAML::Key << "type" << YAML::Value << "main_list";
 	emitThemeMain(out);
 	emitLayoutStr(out, "center", 10, "btn_width", 300);
-	out << YAML::Key << "draw_logo" << YAML::Value << false;
-	out << YAML::Key << "background" << YAML::Value << "main_bg";
 	out << YAML::Key << "item_width" << YAML::Value << 204;
-	out << YAML::Key << "visible_buttons" << YAML::Value << YAML::Flow << YAML::BeginSeq << 11 << 12 << YAML::EndSeq;
+	out << YAML::Key << "visible_buttons" << YAML::Value << YAML::Flow << YAML::BeginSeq << "softkey_left" << "sfx_volume_slider" << YAML::EndSeq;
 	out << YAML::Key << "visible_buttons_conditional" << YAML::Value << YAML::BeginMap;
-	out << YAML::Key << 13 << YAML::Value << "music_on";
+	out << YAML::Key << "music_volume_slider" << YAML::Value << "music_on";
 	out << YAML::EndMap;
 	out << YAML::Key << "vibration_y" << YAML::Value << 169;
+	out << YAML::Key << "items" << YAML::Value << YAML::BeginSeq;
+	emitBgItem(out);
+	out << YAML::EndSeq;
 	out << YAML::EndMap;
 
 	out << YAML::Key << "main_options_video" << YAML::Value << YAML::BeginMap;
@@ -2553,8 +2567,9 @@ static bool convertMenus(ZipFile& zip, const std::string& outDir) {
 	out << YAML::Key << "type" << YAML::Value << "main_list";
 	emitThemeMainWide(out);
 	emitLayoutStr(out, "center", 10, "btn_width", 300);
-	out << YAML::Key << "draw_logo" << YAML::Value << false;
-	out << YAML::Key << "background" << YAML::Value << "main_bg";
+	out << YAML::Key << "items" << YAML::Value << YAML::BeginSeq;
+	emitBgItem(out);
+	out << YAML::EndSeq;
 	out << YAML::EndMap;
 
 	out << YAML::Key << "main_options_input" << YAML::Value << YAML::BeginMap;
@@ -2563,8 +2578,9 @@ static bool convertMenus(ZipFile& zip, const std::string& outDir) {
 	out << YAML::Key << "type" << YAML::Value << "main_list";
 	emitThemeMain(out);
 	emitLayoutStr(out, "center", 10, "btn_width", 300);
-	out << YAML::Key << "draw_logo" << YAML::Value << false;
-	out << YAML::Key << "background" << YAML::Value << "main_bg";
+	out << YAML::Key << "items" << YAML::Value << YAML::BeginSeq;
+	emitBgItem(out);
+	out << YAML::EndSeq;
 	out << YAML::EndMap;
 
 	out << YAML::Key << "main_controls" << YAML::Value << YAML::BeginMap;
@@ -2573,8 +2589,9 @@ static bool convertMenus(ZipFile& zip, const std::string& outDir) {
 	out << YAML::Key << "type" << YAML::Value << "main_list";
 	emitThemeMain(out);
 	emitLayoutStr(out, "center", 10, "btn_width", 300);
-	out << YAML::Key << "draw_logo" << YAML::Value << false;
-	out << YAML::Key << "background" << YAML::Value << "main_bg";
+	out << YAML::Key << "items" << YAML::Value << YAML::BeginSeq;
+	emitBgItem(out);
+	out << YAML::EndSeq;
 	out << YAML::EndMap;
 
 	out << YAML::Key << "main_bindings" << YAML::Value << YAML::BeginMap;
@@ -2583,8 +2600,9 @@ static bool convertMenus(ZipFile& zip, const std::string& outDir) {
 	out << YAML::Key << "type" << YAML::Value << "main_list";
 	emitThemeMainWide(out);
 	emitLayoutStr(out, "center", 10, "btn_width", 300);
-	out << YAML::Key << "draw_logo" << YAML::Value << false;
-	out << YAML::Key << "background" << YAML::Value << "main_bg";
+	out << YAML::Key << "items" << YAML::Value << YAML::BeginSeq;
+	emitBgItem(out);
+	out << YAML::EndSeq;
 	out << YAML::EndMap;
 
 	out << YAML::Key << "main_controller" << YAML::Value << YAML::BeginMap;
@@ -2593,11 +2611,12 @@ static bool convertMenus(ZipFile& zip, const std::string& outDir) {
 	out << YAML::Key << "type" << YAML::Value << "main_list";
 	emitThemeMain(out);
 	emitLayoutStr(out, "center", 10, "btn_width", 300);
-	out << YAML::Key << "draw_logo" << YAML::Value << false;
-	out << YAML::Key << "background" << YAML::Value << "main_bg";
 	out << YAML::Key << "item_width" << YAML::Value << 204;
-	out << YAML::Key << "visible_buttons" << YAML::Value << YAML::Flow << YAML::BeginSeq << 11 << 16 << 17 << YAML::EndSeq;
+	out << YAML::Key << "visible_buttons" << YAML::Value << YAML::Flow << YAML::BeginSeq << "softkey_left" << "vibration_slider" << "deadzone_slider" << YAML::EndSeq;
 	out << YAML::Key << "vibration_y" << YAML::Value << 169;
+	out << YAML::Key << "items" << YAML::Value << YAML::BeginSeq;
+	emitBgItem(out);
+	out << YAML::EndSeq;
 	out << YAML::EndMap;
 
 	// Ingame extension injects
@@ -2608,9 +2627,9 @@ static bool convertMenus(ZipFile& zip, const std::string& outDir) {
 	emitThemeIngame(out);
 	emitLayoutInt(out, 70, 10, 340, 241);
 	out << YAML::Key << "item_width" << YAML::Value << 204;
-	out << YAML::Key << "visible_buttons" << YAML::Value << YAML::Flow << YAML::BeginSeq << 11 << 12 << 15 << YAML::EndSeq;
+	out << YAML::Key << "visible_buttons" << YAML::Value << YAML::Flow << YAML::BeginSeq << "softkey_left" << "sfx_volume_slider" << "softkey_right" << YAML::EndSeq;
 	out << YAML::Key << "visible_buttons_conditional" << YAML::Value << YAML::BeginMap;
-	out << YAML::Key << 13 << YAML::Value << "music_on";
+	out << YAML::Key << "music_volume_slider" << YAML::Value << "music_on";
 	out << YAML::EndMap;
 	out << YAML::Key << "vibration_y" << YAML::Value << 169;
 	out << YAML::EndMap;
@@ -2639,7 +2658,7 @@ static bool convertMenus(ZipFile& zip, const std::string& outDir) {
 	emitThemeIngame(out);
 	emitLayoutInt(out, 70, 10, 340, 241);
 	out << YAML::Key << "item_width" << YAML::Value << 204;
-	out << YAML::Key << "visible_buttons" << YAML::Value << YAML::Flow << YAML::BeginSeq << 11 << 15 << 16 << 17 << YAML::EndSeq;
+	out << YAML::Key << "visible_buttons" << YAML::Value << YAML::Flow << YAML::BeginSeq << "softkey_left" << "softkey_right" << "vibration_slider" << "deadzone_slider" << YAML::EndSeq;
 	out << YAML::Key << "vibration_y" << YAML::Value << 169;
 	out << YAML::EndMap;
 
@@ -3016,162 +3035,129 @@ static bool generateUIYaml(const std::string& outDir) {
 	yaml += "# UI element definitions for DoomIIRPG\n";
 	yaml += "# Describes all UI widget types, button instances, and their properties\n";
 	yaml += "\n";
-	yaml += "# Reusable visual styles\n";
-	yaml += "components:\n";
-	yaml += "  menu_button:\n";
-	yaml += "    image: menu_btn_bg\n";
-	yaml += "    image_highlight: menu_btn_bg_on\n";
-	yaml += "    sound: menu_highlight\n";
-	yaml += "    render_mode: 1\n";
-	yaml += "    highlight_render_mode: 0\n";
+	yaml += "# Scrollbar config\n";
+	yaml += "scrollbar:\n";
+	yaml += "  sound: scroll\n";
+	yaml += "  vertical: true\n";
 	yaml += "\n";
-	yaml += "  info_button:\n";
-	yaml += "    image: info_btn_normal\n";
-	yaml += "    image_highlight: info_btn_pressed\n";
-	yaml += "    sound: menu_highlight\n";
-	yaml += "    render_mode: 1\n";
-	yaml += "    highlight_render_mode: 0\n";
-	yaml += "\n";
-	yaml += "  scroll_arrow:\n";
-	yaml += "    sound: menu_highlight\n";
-	yaml += "    size_from_image: true\n";
-	yaml += "\n";
-	yaml += "  softkey:\n";
-	yaml += "    sound: softkey_click\n";
-	yaml += "\n";
-	yaml += "  slider_touch:\n";
-	yaml += "    sound: menu_highlight\n";
-	yaml += "\n";
-	yaml += "  vending_arrow:\n";
-	yaml += "    sound: menu_highlight\n";
-	yaml += "    size_from_image: true\n";
-	yaml += "    render_mode: 1\n";
-	yaml += "    highlight_render_mode: 0\n";
-	yaml += "\n";
-	yaml += "  scrollbar:\n";
-	yaml += "    sound: scroll\n";
-	yaml += "    vertical: true\n";
-	yaml += "\n";
-	yaml += "# Screen layouts — compose components with placement\n";
-	yaml += "# container maps to C++ fmButtonContainer (menu | info | vending)\n";
+	yaml += "# Screen layouts — button containers (menu | info | vending)\n";
 	yaml += "screens:\n";
 	yaml += "  menu:\n";
-	yaml += "    container: menu\n";
-	yaml += "    buttons:\n";
-	yaml += "      menu_items:\n";
-	yaml += "        component: menu_button\n";
-	yaml += "        id_range: [0, 8]\n";
-	yaml += "        x: 159\n";
-	yaml += "        start_y: 139\n";
-	yaml += "        step_y: 46\n";
-	yaml += "        width: 162\n";
-	yaml += "        height: 46\n";
-	yaml += "        visible: false\n";
+	yaml += "    menu_items:\n";
+	yaml += "      image: menu_btn_bg\n";
+	yaml += "      image_highlight: menu_btn_bg_on\n";
+	yaml += "      sound: menu_highlight\n";
+	yaml += "      render_mode: 1\n";
+	yaml += "      highlight_render_mode: 0\n";
+	yaml += "      id_range: [0, 8]\n";
+	yaml += "      x: 159\n";
+	yaml += "      start_y: 139\n";
+	yaml += "      step_y: 46\n";
+	yaml += "      width: 162\n";
+	yaml += "      height: 46\n";
+	yaml += "      visible: false\n";
 	yaml += "\n";
-	yaml += "      arrow_up:\n";
-	yaml += "        component: scroll_arrow\n";
-	yaml += "        id: 9\n";
-	yaml += "        x: 331\n";
-	yaml += "        y: image_relative\n";
-	yaml += "        y_base: 190\n";
-	yaml += "        y_offset: -height\n";
-	yaml += "        image: menu_arrow_up\n";
-	yaml += "        visible: false\n";
+	yaml += "    arrow_up:\n";
+	yaml += "      sound: menu_highlight\n";
+	yaml += "      size_from_image: true\n";
+	yaml += "      id: 9\n";
+	yaml += "      x: 331\n";
+	yaml += "      y: image_relative\n";
+	yaml += "      y_base: 190\n";
+	yaml += "      y_offset: -height\n";
+	yaml += "      image: menu_arrow_up\n";
+	yaml += "      visible: false\n";
 	yaml += "\n";
-	yaml += "      arrow_down:\n";
-	yaml += "        component: scroll_arrow\n";
-	yaml += "        id: 10\n";
-	yaml += "        x: 331\n";
-	yaml += "        y: 210\n";
-	yaml += "        image: menu_arrow_down\n";
-	yaml += "        visible: false\n";
+	yaml += "    arrow_down:\n";
+	yaml += "      sound: menu_highlight\n";
+	yaml += "      size_from_image: true\n";
+	yaml += "      id: 10\n";
+	yaml += "      x: 331\n";
+	yaml += "      y: 210\n";
+	yaml += "      image: menu_arrow_down\n";
+	yaml += "      visible: false\n";
 	yaml += "\n";
-	yaml += "      softkey_left:\n";
-	yaml += "        component: softkey\n";
-	yaml += "        id: 11\n";
-	yaml += "        x: 0\n";
-	yaml += "        y: 256\n";
-	yaml += "        width: 52\n";
-	yaml += "        height: 64\n";
-	yaml += "        image: switch_left_normal\n";
-	yaml += "        image_highlight: switch_left_active\n";
-	yaml += "        visible: false\n";
+	yaml += "    softkey_left:\n";
+	yaml += "      sound: softkey_click\n";
+	yaml += "      id: 11\n";
+	yaml += "      x: 0\n";
+	yaml += "      y: 256\n";
+	yaml += "      width: 52\n";
+	yaml += "      height: 64\n";
+	yaml += "      image: switch_left_normal\n";
+	yaml += "      image_highlight: switch_left_active\n";
+	yaml += "      visible: false\n";
 	yaml += "\n";
-	yaml += "      sfx_volume_slider:\n";
-	yaml += "        component: slider_touch\n";
-	yaml += "        id: 12\n";
-	yaml += "        visible: false\n";
+	yaml += "    sfx_volume_slider:\n";
+	yaml += "      sound: menu_highlight\n";
+	yaml += "      id: 12\n";
+	yaml += "      visible: false\n";
 	yaml += "\n";
-	yaml += "      music_volume_slider:\n";
-	yaml += "        component: slider_touch\n";
-	yaml += "        id: 13\n";
-	yaml += "        visible: false\n";
+	yaml += "    music_volume_slider:\n";
+	yaml += "      sound: menu_highlight\n";
+	yaml += "      id: 13\n";
+	yaml += "      visible: false\n";
 	yaml += "\n";
-	yaml += "      alpha_slider:\n";
-	yaml += "        component: slider_touch\n";
-	yaml += "        id: 14\n";
-	yaml += "        visible: false\n";
+	yaml += "    alpha_slider:\n";
+	yaml += "      sound: menu_highlight\n";
+	yaml += "      id: 14\n";
+	yaml += "      visible: false\n";
 	yaml += "\n";
-	yaml += "      softkey_right:\n";
-	yaml += "        component: softkey\n";
-	yaml += "        id: 15\n";
-	yaml += "        x: 428\n";
-	yaml += "        y: 256\n";
-	yaml += "        width: 52\n";
-	yaml += "        height: 64\n";
-	yaml += "        visible: false\n";
+	yaml += "    softkey_right:\n";
+	yaml += "      sound: softkey_click\n";
+	yaml += "      id: 15\n";
+	yaml += "      x: 428\n";
+	yaml += "      y: 256\n";
+	yaml += "      width: 52\n";
+	yaml += "      height: 64\n";
+	yaml += "      visible: false\n";
 	yaml += "\n";
-	yaml += "      # Controller sliders [GEC]\n";
-	yaml += "      vibration_slider:\n";
-	yaml += "        component: slider_touch\n";
-	yaml += "        id: 16\n";
-	yaml += "        visible: false\n";
+	yaml += "    # Controller sliders [GEC]\n";
+	yaml += "    vibration_slider:\n";
+	yaml += "      sound: menu_highlight\n";
+	yaml += "      id: 16\n";
+	yaml += "      visible: false\n";
 	yaml += "\n";
-	yaml += "      deadzone_slider:\n";
-	yaml += "        component: slider_touch\n";
-	yaml += "        id: 17\n";
-	yaml += "        visible: false\n";
+	yaml += "    deadzone_slider:\n";
+	yaml += "      sound: menu_highlight\n";
+	yaml += "      id: 17\n";
+	yaml += "      visible: false\n";
 	yaml += "\n";
 	yaml += "  info:\n";
-	yaml += "    container: info\n";
-	yaml += "    buttons:\n";
-	yaml += "      info_items:\n";
-	yaml += "        component: info_button\n";
-	yaml += "        id_range: [0, 8]\n";
-	yaml += "        visible: false\n";
+	yaml += "    info_items:\n";
+	yaml += "      image: info_btn_normal\n";
+	yaml += "      image_highlight: info_btn_pressed\n";
+	yaml += "      sound: menu_highlight\n";
+	yaml += "      render_mode: 1\n";
+	yaml += "      highlight_render_mode: 0\n";
+	yaml += "      id_range: [0, 8]\n";
+	yaml += "      visible: false\n";
 	yaml += "\n";
 	yaml += "  vending:\n";
-	yaml += "    container: vending\n";
-	yaml += "    buttons:\n";
-	yaml += "      arrow_up:\n";
-	yaml += "        component: vending_arrow\n";
-	yaml += "        id: 0\n";
-	yaml += "        x: 320\n";
-	yaml += "        y: 130\n";
-	yaml += "        image: vending_arrow_up_glow\n";
-	yaml += "        visible: true\n";
+	yaml += "    arrow_up:\n";
+	yaml += "      sound: menu_highlight\n";
+	yaml += "      size_from_image: true\n";
+	yaml += "      render_mode: 1\n";
+	yaml += "      highlight_render_mode: 0\n";
+	yaml += "      id: 0\n";
+	yaml += "      x: 320\n";
+	yaml += "      y: 130\n";
+	yaml += "      image: vending_arrow_up_glow\n";
+	yaml += "      visible: true\n";
 	yaml += "\n";
-	yaml += "      arrow_down:\n";
-	yaml += "        component: vending_arrow\n";
-	yaml += "        id: 1\n";
-	yaml += "        x: 320\n";
-	yaml += "        y: image_relative\n";
-	yaml += "        y_base: 150\n";
-	yaml += "        y_offset: menu_arrow_up.height\n";
-	yaml += "        image: vending_arrow_down_glow\n";
-	yaml += "        visible: true\n";
+	yaml += "    arrow_down:\n";
+	yaml += "      sound: menu_highlight\n";
+	yaml += "      size_from_image: true\n";
+	yaml += "      render_mode: 1\n";
+	yaml += "      highlight_render_mode: 0\n";
+	yaml += "      id: 1\n";
+	yaml += "      x: 320\n";
+	yaml += "      y: image_relative\n";
+	yaml += "      y_base: 150\n";
+	yaml += "      y_offset: menu_arrow_up.height\n";
+	yaml += "      image: vending_arrow_down_glow\n";
+	yaml += "      visible: true\n";
 	yaml += "\n";
-	yaml += "# Bridge between widget types (menus.yaml) and item_flags\n";
-	yaml += "widget_flag_mapping:\n";
-	yaml += "  label: noselect\n";
-	yaml += "  divider: noselect,divider\n";
-	yaml += "  toggle: checked\n";
-	yaml += "  slider: scrollbar\n";
-	yaml += "  slider_image: scrollbartwo\n";
-	yaml += "  keybinding: binding\n";
-	yaml += "  padding: noselect,padding\n";
-	yaml += "  block_text: block_text\n";
-
 	// menu_presentation data is now emitted directly in convertMenus() within menus.yaml
 
 

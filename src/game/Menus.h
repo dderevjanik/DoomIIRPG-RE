@@ -32,6 +32,7 @@ public:
     static constexpr int ITEM_DISABLEDTWO = 0x80000; // [GEC]
     static constexpr int ITEM_PADDING = 0x100000; // [GEC]
     static constexpr int ITEM_BINDING = 0x200000; // [GEC]
+    static constexpr int ITEM_IMAGE = 0x400000; // [GEC] Image/background visual item
     static constexpr int VENDING_MACHINE_LEFT_INDENT_AMOUNT = 9;
     static constexpr int VENDING_MACHINE_RIGHT_INDENT_AMOUNT = 9;
     static constexpr int VENDING_MACHINE_TOP_MARGIN_AMOUNT = 13;

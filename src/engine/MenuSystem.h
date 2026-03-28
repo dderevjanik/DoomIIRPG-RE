@@ -261,7 +261,13 @@ public:
         int helpField;
         std::string text;   // inline text (empty if using string_id)
         std::string text2;  // inline secondary text
-        std::string widget; // widget type name from ui.yaml
+        // Image item fields (type: background / type: image)
+        std::string itemType;    // "background", "image", or "" for regular items
+        std::string imageName;   // image name from imageMap (e.g. "main_bg", "logo")
+        int imageX = 0;          // x position (-1 = center horizontally)
+        int imageY = 0;          // y position
+        int imageAnchor = 0;     // Graphics anchor flags (0=top-left, 3=center)
+        int imageRenderMode = 0; // render mode passed to drawImage
     };
 
     // Layout value modes for YAML-driven canvas dimensions
@@ -329,13 +335,13 @@ public:
         int type;
         int maxItems;
         std::vector<YAMLMenuItem> items;
-        std::string background;
-        bool drawLogo = false;
         int helpResource = -1;
         int selectedIndex = -1;
         bool showInfoButtons = false;
-        std::vector<int> visibleButtons;
-        std::vector<int> visibleButtonsConditional;
+        std::vector<std::string> visibleButtonNames;
+        std::vector<std::string> visibleButtonsConditionalNames;
+        std::vector<int> visibleButtons;           // resolved from names in loadUIFromYAML
+        std::vector<int> visibleButtonsConditional; // resolved from names in loadUIFromYAML
         int itemWidth = 0;
         int vibrationY = -1;
         MenuLayout layout;
@@ -372,6 +378,7 @@ public:
 	bool loadYAMLMenuItems(int menuId);
 	const MenuTheme* getThemeForMenu(int menuId) const;
 	const YAMLMenuDef* getMenuDef(int menuId) const;
+	Image* resolveMenuImage(const std::string& name) const;
 	int resolveLayoutValue(LayoutValueMode mode, int literal, int w = 0) const;
     void buildDivider(Text* text, int i);
     bool enterDigit(int i);
