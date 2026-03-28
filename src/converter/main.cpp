@@ -2147,20 +2147,7 @@ static bool convertMenus(ZipFile& zip, const std::string& outDir) {
 			out << YAML::Key << "type" << YAML::Value << mtype;
 		}
 
-		// Emit theme based on menu_id ranges
-		if (signedId != 0) {
-			const char* themeName = nullptr;
-			if (signedId >= 83 && signedId <= 88) {
-				themeName = "vending";
-			} else if (signedId >= 29 && signedId <= 82) {
-				themeName = "ingame";
-			} else if (signedId >= 1 && signedId <= 28) {
-				themeName = "main";
-			}
-			if (themeName) {
-				out << YAML::Key << "theme" << YAML::Value << themeName;
-			}
-		}
+		// Theme properties are now inlined in each menu_presentation entry in ui.yaml
 
 		if (numItems > 0) {
 			out << YAML::Key << "items" << YAML::Value << YAML::BeginSeq;
@@ -2613,56 +2600,6 @@ static bool generateUIYaml(const std::string& outDir) {
 	yaml += "    sound: scroll\n";
 	yaml += "    vertical: true\n";
 	yaml += "\n";
-	yaml += "# Themes — button appearance per menu context\n";
-	yaml += "themes:\n";
-	yaml += "  main:\n";
-	yaml += "    menu_button: menu_button\n";
-	yaml += "    info_button: info_button\n";
-	yaml += "    item_width: 162\n";
-	yaml += "    item_height: 46\n";
-	yaml += "    scrollbar:\n";
-	yaml += "      style: dial\n";
-	yaml += "      default_x: 408\n";
-	yaml += "      default_y: 81\n";
-	yaml += "\n";
-	yaml += "  main_wide:\n";
-	yaml += "    menu_button:\n";
-	yaml += "      image: menu_btn_bg_ext\n";
-	yaml += "      image_highlight: menu_btn_bg_ext_on\n";
-	yaml += "      render_mode: 1\n";
-	yaml += "      highlight_render_mode: 0\n";
-	yaml += "    info_button: info_button\n";
-	yaml += "    item_width: 296\n";
-	yaml += "    item_height: 46\n";
-	yaml += "\n";
-	yaml += "  ingame:\n";
-	yaml += "    menu_button:\n";
-	yaml += "      image: ingame_option_btn\n";
-	yaml += "      render_mode: 1\n";
-	yaml += "      highlight_render_mode: 0\n";
-	yaml += "    info_button: info_button\n";
-	yaml += "    item_padding_bottom: 10\n";
-	yaml += "    scrollbar:\n";
-	yaml += "      style: bar\n";
-	yaml += "      images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider]\n";
-	yaml += "      x: 430\n";
-	yaml += "      width: 50\n";
-	yaml += "\n";
-	yaml += "  vending:\n";
-	yaml += "    menu_button:\n";
-	yaml += "      image: vending_btn_large\n";
-	yaml += "      render_mode: 1\n";
-	yaml += "      highlight_render_mode: 0\n";
-	yaml += "    info_button:\n";
-	yaml += "      image: vending_btn_help\n";
-	yaml += "      render_mode: 2\n";
-	yaml += "      highlight_render_mode: 0\n";
-	yaml += "    item_padding_bottom: 3\n";
-	yaml += "    scrollbar:\n";
-	yaml += "      style: bar\n";
-	yaml += "      images: [vending_scrollbar, vending_top, vending_mid, vending_bottom]\n";
-	yaml += "      x: 350\n";
-	yaml += "\n";
 	yaml += "# Screen layouts — compose components with placement\n";
 	yaml += "# container maps to C++ fmButtonContainer (menu | info | vending)\n";
 	yaml += "screens:\n";
@@ -2782,6 +2719,411 @@ static bool generateUIYaml(const std::string& outDir) {
 	yaml += "  keybinding: binding\n";
 	yaml += "  padding: noselect,padding\n";
 	yaml += "  block_text: block_text\n";
+
+	// Per-menu presentation — layout, backgrounds, visible buttons, injected menus
+	yaml += "\n";
+	yaml += "# Per-menu presentation — layout, backgrounds, visible buttons, injected menus\n";
+	yaml += "# Entries with inject: true create menus not in the binary data.\n";
+	yaml += "menu_presentation:\n";
+
+	// Inline theme properties (replaces named themes)
+	const std::string themeMain =
+		"    button: menu_button\n"
+		"    info_button: info_button\n"
+		"    item_height: 46\n"
+		"    scrollbar: { style: dial, default_x: 408, default_y: 81 }\n";
+
+	const std::string themeMainWide =
+		"    button:\n"
+		"      image: menu_btn_bg_ext\n"
+		"      image_highlight: menu_btn_bg_ext_on\n"
+		"      render_mode: 1\n"
+		"      highlight_render_mode: 0\n"
+		"    info_button: info_button\n"
+		"    item_height: 46\n";
+
+	const std::string themeIngame =
+		"    button:\n"
+		"      image: ingame_option_btn\n"
+		"      render_mode: 1\n"
+		"      highlight_render_mode: 0\n"
+		"    info_button: info_button\n"
+		"    item_padding_bottom: 10\n"
+		"    scrollbar: { style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50 }\n";
+
+	// --- Main menus (below logo) ---
+	auto mainMenu = [&](const char* name, const char* extra = "") {
+		yaml += std::string("  ") + name + ":\n";
+		yaml += themeMain;
+		yaml += "    layout: { x: center, y: 126, w: btn_width, h: 176 }\n";
+		yaml += "    draw_logo: true\n";
+		yaml += "    background: main_bg\n";
+		if (extra[0]) yaml += std::string("    ") + extra + "\n";
+		yaml += "    visible_buttons: [11]\n";
+		yaml += "\n";
+	};
+
+	mainMenu("main");
+	mainMenu("main_more_games");
+	mainMenu("main_help", "load_start_item: 1");
+	// main_minigame and main_difficulty: selected_index + load_start_item
+	yaml += "  main_minigame:\n";
+	yaml += themeMain;
+	yaml += "    layout: { x: center, y: 126, w: btn_width, h: 176 }\n";
+	yaml += "    draw_logo: true\n";
+	yaml += "    background: main_bg\n";
+	yaml += "    selected_index: 1\n";
+	yaml += "    load_start_item: 1\n";
+	yaml += "    visible_buttons: [11]\n\n";
+	yaml += "  main_difficulty:\n";
+	yaml += themeMain;
+	yaml += "    layout: { x: center, y: 126, w: btn_width, h: 176 }\n";
+	yaml += "    draw_logo: true\n";
+	yaml += "    background: main_bg\n";
+	yaml += "    selected_index: 1\n";
+	yaml += "    load_start_item: 1\n";
+	yaml += "    visible_buttons: [11]\n\n";
+	mainMenu("main_options");
+	mainMenu("select_language");
+
+	// YesNo main menus
+	yaml += "  main_exit:\n";
+	yaml += themeMain;
+	yaml += "    layout: { x: center, y: 126, w: btn_width, h: 176 }\n";
+	yaml += "    draw_logo: true\n";
+	yaml += "    background: main_bg\n";
+	yaml += "    yesno:\n";
+	yaml += "      string_id: 106\n";
+	yaml += "      select_yes: false\n";
+	yaml += "      yes_action: exit\n";
+	yaml += "      yes_param: 0\n\n";
+
+	yaml += "  main_confirmnew:\n";
+	yaml += themeMain;
+	yaml += "    layout: { x: center, y: 126, w: btn_width, h: 176 }\n";
+	yaml += "    draw_logo: true\n";
+	yaml += "    background: main_bg\n";
+	yaml += "    yesno:\n";
+	yaml += "      string_id: 107\n";
+	yaml += "      select_yes: false\n";
+	yaml += "      yes_action: goto\n";
+	yaml += "      yes_param: 16\n\n";
+
+	yaml += "  main_confirmnew2:\n";
+	yaml += themeMain;
+	yaml += "    layout: { x: center, y: 126, w: btn_width, h: 176 }\n";
+	yaml += "    background: main_bg\n";
+	yaml += "    yesno:\n";
+	yaml += "      string_id: 108\n";
+	yaml += "      select_yes: false\n";
+	yaml += "      yes_action: newgame\n";
+	yaml += "      yes_param: 0\n\n";
+
+	yaml += "  enable_sounds:\n";
+	yaml += themeMain;
+	yaml += "    layout: { x: center, y: 126, w: btn_width, h: 176 }\n";
+	yaml += "    draw_logo: true\n";
+	yaml += "    background: main_bg\n";
+	yaml += "    yesno:\n";
+	yaml += "      string_id: 168\n";
+	yaml += "      select_yes: true\n";
+	yaml += "      yes_action: togsound\n";
+	yaml += "      yes_param: 1\n";
+	yaml += "      no_action: togsound\n";
+	yaml += "      no_param: 0\n";
+	yaml += "      clear_stack: true\n\n";
+
+	yaml += "  end_ranking:\n";
+	yaml += "    layout: { x: 23, y: 0, w: 407, h: 320 }\n";
+	yaml += "    background: none\n\n";
+
+	// --- Main help injected menus ---
+	struct HelpMenu { const char* name; int id; int res; };
+	HelpMenu mainHelps[] = {
+		{"main_general", 9, 1}, {"main_move", 10, 2}, {"main_attack", 11, 3},
+		{"main_sniper", 12, 7}, {"main_armorhelp", 5, 4}, {"main_effecthelp", 6, 5},
+		{"main_itemhelp", 7, 6}, {"main_about", 8, 11}, {"main_hacker_help", 20, 8},
+		{"main_matrix_skip_help", 21, 9}, {"main_power_up_help", 22, 10},
+	};
+	for (auto& h : mainHelps) {
+		yaml += std::string("  ") + h.name + ":\n";
+		yaml += "    inject: true\n";
+		yaml += "    menu_id: " + std::to_string(h.id) + "\n";
+		yaml += "    type: help\n";
+		yaml += themeMain;
+		yaml += "    layout: { x: 85, y: 0, w: 300, h: 320 }\n";
+		yaml += "    background: main_bg\n";
+		yaml += "    visible_buttons: [11]\n";
+		yaml += "    help_resource: " + std::to_string(h.res) + "\n\n";
+	}
+
+	// --- Simple injected main menus (no presentation overrides) ---
+	struct SimpleInject { const char* name; int id; const char* type; };
+	SimpleInject simpleInjects[] = {
+		{"main_exit_injected", 13, "main"},
+		{"main_confirmnew_injected", 14, "vcenter"},
+		{"main_confirmnew2_injected", 15, "vcenter"},
+		{"select_language_injected", 23, "vcenter"},
+		{"end_ranking_injected", 24, "help"},
+		{"enable_sounds_injected", 25, "main"},
+	};
+	for (auto& s : simpleInjects) {
+		yaml += std::string("  ") + s.name + ":\n";
+		yaml += "    inject: true\n";
+		yaml += std::string("    menu_id: ") + std::to_string(s.id) + "\n";
+		yaml += std::string("    type: ") + s.type + "\n";
+		yaml += themeMain;  // all simple injects use main theme
+		yaml += "\n";
+	}
+
+	// --- Ingame menus ---
+	auto ingameMenu = [&](const char* name, const char* extra = "") {
+		yaml += std::string("  ") + name + ":\n";
+		yaml += themeIngame;
+		yaml += "    layout: { x: 70, y: 10, w: 340, h: 241 }\n";
+		if (extra[0]) yaml += std::string("    ") + extra + "\n";
+		yaml += "    visible_buttons: [11, 15]\n";
+		yaml += "\n";
+	};
+
+	// ingame with show_info_buttons
+	yaml += "  ingame:\n";
+	yaml += themeIngame;
+	yaml += "    layout: { x: 70, y: 10, w: 340, h: 241 }\n";
+	yaml += "    selected_index: 1\n";
+	yaml += "    visible_buttons: [11, 15]\n";
+	yaml += "    show_info_buttons: true\n\n";
+
+	yaml += "  ingame_kicking:\n";
+	yaml += themeIngame;
+	yaml += "    layout: { x: 70, y: 10, w: 340, h: 241 }\n";
+	yaml += "    visible_buttons: [11, 15]\n";
+	yaml += "    show_info_buttons: true\n\n";
+
+	yaml += "  ingame_loadnosave:\n";
+	yaml += themeIngame;
+	yaml += "    layout: { x: 70, y: 10, w: 340, h: 241 }\n";
+	yaml += "    scroll_index: 0\n\n";
+
+	ingameMenu("ingame_help");
+	ingameMenu("ingame_status");
+
+	yaml += "  ingame_player:\n";
+	yaml += themeIngame;
+	yaml += "    layout: { x: 70, y: 10, w: 340, h: 241 }\n";
+	yaml += "    selected_index: 2\n";
+	yaml += "    visible_buttons: [11, 15]\n\n";
+
+	ingameMenu("ingame_level");
+	ingameMenu("ingame_grades");
+
+	yaml += "  level_stats:\n";
+	yaml += themeIngame;
+	yaml += "    layout: { x: 23, y: 0, w: 407, h: 320 }\n\n";
+
+	// Ingame menus without visible_buttons
+	yaml += "  ingame_exit:\n";
+	yaml += themeIngame;
+	yaml += "    layout: { x: 70, y: 10, w: 340, h: 241 }\n\n";
+	yaml += "  ingame_dead:\n";
+	yaml += themeIngame;
+	yaml += "    layout: { x: 70, y: 10, w: 340, h: 241 }\n\n";
+
+	yaml += "  end:\n";
+	yaml += themeMain;
+	yaml += "    layout: { x: center, y: 126, w: btn_width, h: 176 }\n\n";
+	yaml += "  end_finalquit:\n";
+	yaml += themeMain;
+	yaml += "    layout: { x: center, y: 126, w: btn_width, h: 176 }\n\n";
+
+	ingameMenu("ingame_options");
+	ingameMenu("ingame_controls");
+
+	// --- Ingame help injected menus ---
+	HelpMenu ingameHelps[] = {
+		{"ingame_general", 38, 1}, {"ingame_move", 39, 2}, {"ingame_attack", 40, 3},
+		{"ingame_sniper", 41, 7}, {"ingame_armorhelp", 43, 4}, {"ingame_effecthelp", 44, 5},
+		{"ingame_itemhelp", 45, 6}, {"ingame_hacker_help", 59, 8},
+		{"ingame_matrix_skip_help", 60, 9}, {"ingame_power_up_help", 61, 10},
+	};
+	for (auto& h : ingameHelps) {
+		yaml += std::string("  ") + h.name + ":\n";
+		yaml += "    inject: true\n";
+		yaml += "    menu_id: " + std::to_string(h.id) + "\n";
+		yaml += "    type: help\n";
+		yaml += themeIngame;
+		yaml += "    layout: { x: 23, y: 10, w: 434, h: 241 }\n";
+		yaml += "    visible_buttons: [11, 15]\n";
+		yaml += "    help_resource: " + std::to_string(h.res) + "\n\n";
+	}
+
+	// ingame_questlog (notebook, no help_resource)
+	yaml += "  ingame_questlog:\n";
+	yaml += "    inject: true\n";
+	yaml += "    menu_id: 46\n";
+	yaml += "    type: notebook\n";
+	yaml += themeIngame;
+	yaml += "    layout: { x: 23, y: 10, w: 434, h: 241 }\n";
+	yaml += "    visible_buttons: [11, 15]\n\n";
+
+	// --- Ingame yesno injected menus ---
+	struct YesNoInject { const char* name; int id; int stringId; const char* action; };
+	YesNoInject yesnoMenus[] = {
+		{"ingame_load", 49, 136, "load"},
+		{"ingame_restartlvl", 52, 134, "restartlevel"},
+		{"ingame_savequit", 53, 135, "savequit"},
+	};
+	for (auto& yn : yesnoMenus) {
+		yaml += std::string("  ") + yn.name + ":\n";
+		yaml += "    inject: true\n";
+		yaml += "    menu_id: " + std::to_string(yn.id) + "\n";
+		yaml += "    type: vcenter\n";
+		yaml += themeIngame;
+		yaml += "    layout: { x: 70, y: 10, w: 340, h: 241 }\n";
+		yaml += "    yesno:\n";
+		yaml += "      string_id: " + std::to_string(yn.stringId) + "\n";
+		yaml += "      select_yes: true\n";
+		yaml += std::string("      yes_action: ") + yn.action + "\n";
+		yaml += "      yes_param: 0\n\n";
+	}
+
+	yaml += "  ingame_special_exit:\n";
+	yaml += "    inject: true\n";
+	yaml += "    menu_id: 58\n";
+	yaml += "    type: vcenter\n";
+	yaml += themeIngame;
+	yaml += "    visible_buttons: [11, 15]\n";
+	yaml += "    yesno:\n";
+	yaml += "      string_id: 137\n";
+	yaml += "      select_yes: false\n";
+	yaml += "      yes_action: main_special\n";
+	yaml += "      yes_param: 0\n\n";
+
+	// --- Simple ingame injected menus ---
+	struct TypeInject { const char* name; int id; const char* type; };
+	TypeInject typeInjects[] = {
+		{"ingame_recipes", 47, "list"},
+		{"ingame_save", 48, "list"},
+		{"showdetails", 71, "notebook"},
+		{"vending_machine_details", 88, "vending_machine"},
+		{"debug_maps", 66, "list"},
+	};
+	for (auto& t : typeInjects) {
+		yaml += std::string("  ") + t.name + ":\n";
+		yaml += "    inject: true\n";
+		yaml += "    menu_id: " + std::to_string(t.id) + "\n";
+		yaml += std::string("    type: ") + t.type + "\n";
+		yaml += themeIngame;
+		yaml += "\n";
+	}
+
+	yaml += "  comic_book:\n";
+	yaml += "    inject: true\n";
+	yaml += "    menu_id: 89\n";
+	yaml += "    type: default\n";
+	yaml += themeMain;
+	yaml += "\n";
+
+	// --- Items menus ---
+	const char* itemMenusWithInfo[] = {"items", "items_weapons", "items_drinks"};
+	for (auto& name : itemMenusWithInfo) {
+		yaml += std::string("  ") + name + ":\n";
+		yaml += themeIngame;
+		yaml += "    layout: { x: 70, y: 10, w: 340, h: 241 }\n";
+		yaml += "    visible_buttons: [11, 15]\n";
+		yaml += "    show_info_buttons: true\n\n";
+	}
+	const char* itemMenusPlain[] = {"items_healthmsg", "items_armormsg", "items_syringemsg", "items_holy_water_max"};
+	for (auto& name : itemMenusPlain) {
+		yaml += std::string("  ") + name + ":\n";
+		yaml += themeIngame;
+		yaml += "    layout: { x: 70, y: 10, w: 340, h: 241 }\n\n";
+	}
+
+	// --- Vending machine menus ---
+	const char* vendingWithInfo[] = {"vending_machine", "vending_machine_drinks", "vending_machine_snacks", "vending_machine_confirm"};
+	for (auto& name : vendingWithInfo) {
+		yaml += std::string("  ") + name + ":\n";
+		yaml += themeIngame;
+		yaml += "    layout: { x: 70, y: 11, w: 203, h: 250 }\n";
+		yaml += "    visible_buttons: [11, 15]\n";
+		yaml += "    show_info_buttons: true\n\n";
+	}
+	yaml += "  vending_machine_cant_buy:\n";
+	yaml += themeIngame;
+	yaml += "    layout: { x: 70, y: 11, w: 203, h: 250 }\n";
+	yaml += "    visible_buttons: [11, 15]\n\n";
+
+	// --- Debug menus ---
+	const char* debugMenus[] = {"debug", "debug_stats", "debug_sys"};
+	for (auto& name : debugMenus) {
+		yaml += std::string("  ") + name + ":\n";
+		yaml += themeIngame;
+		yaml += "    layout: { x: 70, y: 10, w: 340, h: 241 }\n";
+		yaml += "    visible_buttons: [11, 15]\n\n";
+	}
+
+	// --- GEC extension menus (main screen, no logo) ---
+	// GEC extension menus — main_options_sound, video, input, controls, bindings, controller
+	auto gecMenu = [&](const char* name, int id, const std::string& theme, const char* extra) {
+		yaml += std::string("  ") + name + ":\n";
+		yaml += "    inject: true\n";
+		yaml += "    menu_id: " + std::to_string(id) + "\n";
+		yaml += "    type: main_list\n";
+		yaml += theme;
+		yaml += "    layout: { x: center, y: 10, w: btn_width, h: 300 }\n";
+		yaml += "    draw_logo: false\n";
+		yaml += "    background: main_bg\n";
+		if (extra[0]) yaml += extra;
+		yaml += "\n";
+	};
+	gecMenu("main_options_sound", -3, themeMain,
+		"    item_width: 204\n    visible_buttons: [11, 12]\n    visible_buttons_conditional:\n      13: music_on\n    vibration_y: 169\n");
+	gecMenu("main_options_video", -2, themeMainWide, "");
+	gecMenu("main_options_input", -1, themeMain, "");
+	gecMenu("main_controls", -4, themeMain, "");
+	gecMenu("main_bindings", -5, themeMainWide, "");
+	gecMenu("main_controller", -6, themeMain,
+		"    item_width: 204\n    visible_buttons: [11, 16, 17]\n    vibration_y: 169\n");
+
+	// --- Ingame options extension menus ---
+	yaml += "  ingame_options_sound:\n";
+	yaml += "    inject: true\n";
+	yaml += "    menu_id: 55\n";
+	yaml += "    type: list\n";
+	yaml += themeIngame;
+	yaml += "    layout: { x: 70, y: 10, w: 340, h: 241 }\n";
+	yaml += "    item_width: 204\n";
+	yaml += "    visible_buttons: [11, 12, 15]\n";
+	yaml += "    visible_buttons_conditional:\n";
+	yaml += "      13: music_on\n";
+	yaml += "    vibration_y: 169\n\n";
+
+	struct IngameExt { const char* name; int id; };
+	IngameExt ingameExts[] = {
+		{"ingame_options_video", 56},
+		{"ingame_options_input", 63},
+		{"ingame_bindings", 54},
+	};
+	for (auto& ie : ingameExts) {
+		yaml += std::string("  ") + ie.name + ":\n";
+		yaml += "    inject: true\n";
+		yaml += "    menu_id: " + std::to_string(ie.id) + "\n";
+		yaml += "    type: list\n";
+		yaml += themeIngame;
+		yaml += "    layout: { x: 70, y: 10, w: 340, h: 241 }\n";
+		yaml += "    visible_buttons: [11, 15]\n\n";
+	}
+
+	yaml += "  ingame_controller:\n";
+	yaml += "    inject: true\n";
+	yaml += "    menu_id: 64\n";
+	yaml += "    type: list\n";
+	yaml += themeIngame;
+	yaml += "    layout: { x: 70, y: 10, w: 340, h: 241 }\n";
+	yaml += "    item_width: 204\n";
+	yaml += "    visible_buttons: [11, 15, 16, 17]\n";
+	yaml += "    vibration_y: 169\n";
 
 	std::string path = outDir + "/ui.yaml";
 	if (!writeString(path, yaml)) {

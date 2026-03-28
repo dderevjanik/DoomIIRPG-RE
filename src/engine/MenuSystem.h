@@ -4,6 +4,7 @@
 #include "Text.h"
 #include "MenuItem.h"
 #include "MenuStrings.h"
+#include "DataNode.h"
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -292,51 +293,17 @@ public:
         bool isSet = false;
     };
 
-    // Draw-time layout override (adjusts canvas during rendering)
-    struct DrawLayout {
-        int x = -1, y = -1, w = -1, h = -1; // -1 = keep from menuRect
-        bool clip = false;  // whether to set clip rect after applying
-        bool isSet = false;
-    };
-
-    struct YAMLMenuDef {
-        std::string name;
-        int menuId;
-        int type;
-        int maxItems;       // max visible items (0 = default)
-        std::string theme;  // theme name from ui.yaml
-        std::vector<YAMLMenuItem> items;
-        // Presentation properties (from YAML)
-        std::string background;     // image name ("main_bg", "none", or empty=default)
-        bool drawLogo = false;
-        int helpResource = -1;      // help resource index (1-11), -1 = not a help menu
-        int selectedIndex = -1;     // initial selection (-1 = default)
-        bool showInfoButtons = false;
-        std::vector<int> visibleButtons;            // button IDs to show
-        std::vector<int> visibleButtonsConditional;  // button IDs conditional on music_on (13)
-        int itemWidth = 0;          // override menuItem_width (0 = default)
-        int vibrationY = -1;        // alternate y when HasVibration() (-1 = unused)
-        MenuLayout layout;
-        DrawLayout drawLayout;
-        // Per-menu scrollbar position override (offsets from menuRect)
-        int scrollbarXOffset = -1;  // -1 = use theme default
-        int scrollbarYOffset = -1;
-    };
-
-    // Resolved theme data (images resolved at load time)
-    // Scrollbar style within a theme
+    // Scrollbar style
     enum ScrollbarStyle { SB_NONE = 0, SB_DIAL, SB_BAR };
 
     struct ScrollbarConfig {
         ScrollbarStyle style = SB_NONE;
-        // For SB_BAR: 4 resolved images
         Image* barImg = nullptr;
         Image* topImg = nullptr;
         Image* midImg = nullptr;
         Image* bottomImg = nullptr;
         int x = 0;
         int width = 50;
-        // For SB_DIAL: default position (overridable per-menu)
         int defaultX = 408;
         int defaultY = 81;
     };
@@ -350,18 +317,48 @@ public:
         Image* infoBtnHighlightImage = nullptr;
         int infoBtnRenderMode = 0;
         int infoBtnHighlightRenderMode = 0;
-        int itemWidth = 0;  // 0 = use default or image width
+        int itemWidth = 0;
         int itemHeight = 46;
         int itemPaddingBottom = 0;
         ScrollbarConfig scrollbar;
     };
 
+    struct YAMLMenuDef {
+        std::string name;
+        int menuId;
+        int type;
+        int maxItems;
+        std::vector<YAMLMenuItem> items;
+        std::string background;
+        bool drawLogo = false;
+        int helpResource = -1;
+        int selectedIndex = -1;
+        bool showInfoButtons = false;
+        std::vector<int> visibleButtons;
+        std::vector<int> visibleButtonsConditional;
+        int itemWidth = 0;
+        int vibrationY = -1;
+        MenuLayout layout;
+        int scrollbarXOffset = -1;
+        int scrollbarYOffset = -1;
+        int loadStartItem = 0;
+        int scrollIndex = -1;
+        bool isMissing = false;
+        int yesnoStringId = -1;
+        int yesnoSelectYes = 0;
+        int yesnoYesAction = 0;
+        int yesnoYesParam = 0;
+        int yesnoNoAction = 2;
+        int yesnoNoParam = 0;
+        bool yesnoClearStack = false;
+        // Resolved theme (populated after images load)
+        MenuTheme resolvedTheme;
+        bool hasTheme = false;
+    };
+
     std::vector<YAMLMenuDef> yamlMenuDefs;
     std::unordered_map<int, int> yamlMenuById; // menuId -> index in yamlMenuDefs
-    std::unordered_map<std::string, MenuTheme> menuThemes_; // theme name -> resolved theme
-    std::unordered_map<int, std::string> menuThemeByMenuId_; // menuId -> theme name
-    std::unordered_map<std::string, MenuLayout> layoutPresets_; // preset name -> layout
-    std::unordered_map<std::string, DrawLayout> drawLayoutPresets_; // preset name -> draw layout
+    std::unordered_map<std::string, DataNode> presMenus_; // menu presentation from ui.yaml
 
 	// Constructor
 	MenuSystem();
