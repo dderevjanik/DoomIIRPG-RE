@@ -263,23 +263,40 @@ int main(int argc, char* args[]) {
 			gc.maxEntities = game["max_entities"].asInt(gc.maxEntities);
 			gc.maxWeaponButtons = game["max_weapon_buttons"].asInt(gc.maxWeaponButtons);
 
-			// Player balance
-			gc.startingMaxHealth = game["starting_max_health"].asInt(gc.startingMaxHealth);
-			gc.outOfCombatTurns = game["out_of_combat_turns"].asInt(gc.outOfCombatTurns);
+			// Player section
+			DataNode player = game["player"];
+			if (player) {
+				gc.startingMaxHealth = player["starting_max_health"].asInt(gc.startingMaxHealth);
+				gc.outOfCombatTurns = player["out_of_combat_turns"].asInt(gc.outOfCombatTurns);
 
-			DataNode lu = game["level_up"];
-			if (lu) {
-				gc.levelUpHealth = lu["health"].asInt(gc.levelUpHealth);
-				gc.levelUpDefense = lu["defense"].asInt(gc.levelUpDefense);
-				gc.levelUpStrength = lu["strength"].asInt(gc.levelUpStrength);
-				gc.levelUpAccuracy = lu["accuracy"].asInt(gc.levelUpAccuracy);
-				gc.levelUpAgility = lu["agility"].asInt(gc.levelUpAgility);
-			}
+				DataNode lu = player["level_up"];
+				if (lu) {
+					gc.levelUpHealth = lu["health"].asInt(gc.levelUpHealth);
+					gc.levelUpDefense = lu["defense"].asInt(gc.levelUpDefense);
+					gc.levelUpStrength = lu["strength"].asInt(gc.levelUpStrength);
+					gc.levelUpAccuracy = lu["accuracy"].asInt(gc.levelUpAccuracy);
+					gc.levelUpAgility = lu["agility"].asInt(gc.levelUpAgility);
+				}
 
-			DataNode cs = game["chainsaw_bonus"];
-			if (cs) {
-				gc.chainsawBonusKills = cs["kills"].asInt(gc.chainsawBonusKills);
-				gc.chainsawBonusStrength = cs["strength"].asInt(gc.chainsawBonusStrength);
+				DataNode cs = player["chainsaw_bonus"];
+				if (cs) {
+					gc.chainsawBonusKills = cs["kills"].asInt(gc.chainsawBonusKills);
+					gc.chainsawBonusStrength = cs["strength"].asInt(gc.chainsawBonusStrength);
+				}
+
+				DataNode xp = player["xp_formula"];
+				if (xp) {
+					gc.xpLinear = xp["linear"].asInt(gc.xpLinear);
+					gc.xpCubic = xp["cubic"].asInt(gc.xpCubic);
+				}
+
+				DataNode caps = player["caps"];
+				if (caps) {
+					gc.capCredits = caps["credits"].asInt(gc.capCredits);
+					gc.capInventory = caps["inventory"].asInt(gc.capInventory);
+					gc.capAmmo = caps["ammo"].asInt(gc.capAmmo);
+					gc.capBotFuel = caps["bot_fuel"].asInt(gc.capBotFuel);
+				}
 			}
 
 			DataNode sc = game["scoring"];
@@ -297,20 +314,6 @@ int main(int argc, char* args[]) {
 				gc.scoreMoveDivisor = sc["move_divisor"].asInt(gc.scoreMoveDivisor);
 				gc.scorePerSecret = sc["per_secret"].asInt(gc.scorePerSecret);
 				gc.scoreAllSecretsBonus = sc["all_secrets_bonus"].asInt(gc.scoreAllSecretsBonus);
-			}
-
-			DataNode xp = game["xp_formula"];
-			if (xp) {
-				gc.xpLinear = xp["linear"].asInt(gc.xpLinear);
-				gc.xpCubic = xp["cubic"].asInt(gc.xpCubic);
-			}
-
-			DataNode caps = game["caps"];
-			if (caps) {
-				gc.capCredits = caps["credits"].asInt(gc.capCredits);
-				gc.capInventory = caps["inventory"].asInt(gc.capInventory);
-				gc.capAmmo = caps["ammo"].asInt(gc.capAmmo);
-				gc.capBotFuel = caps["bot_fuel"].asInt(gc.capBotFuel);
 			}
 
 			DataNode dvd = game["damage_vignette_dirs"];

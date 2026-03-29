@@ -36,21 +36,47 @@ bool SpriteDefs::parse(const DataNode& config) {
 				SpriteDefs::tileIndexToName[src.id] = name;
 			}
 		} else if (it.value().isMap()) {
-			// Extended format: chainsaw: { type: bin, file: tables.bin, id: 2 }
 			DataNode entry = it.value();
-			std::string typeStr = entry["type"].asString("bin");
 			src.file = entry["file"].asString("");
 
-			if (typeStr == "png" || typeStr == "bmp") {
-				src.type = (typeStr == "bmp") ? SpriteSourceType::Bmp : SpriteSourceType::Png;
-				SpriteDefs::tileNameToIndex[name] = SpriteDefs::SPRITE_INDEX_EXTERNAL;
-			} else {
+			// Infer type from fields:
+			//   has "id:" → Bin (legacy binary sprite from tables.bin)
+			//   has "frame_size:" → Sheet (sprite sheet with frame metadata)
+			//   otherwise → Image (single image file)
+			// Also support legacy "type:" field for backwards compat
+			DataNode idNode = entry["id"];
+			DataNode frameSizeNode = entry["frame_size"];
+			std::string typeStr = entry["type"].asString("");
+
+			if (idNode) {
+				// Binary sprite from tables.bin
 				src.type = SpriteSourceType::Bin;
-				src.id = entry["id"].asInt(0);
+				src.id = idNode.asInt(0);
 				SpriteDefs::tileNameToIndex[name] = src.id;
 				if (SpriteDefs::tileIndexToName.find(src.id) == SpriteDefs::tileIndexToName.end()) {
 					SpriteDefs::tileIndexToName[src.id] = name;
 				}
+			} else if (frameSizeNode) {
+				// Sprite sheet with frame metadata
+				src.type = SpriteSourceType::Sheet;
+				if (frameSizeNode.isSequence() && frameSizeNode.size() >= 2) {
+					src.frameWidth = frameSizeNode[0].asInt(0);
+					src.frameHeight = frameSizeNode[1].asInt(0);
+				} else if (frameSizeNode.isMap()) {
+					src.frameWidth = frameSizeNode["w"].asInt(0);
+					src.frameHeight = frameSizeNode["h"].asInt(0);
+				}
+				src.frameCount = entry["frames"].asInt(1);
+				SpriteDefs::tileNameToIndex[name] = SpriteDefs::SPRITE_INDEX_EXTERNAL;
+			} else if (typeStr == "bin") {
+				// Legacy explicit type: bin without id (treat as bin with id 0)
+				src.type = SpriteSourceType::Bin;
+				src.id = 0;
+				SpriteDefs::tileNameToIndex[name] = 0;
+			} else {
+				// Single image file (png, bmp, etc.)
+				src.type = SpriteSourceType::Image;
+				SpriteDefs::tileNameToIndex[name] = SpriteDefs::SPRITE_INDEX_EXTERNAL;
 			}
 		}
 
@@ -68,15 +94,15 @@ bool SpriteDefs::parse(const DataNode& config) {
 		}
 	}
 
-	int pngCount = 0, bmpCount = 0;
+	int imageCount = 0, sheetCount = 0;
 	for (const auto& [k, v] : SpriteDefs::tileNameToSource) {
-		if (v.type == SpriteSourceType::Png) pngCount++;
-		if (v.type == SpriteSourceType::Bmp) bmpCount++;
+		if (v.type == SpriteSourceType::Image) imageCount++;
+		if (v.type == SpriteSourceType::Sheet) sheetCount++;
 	}
-	int binCount = (int)SpriteDefs::tileNameToIndex.size() - pngCount - bmpCount;
-	printf("[sprites] loaded %d sprite names (%d bin, %d png, %d bmp), %d ranges\n",
+	int binCount = (int)SpriteDefs::tileNameToIndex.size() - imageCount - sheetCount;
+	printf("[sprites] loaded %d sprite names (%d bin, %d image, %d sheet), %d ranges\n",
 		(int)SpriteDefs::tileNameToIndex.size(),
-		binCount, pngCount, bmpCount,
+		binCount, imageCount, sheetCount,
 		(int)SpriteDefs::ranges.size());
 	return true;
 }
@@ -97,19 +123,19 @@ const SpriteSource* SpriteDefs::getSource(const std::string& name) {
 	return nullptr;
 }
 
-bool SpriteDefs::isPng(const std::string& name) {
+bool SpriteDefs::isImage(const std::string& name) {
 	const SpriteSource* src = getSource(name);
-	return src && src->type == SpriteSourceType::Png;
+	return src && src->type == SpriteSourceType::Image;
 }
 
-bool SpriteDefs::isBmp(const std::string& name) {
+bool SpriteDefs::isSheet(const std::string& name) {
 	const SpriteSource* src = getSource(name);
-	return src && src->type == SpriteSourceType::Bmp;
+	return src && src->type == SpriteSourceType::Sheet;
 }
 
 bool SpriteDefs::isExternal(const std::string& name) {
 	const SpriteSource* src = getSource(name);
-	return src && (src->type == SpriteSourceType::Png || src->type == SpriteSourceType::Bmp);
+	return src && (src->type == SpriteSourceType::Image || src->type == SpriteSourceType::Sheet);
 }
 
 int SpriteDefs::getRange(const std::string& name) {

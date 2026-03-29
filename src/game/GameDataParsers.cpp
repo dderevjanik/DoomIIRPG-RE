@@ -225,8 +225,8 @@ bool parseWeapons(Applet* app, const DataNode& config) {
 		app->combat->weapons[base + 7] = (int8_t)w["shots"].asInt(1);
 		app->combat->weapons[base + 8] = (int8_t)w["shot_hold"].asInt(0);
 
-		// Sprite info (optional)
-		DataNode sprite = w["sprite"];
+		// View offsets (idle/attack/flash positions)
+		DataNode sprite = w["view_offsets"];
 		if (sprite) {
 			int wpBase = idx * 6;
 			DataNode idle = sprite["idle"];
@@ -267,8 +267,8 @@ bool parseWeapons(Applet* app, const DataNode& config) {
 			app->combat->wpAttackSoundAlt[idx] = (int16_t)Sounds::getResIDByName(atkSndAlt);
 		}
 
-		// View tile (first-person weapon sprite tile index)
-		std::string vtName = w["view_tile"].asString("");
+		// First-person weapon sprite tile index
+		std::string vtName = w["sprite"].asString("");
 		if (!vtName.empty()) {
 			app->combat->wpViewTile[idx] = (int16_t)tileFromName(vtName);
 		}
@@ -430,11 +430,11 @@ bool parseProjectiles(Applet* app, const DataNode& config) {
 		if (launch) {
 			auto& pv = app->combat->projVisuals[i];
 			pv.launchRenderMode = (int8_t)renderModeFromName(launch["render_mode"].asString("normal"));
-			pv.launchAnim = (int16_t)tileFromName(launch["anim"].asString("0"));
-			pv.launchAnimMonster = (int16_t)tileFromName(launch["anim_monster"].asString("0"));
+			pv.launchAnim = (int16_t)tileFromName(launch["sprite"].asString(launch["anim"].asString("0")));
+			pv.launchAnimMonster = (int16_t)tileFromName(launch["sprite_monster"].asString(launch["anim_monster"].asString("0")));
 			pv.launchSpeed = (int16_t)launch["speed"].asInt(0);
 			pv.launchSpeedAdd = (int16_t)launch["speed_add"].asInt(0);
-			pv.launchAnimFromWeapon = launch["anim_from_weapon"].asBool(false);
+			pv.launchAnimFromWeapon = launch["sprite_from_weapon"].asBool(launch["anim_from_weapon"].asBool(false));
 			pv.launchZOffset = (int16_t)launch["z_offset"].asInt(0);
 			DataNode off = launch["offset"];
 			if (off) {
@@ -442,13 +442,15 @@ bool parseProjectiles(Applet* app, const DataNode& config) {
 				pv.launchOffsetYR = (int8_t)off["y_right"].asInt(0);
 				pv.launchOffsetZ = (int8_t)off["z"].asInt(0);
 			}
-			// Support anim_player as alias for anim
-			DataNode animPlayer = launch["anim_player"];
-			if (animPlayer)
-				pv.launchAnim = (int16_t)tileFromName(animPlayer.asString("0"));
-			DataNode animMonster = launch["anim_monster"];
-			if (animMonster)
-				pv.launchAnimMonster = (int16_t)tileFromName(animMonster.asString("0"));
+			// Support sprite_player as override for sprite
+			DataNode spritePlayer = launch["sprite_player"];
+			if (!spritePlayer) spritePlayer = launch["anim_player"]; // backwards compat
+			if (spritePlayer)
+				pv.launchAnim = (int16_t)tileFromName(spritePlayer.asString("0"));
+			DataNode spriteMonster = launch["sprite_monster"];
+			if (!spriteMonster) spriteMonster = launch["anim_monster"]; // backwards compat
+			if (spriteMonster)
+				pv.launchAnimMonster = (int16_t)tileFromName(spriteMonster.asString("0"));
 			// Launch behaviors
 			int crZAdj = launch["close_range_z_adjust"].asInt(0);
 			if (crZAdj != 0) {
@@ -462,7 +464,7 @@ bool parseProjectiles(Applet* app, const DataNode& config) {
 		DataNode impact = p["impact"];
 		if (impact) {
 			auto& pv = app->combat->projVisuals[i];
-			pv.impactAnim = (int16_t)tileFromName(impact["anim"].asString("0"));
+			pv.impactAnim = (int16_t)tileFromName(impact["sprite"].asString(impact["anim"].asString("0")));
 			pv.impactRenderMode = (int8_t)renderModeFromName(impact["render_mode"].asString("normal"));
 			std::string snd = impact["impact_sound"].asString("");
 			if (!snd.empty()) {
@@ -484,7 +486,7 @@ bool parseProjectiles(Applet* app, const DataNode& config) {
 			if (reflectBuff >= 0) {
 				pv.reflectsWithBuff = true;
 				pv.reflectBuffId = (int8_t)reflectBuff;
-				pv.reflectAnim = (int16_t)tileFromName(impact["reflect_anim"].asString("0"));
+				pv.reflectAnim = (int16_t)tileFromName(impact["reflect_sprite"].asString(impact["reflect_anim"].asString("0")));
 				pv.reflectRenderMode = (int8_t)renderModeFromName(impact["reflect_render_mode"].asString("normal"));
 			}
 			DataNode particles = impact["particles"];

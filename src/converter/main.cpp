@@ -509,6 +509,83 @@ static std::string escapeString(const uint8_t* raw, int len) {
 	return result;
 }
 
+// Sprite tile name/index mapping (used by sprites.yaml and entities.yaml generators)
+struct TileEntry { const char* name; int index; };
+static const TileEntry spriteEntries[] = {
+	// View weapons
+	{"assault_rifle", 1}, {"chainsaw", 2}, {"holy_water_pistol", 3},
+	{"sentry_bot_shooting", 4}, {"sentry_bot_exploding", 5},
+	{"super_shotgun", 6}, {"chaingun", 7}, {"assault_rifle_with_scope", 8},
+	{"plasma_gun", 9}, {"rocket_launcher", 10}, {"bfg", 11}, {"soul_cube", 12},
+	{"sentry_bot_red_shooting", 13}, {"sentry_bot_red_exploding", 14},
+	{"world_weapon", 15},
+	// Monsters
+	{"monster_red_sentry_bot", 18}, {"monster_sentry_bot", 19},
+	{"monster_zombie", 20}, {"monster_zombie2", 21}, {"monster_zombie3", 22},
+	{"monster_imp", 23}, {"monster_imp2", 24}, {"monster_imp3", 25},
+	{"monster_saw_goblin", 26}, {"monster_saw_goblin2", 27}, {"monster_saw_goblin3", 28},
+	{"monster_lost_soul", 29}, {"monster_lost_soul2", 30}, {"monster_lost_soul3", 31},
+	{"monster_pinky", 32}, {"monster_pinky2", 33}, {"monster_pinky3", 34},
+	{"monster_revenant", 35}, {"monster_revenant2", 36}, {"monster_revenant3", 37},
+	{"monster_mancubus", 38}, {"monster_mancubus2", 39}, {"monster_mancubus3", 40},
+	{"monster_cacodemon", 41}, {"monster_cacodemon2", 42}, {"monster_cacodemon3", 43},
+	{"monster_sentinel", 44}, {"monster_sentinel2", 45}, {"monster_sentinel3", 46},
+	{"monster_arch_vile", 50}, {"monster_arch_vile2", 51}, {"monster_arch_vile3", 52},
+	{"monster_arachnotron", 53},
+	{"boss_cyberdemon", 54}, {"boss_pinky", 56}, {"boss_mastermind", 57},
+	{"boss_vios", 58}, {"boss_vios2", 59}, {"boss_vios3", 60},
+	{"boss_vios4", 61}, {"boss_vios5", 62},
+	// NPCs
+	{"npc_riley_oconnor", 66}, {"npc_major", 68}, {"npc_bob", 69},
+	{"npc_civilian", 71}, {"npc_sarge", 72}, {"npc_female", 73},
+	{"npc_evil_scientist", 74}, {"npc_scientist", 75}, {"npc_researcher", 76},
+	{"npc_civilian2", 77},
+	// Items
+	{"ammo_bullets", 85}, {"ammo_shells", 86}, {"ammo_rockets", 88},
+	{"ammo_cells", 89}, {"ammo_holy_water", 90}, {"one_uac_credit", 107},
+	{"key_red", 110}, {"key_blue", 111}, {"armor_jacket", 112},
+	{"satchel", 113}, {"pack_item", 114}, {"worker_pack", 115},
+	{"health_pack", 116}, {"food_plate", 117}, {"armor_shard", 119},
+	// World objects
+	{"obj_table", 121}, {"hell_seal", 122}, {"toilet", 123},
+	{"dirt_decal", 124}, {"ladder", 125}, {"blood_splatter", 126},
+	{"sink", 127}, {"barred_window", 128}, {"hazard_bar", 129},
+	{"obj_fire", 130}, {"treadmill_monitor", 131}, {"tech_station", 133},
+	{"water_spout", 134}, {"obj_chair", 135}, {"obj_torchiere", 136},
+	{"obj_scientist_corpse", 137}, {"obj_corpse", 138}, {"obj_other_corpse", 139},
+	{"dummy_pain", 140}, {"attack_dummy", 141}, {"exit_dummy", 142},
+	{"use_dummy", 143}, {"septic_station", 147}, {"practice_target", 149},
+	{"obj_printer", 150}, {"obj_crate", 152}, {"vending_machine", 153},
+	{"armor_repair", 154}, {"closed_portal_eye", 155}, {"eye_portal", 156},
+	{"portal_socket", 157}, {"treadmill_side", 158}, {"treadmill_front", 159},
+	{"hell_hands", 161}, {"doorjamb_decal", 162}, {"stones_and_skulls", 164},
+	{"nonobstructing_spritewall", 166}, {"fence", 168},
+	{"sentinel_spikes", 170}, {"sentinel_spikes_dummy", 171},
+	{"switch", 173}, {"tech_detail", 175}, {"hell_skulls", 177},
+	{"glass", 178}, {"terminal_target", 179}, {"terminal_general", 180},
+	{"terminal_vios", 181}, {"terminal_bot", 182}, {"terminal_hacking", 183},
+	{"elevator_nums", 184}, {"bush", 187}, {"tree_top", 188},
+	{"tree_trunk", 189}, {"sfx_lightglow1", 193}, {"window3", 197},
+	{"glaevenscope", 201}, {"fog_gray", 208}, {"scorch_mark", 212},
+	{"static_flame", 223},
+	// Projectiles and effects
+	{"missile_player_rocket", 225}, {"missile_rocket", 226}, {"flesh", 227},
+	{"shadow", 232}, {"anim_fire", 234}, {"anim_water", 235},
+	{"air_vent", 236}, {"soul_cube_attack", 239}, {"water_stream", 240},
+	{"caco_plasma", 241}, {"fire_ball", 242}, {"plasma_ball", 243},
+	{"bfg_ball", 244}, {"monster_claw", 245}, {"monster_bite", 246},
+	{"monster_blunt_trauma", 247}, {"electric_slide", 248},
+	{"fear_eye", 251}, {"acid_spit", 252}, {"npc_chat", 254}, {"alert", 255},
+	// Walls and doors
+	{"doorjamb", 257}, {"red_door_locked", 271}, {"red_door_unlocked", 272},
+	{"blue_door_locked", 273}, {"blue_door_unlocked", 274},
+	{"door_locked", 275}, {"door_unlocked", 276},
+	{"level_door_locked", 277}, {"level_door_unlocked", 278},
+	{"sky_box", 301}, {"fade", 302},
+	// Flats
+	{"flat_lava", 479}, {"flat_lava2", 480},
+};
+
 // ========================================================================
 // Sound filenames (144 default sounds from the original IPA)
 // ========================================================================
@@ -964,41 +1041,8 @@ static bool convertEntities(ZipFile& zip, const std::string& outDir) {
 	out << YAML::Comment(std::to_string(count) + " entities with type, rendering, and animation data");
 	out << YAML::Newline;
 
-	// Emit entity type/subtype lookup tables (used by EntityNames at runtime)
+	// Entity type/subtype lookup tables are now hardcoded in EntityNames.cpp
 	out << YAML::BeginMap;
-
-	out << YAML::Key << "entity_types" << YAML::Value << YAML::BeginMap;
-	for (int i = 0; i < NUM_ENTITY_TYPES; i++) {
-		out << YAML::Key << ENTITY_TYPE_NAMES[i] << YAML::Value << i;
-	}
-	out << YAML::EndMap;
-
-	out << YAML::Key << "monster_subtypes" << YAML::Value << YAML::BeginMap;
-	for (int i = 0; i < NUM_MONSTER_NAMES; i++) {
-		out << YAML::Key << MONSTER_NAMES[i] << YAML::Value << i;
-	}
-	out << YAML::EndMap;
-
-	out << YAML::Key << "item_subtypes" << YAML::Value << YAML::BeginMap;
-	for (int i = 0; i < NUM_ITEM_SUBTYPES; i++) {
-		out << YAML::Key << ITEM_SUBTYPE_NAMES[i] << YAML::Value << i;
-	}
-	out << YAML::EndMap;
-
-	out << YAML::Key << "door_subtypes" << YAML::Value << YAML::BeginMap;
-	for (int i = 0; i < NUM_DOOR_SUBTYPES; i++) {
-		if (DOOR_SUBTYPE_NAMES[i][0] != '\0')
-			out << YAML::Key << DOOR_SUBTYPE_NAMES[i] << YAML::Value << i;
-	}
-	out << YAML::EndMap;
-
-	out << YAML::Key << "decor_subtypes" << YAML::Value << YAML::BeginMap;
-	for (int i = 0; i < NUM_DECOR_SUBTYPES; i++) {
-		if (DECOR_SUBTYPE_NAMES[i][0] != '\0')
-			out << YAML::Key << DECOR_SUBTYPE_NAMES[i] << YAML::Value << i;
-	}
-	out << YAML::EndMap;
-
 	out << YAML::Key << "entities" << YAML::Value;
 	out << YAML::BeginMap;
 
@@ -1029,6 +1073,14 @@ static bool convertEntities(ZipFile& zip, const std::string& outDir) {
 		entityNames[i] = generateEntityName(e.eType, e.eSubType, e.parm, typeName, nameCount);
 	}
 
+	// Build tile index → sprite name lookup
+	std::map<int, std::string> tileIdToName;
+	for (const auto& te : spriteEntries) {
+		if (tileIdToName.find(te.index) == tileIdToName.end()) {
+			tileIdToName[te.index] = te.name;
+		}
+	}
+
 	// Second pass: emit YAML
 	for (int i = 0; i < count; i++) {
 		auto& e = entities[i];
@@ -1038,7 +1090,12 @@ static bool convertEntities(ZipFile& zip, const std::string& outDir) {
 
 		out << YAML::Comment("Entity " + std::to_string(i));
 		out << YAML::Key << entityNames[i] << YAML::Value << YAML::BeginMap;
-		out << YAML::Key << "tile_index" << YAML::Value << (int)e.tileIndex;
+		auto tit = tileIdToName.find((int)e.tileIndex);
+		if (tit != tileIdToName.end()) {
+			out << YAML::Key << "sprite" << YAML::Value << tit->second;
+		} else {
+			out << YAML::Key << "sprite" << YAML::Value << (int)e.tileIndex;
+		}
 		out << YAML::Key << "type" << YAML::Value << typeName;
 		out << YAML::Key << "subtype" << YAML::Value << subtypeName;
 		out << YAML::Key << "parm" << YAML::Value << parmName;
@@ -1199,15 +1256,10 @@ static bool convertTables(ZipFile& zip, const std::string& outDir) {
 			wout << YAML::Key << weaponName(i) << YAML::Value << YAML::BeginMap;
 			wout << YAML::Key << "index" << YAML::Value << i;
 
-			// View tile (first-person weapon sprite tile index)
+			// First-person weapon view sprite (references wp_view_* in sprites.yaml)
 			if (i < NUM_PLAYER_WEAPONS) {
-				int vt;
-				switch (i) {
-					case 5:  vt = 13; break; // red_shooting_sentry_bot
-					case 6:  vt = 14; break; // red_exploding_sentry_bot
-					default: vt = 1 + i; break;
-				}
-				wout << YAML::Key << "view_tile" << YAML::Value << std::to_string(vt);
+				std::string wpViewName = "wp_view_" + std::string(weaponName(i));
+				wout << YAML::Key << "sprite" << YAML::Value << wpViewName;
 			}
 
 			// Attack sound (hardcoded defaults per weapon)
@@ -1252,7 +1304,7 @@ static bool convertTables(ZipFile& zip, const std::string& outDir) {
 			// Sprite info only for weapons with weapon_info data
 			if (i < (int)allWpInfo.size()) {
 				const auto& wi = allWpInfo[i];
-				wout << YAML::Key << "sprite" << YAML::Value << YAML::BeginMap;
+				wout << YAML::Key << "view_offsets" << YAML::Value << YAML::BeginMap;
 				wout << YAML::Key << "idle" << YAML::Value << YAML::Flow << YAML::BeginMap;
 				wout << YAML::Key << "x" << YAML::Value << wi.idleX;
 				wout << YAML::Key << "y" << YAML::Value << wi.idleY;
@@ -1704,89 +1756,38 @@ static bool generateAnimationsYaml(const std::string& outDir) {
 	out << YAML::Comment("Modders can remap sprite sheet layouts by changing the indices here.");
 	out << YAML::Newline;
 
-	struct TileEntry { const char* name; int index; };
-	static const TileEntry entries[] = {
-		// View weapons
-		{"assault_rifle", 1}, {"chainsaw", 2}, {"holy_water_pistol", 3},
-		{"sentry_bot_shooting", 4}, {"sentry_bot_exploding", 5},
-		{"super_shotgun", 6}, {"chaingun", 7}, {"assault_rifle_with_scope", 8},
-		{"plasma_gun", 9}, {"rocket_launcher", 10}, {"bfg", 11}, {"soul_cube", 12},
-		{"sentry_bot_red_shooting", 13}, {"sentry_bot_red_exploding", 14},
-		{"world_weapon", 15},
-		// Monsters
-		{"monster_red_sentry_bot", 18}, {"monster_sentry_bot", 19},
-		{"monster_zombie", 20}, {"monster_zombie2", 21}, {"monster_zombie3", 22},
-		{"monster_imp", 23}, {"monster_imp2", 24}, {"monster_imp3", 25},
-		{"monster_saw_goblin", 26}, {"monster_saw_goblin2", 27}, {"monster_saw_goblin3", 28},
-		{"monster_lost_soul", 29}, {"monster_lost_soul2", 30}, {"monster_lost_soul3", 31},
-		{"monster_pinky", 32}, {"monster_pinky2", 33}, {"monster_pinky3", 34},
-		{"monster_revenant", 35}, {"monster_revenant2", 36}, {"monster_revenant3", 37},
-		{"monster_mancubus", 38}, {"monster_mancubus2", 39}, {"monster_mancubus3", 40},
-		{"monster_cacodemon", 41}, {"monster_cacodemon2", 42}, {"monster_cacodemon3", 43},
-		{"monster_sentinel", 44}, {"monster_sentinel2", 45}, {"monster_sentinel3", 46},
-		{"monster_arch_vile", 50}, {"monster_arch_vile2", 51}, {"monster_arch_vile3", 52},
-		{"monster_arachnotron", 53},
-		{"boss_cyberdemon", 54}, {"boss_pinky", 56}, {"boss_mastermind", 57},
-		{"boss_vios", 58}, {"boss_vios2", 59}, {"boss_vios3", 60},
-		{"boss_vios4", 61}, {"boss_vios5", 62},
-		// NPCs
-		{"npc_riley_oconnor", 66}, {"npc_major", 68}, {"npc_bob", 69},
-		{"npc_civilian", 71}, {"npc_sarge", 72}, {"npc_female", 73},
-		{"npc_evil_scientist", 74}, {"npc_scientist", 75}, {"npc_researcher", 76},
-		{"npc_civilian2", 77},
-		// Items
-		{"ammo_bullets", 85}, {"ammo_shells", 86}, {"ammo_rockets", 88},
-		{"ammo_cells", 89}, {"ammo_holy_water", 90}, {"one_uac_credit", 107},
-		{"key_red", 110}, {"key_blue", 111}, {"armor_jacket", 112},
-		{"satchel", 113}, {"pack_item", 114}, {"worker_pack", 115},
-		{"health_pack", 116}, {"food_plate", 117}, {"armor_shard", 119},
-		// World objects
-		{"obj_table", 121}, {"hell_seal", 122}, {"toilet", 123},
-		{"dirt_decal", 124}, {"ladder", 125}, {"blood_splatter", 126},
-		{"sink", 127}, {"barred_window", 128}, {"hazard_bar", 129},
-		{"obj_fire", 130}, {"treadmill_monitor", 131}, {"tech_station", 133},
-		{"water_spout", 134}, {"obj_chair", 135}, {"obj_torchiere", 136},
-		{"obj_scientist_corpse", 137}, {"obj_corpse", 138}, {"obj_other_corpse", 139},
-		{"dummy_pain", 140}, {"attack_dummy", 141}, {"exit_dummy", 142},
-		{"use_dummy", 143}, {"septic_station", 147}, {"practice_target", 149},
-		{"obj_printer", 150}, {"obj_crate", 152}, {"vending_machine", 153},
-		{"armor_repair", 154}, {"closed_portal_eye", 155}, {"eye_portal", 156},
-		{"portal_socket", 157}, {"treadmill_side", 158}, {"treadmill_front", 159},
-		{"hell_hands", 161}, {"doorjamb_decal", 162}, {"stones_and_skulls", 164},
-		{"nonobstructing_spritewall", 166}, {"fence", 168},
-		{"sentinel_spikes", 170}, {"sentinel_spikes_dummy", 171},
-		{"switch", 173}, {"tech_detail", 175}, {"hell_skulls", 177},
-		{"glass", 178}, {"terminal_target", 179}, {"terminal_general", 180},
-		{"terminal_vios", 181}, {"terminal_bot", 182}, {"terminal_hacking", 183},
-		{"elevator_nums", 184}, {"bush", 187}, {"tree_top", 188},
-		{"tree_trunk", 189}, {"sfx_lightglow1", 193}, {"window3", 197},
-		{"glaevenscope", 201}, {"fog_gray", 208}, {"scorch_mark", 212},
-		{"static_flame", 223},
-		// Projectiles and effects
-		{"missile_player_rocket", 225}, {"missile_rocket", 226}, {"flesh", 227},
-		{"shadow", 232}, {"anim_fire", 234}, {"anim_water", 235},
-		{"air_vent", 236}, {"soul_cube_attack", 239}, {"water_stream", 240},
-		{"caco_plasma", 241}, {"fire_ball", 242}, {"plasma_ball", 243},
-		{"bfg_ball", 244}, {"monster_claw", 245}, {"monster_bite", 246},
-		{"monster_blunt_trauma", 247}, {"electric_slide", 248},
-		{"fear_eye", 251}, {"acid_spit", 252}, {"npc_chat", 254}, {"alert", 255},
-		// Walls and doors
-		{"doorjamb", 257}, {"red_door_locked", 271}, {"red_door_unlocked", 272},
-		{"blue_door_locked", 273}, {"blue_door_unlocked", 274},
-		{"door_locked", 275}, {"door_unlocked", 276},
-		{"level_door_locked", 277}, {"level_door_unlocked", 278},
-		{"sky_box", 301}, {"fade", 302},
-		// Flats
-		{"flat_lava", 479}, {"flat_lava2", 480},
-	};
-
 	out << YAML::BeginMap;
 	out << YAML::Key << "sprites" << YAML::Value << YAML::BeginMap;
-	for (const auto& e : entries) {
+	for (const auto& e : spriteEntries) {
 		out << YAML::Key << e.name << YAML::Value << YAML::Flow << YAML::BeginMap;
-		out << YAML::Key << "type" << YAML::Value << "bin";
 		out << YAML::Key << "file" << YAML::Value << "tables.bin";
 		out << YAML::Key << "id" << YAML::Value << e.index;
+		out << YAML::EndMap;
+	}
+
+	// First-person weapon view sprite aliases (used by weapons.yaml sprite: field)
+	struct WpViewEntry { const char* name; int id; };
+	static const WpViewEntry wpViewEntries[] = {
+		{"wp_view_assault_rifle", 1},
+		{"wp_view_chainsaw", 2},
+		{"wp_view_holy_water_pistol", 3},
+		{"wp_view_shooting_sentry_bot", 4},
+		{"wp_view_exploding_sentry_bot", 5},
+		{"wp_view_super_shotgun", 8},
+		{"wp_view_chaingun", 9},
+		{"wp_view_assault_rifle_with_scope", 10},
+		{"wp_view_plasma_gun", 11},
+		{"wp_view_rocket_launcher", 12},
+		{"wp_view_bfg", 13},
+		{"wp_view_soul_cube", 14},
+		{"wp_view_red_shooting_sentry_bot", 13},
+		{"wp_view_red_exploding_sentry_bot", 14},
+		{"wp_view_item", 15},
+	};
+	for (const auto& wv : wpViewEntries) {
+		out << YAML::Key << wv.name << YAML::Value << YAML::Flow << YAML::BeginMap;
+		out << YAML::Key << "file" << YAML::Value << "tables.bin";
+		out << YAML::Key << "id" << YAML::Value << wv.id;
 		out << YAML::EndMap;
 	}
 
@@ -1842,7 +1843,6 @@ static bool generateAnimationsYaml(const std::string& outDir) {
 	};
 	for (const auto& img : bmpEntries) {
 		out << YAML::Key << img.name << YAML::Value << YAML::Flow << YAML::BeginMap;
-		out << YAML::Key << "type" << YAML::Value << "bmp";
 		out << YAML::Key << "file" << YAML::Value << img.file;
 		out << YAML::EndMap;
 	}
@@ -1900,10 +1900,10 @@ static bool generateProjectilesYaml(const std::string& outDir) {
 			out << YAML::Key << "launch" << YAML::Value << YAML::BeginMap;
 			if (d.launchRM >= 0) out << YAML::Key << "render_mode" << YAML::Value << renderModeName(d.launchRM);
 			if (d.launchAnimMon != 0) {
-				out << YAML::Key << "anim_player" << YAML::Value << tileName(d.launchAnim);
-				out << YAML::Key << "anim_monster" << YAML::Value << tileName(d.launchAnimMon);
+				out << YAML::Key << "sprite_player" << YAML::Value << tileName(d.launchAnim);
+				out << YAML::Key << "sprite_monster" << YAML::Value << tileName(d.launchAnimMon);
 			} else if (d.launchAnim != 0) {
-				out << YAML::Key << "anim" << YAML::Value << tileName(d.launchAnim);
+				out << YAML::Key << "sprite" << YAML::Value << tileName(d.launchAnim);
 			}
 			if (d.launchSpeed > 0) out << YAML::Key << "speed" << YAML::Value << d.launchSpeed;
 			if (d.launchSpeedAdd != 0) out << YAML::Key << "speed_add" << YAML::Value << d.launchSpeedAdd;
@@ -1917,13 +1917,13 @@ static bool generateProjectilesYaml(const std::string& outDir) {
 				out << YAML::EndMap;
 			}
 			if (d.launchZOff != 0) out << YAML::Key << "z_offset" << YAML::Value << d.launchZOff;
-			if (d.animFromWeapon) out << YAML::Key << "anim_from_weapon" << YAML::Value << true;
+			if (d.animFromWeapon) out << YAML::Key << "sprite_from_weapon" << YAML::Value << true;
 			out << YAML::EndMap;
 		}
 
 		if (d.impactAnim != 0 || d.impactSound != nullptr || d.shake) {
 			out << YAML::Key << "impact" << YAML::Value << YAML::BeginMap;
-			out << YAML::Key << "anim" << YAML::Value << tileName(d.impactAnim);
+			out << YAML::Key << "sprite" << YAML::Value << tileName(d.impactAnim);
 			if (d.impactRM != 0) out << YAML::Key << "render_mode" << YAML::Value << renderModeName(d.impactRM);
 			if (d.impactSound) out << YAML::Key << "impact_sound" << YAML::Value << d.impactSound;
 			if (d.shake) {
@@ -2966,36 +2966,37 @@ static bool generateGameYaml(const std::string& outDir) {
 	yaml += "    - comicbook\n";
 	yaml += "    - data\n";
 	yaml += "\n";
-	yaml += "  # Player starting stats\n";
-	yaml += "  starting_max_health: 100\n";
+	yaml += "  # Player configuration\n";
+	yaml += "  player:\n";
+	yaml += "    starting_max_health: 100\n";
 	yaml += "\n";
-	yaml += "  # Level-up stat grants\n";
-	yaml += "  level_up:\n";
-	yaml += "    health: 10\n";
-	yaml += "    defense: 1\n";
-	yaml += "    strength: 2\n";
-	yaml += "    accuracy: 1\n";
-	yaml += "    agility: 3\n";
+	yaml += "    # Level-up stat grants\n";
+	yaml += "    level_up:\n";
+	yaml += "      health: 10\n";
+	yaml += "      defense: 1\n";
+	yaml += "      strength: 2\n";
+	yaml += "      accuracy: 1\n";
+	yaml += "      agility: 3\n";
 	yaml += "\n";
-	yaml += "  # Chainsaw strength bonus: every N kills grants +strength\n";
-	yaml += "  chainsaw_bonus:\n";
-	yaml += "    kills: 30\n";
-	yaml += "    strength: 2\n";
+	yaml += "    # Chainsaw strength bonus: every N kills grants +strength\n";
+	yaml += "    chainsaw_bonus:\n";
+	yaml += "      kills: 30\n";
+	yaml += "      strength: 2\n";
 	yaml += "\n";
-	yaml += "  # Out-of-combat cooldown (turns since last combat)\n";
-	yaml += "  out_of_combat_turns: 4\n";
+	yaml += "    # Out-of-combat cooldown (turns since last combat)\n";
+	yaml += "    out_of_combat_turns: 4\n";
 	yaml += "\n";
-	yaml += "  # XP formula coefficients: linear*n + cubic*((n-1)^3 + (n-1))\n";
-	yaml += "  xp_formula:\n";
-	yaml += "    linear: 500\n";
-	yaml += "    cubic: 100\n";
+	yaml += "    # XP formula coefficients: linear*n + cubic*((n-1)^3 + (n-1))\n";
+	yaml += "    xp_formula:\n";
+	yaml += "      linear: 500\n";
+	yaml += "      cubic: 100\n";
 	yaml += "\n";
-	yaml += "  # Inventory/ammo capacity caps\n";
-	yaml += "  caps:\n";
-	yaml += "    credits: 9999\n";
-	yaml += "    inventory: 999\n";
-	yaml += "    ammo: 100\n";
-	yaml += "    bot_fuel: 5\n";
+	yaml += "    # Inventory/ammo capacity caps\n";
+	yaml += "    caps:\n";
+	yaml += "      credits: 9999\n";
+	yaml += "      inventory: 999\n";
+	yaml += "      ammo: 100\n";
+	yaml += "      bot_fuel: 5\n";
 	yaml += "\n";
 	yaml += "  # Scoring formula constants\n";
 	yaml += "  scoring:\n";

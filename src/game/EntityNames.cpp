@@ -17,17 +17,6 @@ std::unordered_map<std::string, int> EntityNames::ammoParms;
 std::vector<std::string> EntityNames::entityTypesByIndex;
 std::vector<std::string> EntityNames::weaponNamesByIndex;
 
-static void loadSection(const DataNode& config, const char* key,
-						std::unordered_map<std::string, int>& map) {
-	map.clear();
-	DataNode section = config[key];
-	if (section && section.isMap()) {
-		for (auto it = section.begin(); it != section.end(); ++it) {
-			map[it.key().asString()] = it.value().asInt(0);
-		}
-	}
-}
-
 static void buildIndexVector(const std::unordered_map<std::string, int>& map,
 							 std::vector<std::string>& vec) {
 	int maxIdx = 0;
@@ -42,17 +31,70 @@ static void buildIndexVector(const std::unordered_map<std::string, int>& map,
 	}
 }
 
-bool EntityNames::parseTypes(const DataNode& config) {
-	loadSection(config, "entity_types", EntityNames::entityTypes);
-	loadSection(config, "monster_subtypes", EntityNames::monsterSubtypes);
-	loadSection(config, "item_subtypes", EntityNames::itemSubtypes);
-	loadSection(config, "door_subtypes", EntityNames::doorSubtypes);
-	loadSection(config, "decor_subtypes", EntityNames::decorSubtypes);
+bool EntityNames::parseTypes(const DataNode&) {
+	// Entity types — hardcoded engine constants
+	entityTypes = {
+		{"world", Enums::ET_WORLD},
+		{"player", Enums::ET_PLAYER},
+		{"monster", Enums::ET_MONSTER},
+		{"npc", Enums::ET_NPC},
+		{"playerclip", Enums::ET_PLAYERCLIP},
+		{"door", Enums::ET_DOOR},
+		{"item", Enums::ET_ITEM},
+		{"decor", Enums::ET_DECOR},
+		{"env_damage", Enums::ET_ENV_DAMAGE},
+		{"corpse", Enums::ET_CORPSE},
+		{"attack_interactive", Enums::ET_ATTACK_INTERACTIVE},
+		{"monsterblock_item", Enums::ET_MONSTERBLOCK_ITEM},
+		{"spritewall", Enums::ET_SPRITEWALL},
+		{"nonobstructing_spritewall", Enums::ET_NONOBSTRUCTING_SPRITEWALL},
+		{"decor_noclip", Enums::ET_DECOR_NOCLIP},
+	};
 
-	buildIndexVector(EntityNames::entityTypes, EntityNames::entityTypesByIndex);
+	// Item subtypes
+	itemSubtypes = {
+		{"inventory", 0},
+		{"weapon", Enums::ITEM_WEAPON},
+		{"ammo", Enums::ITEM_AMMO},
+		{"food", 3},
+		{"sack", 4},
+		{"c_note", 5},
+		{"c_string", 6},
+	};
 
-	printf("[entity_names] loaded %d entity types, %d monster subtypes\n",
-		(int)EntityNames::entityTypes.size(), (int)EntityNames::monsterSubtypes.size());
+	// Door subtypes
+	doorSubtypes = {
+		{"locked", Enums::DOOR_LOCKED},
+		{"unlocked", Enums::DOOR_UNLOCKED},
+	};
+
+	// Decor subtypes
+	decorSubtypes = {
+		{"misc", 0},
+		{"exithall", 1},
+		{"mixing", 2},
+		{"statue", 3},
+		{"tombstone", 5},
+		{"dynamite", 6},
+		{"water_spout", 7},
+		{"treadmill", 8},
+	};
+
+	// Monster subtypes — hardcoded fallback, but lookupSubtype()
+	// prefers combat->monsterNameToIndex (populated from monsters.yaml)
+	monsterSubtypes = {
+		{"zombie", 0}, {"zombie_commando", 1}, {"lost_soul", 2},
+		{"imp", 3}, {"sawcubus", 4}, {"pinky", 5},
+		{"cacodemon", 6}, {"sentinel", 7}, {"mancubus", 8},
+		{"revenant", 9}, {"arch_vile", 10}, {"sentry_bot", 11},
+		{"cyberdemon", 12}, {"mastermind", 13}, {"phantom", 14},
+		{"boss_vios", 15}, {"boss_vios2", 16},
+	};
+
+	buildIndexVector(entityTypes, entityTypesByIndex);
+
+	printf("[entity_names] initialized %d entity types, %d monster subtypes\n",
+		(int)entityTypes.size(), (int)monsterSubtypes.size());
 	return true;
 }
 
@@ -67,7 +109,16 @@ bool EntityNames::parseWeapons(const DataNode& config) {
 			if (index >= 0) EntityNames::weaponNames[name] = index;
 		}
 	}
-	loadSection(config, "ammo_parms", EntityNames::ammoParms);
+
+	// ammo_parms still comes from weapons.yaml (data-driven)
+	ammoParms.clear();
+	DataNode ammoNode = config["ammo_parms"];
+	if (ammoNode && ammoNode.isMap()) {
+		for (auto it = ammoNode.begin(); it != ammoNode.end(); ++it) {
+			ammoParms[it.key().asString()] = it.value().asInt(0);
+		}
+	}
+
 	buildIndexVector(EntityNames::weaponNames, EntityNames::weaponNamesByIndex);
 
 	printf("[entity_names] loaded %d weapon names, %d ammo parms\n",
@@ -97,7 +148,7 @@ int EntityNames::lookupSubtype(int eType, const std::string& name) {
 	switch (eType) {
 		case Enums::ET_MONSTER:
 		case Enums::ET_CORPSE: {
-			// Try dynamic map first (loaded from monsters.yaml)
+			// Try monsters.yaml index first (dynamic, data-driven)
 			Applet* app = CAppContainer::getInstance()->app;
 			if (app && app->combat) {
 				auto it = app->combat->monsterNameToIndex.find(name);

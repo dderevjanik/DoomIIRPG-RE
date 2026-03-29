@@ -1616,7 +1616,7 @@ int Combat::getWeaponTileNum(int n) {
     if (this->wpViewTile != nullptr && n >= 0 && n < this->numWeaponViewTiles && this->wpViewTile[n] != 0) {
         return this->wpViewTile[n];
     }
-    // Fallback: view_tile should be set in weapons.yaml for all weapons
+    // Fallback: sprite should be set in weapons.yaml for all weapons
     return 1 + n;
 }
 

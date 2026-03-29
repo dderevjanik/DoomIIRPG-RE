@@ -8,6 +8,7 @@
 #include "DataNode.h"
 #include "EntityDef.h"
 #include "EntityNames.h"
+#include "SpriteDefs.h"
 #include "Combat.h"
 #include "JavaStream.h"
 #include "Resource.h"
@@ -48,7 +49,19 @@ bool EntityDefManager::parse(EntityDefManager* mgr, const DataNode& config) {
 	for (auto eit = entities.begin(); eit != entities.end(); ++eit, ++i) {
 		DataNode e = eit.value();
 
-		list[i].tileIndex = (int16_t)e["tile_index"].asInt(0);
+		// Sprite reference: accepts name from sprites.yaml or numeric tile index
+		std::string spriteRef = e["sprite"].asString("");
+		if (spriteRef.empty()) spriteRef = e["tile_index"].asString("0"); // backwards compat
+		if (!spriteRef.empty() && spriteRef != "0") {
+			int idx = SpriteDefs::getIndex(spriteRef);
+			if (idx != 0) {
+				list[i].tileIndex = (int16_t)idx;
+			} else {
+				try { list[i].tileIndex = (int16_t)std::stoi(spriteRef); } catch (...) { list[i].tileIndex = 0; }
+			}
+		} else {
+			list[i].tileIndex = 0;
+		}
 		list[i].eType = (uint8_t)EntityNames::entityTypeFromString(e["type"].asString("world"));
 		list[i].eSubType = (uint8_t)EntityNames::lookupSubtype(list[i].eType, e["subtype"].asString("0"));
 		list[i].parm = (uint8_t)EntityNames::lookupParm(list[i].eType, list[i].eSubType, e["parm"].asString("0"));

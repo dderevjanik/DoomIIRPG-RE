@@ -284,16 +284,19 @@ void AssetBrowser::loadAnimations() {
 				a.tileIndex = it->second.as<int>();
 				a.sourceType = SpriteSourceType::Bin;
 			} else if (it->second.IsMap()) {
-				// Extended format
+				// Infer type from fields
 				YAML::Node entry = it->second;
-				std::string typeStr = entry["type"].as<std::string>("bin");
-				if (typeStr == "png") {
-					a.sourceType = SpriteSourceType::Png;
+				if (entry["id"]) {
+					a.sourceType = SpriteSourceType::Bin;
+					a.tileIndex = entry["id"].as<int>(0);
+				} else if (entry["frame_size"]) {
+					a.sourceType = SpriteSourceType::Sheet;
 					a.tileIndex = -1;
 					a.pngFile = entry["file"].as<std::string>("");
 				} else {
-					a.sourceType = SpriteSourceType::Bin;
-					a.tileIndex = entry["id"].as<int>(0);
+					a.sourceType = SpriteSourceType::Image;
+					a.tileIndex = -1;
+					a.pngFile = entry["file"].as<std::string>("");
 				}
 			}
 
@@ -1122,7 +1125,7 @@ void AssetBrowser::drawAnimationsPanel() {
 
 		// Show a small sprite thumbnail in the list
 		GLuint thumb = 0;
-		if (a.sourceType == SpriteSourceType::Png) {
+		if (a.sourceType == SpriteSourceType::Image) {
 			thumb = imageLoader_.loadTexture(gameDir_ + "/sprites/" + a.pngFile);
 		} else {
 			thumb = sprites_.getTextureForTile(a.tileIndex);
@@ -1137,7 +1140,7 @@ void AssetBrowser::drawAnimationsPanel() {
 			animTime_ = 0.0f;
 		}
 		ImGui::SameLine(listWidth - 70);
-		if (a.sourceType == SpriteSourceType::Png) {
+		if (a.sourceType == SpriteSourceType::Image) {
 			ImGui::TextDisabled("png");
 		} else {
 			int frames = sprites_.getFrameCount(a.tileIndex);
@@ -1153,7 +1156,7 @@ void AssetBrowser::drawAnimationsPanel() {
 		auto& a = animations_[selectedAnimation_];
 		ImGui::Text("%s", a.name.c_str());
 		ImGui::SameLine();
-		if (a.sourceType == SpriteSourceType::Png) {
+		if (a.sourceType == SpriteSourceType::Image) {
 			ImGui::TextDisabled("(png: %s)", a.pngFile.c_str());
 			ImGui::Separator();
 			int w = 0, h = 0;
