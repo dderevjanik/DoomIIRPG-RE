@@ -147,7 +147,7 @@ void CombatEntity::calcCombat(CombatEntity* combatEntity, Entity* entity, bool b
         return;
     }
     if (!b && app->combat->getWeaponFlags(combatEntity->weapon).chainsawHitEvent) {
-        app->player->usedChainsaw(true);
+        app->player->onWeaponKill(combatEntity->weapon, true);
     }
     int calcDamage = this->calcDamage(combatEntity, entity, combatEntity2, b, n2);
     if (calcDamage == 0 && app->combat->crArmorDamage == 0) {

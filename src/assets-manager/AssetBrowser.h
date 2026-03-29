@@ -180,7 +180,6 @@ struct GameConfig {
 	std::string entryMap;
 	int startingMaxHealth = 100;
 	struct { int health, defense, strength, accuracy, agility; } levelUp = {};
-	struct { int kills, strength; } chainsawBonus = {};
 	struct { int credits, inventory, ammo, botFuel; } caps = {};
 };
 

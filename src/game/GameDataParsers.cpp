@@ -317,6 +317,14 @@ bool parseWeapons(Applet* app, const DataNode& config) {
 			f.blockableByShield = beh["blockable_by_shield"].asBool(false);
 			f.outOfRangeStillFires = beh["out_of_range_still_fires"].asBool(false);
 		}
+
+		// On-kill stat grant (e.g. chainsaw: every 30 kills grants +2 strength)
+		DataNode okg = w["on_kill_grant"];
+		if (okg) {
+			auto& f = app->combat->wpFlags[idx];
+			f.onKillGrantKills = okg["kills"].asInt(0);
+			f.onKillGrantStrength = okg["strength"].asInt(0);
+		}
 	}
 
 	// Cache special weapon indices and ammo types for quick lookups

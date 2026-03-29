@@ -120,7 +120,7 @@ public:
 	// Per-weapon behavior flags (loaded from weapons.yaml)
 	struct WeaponFlags {
 		bool vibrateAnim;       // Vibration animation during attack (chainsaw-like)
-		bool chainsawHitEvent;  // Triggers usedChainsaw() on hit
+		bool chainsawHitEvent;  // Triggers onWeaponKill() on hit
 		bool alwaysHits;        // Bypasses accuracy check (soul cube-like)
 		bool doubleDamage;      // Doubles min/max damage (soul cube-like)
 		bool isThrowableItem;   // Special render path with ammo check, skip in weapon cycle
@@ -149,6 +149,8 @@ public:
 		bool requiresLineOfSight; // Weapon requires clear line of sight to target (melee weapons)
 		bool blockableByShield; // Attack is blocked when player has shield buff active (fireball, archvile fire)
 		bool outOfRangeStillFires; // Still fires when out of range (super shotgun, holy water — no early miss)
+		int onKillGrantKills;     // Every N kills with this weapon grants a stat bonus (0 = disabled)
+		int onKillGrantStrength;  // Strength bonus granted per on_kill_grant cycle
 	};
 	WeaponFlags* wpFlags;       // Array sized to numWeapons
 	int numWeaponFlags;

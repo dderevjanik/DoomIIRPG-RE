@@ -339,8 +339,6 @@ public:
     static constexpr int MAX_IQ = 200;
     static constexpr int MAX_OTHER_STATS = 99;
     static constexpr int STRENGTH_OF_A_REAL_MAN = 11;
-    static constexpr int CHAINSAW_REPS_FOR_STRENGTH_BONUS = 30;
-    static constexpr int CHAINSAW_USE_STRENGTH_BONUS = 2;
     static constexpr int MONSTER_POISON_DAMAGE = 10;
     // Monster Flags monster->flags 16544 // 40A0 - MFLAG_LERP_SHADOW - MFLAG_NOTRACK - MFLAG_NOTHINK
     static constexpr int MFLAG_NONE = 0;

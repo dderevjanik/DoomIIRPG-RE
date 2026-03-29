@@ -1903,7 +1903,7 @@ uint32_t ScriptThread::run() {
 
             case Enums::EV_USED_CHAINSAW: {
                 //printf("EV_USED_CHAINSAW -> %d\n", this->IP);
-                this->app->player->usedChainsaw(false);
+                this->app->player->onWeaponKill(this->app->player->ce->weapon, false);
                 break;
             }
 

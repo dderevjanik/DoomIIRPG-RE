@@ -1360,6 +1360,14 @@ static bool convertTables(ZipFile& zip, const std::string& outDir) {
 				wout << YAML::EndMap;
 			}
 
+			// On-kill stat grant (chainsaw: every 30 kills grants +2 strength)
+			if (i == 1) {
+				wout << YAML::Key << "on_kill_grant" << YAML::Value << YAML::BeginMap;
+				wout << YAML::Key << "kills" << YAML::Value << 30;
+				wout << YAML::Key << "strength" << YAML::Value << 2;
+				wout << YAML::EndMap;
+			}
+
 			// Behavior flags (player weapons only)
 			if (i < NUM_PLAYER_WEAPONS) {
 				const auto& b = WEAPON_BEHAVIOR[i];
@@ -2974,11 +2982,6 @@ static bool generateGameYaml(const std::string& outDir) {
 	yaml += "      strength: 2\n";
 	yaml += "      accuracy: 1\n";
 	yaml += "      agility: 3\n";
-	yaml += "\n";
-	yaml += "    # Chainsaw strength bonus: every N kills grants +strength\n";
-	yaml += "    chainsaw_bonus:\n";
-	yaml += "      kills: 30\n";
-	yaml += "      strength: 2\n";
 	yaml += "\n";
 	yaml += "    # Out-of-combat cooldown (turns since last combat)\n";
 	yaml += "    out_of_combat_turns: 4\n";

@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <unordered_map>
 #include "Entity.h"
 #include "EntityDef.h"
 #include "CombatEntity.h"
@@ -106,7 +107,7 @@ public:
 	bool isFamiliar;
 	short familiarType;
 	bool attemptingToSelfDestructFamiliar;
-	int chainsawStrengthBonusCount;
+	std::unordered_map<int, int> killGrantCounts; // per-weapon kill counters for on_kill_grant
 	uint8_t lastSkipCode;
 	bool inTargetPractice;
 	int targetPracticeScore;
@@ -258,7 +259,7 @@ public:
 	void enterTargetPractice(int n, int n2, int n3, ScriptThread* targetPracticeThread);
 	void assessTargetPracticeShot(Entity* entity);
 	void exitTargetPractice();
-	void usedChainsaw(bool b);
+	void onWeaponKill(int weaponIdx, bool bonusHit);
 	bool hasANanoDrink();
 	void stripInventoryForViosBattle();
 	void stripInventoryForTargetPractice();

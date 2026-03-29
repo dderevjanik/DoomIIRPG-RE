@@ -524,7 +524,7 @@ void Player::reset() {
 			this->vendingMachineHackTriesLeft2 <<= 3;
 		}
 	}
-	this->chainsawStrengthBonusCount = 0;
+	this->killGrantCounts.clear();
 	this->lastSkipCode = 0;
 	this->playerEntityCopyIndex = -1;
 	app->canvas->viewX = (app->canvas->destX = (app->canvas->saveX = (app->canvas->prevX = 0)));
@@ -769,11 +769,11 @@ bool Player::fireWeapon(Entity* entity, int n, int n2) {
 		entity->monster->flags &= 0xfff7;
 	}
 
-	if (this->ce->weapon == Enums::WP_CHAINSAW &&
+	if (app->combat->getWeaponFlags(this->ce->weapon).chainsawHitEvent &&
 	    (entity->def->eType == Enums::ET_CORPSE || (entity->def->eType == Enums::ET_ATTACK_INTERACTIVE &&
 	                                                (entity->def->eSubType == Enums::INTERACT_BARRICADE ||
 	                                                 entity->def->eSubType == Enums::INTERACT_FURNITURE)))) {
-		this->usedChainsaw(false);
+		this->onWeaponKill(this->ce->weapon, false);
 	}
 
 	int weapon = this->ce->weapon * Combat::WEAPON_MAX_FIELDS;
@@ -1225,7 +1225,13 @@ bool Player::loadState(InputStream* IS) {
 	this->hackedVendingMachines = IS->readInt();
 	this->vendingMachineHackTriesLeft1 = IS->readInt();
 	this->vendingMachineHackTriesLeft2 = IS->readInt();
-	this->chainsawStrengthBonusCount = IS->readInt();
+	{
+		int legacyCount = IS->readInt();
+		this->killGrantCounts.clear();
+		if (legacyCount > 0) {
+			this->killGrantCounts[Enums::WP_CHAINSAW] = legacyCount;
+		}
+	}
 	this->lastSkipCode = IS->readByte();
 
 	for (int i = 0; i < 9; ++i) {
@@ -1306,7 +1312,10 @@ bool Player::saveState(OutputStream* OS) {
 	OS->writeInt(this->hackedVendingMachines);
 	OS->writeInt(this->vendingMachineHackTriesLeft1);
 	OS->writeInt(this->vendingMachineHackTriesLeft2);
-	OS->writeInt(this->chainsawStrengthBonusCount);
+	{
+		auto it = this->killGrantCounts.find(Enums::WP_CHAINSAW);
+		OS->writeInt(it != this->killGrantCounts.end() ? it->second : 0);
+	}
 	OS->writeByte(this->lastSkipCode);
 	for (int i = 0; i < 9; ++i) {
 		OS->writeShort(this->ammo[i]);
@@ -2385,17 +2394,20 @@ void Player::exitTargetPractice() {
 	}
 }
 
-void Player::usedChainsaw(bool b) {
-
-
-	const GameConfig& gc = CAppContainer::getInstance()->gameConfig;
-	this->chainsawStrengthBonusCount++;
-	if (b && (app->combat->crFlags & 0x2) != 0x0) {
-		this->chainsawStrengthBonusCount++;
+void Player::onWeaponKill(int weaponIdx, bool bonusHit) {
+	const auto& flags = app->combat->getWeaponFlags(weaponIdx);
+	if (flags.onKillGrantKills <= 0) {
+		app->canvas->startShake(666, 1, 0);
+		return;
 	}
-	if (this->chainsawStrengthBonusCount >= gc.chainsawBonusKills) {
-		this->chainsawStrengthBonusCount %= gc.chainsawBonusKills;
-		int modifyStat = this->modifyStat(4, gc.chainsawBonusStrength);
+
+	this->killGrantCounts[weaponIdx]++;
+	if (bonusHit && (app->combat->crFlags & 0x2) != 0x0) {
+		this->killGrantCounts[weaponIdx]++;
+	}
+	if (this->killGrantCounts[weaponIdx] >= flags.onKillGrantKills) {
+		this->killGrantCounts[weaponIdx] %= flags.onKillGrantKills;
+		int modifyStat = this->modifyStat(4, flags.onKillGrantStrength);
 		if (modifyStat != 0) {
 			app->localization->resetTextArgs();
 			app->localization->addTextArg(modifyStat);

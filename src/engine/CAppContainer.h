@@ -45,9 +45,6 @@ struct GameConfig {
 	int levelUpAccuracy = 1;
 	int levelUpAgility = 3;
 
-	// Chainsaw strength bonus: every N kills with chainsaw grants +bonusAmount strength
-	int chainsawBonusKills = 30;
-	int chainsawBonusStrength = 2;
 
 	// Out-of-combat cooldown (turns since last combat before "inCombat" clears)
 	int outOfCombatTurns = 4;

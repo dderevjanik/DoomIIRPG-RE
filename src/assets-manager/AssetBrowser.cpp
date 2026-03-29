@@ -1563,11 +1563,6 @@ void AssetBrowser::loadGame() {
 			gameConfig_.levelUp.accuracy = yamlInt(lu, "accuracy");
 			gameConfig_.levelUp.agility = yamlInt(lu, "agility");
 		}
-		if (game["chainsaw_bonus"]) {
-			auto cb = game["chainsaw_bonus"];
-			gameConfig_.chainsawBonus.kills = yamlInt(cb, "kills");
-			gameConfig_.chainsawBonus.strength = yamlInt(cb, "strength");
-		}
 		if (game["caps"]) {
 			auto caps = game["caps"];
 			gameConfig_.caps.credits = yamlInt(caps, "credits");
@@ -1623,10 +1618,6 @@ void AssetBrowser::drawGamePanel() {
 		statBar("Strength", g.levelUp.strength, 5, ImVec4(0.9f, 0.5f, 0.1f, 1.0f));
 		statBar("Accuracy", g.levelUp.accuracy, 5, ImVec4(0.9f, 0.9f, 0.2f, 1.0f));
 		statBar("Agility", g.levelUp.agility, 5, ImVec4(0.2f, 0.8f, 0.2f, 1.0f));
-	}
-
-	if (ImGui::CollapsingHeader("Chainsaw Bonus", ImGuiTreeNodeFlags_DefaultOpen)) {
-		ImGui::Text("  Every %d kills: +%d Strength", g.chainsawBonus.kills, g.chainsawBonus.strength);
 	}
 
 	if (ImGui::CollapsingHeader("Capacity Caps", ImGuiTreeNodeFlags_DefaultOpen)) {

@@ -271,12 +271,6 @@ int main(int argc, char* args[]) {
 					gc.levelUpAgility = lu["agility"].asInt(gc.levelUpAgility);
 				}
 
-				DataNode cs = player["chainsaw_bonus"];
-				if (cs) {
-					gc.chainsawBonusKills = cs["kills"].asInt(gc.chainsawBonusKills);
-					gc.chainsawBonusStrength = cs["strength"].asInt(gc.chainsawBonusStrength);
-				}
-
 				DataNode xp = player["xp_formula"];
 				if (xp) {
 					gc.xpLinear = xp["linear"].asInt(gc.xpLinear);
