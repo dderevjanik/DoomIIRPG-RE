@@ -226,10 +226,6 @@ int main(int argc, char* argv[]) {
 					gc.saveDir = game["save_dir"].as<std::string>();
 				if (game["entry_map"])
 					gc.entryMap = game["entry_map"].as<std::string>();
-				if (game["no_fog_maps"]) {
-					for (const auto& id : game["no_fog_maps"])
-						gc.noFogMaps.push_back(id.as<int>());
-				}
 				if (game["search_dirs"]) {
 					for (const auto& dir : game["search_dirs"])
 						gc.searchDirs.push_back(dir.as<std::string>());

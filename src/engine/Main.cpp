@@ -235,13 +235,6 @@ int main(int argc, char* args[]) {
 			if (game["save_dir"]) gc.saveDir = game["save_dir"].asString();
 			if (game["entry_map"]) gc.entryMap = game["entry_map"].asString();
 
-			DataNode nfm = game["no_fog_maps"];
-			if (nfm) {
-				for (auto it = nfm.begin(); it != nfm.end(); ++it) {
-					gc.noFogMaps.push_back(it.value().asInt(0));
-				}
-			}
-
 			DataNode searchDirs = game["search_dirs"];
 			if (searchDirs) {
 				for (auto it = searchDirs.begin(); it != searchDirs.end(); ++it) {
@@ -400,7 +393,7 @@ int main(int argc, char* args[]) {
 			printf("[main] Game: %s (save: %s)\n", gc.name.c_str(), gc.saveDir.c_str());
 		}
 
-		// Load joke_items from levels.yaml (per-level data)
+		// Load per-level data from levels.yaml
 		DataNode levelsConfig = DataNode::loadFile("levels.yaml");
 		if (levelsConfig) {
 			GameConfig& gc2 = CAppContainer::getInstance()->gameConfig;
@@ -408,7 +401,15 @@ int main(int argc, char* args[]) {
 			if (levels && levels.isMap()) {
 				for (auto it = levels.begin(); it != levels.end(); ++it) {
 					int mapId = std::atoi(it.key().asString().c_str());
-					DataNode jiNode = it.value()["joke_items"];
+					DataNode levelNode = it.value();
+
+					// fog: false disables fog for this map (defaults to true)
+					DataNode fogNode = levelNode["fog"];
+					if (fogNode && !fogNode.asBool(true)) {
+						gc2.noFogMaps.push_back(mapId);
+					}
+
+					DataNode jiNode = levelNode["joke_items"];
 					if (jiNode && jiNode.isSequence()) {
 						std::vector<int> items;
 						for (auto it2 = jiNode.begin(); it2 != jiNode.end(); ++it2) {

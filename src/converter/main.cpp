@@ -2942,9 +2942,6 @@ static bool generateGameYaml(const std::string& outDir) {
 	yaml += "  # Entry map (first map loaded on new game)\n";
 	yaml += "  entry_map: map00\n";
 	yaml += "\n";
-	yaml += "  # Map IDs where fog is disabled (e.g. outdoor maps)\n";
-	yaml += "  no_fog_maps: [2]\n";
-	yaml += "\n";
 	yaml += "  # String tables — maps group index to YAML file path.\n";
 	yaml += "  # Modders can add/reorder groups or point to custom files.\n";
 	yaml += "  strings:\n";
@@ -3343,6 +3340,11 @@ static bool generateLevelsYaml(const std::string& outDir) {
 
 	for (const auto& e : entries) {
 		yaml += "  " + std::to_string(e.map) + ":\n";
+
+		// Fog disabled on map 2 (outdoor map)
+		if (e.map == 2) {
+			yaml += "    fog: false\n";
+		}
 
 		// Joke items for this level
 		auto jit = jokeMap.find(e.map);
