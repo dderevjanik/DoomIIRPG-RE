@@ -3786,7 +3786,7 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 			}
 			// Shadow
 			this->renderSprite(x, y, n13, TILE_SHADOW, 0, flags, renderMode, n14, renderFlags);
-			if (tileNum > TILE_LAST_MONSTER) {
+			if (this->isNPC(tileNum)) {
 				this->renderSprite(x, y, z, tileNum, n26, flags, renderMode, scaleFactor, renderFlags);
 				break;
 			}
@@ -3907,10 +3907,24 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 			}
 			break;
 		}
-		case Enums::MANIM_PAIN:
-		case Enums::MANIM_SLAP: {
+		case Enums::MANIM_PAIN: {
 			this->renderSprite(x, y, n13, TILE_SHADOW, 0, flags, renderMode, n14, renderFlags);
 			this->renderSprite(x, y, z + n15, tileNum, 12, flags, renderMode, scaleFactor, renderFlags);
+			break;
+		}
+		case Enums::MANIM_SLAP: {
+			// Shadow
+			this->renderSprite(x, y, n13, TILE_SHADOW, 0, flags, renderMode, n14, renderFlags);
+			// Legs
+			this->renderSprite(x, y, z, tileNum, 0, flags, renderMode, scaleFactor, renderFlags);
+			// Slap torso
+			this->renderSprite(x + (n17 * this->viewRightStepX >> 6), y + (n17 * this->viewRightStepY >> 6),
+			                   z, tileNum, 14, flags, renderMode, scaleFactor, renderFlags);
+			// Slap head (alternates between frame 15 and 16)
+			if (n19 != 0) {
+				this->renderSprite(x + (n18 * this->viewRightStepX >> 6), y + (n18 * this->viewRightStepY >> 6),
+				                   z + n16, tileNum, 15 + (frame & 0x1), flags, renderMode, scaleFactor, renderFlags);
+			}
 			break;
 		}
 		case Enums::MANIM_DEAD: {
