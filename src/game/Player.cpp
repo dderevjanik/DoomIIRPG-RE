@@ -24,6 +24,8 @@
 
 Player::Player() {
 	std::memset(this, 0, sizeof(Player));
+	// Re-construct objects that memset destroyed
+	new (&this->killGrantCounts) std::unordered_map<int, int>();
 }
 
 Player::~Player() {
