@@ -394,8 +394,9 @@ int main(int argc, char* args[]) {
 			DataNode levels = levelsConfig["levels"];
 			if (levels && levels.isMap()) {
 				for (auto it = levels.begin(); it != levels.end(); ++it) {
-					int mapId = std::atoi(it.key().asString().c_str());
 					DataNode levelNode = it.value();
+					int mapId = levelNode["map_id"].asInt(-1);
+					if (mapId < 0) continue;
 
 					// fog: false disables fog for this map (defaults to true)
 					DataNode fogNode = levelNode["fog"];

@@ -478,6 +478,11 @@ static const char* GROUP_NAMES[] = {"CodeStrings", "EntityStrings", "FileStrings
                                     "M_02",        "M_03",          "M_04",        "M_05",        "M_06",
                                     "M_07",        "M_08",          "M_09",        "M_TEST",      "Translations"};
 
+// Shared data between conversion steps — populated by convertTables/convertStrings,
+// consumed by generateLevelsYaml to derive level names from string tables.
+static std::vector<int16_t> g_levelNameIds;       // from tables.bin table 7
+static std::vector<std::string> g_menuStrings;     // English MenuStrings (group 3)
+
 // Escape special bytes for YAML string storage
 static std::string escapeString(const uint8_t* raw, int len) {
 	std::string result;
@@ -1477,9 +1482,12 @@ static bool convertTables(ZipFile& zip, const std::string& outDir) {
 		TableReader r = {data, dataStart + start};
 		int count = r.readInt();
 
+		g_levelNameIds.clear();
 		out << YAML::Key << "level_names" << YAML::Value << YAML::Flow << YAML::BeginSeq;
 		for (int i = 0; i < count; i++) {
-			out << (int)r.readShort();
+			int16_t id = r.readShort();
+			g_levelNameIds.push_back(id);
+			out << (int)id;
 		}
 		out << YAML::EndSeq;
 	}
@@ -2795,6 +2803,11 @@ static bool convertStrings(ZipFile& zip, const std::string& outDir) {
 		}
 	}
 
+	// Store English MenuStrings (group 3) for level name resolution
+	if (!groupData[3].strings[0].empty()) {
+		g_menuStrings = groupData[3].strings[0];
+	}
+
 	// Create strings/ directory
 	std::string stringsDir = outDir + "/strings";
 #ifdef _WIN32
@@ -3318,11 +3331,49 @@ static bool generateLevelsYaml(const std::string& outDir) {
 		jokeMap[je.map] = je.items;
 	}
 
+	// Map number → level name (derived from level_names table + MenuStrings)
+	auto levelName = [](int map) -> std::string {
+		// map is 1-based, g_levelNameIds is 0-based (map 1 = index 0)
+		int idx = map - 1;
+		if (idx >= 0 && idx < (int)g_levelNameIds.size()) {
+			int strId = g_levelNameIds[idx];
+			if (strId >= 0 && strId < (int)g_menuStrings.size()) {
+				std::string name = g_menuStrings[strId];
+				// Strip soft hyphens (used for word-break hints in original strings)
+				std::string clean;
+				for (char c : name) {
+					if (c != '-') clean += c;
+				}
+				// Convert to snake_case: lowercase, spaces/& to underscores
+				std::string result;
+				for (char c : clean) {
+					if (c == ' ' || c == '&') result += '_';
+					else result += (char)std::tolower((unsigned char)c);
+				}
+				// Collapse consecutive underscores
+				std::string final;
+				for (char c : result) {
+					if (c == '_' && !final.empty() && final.back() == '_') continue;
+					final += c;
+				}
+				return final;
+			}
+		}
+		return "map" + std::to_string(map);
+	};
+
 	std::string yaml;
 	yaml += "# Per-level configuration.\n";
-	yaml += "# Each key under \"levels:\" is a map number.\n";
+	yaml += "# Each key under \"levels:\" is a level name; map_id maps it to the engine map number.\n";
 	yaml += "\n";
 	yaml += "levels:\n";
+
+	// Map number → map file name (map 1 = map00.bin, etc.)
+	auto mapFileName = [](int map) -> std::string {
+		char buf[16];
+		snprintf(buf, sizeof(buf), "map%02d.bin", map - 1);
+		return buf;
+	};
 
 	// Emit levels that only have joke_items (no loadout)
 	for (const auto& je : jokeEntries) {
@@ -3331,7 +3382,9 @@ static bool generateLevelsYaml(const std::string& outDir) {
 			if (e.map == je.map) { hasLoadout = true; break; }
 		}
 		if (!hasLoadout) {
-			yaml += "  " + std::to_string(je.map) + ":\n";
+			yaml += "  " + levelName(je.map) + ":\n";
+			yaml += "    map_id: " + std::to_string(je.map) + "\n";
+			yaml += "    file: " + mapFileName(je.map) + "\n";
 			yaml += "    joke_items: [";
 			for (size_t i = 0; i < je.items.size(); i++) {
 				if (i > 0) yaml += ", ";
@@ -3342,7 +3395,9 @@ static bool generateLevelsYaml(const std::string& outDir) {
 	}
 
 	for (const auto& e : entries) {
-		yaml += "  " + std::to_string(e.map) + ":\n";
+		yaml += "  " + levelName(e.map) + ":\n";
+		yaml += "    map_id: " + std::to_string(e.map) + "\n";
+		yaml += "    file: " + mapFileName(e.map) + "\n";
 
 		// Fog disabled on map 2 (outdoor map)
 		if (e.map == 2) {

@@ -186,6 +186,7 @@ struct GameConfig {
 // Level entry (from levels.yaml)
 struct LevelEntry {
 	int mapNumber = 0;
+	std::string name;
 	std::vector<std::string> weapons;
 	int armor = 0;
 	int xp = 0;

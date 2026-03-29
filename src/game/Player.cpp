@@ -1679,7 +1679,13 @@ void Player::equipForLevel(int highestMap) {
 
 			// Map 10 uses map 9 loadout
 			int lookupMap = (highestMap == 10) ? 9 : highestMap;
-			DataNode level = levels[lookupMap];
+			DataNode level;
+			for (auto lit = levels.begin(); lit != levels.end(); ++lit) {
+				if (lit.value()["map_id"].asInt(-1) == lookupMap) {
+					level = lit.value();
+					break;
+				}
+			}
 			DataNode r = level ? level["starting_loadout"] : DataNode();
 			if (r) {
 				// Weapons

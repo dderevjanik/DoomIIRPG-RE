@@ -1638,8 +1638,9 @@ void AssetBrowser::loadLevels() {
 
 		for (auto it = lvls.begin(); it != lvls.end(); ++it) {
 			LevelEntry lev;
-			lev.mapNumber = it->first.as<int>();
+			lev.name = it->first.as<std::string>();
 			auto& v = it->second;
+			lev.mapNumber = v["map_id"] ? v["map_id"].as<int>() : 0;
 			if (v["starting_loadout"]) {
 				auto sl = v["starting_loadout"];
 				if (sl["weapons"]) {
@@ -1674,7 +1675,7 @@ void AssetBrowser::drawLevelsPanel() {
 	for (int i = 0; i < (int)levels_.size(); i++) {
 		auto& lev = levels_[i];
 		char label[64];
-		std::snprintf(label, sizeof(label), "Map %02d", lev.mapNumber);
+		std::snprintf(label, sizeof(label), "%02d: %s", lev.mapNumber, lev.name.c_str());
 
 		bool selected = (selectedLevel_ == i);
 		if (ImGui::Selectable(label, selected))
@@ -1687,7 +1688,7 @@ void AssetBrowser::drawLevelsPanel() {
 	ImGui::BeginChild("LevelDetail", ImVec2(0, 0), true);
 	if (selectedLevel_ >= 0 && selectedLevel_ < (int)levels_.size()) {
 		auto& lev = levels_[selectedLevel_];
-		ImGui::TextColored(ImVec4(0.3f, 0.8f, 1.0f, 1.0f), "Map %02d", lev.mapNumber);
+		ImGui::TextColored(ImVec4(0.3f, 0.8f, 1.0f, 1.0f), "Map %02d: %s", lev.mapNumber, lev.name.c_str());
 		ImGui::Separator();
 
 		if (!lev.weapons.empty()) {
