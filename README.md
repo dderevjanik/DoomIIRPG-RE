@@ -2,6 +2,10 @@
 
 ![logo](./logo.png)
 
+A custom RPG turn-based engine based on the [Doom II RPG](https://doomwiki.org/wiki/Doom_II_RPG) reverse engineering project. The goal is to rebuild the original game into a moddable, open engine with YAML-driven data, a flexible asset pipeline, and an integrated map editor.
+
+This is an early-stage project (v0.1.0). Many reverse-engineered field names still use placeholder names (e.g., `field_0x7c`). Contributions to improve naming, fix bugs, and document behavior are welcome.
+
 ## Building
 
 ### Dependencies
@@ -57,7 +61,10 @@ src/
 
 games/doom2rpg/  # Converted game assets (YAML configs + binary data, not checked in)
 tools/           # Python extraction scripts (extract_*.py) and HTML viewers
-docs/            # Binary format specs and modding guides
+docs/            # Project documentation
+├── d1-rpg/      # Doom 1 RPG binary format specs (bitshapes, BSP, palettes, etc.)
+├── d2-rpg/      # Doom 2 RPG binary format specs (entities, levels, media, menus, scripting, strings, tables)
+└── LEVELS.md    # Level structure documentation
 Testing/         # Test scripts for automated map/minigame validation
 scripts/         # Shell scripts for smoke testing
 ```
@@ -87,7 +94,7 @@ The project is a game engine for classic mobile RPG formats, written in C++17:
 - **Data**: Resource, VFS, ZipFile, JavaStream (asset loading)
 - **Minigames**: HackingGame, SentryBotGame, VendingMachine, ComicBook
 
-See [docs/](docs/) for binary format specs and [docs/modding/](docs/modding/) for modding guides.
+See [docs/d2-rpg/](docs/d2-rpg/) for Doom 2 RPG binary format specs and [docs/d1-rpg/](docs/d1-rpg/) for Doom 1 RPG format specs.
 
 ## Running
 
@@ -151,10 +158,6 @@ J2ME/BREW version - open menu and enter these numbers:<br>
 1666 -> Restart level / Reinicia el nivel<br>
 4332 -> All keys, items, weapons / Todas las llaves, items y armas<br>
 3366 -> Speed benchmark / Testeo de velocidad
-
-## Status
-
-This is an early-stage reverse engineering project (v0.1.0). Many reverse-engineered field names still use placeholder names (e.g., `field_0x7c`). Contributions to improve naming, fix bugs, and document behavior are welcome.
 
 ## Editor
 
