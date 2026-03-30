@@ -592,6 +592,388 @@ Offset    Size      Section
 
 ---
 
+## Rendering Pipeline
+
+This section describes how the engine renders BSP data into pixels on screen.
+
+### Coordinate System
+
+- **Tile grid:** 32x32 tiles, each tile is 64 world units
+- **shiftCoordAt:** reads one byte, shifts left by 3 → `value << 3` (range 0-2040, 8 units per step)
+- **Fixed-point:** 16-bit fractional part (`FRACBITS = 16`, `FRACUNIT = 65536`)
+- **View angle:** 0-255 maps to 0-360 degrees, with the sine table providing 256 precomputed values
+- **View Z:** vertical position (default 32 = half of 64-unit tile height)
+
+### Render Loop Overview
+
+Each frame follows this sequence:
+
+```
+Render_render(viewX, viewY, viewZ, viewAngle)
+  │
+  ├─ 1. Compute view vectors from angle
+  │     sin_ = sinTable[angle & 255]
+  │     cos_ = sinTable[(angle + 64) & 255]
+  │
+  ├─ 2. Apply view nudge (push camera 16 units back)
+  │     vx = viewX - ((16 * cos_) >> 16)
+  │     vy = viewY + ((16 * sin_) >> 16)
+  │
+  ├─ 3. Set up view transform matrix
+  │     viewTransX = -(vx * viewCos_ + vy * viewSin_)
+  │     viewTransY = -(vx * viewSin  + vy * viewCos)
+  │
+  ├─ 4. Reset columnScale[] to COLUMN_SCALE_INIT
+  │
+  ├─ 5. Draw floor/ceiling background
+  │     (solid color fill or textured plane rendering)
+  │
+  ├─ 6. Traverse BSP tree (Render_walkNode)
+  │     ├─ Collect visible nodes and lines
+  │     └─ Build depth-sorted sprite list
+  │
+  ├─ 7. Draw wall lines (Render_drawNodeLines)
+  │
+  └─ 8. Draw sprites back-to-front (Render_renderSpriteObject)
+```
+
+### View Transform
+
+All world coordinates are transformed to view space before clipping and projection:
+
+```c
+// Render_transform2DVerts
+view_x = (world_x * viewCos_) + (world_y * viewSin_) + viewTransX;
+view_y = (world_x * viewSin)  + (world_y * viewCos)  + viewTransY;
+```
+
+After transform: `view_x` is depth (distance from camera), `view_y` is horizontal offset.
+
+---
+
+### BSP Traversal — Render_walkNode()
+
+The BSP tree is traversed recursively with front-to-back ordering:
+
+```
+walkNode(nodeIndex):
+    node = nodes[nodeIndex]
+
+    if cullBoundingBox(node):
+        return                          // fully occluded, skip
+
+    if (node.args1 & 0x30000) == 0:     // LEAF NODE
+        add node to viewNodes list
+        render all lines in this leaf
+        collect sprites into depth-sorted list
+        return
+
+    // INTERNAL NODE — determine split axis and position
+    splitPos = node.args1 & 0xFFFF
+    frontChild = (node.args2 >> 16) & 0xFFFF
+    backChild  = node.args2 & 0xFFFF
+
+    if args1 & 0x20000:  split on Y axis
+    if args1 & 0x10000:  split on X axis
+
+    // Traverse near side first for front-to-back ordering
+    if viewer is on the "less than" side of split plane:
+        walkNode(frontChild)
+        walkNode(backChild)
+    else:
+        walkNode(backChild)
+        walkNode(frontChild)
+```
+
+**Node args1 bit layout (extended for traversal):**
+
+| Bits | Mask | Description |
+|------|------|-------------|
+| 0-15 | 0xFFFF | Split plane position (leaf: unused) |
+| 16 | 0x10000 | Split on X axis |
+| 17 | 0x20000 | Split on Y axis |
+
+If both bits 16-17 are 0, the node is a **leaf** containing geometry.
+
+**Node args2 bit layout:**
+
+| Bits | Mask | Description (leaf node) | Description (internal node) |
+|------|------|------------------------|----------------------------|
+| 0-15 | 0xFFFF | First line index | Back child node index |
+| 16-31 | 0xFFFF0000 | Line count | Front child node index |
+
+---
+
+### Frustum Culling — Render_cullBoundingBox()
+
+Before traversing a node, the engine checks if its bounding box is fully behind already-rendered geometry:
+
+```
+1. If viewer is inside the bounding box (within ±5 units):
+   → Not culled (always visible)
+
+2. Select the bounding box edge closest to the viewer:
+   → Creates a test line from the two corners of that edge
+
+3. Transform the test line to view space
+
+4. Clip the test line to the view frustum (4 planes)
+
+5. Project the clipped line to screen columns
+
+6. For each screen column in the projected range:
+   if columnScale[column] == COLUMN_SCALE_INIT:
+       → At least one column is unoccluded
+       → Not culled (node is visible)
+
+7. If all columns are already filled:
+   → Fully culled (skip this node)
+```
+
+---
+
+### Column Occlusion Tracking
+
+The `columnScale[]` array (one entry per screen column) tracks rendering depth:
+
+| Value | Constant | Meaning |
+|-------|----------|---------|
+| `0x7FFFFFFF` | `COLUMN_SCALE_INIT` | Column has no geometry yet |
+| `0x7FFFFFFE` | `COLUMN_SCALE_OCCLUDED` | Column fully blocked by opaque BSP wall |
+| Other | Scale value | Distance to closest wall (larger = closer) |
+
+**Updated by:**
+- **BSP walls** set columns to `COLUMN_SCALE_OCCLUDED` via `Render_occludeClippedLine()`
+- **Visible walls/sprites** set columns to their scale value, only if closer than current value
+
+---
+
+### Line Rendering — Render_drawLines()
+
+```
+1. Backface cull:
+   cross = (vert1 - viewPos) × (vert2 - vert1)
+   if cross <= 0 and line is not double-sided (flag 1):
+       skip this line
+   if cross <= 0 and line IS double-sided:
+       swap vert1 ↔ vert2 (render back face)
+
+2. Transform both vertices to view space
+
+3. Render_drawLine():
+   a. Clip line to 4 frustum planes
+   b. Project vertices to screen coordinates
+   c. Route to renderer based on flags:
+      - flag 0x20000000 (BSP wall):  mark columns as occluded
+      - flag 2 (sprite line):        Render_drawSpriteSpan()
+      - otherwise (textured wall):   Render_drawWallSpans()
+```
+
+**Line flags (extended for rendering):**
+
+| Bit | Hex | Description |
+|-----|-----|-------------|
+| 0 | 0x01 | Double-sided (render both faces) |
+| 1 | 0x02 | Sprite line (render as sprite, not wall) |
+| 7 | 0x80 | Line has been rendered this frame |
+| 29 | 0x20000000 | From BSP traversal (occlude columns) |
+
+---
+
+### Clipping — Render_clipLine()
+
+Lines are clipped against 4 planes that form a view pyramid:
+
+```
+Plane 1: x + y >= 0    (left edge)
+Plane 2: x - y >= 0    (right edge)
+Plane 3: x <= 0x40000  (far plane)
+```
+
+If a line is fully behind any plane, it is discarded. Otherwise, endpoints are interpolated to the clip boundary using fixed-point linear interpolation:
+
+```c
+t = -dist1 / (dist2 - dist1);
+clipped = vert1 * (1 - t) + vert2 * t;
+```
+
+---
+
+### Projection — Render_projectVertex()
+
+Perspective projection from view space to screen coordinates:
+
+```c
+// view_x = depth, view_y = horizontal offset
+scale = screenWidth / view_x                    // perspective divide
+screen_x = (view_y * scale) / 2 + halfScreenWidth
+screen_z = view_z * scale                       // scaled height
+```
+
+All arithmetic uses 64-bit intermediates to avoid overflow.
+
+---
+
+### Wall Span Rendering — Render_drawWallSpans()
+
+Walls are rendered column-by-column with perspective-correct texture mapping:
+
+```
+For each screen column from x1 to x2:
+
+    1. Calculate wall scale:
+       scale = 0x40000000 / interpolated_depth
+
+    2. Skip if column already has closer geometry:
+       if columnScale[col] < scale: skip
+       columnScale[col] = scale
+
+    3. Calculate texture U coordinate:
+       u = (z_interpolated * scale) >> 32   // 0-63 range
+
+    4. Calculate wall height on screen:
+       wallHeight = (64 * depth) >> 17
+
+    5. Calculate vertical screen position:
+       yCenter = halfScreenHeight - ((64 - viewZ) * depth) >> 17
+
+    6. Clamp to screen bounds
+
+    7. Draw vertical span:
+       texelOffset = (texelBase + u * 64) << 12
+       spanFunction(column, yStart, texelOffset, vStep, height)
+```
+
+### Texture Animation
+
+Wall texture indices are animated during rendering:
+
+```c
+animatedTexture = baseTexture + ((animFrameTime + textureIndex * 3) * 0x400000) >> 30
+```
+
+This produces a 2-bit animation frame (0-3) cycling based on time.
+
+---
+
+### Sprite Span Rendering — Render_drawSpriteSpan()
+
+Similar to wall rendering but uses shape data from `bitshapes.bin` for variable-height columns:
+
+```
+For each screen column:
+    1. Calculate column index in sprite texture from shape data
+    2. Look up column pointer in shapeData[offset + 4 + columnIndex]
+    3. For each run in the column (until 0x7F terminator):
+       - yStart = shapeData[ptr] & 0xFF
+       - runLength = shapeData[ptr] >> 8
+       - texelOffset = shapeData[ptr + 1]
+       - Calculate screen position and scale
+       - Call spanFunction() for this segment
+```
+
+---
+
+### Pixel Drawing Modes — SpanMode Functions
+
+Each span function draws a vertical column of pixels from texture data. The texture is read as packed 4-bit nibbles:
+
+```c
+// Extract palette index from packed texel data
+paletteIndex = mediaTexels[texOffset >> 13] >> ((texOffset >> 10) & 4) & 0xF;
+color = spanPalettes[paletteIndex];
+```
+
+Available span modes:
+
+| Mode | Name | Description |
+|------|------|-------------|
+| 0 | Normal | Direct palette lookup |
+| 1 | XOR | XOR blend with framebuffer |
+| 2 | OR | OR blend with framebuffer |
+| 3 | AND | AND blend with framebuffer |
+| 4 | 25% Alpha | 25% texture, 75% framebuffer |
+| 5 | 50% Alpha | 50% transparency blend |
+| 6 | 75% Alpha | 75% texture, 25% framebuffer |
+| 7 | Additive | Additive glow effect (used by lights) |
+| 8 | Subtractive | Darken effect |
+| 9 | Spectre | Random noise dither (invisible enemy effect) |
+
+---
+
+### Sprite Sorting and Rendering
+
+Sprites are collected during BSP traversal and sorted by depth (furthest first) for back-to-front rendering:
+
+```
+1. Calculate depth:
+   sortZ = sprite.x * viewCos_ + sprite.y * viewSin_ + viewTransX
+
+2. Adjust priority:
+   - Background sprites (flag 0x800000):  sortZ = MAX_INT (always behind)
+   - Foreground sprites (flag 0x1000000): sortZ++ (slightly in front)
+   - Certain decorations (ID 180-191):    sortZ -= 2 (pushed back)
+
+3. Insert into sorted linked list (furthest first)
+
+4. Render all sprites in order (back-to-front):
+   For each sprite: Render_renderSpriteObject()
+```
+
+### Sprite Orientation
+
+Each sprite in the BSP file has orientation flags that determine how it faces the camera:
+
+| Flag | Hex | Orientation |
+|------|-----|-------------|
+| Bit 19 | 0x80000 | Horizontal, facing East/West |
+| Bit 20 | 0x100000 | Horizontal, facing opposite |
+| Bit 21 | 0x200000 | Vertical, facing opposite |
+| Bit 22 | 0x400000 | Vertical, facing North/South |
+
+The sprite is converted into a line segment (two vertices) based on its orientation, then rendered through the same `Render_drawLine()` path as walls.
+
+---
+
+### Floor and Ceiling Rendering
+
+Floor and ceiling are drawn before BSP geometry using one of two methods:
+
+**Solid Color Mode:**
+- Top half of screen filled with `ceilingColor` (from header)
+- Bottom half filled with `floorColor` (from header)
+
+**Textured Plane Mode:**
+- For each scanline above center: sample ceiling texture
+- For each scanline below center: sample floor texture
+- Texture coordinates are computed using view position and angle:
+
+```c
+distance = (viewZ * 8 * screenWidth) / (scanlineOffset + 1)
+u = viewX + viewCos * distance + viewSin * columnOffset
+v = viewY - viewSin * distance + viewCos * columnOffset
+```
+
+The plane texture data comes from the **Plane Textures** section, providing per-tile texture indices across the 32x32 grid.
+
+---
+
+### Sprite Relinking
+
+When a sprite moves (e.g., a door opening or entity walking), it must be re-inserted into the correct BSP leaf node:
+
+```
+1. Remove sprite from current node's sprite list
+2. Traverse BSP tree from root:
+   - At each internal node, compare sprite position to split plane
+   - Navigate to the appropriate child
+3. Insert sprite into the new leaf node's sprite list
+```
+
+This ensures sprites are always rendered with the correct occlusion relative to walls.
+
+---
+
 ## Related Files
 
 | File | Description |
