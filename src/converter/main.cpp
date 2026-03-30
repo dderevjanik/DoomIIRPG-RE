@@ -479,9 +479,58 @@ static const char* GROUP_NAMES[] = {"CodeStrings", "EntityStrings", "FileStrings
                                     "M_07",        "M_08",          "M_09",        "M_TEST",      "Translations"};
 
 // Shared data between conversion steps — populated by convertTables/convertStrings,
-// consumed by generateLevelsYaml to derive level names from string tables.
+// consumed by level config generation to derive level names from string tables.
 static std::vector<int16_t> g_levelNameIds;       // from tables.bin table 7
 static std::vector<std::string> g_menuStrings;     // English MenuStrings (group 3)
+
+// Derive a snake_case level name from the string tables (e.g. "tycho", "uac_labs")
+static std::string levelNameFromId(int mapId) {
+	int idx = mapId - 1;
+	if (idx >= 0 && idx < (int)g_levelNameIds.size()) {
+		int strId = g_levelNameIds[idx];
+		if (strId >= 0 && strId < (int)g_menuStrings.size()) {
+			std::string name = g_menuStrings[strId];
+			// Strip soft hyphens (used for word-break hints in original strings)
+			std::string clean;
+			for (char c : name) {
+				if (c != '-') clean += c;
+			}
+			// Convert to snake_case: lowercase, spaces/& to underscores
+			std::string result;
+			for (char c : clean) {
+				if (c == ' ' || c == '&') result += '_';
+				else result += (char)std::tolower((unsigned char)c);
+			}
+			// Collapse consecutive underscores
+			std::string final_name;
+			for (char c : result) {
+				if (c == '_' && !final_name.empty() && final_name.back() == '_') continue;
+				final_name += c;
+			}
+			return final_name;
+		}
+	}
+	return "map" + std::to_string(mapId);
+}
+
+// Get numbered level directory name, e.g. "01_tycho", "10_test_map"
+static std::string getLevelDirName(int mapId) {
+	char buf[64];
+	snprintf(buf, sizeof(buf), "%02d_%s", mapId, levelNameFromId(mapId).c_str());
+	return buf;
+}
+
+// Create all per-level directories under outDir/levels/
+static bool createLevelDirectories(const std::string& outDir) {
+	for (int mapId = 1; mapId <= 10; mapId++) {
+		std::string dir = outDir + "/levels/" + getLevelDirName(mapId);
+		if (!mkdirRecursive(dir)) {
+			fprintf(stderr, "  Failed to create level directory: %s\n", dir.c_str());
+			return false;
+		}
+	}
+	return true;
+}
 
 // Escape special bytes for YAML string storage
 static std::string escapeString(const uint8_t* raw, int len) {
@@ -2808,6 +2857,9 @@ static bool convertStrings(ZipFile& zip, const std::string& outDir) {
 		g_menuStrings = groupData[3].strings[0];
 	}
 
+	// Create per-level directories (needed before writing per-level strings)
+	createLevelDirectories(outDir);
+
 	// Create strings/ directory
 	std::string stringsDir = outDir + "/strings";
 #ifdef _WIN32
@@ -2844,14 +2896,25 @@ static bool convertStrings(ZipFile& zip, const std::string& outDir) {
 			yaml += "english:\n  []\n";
 		}
 
-		std::string filePath = stringsDir + "/" + GROUP_NAMES[grp] + ".yaml";
+		std::string filePath;
+		std::string printPath;
+		if (grp >= 4 && grp <= 13) {
+			// Per-level strings: group 4=map1, ..., 12=map9, 13=map10(test)
+			int mapId = (grp == 13) ? 10 : (grp - 3);
+			std::string dirName = getLevelDirName(mapId);
+			filePath = outDir + "/levels/" + dirName + "/strings.yaml";
+			printPath = "levels/" + dirName + "/strings.yaml";
+		} else {
+			filePath = stringsDir + "/" + GROUP_NAMES[grp] + ".yaml";
+			printPath = "strings/" + std::string(GROUP_NAMES[grp]) + ".yaml";
+		}
 		if (!writeString(filePath, yaml)) {
 			fprintf(stderr, "  Failed to write %s\n", filePath.c_str());
 			return false;
 		}
 		int grpTotal = 0;
 		for (int l = 0; l < MAX_LANGUAGES; l++) grpTotal += (int)groupData[grp].strings[l].size();
-		printf("  -> strings/%s.yaml (%d strings)\n", GROUP_NAMES[grp], grpTotal);
+		printf("  -> %s (%d strings)\n", printPath.c_str(), grpTotal);
 	}
 
 	free(idxData);
@@ -2963,11 +3026,23 @@ static bool generateGameYaml(const std::string& outDir) {
 	yaml += "  # Entry map (first map loaded on new game)\n";
 	yaml += "  entry_map: map00\n";
 	yaml += "\n";
+	yaml += "  # Per-level directory mappings (map_id -> directory path)\n";
+	yaml += "  levels:\n";
+	for (int mapId = 1; mapId <= 10; mapId++) {
+		yaml += "    " + std::to_string(mapId) + ": levels/" + getLevelDirName(mapId) + "\n";
+	}
+	yaml += "\n";
 	yaml += "  # String tables — maps group index to YAML file path.\n";
 	yaml += "  # Modders can add/reorder groups or point to custom files.\n";
 	yaml += "  strings:\n";
 	for (int g = 0; g < MAXTEXT; g++) {
-		yaml += "    " + std::to_string(g) + ": strings/" + GROUP_NAMES[g] + ".yaml\n";
+		if (g >= 4 && g <= 13) {
+			// Per-level strings: group 4=map1, ..., 12=map9, 13=map10(test)
+			int mapId = (g == 13) ? 10 : (g - 3);
+			yaml += "    " + std::to_string(g) + ": levels/" + getLevelDirName(mapId) + "/strings.yaml\n";
+		} else {
+			yaml += "    " + std::to_string(g) + ": strings/" + GROUP_NAMES[g] + ".yaml\n";
+		}
 	}
 	yaml += "\n";
 	yaml += "  # Subdirectories to search when resolving asset files.\n";
@@ -2977,9 +3052,7 @@ static bool generateGameYaml(const std::string& outDir) {
 	yaml += "    - ui\n";
 	yaml += "    - hud\n";
 	yaml += "    - fonts\n";
-	yaml += "    - levels/maps\n";
 	yaml += "    - levels/textures\n";
-	yaml += "    - levels/models\n";
 	yaml += "    - audio\n";
 	yaml += "    - comicbook\n";
 	yaml += "    - data\n";
@@ -3258,9 +3331,9 @@ static bool generateCharactersYaml(const std::string& outDir) {
 }
 
 // ========================================================================
-// Generate levels.yaml
+// Generate per-level level.yaml files
 // ========================================================================
-static bool generateLevelsYaml(const std::string& outDir) {
+static bool generateLevelConfigs(const std::string& outDir) {
 	// Hardcoded loadout data from the original game binary.
 	// Each entry represents the starting equipment when entering a map.
 	struct LoadoutEntry {
@@ -3331,83 +3404,29 @@ static bool generateLevelsYaml(const std::string& outDir) {
 		jokeMap[je.map] = je.items;
 	}
 
-	// Map number → level name (derived from level_names table + MenuStrings)
-	auto levelName = [](int map) -> std::string {
-		// map is 1-based, g_levelNameIds is 0-based (map 1 = index 0)
-		int idx = map - 1;
-		if (idx >= 0 && idx < (int)g_levelNameIds.size()) {
-			int strId = g_levelNameIds[idx];
-			if (strId >= 0 && strId < (int)g_menuStrings.size()) {
-				std::string name = g_menuStrings[strId];
-				// Strip soft hyphens (used for word-break hints in original strings)
-				std::string clean;
-				for (char c : name) {
-					if (c != '-') clean += c;
-				}
-				// Convert to snake_case: lowercase, spaces/& to underscores
-				std::string result;
-				for (char c : clean) {
-					if (c == ' ' || c == '&') result += '_';
-					else result += (char)std::tolower((unsigned char)c);
-				}
-				// Collapse consecutive underscores
-				std::string final;
-				for (char c : result) {
-					if (c == '_' && !final.empty() && final.back() == '_') continue;
-					final += c;
-				}
-				return final;
-			}
-		}
-		return "map" + std::to_string(map);
-	};
-
-	std::string yaml;
-	yaml += "# Per-level configuration.\n";
-	yaml += "# Each key under \"levels:\" is a level name; map_id maps it to the engine map number.\n";
-	yaml += "\n";
-	yaml += "levels:\n";
-
-	// Map number → map file name (map 1 = map00.bin, etc.)
-	auto mapFileName = [](int map) -> std::string {
-		char buf[16];
-		snprintf(buf, sizeof(buf), "map%02d.bin", map - 1);
-		return buf;
-	};
-
-	// Emit levels that only have joke_items (no loadout)
-	for (const auto& je : jokeEntries) {
-		bool hasLoadout = false;
-		for (const auto& e : entries) {
-			if (e.map == je.map) { hasLoadout = true; break; }
-		}
-		if (!hasLoadout) {
-			yaml += "  " + levelName(je.map) + ":\n";
-			yaml += "    map_id: " + std::to_string(je.map) + "\n";
-			yaml += "    file: " + mapFileName(je.map) + "\n";
-			yaml += "    joke_items: [";
-			for (size_t i = 0; i < je.items.size(); i++) {
-				if (i > 0) yaml += ", ";
-				yaml += std::to_string(je.items[i]);
-			}
-			yaml += "]\n\n";
-		}
+	// Build loadout lookup by map ID
+	std::map<int, const LoadoutEntry*> loadoutMap;
+	for (const auto& e : entries) {
+		loadoutMap[e.map] = &e;
 	}
 
-	for (const auto& e : entries) {
-		yaml += "  " + levelName(e.map) + ":\n";
-		yaml += "    map_id: " + std::to_string(e.map) + "\n";
-		yaml += "    file: " + mapFileName(e.map) + "\n";
+	// Generate one level.yaml per level directory
+	for (int mapId = 1; mapId <= 10; mapId++) {
+		std::string dirName = getLevelDirName(mapId);
+		std::string yaml;
+		yaml += "# Level configuration for " + levelNameFromId(mapId) + "\n\n";
+		yaml += "name: " + levelNameFromId(mapId) + "\n";
+		yaml += "map_id: " + std::to_string(mapId) + "\n";
 
 		// Fog disabled on map 2 (outdoor map)
-		if (e.map == 2) {
-			yaml += "    fog: false\n";
+		if (mapId == 2) {
+			yaml += "fog: false\n";
 		}
 
-		// Joke items for this level
-		auto jit = jokeMap.find(e.map);
+		// Joke items
+		auto jit = jokeMap.find(mapId);
 		if (jit != jokeMap.end()) {
-			yaml += "    joke_items: [";
+			yaml += "joke_items: [";
 			for (size_t i = 0; i < jit->second.size(); i++) {
 				if (i > 0) yaml += ", ";
 				yaml += std::to_string(jit->second[i]);
@@ -3415,60 +3434,65 @@ static bool generateLevelsYaml(const std::string& outDir) {
 			yaml += "]\n";
 		}
 
-		yaml += "    starting_loadout:\n";
+		// Starting loadout (only some levels have one)
+		auto lit = loadoutMap.find(mapId);
+		if (lit != loadoutMap.end()) {
+			const LoadoutEntry& e = *lit->second;
 
-		// Weapons
-		yaml += "      weapons: [";
-		for (size_t i = 0; i < e.weapons.size(); i++) {
-			if (i > 0) yaml += ", ";
-			yaml += weaponName(e.weapons[i]);
+			yaml += "starting_loadout:\n";
+
+			// Weapons
+			yaml += "  weapons: [";
+			for (size_t i = 0; i < e.weapons.size(); i++) {
+				if (i > 0) yaml += ", ";
+				yaml += weaponName(e.weapons[i]);
+			}
+			yaml += "]\n";
+
+			// Weapon ammo
+			if (!e.weapon_ammo.empty()) {
+				yaml += "  weapon_ammo:\n";
+				for (const auto& wa : e.weapon_ammo)
+					yaml += "    " + weaponName(wa.first) + ": " + std::to_string(wa.second) + "\n";
+			}
+
+			// Armor
+			yaml += "  armor: " + std::to_string(e.armor) + "\n";
+
+			// Inventory
+			yaml += "  inventory:\n";
+			for (const auto& inv : e.inventory)
+				yaml += "    " + invName(inv.first) + ": " + std::to_string(inv.second) + "\n";
+
+			// Ammo
+			yaml += "  ammo:\n";
+			for (const auto& a : e.ammo)
+				yaml += "    " + ammoName(a.first) + ": " + std::to_string(a.second) + "\n";
+
+			// XP
+			yaml += "  xp: " + std::to_string(e.xp) + "\n";
+
+			// Stats
+			yaml += "  stats:\n";
+			yaml += "    defense: " + std::to_string(e.defense) + "\n";
+			yaml += "    strength: " + std::to_string(e.strength) + "\n";
+			yaml += "    accuracy: " + std::to_string(e.accuracy) + "\n";
+			if (e.agility > 0)
+				yaml += "    agility: " + std::to_string(e.agility) + "\n";
+			yaml += "    iq: " + std::to_string(e.iq) + "\n";
+
+			// VIOS mallocs
+			yaml += "  vios_mallocs: " + std::to_string(e.vios_mallocs) + "\n";
 		}
-		yaml += "]\n";
 
-		// Weapon ammo
-		if (!e.weapon_ammo.empty()) {
-			yaml += "      weapon_ammo:\n";
-			for (const auto& wa : e.weapon_ammo)
-				yaml += "        " + weaponName(wa.first) + ": " + std::to_string(wa.second) + "\n";
+		std::string path = outDir + "/levels/" + dirName + "/level.yaml";
+		if (!writeString(path, yaml)) {
+			fprintf(stderr, "  Failed to write %s\n", path.c_str());
+			return false;
 		}
-
-		// Armor
-		yaml += "      armor: " + std::to_string(e.armor) + "\n";
-
-		// Inventory
-		yaml += "      inventory:\n";
-		for (const auto& inv : e.inventory)
-			yaml += "        " + invName(inv.first) + ": " + std::to_string(inv.second) + "\n";
-
-		// Ammo
-		yaml += "      ammo:\n";
-		for (const auto& a : e.ammo)
-			yaml += "        " + ammoName(a.first) + ": " + std::to_string(a.second) + "\n";
-
-		// XP
-		yaml += "      xp: " + std::to_string(e.xp) + "\n";
-
-		// Stats
-		yaml += "      stats:\n";
-		yaml += "        defense: " + std::to_string(e.defense) + "\n";
-		yaml += "        strength: " + std::to_string(e.strength) + "\n";
-		yaml += "        accuracy: " + std::to_string(e.accuracy) + "\n";
-		if (e.agility > 0)
-			yaml += "        agility: " + std::to_string(e.agility) + "\n";
-		yaml += "        iq: " + std::to_string(e.iq) + "\n";
-
-		// VIOS mallocs
-		yaml += "      vios_mallocs: " + std::to_string(e.vios_mallocs) + "\n";
-
-		yaml += "\n";
+		printf("  -> levels/%s/level.yaml\n", dirName.c_str());
 	}
 
-	std::string path = outDir + "/levels.yaml";
-	if (!writeString(path, yaml)) {
-		fprintf(stderr, "  Failed to write %s\n", path.c_str());
-		return false;
-	}
-	printf("  -> %s\n", path.c_str());
 	return true;
 }
 
@@ -3641,9 +3665,19 @@ static void copyBinaryAssets(ZipFile& zip, const std::string& outDir) {
 
 			// Classify binary assets into subdirectories
 			if (outFile.compare(0, 3, "map") == 0 && outFile.find(".bin") != std::string::npos) {
-				outFile = "levels/maps/" + outFile;
+				// map00.bin -> levels/01_tycho/map.bin
+				int mapIdx = 0;
+				if (sscanf(outFile.c_str(), "map%d.bin", &mapIdx) == 1) {
+					int mapId = mapIdx + 1;
+					outFile = "levels/" + getLevelDirName(mapId) + "/map.bin";
+				}
 			} else if (outFile.compare(0, 6, "model_") == 0) {
-				outFile = "levels/models/" + outFile;
+				// model_0000.bin -> levels/01_tycho/model.bin
+				int modelIdx = 0;
+				if (sscanf(outFile.c_str(), "model_%d.bin", &modelIdx) == 1) {
+					int mapId = modelIdx + 1;
+					outFile = "levels/" + getLevelDirName(mapId) + "/model.bin";
+				}
 			} else if (outFile.compare(0, 3, "new") == 0) {
 				outFile = "levels/textures/" + outFile;
 			} else if (outFile == "tables.bin") {
@@ -3749,8 +3783,8 @@ int main(int argc, char* argv[]) {
 	printf("Generating characters.yaml...\n");
 	ok &= generateCharactersYaml(outputDir);
 
-	printf("Generating levels.yaml...\n");
-	ok &= generateLevelsYaml(outputDir);
+	printf("Generating per-level configs...\n");
+	ok &= generateLevelConfigs(outputDir);
 
 	// Copy binary assets that still need the original format
 	printf("\nCopying binary assets (maps, textures, models)...\n");

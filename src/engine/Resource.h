@@ -12,7 +12,6 @@ public:
     static constexpr char* RES_LOGO2_BMP_GZ = "logo2.bmp";
     static constexpr char* RES_TABLES_BIN_GZ = "tables.bin";
     static constexpr char* RES_NEWMAPPINGS_BIN_GZ = "newMappings.bin";
-    static constexpr char* RES_MAP_FILE_ARRAY[] = { "map00.bin" , "map01.bin", "map02.bin", "map03.bin", "map04.bin", "map05.bin", "map06.bin", "map07.bin", "map08.bin", "map09.bin"};
     static constexpr char* RES_NEWPALETTES_BIN_GZ = "newPalettes.bin";
     static constexpr char* RES_NEWTEXEL_FILE_ARRAY[] = {
         "newTexels000.bin", "newTexels001.bin", "newTexels002.bin", "newTexels003.bin", "newTexels004.bin",

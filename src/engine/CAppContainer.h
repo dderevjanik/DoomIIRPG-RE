@@ -14,6 +14,14 @@ class Applet;
 class IGameModule;
 class ResourceManager;
 
+// Per-level info populated from game.yaml levels section
+struct LevelInfo {
+	std::string dir;         // e.g. "levels/01_tycho"
+	std::string mapFile;     // e.g. "levels/01_tycho/map.bin"
+	std::string modelFile;   // e.g. "levels/01_tycho/model.bin"
+	std::string configFile;  // e.g. "levels/01_tycho/level.yaml"
+};
+
 // Game-level configuration loaded from game.yaml
 struct GameConfig {
 	std::string name = "Doom II RPG";
@@ -24,6 +32,7 @@ struct GameConfig {
 	std::vector<int> noFogMaps;  // Map IDs where fog is disabled (e.g. outdoor maps)
 	std::vector<std::string> searchDirs;  // VFS search subdirectories for asset resolution
 	std::unordered_map<int, std::string> stringFiles;  // group index -> YAML file path (from game.yaml strings:)
+	std::map<int, LevelInfo> levelInfos;  // map_id -> per-level paths
 
 	// Inventory/ammo capacity caps
 	int capCredits = 9999;
@@ -133,6 +142,15 @@ struct GameConfig {
 			if (id == mapID) return true;
 		}
 		return false;
+	}
+
+	// Get map file path for a given map ID (falls back to legacy mapNN.bin naming)
+	std::string getMapFile(int mapId) const {
+		auto it = levelInfos.find(mapId);
+		if (it != levelInfos.end()) return it->second.mapFile;
+		char buf[32];
+		snprintf(buf, sizeof(buf), "map%02d.bin", mapId - 1);
+		return buf;
 	}
 };
 

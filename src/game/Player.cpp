@@ -1650,46 +1650,40 @@ void Player::equipForLevel(int highestMap) {
 	this->weapons = 0;
 	app->game->numMallocsForVIOS = 0;
 
-	// Load map starting loadout from YAML
-	DataNode config2 = DataNode::loadFile("levels.yaml");
-	if (config2) {
-		DataNode levels = config2["levels"];
-		if (!levels || !levels.isMap()) {
-			app->Error("levels.yaml: missing or invalid 'levels' map");
-		} else {
-			// Build weapon name→index lookup from weapons.yaml
-			std::map<std::string, int> weaponNameToIndex;
-			DataNode wpConfig = DataNode::loadFile("weapons.yaml");
-			if (wpConfig) {
-				DataNode wpNode = wpConfig["weapons"];
-				if (wpNode) {
-					for (auto it = wpNode.begin(); it != wpNode.end(); ++it)
-						weaponNameToIndex[it.key().asString()] = it.value()["index"].asInt(-1);
-				}
+	// Load map starting loadout from per-level level.yaml
+	{
+		// Build weapon name→index lookup from weapons.yaml
+		std::map<std::string, int> weaponNameToIndex;
+		DataNode wpConfig = DataNode::loadFile("weapons.yaml");
+		if (wpConfig) {
+			DataNode wpNode = wpConfig["weapons"];
+			if (wpNode) {
+				for (auto it = wpNode.begin(); it != wpNode.end(); ++it)
+					weaponNameToIndex[it.key().asString()] = it.value()["index"].asInt(-1);
 			}
+		}
 
-			// Resolve weapon name or index
-			auto resolveWeapon = [&](const DataNode& node) -> int {
-				if (node.isScalar()) {
-					std::string s = node.asString();
-					auto it = weaponNameToIndex.find(s);
-					if (it != weaponNameToIndex.end()) return it->second;
-					try { return std::stoi(s); } catch (...) { return -1; }
-				}
-				return node.asInt(-1);
-			};
-
-			// Map 10 uses map 9 loadout
-			int lookupMap = (highestMap == 10) ? 9 : highestMap;
-			DataNode level;
-			for (auto lit = levels.begin(); lit != levels.end(); ++lit) {
-				if (lit.value()["map_id"].asInt(-1) == lookupMap) {
-					level = lit.value();
-					break;
-				}
+		// Resolve weapon name or index
+		auto resolveWeapon = [&](const DataNode& node) -> int {
+			if (node.isScalar()) {
+				std::string s = node.asString();
+				auto it = weaponNameToIndex.find(s);
+				if (it != weaponNameToIndex.end()) return it->second;
+				try { return std::stoi(s); } catch (...) { return -1; }
 			}
-			DataNode r = level ? level["starting_loadout"] : DataNode();
-			if (r) {
+			return node.asInt(-1);
+		};
+
+		// Map 10 uses map 9 loadout
+		int lookupMap = (highestMap == 10) ? 9 : highestMap;
+		const GameConfig& gc = CAppContainer::getInstance()->gameConfig;
+		auto lit = gc.levelInfos.find(lookupMap);
+		DataNode config2;
+		if (lit != gc.levelInfos.end()) {
+			config2 = DataNode::loadFile(lit->second.configFile.c_str());
+		}
+		DataNode r = config2 ? config2["starting_loadout"] : DataNode();
+		if (r) {
 				// Weapons
 				DataNode weapons = r["weapons"];
 				if (weapons) {
@@ -1740,7 +1734,6 @@ void Player::equipForLevel(int highestMap) {
 				// VIOS mallocs
 				app->game->numMallocsForVIOS = r["vios_mallocs"].asInt(0);
 			}
-		}
 	}
 	this->give(0, 18, 1);
 	this->enableHelp = enableHelp;

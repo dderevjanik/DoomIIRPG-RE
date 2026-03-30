@@ -253,6 +253,23 @@ int main(int argc, char* args[]) {
 				}
 			}
 
+			// Parse per-level directory mappings
+			DataNode levelsNode = game["levels"];
+			if (levelsNode && levelsNode.isMap()) {
+				for (auto it = levelsNode.begin(); it != levelsNode.end(); ++it) {
+					int mapId = std::atoi(it.key().asString().c_str());
+					std::string dir = it.value().asString("");
+					if (!dir.empty() && mapId > 0) {
+						LevelInfo info;
+						info.dir = dir;
+						info.mapFile = dir + "/map.bin";
+						info.modelFile = dir + "/model.bin";
+						info.configFile = dir + "/level.yaml";
+						gc.levelInfos[mapId] = std::move(info);
+					}
+				}
+			}
+
 			gc.maxEntities = game["max_entities"].asInt(gc.maxEntities);
 			gc.maxWeaponButtons = game["max_weapon_buttons"].asInt(gc.maxWeaponButtons);
 
@@ -387,31 +404,26 @@ int main(int argc, char* args[]) {
 			printf("[main] Game: %s (save: %s)\n", gc.name.c_str(), gc.saveDir.c_str());
 		}
 
-		// Load per-level data from levels.yaml
-		DataNode levelsConfig = DataNode::loadFile("levels.yaml");
-		if (levelsConfig) {
+		// Load per-level data from level.yaml files in each level directory
+		{
 			GameConfig& gc2 = CAppContainer::getInstance()->gameConfig;
-			DataNode levels = levelsConfig["levels"];
-			if (levels && levels.isMap()) {
-				for (auto it = levels.begin(); it != levels.end(); ++it) {
-					DataNode levelNode = it.value();
-					int mapId = levelNode["map_id"].asInt(-1);
-					if (mapId < 0) continue;
+			for (const auto& [mapId, info] : gc2.levelInfos) {
+				DataNode levelNode = DataNode::loadFile(info.configFile.c_str());
+				if (!levelNode) continue;
 
-					// fog: false disables fog for this map (defaults to true)
-					DataNode fogNode = levelNode["fog"];
-					if (fogNode && !fogNode.asBool(true)) {
-						gc2.noFogMaps.push_back(mapId);
-					}
+				// fog: false disables fog for this map (defaults to true)
+				DataNode fogNode = levelNode["fog"];
+				if (fogNode && !fogNode.asBool(true)) {
+					gc2.noFogMaps.push_back(mapId);
+				}
 
-					DataNode jiNode = levelNode["joke_items"];
-					if (jiNode && jiNode.isSequence()) {
-						std::vector<int> items;
-						for (auto it2 = jiNode.begin(); it2 != jiNode.end(); ++it2) {
-							items.push_back(it2.value().asInt(0));
-						}
-						gc2.jokeItems[mapId] = std::move(items);
+				DataNode jiNode = levelNode["joke_items"];
+				if (jiNode && jiNode.isSequence()) {
+					std::vector<int> items;
+					for (auto it2 = jiNode.begin(); it2 != jiNode.end(); ++it2) {
+						items.push_back(it2.value().asInt(0));
 					}
+					gc2.jokeItems[mapId] = std::move(items);
 				}
 			}
 		}

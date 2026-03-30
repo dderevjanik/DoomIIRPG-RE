@@ -702,8 +702,10 @@ bool Render::beginLoadMap(int mapNameID) {
 
 	app->canvas->updateLoadingBar(false);
 
-	const char* mapFile = CAppContainer::getInstance()->customMapFile ? CAppContainer::getInstance()->customMapFile
-	                                                                  : Resources::RES_MAP_FILE_ARRAY[(mapNameID - 1)];
+	std::string mapFilePath = CAppContainer::getInstance()->gameConfig.getMapFile(mapNameID);
+	const char* mapFile = CAppContainer::getInstance()->customMapFile
+	    ? CAppContainer::getInstance()->customMapFile
+	    : mapFilePath.c_str();
 	IS.loadResource(mapFile);
 	app->resource->read(&IS, 42);
 	if (app->resource->shiftUByte() != 3) {

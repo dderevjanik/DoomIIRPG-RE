@@ -1632,17 +1632,25 @@ void AssetBrowser::drawGamePanel() {
 
 void AssetBrowser::loadLevels() {
 	try {
-		YAML::Node root = YAML::LoadFile(gameDir_ + "/levels.yaml");
-		YAML::Node lvls = root["levels"];
-		if (!lvls) return;
+		// Read level directory mappings from game.yaml
+		YAML::Node root = YAML::LoadFile(gameDir_ + "/game.yaml");
+		YAML::Node levelsNode = root["game"]["levels"];
+		if (!levelsNode) return;
 
-		for (auto it = lvls.begin(); it != lvls.end(); ++it) {
+		for (auto it = levelsNode.begin(); it != levelsNode.end(); ++it) {
+			int mapId = it->first.as<int>();
+			std::string levelDir = it->second.as<std::string>();
+			std::string yamlPath = gameDir_ + "/" + levelDir + "/level.yaml";
+
+			YAML::Node lvl;
+			try { lvl = YAML::LoadFile(yamlPath); }
+			catch (...) { continue; }
+
 			LevelEntry lev;
-			lev.name = it->first.as<std::string>();
-			auto& v = it->second;
-			lev.mapNumber = v["map_id"] ? v["map_id"].as<int>() : 0;
-			if (v["starting_loadout"]) {
-				auto sl = v["starting_loadout"];
+			lev.name = lvl["name"] ? lvl["name"].as<std::string>() : "unknown";
+			lev.mapNumber = mapId;
+			if (lvl["starting_loadout"]) {
+				auto sl = lvl["starting_loadout"];
 				if (sl["weapons"]) {
 					for (const auto& w : sl["weapons"])
 						lev.weapons.push_back(w.as<std::string>());
@@ -1664,7 +1672,7 @@ void AssetBrowser::loadLevels() {
 			[](const LevelEntry& a, const LevelEntry& b) { return a.mapNumber < b.mapNumber; });
 		std::fprintf(stderr, "Loaded %zu levels\n", levels_.size());
 	} catch (const YAML::Exception& ex) {
-		std::fprintf(stderr, "Failed to load levels.yaml: %s\n", ex.what());
+		std::fprintf(stderr, "Failed to load levels: %s\n", ex.what());
 	}
 }
 
