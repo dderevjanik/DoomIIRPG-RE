@@ -20,6 +20,7 @@ add_custom_target(converter_resources DEPENDS "${RESOURCES_HEADER}")
 
 add_executable(${CONVERTER_TGT_NAME}
 	main.cpp
+	d2-converter.cpp
 	Error.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/../engine/ZipFile.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/../editor/MapDataIO.cpp
@@ -35,6 +36,7 @@ set_target_properties(${CONVERTER_TGT_NAME} PROPERTIES
 )
 
 target_include_directories(${CONVERTER_TGT_NAME} PRIVATE
+	${CMAKE_CURRENT_SOURCE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}/../engine
 	${CMAKE_CURRENT_SOURCE_DIR}/../game
 	${CMAKE_CURRENT_SOURCE_DIR}/../editor
