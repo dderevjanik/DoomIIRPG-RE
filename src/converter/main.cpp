@@ -12,10 +12,57 @@
 #include <yaml-cpp/yaml.h>
 #include "resources_embedded.h"
 
-// IPA internal path prefix
-static const char* IPA_PREFIX = "Payload/Doom2rpg.app/";
-// Binary assets are under Packages/
-static const char* PKG_PREFIX = "Payload/Doom2rpg.app/Packages/";
+// ========================================================================
+// Game definition — all game-specific configuration in one place.
+// Add new games here (e.g. Doom 1 RPG, Wolfenstein RPG).
+// ========================================================================
+struct GameDef {
+	const char* id;              // e.g. "doom2rpg"
+	const char* name;            // e.g. "Doom II RPG"
+	const char* ipaPrefix;       // IPA path prefix (e.g. "Payload/Doom2rpg.app/")
+	const char* pkgPrefix;       // package prefix (e.g. "Payload/Doom2rpg.app/Packages/")
+	const char* defaultOutput;   // default output dir (e.g. "games/doom2rpg")
+	const char* soundsDir;       // IPA subdirectory for audio (e.g. "sounds2")
+	const char* const* levelDirs;
+	int numLevels;
+	int numMaps;                 // number of map/model binary files
+	int numTextures;             // number of newTexels files
+	int maxStringGroups;
+	int maxLanguages;
+	const char* const* languageNames;
+	const char* const* groupNames;
+};
+
+// --- Doom II RPG ---
+static const char* D2RPG_LEVEL_DIRS[] = {
+	"01_tycho", "02_cichus", "03_kepler", "04_uac_admin", "05_uac_labs",
+	"06_uac_r_d", "07_gehenna", "08_abaddon", "09_vios", "10_test_map"
+};
+static const char* D2RPG_LANGUAGES[] = {"english", "french", "german", "italian", "spanish"};
+static const char* D2RPG_GROUPS[] = {
+	"CodeStrings", "EntityStrings", "FileStrings", "MenuStrings",
+	"M_01", "M_02", "M_03", "M_04", "M_05", "M_06", "M_07", "M_08", "M_09",
+	"M_TEST", "Translations"
+};
+
+static const GameDef GAME_DOOM2RPG = {
+	"doom2rpg",
+	"Doom II RPG",
+	"Payload/Doom2rpg.app/",
+	"Payload/Doom2rpg.app/Packages/",
+	"games/doom2rpg",
+	"sounds2",
+	D2RPG_LEVEL_DIRS, 10,
+	10,   // maps
+	40,   // textures
+	15,   // string groups
+	5,    // languages
+	D2RPG_LANGUAGES,
+	D2RPG_GROUPS,
+};
+
+// Active game (only Doom II RPG for now)
+static const GameDef* g_game = &GAME_DOOM2RPG;
 
 // ========================================================================
 // Utility
@@ -24,8 +71,8 @@ static const char* PKG_PREFIX = "Payload/Doom2rpg.app/Packages/";
 static void printUsage(const char* progName) {
 	printf("Usage: %s --ipa <path> [--output <dir>]\n", progName);
 	printf("\n");
-	printf("  --ipa <path>     Path to Doom 2 RPG.ipa file\n");
-	printf("  --output <dir>   Output directory (default: games/doom2rpg)\n");
+	printf("  --ipa <path>     Path to game .ipa file\n");
+	printf("  --output <dir>   Output directory (default: %s)\n", g_game->defaultOutput);
 }
 
 static bool dirExists(const char* path) {
@@ -85,31 +132,16 @@ static uint32_t readUInt(const uint8_t* data, int offset) {
 }
 
 // ========================================================================
-// String constants
+// Level directory helpers (use active game definition)
 // ========================================================================
-static const int MAXTEXT = 15;
-static const int MAX_LANGUAGES = 5;
-
-static const char* LANGUAGE_NAMES[] = {"english", "french", "german", "italian", "spanish"};
-static const char* GROUP_NAMES[] = {"CodeStrings", "EntityStrings", "FileStrings", "MenuStrings", "M_01",
-                                    "M_02",        "M_03",          "M_04",        "M_05",        "M_06",
-                                    "M_07",        "M_08",          "M_09",        "M_TEST",      "Translations"};
-
-// Hardcoded level directory names for Doom II RPG (10 levels)
-static const char* LEVEL_DIR_NAMES[] = {
-    "01_tycho", "02_cichus", "03_kepler", "04_uac_admin", "05_uac_labs",
-    "06_uac_r_d", "07_gehenna", "08_abaddon", "09_vios", "10_test_map"
-};
-
 static std::string getLevelDirName(int mapId) {
-    if (mapId >= 1 && mapId <= 10)
-        return LEVEL_DIR_NAMES[mapId - 1];
+    if (mapId >= 1 && mapId <= g_game->numLevels)
+        return g_game->levelDirs[mapId - 1];
     return "map" + std::to_string(mapId);
 }
 
-// Create all per-level directories under outDir/levels/
 static bool createLevelDirectories(const std::string& outDir) {
-	for (int mapId = 1; mapId <= 10; mapId++) {
+	for (int mapId = 1; mapId <= g_game->numLevels; mapId++) {
 		std::string dir = outDir + "/levels/" + getLevelDirName(mapId);
 		if (!mkdirRecursive(dir)) {
 			fprintf(stderr, "  Failed to create level directory: %s\n", dir.c_str());
@@ -156,7 +188,7 @@ static std::string escapeString(const uint8_t* raw, int len) {
 static bool convertStrings(ZipFile& zip, const std::string& outDir) {
 	// Read strings.idx
 	int idxSize = 0;
-	std::string idxPath = std::string(PKG_PREFIX) + "strings.idx";
+	std::string idxPath = std::string(g_game->pkgPrefix) + "strings.idx";
 	uint8_t* idxData = zip.readZipFileEntry(idxPath.c_str(), &idxSize);
 	if (!idxData) {
 		fprintf(stderr, "  strings.idx not found in IPA\n");
@@ -169,7 +201,7 @@ static bool convertStrings(ZipFile& zip, const std::string& outDir) {
 	for (int i = 0; i < 3; i++) {
 		char fname[32];
 		snprintf(fname, sizeof(fname), "strings%02d.bin", i);
-		std::string chunkPath = std::string(PKG_PREFIX) + fname;
+		std::string chunkPath = std::string(g_game->pkgPrefix) + fname;
 		chunks[i] = zip.readZipFileEntry(chunkPath.c_str(), &chunkSizes[i]);
 		if (chunks[i]) {
 			printf("  %s: %d bytes\n", fname, chunkSizes[i]);
@@ -178,7 +210,7 @@ static bool convertStrings(ZipFile& zip, const std::string& outDir) {
 
 	// Parse file index (same logic as Resource::loadFileIndex)
 	int totalEntries = readShort(idxData, 0);
-	int arraySize = MAX_LANGUAGES * MAXTEXT * 3 + 10;
+	int arraySize = g_game->maxLanguages * g_game->maxStringGroups * 3 + 10;
 	std::vector<int> array(arraySize, 0);
 
 	int off = 2;
@@ -223,14 +255,15 @@ static bool convertStrings(ZipFile& zip, const std::string& outDir) {
 
 	// Collect all strings per group per language
 	struct GroupData {
-		std::vector<std::string> strings[MAX_LANGUAGES];
+		std::vector<std::vector<std::string>> strings;
+		GroupData() : strings(g_game->maxLanguages) {}
 	};
-	GroupData groupData[MAXTEXT];
+	std::vector<GroupData> groupData(g_game->maxStringGroups);
 
 	int totalStrings = 0;
-	for (int lang = 0; lang < MAX_LANGUAGES; lang++) {
-		for (int grp = 0; grp < MAXTEXT; grp++) {
-			int idxPos = (grp + lang * MAXTEXT) * 3;
+	for (int lang = 0; lang < g_game->maxLanguages; lang++) {
+		for (int grp = 0; grp < g_game->maxStringGroups; grp++) {
+			int idxPos = (grp + lang * g_game->maxStringGroups) * 3;
 			int chunkId = array[idxPos + 0];
 			int byteOffset = array[idxPos + 1];
 			int byteSize = array[idxPos + 2];
@@ -266,9 +299,9 @@ static bool convertStrings(ZipFile& zip, const std::string& outDir) {
 #endif
 
 	// Write one file per group
-	for (int grp = 0; grp < MAXTEXT; grp++) {
+	for (int grp = 0; grp < g_game->maxStringGroups; grp++) {
 		std::string yaml;
-		yaml += "# " + std::string(GROUP_NAMES[grp]) + " (group " + std::to_string(grp) + ") — " + GROUP_DESCRIPTIONS[grp] + "\n";
+		yaml += "# " + std::string(g_game->groupNames[grp]) + " (group " + std::to_string(grp) + ") — " + GROUP_DESCRIPTIONS[grp] + "\n";
 		yaml += "# STRINGID(" + std::to_string(grp) + ", index)\n";
 		yaml += "#\n";
 		yaml += "# Special character escapes:\n";
@@ -280,10 +313,10 @@ static bool convertStrings(ZipFile& zip, const std::string& outDir) {
 		yaml += "\n";
 
 		bool hasData = false;
-		for (int lang = 0; lang < MAX_LANGUAGES; lang++) {
+		for (int lang = 0; lang < g_game->maxLanguages; lang++) {
 			if (!groupData[grp].strings[lang].empty()) {
 				hasData = true;
-				yaml += std::string(LANGUAGE_NAMES[lang]) + ":\n";
+				yaml += std::string(g_game->languageNames[lang]) + ":\n";
 				for (const auto& s : groupData[grp].strings[lang]) {
 					yaml += "  - \"" + s + "\"\n";
 				}
@@ -302,15 +335,15 @@ static bool convertStrings(ZipFile& zip, const std::string& outDir) {
 			filePath = outDir + "/levels/" + dirName + "/strings.yaml";
 			printPath = "levels/" + dirName + "/strings.yaml";
 		} else {
-			filePath = stringsDir + "/" + GROUP_NAMES[grp] + ".yaml";
-			printPath = "strings/" + std::string(GROUP_NAMES[grp]) + ".yaml";
+			filePath = stringsDir + "/" + g_game->groupNames[grp] + ".yaml";
+			printPath = "strings/" + std::string(g_game->groupNames[grp]) + ".yaml";
 		}
 		if (!writeString(filePath, yaml)) {
 			fprintf(stderr, "  Failed to write %s\n", filePath.c_str());
 			return false;
 		}
 		int grpTotal = 0;
-		for (int l = 0; l < MAX_LANGUAGES; l++) grpTotal += (int)groupData[grp].strings[l].size();
+		for (int l = 0; l < g_game->maxLanguages; l++) grpTotal += (int)groupData[grp].strings[l].size();
 		printf("  -> %s (%d strings)\n", printPath.c_str(), grpTotal);
 	}
 
@@ -365,7 +398,7 @@ static std::string classifyImage(const std::string& relPath) {
 }
 
 static void copyImageAssets(ZipFile& zip, const std::string& outDir) {
-	const std::string prefix = std::string(PKG_PREFIX);
+	const std::string prefix = std::string(g_game->pkgPrefix);
 	int copied = 0;
 
 	for (int i = 0; i < zip.getEntryCount(); i++) {
@@ -407,7 +440,7 @@ static void copyAudioAssets(ZipFile& zip, const std::string& outDir) {
 	std::string audioDir = outDir + "/audio";
 	mkdirRecursive(audioDir);
 
-	const std::string prefix = std::string(PKG_PREFIX) + "sounds2/";
+	const std::string prefix = std::string(g_game->pkgPrefix) + g_game->soundsDir + "/";
 	int copied = 0;
 
 	for (int i = 0; i < zip.getEntryCount(); i++) {
@@ -460,7 +493,7 @@ static bool extractSpritesToYaml(const std::string& outDir) {
 	// Collect all media indices from all maps and add unnamed ones to sprites.yaml
 	{
 		std::set<int> allMediaIds;
-		for (int mapId = 1; mapId <= 10; mapId++) {
+		for (int mapId = 1; mapId <= g_game->numLevels; mapId++) {
 			std::string dirName = getLevelDirName(mapId);
 			std::string mapBinPath = outDir + "/levels/" + dirName + "/map.bin";
 			MapData md;
@@ -503,7 +536,7 @@ static bool extractSpritesToYaml(const std::string& outDir) {
 		}
 	}
 
-	for (int mapId = 1; mapId <= 10; mapId++) {
+	for (int mapId = 1; mapId <= g_game->numLevels; mapId++) {
 		std::string dirName = getLevelDirName(mapId);
 		std::string mapBinPath = outDir + "/levels/" + dirName + "/map.bin";
 		std::string levelYamlPath = outDir + "/levels/" + dirName + "/level.yaml";
@@ -820,79 +853,27 @@ static bool extractSpritesToYaml(const std::string& outDir) {
 // Copy binary assets that aren't converted yet (maps, textures, models)
 // ========================================================================
 static void copyBinaryAssets(ZipFile& zip, const std::string& outDir) {
-	// Copy binary resource files that the engine loads directly via VFS
-	const char* binaryFiles[] = {
-	    // Maps
-	    "Packages/map00.bin",
-	    "Packages/map01.bin",
-	    "Packages/map02.bin",
-	    "Packages/map03.bin",
-	    "Packages/map04.bin",
-	    "Packages/map05.bin",
-	    "Packages/map06.bin",
-	    "Packages/map07.bin",
-	    "Packages/map08.bin",
-	    "Packages/map09.bin",
-	    // Models
-	    "Packages/model_0000.bin",
-	    "Packages/model_0001.bin",
-	    "Packages/model_0002.bin",
-	    "Packages/model_0003.bin",
-	    "Packages/model_0004.bin",
-	    "Packages/model_0005.bin",
-	    "Packages/model_0006.bin",
-	    "Packages/model_0007.bin",
-	    "Packages/model_0008.bin",
-	    "Packages/model_0009.bin",
-	    // Textures
-	    "Packages/newMappings.bin",
-	    "Packages/newPalettes.bin",
-	    "Packages/newTexels000.bin",
-	    "Packages/newTexels001.bin",
-	    "Packages/newTexels002.bin",
-	    "Packages/newTexels003.bin",
-	    "Packages/newTexels004.bin",
-	    "Packages/newTexels005.bin",
-	    "Packages/newTexels006.bin",
-	    "Packages/newTexels007.bin",
-	    "Packages/newTexels008.bin",
-	    "Packages/newTexels009.bin",
-	    "Packages/newTexels010.bin",
-	    "Packages/newTexels011.bin",
-	    "Packages/newTexels012.bin",
-	    "Packages/newTexels013.bin",
-	    "Packages/newTexels014.bin",
-	    "Packages/newTexels015.bin",
-	    "Packages/newTexels016.bin",
-	    "Packages/newTexels017.bin",
-	    "Packages/newTexels018.bin",
-	    "Packages/newTexels019.bin",
-	    "Packages/newTexels020.bin",
-	    "Packages/newTexels021.bin",
-	    "Packages/newTexels022.bin",
-	    "Packages/newTexels023.bin",
-	    "Packages/newTexels024.bin",
-	    "Packages/newTexels025.bin",
-	    "Packages/newTexels026.bin",
-	    "Packages/newTexels027.bin",
-	    "Packages/newTexels028.bin",
-	    "Packages/newTexels029.bin",
-	    "Packages/newTexels030.bin",
-	    "Packages/newTexels031.bin",
-	    "Packages/newTexels032.bin",
-	    "Packages/newTexels033.bin",
-	    "Packages/newTexels034.bin",
-	    "Packages/newTexels035.bin",
-	    "Packages/newTexels036.bin",
-	    "Packages/newTexels037.bin",
-	    "Packages/newTexels038.bin",
-	    // Binary data (sky/camera tables still loaded at runtime)
-	    "Packages/tables.bin",
-	};
+	// Build file list from game config
+	std::vector<std::string> binaryFiles;
+	for (int i = 0; i < g_game->numMaps; i++) {
+		char buf[64];
+		snprintf(buf, sizeof(buf), "Packages/map%02d.bin", i);
+		binaryFiles.push_back(buf);
+		snprintf(buf, sizeof(buf), "Packages/model_%04d.bin", i);
+		binaryFiles.push_back(buf);
+	}
+	binaryFiles.push_back("Packages/newMappings.bin");
+	binaryFiles.push_back("Packages/newPalettes.bin");
+	for (int i = 0; i < g_game->numTextures; i++) {
+		char buf[64];
+		snprintf(buf, sizeof(buf), "Packages/newTexels%03d.bin", i);
+		binaryFiles.push_back(buf);
+	}
+	binaryFiles.push_back("Packages/tables.bin");
 
 	int copied = 0;
-	for (const char* relPath : binaryFiles) {
-		std::string ipaPath = std::string(IPA_PREFIX) + relPath;
+	for (const auto& relPath : binaryFiles) {
+		std::string ipaPath = std::string(g_game->ipaPrefix) + relPath;
 		int size = 0;
 		if (!zip.hasEntry(ipaPath.c_str()))
 			continue;
@@ -967,7 +948,7 @@ static bool writeResourceFiles(const std::string& outDir) {
 // ========================================================================
 int main(int argc, char* argv[]) {
 	const char* ipaPath = nullptr;
-	std::string outputDir = "games/doom2rpg";
+	std::string outputDir = g_game->defaultOutput;
 	bool force = false;
 
 	for (int i = 1; i < argc; i++) {
@@ -1038,7 +1019,7 @@ int main(int argc, char* argv[]) {
 
 	if (ok) {
 		printf("\nConversion complete: %s\n", outputDir.c_str());
-		printf("Run the game with: ./DoomIIRPG --game doom2rpg\n");
+		printf("Run the game with: ./DoomIIRPG --game %s\n", g_game->id);
 	} else {
 		printf("\nConversion completed with errors.\n");
 	}

@@ -1,7 +1,8 @@
 set(CONVERTER_TGT_NAME doom2rpg-convert)
 
 # --- Embed YAML resource files into a C++ header ---
-set(RESOURCES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/resources")
+set(RESOURCES_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/resources")
+set(RESOURCES_DIR "${RESOURCES_ROOT}/d2-rpg")
 set(RESOURCES_HEADER "${CMAKE_CURRENT_BINARY_DIR}/resources_embedded.h")
 
 file(GLOB_RECURSE RESOURCE_YAML_FILES "${RESOURCES_DIR}/*.yaml")
@@ -11,8 +12,8 @@ add_custom_command(
 	COMMAND ${CMAKE_COMMAND}
 		-DRESOURCES_DIR=${RESOURCES_DIR}
 		-DOUTPUT_FILE=${RESOURCES_HEADER}
-		-P ${RESOURCES_DIR}/embed_resources.cmake
-	DEPENDS ${RESOURCE_YAML_FILES} ${RESOURCES_DIR}/embed_resources.cmake
+		-P ${RESOURCES_ROOT}/embed_resources.cmake
+	DEPENDS ${RESOURCE_YAML_FILES} ${RESOURCES_ROOT}/embed_resources.cmake
 	COMMENT "Embedding converter resource YAML files"
 )
 add_custom_target(converter_resources DEPENDS "${RESOURCES_HEADER}")
