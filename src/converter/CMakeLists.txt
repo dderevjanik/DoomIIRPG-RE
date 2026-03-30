@@ -4,6 +4,8 @@ add_executable(${CONVERTER_TGT_NAME}
 	main.cpp
 	Error.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/../engine/ZipFile.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/../editor/MapDataIO.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/../editor/BSPCompiler.cpp
 )
 
 set_target_properties(${CONVERTER_TGT_NAME} PROPERTIES
@@ -15,6 +17,7 @@ set_target_properties(${CONVERTER_TGT_NAME} PROPERTIES
 target_include_directories(${CONVERTER_TGT_NAME} PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/../engine
 	${CMAKE_CURRENT_SOURCE_DIR}/../game
+	${CMAKE_CURRENT_SOURCE_DIR}/../editor
 )
 
 target_link_libraries(${CONVERTER_TGT_NAME}

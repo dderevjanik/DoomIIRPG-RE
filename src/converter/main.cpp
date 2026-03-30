@@ -10,6 +10,7 @@
 #include "ZipFile.h"
 #include "WeaponNames.h"
 #include "Enums.h"
+#include "MapDataIO.h"
 #include <yaml-cpp/yaml.h>
 
 // IPA internal path prefix
@@ -3576,6 +3577,332 @@ static void copyImageAssets(ZipFile& zip, const std::string& outDir) {
 }
 
 // ========================================================================
+// Extract sprite placement data from map binaries into level.yaml
+// ========================================================================
+static bool extractSpritesToYaml(const std::string& outDir) {
+	// Build tile ID → sprite name reverse lookup from sprites.yaml
+	std::map<int, std::string> tileIdToName;
+	{
+		YAML::Node root = YAML::LoadFile(outDir + "/sprites.yaml");
+		YAML::Node sprites = root["sprites"];
+		if (sprites) {
+			for (auto it = sprites.begin(); it != sprites.end(); ++it) {
+				std::string name = it->first.as<std::string>();
+				auto& val = it->second;
+				// Only include tables.bin sprites (not image sprites)
+				if (val["file"] && val["file"].as<std::string>() == "tables.bin" && val["id"]) {
+					int id = val["id"].as<int>();
+					// Keep first name per ID (skip duplicates like wp_view_*)
+					if (tileIdToName.find(id) == tileIdToName.end()) {
+						tileIdToName[id] = name;
+					}
+				}
+			}
+		}
+		printf("  Loaded %d sprite names for tile lookup\n", (int)tileIdToName.size());
+	}
+
+	for (int mapId = 1; mapId <= 10; mapId++) {
+		std::string dirName = getLevelDirName(mapId);
+		std::string mapBinPath = outDir + "/levels/" + dirName + "/map.bin";
+		std::string levelYamlPath = outDir + "/levels/" + dirName + "/level.yaml";
+
+		// Load map binary
+		MapData mapData;
+		std::string errorMsg;
+		if (!MapDataIO::loadFromBin(mapBinPath, mapData, errorMsg)) {
+			fprintf(stderr, "  Failed to load %s: %s\n", mapBinPath.c_str(), errorMsg.c_str());
+			return false;
+		}
+
+		int totalSprites = (int)mapData.normalSprites.size() + (int)mapData.zSprites.size();
+
+		// Build YAML to append
+		std::string yaml;
+
+		// Player spawn point
+		{
+			int spawnCol = mapData.spawnIndex % 32;
+			int spawnRow = mapData.spawnIndex / 32;
+			static const char* dirNames[] = {"east", "1", "south", "3", "west", "5", "north", "7"};
+			const char* dirName2 = (mapData.spawnDir < 8) ? dirNames[mapData.spawnDir] : "east";
+			yaml += "\nplayer_spawn:\n";
+			yaml += "  x: " + std::to_string(spawnCol) + "\n";
+			yaml += "  y: " + std::to_string(spawnRow) + "\n";
+			yaml += "  dir: " + std::string(dirName2) + "\n";
+		}
+
+		// Header values
+		yaml += "\ntotal_secrets: " + std::to_string(mapData.totalSecrets) + "\n";
+		yaml += "total_loot: " + std::to_string(mapData.totalLoot) + "\n";
+		if (mapData.flagsBitmask != 0) {
+			yaml += "flags_bitmask: " + std::to_string(mapData.flagsBitmask) + "\n";
+		}
+
+		// Maya cameras
+		if (!mapData.mayaCameras.empty()) {
+			yaml += "\ncameras:\n";
+			for (const auto& cam : mapData.mayaCameras) {
+				yaml += "  - sample_rate: " + std::to_string(cam.sampleRate) + "\n";
+				if (cam.numKeys > 0) {
+					yaml += "    keys:\n";
+					// keyData is stored channel-interleaved: [ch0_k0, ch0_k1, ..., ch1_k0, ch1_k1, ...]
+					// 7 channels: x, y, z, pitch, yaw, roll, ms
+					for (int k = 0; k < cam.numKeys; k++) {
+						int16_t x     = cam.keyData[0 * cam.numKeys + k];
+						int16_t y     = cam.keyData[1 * cam.numKeys + k];
+						int16_t z     = cam.keyData[2 * cam.numKeys + k];
+						int16_t pitch = cam.keyData[3 * cam.numKeys + k];
+						int16_t yaw   = cam.keyData[4 * cam.numKeys + k];
+						int16_t roll  = cam.keyData[5 * cam.numKeys + k];
+						int16_t ms    = cam.keyData[6 * cam.numKeys + k];
+						yaml += "      - {x: " + std::to_string(x) + ", y: " + std::to_string(y)
+						     + ", z: " + std::to_string(z) + ", pitch: " + std::to_string(pitch)
+						     + ", yaw: " + std::to_string(yaw) + ", roll: " + std::to_string(roll)
+						     + ", ms: " + std::to_string(ms) + "}\n";
+					}
+
+					yaml += "    tween_indices:\n";
+					for (int k = 0; k < cam.numKeys; k++) {
+						yaml += "      - [";
+						for (int ch = 0; ch < 6; ch++) {
+							if (ch > 0) yaml += ", ";
+							yaml += std::to_string(cam.tweenIndices[k * 6 + ch]);
+						}
+						yaml += "]\n";
+					}
+
+					yaml += "    tween_counts: [";
+					for (int ch = 0; ch < 6; ch++) {
+						if (ch > 0) yaml += ", ";
+						yaml += std::to_string(cam.tweenCounts[ch]);
+					}
+					yaml += "]\n";
+
+					if (!cam.tweenData.empty()) {
+						yaml += "    tween_data: [";
+						for (int j = 0; j < (int)cam.tweenData.size(); j++) {
+							if (j > 0) yaml += ", ";
+							yaml += std::to_string(cam.tweenData[j]);
+						}
+						yaml += "]\n";
+					}
+				}
+			}
+		}
+
+		// Height map (32x32 grid)
+		yaml += "\nheight_map:\n";
+		for (int row = 0; row < 32; row++) {
+			yaml += "  - [";
+			for (int col = 0; col < 32; col++) {
+				if (col > 0) yaml += ", ";
+				yaml += std::to_string(mapData.tiles[row * 32 + col].height);
+			}
+			yaml += "]\n";
+		}
+
+		// Generate scripts.yaml (tileEvents + staticFuncs + byteCode)
+		{
+			std::string sYaml;
+			sYaml += "# Script data for " + levelNameFromId(mapId) + "\n\n";
+
+			// Static functions
+			sYaml += "static_funcs:\n";
+			static const char* sfNames[] = {
+				"init_map", "end_game", "boss_75", "boss_50", "boss_25", "boss_dead",
+				"per_turn", "attack_npc", "monster_death", "monster_activate",
+				"chicken_kicked", "item_pickup"
+			};
+			for (int i = 0; i < 12; i++) {
+				if (mapData.staticFuncs[i] != 0xFFFF) {
+					sYaml += "  " + std::string(sfNames[i]) + ": " + std::to_string(mapData.staticFuncs[i]) + "\n";
+				}
+			}
+
+			// Tile events
+			if (!mapData.tileEvents.empty()) {
+				sYaml += "\ntile_events:\n";
+				for (const auto& ev : mapData.tileEvents) {
+					int tileIdx = ev.packed & 0x3FF;
+					int ip = (ev.packed >> 16) & 0xFFFF;
+					int col = tileIdx % 32;
+					int row = tileIdx / 32;
+
+					sYaml += "  - tile: {x: " + std::to_string(col) + ", y: " + std::to_string(row) + "}\n";
+					sYaml += "    ip: " + std::to_string(ip) + "\n";
+
+					// Decode event param flags
+					int param = ev.param;
+					// Trigger type (bits 0-3)
+					std::string triggers;
+					if (param & 0x1) triggers += "enter, ";
+					if (param & 0x2) triggers += "exit, ";
+					if (param & 0x4) triggers += "trigger, ";
+					if (param & 0x8) triggers += "face, ";
+					if (!triggers.empty()) {
+						triggers = triggers.substr(0, triggers.size() - 2);
+						sYaml += "    on: [" + triggers + "]\n";
+					}
+
+					// Direction modifiers (bits 4-11)
+					std::string dirs;
+					if (param & 0x010) dirs += "east, ";
+					if (param & 0x020) dirs += "northeast, ";
+					if (param & 0x040) dirs += "north, ";
+					if (param & 0x080) dirs += "northwest, ";
+					if (param & 0x100) dirs += "west, ";
+					if (param & 0x200) dirs += "southwest, ";
+					if (param & 0x400) dirs += "south, ";
+					if (param & 0x800) dirs += "southeast, ";
+					if (!dirs.empty()) {
+						dirs = dirs.substr(0, dirs.size() - 2);
+						sYaml += "    dir: [" + dirs + "]\n";
+					}
+
+					// Attack type (bits 12-14)
+					std::string attacks;
+					if (param & 0x1000) attacks += "melee, ";
+					if (param & 0x2000) attacks += "ranged, ";
+					if (param & 0x4000) attacks += "explosion, ";
+					if (!attacks.empty()) {
+						attacks = attacks.substr(0, attacks.size() - 2);
+						sYaml += "    attack: [" + attacks + "]\n";
+					}
+
+					// Flags (bits 16+)
+					std::string eflags;
+					if (param & 0x10000) eflags += "block_input, ";
+					if (param & 0x20000) eflags += "exit_goto, ";
+					if (param & 0x40000) eflags += "skip_turn, ";
+					if (param & 0x80000) eflags += "disable, ";
+					if (!eflags.empty()) {
+						eflags = eflags.substr(0, eflags.size() - 2);
+						sYaml += "    flags: [" + eflags + "]\n";
+					}
+				}
+			}
+
+			// Bytecode as hex string
+			if (!mapData.byteCode.empty()) {
+				sYaml += "\nbytecode: |\n";
+				for (size_t i = 0; i < mapData.byteCode.size(); i += 32) {
+					sYaml += "  ";
+					for (size_t j = i; j < i + 32 && j < mapData.byteCode.size(); j++) {
+						char hex[4];
+						snprintf(hex, sizeof(hex), "%02X", mapData.byteCode[j]);
+						sYaml += hex;
+					}
+					sYaml += "\n";
+				}
+			}
+
+			std::string scriptsPath = outDir + "/levels/" + dirName + "/scripts.yaml";
+			if (!writeString(scriptsPath, sYaml)) {
+				fprintf(stderr, "  Failed to write %s\n", scriptsPath.c_str());
+				return false;
+			}
+		}
+
+		if (totalSprites == 0) {
+			printf("  levels/%s: extracted (0 sprites)\n", dirName.c_str());
+		}
+
+		// Sprites section
+		if (totalSprites > 0) {
+		yaml += "\nsprites:\n";
+
+		// Helper to emit one sprite
+		auto emitSprite = [&](const SpriteData& s, bool isZ) {
+			int tile = (s.info & 0xFF);
+			if (s.info & 0x400000) tile += 257;
+			// Flags: upper 16 bits, strip the extended tile bit (bit 6 of shifted value)
+			uint32_t flags = ((s.info >> 16) & 0xFFFF) & ~0x40u;
+
+			yaml += "  - x: " + std::to_string(s.x) + "\n";
+			yaml += "    y: " + std::to_string(s.y) + "\n";
+			auto nameIt = tileIdToName.find(tile);
+			if (nameIt != tileIdToName.end()) {
+				yaml += "    tile: " + nameIt->second + "\n";
+			} else {
+				yaml += "    tile: " + std::to_string(tile) + "\n";
+			}
+			if (flags != 0) {
+				// Emit named flags as a YAML list
+				struct FlagDef { uint32_t bit; const char* name; };
+				static const FlagDef flagDefs[] = {
+					{0x0001, "invisible"},
+					{0x0002, "flip_h"},
+					{0x0010, "animation"},
+					{0x0020, "non_entity"},
+					{0x0080, "sprite_wall"},
+					{0x0100, "south"},
+					{0x0200, "north"},
+					{0x0400, "east"},
+					{0x0800, "west"},
+				};
+				yaml += "    flags: [";
+				bool first = true;
+				uint32_t remaining = flags;
+				for (const auto& fd : flagDefs) {
+					if (remaining & fd.bit) {
+						if (!first) yaml += ", ";
+						yaml += fd.name;
+						first = false;
+						remaining &= ~fd.bit;
+					}
+				}
+				// Preserve any unknown bits as hex
+				if (remaining != 0) {
+					char buf[16];
+					snprintf(buf, sizeof(buf), "0x%X", remaining);
+					if (!first) yaml += ", ";
+					yaml += buf;
+				}
+				yaml += "]\n";
+			}
+			if (isZ) {
+				yaml += "    z: " + std::to_string(s.z) + "\n";
+				int zAnim = (s.info >> 8) & 0xFF;
+				if (zAnim != 0) {
+					yaml += "    z_anim: " + std::to_string(zAnim) + "\n";
+				}
+			}
+		};
+
+		// Normal sprites first, then Z-sprites
+		for (const auto& s : mapData.normalSprites) emitSprite(s, false);
+		for (const auto& s : mapData.zSprites) emitSprite(s, true);
+		} // end if (totalSprites > 0)
+
+		// Append to existing level.yaml
+		std::string existing;
+		{
+			FILE* f = fopen(levelYamlPath.c_str(), "r");
+			if (f) {
+				fseek(f, 0, SEEK_END);
+				long sz = ftell(f);
+				fseek(f, 0, SEEK_SET);
+				existing.resize(sz);
+				fread(&existing[0], 1, sz, f);
+				fclose(f);
+			}
+		}
+		if (!writeString(levelYamlPath, existing + yaml)) {
+			fprintf(stderr, "  Failed to write %s\n", levelYamlPath.c_str());
+			return false;
+		}
+
+		// Note: We don't rewrite the binary here because saveToBin() recompiles
+		// BSP geometry which produces different results than the original tools.
+		// The engine ignores binary sprites when YAML sprites are present.
+
+		printf("  levels/%s: %d sprites extracted\n", dirName.c_str(), totalSprites);
+	}
+	return true;
+}
+
+// ========================================================================
 // Copy binary assets that aren't converted yet (maps, textures, models)
 // ========================================================================
 static void copyBinaryAssets(ZipFile& zip, const std::string& outDir) {
@@ -3789,6 +4116,10 @@ int main(int argc, char* argv[]) {
 	// Copy binary assets that still need the original format
 	printf("\nCopying binary assets (maps, textures, models)...\n");
 	copyBinaryAssets(zip, outputDir);
+
+	// Extract sprite data from map binaries into level.yaml
+	printf("\nExtracting sprites to YAML...\n");
+	ok &= extractSpritesToYaml(outputDir);
 
 	// Copy all BMP images from the IPA
 	printf("\nCopying image assets...\n");
