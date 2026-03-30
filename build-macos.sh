@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Build script for DoomIIRPG-RE on macOS
+# Build script for DRPG Engine on macOS
 # This script installs dependencies (if needed) and builds the project
 
 set -e
@@ -12,7 +12,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo -e "${GREEN}========================================${NC}"
-echo -e "${GREEN}  DoomIIRPG-RE macOS Build Script${NC}"
+echo -e "${GREEN}  DRPG Engine macOS Build Script${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
 
@@ -54,7 +54,7 @@ install_dependencies() {
 # Build the project
 build_project() {
     echo ""
-    echo -e "${YELLOW}Building DoomIIRPG-RE...${NC}"
+    echo -e "${YELLOW}Building DRPG Engine...${NC}"
 
     # Get the directory where this script is located
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -87,7 +87,7 @@ build_project() {
     echo -e "${GREEN}  Build completed successfully!${NC}"
     echo -e "${GREEN}========================================${NC}"
     echo ""
-    echo -e "Executable location: ${YELLOW}$SCRIPT_DIR/$BUILD_DIR/DoomIIRPG${NC}"
+    echo -e "Executable location: ${YELLOW}$SCRIPT_DIR/$BUILD_DIR/DRPGEngine${NC}"
     echo ""
     echo -e "${YELLOW}Note:${NC} To run the game, you need the game data file:"
     echo -e "  Place ${YELLOW}'Doom 2 RPG.ipa'${NC} in the same directory as the executable."

@@ -1,8 +1,8 @@
 # Test: Load map09 and perform basic gameplay
 #
 # Usage:
-#   ./DoomIIRPG --game doom2rpg --map map09.bin --script Testing/test_map09.script --seed 1337 --headless
-#   ./DoomIIRPG --game doom2rpg --map map09.bin --script Testing/test_map09.script --seed 1337
+#   ./DRPGEngine --game doom2rpg --map map09.bin --script Testing/test_map09.script --seed 1337 --headless
+#   ./DRPGEngine --game doom2rpg --map map09.bin --script Testing/test_map09.script --seed 1337
 #
 # Note: --map takes a .bin filename (e.g. map09.bin), not a bare name.
 # With --map, the game skips intro/character selection and loads the map directly.

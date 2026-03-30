@@ -50,10 +50,10 @@ void EditorUI::draw(int currentMapID, const Camera& camera, bool noclip) {
         showAbout_ = false;
     }
     if (ImGui::BeginPopupModal("About", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-        ImGui::Text("DoomIIRPG Map Editor");
+        ImGui::Text("DRPG Map Editor");
         ImGui::Text("Uses game rendering engine");
         ImGui::Separator();
-        ImGui::Text("Part of the DoomIIRPG-RE project");
+        ImGui::Text("Part of the DRPG Engine project");
         if (ImGui::Button("OK", ImVec2(120, 0)))
             ImGui::CloseCurrentPopup();
         ImGui::EndPopup();

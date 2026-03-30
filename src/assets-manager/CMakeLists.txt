@@ -1,4 +1,4 @@
-set(ASSETS_MGR_TGT_NAME doom2rpg-assets-manager)
+set(ASSETS_MGR_TGT_NAME drpg-assets-manager)
 
 # Fetch Dear ImGui
 include(FetchContent)

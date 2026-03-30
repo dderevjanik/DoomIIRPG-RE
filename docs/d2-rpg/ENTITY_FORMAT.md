@@ -1,6 +1,6 @@
-# Doom II RPG Entity Definition File Format (entities.bin)
+# D2RPG Entity Definition File Format (entities.bin)
 
-This document describes the binary format of the Doom II RPG entity definition file based on reverse engineering of the game code.
+This document describes the binary format of the D2RPG entity definition file based on reverse engineering of the game code.
 
 ## Overview
 

@@ -1,4 +1,4 @@
-set(CONVERTER_TGT_NAME doom2rpg-convert)
+set(CONVERTER_TGT_NAME drpg-convert)
 
 # --- Embed YAML resource files into a C++ header ---
 set(RESOURCES_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/resources")

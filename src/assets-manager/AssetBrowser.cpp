@@ -592,7 +592,7 @@ void AssetBrowser::draw() {
 		ImGuiWindowFlags_NoBringToFrontOnFocus);
 
 	// Title bar
-	ImGui::Text("DoomIIRPG Assets Manager");
+	ImGui::Text("DRPG Assets Manager");
 	ImGui::Separator();
 
 	// Filter

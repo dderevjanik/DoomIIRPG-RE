@@ -6,8 +6,8 @@
 #include "CreditsState.h"
 #include "AutomapState.h"
 
-// Default game module: the original Doom II RPG.
-// Creates and manages all Doom II RPG game objects.
+// Default game module: D2RPG.
+// Creates and manages all D2RPG game objects.
 class DoomIIRPGGame : public IGameModule {
 public:
 	// Canvas state handlers (owned by this module)
@@ -24,7 +24,7 @@ public:
 	void shutdown(Applet* app) override;
 	void registerLoaders(class ResourceManager* rm) override;
 	void registerOpcodes(Applet* app) override;
-	const char* getName() const override { return "Doom II RPG"; }
+	const char* getName() const override { return "D2RPG"; }
 };
 
 #endif

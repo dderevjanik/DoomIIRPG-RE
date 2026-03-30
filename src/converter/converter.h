@@ -8,7 +8,7 @@
 // ========================================================================
 struct GameDef {
 	const char* id;              // e.g. "doom2rpg"
-	const char* name;            // e.g. "Doom II RPG"
+	const char* name;            // e.g. "D2RPG"
 	const char* ipaPrefix;       // IPA path prefix (e.g. "Payload/Doom2rpg.app/")
 	const char* pkgPrefix;       // package prefix (e.g. "Payload/Doom2rpg.app/Packages/")
 	const char* defaultOutput;   // default output dir (e.g. "games/doom2rpg")

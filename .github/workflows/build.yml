@@ -31,8 +31,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DoomIIRPG-linux
-          path: build/DoomIIRPG
+          name: drpg-engine-linux
+          path: build/src/DRPGEngine
 
   build-macos:
     runs-on: macos-latest
@@ -56,8 +56,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DoomIIRPG-macos
-          path: build/DoomIIRPG
+          name: drpg-engine-macos
+          path: build/src/DRPGEngine
 
   # build-windows:
   #   runs-on: windows-latest
@@ -87,5 +87,5 @@ jobs:
   #     - name: Upload artifact
   #       uses: actions/upload-artifact@v4
   #       with:
-  #         name: DoomIIRPG-windows
-  #         path: build/Release/DoomIIRPG.exe
+  #         name: drpg-engine-windows
+  #         path: build/Release/DRPGEngine.exe

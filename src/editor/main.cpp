@@ -219,9 +219,9 @@ int main(int argc, char* argv[]) {
 				if (game["name"])
 					gc.name = game["name"].as<std::string>();
 				if (game["window_title"])
-					gc.windowTitle = "DoomIIRPG Map Editor";
+					gc.windowTitle = "DRPG Map Editor";
 				else
-					gc.windowTitle = "DoomIIRPG Map Editor";
+					gc.windowTitle = "DRPG Map Editor";
 				if (game["save_dir"])
 					gc.saveDir = game["save_dir"].as<std::string>();
 				if (game["entry_map"])
@@ -259,7 +259,7 @@ int main(int argc, char* argv[]) {
 	SDL_SetWindowResizable(sdlGL.window, SDL_TRUE);
 	SDL_SetWindowSize(sdlGL.window, 1280, 800);
 	SDL_SetWindowPosition(sdlGL.window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-	SDL_SetWindowTitle(sdlGL.window, "DoomIIRPG Map Editor");
+	SDL_SetWindowTitle(sdlGL.window, "DRPG Map Editor");
 
 	// Init ImGui
 	IMGUI_CHECKVERSION();

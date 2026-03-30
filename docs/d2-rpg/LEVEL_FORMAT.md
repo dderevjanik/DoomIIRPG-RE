@@ -1,6 +1,6 @@
-# Doom II RPG Level File Format (.bin)
+# D2RPG Level File Format (.bin)
 
-This document describes the binary format of Doom II RPG level files based on reverse engineering of the game code.
+This document describes the binary format of D2RPG level files based on reverse engineering of the game code.
 
 ## Overview
 

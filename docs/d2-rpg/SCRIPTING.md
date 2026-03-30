@@ -1,4 +1,4 @@
-# Doom II RPG Scripting System
+# D2RPG Scripting System
 
 The game uses a stack-based bytecode virtual machine to drive level scripting — cutscenes, dialogs, puzzles, entity behavior, item drops, and all dynamic gameplay events. Each level embeds its own bytecode program in the map file.
 

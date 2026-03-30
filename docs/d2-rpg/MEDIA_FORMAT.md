@@ -1,6 +1,6 @@
-# Doom II RPG Media File Formats (Textures, Palettes, Mappings)
+# D2RPG Media File Formats (Textures, Palettes, Mappings)
 
-This document describes the binary format of the Doom II RPG media files that define textures, palettes, and sprite/tile mappings, based on reverse engineering of the game code.
+This document describes the binary format of the D2RPG media files that define textures, palettes, and sprite/tile mappings, based on reverse engineering of the game code.
 
 ## Overview
 

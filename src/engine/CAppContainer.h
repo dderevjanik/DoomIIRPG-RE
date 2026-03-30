@@ -24,8 +24,8 @@ struct LevelInfo {
 
 // Game-level configuration loaded from game.yaml
 struct GameConfig {
-	std::string name = "Doom II RPG";
-	std::string windowTitle = "Doom II RPG";
+	std::string name = "DRPG Engine";
+	std::string windowTitle = "DRPG Engine";
 	std::string module = "doom2rpg";
 	std::string saveDir = "Doom2rpg.app";
 	std::string entryMap = "map00";

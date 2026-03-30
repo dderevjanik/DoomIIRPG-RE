@@ -8,7 +8,7 @@ set -euo pipefail
 
 BUILD_DIR="${1:-build}"
 GAME="${2:-doom2rpg}"
-BINARY="$BUILD_DIR/src/DoomIIRPG"
+BINARY="$BUILD_DIR/src/DRPGEngine"
 TIMEOUT_SEC=3
 PASSED=0
 FAILED=0

@@ -1,6 +1,6 @@
-# Doom II RPG Menu File Format (menus.bin)
+# D2RPG Menu File Format (menus.bin)
 
-This document describes the binary format of the Doom II RPG menu definition file based on reverse engineering of the game code.
+This document describes the binary format of the D2RPG menu definition file based on reverse engineering of the game code.
 
 ## Overview
 

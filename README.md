@@ -1,9 +1,9 @@
-# DoomIIRPG-RE
+# DRPG Engine
 
 ![image](https://github.com/Erick194/DoomIIRPG-RE/assets/41172072/6249f7bd-18e6-4838-b1ec-8654d18cc1b4)<br>
 https://www.doomworld.com/forum/topic/135602
 
-Doom II RPG Reverse Engineering by [GEC] / Ingenieria inversa por [GEC]<br />
+DRPG Engine - A game engine for classic mobile RPG formats by [GEC]<br />
 Created by / Creado por Erick Vasquez Garcia.
 
 Current version / Version actual: **0.1.0**
@@ -58,7 +58,7 @@ cmake --build build --config Release --parallel
 
 ```
 src/
-├── converter/   # CLI tool: extracts assets from .ipa → YAML + binaries in games/doom2rpg/
+├── converter/   # CLI tool: extracts assets from .ipa → YAML + binaries in games/
 ├── editor/      # Map editor with BSP compiler, camera, and Dear ImGui UI
 ├── engine/      # Platform layer: SDL/GL, TinyGL renderer, input, sound, VFS, menus, scripting
 └── game/        # Game logic: entities, combat, player, minigames, game states
@@ -73,7 +73,7 @@ scripts/         # Shell scripts for smoke testing
 ## Asset Pipeline
 
 ```
-Doom 2 RPG.ipa  →  doom2rpg-convert (or tools/*.py)  →  games/doom2rpg/
+*.ipa  →  drpg-convert (or tools/*.py)  →  games/doom2rpg/
                                                           ├── *.yaml (entities, weapons, monsters, strings, ...)
                                                           ├── levels/maps/*.bin
                                                           ├── audio/, fonts/, hud/, ui/, ...
@@ -84,7 +84,7 @@ The YAML files in `games/doom2rpg/` define game content (entities, weapons, mons
 
 ## Architecture
 
-The project reconstructs the original Doom II RPG iOS game engine in C++17:
+The project is a game engine for classic mobile RPG formats, written in C++17:
 
 - **Rendering**: SDLGL → GLES → Render → Canvas (BSP-based pipeline with TinyGL software rasterizer)
 - **Game Logic**: Game, Entity, Combat, Player (entity-based game systems)
@@ -100,14 +100,14 @@ See [docs/](docs/) for binary format specs and [docs/modding/](docs/modding/) fo
 ## Running
 
 ```bash
-./build/src/DoomIIRPG --game doom2rpg
+./build/src/DRPGEngine --game doom2rpg
 ```
 
 ### Game CLI Options
 
 | Flag                   | Description                                                    |
 | ---------------------- | -------------------------------------------------------------- |
-| `--game <name>`        | Game directory under `games/` (e.g. `doom2rpg`)                |
+| `--game <name>`        | Game module under `games/` (e.g. `doom2rpg`)                   |
 | `--gamedir <path>`     | Explicit game directory path                                   |
 | `--map <path>`         | Load a specific map (e.g. `levels/maps/map09.bin`)             |
 | `--minigame <name>`    | Launch a minigame directly (`hacking`, `sentrybot`, `vending`) |
@@ -121,7 +121,7 @@ See [docs/](docs/) for binary format specs and [docs/modding/](docs/modding/) fo
 ### Converter CLI Options
 
 ```bash
-./build/src/converter/doom2rpg-convert --ipa "Doom 2 RPG.ipa" --output games/doom2rpg
+./build/src/converter/drpg-convert --ipa "Doom 2 RPG.ipa" --output games/doom2rpg
 ```
 
 | Flag               | Description                                      |
@@ -174,13 +174,13 @@ The editor is built alongside the main project:
 
 ```bash
 cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build --target doom2rpg-editor --parallel
+cmake --build build --target drpg-editor --parallel
 ```
 
 ### Running
 
 ```bash
-./build/src/editor/doom2rpg-editor --game doom2rpg
+./build/src/editor/drpg-editor --game doom2rpg
 ```
 
 Options:
@@ -244,5 +244,5 @@ scripts/test_minigame_loading.sh   # loads hacking, sentrybot, vending minigames
 Test scripts in `Testing/` can exercise specific maps with deterministic seeds:
 
 ```bash
-./build/src/DoomIIRPG --game doom2rpg --skip-travel-map --map levels/maps/map09.bin --script Testing/test_map09.script --seed 1337
+./build/src/DRPGEngine --game doom2rpg --skip-travel-map --map levels/maps/map09.bin --script Testing/test_map09.script --seed 1337
 ```

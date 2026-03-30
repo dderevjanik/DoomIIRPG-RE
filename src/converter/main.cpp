@@ -155,7 +155,7 @@ int main(int argc, char* argv[]) {
 
 	if (ok) {
 		printf("\nConversion complete: %s\n", outputDir.c_str());
-		printf("Run the game with: ./DoomIIRPG --game %s\n", game->id);
+		printf("Run the game with: ./DRPGEngine --game %s\n", game->id);
 	} else {
 		printf("\nConversion completed with errors.\n");
 	}

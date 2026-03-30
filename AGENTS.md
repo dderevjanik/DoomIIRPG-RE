@@ -21,10 +21,10 @@ cmake --build build --parallel
 macOS shortcut: `./build-macos.sh`
 
 **Targets:**
-- `DoomIIRPG` — main game executable
-- `doom2rpg-convert` — asset converter CLI
-- `doom2rpg-editor` — map editor (`./build/src/editor/doom2rpg-editor --game doom2rpg`)
-- `doom2rpg-assets-manager` — asset browser
+- `DRPGEngine` — main game executable
+- `drpg-convert` — asset converter CLI
+- `drpg-editor` — map editor (`./build/src/editor/drpg-editor --game doom2rpg`)
+- `drpg-assets-manager` — asset browser
 
 ## Testing
 
@@ -41,14 +41,14 @@ scripts/test_minigame_loading.sh
 
 Test scripts in `Testing/` can be run via `--script` flag:
 ```bash
-./build/src/DoomIIRPG --game doom2rpg --map levels/maps/map09.bin --script Testing/test_map09.script --seed 1337
+./build/src/DRPGEngine --game doom2rpg --map levels/maps/map09.bin --script Testing/test_map09.script --seed 1337
 ```
 
 After bigger refactors (engine, asset pipeline, entity system, rendering, level loading), always run `scripts/test_map_loading.sh` before committing.
 
 ## Asset Pipeline
 
-`Doom 2 RPG.ipa` → `doom2rpg-convert` (or `tools/*.py`) → YAML + binary assets in `games/doom2rpg/`
+`*.ipa` → `drpg-convert` (or `tools/*.py`) → YAML + binary assets in `games/doom2rpg/`
 
 - **YAML files** in `games/doom2rpg/` (entities, weapons, monsters, strings, etc.) are the modding/editing surface.
 - **Binary `.bin` map files** should not be hand-edited — use the editor or converter.

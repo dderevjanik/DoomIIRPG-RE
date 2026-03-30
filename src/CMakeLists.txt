@@ -22,20 +22,20 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} PREFIX "Resources Files" FILES ${R
 set(LIB_SOURCE_FILES ${SOURCE_FILES})
 list(FILTER LIB_SOURCE_FILES EXCLUDE REGEX "engine/Main\\.cpp$")
 
-add_library(doom2rpg-lib STATIC ${HEADER_FILES} ${LIB_SOURCE_FILES} ${RESOURCES_FILES})
+add_library(drpg-engine-lib STATIC ${HEADER_FILES} ${LIB_SOURCE_FILES} ${RESOURCES_FILES})
 
-set_target_properties(doom2rpg-lib PROPERTIES
+set_target_properties(drpg-engine-lib PROPERTIES
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF
 )
 
-target_include_directories(doom2rpg-lib PUBLIC
+target_include_directories(drpg-engine-lib PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/engine
 	${CMAKE_CURRENT_SOURCE_DIR}/game
 )
 
-target_link_libraries(doom2rpg-lib PUBLIC
+target_link_libraries(drpg-engine-lib PUBLIC
 	SDL2::SDL2
 	OpenAL::OpenAL
 	OpenGL::GL
@@ -51,7 +51,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     CXX_EXTENSIONS OFF
 )
 
-target_link_libraries(${PROJECT_NAME} doom2rpg-lib)
+target_link_libraries(${PROJECT_NAME} drpg-engine-lib)
 
 # Converter tool
 add_subdirectory(converter)

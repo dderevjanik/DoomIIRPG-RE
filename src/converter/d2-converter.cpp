@@ -16,7 +16,7 @@
 #include "resources_embedded.h"
 
 // ========================================================================
-// Doom II RPG game definition
+// D2RPG game definition
 // ========================================================================
 static const char* D2RPG_LEVEL_DIRS[] = {
 	"01_tycho", "02_cichus", "03_kepler", "04_uac_admin", "05_uac_labs",
@@ -31,7 +31,7 @@ static const char* D2RPG_GROUPS[] = {
 
 const GameDef GAME_DOOM2RPG = {
 	"doom2rpg",
-	"Doom II RPG",
+	"D2RPG",
 	"Payload/Doom2rpg.app/",
 	"Payload/Doom2rpg.app/Packages/",
 	"games/doom2rpg",

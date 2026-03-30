@@ -136,7 +136,7 @@ int main(int argc, char* args[]) {
 		} else if (access("Doom 2 RPG.ipa", F_OK) == 0) {
 			// IPA found but not yet converted — run converter automatically
 			printf("[main] Found 'Doom 2 RPG.ipa' but no converted assets.\n");
-			printf("[main] Running doom2rpg-convert to extract game assets...\n");
+			printf("[main] Running drpg-convert to extract game assets...\n");
 
 			std::string converterCmd;
 			std::string selfDir;
@@ -164,8 +164,8 @@ int main(int argc, char* args[]) {
 
 			if (!selfDir.empty()) {
 				std::string candidates[] = {
-					selfDir + "doom2rpg-convert",
-					selfDir + "converter/doom2rpg-convert",
+					selfDir + "drpg-convert",
+					selfDir + "converter/drpg-convert",
 				};
 				for (const auto& c : candidates) {
 					if (access(c.c_str(), X_OK) == 0) {
@@ -175,7 +175,7 @@ int main(int argc, char* args[]) {
 				}
 			}
 			if (converterCmd.empty()) {
-				converterCmd = "doom2rpg-convert";
+				converterCmd = "drpg-convert";
 			}
 
 			std::string cmd = converterCmd + " --ipa \"Doom 2 RPG.ipa\" --output games/doom2rpg";

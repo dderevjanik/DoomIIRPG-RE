@@ -2,5 +2,5 @@
 
 #include "converter.h"
 
-// Doom II RPG game definition
+// D2RPG game definition
 extern const GameDef GAME_DOOM2RPG;

@@ -1,13 +1,13 @@
-# Doom II RPG - Game Definition
+# D2RPG - Game Definition
 # This is the default game that ships with the engine.
 
 game:
-  name: Doom II RPG
-  description: The classic Doom II RPG, reverse-engineered and enhanced
+  name: D2RPG
+  description: Classic D2RPG game module for DRPG Engine
   version: "1.0"
 
   # Window title (defaults to name if not set)
-  window_title: Doom II RPG By [GEC]
+  window_title: D2RPG By [GEC]
 
   # Save directory for config/profile data
   save_dir: Doom2rpg.app

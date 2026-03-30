@@ -1,6 +1,6 @@
-# Doom II RPG Table File Format (tables.bin)
+# D2RPG Table File Format (tables.bin)
 
-This document describes the binary format of the Doom II RPG resource table file based on reverse engineering of the game code.
+This document describes the binary format of the D2RPG resource table file based on reverse engineering of the game code.
 
 ## Overview
 

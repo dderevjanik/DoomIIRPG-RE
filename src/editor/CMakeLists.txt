@@ -1,4 +1,4 @@
-set(EDITOR_TGT_NAME doom2rpg-editor)
+set(EDITOR_TGT_NAME drpg-editor)
 
 # Fetch Dear ImGui
 include(FetchContent)
@@ -41,7 +41,7 @@ target_include_directories(${EDITOR_TGT_NAME} PRIVATE
 )
 
 target_link_libraries(${EDITOR_TGT_NAME}
-	doom2rpg-lib
+	drpg-engine-lib
 )
 
 # macOS framework for OpenGL deprecation warnings suppression

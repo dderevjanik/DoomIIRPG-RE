@@ -8,7 +8,7 @@
 - Zlib
 - OpenAL
 - OpenGL
-- Game asset: `Doom 2 RPG.ipa` placed in project root
+- Game asset: original `.ipa` file placed in project root
 
 ## IDE Setup
 
@@ -29,7 +29,7 @@ Open the root `CMakeLists.txt` as a project. CLion will auto-detect the CMake co
 ## Project Structure
 
 ```
-DoomIIRPG-RE/
+drpg-engine/
   src/                  # All source and header files (flat layout)
   docs/                 # Binary format documentation
     ENTITY_FORMAT.md    # Entity definition and instance formats
@@ -45,7 +45,7 @@ DoomIIRPG-RE/
 
 ## Architecture Overview
 
-The codebase reconstructs the original Doom II RPG iOS (iPhone OS 2.x) game engine. Key components:
+The codebase is a game engine for classic mobile RPG formats. Key components:
 
 ### Core Systems
 - **CAppContainer** - Singleton application container, owns all subsystems

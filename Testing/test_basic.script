@@ -1,8 +1,8 @@
 # Basic smoke test — wait for game to load, then perform some actions
 #
 # Usage:
-#   ./DoomIIRPG --game doom2rpg --script Testing/test_basic.script --seed 42
-#   ./DoomIIRPG --game doom2rpg --script Testing/test_basic.script --seed 42 --headless
+#   ./DRPGEngine --game doom2rpg --script Testing/test_basic.script --seed 42
+#   ./DRPGEngine --game doom2rpg --script Testing/test_basic.script --seed 42 --headless
 
 # Wait for logo/intro screens to pass (SELECT to skip)
 tick 30: SELECT

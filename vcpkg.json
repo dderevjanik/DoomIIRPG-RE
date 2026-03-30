@@ -1,7 +1,7 @@
 {
-  "name": "doom2rpg-re",
+  "name": "drpg-engine",
   "version-string": "0.1.0",
-  "description": "Doom II RPG Reverse Engineering",
+  "description": "DRPG Engine - Game engine for classic mobile RPG formats",
   "dependencies": [
     "sdl2",
     "zlib",

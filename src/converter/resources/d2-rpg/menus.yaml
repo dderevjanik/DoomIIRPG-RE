@@ -1,4 +1,4 @@
-# Menu definitions for DoomIIRPG  # string_id values are indices into menu strings (group 3)  # goto targets reference menu names instead of numeric IDs
+# Menu definitions for D2RPG  # string_id values are indices into menu strings (group 3)  # goto targets reference menu names instead of numeric IDs
 
 menus:
   main:

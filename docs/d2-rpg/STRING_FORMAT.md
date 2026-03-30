@@ -1,6 +1,6 @@
-# Doom II RPG String/Localization File Format
+# D2RPG String/Localization File Format
 
-This document describes the binary format of the Doom II RPG string index and string chunk files based on reverse engineering of the game code.
+This document describes the binary format of the D2RPG string index and string chunk files based on reverse engineering of the game code.
 
 ## Overview
 
