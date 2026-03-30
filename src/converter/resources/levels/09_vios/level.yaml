@@ -1,0 +1,31 @@
+# Level configuration for vios
+
+name: vios
+map_id: 9
+joke_items: [15, 16, 17, 18, 19]
+starting_loadout:
+  weapons: [soul_cube, bfg, rocket_launcher, plasma_gun, assault_rifle_with_scope, chaingun, super_shotgun, holy_water_pistol, chainsaw, assault_rifle]
+  weapon_ammo:
+    red_shooting_sentry_bot: 100
+  armor: 27
+  inventory:
+    health_pack: 160
+    health_ration_bar: 90
+    armor_large: 23
+    armor_small: 28
+    uac_credit: 174
+  ammo:
+    bullets: 29
+    holy_water: 8
+    shells: 44
+    cells: 55
+    rockets: 90
+    soul_cube: 5
+  xp: 8281
+  stats:
+    defense: 27
+    strength: 17
+    accuracy: 8
+    agility: 22
+    iq: 46
+  vios_mallocs: 4

@@ -1,0 +1,5 @@
+# Level configuration for test_map
+
+name: test_map
+map_id: 10
+joke_items: [9, 10, 11, 12, 13]

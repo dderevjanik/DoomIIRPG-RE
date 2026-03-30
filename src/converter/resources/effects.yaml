@@ -1,0 +1,68 @@
+# Buff/status effect definitions  # Loaded by the engine to configure buff behavior
+
+warning_time: 10
+buffs:
+  reflect:
+    max_stacks: 3
+    has_amount: false
+    draw_amount: false
+  purify:
+    max_stacks: 3
+    has_amount: false
+    draw_amount: false
+  haste:
+    max_stacks: 3
+    has_amount: false
+    draw_amount: false
+  regen:
+    max_stacks: 3
+    has_amount: true
+    draw_amount: true
+    per_turn: heal_by_amount
+  defense:
+    max_stacks: 3
+    has_amount: true
+    draw_amount: true
+  strength:
+    max_stacks: 3
+    has_amount: true
+    draw_amount: true
+  agility:
+    max_stacks: 3
+    has_amount: true
+    draw_amount: true
+  focus:
+    max_stacks: 3
+    has_amount: true
+    draw_amount: true
+  anger:
+    max_stacks: 3
+    has_amount: true
+    draw_amount: true
+  antifire:
+    max_stacks: 1
+    has_amount: false
+    draw_amount: false
+  fortitude:
+    max_stacks: 3
+    has_amount: true
+    draw_amount: true
+  fear:
+    max_stacks: 3
+    has_amount: false
+    draw_amount: false
+  wp_poison:
+    max_stacks: 1
+    has_amount: false
+    draw_amount: false
+  fire:
+    max_stacks: 3
+    has_amount: true
+    draw_amount: false
+    blocked_by: antifire
+    on_apply_sound: fireball_impact
+    per_turn_damage: 3
+  disease:
+    max_stacks: 3
+    has_amount: true
+    draw_amount: true

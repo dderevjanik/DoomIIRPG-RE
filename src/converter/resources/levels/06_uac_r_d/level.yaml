@@ -1,0 +1,30 @@
+# Level configuration for uac_r_d
+
+name: uac_r_d
+map_id: 6
+joke_items: [78, 79, 80, 81, 82]
+starting_loadout:
+  weapons: [plasma_gun, assault_rifle_with_scope, chaingun, super_shotgun, holy_water_pistol, chainsaw, assault_rifle]
+  weapon_ammo:
+    red_shooting_sentry_bot: 100
+  armor: 24
+  inventory:
+    health_pack: 116
+    health_ration_bar: 54
+    armor_large: 22
+    armor_small: 2
+    uac_credit: 101
+  ammo:
+    bullets: 88
+    holy_water: 60
+    shells: 100
+    cells: 100
+    rockets: 20
+  xp: 4749
+  stats:
+    defense: 24
+    strength: 13
+    accuracy: 9
+    agility: 18
+    iq: 34
+  vios_mallocs: 3

@@ -1,0 +1,87 @@
+# Projectile visual definitions  # Controls missile animation, render mode, and impact effects
+
+projectiles:
+  bullet:
+    {}
+  melee:
+    {}
+  water:
+    launch:
+      render_mode: add
+      sprite: water_stream
+      speed: 512
+    impact:
+      sprite: anim_water
+      render_mode: add75
+  plasma:
+    launch:
+      render_mode: add
+      sprite: plasma_ball
+      speed: 512
+      offset: {x_right: 4, y_right: 4, z: 15}
+    impact:
+      sprite: plasma_ball
+      render_mode: add75
+  rocket:
+    launch:
+      render_mode: normal
+      sprite_player: missile_player_rocket
+      sprite_monster: missile_rocket
+      speed_add: 64
+      offset: {x_right: 4, y_right: 4, z: 10}
+    impact:
+      sprite: fire_ball
+      render_mode: add75
+      impact_sound: explosion
+      screen_shake: {duration: 500, intensity: 4, fade: 500}
+  bfg:
+    launch:
+      render_mode: add75
+      sprite: bfg_ball
+    impact:
+      sprite: bfg_ball
+      render_mode: add75
+  flesh:
+    launch:
+      render_mode: normal
+      sprite: flesh
+  fire:
+    launch:
+      render_mode: add
+      sprite: fire_ball
+    impact:
+      sprite: fire_ball
+      render_mode: add75
+      impact_sound: fireball_impact
+  caco_plasma:
+    launch:
+      render_mode: add
+      sprite: caco_plasma
+  thorns:
+    launch:
+      render_mode: normal
+      sprite: sentinel_spikes_dummy
+      z_offset: -32
+    impact:
+      sprite: sentinel_spikes
+  acid:
+    launch:
+      render_mode: add
+      sprite: acid_spit
+      z_offset: 48
+    impact:
+      sprite: acid_spit
+      render_mode: add75
+  electric:
+    launch:
+      render_mode: add
+      sprite: electric_slide
+  soul_cube:
+    {}
+  item:
+    launch:
+      render_mode: normal
+      sprite_from_weapon: true
+    impact:
+      sprite: 0
+      impact_sound: weapon_pickup

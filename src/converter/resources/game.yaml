@@ -1,0 +1,139 @@
+# Doom II RPG - Game Definition
+# This is the default game that ships with the engine.
+
+game:
+  name: Doom II RPG
+  description: The classic Doom II RPG, reverse-engineered and enhanced
+  version: "1.0"
+
+  # Window title (defaults to name if not set)
+  window_title: Doom II RPG By [GEC]
+
+  # Save directory for config/profile data
+  save_dir: Doom2rpg.app
+
+  # Entry map (first map loaded on new game)
+  entry_map: map00
+
+  # Per-level directory mappings (map_id -> directory path)
+  levels:
+    1: levels/01_tycho
+    2: levels/02_cichus
+    3: levels/03_kepler
+    4: levels/04_uac_admin
+    5: levels/05_uac_labs
+    6: levels/06_uac_r_d
+    7: levels/07_gehenna
+    8: levels/08_abaddon
+    9: levels/09_vios
+    10: levels/10_test_map
+
+  # String tables — maps group index to YAML file path.
+  # Modders can add/reorder groups or point to custom files.
+  strings:
+    0: strings/CodeStrings.yaml
+    1: strings/EntityStrings.yaml
+    2: strings/FileStrings.yaml
+    3: strings/MenuStrings.yaml
+    4: levels/01_tycho/strings.yaml
+    5: levels/02_cichus/strings.yaml
+    6: levels/03_kepler/strings.yaml
+    7: levels/04_uac_admin/strings.yaml
+    8: levels/05_uac_labs/strings.yaml
+    9: levels/06_uac_r_d/strings.yaml
+    10: levels/07_gehenna/strings.yaml
+    11: levels/08_abaddon/strings.yaml
+    12: levels/09_vios/strings.yaml
+    13: levels/10_test_map/strings.yaml
+    14: strings/Translations.yaml
+
+  # Subdirectories to search when resolving asset files.
+  # The engine tries the exact path first, then searches these dirs in order.
+  search_dirs:
+    - config
+    - ui
+    - hud
+    - fonts
+    - levels/textures
+    - audio
+    - comicbook
+    - data
+
+  # Player configuration
+  player:
+    starting_max_health: 100
+
+    # Level-up stat grants
+    level_up:
+      health: 10
+      defense: 1
+      strength: 2
+      accuracy: 1
+      agility: 3
+
+    # Out-of-combat cooldown (turns since last combat)
+    out_of_combat_turns: 4
+
+    # XP formula coefficients: linear*n + cubic*((n-1)^3 + (n-1))
+    xp_formula:
+      linear: 500
+      cubic: 100
+
+    # Inventory/ammo capacity caps
+    caps:
+      credits: 9999
+      inventory: 999
+      ammo: 100
+      bot_fuel: 5
+
+  # Scoring formula constants
+  scoring:
+    per_level: 1000
+    all_levels_bonus: 1000
+    no_deaths_bonus: 1000
+    death_penalty_base: 5
+    death_penalty_mult: 50
+    many_deaths_penalty: 250
+    death_threshold: 10
+    time_bonus_minutes: 120
+    time_bonus_mult: 15
+    move_threshold: 5000
+    move_divisor: 2
+    per_secret: 1000
+    all_secrets_bonus: 1000
+
+  # Render mode name -> ID lookup
+  render_modes:
+    normal: 0
+    blend25: 1
+    blend50: 2
+    add: 3
+    add75: 4
+    add50: 5
+    add25: 6
+    sub: 7
+    perf: 9
+    none: 10
+    blend75: 12
+    blend_special_alpha: 13
+
+# Config enum name/value mappings (used by settings UI)
+config_enums:
+  difficulty:
+    baby: 0
+    normal: 1
+    hard: 2
+    nightmare: 3
+  language:
+    english: 0
+    french: 1
+    german: 2
+    italian: 3
+    spanish: 4
+  window_mode:
+    windowed: 0
+    fullscreen: 1
+    borderless: 2
+  control_layout:
+    chevrons: 0
+    dpad: 1

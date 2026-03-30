@@ -1,0 +1,296 @@
+# Sound resource definitions - Named sound entries  # Each sound has a name (lookup key) and file (WAV filename)  # Index = position in array, ResID = index + 1000
+
+sounds:
+  arachnotron_active:
+    file: Arachnotron_active.wav
+  arachnotron_death:
+    file: Arachnotron_death.wav
+  arachnotron_sight:
+    file: Arachnotron_sight.wav
+  arachnotron_walk:
+    file: Arachnotron_walk.wav
+  archvile_active:
+    file: Archvile_active.wav
+  archvile_attack:
+    file: Archvile_attack.wav
+  archvile_death:
+    file: Archvile_death.wav
+  archvile_pain:
+    file: Archvile_pain.wav
+  archvile_sight:
+    file: Archvile_sight.wav
+  bfg:
+    file: BFG.wav
+  block_drop:
+    file: block_drop.wav
+  block_pick:
+    file: block_pick.wav
+  cacodemon_death:
+    file: Cacodemon_death.wav
+  cacodemon_sight:
+    file: Cacodemon_sight.wav
+  chaingun:
+    file: chaingun.wav
+  chainsaw:
+    file: chainsaw.wav
+  chainsawgoblin_attack:
+    file: ChainsawGoblin_attack.wav
+  chainsawgoblin_death:
+    file: ChainsawGoblin_death.wav
+  chainsawgoblin_pain:
+    file: ChainsawGoblin_pain.wav
+  chainsawgoblin_sight:
+    file: ChainsawGoblin_sight.wav
+  chime:
+    file: chime.wav
+  claw:
+    file: claw.wav
+  cyberdemon_death:
+    file: Cyberdemon_death.wav
+  cyberdemon_sight:
+    file: Cyberdemon_sight.wav
+  demon_active:
+    file: demon_active.wav
+  demon_pain:
+    file: demon_pain.wav
+  demon_small_active:
+    file: demon_small_active.wav
+  dialog_help:
+    file: Dialog_Help.wav
+  door_close:
+    file: door_close.wav
+  door_close_slow:
+    file: door_close_slow.wav
+  door_open:
+    file: door_open.wav
+  door_open_slow:
+    file: door_open_slow.wav
+  explosion:
+    file: explosion.wav
+  fireball:
+    file: fireball.wav
+  fireball_impact:
+    file: fireball_impact.wav
+  footstep1:
+    file: footstep1.wav
+  footstep2:
+    file: footstep2.wav
+  gib:
+    file: gib.wav
+  glass:
+    file: glass.wav
+  hack_clear:
+    file: hack_clear.wav
+  hack_fail:
+    file: hack_fail.wav
+  hack_failed:
+    file: hack_failed.wav
+  hack_submit:
+    file: hack_submit.wav
+  hack_success:
+    file: hack_success.wav
+  hack_successful:
+    file: hack_successful.wav
+  holywaterpistol:
+    file: HolyWaterPistol.wav
+  holywaterpistol_refill:
+    file: HolyWaterPistol_refill.wav
+  hoof:
+    file: hoof.wav
+  impclaw:
+    file: impClaw.wav
+  imp_active:
+    file: Imp_active.wav
+  imp_death1:
+    file: Imp_death1.wav
+  imp_death2:
+    file: Imp_death2.wav
+  imp_sight1:
+    file: Imp_sight1.wav
+  imp_sight2:
+    file: Imp_sight2.wav
+  item_pickup:
+    file: item_pickup.wav
+  loot:
+    file: loot.wav
+  lostsoul_attack:
+    file: LostSoul_attack.wav
+  maglev_arrive:
+    file: Maglev_arrive.wav
+  maglev_depart:
+    file: Maglev_depart.wav
+  malfunction:
+    file: malfunction.wav
+  mancubus_attack:
+    file: Mancubus_attack.wav
+  mancubus_death:
+    file: Mancubus_death.wav
+  mancubus_pain:
+    file: Mancubus_pain.wav
+  mancubus_sight:
+    file: Mancubus_sight.wav
+  menu_open:
+    file: menu_open.wav
+  menu_scroll:
+    file: menu_scroll.wav
+  monster_pain:
+    file: monster_pain.wav
+  music_boss:
+    file: Music_Boss.wav
+  music_general:
+    file: Music_General.wav
+  music_level_end:
+    file: Music_Level_End.wav
+  music_levelup:
+    file: Music_LevelUp.wav
+  music_title:
+    file: Music_Title.wav
+  no_use:
+    file: no_use.wav
+  no_use2:
+    file: no_use2.wav
+  pinkinator_attack:
+    file: Pinkinator_attack.wav
+  pinkinator_death:
+    file: Pinkinator_death.wav
+  pinkinator_pain:
+    file: Pinkinator_pain.wav
+  pinkinator_sight:
+    file: Pinkinator_sight.wav
+  pinkinator_spawn:
+    file: Pinkinator_spawn.wav
+  pinky_attack:
+    file: Pinky_attack.wav
+  pinky_death:
+    file: Pinky_death.wav
+  pinky_sight:
+    file: Pinky_sight.wav
+  pinky_small_attack:
+    file: Pinky_small_attack.wav
+  pinky_small_death:
+    file: Pinky_small_death.wav
+  pinky_small_pain:
+    file: Pinky_small_pain.wav
+  pinky_small_sight:
+    file: Pinky_small_sight.wav
+  pistol:
+    file: pistol.wav
+  plasma:
+    file: plasma.wav
+  platform_start:
+    file: platform_start.wav
+  platform_stop:
+    file: platform_stop.wav
+  player_death1:
+    file: player_death1.wav
+  player_death2:
+    file: player_death2.wav
+  player_death3:
+    file: player_death3.wav
+  player_pain1:
+    file: player_pain1.wav
+  player_pain2:
+    file: player_pain2.wav
+  revenant_active:
+    file: Revenant_active.wav
+  revenant_attack:
+    file: Revenant_attack.wav
+  revenant_death:
+    file: Revenant_death.wav
+  revenant_punch:
+    file: Revenant_punch.wav
+  revenant_sight:
+    file: Revenant_sight.wav
+  revenant_swing:
+    file: Revenant_swing.wav
+  rocketlauncher:
+    file: rocketLauncher.wav
+  rocket_explode:
+    file: rocket_explode.wav
+  secret:
+    file: secret.wav
+  sentinel_attack:
+    file: Sentinel_attack.wav
+  sentinel_death:
+    file: Sentinel_death.wav
+  sentinel_pain:
+    file: Sentinel_pain.wav
+  sentinel_sight:
+    file: Sentinel_sight.wav
+  sentrybot_activate:
+    file: SentryBot_activate.wav
+  sentrybot_death:
+    file: SentryBot_death.wav
+  sentrybot_discard:
+    file: SentryBot_discard.wav
+  sentrybot_pain:
+    file: SentryBot_pain.wav
+  sentrybot_return:
+    file: SentryBot_return.wav
+  slider:
+    file: slider.wav
+  soulcube:
+    file: Soulcube.wav
+  spidermastermind_death:
+    file: SpiderMastermind_death.wav
+  spidermastermind_sight:
+    file: SpiderMastermind_sight.wav
+  supershotgun:
+    file: supershotgun.wav
+  supershotgun_close:
+    file: supershotgun_close.wav
+  supershotgun_load:
+    file: supershotgun_load.wav
+  supershotgun_open:
+    file: supershotgun_open.wav
+  switch:
+    file: switch.wav
+  switch_exit:
+    file: switch_exit.wav
+  teleport:
+    file: teleport.wav
+  use_item:
+    file: use_item.wav
+  vending_sale:
+    file: vending_sale.wav
+  vent:
+    file: vent.wav
+  vios_attack1:
+    file: VIOS_attack1.wav
+  vios_attack2:
+    file: VIOS_attack2.wav
+  vios_death:
+    file: VIOS_death.wav
+  vios_pain:
+    file: VIOS_pain.wav
+  vios_sight:
+    file: VIOS_sight.wav
+  weapon_pickup:
+    file: weapon_pickup.wav
+  weapon_sniper_scope:
+    file: Weapon_Sniper_Scope.wav
+  weapon_toilet_pull:
+    file: Weapon_Toilet_Pull.wav
+  weapon_toilet_smash:
+    file: Weapon_Toilet_Smash.wav
+  weapon_toilet_throw:
+    file: Weapon_Toilet_Throw.wav
+  weapon_toilet_throw2:
+    file: Weapon_Toilet_Throw2.wav
+  zombie_active:
+    file: zombie_active.wav
+  zombie_death1:
+    file: zombie_death1.wav
+  zombie_death2:
+    file: zombie_death2.wav
+  zombie_death3:
+    file: zombie_death3.wav
+  zombie_sight1:
+    file: zombie_sight1.wav
+  zombie_sight2:
+    file: zombie_sight2.wav
+# UI sound aliases - maps descriptive names to sound entries above
+ui_sounds:
+  menu_highlight: dialog_help
+  softkey_click: switch_exit
+  scroll: menu_scroll

@@ -1,0 +1,29 @@
+# Level configuration for uac_labs
+
+name: uac_labs
+map_id: 5
+joke_items: [131, 132, 133, 134, 135]
+starting_loadout:
+  weapons: [assault_rifle_with_scope, chaingun, super_shotgun, holy_water_pistol, chainsaw, assault_rifle]
+  weapon_ammo:
+    red_shooting_sentry_bot: 100
+  armor: 34
+  inventory:
+    health_pack: 79
+    health_ration_bar: 31
+    armor_large: 9
+    armor_small: 40
+    uac_credit: 73
+  ammo:
+    bullets: 84
+    holy_water: 85
+    shells: 88
+    cells: 55
+  xp: 3594
+  stats:
+    defense: 14
+    strength: 12
+    accuracy: 9
+    agility: 18
+    iq: 28
+  vios_mallocs: 2

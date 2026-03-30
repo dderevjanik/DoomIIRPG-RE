@@ -1,0 +1,126 @@
+# UI element definitions for DoomIIRPG
+# Describes all UI widget types, button instances, and their properties
+
+# Scrollbar config
+scrollbar:
+  sound: scroll
+  vertical: true
+
+# Screen layouts — button containers (menu | info | vending)
+screens:
+  menu:
+    menu_items:
+      image: menu_btn_bg
+      image_highlight: menu_btn_bg_on
+      sound: menu_highlight
+      render_mode: 1
+      highlight_render_mode: 0
+      id_range: [0, 8]
+      x: 159
+      start_y: 139
+      step_y: 46
+      width: 162
+      height: 46
+      visible: false
+
+    arrow_up:
+      sound: menu_highlight
+      size_from_image: true
+      id: 9
+      x: 331
+      y: image_relative
+      y_base: 190
+      y_offset: -height
+      image: menu_arrow_up
+      visible: false
+
+    arrow_down:
+      sound: menu_highlight
+      size_from_image: true
+      id: 10
+      x: 331
+      y: 210
+      image: menu_arrow_down
+      visible: false
+
+    softkey_left:
+      sound: softkey_click
+      id: 11
+      x: 0
+      y: 256
+      width: 52
+      height: 64
+      image: switch_left_normal
+      image_highlight: switch_left_active
+      visible: false
+
+    sfx_volume_slider:
+      sound: menu_highlight
+      id: 12
+      visible: false
+
+    music_volume_slider:
+      sound: menu_highlight
+      id: 13
+      visible: false
+
+    alpha_slider:
+      sound: menu_highlight
+      id: 14
+      visible: false
+
+    softkey_right:
+      sound: softkey_click
+      id: 15
+      x: 428
+      y: 256
+      width: 52
+      height: 64
+      visible: false
+
+    # Controller sliders [GEC]
+    vibration_slider:
+      sound: menu_highlight
+      id: 16
+      visible: false
+
+    deadzone_slider:
+      sound: menu_highlight
+      id: 17
+      visible: false
+
+  info:
+    info_items:
+      image: info_btn_normal
+      image_highlight: info_btn_pressed
+      sound: menu_highlight
+      render_mode: 1
+      highlight_render_mode: 0
+      id_range: [0, 8]
+      visible: false
+
+  vending:
+    arrow_up:
+      sound: menu_highlight
+      size_from_image: true
+      render_mode: 1
+      highlight_render_mode: 0
+      id: 0
+      x: 320
+      y: 130
+      image: vending_arrow_up_glow
+      visible: true
+
+    arrow_down:
+      sound: menu_highlight
+      size_from_image: true
+      render_mode: 1
+      highlight_render_mode: 0
+      id: 1
+      x: 320
+      y: image_relative
+      y_base: 150
+      y_offset: menu_arrow_up.height
+      image: vending_arrow_down_glow
+      visible: true
+

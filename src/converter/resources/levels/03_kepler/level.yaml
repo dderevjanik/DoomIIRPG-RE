@@ -1,0 +1,26 @@
+# Level configuration for kepler
+
+name: kepler
+map_id: 3
+joke_items: [130, 131, 132, 133, 134]
+starting_loadout:
+  weapons: [holy_water_pistol, chainsaw, assault_rifle]
+  weapon_ammo:
+    shooting_sentry_bot: 100
+  armor: 4
+  inventory:
+    health_pack: 34
+    armor_large: 12
+    armor_small: 6
+    uac_credit: 39
+  ammo:
+    bullets: 100
+    holy_water: 90
+  xp: 1519
+  stats:
+    defense: 13
+    strength: 5
+    accuracy: 10
+    agility: 6
+    iq: 10
+  vios_mallocs: 1

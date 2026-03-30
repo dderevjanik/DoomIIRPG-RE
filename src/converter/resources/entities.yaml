@@ -1,0 +1,2290 @@
+# Entity definitions  # 190 entities with type, rendering, and animation data
+
+entities:
+# Entity 0
+  corpse_boss_vios_parm0:
+    sprite: 0
+    type: corpse
+    subtype: boss_vios
+    parm: 0
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 1
+  corpse_boss_vios_parm1:
+    sprite: 0
+    type: corpse
+    subtype: boss_vios
+    parm: 1
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 2
+  corpse_boss_vios_parm2:
+    sprite: 0
+    type: corpse
+    subtype: boss_vios
+    parm: 2
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 3
+  corpse_boss_vios_parm3:
+    sprite: 0
+    type: corpse
+    subtype: boss_vios
+    parm: 3
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 4
+  corpse_boss_vios_parm4:
+    sprite: 0
+    type: corpse
+    subtype: boss_vios
+    parm: 4
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 5
+  corpse_sentry_bot_parm0:
+    sprite: 0
+    type: corpse
+    subtype: sentry_bot
+    parm: 0
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 6
+  corpse_sentry_bot_parm1:
+    sprite: 0
+    type: corpse
+    subtype: sentry_bot
+    parm: 1
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 7
+  corpse_zombie_parm0:
+    sprite: 0
+    type: corpse
+    subtype: zombie
+    parm: 0
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 8
+  corpse_zombie_parm1:
+    sprite: 0
+    type: corpse
+    subtype: zombie
+    parm: 1
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 9
+  corpse_zombie_parm2:
+    sprite: 0
+    type: corpse
+    subtype: zombie
+    parm: 2
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 10
+  corpse_imp_parm0:
+    sprite: 0
+    type: corpse
+    subtype: imp
+    parm: 0
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 11
+  corpse_imp_parm1:
+    sprite: 0
+    type: corpse
+    subtype: imp
+    parm: 1
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 12
+  corpse_imp_parm2:
+    sprite: 0
+    type: corpse
+    subtype: imp
+    parm: 2
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 13
+  corpse_sawcubus_parm0:
+    sprite: 0
+    type: corpse
+    subtype: sawcubus
+    parm: 0
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 14
+  corpse_sawcubus_parm1:
+    sprite: 0
+    type: corpse
+    subtype: sawcubus
+    parm: 1
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 15
+  corpse_sawcubus_parm2:
+    sprite: 0
+    type: corpse
+    subtype: sawcubus
+    parm: 2
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 16
+  corpse_pinky_parm0:
+    sprite: 0
+    type: corpse
+    subtype: pinky
+    parm: 0
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 17
+  corpse_pinky_parm1:
+    sprite: 0
+    type: corpse
+    subtype: pinky
+    parm: 1
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 18
+  corpse_pinky_parm2:
+    sprite: 0
+    type: corpse
+    subtype: pinky
+    parm: 2
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 19
+  corpse_mancubus_parm0:
+    sprite: 0
+    type: corpse
+    subtype: mancubus
+    parm: 0
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 20
+  corpse_mancubus_parm1:
+    sprite: 0
+    type: corpse
+    subtype: mancubus
+    parm: 1
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 21
+  corpse_mancubus_parm2:
+    sprite: 0
+    type: corpse
+    subtype: mancubus
+    parm: 2
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 22
+  corpse_cacodemon_parm0:
+    sprite: 0
+    type: corpse
+    subtype: cacodemon
+    parm: 0
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 23
+  corpse_cacodemon_parm1:
+    sprite: 0
+    type: corpse
+    subtype: cacodemon
+    parm: 1
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 24
+  corpse_cacodemon_parm2:
+    sprite: 0
+    type: corpse
+    subtype: cacodemon
+    parm: 2
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 25
+  corpse_sentinel_parm0:
+    sprite: 0
+    type: corpse
+    subtype: sentinel
+    parm: 0
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 26
+  corpse_sentinel_parm1:
+    sprite: 0
+    type: corpse
+    subtype: sentinel
+    parm: 1
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 27
+  corpse_sentinel_parm2:
+    sprite: 0
+    type: corpse
+    subtype: sentinel
+    parm: 2
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 28
+  corpse_lost_soul_parm0:
+    sprite: 0
+    type: corpse
+    subtype: lost_soul
+    parm: 0
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 29
+  corpse_lost_soul_parm1:
+    sprite: 0
+    type: corpse
+    subtype: lost_soul
+    parm: 1
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 30
+  corpse_lost_soul_parm2:
+    sprite: 0
+    type: corpse
+    subtype: lost_soul
+    parm: 2
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 31
+  corpse_arch_vile_parm0:
+    sprite: 0
+    type: corpse
+    subtype: arch_vile
+    parm: 0
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 32
+  corpse_arch_vile_parm1:
+    sprite: 0
+    type: corpse
+    subtype: arch_vile
+    parm: 1
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 33
+  corpse_arch_vile_parm2:
+    sprite: 0
+    type: corpse
+    subtype: arch_vile
+    parm: 2
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 34
+  corpse_revenant_parm0:
+    sprite: 0
+    type: corpse
+    subtype: revenant
+    parm: 0
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 35
+  corpse_revenant_parm1:
+    sprite: 0
+    type: corpse
+    subtype: revenant
+    parm: 1
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 36
+  corpse_revenant_parm2:
+    sprite: 0
+    type: corpse
+    subtype: revenant
+    parm: 2
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 37
+  corpse_phantom_parm0:
+    sprite: 0
+    type: corpse
+    subtype: phantom
+    parm: 0
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 38
+  corpse_cyberdemon_parm0:
+    sprite: 0
+    type: corpse
+    subtype: cyberdemon
+    parm: 0
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 39
+  corpse_mastermind_parm0:
+    sprite: 0
+    type: corpse
+    subtype: mastermind
+    parm: 0
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 40
+  corpse_phantom_parm1:
+    sprite: 0
+    type: corpse
+    subtype: phantom
+    parm: 1
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 41
+  inventory_13:
+    sprite: 0
+    type: item
+    subtype: inventory
+    parm: 13
+    text:
+      name: 76
+      long_name: 76
+      description: 77  # Entity 42
+  soul_cube:
+    sprite: 0
+    type: item
+    subtype: ammo
+    parm: soul_cube
+    text:
+      name: 88
+      long_name: 88
+      description: 89  # Entity 43
+  inventory_8:
+    sprite: 0
+    type: item
+    subtype: inventory
+    parm: 8
+    text:
+      name: 93
+      long_name: 94
+      description: 95  # Entity 44
+  inventory_6:
+    sprite: 0
+    type: item
+    subtype: inventory
+    parm: 6
+    text:
+      name: 96
+      long_name: 97
+      description: 98  # Entity 45
+  inventory_1:
+    sprite: 0
+    type: item
+    subtype: inventory
+    parm: 1
+    text:
+      name: 99
+      long_name: 100
+      description: 101  # Entity 46
+  inventory_3:
+    sprite: 0
+    type: item
+    subtype: inventory
+    parm: 3
+    text:
+      name: 119
+      long_name: 120
+      description: 121  # Entity 47
+  inventory_2:
+    sprite: 0
+    type: item
+    subtype: inventory
+    parm: 2
+    text:
+      name: 102
+      long_name: 103
+      description: 104  # Entity 48
+  inventory_9:
+    sprite: 0
+    type: item
+    subtype: inventory
+    parm: 9
+    text:
+      name: 105
+      long_name: 106
+      description: 107  # Entity 49
+  inventory_7:
+    sprite: 0
+    type: item
+    subtype: inventory
+    parm: 7
+    text:
+      name: 108
+      long_name: 109
+      description: 110  # Entity 50
+  inventory_0:
+    sprite: 0
+    type: item
+    subtype: inventory
+    parm: 0
+    text:
+      name: 111
+      long_name: 112
+      description: 113  # Entity 51
+  inventory_5:
+    sprite: 0
+    type: item
+    subtype: inventory
+    parm: 5
+    text:
+      name: 114
+      long_name: 115
+      description: 116  # Entity 52
+  inventory_10:
+    sprite: 0
+    type: item
+    subtype: inventory
+    parm: 10
+    text:
+      name: 117
+      long_name: 117
+      description: 118  # Entity 53
+  inventory_4:
+    sprite: 0
+    type: item
+    subtype: inventory
+    parm: 4
+    text:
+      name: 122
+      long_name: 123
+      description: 124  # Entity 54
+  inventory_16:
+    sprite: 0
+    type: item
+    subtype: inventory
+    parm: 16
+    text:
+      name: 145
+      long_name: 145
+      description: 146  # Entity 55
+  inventory_22:
+    sprite: 0
+    type: item
+    subtype: inventory
+    parm: 22
+    text:
+      name: 86
+      long_name: 86
+      description: 87  # Entity 56
+  inventory_25:
+    sprite: 0
+    type: item
+    subtype: inventory
+    parm: 25
+    text:
+      name: 157
+      long_name: 157
+      description: 158  # Entity 57
+  assault_rifle:
+    sprite: assault_rifle
+    type: item
+    subtype: weapon
+    parm: assault_rifle
+    text:
+      name: 0
+      long_name: 0
+      description: 1  # Entity 58
+  chainsaw:
+    sprite: chainsaw
+    type: item
+    subtype: weapon
+    parm: chainsaw
+    text:
+      name: 2
+      long_name: 2
+      description: 3  # Entity 59
+  holy_water_pistol:
+    sprite: holy_water_pistol
+    type: item
+    subtype: weapon
+    parm: holy_water_pistol
+    text:
+      name: 4
+      long_name: 4
+      description: 5  # Entity 60
+  shooting_sentry_bot:
+    sprite: sentry_bot_shooting
+    type: item
+    subtype: weapon
+    parm: shooting_sentry_bot
+    text:
+      name: 6
+      long_name: 7
+      description: 8  # Entity 61
+  exploding_sentry_bot:
+    sprite: sentry_bot_exploding
+    type: item
+    subtype: weapon
+    parm: exploding_sentry_bot
+    text:
+      name: 9
+      long_name: 10
+      description: 11  # Entity 62
+  super_shotgun:
+    sprite: super_shotgun
+    type: item
+    subtype: weapon
+    parm: super_shotgun
+    text:
+      name: 12
+      long_name: 12
+      description: 13  # Entity 63
+  chaingun:
+    sprite: chaingun
+    type: item
+    subtype: weapon
+    parm: chaingun
+    text:
+      name: 14
+      long_name: 14
+      description: 15  # Entity 64
+  assault_rifle_with_scope:
+    sprite: assault_rifle_with_scope
+    type: item
+    subtype: weapon
+    parm: assault_rifle_with_scope
+    text:
+      name: 16
+      long_name: 17
+      description: 18  # Entity 65
+  plasma_gun:
+    sprite: plasma_gun
+    type: item
+    subtype: weapon
+    parm: plasma_gun
+    text:
+      name: 19
+      long_name: 19
+      description: 20  # Entity 66
+  rocket_launcher:
+    sprite: rocket_launcher
+    type: item
+    subtype: weapon
+    parm: rocket_launcher
+    text:
+      name: 21
+      long_name: 21
+      description: 22  # Entity 67
+  bfg:
+    sprite: bfg
+    type: item
+    subtype: weapon
+    parm: bfg
+    text:
+      name: 23
+      long_name: 23
+      description: 24  # Entity 68
+  soul_cube_2:
+    sprite: soul_cube
+    type: item
+    subtype: weapon
+    parm: soul_cube
+    text:
+      name: 25
+      long_name: 25
+      description: 26  # Entity 69
+  red_shooting_sentry_bot:
+    sprite: sentry_bot_red_shooting
+    type: item
+    subtype: weapon
+    parm: red_shooting_sentry_bot
+    text:
+      name: 6
+      long_name: 7
+      description: 8  # Entity 70
+  red_exploding_sentry_bot:
+    sprite: sentry_bot_red_exploding
+    type: item
+    subtype: weapon
+    parm: red_exploding_sentry_bot
+    text:
+      name: 9
+      long_name: 10
+      description: 11  # Entity 71
+  item:
+    sprite: world_weapon
+    type: item
+    subtype: weapon
+    parm: item
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 72
+  sentry_bot_parm1:
+    sprite: monster_red_sentry_bot
+    type: monster
+    subtype: sentry_bot
+    parm: 1
+    text:
+      name: 29
+      long_name: 29
+      description: 159
+    rendering:
+      flags:
+        - gun_flare
+      gun_flare:
+        flash2_z: -64
+      body_parts:
+        sentry_head_flip: true  # Entity 73
+  sentry_bot_parm0:
+    sprite: monster_sentry_bot
+    type: monster
+    subtype: sentry_bot
+    parm: 0
+    text:
+      name: 28
+      long_name: 28
+      description: 159
+    rendering:
+      flags:
+        - gun_flare
+      gun_flare:
+        flash2_z: -64
+      body_parts:
+        sentry_head_flip: true  # Entity 74
+  zombie_parm0:
+    sprite: monster_zombie
+    type: monster
+    subtype: zombie
+    parm: 0
+    text:
+      name: 30
+      long_name: 30
+      description: 159
+    rendering:
+      body_parts:
+        no_head_on_attack: true  # Entity 75
+  zombie_parm1:
+    sprite: monster_zombie2
+    type: monster
+    subtype: zombie
+    parm: 1
+    text:
+      name: 31
+      long_name: 31
+      description: 159
+    rendering:
+      body_parts:
+        no_head_on_attack: true  # Entity 76
+  zombie_parm2:
+    sprite: monster_zombie3
+    type: monster
+    subtype: zombie
+    parm: 2
+    text:
+      name: 32
+      long_name: 32
+      description: 159
+    rendering:
+      body_parts:
+        no_head_on_attack: true  # Entity 77
+  imp_parm0:
+    sprite: monster_imp
+    type: monster
+    subtype: imp
+    parm: 0
+    text:
+      name: 33
+      long_name: 33
+      description: 159
+    rendering:
+      fear_eyes:
+        eye_l: -3
+        eye_r: 3
+        z_add: 294
+      body_parts:
+        no_head_on_attack: true  # Entity 78
+  imp_parm1:
+    sprite: monster_imp2
+    type: monster
+    subtype: imp
+    parm: 1
+    text:
+      name: 34
+      long_name: 34
+      description: 159
+    rendering:
+      fear_eyes:
+        eye_l: -3
+        eye_r: 3
+        z_add: 294
+      body_parts:
+        no_head_on_attack: true  # Entity 79
+  imp_parm2:
+    sprite: monster_imp3
+    type: monster
+    subtype: imp
+    parm: 2
+    text:
+      name: 35
+      long_name: 35
+      description: 159
+    rendering:
+      fear_eyes:
+        eye_l: -3
+        eye_r: 3
+        z_add: 294
+      body_parts:
+        no_head_on_attack: true  # Entity 80
+  sawcubus_parm0:
+    sprite: monster_saw_goblin
+    type: monster
+    subtype: sawcubus
+    parm: 0
+    text:
+      name: 36
+      long_name: 36
+      description: 159
+    rendering:
+      fear_eyes:
+        eye_l: -3
+        eye_r: 3
+        z_add: 388
+      body_parts:
+        attack_torso_z_f0: 96
+        attack_torso_z_f1: -100
+        attack_head_z: 16
+      sprite_anim:
+        has_frame_dependent_head: true
+        head_z_frame0: 17
+        head_x_frame0: 2
+        head_z_frame1: 16  # Entity 81
+  sawcubus_parm1:
+    sprite: monster_saw_goblin2
+    type: monster
+    subtype: sawcubus
+    parm: 1
+    text:
+      name: 37
+      long_name: 37
+      description: 159
+    rendering:
+      fear_eyes:
+        eye_l: -3
+        eye_r: 3
+        z_add: 388
+      body_parts:
+        attack_torso_z_f0: 96
+        attack_torso_z_f1: -100
+        attack_head_z: 16
+      sprite_anim:
+        has_frame_dependent_head: true
+        head_z_frame0: 17
+        head_x_frame0: 2
+        head_z_frame1: 16  # Entity 82
+  sawcubus_parm2:
+    sprite: monster_saw_goblin3
+    type: monster
+    subtype: sawcubus
+    parm: 2
+    text:
+      name: 38
+      long_name: 38
+      description: 159
+    rendering:
+      fear_eyes:
+        eye_l: -3
+        eye_r: 3
+        z_add: 388
+      body_parts:
+        attack_torso_z_f0: 96
+        attack_torso_z_f1: -100
+        attack_head_z: 16
+      sprite_anim:
+        has_frame_dependent_head: true
+        head_z_frame0: 17
+        head_x_frame0: 2
+        head_z_frame1: 16  # Entity 83
+  lost_soul_parm0:
+    sprite: monster_lost_soul
+    type: monster
+    subtype: lost_soul
+    parm: 0
+    text:
+      name: 54
+      long_name: 54
+      description: 159
+    rendering:
+      flags:
+        - floater
+      fear_eyes:
+        eye_l: -4
+        eye_r: 4
+        z_add: -192
+        z_always_pre: 192
+      floater:
+        z_offset: 192
+        has_idle_frame_increment: true  # Entity 84
+  lost_soul_parm1:
+    sprite: monster_lost_soul2
+    type: monster
+    subtype: lost_soul
+    parm: 1
+    text:
+      name: 55
+      long_name: 55
+      description: 159
+    rendering:
+      flags:
+        - floater
+      fear_eyes:
+        eye_l: -4
+        eye_r: 4
+        z_add: -192
+        z_always_pre: 192
+      floater:
+        z_offset: 192
+        has_idle_frame_increment: true  # Entity 85
+  lost_soul_parm2:
+    sprite: monster_lost_soul3
+    type: monster
+    subtype: lost_soul
+    parm: 2
+    text:
+      name: 56
+      long_name: 56
+      description: 159
+    rendering:
+      flags:
+        - floater
+      fear_eyes:
+        eye_l: -4
+        eye_r: 4
+        z_add: -192
+        z_always_pre: 192
+      floater:
+        z_offset: 192
+        has_idle_frame_increment: true  # Entity 86
+  pinky_parm0:
+    sprite: monster_pinky
+    type: monster
+    subtype: pinky
+    parm: 0
+    text:
+      name: 39
+      long_name: 39
+      description: 159
+    rendering:
+      fear_eyes:
+        eye_l: -5
+        eye_r: 5
+        z_add: 35
+      body_parts:
+        no_head_on_back: true  # Entity 87
+  pinky_parm1:
+    sprite: monster_pinky2
+    type: monster
+    subtype: pinky
+    parm: 1
+    text:
+      name: 40
+      long_name: 40
+      description: 159
+    rendering:
+      fear_eyes:
+        eye_l: -5
+        eye_r: 5
+        z_add: 35
+      body_parts:
+        no_head_on_back: true  # Entity 88
+  pinky_parm2:
+    sprite: monster_pinky3
+    type: monster
+    subtype: pinky
+    parm: 2
+    text:
+      name: 41
+      long_name: 41
+      description: 159
+    rendering:
+      fear_eyes:
+        eye_l: -5
+        eye_r: 5
+        z_add: 35
+      body_parts:
+        no_head_on_back: true  # Entity 89
+  revenant_parm0:
+    sprite: monster_revenant
+    type: monster
+    subtype: revenant
+    parm: 0
+    text:
+      name: 60
+      long_name: 60
+      description: 159
+    rendering:
+      flags:
+        - gun_flare
+      fear_eyes:
+        eye_l: -2
+        eye_r: 5
+        z_add: 324
+        z_always_pre: 160
+        z_idle_pre: 32
+        eye_l_flip: -5
+        eye_r_flip: 2
+      gun_flare:
+        dual: true
+        flash1_x: -9
+        flash1_z: 736
+        flash2_x: 15
+        flash2_z: 736
+      body_parts:
+        idle_torso_z: -30
+        idle_head_z: 140
+        walk_head_z: 160
+        attack_head_z: 20
+        attack_head_x: 2
+        attack_rev_atk2_torso_z: 130  # Entity 90
+  revenant_parm1:
+    sprite: monster_revenant2
+    type: monster
+    subtype: revenant
+    parm: 1
+    text:
+      name: 61
+      long_name: 61
+      description: 159
+    rendering:
+      flags:
+        - gun_flare
+      fear_eyes:
+        eye_l: -2
+        eye_r: 5
+        z_add: 324
+        z_always_pre: 160
+        z_idle_pre: 32
+        eye_l_flip: -5
+        eye_r_flip: 2
+      gun_flare:
+        dual: true
+        flash1_x: -9
+        flash1_z: 736
+        flash2_x: 15
+        flash2_z: 736
+      body_parts:
+        idle_torso_z: -30
+        idle_head_z: 140
+        walk_head_z: 160
+        attack_head_z: 20
+        attack_head_x: 2
+        attack_rev_atk2_torso_z: 130  # Entity 91
+  revenant_parm2:
+    sprite: monster_revenant3
+    type: monster
+    subtype: revenant
+    parm: 2
+    text:
+      name: 62
+      long_name: 62
+      description: 159
+    rendering:
+      flags:
+        - gun_flare
+      fear_eyes:
+        eye_l: -2
+        eye_r: 5
+        z_add: 324
+        z_always_pre: 160
+        z_idle_pre: 32
+        eye_l_flip: -5
+        eye_r_flip: 2
+      gun_flare:
+        dual: true
+        flash1_x: -9
+        flash1_z: 736
+        flash2_x: 15
+        flash2_z: 736
+      body_parts:
+        idle_torso_z: -30
+        idle_head_z: 140
+        walk_head_z: 160
+        attack_head_z: 20
+        attack_head_x: 2
+        attack_rev_atk2_torso_z: 130  # Entity 92
+  mancubus_parm0:
+    sprite: monster_mancubus
+    type: monster
+    subtype: mancubus
+    parm: 0
+    text:
+      name: 42
+      long_name: 42
+      description: 159
+    rendering:
+      flags:
+        - gun_flare
+      fear_eyes:
+        eye_l: -3
+        eye_r: 3
+        z_add: 280
+      gun_flare:
+        dual: true
+        flash1_x: -24
+        flash1_z: 160
+        flash2_x: 22
+        flash2_z: 128
+      body_parts:
+        attack_head_z: -112
+        attack_head_x: 7
+        no_head_on_manc_atk: true  # Entity 93
+  mancubus_parm1:
+    sprite: monster_mancubus2
+    type: monster
+    subtype: mancubus
+    parm: 1
+    text:
+      name: 43
+      long_name: 43
+      description: 159
+    rendering:
+      flags:
+        - gun_flare
+      fear_eyes:
+        eye_l: -3
+        eye_r: 3
+        z_add: 280
+      gun_flare:
+        dual: true
+        flash1_x: -24
+        flash1_z: 160
+        flash2_x: 22
+        flash2_z: 128
+      body_parts:
+        attack_head_z: -112
+        attack_head_x: 7
+        no_head_on_manc_atk: true  # Entity 94
+  mancubus_parm2:
+    sprite: monster_mancubus3
+    type: monster
+    subtype: mancubus
+    parm: 2
+    text:
+      name: 44
+      long_name: 44
+      description: 159
+    rendering:
+      flags:
+        - gun_flare
+      fear_eyes:
+        eye_l: -3
+        eye_r: 3
+        z_add: 280
+      gun_flare:
+        dual: true
+        flash1_x: -24
+        flash1_z: 160
+        flash2_x: 22
+        flash2_z: 128
+      body_parts:
+        attack_head_z: -112
+        attack_head_x: 7
+        no_head_on_manc_atk: true  # Entity 95
+  cacodemon_parm0:
+    sprite: monster_cacodemon
+    type: monster
+    subtype: cacodemon
+    parm: 0
+    text:
+      name: 45
+      long_name: 45
+      description: 159
+    rendering:
+      flags:
+        - floater
+      fear_eyes:
+        eye_l: 0
+        eye_r: -1
+        z_add: 32
+        single_eye: true
+      floater:
+        has_back_extra_sprite: true
+        back_extra_sprite_idx: 7  # Entity 96
+  cacodemon_parm1:
+    sprite: monster_cacodemon2
+    type: monster
+    subtype: cacodemon
+    parm: 1
+    text:
+      name: 46
+      long_name: 46
+      description: 159
+    rendering:
+      flags:
+        - floater
+      fear_eyes:
+        eye_l: 0
+        eye_r: -1
+        z_add: 32
+        single_eye: true
+      floater:
+        has_back_extra_sprite: true
+        back_extra_sprite_idx: 7  # Entity 97
+  cacodemon_parm2:
+    sprite: monster_cacodemon3
+    type: monster
+    subtype: cacodemon
+    parm: 2
+    text:
+      name: 47
+      long_name: 47
+      description: 159
+    rendering:
+      flags:
+        - floater
+      fear_eyes:
+        eye_l: 0
+        eye_r: -1
+        z_add: 32
+        single_eye: true
+      floater:
+        has_back_extra_sprite: true
+        back_extra_sprite_idx: 7  # Entity 98
+  sentinel_parm0:
+    sprite: monster_sentinel
+    type: monster
+    subtype: sentinel
+    parm: 0
+    text:
+      name: 48
+      long_name: 48
+      description: 159
+    rendering:
+      flags:
+        - floater
+      fear_eyes:
+        eye_l: -1
+        eye_r: 4
+        z_add: 274
+      floater:
+        type: multipart
+        back_view_frame: 6
+        idle_front_frame: 2
+        head_z_offset: -11
+        has_dead_loot: true  # Entity 99
+  sentinel_parm1:
+    sprite: monster_sentinel2
+    type: monster
+    subtype: sentinel
+    parm: 1
+    text:
+      name: 49
+      long_name: 49
+      description: 159
+    rendering:
+      flags:
+        - floater
+      fear_eyes:
+        eye_l: -1
+        eye_r: 4
+        z_add: 274
+      floater:
+        type: multipart
+        back_view_frame: 6
+        idle_front_frame: 2
+        head_z_offset: -11
+        has_dead_loot: true  # Entity 100
+  sentinel_parm2:
+    sprite: monster_sentinel3
+    type: monster
+    subtype: sentinel
+    parm: 2
+    text:
+      name: 50
+      long_name: 50
+      description: 159
+    rendering:
+      flags:
+        - floater
+      fear_eyes:
+        eye_l: -1
+        eye_r: 4
+        z_add: 274
+      floater:
+        type: multipart
+        back_view_frame: 6
+        idle_front_frame: 2
+        head_z_offset: -11
+        has_dead_loot: true  # Entity 101
+  arch_vile_parm0:
+    sprite: monster_arch_vile
+    type: monster
+    subtype: arch_vile
+    parm: 0
+    text:
+      name: 57
+      long_name: 57
+      description: 159
+    rendering:
+      fear_eyes:
+        eye_l: -3
+        eye_r: 3
+        z_add: 403
+        z_idle_pre: 48
+      body_parts:
+        idle_torso_z: -36
+        idle_head_z: 109
+        walk_torso_z: -36
+        walk_head_z: 109
+        attack_torso_z_f0: 288
+        flip_torso_walk: true
+        no_head_on_attack: true  # Entity 102
+  arch_vile_parm1:
+    sprite: monster_arch_vile2
+    type: monster
+    subtype: arch_vile
+    parm: 1
+    text:
+      name: 58
+      long_name: 58
+      description: 159
+    rendering:
+      fear_eyes:
+        eye_l: -3
+        eye_r: 3
+        z_add: 403
+        z_idle_pre: 48
+      body_parts:
+        idle_torso_z: -36
+        idle_head_z: 109
+        walk_torso_z: -36
+        walk_head_z: 109
+        attack_torso_z_f0: 288
+        flip_torso_walk: true
+        no_head_on_attack: true  # Entity 103
+  arch_vile_parm2:
+    sprite: monster_arch_vile3
+    type: monster
+    subtype: arch_vile
+    parm: 2
+    text:
+      name: 59
+      long_name: 59
+      description: 159
+    rendering:
+      fear_eyes:
+        eye_l: -3
+        eye_r: 3
+        z_add: 403
+        z_idle_pre: 48
+      body_parts:
+        idle_torso_z: -36
+        idle_head_z: 109
+        walk_torso_z: -36
+        walk_head_z: 109
+        attack_torso_z_f0: 288
+        flip_torso_walk: true
+        no_head_on_attack: true  # Entity 104
+  phantom_parm0:
+    sprite: monster_arachnotron
+    type: monster
+    subtype: phantom
+    parm: 0
+    text:
+      name: 63
+      long_name: 63
+      description: 159
+    rendering:
+      flags:
+        - special_boss
+      special_boss:
+        type: spider
+        leg_lateral: -29
+        leg_base_z: 6
+        idle_torso_z: 50
+        idle_bob_div: 2
+        idle_torso_z_base: 50
+        walk_torso_z: 50
+        attack_torso_z: 50
+        pain_torso_z: 100
+        pain_legs_z: 70
+        pain_leg_pos: 1  # Entity 105
+  cyberdemon_parm0:
+    sprite: boss_cyberdemon
+    type: monster
+    subtype: cyberdemon
+    parm: 0
+    text:
+      name: 64
+      long_name: 64
+      description: 159
+    rendering:
+      flags:
+        - gun_flare
+      gun_flare:
+        flash2_x: 14
+        flash2_z: 352
+      body_parts:
+        idle_torso_z: -30
+        idle_head_z: -15
+      sprite_anim:
+        clamp_scale: true
+        attack_leg_offset: -3
+        attack_leg_offset_on_flip: true  # Entity 106
+  mastermind_parm0:
+    sprite: boss_pinky
+    type: monster
+    subtype: mastermind
+    parm: 0
+    text:
+      name: 65
+      long_name: 65
+      description: 159
+    rendering:
+      flags:
+        - special_boss
+      special_boss:
+        type: multipart
+        torso_z: 384
+        idle_sprite_idx: 3
+        attack_sprite_idx: 8
+        pain_sprite_idx: 12  # Entity 107
+  phantom_parm1:
+    sprite: boss_mastermind
+    type: monster
+    subtype: phantom
+    parm: 1
+    text:
+      name: 66
+      long_name: 66
+      description: 159
+    rendering:
+      flags:
+        - gun_flare
+        - special_boss
+      special_boss:
+        type: spider
+        leg_lateral: -44
+        leg_base_z: 6
+        idle_torso_z: 35
+        idle_bob_div: 1
+        idle_torso_z_base: 0
+        walk_torso_z: 35
+        attack_torso_z: 40
+        pain_torso_z: 70
+        pain_legs_z: 100
+        pain_leg_pos: 2
+        has_attack_flare: true
+        flare_z_offset: 288
+        flare_lateral_pos: 0
+        flare_torso_z_extra: 10  # Entity 108
+  boss_vios_parm0:
+    sprite: boss_vios
+    type: monster
+    subtype: boss_vios
+    parm: 0
+    text:
+      name: 67
+      long_name: 67
+      description: 159
+    rendering:
+      flags:
+        - special_boss
+      special_boss:
+        type: ethereal
+        render_mode_override: 3
+        pain_render_mode: 5  # Entity 109
+  boss_vios_parm1:
+    sprite: boss_vios2
+    type: monster
+    subtype: boss_vios
+    parm: 1
+    text:
+      name: 67
+      long_name: 67
+      description: 159
+    rendering:
+      flags:
+        - special_boss
+      special_boss:
+        type: ethereal
+        render_mode_override: 3
+        pain_render_mode: 5  # Entity 110
+  boss_vios_parm2:
+    sprite: boss_vios3
+    type: monster
+    subtype: boss_vios
+    parm: 2
+    text:
+      name: 67
+      long_name: 67
+      description: 159
+    rendering:
+      flags:
+        - special_boss
+      special_boss:
+        type: ethereal
+        render_mode_override: 3
+        pain_render_mode: 5  # Entity 111
+  boss_vios_parm3:
+    sprite: boss_vios4
+    type: monster
+    subtype: boss_vios
+    parm: 3
+    text:
+      name: 67
+      long_name: 67
+      description: 159
+    rendering:
+      flags:
+        - special_boss
+      special_boss:
+        type: ethereal
+        render_mode_override: 3
+        pain_render_mode: 5  # Entity 112
+  boss_vios_parm4:
+    sprite: boss_vios5
+    type: monster
+    subtype: boss_vios
+    parm: 4
+    text:
+      name: 67
+      long_name: 67
+      description: 159
+    rendering:
+      flags:
+        - special_boss
+      special_boss:
+        type: ethereal
+        render_mode_override: 3
+        pain_render_mode: 5  # Entity 113
+  npc_0:
+    sprite: npc_riley_oconnor
+    type: npc
+    subtype: 0
+    parm: 0
+    text:
+      name: 173
+      long_name: 159
+      description: 159
+    rendering:
+      body_parts:
+        idle_torso_z: -18
+        flip_torso_walk: true  # Entity 114
+  npc_1:
+    sprite: npc_major
+    type: npc
+    subtype: 1
+    parm: 0
+    text:
+      name: 174
+      long_name: 159
+      description: 159
+    rendering:
+      body_parts:
+        idle_torso_z: -18
+        flip_torso_walk: true  # Entity 115
+  npc_2:
+    sprite: npc_bob
+    type: npc
+    subtype: 2
+    parm: 0
+    text:
+      name: 175
+      long_name: 159
+      description: 159
+    rendering:
+      fear_eyes:
+        eye_l: -4
+        eye_r: 4
+        z_add: -192
+        z_always_pre: 192
+      body_parts:
+        idle_torso_z: -18
+        flip_torso_walk: true
+      floater:
+        z_offset: 192
+        has_idle_frame_increment: true  # Entity 116
+  npc_3:
+    sprite: npc_civilian
+    type: npc
+    subtype: 3
+    parm: 0
+    text:
+      name: 176
+      long_name: 159
+      description: 159
+    rendering:
+      fear_eyes:
+        eye_l: -3
+        eye_r: 3
+        z_add: 294
+      body_parts:
+        idle_torso_z: -18
+        flip_torso_walk: true  # Entity 117
+  npc_4:
+    sprite: npc_sarge
+    type: npc
+    subtype: 4
+    parm: 0
+    text:
+      name: 177
+      long_name: 159
+      description: 159
+    rendering:
+      fear_eyes:
+        eye_l: -3
+        eye_r: 3
+        z_add: 388
+      body_parts:
+        idle_torso_z: -18
+        flip_torso_walk: true
+      sprite_anim:
+        has_frame_dependent_head: true
+        head_z_frame0: 17
+        head_x_frame0: 2
+        head_z_frame1: 16  # Entity 118
+  npc_5:
+    sprite: npc_female
+    type: npc
+    subtype: 5
+    parm: 0
+    text:
+      name: 179
+      long_name: 159
+      description: 159
+    rendering:
+      fear_eyes:
+        eye_l: -5
+        eye_r: 5
+        z_add: 35
+      body_parts:
+        idle_torso_z: -18
+        flip_torso_walk: true  # Entity 119
+  npc_6:
+    sprite: npc_evil_scientist
+    type: npc
+    subtype: 6
+    parm: 0
+    text:
+      name: 179
+      long_name: 159
+      description: 159
+    rendering:
+      fear_eyes:
+        eye_l: 0
+        eye_r: -1
+        z_add: 32
+        single_eye: true
+      body_parts:
+        idle_torso_z: -18
+        flip_torso_walk: true
+      floater:
+        has_back_extra_sprite: true
+        back_extra_sprite_idx: 7  # Entity 120
+  npc_7:
+    sprite: npc_scientist
+    type: npc
+    subtype: 7
+    parm: 0
+    text:
+      name: 180
+      long_name: 159
+      description: 159
+    rendering:
+      fear_eyes:
+        eye_l: -1
+        eye_r: 4
+        z_add: 274
+      body_parts:
+        idle_torso_z: -18
+        flip_torso_walk: true
+      floater:
+        type: multipart
+        back_view_frame: 6
+        idle_front_frame: 2
+        head_z_offset: -11
+        has_dead_loot: true  # Entity 121
+  npc_8:
+    sprite: npc_researcher
+    type: npc
+    subtype: 8
+    parm: 0
+    text:
+      name: 181
+      long_name: 159
+      description: 159
+    rendering:
+      fear_eyes:
+        eye_l: -3
+        eye_r: 3
+        z_add: 280
+      gun_flare:
+        dual: true
+        flash1_x: -24
+        flash1_z: 160
+        flash2_x: 22
+        flash2_z: 128
+      body_parts:
+        idle_torso_z: -18
+        flip_torso_walk: true  # Entity 122
+  npc_9:
+    sprite: npc_civilian2
+    type: npc
+    subtype: 9
+    parm: 0
+    text:
+      name: 176
+      long_name: 159
+      description: 159
+    rendering:
+      fear_eyes:
+        eye_l: -2
+        eye_r: 5
+        z_add: 324
+        z_always_pre: 160
+        z_idle_pre: 32
+        eye_l_flip: -5
+        eye_r_flip: 2
+      gun_flare:
+        dual: true
+        flash1_x: -9
+        flash1_z: 736
+        flash2_x: 15
+        flash2_z: 736
+      body_parts:
+        idle_torso_z: -18
+        flip_torso_walk: true  # Entity 123
+  bullets:
+    sprite: ammo_bullets
+    type: item
+    subtype: ammo
+    parm: bullets
+    text:
+      name: 78
+      long_name: 78
+      description: 79  # Entity 124
+  shells:
+    sprite: ammo_shells
+    type: item
+    subtype: ammo
+    parm: shells
+    text:
+      name: 80
+      long_name: 80
+      description: 81  # Entity 125
+  rockets:
+    sprite: ammo_rockets
+    type: item
+    subtype: ammo
+    parm: rockets
+    text:
+      name: 82
+      long_name: 82
+      description: 83  # Entity 126
+  cells:
+    sprite: ammo_cells
+    type: item
+    subtype: ammo
+    parm: cells
+    text:
+      name: 84
+      long_name: 84
+      description: 85  # Entity 127
+  holy_water:
+    sprite: ammo_holy_water
+    type: item
+    subtype: ammo
+    parm: holy_water
+    text:
+      name: 86
+      long_name: 86
+      description: 87  # Entity 128
+  inventory_24:
+    sprite: one_uac_credit
+    type: item
+    subtype: inventory
+    parm: 24
+    text:
+      name: 157
+      long_name: 157
+      description: 158  # Entity 129
+  inventory_19:
+    sprite: key_red
+    type: item
+    subtype: inventory
+    parm: 19
+    text:
+      name: 68
+      long_name: 68
+      description: 69  # Entity 130
+  inventory_20:
+    sprite: key_blue
+    type: item
+    subtype: inventory
+    parm: 20
+    text:
+      name: 70
+      long_name: 70
+      description: 71  # Entity 131
+  inventory_11:
+    sprite: armor_jacket
+    type: item
+    subtype: inventory
+    parm: 11
+    text:
+      name: 72
+      long_name: 72
+      description: 73  # Entity 132
+  inventory_23:
+    sprite: satchel
+    type: item
+    subtype: inventory
+    parm: 23
+    text:
+      name: 90
+      long_name: 90
+      description: 159  # Entity 133
+  inventory_23_2:
+    sprite: pack_item
+    type: item
+    subtype: inventory
+    parm: 23
+    text:
+      name: 90
+      long_name: 90
+      description: 159  # Entity 134
+  inventory_23_3:
+    sprite: worker_pack
+    type: item
+    subtype: inventory
+    parm: 23
+    text:
+      name: 91
+      long_name: 91
+      description: 92  # Entity 135
+  inventory_17:
+    sprite: health_pack
+    type: item
+    subtype: inventory
+    parm: 17
+    text:
+      name: 147
+      long_name: 147
+      description: 148  # Entity 136
+  food_0:
+    sprite: food_plate
+    type: item
+    subtype: food
+    parm: 0
+    text:
+      name: 149
+      long_name: 159
+      description: 159  # Entity 137
+  inventory_12:
+    sprite: armor_shard
+    type: item
+    subtype: inventory
+    parm: 12
+    text:
+      name: 74
+      long_name: 74
+      description: 75  # Entity 138
+  attack_interactive_0:
+    sprite: obj_table
+    type: attack_interactive
+    subtype: 0
+    parm: 1
+    text:
+      name: 128
+      long_name: 159
+      description: 159  # Entity 139
+  attack_interactive_3:
+    sprite: toilet
+    type: attack_interactive
+    subtype: 3
+    parm: 3
+    text:
+      name: 131
+      long_name: 131
+      description: 144  # Entity 140
+  decor_0:
+    sprite: ladder
+    type: decor
+    subtype: misc
+    parm: 1
+    text:
+      name: 165
+      long_name: 165
+      description: 159  # Entity 141
+  attack_interactive_3_2:
+    sprite: sink
+    type: attack_interactive
+    subtype: 3
+    parm: 3
+    text:
+      name: 132
+      long_name: 132
+      description: 144  # Entity 142
+  env_damage_1:
+    sprite: obj_fire
+    type: env_damage
+    subtype: 1
+    parm: 0
+    text:
+      name: 130
+      long_name: 159
+      description: 159  # Entity 143
+  decor_noclip_8:
+    sprite: treadmill_monitor
+    type: decor_noclip
+    subtype: treadmill
+    parm: 1
+    text:
+      name: 166
+      long_name: 166
+      description: 159  # Entity 144
+  decor_0_2:
+    sprite: tech_station
+    type: decor
+    subtype: misc
+    parm: 1
+    text:
+      name: 170
+      long_name: 170
+      description: 159  # Entity 145
+  decor_noclip_7:
+    sprite: water_spout
+    type: decor_noclip
+    subtype: water_spout
+    parm: 1
+    text:
+      name: 133
+      long_name: 133
+      description: 159  # Entity 146
+  attack_interactive_0_2:
+    sprite: obj_chair
+    type: attack_interactive
+    subtype: 0
+    parm: 1
+    text:
+      name: 134
+      long_name: 159
+      description: 159  # Entity 147
+  decor_0_3:
+    sprite: obj_torchiere
+    type: decor
+    subtype: misc
+    parm: 0
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 148
+  corpse_17_parm2:
+    sprite: obj_scientist_corpse
+    type: corpse
+    subtype: 17
+    parm: 2
+    text:
+      name: 135
+      long_name: 135
+      description: 159  # Entity 149
+  corpse_17_parm0:
+    sprite: obj_corpse
+    type: corpse
+    subtype: 17
+    parm: 0
+    text:
+      name: 135
+      long_name: 135
+      description: 159  # Entity 150
+  corpse_17_parm1:
+    sprite: obj_other_corpse
+    type: corpse
+    subtype: 17
+    parm: 1
+    text:
+      name: 135
+      long_name: 135
+      description: 159  # Entity 151
+  env_damage_0:
+    sprite: dummy_pain
+    type: env_damage
+    subtype: 0
+    parm: 0
+    text:
+      name: 27
+      long_name: 27
+      description: 159  # Entity 152
+  decor_noclip_0:
+    sprite: attack_dummy
+    type: decor_noclip
+    subtype: misc
+    parm: 0
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 153
+  decor_noclip_0_2:
+    sprite: exit_dummy
+    type: decor_noclip
+    subtype: misc
+    parm: 0
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 154
+  decor_noclip_0_3:
+    sprite: use_dummy
+    type: decor_noclip
+    subtype: misc
+    parm: 0
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 155
+  decor_0_4:
+    sprite: septic_station
+    type: decor
+    subtype: misc
+    parm: 1
+    text:
+      name: 172
+      long_name: 172
+      description: 159  # Entity 156
+  decor_0_5:
+    sprite: practice_target
+    type: decor
+    subtype: misc
+    parm: 0
+    text:
+      name: 167
+      long_name: 159
+      description: 159  # Entity 157
+  decor_0_6:
+    sprite: obj_printer
+    type: decor
+    subtype: misc
+    parm: 1
+    text:
+      name: 160
+      long_name: 160
+      description: 159  # Entity 158
+  attack_interactive_2:
+    sprite: obj_crate
+    type: attack_interactive
+    subtype: 2
+    parm: 0
+    text:
+      name: 136
+      long_name: 159
+      description: 159  # Entity 159
+  decor_0_7:
+    sprite: vending_machine
+    type: decor
+    subtype: misc
+    parm: 1
+    text:
+      name: 126
+      long_name: 126
+      description: 159  # Entity 160
+  decor_0_8:
+    sprite: armor_repair
+    type: decor
+    subtype: misc
+    parm: 1
+    text:
+      name: 127
+      long_name: 127
+      description: 159  # Entity 161
+  decor_1:
+    sprite: eye_portal
+    type: decor
+    subtype: exithall
+    parm: 0
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 162
+  decor_noclip_8_2:
+    sprite: treadmill_side
+    type: decor_noclip
+    subtype: treadmill
+    parm: 1
+    text:
+      name: 166
+      long_name: 166
+      description: 159  # Entity 163
+  decor_noclip_8_3:
+    sprite: treadmill_front
+    type: decor_noclip
+    subtype: treadmill
+    parm: 1
+    text:
+      name: 166
+      long_name: 166
+      description: 159  # Entity 164
+  decor_0_9:
+    sprite: switch
+    type: decor
+    subtype: misc
+    parm: 1
+    text:
+      name: 125
+      long_name: 159
+      description: 159  # Entity 165
+  attack_interactive_1:
+    sprite: glass
+    type: attack_interactive
+    subtype: 1
+    parm: 2
+    text:
+      name: 137
+      long_name: 159
+      description: 159  # Entity 166
+  decor_0_10:
+    sprite: terminal_target
+    type: decor
+    subtype: misc
+    parm: 1
+    text:
+      name: 161
+      long_name: 161
+      description: 159  # Entity 167
+  decor_0_11:
+    sprite: terminal_general
+    type: decor
+    subtype: misc
+    parm: 1
+    text:
+      name: 129
+      long_name: 129
+      description: 159  # Entity 168
+  decor_0_12:
+    sprite: terminal_vios
+    type: decor
+    subtype: misc
+    parm: 1
+    text:
+      name: 162
+      long_name: 162
+      description: 159  # Entity 169
+  decor_0_13:
+    sprite: terminal_bot
+    type: decor
+    subtype: misc
+    parm: 1
+    text:
+      name: 163
+      long_name: 163
+      description: 159  # Entity 170
+  decor_0_14:
+    sprite: terminal_hacking
+    type: decor
+    subtype: misc
+    parm: 1
+    text:
+      name: 164
+      long_name: 164
+      description: 159  # Entity 171
+  decor_0_15:
+    sprite: bush
+    type: decor
+    subtype: misc
+    parm: 0
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 172
+  decor_0_16:
+    sprite: tree_top
+    type: decor
+    subtype: misc
+    parm: 0
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 173
+  decor_0_17:
+    sprite: tree_trunk
+    type: decor
+    subtype: misc
+    parm: 0
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 174
+  decor_0_18:
+    sprite: glaevenscope
+    type: decor
+    subtype: misc
+    parm: 1
+    text:
+      name: 171
+      long_name: 171
+      description: 159  # Entity 175
+  door_locked:
+    sprite: red_door_locked
+    type: door
+    subtype: locked
+    parm: 1
+    text:
+      name: 139
+      long_name: 159
+      description: 159  # Entity 176
+  door_unlocked:
+    sprite: red_door_unlocked
+    type: door
+    subtype: unlocked
+    parm: 1
+    text:
+      name: 138
+      long_name: 159
+      description: 159  # Entity 177
+  door_locked_2:
+    sprite: blue_door_locked
+    type: door
+    subtype: locked
+    parm: 1
+    text:
+      name: 141
+      long_name: 159
+      description: 159  # Entity 178
+  door_unlocked_2:
+    sprite: blue_door_unlocked
+    type: door
+    subtype: unlocked
+    parm: 1
+    text:
+      name: 140
+      long_name: 159
+      description: 159  # Entity 179
+  door_locked_3:
+    sprite: door_locked
+    type: door
+    subtype: locked
+    parm: 0
+    text:
+      name: 142
+      long_name: 159
+      description: 159  # Entity 180
+  door_unlocked_3:
+    sprite: door_unlocked
+    type: door
+    subtype: unlocked
+    parm: 0
+    text:
+      name: 143
+      long_name: 159
+      description: 159  # Entity 181
+  door_locked_4:
+    sprite: level_door_locked
+    type: door
+    subtype: locked
+    parm: 2
+    text:
+      name: 168
+      long_name: 168
+      description: 159  # Entity 182
+  door_unlocked_4:
+    sprite: level_door_unlocked
+    type: door
+    subtype: unlocked
+    parm: 2
+    text:
+      name: 169
+      long_name: 169
+      description: 159  # Entity 183
+  decor_noclip_0_4:
+    sprite: flat_lava
+    type: decor_noclip
+    subtype: misc
+    parm: 0
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 184
+  decor_noclip_0_5:
+    sprite: flat_lava2
+    type: decor_noclip
+    subtype: misc
+    parm: 0
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 185
+  nonobstructing_spritewall_0:
+    sprite: 507
+    type: nonobstructing_spritewall
+    subtype: 0
+    parm: 0
+    text:
+      name: 151
+      long_name: 159
+      description: 159  # Entity 186
+  spritewall_0:
+    sprite: 508
+    type: spritewall
+    subtype: 0
+    parm: 0
+    text:
+      name: 152
+      long_name: 159
+      description: 159  # Entity 187
+  spritewall_1:
+    sprite: 509
+    type: spritewall
+    subtype: 1
+    parm: 0
+    text:
+      name: 153
+      long_name: 159
+      description: 159  # Entity 188
+  player_0:
+    sprite: 510
+    type: player
+    subtype: 0
+    parm: 0
+    text:
+      name: 159
+      long_name: 159
+      description: 159  # Entity 189
+  world_0:
+    sprite: 511
+    type: world
+    subtype: 0
+    parm: 0
+    text:
+      name: 154
+      long_name: 159
+      description: 159

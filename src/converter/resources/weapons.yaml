@@ -1,0 +1,665 @@
+# Weapon definitions - consolidated combat and sprite data
+
+weapons:
+  assault_rifle:
+    index: 0
+    sprite: wp_view_assault_rifle
+    attack_sound: chaingun
+    damage:
+      min: 8
+      max: 10
+    range:
+      min: 0
+      max: 5
+    ammo:
+      type: bullets
+      usage: 1
+    projectile: bullet
+    shots: 2
+    shot_hold: 50
+    view_offsets:
+      idle: {x: -13, y: 88}
+      attack: {x: -8, y: 82}
+      flash: {x: 1, y: 12}
+    hud:
+      tex_row: 0
+      show_ammo: true
+    behavior:
+      has_flash_sprite: true
+  chainsaw:
+    index: 1
+    sprite: wp_view_chainsaw
+    attack_sound: chainsaw
+    damage:
+      min: 18
+      max: 22
+    range:
+      min: 0
+      max: 1
+    ammo:
+      type: none
+      usage: 0
+    projectile: none
+    shots: 1
+    shot_hold: 100
+    view_offsets:
+      idle: {x: -33, y: 80}
+      attack: {x: -53, y: 91}
+      flash: {x: 30, y: 26}
+    display:
+      offset_y: 3
+      sw_offset: {x: -7, y: 4}
+    hud:
+      tex_row: 1
+      show_ammo: false
+    on_kill_grant:
+      kills: 30
+      strength: 2
+    behavior:
+      vibrate_anim: true
+      chainsaw_hit_event: true
+      is_melee: true
+      no_recoil: true
+  holy_water_pistol:
+    index: 2
+    sprite: wp_view_holy_water_pistol
+    attack_sound: holywaterpistol
+    damage:
+      min: 5
+      max: 8
+    range:
+      min: 0
+      max: 3
+    ammo:
+      type: holy_water
+      usage: 2
+    projectile: water
+    shots: 2
+    shot_hold: 50
+    view_offsets:
+      idle: {x: -9, y: 89}
+      attack: {x: -4, y: 81}
+      flash: {x: 0, y: 0}
+    display:
+      offset_y: 10
+      sw_offset: {y: 3}
+    hud:
+      tex_row: 2
+      show_ammo: true
+    behavior:
+      no_blood_on_hit: true
+  shooting_sentry_bot:
+    index: 3
+    sprite: wp_view_shooting_sentry_bot
+    attack_sound: pistol
+    damage:
+      min: 12
+      max: 15
+    range:
+      min: 0
+      max: 5
+    ammo:
+      type: sentry_bot
+      usage: 0
+    projectile: bullet
+    shots: 1
+    shot_hold: 35
+    view_offsets:
+      idle: {x: -23, y: 65}
+      attack: {x: -15, y: 88}
+      flash: {x: 30, y: 18}
+    display:
+      offset_y: 12
+      sw_offset: {x: -4, y: 12}
+    hud:
+      tex_row: 10
+      show_ammo: true
+  exploding_sentry_bot:
+    index: 4
+    sprite: wp_view_exploding_sentry_bot
+    damage:
+      min: 100
+      max: 120
+    range:
+      min: 0
+      max: 4
+    ammo:
+      type: sentry_bot
+      usage: 0
+    projectile: none
+    shots: 1
+    shot_hold: 30
+    view_offsets:
+      idle: {x: -23, y: 65}
+      attack: {x: -15, y: 88}
+      flash: {x: 30, y: 18}
+    display:
+      offset_y: 12
+      sw_offset: {x: -4, y: 12}
+    hud:
+      tex_row: 10
+      show_ammo: true
+    behavior:
+      no_recoil: true
+      splash_damage: true
+      splash_divisor: 2
+      consume_on_use: true
+  red_shooting_sentry_bot:
+    index: 5
+    sprite: wp_view_red_shooting_sentry_bot
+    attack_sound: pistol
+    damage:
+      min: 20
+      max: 30
+    range:
+      min: 0
+      max: 5
+    ammo:
+      type: sentry_bot
+      usage: 0
+    projectile: bullet
+    shots: 1
+    shot_hold: 35
+    view_offsets:
+      idle: {x: -23, y: 65}
+      attack: {x: -15, y: 88}
+      flash: {x: 30, y: 18}
+    display:
+      offset_y: 12
+      sw_offset: {x: -4, y: 12}
+    hud:
+      tex_row: 11
+      show_ammo: true
+  red_exploding_sentry_bot:
+    index: 6
+    sprite: wp_view_red_exploding_sentry_bot
+    damage:
+      min: 140
+      max: 155
+    range:
+      min: 0
+      max: 4
+    ammo:
+      type: sentry_bot
+      usage: 0
+    projectile: none
+    shots: 1
+    shot_hold: 30
+    view_offsets:
+      idle: {x: -23, y: 65}
+      attack: {x: -15, y: 88}
+      flash: {x: 30, y: 18}
+    display:
+      offset_y: 12
+      sw_offset: {x: -4, y: 12}
+    hud:
+      tex_row: 11
+      show_ammo: true
+    behavior:
+      no_recoil: true
+      splash_damage: true
+      splash_divisor: 2
+      consume_on_use: true
+  super_shotgun:
+    index: 7
+    sprite: wp_view_super_shotgun
+    attack_sound: supershotgun
+    damage:
+      min: 25
+      max: 30
+    range:
+      min: 0
+      max: 3
+    ammo:
+      type: shells
+      usage: 2
+    projectile: bullet
+    shots: 1
+    shot_hold: 30
+    view_offsets:
+      idle: {x: -8, y: 88}
+      attack: {x: 0, y: 82}
+      flash: {x: -1, y: 14}
+    display:
+      sw_offset: {x: 1}
+    hud:
+      tex_row: 3
+      show_ammo: true
+    behavior:
+      has_flash_sprite: true
+  chaingun:
+    index: 8
+    sprite: wp_view_chaingun
+    attack_sound: chaingun
+    damage:
+      min: 12
+      max: 15
+    range:
+      min: 0
+      max: 5
+    ammo:
+      type: bullets
+      usage: 1
+    projectile: bullet
+    shots: 4
+    shot_hold: 15
+    view_offsets:
+      idle: {x: -20, y: 88}
+      attack: {x: -14, y: 82}
+      flash: {x: 5, y: 20}
+    display:
+      sw_offset: {x: -3}
+    hud:
+      tex_row: 4
+      show_ammo: true
+    behavior:
+      show_flash_frame: true
+      has_flash_sprite: true
+      draw_double_sprite: true
+  assault_rifle_with_scope:
+    index: 9
+    sprite: wp_view_assault_rifle_with_scope
+    attack_sound: pistol
+    damage:
+      min: 20
+      max: 25
+    range:
+      min: 0
+      max: 5
+    ammo:
+      type: bullets
+      usage: 1
+    projectile: bullet
+    shots: 1
+    shot_hold: 30
+    view_offsets:
+      idle: {x: -13, y: 88}
+      attack: {x: -14, y: 82}
+      flash: {x: 30, y: 18}
+    hud:
+      tex_row: 5
+      show_ammo: true
+  plasma_gun:
+    index: 10
+    sprite: wp_view_plasma_gun
+    attack_sound: plasma
+    damage:
+      min: 20
+      max: 25
+    range:
+      min: 0
+      max: 5
+    ammo:
+      type: cells
+      usage: 1
+    projectile: plasma
+    shots: 3
+    shot_hold: 5
+    view_offsets:
+      idle: {x: -2, y: 88}
+      attack: {x: 1, y: 82}
+      flash: {x: 30, y: 18}
+    display:
+      sw_offset: {x: 3}
+    hud:
+      tex_row: 6
+      show_ammo: true
+  rocket_launcher:
+    index: 11
+    sprite: wp_view_rocket_launcher
+    attack_sound: rocketlauncher
+    damage:
+      min: 80
+      max: 90
+    range:
+      min: 0
+      max: 5
+    ammo:
+      type: rockets
+      usage: 1
+    projectile: rocket
+    shots: 1
+    shot_hold: 30
+    view_offsets:
+      idle: {x: 0, y: 88}
+      attack: {x: 8, y: 82}
+      flash: {x: 22, y: 26}
+    display:
+      sw_offset: {x: 3}
+    hud:
+      tex_row: 7
+      show_ammo: true
+    behavior:
+      splash_damage: true
+      splash_divisor: 2
+  bfg:
+    index: 12
+    sprite: wp_view_bfg
+    attack_sound: bfg
+    damage:
+      min: 200
+      max: 220
+    range:
+      min: 0
+      max: 5
+    ammo:
+      type: cells
+      usage: 10
+    projectile: bfg
+    shots: 1
+    shot_hold: 30
+    view_offsets:
+      idle: {x: -44, y: 88}
+      attack: {x: -44, y: 66}
+      flash: {x: 30, y: 18}
+    display:
+      sw_offset: {x: -11}
+    hud:
+      tex_row: 8
+      show_ammo: true
+    behavior:
+      splash_damage: true
+      splash_divisor: 4
+  soul_cube:
+    index: 13
+    sprite: wp_view_soul_cube
+    attack_sound: soulcube
+    damage:
+      min: 250
+      max: 250
+    range:
+      min: 0
+      max: 5
+    ammo:
+      type: soul_cube
+      usage: 5
+    projectile: soul_cube
+    shots: 1
+    shot_hold: 30
+    view_offsets:
+      idle: {x: -20, y: 88}
+      attack: {x: 0, y: 88}
+      flash: {x: -25, y: -32}
+    display:
+      sw_offset: {x: -3}
+    hud:
+      tex_row: 9
+      show_ammo: true
+    behavior:
+      show_flash_frame: true
+      soul_ammo_display: true
+      charge_attack: true
+      flip_sprite_on_end: true
+  item:
+    index: 14
+    sprite: wp_view_item
+    attack_sound: weapon_toilet_throw
+    attack_sound_alt: weapon_toilet_throw2
+    damage:
+      min: 20
+      max: 20
+    range:
+      min: 0
+      max: 5
+    ammo:
+      type: item
+      usage: 1
+    projectile: item
+    shots: 1
+    shot_hold: 35
+    view_offsets:
+      idle: {x: -10, y: 40}
+      attack: {x: -20, y: 88}
+      flash: {x: -30, y: -48}
+    hud:
+      tex_row: 12
+      show_ammo: true
+    behavior:
+      is_throwable_item: true
+      consume_on_use: true
+  m_bite:
+    index: 15
+    damage:
+      min: 6
+      max: 8
+    range:
+      min: 1
+      max: 1
+    ammo:
+      type: none
+      usage: 0
+    projectile: melee
+    shots: 1
+    shot_hold: 20
+  m_claw:
+    index: 16
+    damage:
+      min: 5
+      max: 6
+    range:
+      min: 1
+      max: 1
+    ammo:
+      type: none
+      usage: 0
+    projectile: melee
+    shots: 2
+    shot_hold: 10
+  m_punch:
+    index: 17
+    damage:
+      min: 7
+      max: 9
+    range:
+      min: 1
+      max: 1
+    ammo:
+      type: none
+      usage: 0
+    projectile: melee
+    shots: 1
+    shot_hold: 20
+  m_charge:
+    index: 18
+    damage:
+      min: 8
+      max: 12
+    range:
+      min: 1
+      max: 2
+    ammo:
+      type: none
+      usage: 0
+    projectile: melee
+    shots: 1
+    shot_hold: 20
+  m_flesh_throw:
+    index: 19
+    damage:
+      min: 8
+      max: 10
+    range:
+      min: 1
+      max: 3
+    ammo:
+      type: none
+      usage: 0
+    projectile: flesh
+    shots: 1
+    shot_hold: 30
+  m_fireball:
+    index: 20
+    damage:
+      min: 10
+      max: 12
+    range:
+      min: 1
+      max: 3
+    ammo:
+      type: none
+      usage: 0
+    projectile: fire
+    shots: 1
+    shot_hold: 10
+  m_plasma:
+    index: 21
+    damage:
+      min: 10
+      max: 12
+    range:
+      min: 2
+      max: 3
+    ammo:
+      type: none
+      usage: 0
+    projectile: caco_plasma
+    shots: 1
+    shot_hold: 10
+  m_floor_strike:
+    index: 22
+    damage:
+      min: 8
+      max: 10
+    range:
+      min: 1
+      max: 3
+    ammo:
+      type: none
+      usage: 0
+    projectile: thorns
+    shots: 1
+    shot_hold: 35
+  m_fire:
+    index: 23
+    damage:
+      min: 15
+      max: 18
+    range:
+      min: 0
+      max: 5
+    ammo:
+      type: none
+      usage: 0
+    projectile: none
+    shots: 1
+    shot_hold: 30
+  m_machine_gun:
+    index: 24
+    damage:
+      min: 3
+      max: 4
+    range:
+      min: 1
+      max: 4
+    ammo:
+      type: none
+      usage: 0
+    projectile: bullet
+    shots: 2
+    shot_hold: 30
+  m_chain_gun:
+    index: 25
+    damage:
+      min: 6
+      max: 9
+    range:
+      min: 1
+      max: 4
+    ammo:
+      type: none
+      usage: 0
+    projectile: bullet
+    shots: 4
+    shot_hold: 30
+  m_rockets:
+    index: 26
+    damage:
+      min: 20
+      max: 25
+    range:
+      min: 1
+      max: 5
+    ammo:
+      type: none
+      usage: 0
+    projectile: rocket
+    shots: 1
+    shot_hold: 30
+  m_acid_spit:
+    index: 27
+    damage:
+      min: 15
+      max: 20
+    range:
+      min: 1
+      max: 6
+    ammo:
+      type: none
+      usage: 0
+    projectile: acid
+    shots: 1
+    shot_hold: 30
+  m_plasma_gun:
+    index: 28
+    damage:
+      min: 8
+      max: 10
+    range:
+      min: 1
+      max: 4
+    ammo:
+      type: none
+      usage: 0
+    projectile: bfg
+    shots: 2
+    shot_hold: 10
+  m_vios_plasma:
+    index: 29
+    damage:
+      min: 15
+      max: 20
+    range:
+      min: 1
+      max: 5
+    ammo:
+      type: none
+      usage: 0
+    projectile: caco_plasma
+    shots: 1
+    shot_hold: 30
+  m_vios_lightning:
+    index: 30
+    damage:
+      min: 10
+      max: 12
+    range:
+      min: 1
+      max: 6
+    ammo:
+      type: none
+      usage: 0
+    projectile: electric
+    shots: 1
+    shot_hold: 30
+  m_vios_poison:
+    index: 31
+    damage:
+      min: 15
+      max: 20
+    range:
+      min: 1
+      max: 5
+    ammo:
+      type: none
+      usage: 0
+    projectile: bfg
+    shots: 1
+    shot_hold: 30
+ammo_parms:
+  none: 0
+  bullets: 1
+  shells: 2
+  holy_water: 3
+  cells: 4
+  rockets: 5
+  soul_cube: 6

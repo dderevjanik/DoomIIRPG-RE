@@ -1,0 +1,5 @@
+# Level configuration for tycho
+
+name: tycho
+map_id: 1
+joke_items: [180, 181, 182, 183, 184]

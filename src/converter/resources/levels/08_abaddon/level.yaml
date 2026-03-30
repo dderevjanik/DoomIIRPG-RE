@@ -1,0 +1,30 @@
+# Level configuration for abaddon
+
+name: abaddon
+map_id: 8
+joke_items: [34, 35, 36, 37, 38]
+starting_loadout:
+  weapons: [bfg, rocket_launcher, plasma_gun, assault_rifle_with_scope, chaingun, super_shotgun, holy_water_pistol, chainsaw, assault_rifle]
+  weapon_ammo:
+    red_shooting_sentry_bot: 100
+  armor: 38
+  inventory:
+    health_pack: 146
+    health_ration_bar: 94
+    armor_large: 27
+    armor_small: 20
+    uac_credit: 168
+  ammo:
+    bullets: 89
+    holy_water: 25
+    shells: 94
+    cells: 52
+    rockets: 100
+  xp: 7198
+  stats:
+    defense: 27
+    strength: 16
+    accuracy: 8
+    agility: 22
+    iq: 46
+  vios_mallocs: 4

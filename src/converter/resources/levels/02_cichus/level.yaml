@@ -1,0 +1,23 @@
+# Level configuration for cichus
+
+name: cichus
+map_id: 2
+fog: false
+joke_items: [149, 150, 151, 152, 153]
+starting_loadout:
+  weapons: [chainsaw, assault_rifle]
+  armor: 33
+  inventory:
+    health_pack: 23
+    armor_large: 4
+    armor_small: 3
+    uac_credit: 4
+  ammo:
+    bullets: 100
+  xp: 638
+  stats:
+    defense: 4
+    strength: 2
+    accuracy: 11
+    iq: 4
+  vios_mallocs: 0

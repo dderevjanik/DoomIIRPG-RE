@@ -1,0 +1,30 @@
+# Level configuration for gehenna
+
+name: gehenna
+map_id: 7
+joke_items: [24, 25, 26, 27, 28]
+starting_loadout:
+  weapons: [rocket_launcher, plasma_gun, assault_rifle_with_scope, chaingun, super_shotgun, holy_water_pistol, chainsaw, assault_rifle]
+  weapon_ammo:
+    red_shooting_sentry_bot: 100
+  armor: 44
+  inventory:
+    health_pack: 132
+    health_ration_bar: 72
+    armor_large: 23
+    armor_small: 12
+    uac_credit: 168
+  ammo:
+    bullets: 70
+    holy_water: 40
+    shells: 66
+    cells: 60
+    rockets: 63
+  xp: 5971
+  stats:
+    defense: 25
+    strength: 14
+    accuracy: 8
+    agility: 18
+    iq: 40
+  vios_mallocs: 3

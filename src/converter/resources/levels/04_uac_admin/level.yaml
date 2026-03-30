@@ -1,0 +1,27 @@
+# Level configuration for uac_admin
+
+name: uac_admin
+map_id: 4
+joke_items: [129, 130, 131, 132, 133]
+starting_loadout:
+  weapons: [super_shotgun, holy_water_pistol, chainsaw, assault_rifle]
+  weapon_ammo:
+    exploding_sentry_bot: 100
+  armor: 4
+  inventory:
+    health_pack: 44
+    armor_large: 5
+    armor_small: 26
+    uac_credit: 59
+  ammo:
+    bullets: 73
+    holy_water: 30
+    shells: 24
+  xp: 2622
+  stats:
+    defense: 14
+    strength: 10
+    accuracy: 9
+    agility: 14
+    iq: 20
+  vios_mallocs: 1

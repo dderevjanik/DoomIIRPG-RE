@@ -1,0 +1,1691 @@
+# Menu definitions for DoomIIRPG  # string_id values are indices into menu strings (group 3)  # goto targets reference menu names instead of numeric IDs
+
+menus:
+  main:
+    menu_id: 3
+    type: main
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+    layout: {x: center, y: 126, w: btn_width, h: 176}
+    visible_buttons: [softkey_left]
+    items:
+      - type: background
+        image: main_bg
+        x: 240
+        y: 160
+        anchor: center
+      - type: image
+        image: logo
+        x: center
+        y: 0
+      - string_id: 71
+        flags: align_center
+        action: newgame
+      - string_id: 72
+        flags: align_center
+        action: goto
+        goto: main_options
+      - string_id: 77
+        flags: align_center
+        action: goto
+        goto: main_more_games
+      - string_id: 391
+        flags: align_center
+        action: goto
+        goto: comic_book
+      - string_id: 73
+        flags: align_center
+        action: goto
+        goto: main_minigame
+      - string_id: 74
+        flags: align_center
+        action: goto
+        goto: main_help
+      - string_id: 75
+        flags: align_center
+        action: goto
+        goto: main_about
+      - string_id: 76
+        flags: align_center
+        action: goto
+        goto: main_exit
+  main_more_games:
+    menu_id: 19
+    type: main_list
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+    layout: {x: center, y: 126, w: btn_width, h: 176}
+    visible_buttons: [softkey_left]
+    items:
+      - type: background
+        image: main_bg
+        x: 240
+        y: 160
+        anchor: center
+      - type: image
+        image: logo
+        x: center
+        y: 0
+      - string_id: 234
+        flags: align_center
+        action: back
+      - string_id: 0
+        flags: noselect,align_center
+      - string_id: 237
+        flags: noselect,align_center
+      - string_id: 0
+        flags: noselect,align_center
+      - string_id: 0
+        flags: noselect,align_center
+      - string_id: 238
+        flags: align_center
+        action: goto
+        goto: main_more_games
+  main_help:
+    menu_id: 4
+    type: vcenter
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+    layout: {x: center, y: 126, w: btn_width, h: 176}
+    load_start_item: 1
+    visible_buttons: [softkey_left]
+    items:
+      - type: background
+        image: main_bg
+        x: 240
+        y: 160
+        anchor: center
+      - type: image
+        image: logo
+        x: center
+        y: 0
+      - string_id: 81
+        flags: align_center
+        action: back
+      - string_id: 83
+        flags: align_center
+        action: goto
+        goto: main_general
+      - string_id: 85
+        flags: align_center
+        action: goto
+        goto: main_move
+      - string_id: 87
+        flags: align_center
+        action: goto
+        goto: main_attack
+      - string_id: 89
+        flags: align_center
+        action: goto
+        goto: main_sniper
+      - string_id: 91
+        flags: align_center
+        action: goto
+        goto: main_armorhelp
+      - string_id: 93
+        flags: align_center
+        action: goto
+        goto: main_itemhelp
+      - string_id: 101
+        flags: align_center
+        action: goto
+        goto: main_effecthelp
+      - string_id: 95
+        flags: align_center
+        action: goto
+        goto: main_hacker_help
+      - string_id: 97
+        flags: align_center
+        action: goto
+        goto: main_matrix_skip_help
+      - string_id: 99
+        flags: align_center
+        action: goto
+        goto: main_power_up_help
+      - string_id: 103
+        flags: align_center
+        action: changestate
+        param: 15
+  main_minigame:
+    menu_id: 18
+    type: main_list
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+    layout: {x: center, y: 126, w: btn_width, h: 176}
+    selected_index: 1
+    load_start_item: 1
+    visible_buttons: [softkey_left]
+    items:
+      - type: background
+        image: main_bg
+        x: 240
+        y: 160
+        anchor: center
+      - type: image
+        image: logo
+        x: center
+        y: 0
+      - string_id: 234
+        flags: align_center
+        action: back
+      - string_id: 0
+        flags: noselect,align_center
+      - string_id: 231
+        flags: align_center
+        action: minigame
+        param: 2
+      - string_id: 232
+        flags: align_center
+        action: minigame
+      - string_id: 233
+        flags: align_center
+        action: minigame
+        param: 4
+  main_difficulty:
+    menu_id: 16
+    type: vcenter
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+    layout: {x: center, y: 126, w: btn_width, h: 176}
+    selected_index: 1
+    load_start_item: 1
+    visible_buttons: [softkey_left]
+    items:
+      - type: background
+        image: main_bg
+        x: 240
+        y: 160
+        anchor: center
+      - type: image
+        image: logo
+        x: center
+        y: 0
+      - string_id: 206
+        flags: noselect,align_center
+        action: goto
+        goto: main_difficulty
+      - string_id: 0
+        flags: noselect,align_center
+      - string_id: 207
+        flags: align_center
+        action: difficulty
+        param: 1
+      - string_id: 208
+        flags: align_center
+        action: difficulty
+        param: 2
+      - string_id: 209
+        flags: align_center
+        action: difficulty
+        param: 4
+  ingame:
+    menu_id: 29
+    type: list
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    selected_index: 1
+    visible_buttons: [softkey_left, softkey_right]
+    show_info_buttons: true
+    items:
+      - string_id: 114
+        action: goto
+        goto: items
+        help_string: 115
+      - string_id: 116
+        action: goto
+        goto: ingame_questlog
+        help_string: 117
+      - string_id: 118
+        action: save
+        help_string: 119
+      - string_id: 120
+        action: goto
+        goto: ingame_load
+        help_string: 121
+      - string_id: 122
+        action: changestate
+        param: 6
+        help_string: 123
+      - string_id: 124
+        action: goto
+        goto: ingame_status
+        help_string: 125
+      - string_id: 74
+        action: goto
+        goto: ingame_help
+        help_string: 79
+      - string_id: 72
+        action: goto
+        goto: ingame_options
+        help_string: 78
+      - string_id: 126
+        action: goto
+        goto: ingame_restartlvl
+        help_string: 127
+      - string_id: 128
+        action: goto
+        goto: ingame_savequit
+        help_string: 129
+      - string_id: 130
+        action: goto
+        goto: ingame_exit
+        help_string: 131
+  ingame_kicking:
+    menu_id: 57
+    type: list
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    visible_buttons: [softkey_left, softkey_right]
+    show_info_buttons: true
+    items:
+      - string_id: 109
+        action: returntogame
+        help_string: 110
+      - string_id: 74
+        action: goto
+        goto: ingame_help
+        help_string: 79
+      - string_id: 72
+        action: goto
+        goto: ingame_options
+        help_string: 78
+      - string_id: 132
+        action: goto
+        goto: ingame_exit
+        help_string: 133
+  ingame_loadnosave:
+    menu_id: 50
+    type: vcenter
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    scroll_index: 0
+    items:
+      - string_id: 138
+        flags: noselect,align_center
+      - string_id: 0
+      - string_id: 80
+        flags: align_center
+        action: back
+  ingame_help:
+    menu_id: 37
+    type: list
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    visible_buttons: [softkey_left, softkey_right]
+    items:
+      - string_id: 139
+        flags: noselect,align_center,divider
+      - string_id: 83
+        action: goto
+        goto: ingame_general
+        help_string: 84
+      - string_id: 85
+        action: goto
+        goto: ingame_move
+        help_string: 86
+      - string_id: 87
+        action: goto
+        goto: ingame_attack
+        help_string: 88
+      - string_id: 89
+        action: goto
+        goto: ingame_sniper
+        help_string: 90
+      - string_id: 91
+        action: goto
+        goto: ingame_armorhelp
+        help_string: 92
+      - string_id: 93
+        action: goto
+        goto: ingame_itemhelp
+        help_string: 94
+      - string_id: 101
+        action: goto
+        goto: ingame_effecthelp
+        help_string: 102
+      - string_id: 95
+        action: goto
+        goto: ingame_hacker_help
+        help_string: 96
+      - string_id: 97
+        action: goto
+        goto: ingame_matrix_skip_help
+        help_string: 98
+      - string_id: 99
+        action: goto
+        goto: ingame_power_up_help
+        help_string: 100
+      - string_id: 103
+        action: changestate
+        param: 15
+        help_string: 105
+  ingame_status:
+    menu_id: 30
+    type: list
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    visible_buttons: [softkey_left, softkey_right]
+    items:
+      - string_id: 0
+        flags: noselect,align_center
+      - string_id: 21
+        flags: noselect,align_center,divider
+      - string_id: 22
+        action: goto
+        goto: ingame_player
+        help_string: 23
+      - string_id: 24
+        action: goto
+        goto: ingame_level
+        help_string: 25
+      - string_id: 45
+        action: goto
+        goto: ingame_grades
+        help_string: 49
+  ingame_player:
+    menu_id: 31
+    type: list
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    selected_index: 2
+    visible_buttons: [softkey_left, softkey_right]
+    items:
+      - string_id: 0
+        flags: noselect,align_center
+      - string_id: 2
+        flags: noselect,align_center,divider
+      - string_id: 3
+        help_string: 4
+      - string_id: 5
+        help_string: 6
+      - string_id: 7
+        help_string: 8
+      - string_id: 9
+        help_string: 10
+      - string_id: 11
+        help_string: 12
+      - string_id: 13
+        help_string: 14
+      - string_id: 15
+        help_string: 16
+      - string_id: 224
+        help_string: 18
+      - string_id: 223
+        help_string: 20
+      - string_id: 225
+        help_string: 226
+      - string_id: 28
+        help_string: 54
+      - string_id: 34
+        help_string: 55
+      - string_id: 56
+        help_string: 57
+      - string_id: 60
+        help_string: 61
+      - string_id: 62
+        help_string: 63
+      - string_id: 58
+        help_string: 59
+      - string_id: 64
+        help_string: 65
+  ingame_level:
+    menu_id: 32
+    type: list
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    visible_buttons: [softkey_left, softkey_right]
+    items:
+      - string_id: 0
+        flags: noselect,align_center
+      - string_id: 0
+        flags: noselect,align_center,divider
+      - string_id: 28
+        help_string: 29
+      - string_id: 30
+        help_string: 31
+      - string_id: 32
+        help_string: 33
+      - string_id: 34
+        help_string: 35
+      - string_id: 56
+        help_string: 57
+      - string_id: 36
+        help_string: 37
+  ingame_grades:
+    menu_id: 33
+    type: list
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    visible_buttons: [softkey_left, softkey_right]
+    items:
+      - string_id: 0
+        flags: noselect,align_center
+  level_stats:
+    menu_id: 1
+    type: help
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 23, y: 0, w: 407, h: 320}
+    items:
+      - string_id: 0
+        flags: noselect,align_center
+      - string_id: 0
+        flags: noselect,align_center
+      - string_id: 0
+        flags: noselect,align_center
+      - string_id: 0
+        flags: noselect,align_center,divider
+      - string_id: 0
+        flags: noselect,align_center
+      - string_id: 28
+        help_string: 29
+      - string_id: 30
+        help_string: 31
+      - string_id: 32
+        help_string: 33
+      - string_id: 34
+        help_string: 35
+      - string_id: 56
+        help_string: 57
+      - string_id: 36
+        help_string: 37
+      - string_id: 0
+      - string_id: 0
+        flags: noselect,align_center
+      - string_id: 140
+        flags: noselect,align_center
+      - string_id: 70
+        flags: noselect,align_center
+  ingame_exit:
+    menu_id: 42
+    type: vcenter
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    items:
+      - string_id: 151
+        flags: noselect,align_center
+      - string_id: 0
+      - string_id: 152
+        flags: align_center
+        action: saveexit
+      - string_id: 153
+        flags: align_center
+        action: backtomain
+      - string_id: 154
+        flags: align_center
+        action: back
+  ingame_dead:
+    menu_id: 51
+    type: vcenter
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    items:
+      - string_id: 169
+        flags: noselect,align_center
+      - string_id: 0
+      - string_id: 170
+        flags: align_center
+        action: load
+      - string_id: 171
+        flags: align_center
+        action: restartlevel
+      - string_id: 172
+        flags: align_center
+        action: backtomain
+  end:
+    menu_id: 26
+    type: vcenter
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+    layout: {x: center, y: 126, w: btn_width, h: 176}
+    items:
+      - string_id: 230
+        flags: noselect,align_center
+      - string_id: 0
+      - string_id: 197
+        flags: align_center
+        action: save
+        param: 1
+      - string_id: 198
+        flags: align_center
+        action: goto
+        goto: end_finalquit
+  end_finalquit:
+    menu_id: 27
+    type: vcenter
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+    layout: {x: center, y: 126, w: btn_width, h: 176}
+    items:
+      - string_id: 205
+        flags: noselect,align_center
+      - string_id: 0
+      - string_id: 173
+        flags: align_center
+        action: returntogame
+      - string_id: 174
+        flags: align_center
+        action: backtomain
+  items:
+    menu_id: 72
+    type: list
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    visible_buttons: [softkey_left, softkey_right]
+    show_info_buttons: true
+    items:
+      - string_id: 0
+        flags: noselect,align_center
+      - string_id: 111
+        flags: noselect,align_center,divider
+      - string_id: 175
+        action: goto
+        goto: items_weapons
+        help_string: 176
+  items_weapons:
+    menu_id: 73
+    type: list
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    visible_buttons: [softkey_left, softkey_right]
+    show_info_buttons: true
+    items:
+      - string_id: 0
+        flags: noselect,align_center
+      - string_id: 66
+        flags: noselect,align_center,divider
+  items_drinks:
+    menu_id: 75
+    type: list
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    visible_buttons: [softkey_left, softkey_right]
+    show_info_buttons: true
+    items:
+      - string_id: 0
+        flags: noselect,align_center
+      - string_id: 177
+        flags: noselect,align_center,divider
+  items_healthmsg:
+    menu_id: 79
+    type: vcenter
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    items:
+      - string_id: 185
+        flags: noselect,align_center
+      - string_id: 187
+        flags: noselect,align_center
+      - string_id: 0
+        flags: noselect,align_center
+      - string_id: 188
+        flags: align_center
+        action: backtwo
+  items_armormsg:
+    menu_id: 80
+    type: vcenter
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    items:
+      - string_id: 186
+        flags: noselect,align_center
+      - string_id: 187
+        flags: noselect,align_center
+      - string_id: 0
+        flags: noselect,align_center
+      - string_id: 188
+        flags: align_center
+        action: backtwo
+  items_syringemsg:
+    menu_id: 81
+    type: vcenter
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    items:
+      - string_id: 189
+        flags: noselect,align_center
+      - string_id: 191
+        flags: noselect,align_center
+      - string_id: 0
+        flags: noselect,align_center
+      - string_id: 188
+        flags: align_center
+        action: backtwo
+  items_holy_water_max:
+    menu_id: 82
+    type: vcenter
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    items:
+      - string_id: 190
+        flags: noselect,align_center
+      - string_id: 191
+        flags: noselect,align_center
+      - string_id: 0
+        flags: noselect,align_center
+      - string_id: 188
+        flags: align_center
+        action: backtwo
+  debug:
+    menu_id: 65
+    type: list
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    visible_buttons: [softkey_left, softkey_right]
+    items:
+      - string_id: 222
+        action: goto
+        goto: debug_stats
+      - string_id: 301
+        action: goto
+        goto: debug_maps
+      - string_id: 302
+        action: goto
+        goto: debug_sys
+      - string_id: 318
+        action: giveall
+      - string_id: 319
+        action: givemap
+      - string_id: 312
+        action: noclip
+      - string_id: 313
+        action: oneshot
+      - string_id: 315
+        action: disableai
+      - string_id: 314
+        action: skip_minigames
+      - string_id: 74
+        action: nohelp
+      - string_id: 317
+        action: godmode
+      - string_id: 303
+        action: showlocation
+      - string_id: 304
+        action: rframes
+      - string_id: 305
+        action: rspeeds
+      - string_id: 308
+        action: rskipflats
+      - string_id: 306
+        action: rskipcull
+      - string_id: 307
+        action: rskipbsp
+      - string_id: 309
+        action: rskiplines
+      - string_id: 310
+        action: rskipsprites
+      - string_id: 311
+        action: ronlyrender
+      - string_id: 291
+        action: rskipdecals
+      - string_id: 292
+        action: rskip2dstretch
+      - string_id: 297
+        action: render_mode
+      - string_id: 343
+        action: debug_font
+      - string_id: 293
+        action: driving_mode
+      - string_id: 316
+        action: equipformap
+      - string_id: 357
+        action: show_heap
+  debug_stats:
+    menu_id: 67
+    type: list
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    visible_buttons: [softkey_left, softkey_right]
+    items:
+      - string_id: 324
+      - string_id: 330
+      - string_id: 328
+      - string_id: 325
+      - string_id: 326
+      - string_id: 327
+      - string_id: 331
+      - string_id: 321
+      - string_id: 322
+      - string_id: 323
+      - string_id: 329
+      - string_id: 320
+  debug_sys:
+    menu_id: 70
+    type: list
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    visible_buttons: [softkey_left, softkey_right]
+    items:
+      - string_id: 332
+        action: sys_test
+      - string_id: 333
+        action: sys_test
+        param: 1
+      - string_id: 334
+        action: sys_test
+        param: 2
+  ingame_options:
+    menu_id: 35
+    type: list
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    visible_buttons: [softkey_left, softkey_right]
+    items:
+      - string_id: 395
+        action: goto
+        goto: ingame_controls
+      - string_id: 80
+        action: back
+  main_options:
+    menu_id: 17
+    type: main_list
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+    layout: {x: center, y: 126, w: btn_width, h: 176}
+    visible_buttons: [softkey_left]
+    items:
+      - type: background
+        image: main_bg
+        x: 240
+        y: 160
+        anchor: center
+      - type: image
+        image: logo
+        x: center
+        y: 0
+  ingame_controls:
+    menu_id: 62
+    type: main_list
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    visible_buttons: [softkey_left, softkey_right]
+    items:
+      - string_id: 396
+        action: control_layout
+        param: 255
+      - string_id: 397
+        action: flip_controls
+        param: 255
+  vending_machine:
+    menu_id: 83
+    type: vending_machine
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 11, w: 203, h: 250}
+    visible_buttons: [softkey_left, softkey_right]
+    show_info_buttons: true
+    items:
+      - string_id: 344
+        flags: noselect,align_center,divider
+      - string_id: 0
+        flags: noselect,align_center
+      - string_id: 178
+        action: goto
+        goto: vending_machine_drinks
+      - string_id: 352
+        action: goto
+        goto: vending_machine_snacks
+  vending_machine_drinks:
+    menu_id: 84
+    type: vending_machine
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 11, w: 203, h: 250}
+    visible_buttons: [softkey_left, softkey_right]
+    show_info_buttons: true
+    items:
+      - string_id: 178
+        flags: noselect,align_center,divider
+      - string_id: 0
+        flags: noselect,align_center
+  vending_machine_snacks:
+    menu_id: 85
+    type: vending_machine
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 11, w: 203, h: 250}
+    visible_buttons: [softkey_left, softkey_right]
+    show_info_buttons: true
+    items:
+      - string_id: 352
+        flags: noselect,align_center,divider
+      - string_id: 0
+        flags: noselect,align_center
+  vending_machine_confirm:
+    menu_id: 86
+    type: vending_machine
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 11, w: 203, h: 250}
+    visible_buttons: [softkey_left, softkey_right]
+    show_info_buttons: true
+    items:
+      - string_id: 345
+        flags: noselect,align_center,divider
+      - string_id: 0
+        flags: noselect,align_center
+  vending_machine_cant_buy:
+    menu_id: 87
+    type: vending_machine
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 11, w: 203, h: 250}
+    visible_buttons: [softkey_left, softkey_right]
+    items:
+      - string_id: 345
+        flags: noselect,align_center,divider
+      - string_id: 0
+        flags: noselect,align_center
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  none:
+    menu_id: 0
+    type: default
+  main_general:
+    inject: true
+    menu_id: 9
+    type: help
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+    layout: {x: 85, y: 0, w: 300, h: 320}
+    visible_buttons: [softkey_left]
+    help_resource: 1
+    items:
+      - type: background
+        image: main_bg
+        x: 240
+        y: 160
+        anchor: center
+  main_move:
+    inject: true
+    menu_id: 10
+    type: help
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+    layout: {x: 85, y: 0, w: 300, h: 320}
+    visible_buttons: [softkey_left]
+    help_resource: 2
+    items:
+      - type: background
+        image: main_bg
+        x: 240
+        y: 160
+        anchor: center
+  main_attack:
+    inject: true
+    menu_id: 11
+    type: help
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+    layout: {x: 85, y: 0, w: 300, h: 320}
+    visible_buttons: [softkey_left]
+    help_resource: 3
+    items:
+      - type: background
+        image: main_bg
+        x: 240
+        y: 160
+        anchor: center
+  main_sniper:
+    inject: true
+    menu_id: 12
+    type: help
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+    layout: {x: 85, y: 0, w: 300, h: 320}
+    visible_buttons: [softkey_left]
+    help_resource: 7
+    items:
+      - type: background
+        image: main_bg
+        x: 240
+        y: 160
+        anchor: center
+  main_armorhelp:
+    inject: true
+    menu_id: 5
+    type: help
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+    layout: {x: 85, y: 0, w: 300, h: 320}
+    visible_buttons: [softkey_left]
+    help_resource: 4
+    items:
+      - type: background
+        image: main_bg
+        x: 240
+        y: 160
+        anchor: center
+  main_effecthelp:
+    inject: true
+    menu_id: 6
+    type: help
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+    layout: {x: 85, y: 0, w: 300, h: 320}
+    visible_buttons: [softkey_left]
+    help_resource: 5
+    items:
+      - type: background
+        image: main_bg
+        x: 240
+        y: 160
+        anchor: center
+  main_itemhelp:
+    inject: true
+    menu_id: 7
+    type: help
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+    layout: {x: 85, y: 0, w: 300, h: 320}
+    visible_buttons: [softkey_left]
+    help_resource: 6
+    items:
+      - type: background
+        image: main_bg
+        x: 240
+        y: 160
+        anchor: center
+  main_about:
+    inject: true
+    menu_id: 8
+    type: help
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+    layout: {x: 85, y: 0, w: 300, h: 320}
+    visible_buttons: [softkey_left]
+    help_resource: 11
+    items:
+      - type: background
+        image: main_bg
+        x: 240
+        y: 160
+        anchor: center
+  main_hacker_help:
+    inject: true
+    menu_id: 20
+    type: help
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+    layout: {x: 85, y: 0, w: 300, h: 320}
+    visible_buttons: [softkey_left]
+    help_resource: 8
+    items:
+      - type: background
+        image: main_bg
+        x: 240
+        y: 160
+        anchor: center
+  main_matrix_skip_help:
+    inject: true
+    menu_id: 21
+    type: help
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+    layout: {x: 85, y: 0, w: 300, h: 320}
+    visible_buttons: [softkey_left]
+    help_resource: 9
+    items:
+      - type: background
+        image: main_bg
+        x: 240
+        y: 160
+        anchor: center
+  main_power_up_help:
+    inject: true
+    menu_id: 22
+    type: help
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+    layout: {x: 85, y: 0, w: 300, h: 320}
+    visible_buttons: [softkey_left]
+    help_resource: 10
+    items:
+      - type: background
+        image: main_bg
+        x: 240
+        y: 160
+        anchor: center
+  main_exit_injected:
+    inject: true
+    menu_id: 13
+    type: main
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+  main_confirmnew_injected:
+    inject: true
+    menu_id: 14
+    type: vcenter
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+  main_confirmnew2_injected:
+    inject: true
+    menu_id: 15
+    type: vcenter
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+  select_language_injected:
+    inject: true
+    menu_id: 23
+    type: vcenter
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+  end_ranking_injected:
+    inject: true
+    menu_id: 24
+    type: help
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+  enable_sounds_injected:
+    inject: true
+    menu_id: 25
+    type: main
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+  ingame_general:
+    inject: true
+    menu_id: 38
+    type: help
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 23, y: 10, w: 434, h: 241}
+    visible_buttons: [softkey_left, softkey_right]
+    help_resource: 1
+  ingame_move:
+    inject: true
+    menu_id: 39
+    type: help
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 23, y: 10, w: 434, h: 241}
+    visible_buttons: [softkey_left, softkey_right]
+    help_resource: 2
+  ingame_attack:
+    inject: true
+    menu_id: 40
+    type: help
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 23, y: 10, w: 434, h: 241}
+    visible_buttons: [softkey_left, softkey_right]
+    help_resource: 3
+  ingame_sniper:
+    inject: true
+    menu_id: 41
+    type: help
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 23, y: 10, w: 434, h: 241}
+    visible_buttons: [softkey_left, softkey_right]
+    help_resource: 7
+  ingame_armorhelp:
+    inject: true
+    menu_id: 43
+    type: help
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 23, y: 10, w: 434, h: 241}
+    visible_buttons: [softkey_left, softkey_right]
+    help_resource: 4
+  ingame_effecthelp:
+    inject: true
+    menu_id: 44
+    type: help
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 23, y: 10, w: 434, h: 241}
+    visible_buttons: [softkey_left, softkey_right]
+    help_resource: 5
+  ingame_itemhelp:
+    inject: true
+    menu_id: 45
+    type: help
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 23, y: 10, w: 434, h: 241}
+    visible_buttons: [softkey_left, softkey_right]
+    help_resource: 6
+  ingame_hacker_help:
+    inject: true
+    menu_id: 59
+    type: help
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 23, y: 10, w: 434, h: 241}
+    visible_buttons: [softkey_left, softkey_right]
+    help_resource: 8
+  ingame_matrix_skip_help:
+    inject: true
+    menu_id: 60
+    type: help
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 23, y: 10, w: 434, h: 241}
+    visible_buttons: [softkey_left, softkey_right]
+    help_resource: 9
+  ingame_power_up_help:
+    inject: true
+    menu_id: 61
+    type: help
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 23, y: 10, w: 434, h: 241}
+    visible_buttons: [softkey_left, softkey_right]
+    help_resource: 10
+  ingame_questlog:
+    inject: true
+    menu_id: 46
+    type: notebook
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 23, y: 10, w: 434, h: 241}
+    visible_buttons: [softkey_left, softkey_right]
+  ingame_load:
+    inject: true
+    menu_id: 49
+    type: vcenter
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    yesno:
+      string_id: 136
+      select_yes: true
+      yes_action: load
+      yes_param: 0
+  ingame_restartlvl:
+    inject: true
+    menu_id: 52
+    type: vcenter
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    yesno:
+      string_id: 134
+      select_yes: true
+      yes_action: restartlevel
+      yes_param: 0
+  ingame_savequit:
+    inject: true
+    menu_id: 53
+    type: vcenter
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    yesno:
+      string_id: 135
+      select_yes: true
+      yes_action: savequit
+      yes_param: 0
+  ingame_special_exit:
+    inject: true
+    menu_id: 58
+    type: vcenter
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    visible_buttons: [softkey_left, softkey_right]
+    yesno:
+      string_id: 137
+      select_yes: false
+      yes_action: main_special
+      yes_param: 0
+  ingame_recipes:
+    inject: true
+    menu_id: 47
+    type: list
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+  ingame_save:
+    inject: true
+    menu_id: 48
+    type: list
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+  showdetails:
+    inject: true
+    menu_id: 71
+    type: notebook
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+  vending_machine_details:
+    inject: true
+    menu_id: 88
+    type: vending_machine
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+  debug_maps:
+    inject: true
+    menu_id: 66
+    type: list
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+  comic_book:
+    inject: true
+    menu_id: 89
+    type: default
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+  main_options_sound:
+    inject: true
+    menu_id: -3
+    type: main_list
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+    layout: {x: center, y: 10, w: btn_width, h: 300}
+    item_width: 204
+    visible_buttons: [softkey_left, sfx_volume_slider]
+    visible_buttons_conditional:
+      music_volume_slider: music_on
+    vibration_y: 169
+    items:
+      - type: background
+        image: main_bg
+        x: 240
+        y: 160
+        anchor: center
+  main_options_video:
+    inject: true
+    menu_id: -2
+    type: main_list
+    button: {image: menu_btn_bg_ext, image_highlight: menu_btn_bg_ext_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    layout: {x: center, y: 10, w: btn_width, h: 300}
+    items:
+      - type: background
+        image: main_bg
+        x: 240
+        y: 160
+        anchor: center
+  main_options_input:
+    inject: true
+    menu_id: -1
+    type: main_list
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+    layout: {x: center, y: 10, w: btn_width, h: 300}
+    items:
+      - type: background
+        image: main_bg
+        x: 240
+        y: 160
+        anchor: center
+  main_controls:
+    inject: true
+    menu_id: -4
+    type: main_list
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+    layout: {x: center, y: 10, w: btn_width, h: 300}
+    items:
+      - type: background
+        image: main_bg
+        x: 240
+        y: 160
+        anchor: center
+  main_bindings:
+    inject: true
+    menu_id: -5
+    type: main_list
+    button: {image: menu_btn_bg_ext, image_highlight: menu_btn_bg_ext_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    layout: {x: center, y: 10, w: btn_width, h: 300}
+    items:
+      - type: background
+        image: main_bg
+        x: 240
+        y: 160
+        anchor: center
+  main_controller:
+    inject: true
+    menu_id: -6
+    type: main_list
+    button: {image: menu_btn_bg, image_highlight: menu_btn_bg_on, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_height: 46
+    scrollbar: {style: dial, default_x: 408, default_y: 81}
+    layout: {x: center, y: 10, w: btn_width, h: 300}
+    item_width: 204
+    visible_buttons: [softkey_left, vibration_slider, deadzone_slider]
+    vibration_y: 169
+    items:
+      - type: background
+        image: main_bg
+        x: 240
+        y: 160
+        anchor: center
+  ingame_options_sound:
+    inject: true
+    menu_id: 55
+    type: list
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    item_width: 204
+    visible_buttons: [softkey_left, sfx_volume_slider, softkey_right]
+    visible_buttons_conditional:
+      music_volume_slider: music_on
+    vibration_y: 169
+  ingame_options_video:
+    inject: true
+    menu_id: 56
+    type: list
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    visible_buttons: [softkey_left, softkey_right]
+  ingame_options_input:
+    inject: true
+    menu_id: 63
+    type: list
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    visible_buttons: [softkey_left, softkey_right]
+  ingame_bindings:
+    inject: true
+    menu_id: 54
+    type: list
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    visible_buttons: [softkey_left, softkey_right]
+  ingame_controller:
+    inject: true
+    menu_id: 64
+    type: list
+    button: {image: ingame_option_btn, render_mode: 1, highlight_render_mode: 0}
+    info_button: {image: info_btn_normal, image_highlight: info_btn_pressed, render_mode: 1, highlight_render_mode: 0}
+    item_padding_bottom: 10
+    scrollbar: {style: bar, images: [game_scrollbar, game_top_slider, game_mid_slider, game_bottom_slider], x: 430, width: 50}
+    layout: {x: 70, y: 10, w: 340, h: 241}
+    item_width: 204
+    visible_buttons: [softkey_left, softkey_right, vibration_slider, deadzone_slider]
+    vibration_y: 169
