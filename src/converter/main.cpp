@@ -3602,6 +3602,52 @@ static bool extractSpritesToYaml(const std::string& outDir) {
 		printf("  Loaded %d sprite names for tile lookup\n", (int)tileIdToName.size());
 	}
 
+	// Collect all media indices from all maps and add unnamed ones to sprites.yaml
+	{
+		std::set<int> allMediaIds;
+		for (int mapId = 1; mapId <= 10; mapId++) {
+			std::string dirName = getLevelDirName(mapId);
+			std::string mapBinPath = outDir + "/levels/" + dirName + "/map.bin";
+			MapData md;
+			std::string err;
+			if (MapDataIO::loadFromBin(mapBinPath, md, err)) {
+				for (auto idx : md.mediaIndices) allMediaIds.insert(idx);
+			}
+		}
+
+		// Find unnamed IDs and add as texture_NNN to sprites.yaml
+		std::string appendYaml;
+		int added = 0;
+		for (int id : allMediaIds) {
+			if (tileIdToName.find(id) == tileIdToName.end()) {
+				char name[32];
+				snprintf(name, sizeof(name), "texture_%03d", id);
+				tileIdToName[id] = name;
+				appendYaml += "  " + std::string(name) + ": {file: tables.bin, id: " + std::to_string(id) + "}\n";
+				added++;
+			}
+		}
+		if (added > 0) {
+			// Append to sprites.yaml
+			std::string spritesPath = outDir + "/sprites.yaml";
+			std::string existing;
+			FILE* f = fopen(spritesPath.c_str(), "r");
+			if (f) {
+				fseek(f, 0, SEEK_END);
+				long sz = ftell(f);
+				fseek(f, 0, SEEK_SET);
+				existing.resize(sz);
+				fread(&existing[0], 1, sz, f);
+				fclose(f);
+			}
+			// Insert before the closing of the sprites map (before image entries or at end)
+			// Simpler: just append under the sprites: key
+			std::string header = "\n  # Wall/floor textures (auto-generated from map media indices)\n";
+			writeString(spritesPath, existing + header + appendYaml);
+			printf("  Added %d texture names to sprites.yaml\n", added);
+		}
+	}
+
 	for (int mapId = 1; mapId <= 10; mapId++) {
 		std::string dirName = getLevelDirName(mapId);
 		std::string mapBinPath = outDir + "/levels/" + dirName + "/map.bin";
@@ -3637,6 +3683,19 @@ static bool extractSpritesToYaml(const std::string& outDir) {
 		yaml += "total_loot: " + std::to_string(mapData.totalLoot) + "\n";
 		if (mapData.flagsBitmask != 0) {
 			yaml += "flags_bitmask: " + std::to_string(mapData.flagsBitmask) + "\n";
+		}
+
+		// Media indices (textures used by this level)
+		if (!mapData.mediaIndices.empty()) {
+			yaml += "\nmedia_indices:\n";
+			for (auto idx : mapData.mediaIndices) {
+				auto nameIt = tileIdToName.find((int)idx);
+				if (nameIt != tileIdToName.end()) {
+					yaml += "  - " + nameIt->second + "\n";
+				} else {
+					yaml += "  - " + std::to_string(idx) + "\n";
+				}
+			}
 		}
 
 		// Maya cameras

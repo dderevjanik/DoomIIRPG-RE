@@ -807,6 +807,27 @@ bool Render::beginLoadMap(int mapNameID) {
 	}
 	app->resource->readMarker(&IS, 0xDEADBEEF);
 	IS.close();
+
+	// Override media indices from YAML if present
+	DataNode yamlMedia = levelYaml ? levelYaml["media_indices"] : DataNode();
+	if (yamlMedia && yamlMedia.isSequence() && yamlMedia.size() > 0) {
+		// Re-register media from YAML (clears previous registrations)
+		for (int i = 0; i < Render::MEDIA_MAX_IMAGES; i++) {
+			this->mediaPalColors[i] &= ~0x40000000;
+			this->mediaTexelSizes[i] &= ~0x40000000;
+		}
+		for (int i = 0; i < (int)yamlMedia.size(); i++) {
+			std::string val = yamlMedia[i].asString("");
+			int tileId = 0;
+			if (!val.empty() && (val[0] < '0' || val[0] > '9')) {
+				tileId = SpriteDefs::getIndex(val);
+			} else {
+				tileId = yamlMedia[i].asInt(0);
+			}
+			if (tileId > 0) this->RegisterMedia(tileId);
+		}
+	}
+
 	this->FinalizeMedia();
 
 	//-----------------------------
