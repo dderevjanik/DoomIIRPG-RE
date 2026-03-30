@@ -2,6 +2,10 @@
 
 Guidelines for AI agents working on this codebase.
 
+## About
+
+This project is based on the Doom II RPG reverse engineering effort and aims to build a custom RPG turn-based engine. The engine is designed to be moddable, with YAML-driven data and a flexible asset pipeline.
+
 ## Project Structure
 
 - **`src/converter/`** — CLI tool that extracts and converts assets from the original `.ipa` into `games/doom2rpg/`. Parses zip/binary formats and emits YAML + raw assets.
@@ -57,7 +61,11 @@ After bigger refactors (engine, asset pipeline, entity system, rendering, level 
 
 ## Documentation
 
-- `docs/d2-rpg/*.md` — binary format specs (entities, levels, media, menus, scripting, strings, tables). Read these before modifying format-related code.
+Project documentation lives in `docs/`. Game-specific documentation is split by title:
+
+- **`docs/`** — general project documentation (engine guides, modding guides).
+- **`docs/d1-rpg/`** — Doom 1 RPG format specs and reference material.
+- **`docs/d2-rpg/`** — Doom 2 RPG binary format specs (entities, levels, media, menus, scripting, strings, tables). Read these before modifying format-related code.
 - `docs/adding-entities.md` — guide for adding new entity types via YAML.
 - `docs/modding/adding-weapons.md` — guide for adding weapons.
 
