@@ -1,14 +1,6 @@
 # DRPG Engine
 
-![image](https://github.com/Erick194/DoomIIRPG-RE/assets/41172072/6249f7bd-18e6-4838-b1ec-8654d18cc1b4)<br>
-https://www.doomworld.com/forum/topic/135602
-
-DRPG Engine - A game engine for classic mobile RPG formats by [GEC]<br />
-Created by / Creado por Erick Vasquez Garcia.
-
-Current version / Version actual: **0.1.0**
-
-License: GPL v3
+![logo](./logo.png)
 
 ## Building
 
