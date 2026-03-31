@@ -48,6 +48,11 @@ Test scripts in `Testing/` can be run via `--script` flag:
 ./build/src/DRPGEngine --game doom2rpg --map levels/maps/map09.bin --script Testing/test_map09.script --seed 1337
 ```
 
+After any change to engine, core, or converter code, it's a good idea to verify the game still runs by launching in headless mode:
+```bash
+./build/src/DoomIIRPG --map levels/maps/map00.bin --headless --skip-travel-map
+```
+
 After bigger refactors (engine, asset pipeline, entity system, rendering, level loading), always run `scripts/test_map_loading.sh` before committing.
 
 ## Asset Pipeline
