@@ -12,15 +12,18 @@ static constexpr int TILE_SIZE = 64;
 static constexpr int WALL_HEIGHT = 64;  // Default wall height in world units
 
 // Coordinate conversion: world coords to byte values used in the binary format
-// Vertex bytes: worldCoord >> 7  (i.e. /128)
-// Line bytes: worldCoord >> 7
-// Node bounds: worldCoord >> 7
+// Engine reads vertex/bounds/line bytes with << 7, and viewX = (worldX << 4) + 8.
+// So byte = worldCoord / 8 = worldCoord >> 3 (NOT >> 3 as previously documented).
+// Verified against working test_map binary: tile col=1 boundary (world=64) = byte 8.
+// Vertex bytes: worldCoord >> 3
+// Line bytes: worldCoord >> 3
+// Node bounds: worldCoord >> 3 (clamped to 255)
 // Height: tile height byte << 3 = world Z
 
 // A polygon with vertices and texture info, before BSP compilation
 struct RawPolygon {
     struct Vertex {
-        uint8_t x, y, z;  // each = worldCoord >> 7
+        uint8_t x, y, z;  // each = worldCoord >> 3
         int8_t s, t;      // texture UV, each = texCoord >> 6
     };
 
@@ -29,7 +32,7 @@ struct RawPolygon {
     bool isWall = false;
     bool isFloor = false;
 
-    // Bounding box in node-bounds coordinates (worldCoord >> 7)
+    // Bounding box in node-bounds coordinates (worldCoord >> 3)
     uint8_t minX() const {
         uint8_t m = 255;
         for (auto& v : verts) m = std::min(m, v.x);
@@ -54,7 +57,7 @@ struct RawPolygon {
 
 // A raw line segment before compilation
 struct RawLine {
-    uint8_t x1, x2, y1, y2; // worldCoord >> 7
+    uint8_t x1, x2, y1, y2; // worldCoord >> 3
     uint8_t flags = 0;       // 4-bit flag
 };
 
@@ -96,31 +99,36 @@ static RawPolygon makeWallQuad(int col, int row, int dc, int dr,
     poly.tileNum = tileNum;
     poly.isWall = true;
 
-    // Edge world coordinates
+    // Edge world coordinates.
+    // Nudge wall 1 unit toward the open tile (dc,dr direction) so it
+    // partitions with the adjacent floor, not the solid tile. This ensures
+    // walls and their floors are in the same BSP leaf for correct draw order.
+    int nudge = 1; // 1 world unit toward open tile
     int wx0, wy0, wx1, wy1;
-    if (dc == 1) {       // East
-        wx0 = (col + 1) * 64; wy0 = row * 64;
-        wx1 = (col + 1) * 64; wy1 = (row + 1) * 64;
-    } else if (dc == -1) { // West
-        wx0 = col * 64; wy0 = (row + 1) * 64;
-        wx1 = col * 64; wy1 = row * 64;
-    } else if (dr == 1) { // South
-        wx0 = (col + 1) * 64; wy0 = (row + 1) * 64;
-        wx1 = col * 64;       wy1 = (row + 1) * 64;
-    } else {              // North
-        wx0 = col * 64;       wy0 = row * 64;
-        wx1 = (col + 1) * 64; wy1 = row * 64;
+    if (dc == 1) {       // East — wall at right edge, nudge right
+        wx0 = (col + 1) * 64 + nudge; wy0 = row * 64;
+        wx1 = (col + 1) * 64 + nudge; wy1 = (row + 1) * 64;
+    } else if (dc == -1) { // West — wall at left edge, nudge left
+        wx0 = col * 64 - nudge; wy0 = (row + 1) * 64;
+        wx1 = col * 64 - nudge; wy1 = row * 64;
+    } else if (dr == 1) { // South — wall at bottom edge, nudge down
+        wx0 = (col + 1) * 64; wy0 = (row + 1) * 64 + nudge;
+        wx1 = col * 64;       wy1 = (row + 1) * 64 + nudge;
+    } else {              // North — wall at top edge, nudge up
+        wx0 = col * 64;       wy0 = row * 64 - nudge;
+        wx1 = (col + 1) * 64; wy1 = row * 64 - nudge;
     }
 
-    uint8_t bx0 = (uint8_t)(wx0 >> 7), by0 = (uint8_t)(wy0 >> 7);
-    uint8_t bx1 = (uint8_t)(wx1 >> 7), by1 = (uint8_t)(wy1 >> 7);
-    uint8_t bzl = (uint8_t)(zLo >> 7),  bzh = (uint8_t)(zHi >> 7);
+    uint8_t bx0 = (uint8_t)(wx0 >> 3), by0 = (uint8_t)(wy0 >> 3);
+    uint8_t bx1 = (uint8_t)(wx1 >> 3), by1 = (uint8_t)(wy1 >> 3);
+    uint8_t bzl = (uint8_t)(zLo >> 3),  bzh = (uint8_t)(zHi >> 3);
 
-    // UV: s along edge length, t along height
-    RawPolygon::Vertex v0 = {bx0, by0, bzl, 0, 0};
-    RawPolygon::Vertex v1 = {bx1, by1, bzl, 1, 0};
-    RawPolygon::Vertex v2 = {bx1, by1, bzh, 1, 1};
-    RawPolygon::Vertex v3 = {bx0, by0, bzh, 0, 1};
+    // Winding: top-start → top-end → bottom-end → bottom-start (CW from front)
+    // Matches test_map convention
+    RawPolygon::Vertex v0 = {bx0, by0, bzh, 0, 1};
+    RawPolygon::Vertex v1 = {bx1, by1, bzh, 1, 1};
+    RawPolygon::Vertex v2 = {bx1, by1, bzl, 1, 0};
+    RawPolygon::Vertex v3 = {bx0, by0, bzl, 0, 0};
     poly.verts = {v0, v1, v2, v3};
     return poly;
 }
@@ -162,6 +170,44 @@ static void generateGeometry(const MapData& map,
                                                      zLo, zHi, tile.wallTexture));
                     }
                 }
+
+                // Generate corner fill quads at inside corners.
+                // An inside corner is where this solid tile and a diagonal neighbor
+                // are both solid, but both adjacent tiles (sharing an edge) are open.
+                // This creates a thin wall quad sealing the diagonal gap.
+                struct Corner { int dc1, dr1, dc2, dr2; }; // two adjacent directions
+                Corner corners[] = {{1,0,0,1}, {1,0,0,-1}, {-1,0,0,1}, {-1,0,0,-1}};
+                for (auto& cn : corners) {
+                    // Check: solid diagonal, both edges open
+                    if (isSolid(col+cn.dc1+cn.dc2, row+cn.dr1+cn.dr2) &&
+                        !isSolid(col+cn.dc1, row+cn.dr1) &&
+                        !isSolid(col+cn.dc2, row+cn.dr2)) {
+                        // Corner point in world coords
+                        int cx = (cn.dc1 > 0 ? (col+1)*64 : col*64);
+                        int cy = (cn.dr2 > 0 ? (row+1)*64 : row*64);
+                        uint8_t bh = tileHeight(col+cn.dc1, row+cn.dr1);
+                        int zLo = bh * 8;
+                        int zHi = zLo + WALL_HEIGHT;
+                        uint8_t bcx = (uint8_t)(cx >> 3);
+                        uint8_t bcy = (uint8_t)(cy >> 3);
+                        uint8_t bzl = (uint8_t)(zLo >> 3);
+                        uint8_t bzh = (uint8_t)(zHi >> 3);
+
+                        // Thin quad: 1 unit in each direction from the corner
+                        uint8_t bx2 = (uint8_t)(bcx + (cn.dc1 > 0 ? 0 : 1));
+                        uint8_t by2 = (uint8_t)(bcy + (cn.dr2 > 0 ? 0 : 1));
+                        RawPolygon fill;
+                        fill.tileNum = tile.wallTexture;
+                        fill.isWall = true;
+                        fill.verts = {
+                            {bcx, bcy, bzl, 0, 0},
+                            {bx2, by2, bzl, 0, 0},
+                            {bx2, by2, bzh, 0, 1},
+                            {bcx, bcy, bzh, 0, 1}
+                        };
+                        polys.push_back(fill);
+                    }
+                }
             } else {
                 // Floor quad
                 int wx0 = col * 64, wy0 = row * 64;
@@ -172,12 +218,25 @@ static void generateGeometry(const MapData& map,
                 poly.tileNum = tile.floorTexture;
                 poly.isFloor = true;
 
-                RawPolygon::Vertex v0 = {(uint8_t)(wx0 >> 7), (uint8_t)(wy0 >> 7), (uint8_t)(wz >> 7), 0, 0};
-                RawPolygon::Vertex v1 = {(uint8_t)(wx1 >> 7), (uint8_t)(wy0 >> 7), (uint8_t)(wz >> 7), 1, 0};
-                RawPolygon::Vertex v2 = {(uint8_t)(wx1 >> 7), (uint8_t)(wy1 >> 7), (uint8_t)(wz >> 7), 1, 1};
-                RawPolygon::Vertex v3 = {(uint8_t)(wx0 >> 7), (uint8_t)(wy1 >> 7), (uint8_t)(wz >> 7), 0, 1};
-                poly.verts = {v0, v1, v2, v3};
+                // Floor: CW winding viewed from above (matching test_map convention)
+                RawPolygon::Vertex fv0 = {(uint8_t)(wx0 >> 3), (uint8_t)(wy1 >> 3), (uint8_t)(wz >> 3), 0, 1};
+                RawPolygon::Vertex fv1 = {(uint8_t)(wx1 >> 3), (uint8_t)(wy1 >> 3), (uint8_t)(wz >> 3), 1, 1};
+                RawPolygon::Vertex fv2 = {(uint8_t)(wx1 >> 3), (uint8_t)(wy0 >> 3), (uint8_t)(wz >> 3), 1, 0};
+                RawPolygon::Vertex fv3 = {(uint8_t)(wx0 >> 3), (uint8_t)(wy0 >> 3), (uint8_t)(wz >> 3), 0, 0};
+                poly.verts = {fv0, fv1, fv2, fv3};
                 polys.push_back(poly);
+
+                // Ceiling quad (CCW from above = CW from below)
+                int wzCeil = wz + WALL_HEIGHT;
+                RawPolygon cpoly;
+                cpoly.tileNum = tile.floorTexture; // same texture for now
+                cpoly.isFloor = true;
+                RawPolygon::Vertex cv0 = {(uint8_t)(wx0 >> 3), (uint8_t)(wy0 >> 3), (uint8_t)(wzCeil >> 3), 0, 0};
+                RawPolygon::Vertex cv1 = {(uint8_t)(wx1 >> 3), (uint8_t)(wy0 >> 3), (uint8_t)(wzCeil >> 3), 1, 0};
+                RawPolygon::Vertex cv2 = {(uint8_t)(wx1 >> 3), (uint8_t)(wy1 >> 3), (uint8_t)(wzCeil >> 3), 1, 1};
+                RawPolygon::Vertex cv3 = {(uint8_t)(wx0 >> 3), (uint8_t)(wy1 >> 3), (uint8_t)(wzCeil >> 3), 0, 1};
+                cpoly.verts = {cv0, cv1, cv2, cv3};
+                polys.push_back(cpoly);
 
                 // Height-step walls: vertical face between adjacent non-solid tiles
                 // at different heights
@@ -237,11 +296,11 @@ static int buildBSPRecursive(
     buildNodes.emplace_back();
     BSPBuildNode& node = buildNodes[idx];
 
-    // Compute bounds in node-byte coords (world >> 7)
-    node.minX = (uint8_t)(minX >> 7);
-    node.minY = (uint8_t)(minY >> 7);
-    node.maxX = (uint8_t)(maxX >> 7);
-    node.maxY = (uint8_t)(maxY >> 7);
+    // Compute bounds in node-byte coords (world >> 3)
+    node.minX = (uint8_t)std::min(255, minX >> 3);
+    node.minY = (uint8_t)std::min(255, minY >> 3);
+    node.maxX = (uint8_t)std::min(255, maxX >> 3);
+    node.maxY = (uint8_t)std::min(255, maxY >> 3);
 
     // Leaf condition: few polys or small region or max depth
     if (polyIdxs.size() <= 4 || depth >= 10 ||
@@ -272,9 +331,9 @@ static int buildBSPRecursive(
         // Compute polygon center on split axis
         int center;
         if (node.axis == 0) {
-            center = ((int)p.minX() + (int)p.maxX()) * 128 / 2; // approximate world center
+            center = ((int)p.minX() + (int)p.maxX()) * 8 / 2; // byte * 8 = world center
         } else {
-            center = ((int)p.minY() + (int)p.maxY()) * 128 / 2;
+            center = ((int)p.minY() + (int)p.maxY()) * 8 / 2;
         }
         if (center < splitWorld) {
             leftPolys.push_back(pi);
@@ -302,6 +361,8 @@ static int buildBSPRecursive(
     }
 
     // If partition failed (all on one side), make leaf
+    if (depth < 4) {
+    }
     if (leftPolys.empty() || rightPolys.empty()) {
         node.isLeaf = true;
         node.polyIndices = std::move(polyIdxs);
@@ -356,13 +417,20 @@ static void packPolygons(
         byTexture[polys[pi].tileNum].push_back(pi);
     }
 
-    int meshCount = (int)byTexture.size();
+    // Count total meshes needed (max 127 polys per mesh, split large groups)
+    int meshCount = 0;
+    for (auto& [tileNum, indices] : byTexture) {
+        meshCount += ((int)indices.size() + 126) / 127;
+    }
     polyDataOffset = (int)polyData.size();
 
     // Write mesh count
     polyData.push_back((uint8_t)meshCount);
 
     for (auto& [tileNum, indices] : byTexture) {
+      for (int chunk = 0; chunk < (int)indices.size(); chunk += 127) {
+        int polyCount = std::min(127, (int)indices.size() - chunk);
+
         // 4 reserved bytes
         polyData.push_back(0);
         polyData.push_back(0);
@@ -370,20 +438,22 @@ static void packPolygons(
         polyData.push_back(0);
 
         // Packed mesh info: (tileNum << 7) | polyCount
-        int polyCount = (int)indices.size();
         uint16_t packed = (uint16_t)((tileNum << 7) | (polyCount & 0x7F));
         polyData.push_back(packed & 0xFF);
         polyData.push_back((packed >> 8) & 0xFF);
 
-        for (int pi : indices) {
+        for (int ci = chunk; ci < chunk + polyCount; ci++) {
+            int pi = indices[ci];
             auto& poly = polys[pi];
             int numVerts = (int)poly.verts.size();
 
             // Vertex count in lower 3 bits, axis flag in bits 3-4
             // AXIS_NONE (24) = explicit vertices, no 2-vert compression
+            // Walls use SWAPXY (64) flag — verified from working test_map
+            // Do NOT set POLY_FLAG_WALL_TEXTURE (32) — test_map doesn't use it
             uint8_t polyFlags = (uint8_t)(((numVerts - 2) & 0x7) | 24); // POLY_FLAG_AXIS_NONE
             if (poly.isWall)
-                polyFlags |= 32; // POLY_FLAG_WALL_TEXTURE
+                polyFlags |= 64; // POLY_FLAG_SWAPXY
             polyData.push_back(polyFlags);
 
             for (auto& v : poly.verts) {
@@ -394,6 +464,7 @@ static void packPolygons(
                 polyData.push_back((uint8_t)v.t);
             }
         }
+      } // chunk loop
     }
 }
 
@@ -421,7 +492,7 @@ bool BSPCompiler::compile(const MapData& map, BSPCompileResult& result, std::str
         leaf.bounds[3] = 16;
 
         result.nodes.push_back(leaf);
-        result.normals = {16384, 0, 0}; // single dummy normal
+        result.normals = {-16384, 0, 0}; // single dummy normal
         result.polyData.push_back(0);   // meshCount = 0
         return true;
     }
@@ -430,8 +501,8 @@ bool BSPCompiler::compile(const MapData& map, BSPCompileResult& result, std::str
     // Normal 0: +X (16384, 0, 0)
     // Normal 1: +Y (0, 16384, 0)
     result.normals = {
-        16384, 0, 0,  // +X
-        0, 16384, 0   // +Y
+        -16384, 0, 0,  // -X (negative, matching engine convention)
+        0, -16384, 0   // -Y
     };
 
     // Build BSP tree
@@ -502,14 +573,11 @@ bool BSPCompiler::compile(const MapData& map, BSPCompileResult& result, std::str
             // Interior node
             on.normalIdx = (uint8_t)(bn.axis); // 0=X normal, 1=Y normal
 
-            // nodeClassifyPoint: ((x*nx + y*ny + z*nz) >> 14) + offset
-            // For axis X with normal (16384,0,0): result = (x * 16384) >> 14 + offset = x + offset
-            // We want classify to be 0 at the split plane: x + offset = 0 => offset = -x
-            // But offset is stored as uint16, so it wraps around.
-            // splitCoord is in world coords. The engine uses signed arithmetic.
+            // With negative normals: classifyPoint = -viewX + offset
+            // viewX = worldX * 16 (render space). Split at worldX = S.
+            // Classify = 0 at split: -S*16 + offset = 0 → offset = S * 16
             int splitWorld = bn.splitCoord;
-            // offset = -splitWorld (as signed, stored as uint16)
-            on.offset = (int16_t)(-splitWorld);
+            on.offset = (int16_t)(splitWorld * 16);
 
             on.child1 = (int16_t)bn.leftChild;
             on.child2 = (int16_t)bn.rightChild;
