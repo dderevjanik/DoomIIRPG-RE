@@ -425,6 +425,11 @@ int main(int argc, char* args[]) {
 					}
 					gc2.jokeItems[mapId] = std::move(items);
 				}
+
+				DataNode skyNode = levelNode["sky_box"];
+				if (skyNode) {
+					gc2.levelInfos[mapId].skyBox = skyNode.asString("");
+				}
 			}
 		}
 	}

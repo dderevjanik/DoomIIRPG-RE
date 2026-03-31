@@ -440,6 +440,10 @@ static bool extractSpritesToYaml(const std::string& outDir) {
 			yaml += "flags_bitmask: " + std::to_string(mapData.flagsBitmask) + "\n";
 		}
 
+		// Sky box sprite name (derived from original engine formula)
+		const char* skyName = (((mapId - 1) / 5 % 2) == 0) ? "sky_earth" : "sky_hell";
+		yaml += "sky_box: " + std::string(skyName) + "\n";
+
 		// Media indices
 		if (!mapData.mediaIndices.empty()) {
 			yaml += "\nmedia_indices:\n";

@@ -1305,9 +1305,25 @@ bool Render::beginLoadMap(int mapNameID) {
 	app->canvas->updateLoadingBar(false);
 	this->postProcessSprites();
 
-	int skyIndex = ((this->mapNameID - 1) / 5 % 2) * 2;
-	int skyPal = app->resource->getNumTableShorts(skyIndex + 16);
-	int skyTexel = app->resource->getNumTableBytes(skyIndex + 17);
+	int skyTableBase;
+	{
+		const auto& gc = CAppContainer::getInstance()->gameConfig;
+		auto lit = gc.levelInfos.find(this->mapNameID);
+		if (lit != gc.levelInfos.end() && !lit->second.skyBox.empty()) {
+			int idx = SpriteDefs::getIndex(lit->second.skyBox);
+			if (idx > 0) {
+				skyTableBase = idx;
+			} else {
+				printf("[render] Unknown sky_box '%s' for map %d, using fallback\n",
+					lit->second.skyBox.c_str(), this->mapNameID);
+				skyTableBase = 16 + ((this->mapNameID - 1) / 5 % 2) * 2;
+			}
+		} else {
+			skyTableBase = 16 + ((this->mapNameID - 1) / 5 % 2) * 2;
+		}
+	}
+	int skyPal = app->resource->getNumTableShorts(skyTableBase);
+	int skyTexel = app->resource->getNumTableBytes(skyTableBase + 1);
 
 	this->skyMapPalette = new uint16_t*[16];
 	for (int i = 0; i < 16; i++) {
@@ -1316,8 +1332,8 @@ bool Render::beginLoadMap(int mapNameID) {
 	this->skyMapTexels = new uint8_t[skyTexel];
 
 	app->resource->beginTableLoading();
-	app->resource->loadUShortTable(this->skyMapPalette[0], skyIndex + 16);
-	app->resource->loadUByteTable(this->skyMapTexels, skyIndex + 17);
+	app->resource->loadUShortTable(this->skyMapPalette[0], skyTableBase);
+	app->resource->loadUByteTable(this->skyMapTexels, skyTableBase + 1);
 	app->resource->finishTableLoading();
 	app->canvas->updateLoadingBar(false);
 
