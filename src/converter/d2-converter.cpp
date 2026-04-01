@@ -790,7 +790,7 @@ static bool writeResourceFiles(const std::string& outDir) {
 // ========================================================================
 // Public entry point: convert a Doom II RPG IPA
 // ========================================================================
-bool convertGame(ZipFile& zip, const GameDef& game, const std::string& outputDir) {
+bool convertD2RPG(ZipFile& zip, const GameDef& game, const std::string& outputDir) {
 	g_game = &game;
 
 	bool ok = true;

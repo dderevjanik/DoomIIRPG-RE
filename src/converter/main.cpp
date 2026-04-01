@@ -6,6 +6,7 @@
 
 #include "ZipFile.h"
 #include "d2-converter.h"
+#include "d1-converter.h"
 
 // ========================================================================
 // Utility function implementations (shared across converters)
@@ -99,21 +100,25 @@ std::string escapeString(const uint8_t* raw, int len) {
 // Main
 // ========================================================================
 static void printUsage(const char* progName) {
-	printf("Usage: %s --ipa <path> [--output <dir>]\n", progName);
+	printf("Usage: %s --ipa <path> [--game <id>] [--output <dir>]\n", progName);
 	printf("\n");
 	printf("  --ipa <path>     Path to game .ipa file\n");
-	printf("  --output <dir>   Output directory (default: %s)\n", GAME_DOOM2RPG.defaultOutput);
+	printf("  --game <id>      Game to convert: doom2rpg (default), doom1rpg\n");
+	printf("  --output <dir>   Output directory (default: games/<game_id>)\n");
 }
 
 int main(int argc, char* argv[]) {
 	const char* ipaPath = nullptr;
+	const char* gameId = nullptr;
 	const GameDef* game = &GAME_DOOM2RPG;
-	std::string outputDir = game->defaultOutput;
+	std::string outputDir;
 	bool force = false;
 
 	for (int i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "--ipa") == 0 && i + 1 < argc) {
 			ipaPath = argv[++i];
+		} else if (strcmp(argv[i], "--game") == 0 && i + 1 < argc) {
+			gameId = argv[++i];
 		} else if (strcmp(argv[i], "--output") == 0 && i + 1 < argc) {
 			outputDir = argv[++i];
 		} else if (strcmp(argv[i], "--force") == 0 || strcmp(argv[i], "-f") == 0) {
@@ -122,6 +127,22 @@ int main(int argc, char* argv[]) {
 			printUsage(argv[0]);
 			return 0;
 		}
+	}
+
+	// Select game
+	if (gameId) {
+		if (strcmp(gameId, "doom2rpg") == 0 || strcmp(gameId, "d2rpg") == 0) {
+			game = &GAME_DOOM2RPG;
+		} else if (strcmp(gameId, "doom1rpg") == 0 || strcmp(gameId, "d1rpg") == 0) {
+			game = &GAME_DOOM1RPG;
+		} else {
+			fprintf(stderr, "Error: unknown game '%s'. Use doom2rpg or doom1rpg.\n", gameId);
+			return 1;
+		}
+	}
+
+	if (outputDir.empty()) {
+		outputDir = game->defaultOutput;
 	}
 
 	if (!ipaPath) {
@@ -149,7 +170,9 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 
-	bool ok = convertGame(zip, *game, outputDir);
+	// Both games use the same D2RPG converter for now.
+	// D1RPG-specific logic will be added later.
+	bool ok = convertD2RPG(zip, *game, outputDir);
 
 	zip.closeZipFile();
 

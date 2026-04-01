@@ -41,6 +41,6 @@ uint32_t readUInt(const uint8_t* data, int offset);
 std::string escapeString(const uint8_t* raw, int len);
 
 // ========================================================================
-// Game conversion entry point (implemented per-game, e.g. d2-converter.cpp)
+// Game conversion entry point
 // ========================================================================
-bool convertGame(ZipFile& zip, const GameDef& game, const std::string& outputDir);
+bool convertD2RPG(ZipFile& zip, const GameDef& game, const std::string& outputDir);
