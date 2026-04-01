@@ -94,6 +94,41 @@ def count_crossings_y(row, c0, c1):
 | POLY_FLAG_WALL_TEXTURE | DO NOT USE | Test_map doesn't use it (0x20) |
 | POLY_FLAG_SWAPXY | Walls only | Flags = 0x5a for walls, 0x1a for floors/ceilings |
 
+### Doors
+
+Doors are handled via **`level.yaml` sprites** + **passable collision lines**:
+
+**Door detection:** D1 lines with texture 0-10 are doors. For each door line, find the midpoint tile `(mx//64, my//64)` and the direction (horizontal = N/S, vertical = E/W).
+
+**Door sprites in `level.yaml`:**
+```yaml
+sprites:
+  - x: 1632         # D1 world coord (midpoint of door line)
+    y: 1504
+    tile: door_unlocked
+    flags: [animation, north, south]   # or [animation, east, west]
+```
+- Horizontal D1 lines → `north, south` direction flags
+- Vertical D1 lines → `east, west` direction flags
+
+**Wall polys:** Keep ALL walls including door tiles — do NOT exclude door wall polys. The door sprite renders on top of the wall texture when closed. When opened, the wall poly remains visible behind the opened door (acceptable visual).
+
+**Collision lines:** Door tile walls get line type 4 (passable in `traceWorld`). All other walls get type 0 (blocking). This is set per-tile: if an open tile `(c,r)` is a door tile, ALL its adjacent walls are passable.
+
+**Door media:** Register tile 276 (`door_unlocked`) in the binary's media section.
+
+**`scripts.yaml`:** Must be empty (`static_funcs: {}`, `tile_events: []`) to prevent D2 tile event scripts from executing on D1 map data.
+
+**`level.yaml` media_indices:** Must include `door_unlocked` and `sky_box`:
+```yaml
+media_indices:
+  - texture_258
+  - texture_451
+  - texture_462
+  - door_unlocked
+  - sky_box
+```
+
 ### What Was Wrong in Previous Attempts
 
 1. **BSPCompiler.cpp** — Used `>> 7` instead of `>> 3` for coordinates (16× too small). Also had broken `packPolygons` that wrote more polys than the mesh header declared (>127 overflow).
@@ -106,6 +141,10 @@ def count_crossings_y(row, c0, c1):
 
 5. **Wall Z values** — Originally used wrong Z range. Correct: floor Z=0, ceiling Z=8 (for height 0 maps). Wall height = 8 byte units = 64 world units.
 
+6. **Door wall exclusion by tile** — Excluding ALL walls for a door tile removed side walls, exposing skybox. Fix: keep all wall polys, let the door sprite render on top.
+
+7. **Door edge matching** — D1 door lines are placed at tile midpoints (not tile boundaries), so they can't be matched to tile-boundary wall quads by coordinate. Match by tile + direction instead, or just keep all walls.
+
 ### Verification Method
 
 **Roundtrip test:** Extract tile grid from a known-working D2 .bin → regenerate geometry → inject into original BSP tree → render. If it matches the original, geometry is correct. Used with `10_test_map/map.bin`.
@@ -115,3 +154,4 @@ def count_crossings_y(row, c0, c1):
 2. Split 4×4 room (2 leaves) — verifies BSP math
 3. Split 4×4 room (4 leaves) — verifies multi-level BSP
 4. Full D1 map with smart splits — verifies at scale
+5. Full D1 map with doors — verifies door rendering and passability
