@@ -11,7 +11,7 @@ enum class SpriteSourceType { Bin, Image, Sheet };
 
 struct SpriteSource {
 	SpriteSourceType type = SpriteSourceType::Bin;
-	std::string file;   // e.g. "tables.bin", "icon.png", "monster_sheet.png"
+	std::string file;   // e.g. "tables.bin", "sprites/door.png"
 	int id = 0;         // tile index (Bin type only)
 	int frameWidth = 0;  // frame dimensions (Sheet type only)
 	int frameHeight = 0;
@@ -31,6 +31,9 @@ class SpriteDefs {
 
 	// Full source metadata for each tile name
 	static std::unordered_map<std::string, SpriteSource> tileNameToSource;
+
+	// Tile index → PNG override path (for binary sprites with png: field)
+	static std::unordered_map<int, std::string> tileIndexToPng;
 
 	// Range boundaries (populated from sprites.yaml "ranges" section)
 	static std::unordered_map<std::string, int> ranges;
@@ -52,6 +55,9 @@ class SpriteDefs {
 
 	// Check if a sprite is external (Image or Sheet, not from bin)
 	static bool isExternal(const std::string& name);
+
+	// Get PNG override path for a tile index, returns empty string if none
+	static const std::string& getPngOverride(int tileIndex);
 
 	// Get range value by name, returns 0 if not found
 	static int getRange(const std::string& name);

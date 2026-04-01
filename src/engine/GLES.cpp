@@ -13,6 +13,8 @@
 #include "SpriteDefs.h"
 #include "Image.h"
 #include "Utils.h"
+#include "JavaStream.h"
+#include "stb_image.h"
 
 gles* _glesObj;
 
@@ -845,6 +847,42 @@ void gles::CreateTextureForMediaID(int n, int mediaID, bool b) {
 	if (mediaID == render->mediaMappings[render->TILE_FADE] && n == render->TILE_FADE) {
 		this->CreateFadeTexture(mediaID);
 		return;
+	}
+
+	// PNG texture override: check if this tile has a png: field in sprites.yaml
+	{
+		const std::string& pngPath = SpriteDefs::getPngOverride(n);
+		if (!pngPath.empty()) {
+			InputStream pngIs;
+			if (pngIs.loadFile(pngPath.c_str(), LT_RESOURCE)) {
+				int pw = 0, ph = 0, channels = 0;
+				uint8_t* rgba = stbi_load_from_memory(
+					pngIs.getData(), pngIs.getFileSize(), &pw, &ph, &channels, 4);
+				pngIs.close();
+				if (rgba) {
+					ct = &this->chains[mediaID];
+					glGenTextures(1, &ct->texnum);
+					// Insert into active chain linked list
+					next = this->activeChain.next;
+					ct->next = next;
+					ct->prev = &this->activeChain;
+					if (next) next->prev = ct;
+					this->activeChain.next = ct;
+					ct->width = pw;
+					ct->height = ph;
+
+					glBindTexture(GL_TEXTURE_2D, ct->texnum);
+					glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, pw, ph, 0,
+					             GL_RGBA, GL_UNSIGNED_BYTE, rgba);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+					stbi_image_free(rgba);
+					printf("[gles] Loaded PNG texture: %s (%dx%d) for tile %d media %d\n",
+					       pngPath.c_str(), pw, ph, n, mediaID);
+					return;
+				}
+			}
+		}
 	}
 
 	assert(mediaID >= 0 && mediaID < MAX_MEDIA);

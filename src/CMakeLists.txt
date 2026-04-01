@@ -33,6 +33,7 @@ set_target_properties(drpg-engine-lib PROPERTIES
 target_include_directories(drpg-engine-lib PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/engine
 	${CMAKE_CURRENT_SOURCE_DIR}/game
+	${CMAKE_SOURCE_DIR}/third_party_libs/stb
 )
 
 target_link_libraries(drpg-engine-lib PUBLIC

@@ -436,15 +436,16 @@ void Applet::loadRuntimeImages() {
 		this->hud->imgPlayerActive->~Image();
 		this->hud->imgPlayerActive = nullptr;
 
-		if (this->player->characterChoice == 1) {
-			this->hud->imgPlayerFaces = this->loadImage("Hud_Player.bmp", true);
-			this->hud->imgPlayerActive = this->loadImage("HUD_Player_Active.bmp", true);
-		} else if (this->player->characterChoice == 2) {
+		if (this->player->characterChoice == 2) {
 			this->hud->imgPlayerFaces = this->loadImage("Hud_PlayerDoom.bmp", true);
 			this->hud->imgPlayerActive = this->loadImage("HUD_PlayerDoom_Active.bmp", true);
 		} else if (this->player->characterChoice == 3) {
 			this->hud->imgPlayerFaces = this->loadImage("Hud_PlayerScientist.bmp", true);
 			this->hud->imgPlayerActive = this->loadImage("HUD_PlayerScientist_Active.bmp", true);
+		} else {
+			// Default (characterChoice 0 or 1): standard marine face
+			this->hud->imgPlayerFaces = this->loadImage("Hud_Player.bmp", true);
+			this->hud->imgPlayerActive = this->loadImage("HUD_Player_Active.bmp", true);
 		}
 
 		this->hud->imgSentryBotFace = this->loadImage("Hud_Sentry.bmp", true);

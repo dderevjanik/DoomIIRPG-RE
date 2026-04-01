@@ -6,7 +6,10 @@
 std::unordered_map<std::string, int> SpriteDefs::tileNameToIndex;
 std::unordered_map<int, std::string> SpriteDefs::tileIndexToName;
 std::unordered_map<std::string, SpriteSource> SpriteDefs::tileNameToSource;
+std::unordered_map<int, std::string> SpriteDefs::tileIndexToPng;
 std::unordered_map<std::string, int> SpriteDefs::ranges;
+
+static const std::string EMPTY_STRING;
 
 bool SpriteDefs::parse(const DataNode& config) {
 	// Load sprites section (fall back to "tiles" for backwards compat)
@@ -22,6 +25,7 @@ bool SpriteDefs::parse(const DataNode& config) {
 	SpriteDefs::tileNameToIndex.clear();
 	SpriteDefs::tileIndexToName.clear();
 	SpriteDefs::tileNameToSource.clear();
+	SpriteDefs::tileIndexToPng.clear();
 
 	for (auto it = tiles.begin(); it != tiles.end(); ++it) {
 		std::string name = it.key().asString();
@@ -43,18 +47,32 @@ bool SpriteDefs::parse(const DataNode& config) {
 			//   has "id:" → Bin (legacy binary sprite from tables.bin)
 			//   has "frame_size:" → Sheet (sprite sheet with frame metadata)
 			//   otherwise → Image (single image file)
-			// Also support legacy "type:" field for backwards compat
+			// If file: is an image (.png/.bmp) and id: is present, it's a
+			// binary sprite with an image override — the engine loads the image
+			// instead of the binary palette+texel data.
 			DataNode idNode = entry["id"];
 			DataNode frameSizeNode = entry["frame_size"];
 			std::string typeStr = entry["type"].asString("");
 
+			// Check if file is an image (not tables.bin)
+			bool fileIsImage = false;
+			if (!src.file.empty()) {
+				auto ext = src.file.substr(src.file.find_last_of('.') + 1);
+				fileIsImage = (ext == "png" || ext == "bmp" || ext == "jpg" || ext == "tga");
+			}
+
 			if (idNode) {
-				// Binary sprite from tables.bin
+				// Binary sprite with tile index
 				src.type = SpriteSourceType::Bin;
 				src.id = idNode.asInt(0);
 				SpriteDefs::tileNameToIndex[name] = src.id;
 				if (SpriteDefs::tileIndexToName.find(src.id) == SpriteDefs::tileIndexToName.end()) {
 					SpriteDefs::tileIndexToName[src.id] = name;
+				}
+				// If file is an image, register as PNG override for this tile
+				if (fileIsImage) {
+					SpriteDefs::tileIndexToPng[src.id] = src.file;
+					printf("[sprites] PNG override: tile %d (%s) -> %s\n", src.id, name.c_str(), src.file.c_str());
 				}
 			} else if (frameSizeNode) {
 				// Sprite sheet with frame metadata
@@ -148,4 +166,12 @@ int SpriteDefs::getRange(const std::string& name) {
 
 bool SpriteDefs::isInRange(int index, const std::string& first, const std::string& last) {
 	return index >= getRange(first) && index <= getRange(last);
+}
+
+const std::string& SpriteDefs::getPngOverride(int tileIndex) {
+	auto it = tileIndexToPng.find(tileIndex);
+	if (it != tileIndexToPng.end()) {
+		return it->second;
+	}
+	return EMPTY_STRING;
 }
