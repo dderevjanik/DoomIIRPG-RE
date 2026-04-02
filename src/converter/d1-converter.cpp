@@ -93,6 +93,7 @@ bool extractD1Textures(ZipFile& zip, const std::string& outputDir) {
 	std::vector<RGB> palette(numColors);
 	for (int i = 0; i < numColors; i++) {
 		uint16_t c = *(uint16_t*)(palData + palPos); palPos += 2;
+		// D1 palettes.bin stores BGR565: B in high bits, R in low bits
 		uint8_t b5 = (c >> 11) & 0x1F;
 		uint8_t g6 = (c >> 5) & 0x3F;
 		uint8_t r5 = c & 0x1F;
@@ -236,7 +237,7 @@ static std::string generateLevelYaml(const BspToBin::Result& r, const D1LevelMap
 	yaml += "total_secrets: 0\n";
 	yaml += "total_loot: 0\n\n";
 
-	yaml += "sky_box: sky_hell\n\n";
+	yaml += "no_fog: true\n\n";
 
 	yaml += "media_indices:\n";
 	yaml += "  - texture_258\n";
