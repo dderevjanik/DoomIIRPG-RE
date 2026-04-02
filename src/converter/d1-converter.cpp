@@ -125,68 +125,83 @@ bool extractD1Textures(ZipFile& zip, const std::string& outputDir) {
 		textureIds[i] = *(int16_t*)(mapData + mPos); mPos += 2;
 	}
 
-	// Collect unique texture IDs in order
-	std::vector<int> uniqueIds;
-	std::vector<bool> seen(texelCnt / 2, false);
-	for (int texIdx = 0; texIdx < textureCnt; texIdx++) {
-		int texId = textureIds[texIdx];
-		if (texId < 0 || texId * 2 + 1 >= texelCnt) continue;
-		if (seen[texId]) continue;
-		seen[texId] = true;
-		uniqueIds.push_back(texId);
-	}
+	// Decode a 64x64 D1 texture at native resolution.
+	// The engine's GL_REPEAT will handle tiling with UV 0-16.
+	static constexpr int TEX_SIZE = 64;
 
-	int count = (int)uniqueIds.size();
-	if (count == 0) {
-		printf("  No textures found\n");
-		free(palData); free(mapData); free(wtxData);
-		return false;
-	}
-
-	// Build one horizontal atlas: count * 64 wide, 64 tall
-	int atlasW = count * 64, atlasH = 64;
-	std::vector<uint8_t> atlas(atlasW * atlasH * 3, 0);
-
-	for (int i = 0; i < count; i++) {
-		int texId = uniqueIds[i];
-		int texelOffset = texelOffsets[texId * 2];
-		int paletteOffset = texelOffsets[texId * 2 + 1];
+	auto decodeTex64 = [&](int texelOffset, int paletteOffset, uint8_t* out) {
 		int base = 4 + texelOffset;
-
-		for (int y = 0; y < 64; y++) {
-			for (int x = 0; x < 64; x += 2) {
+		for (int y = 0; y < TEX_SIZE; y++) {
+			for (int x = 0; x < TEX_SIZE; x += 2) {
 				int byteIdx = base + (y * 32) + (x / 2);
 				if (byteIdx < 0 || byteIdx >= wtxLen) continue;
-
 				uint8_t byteVal = wtxData[byteIdx];
-				int pix1 = byteVal & 0x0F;
-				int pix2 = (byteVal >> 4) & 0x0F;
-				int palIdx1 = paletteOffset + pix1;
-				int palIdx2 = paletteOffset + pix2;
-
-				int ax = i * 64 + x; // atlas X position
-				if (palIdx1 >= 0 && palIdx1 < numColors) {
-					atlas[(y * atlasW + ax) * 3 + 0] = palette[palIdx1].r;
-					atlas[(y * atlasW + ax) * 3 + 1] = palette[palIdx1].g;
-					atlas[(y * atlasW + ax) * 3 + 2] = palette[palIdx1].b;
+				int p1 = paletteOffset + (byteVal & 0x0F);
+				int p2 = paletteOffset + ((byteVal >> 4) & 0x0F);
+				if (p1 >= 0 && p1 < numColors) {
+					out[(y*TEX_SIZE+x)*3+0] = palette[p1].r;
+					out[(y*TEX_SIZE+x)*3+1] = palette[p1].g;
+					out[(y*TEX_SIZE+x)*3+2] = palette[p1].b;
 				}
-				if (palIdx2 >= 0 && palIdx2 < numColors) {
-					atlas[(y * atlasW + (ax + 1)) * 3 + 0] = palette[palIdx2].r;
-					atlas[(y * atlasW + (ax + 1)) * 3 + 1] = palette[palIdx2].g;
-					atlas[(y * atlasW + (ax + 1)) * 3 + 2] = palette[palIdx2].b;
+				if (p2 >= 0 && p2 < numColors) {
+					out[(y*TEX_SIZE+x+1)*3+0] = palette[p2].r;
+					out[(y*TEX_SIZE+x+1)*3+1] = palette[p2].g;
+					out[(y*TEX_SIZE+x+1)*3+2] = palette[p2].b;
 				}
 			}
 		}
-	}
+	};
 
-	// Write atlas PNG
 	std::string texDir = outputDir + "/levels/textures";
 	mkdirRecursive(texDir);
-	std::string outPath = texDir + "/d1_wtexels.png";
-	stbi_write_png(outPath.c_str(), atlasW, atlasH, 3, atlas.data(), atlasW * 3);
 
-	printf("  Exported %d wall textures as %dx%d atlas: %s\n",
-	       count, atlasW, atlasH, outPath.c_str());
+	// 1. Export horizontal atlas of all raw texel entries (d1_wtexels.png)
+	std::vector<int> uniqueTexelIds;
+	{
+		std::vector<bool> seen(texelCnt / 2, false);
+		for (int i = 0; i < textureCnt; i++) {
+			int tid = textureIds[i];
+			if (tid < 0 || tid * 2 + 1 >= texelCnt || seen[tid]) continue;
+			seen[tid] = true;
+			uniqueTexelIds.push_back(tid);
+		}
+	}
+	if (!uniqueTexelIds.empty()) {
+		int cnt = (int)uniqueTexelIds.size();
+		int atlasW = cnt * TEX_SIZE;
+		std::vector<uint8_t> atlasImg(atlasW * TEX_SIZE * 3, 0);
+		for (int i = 0; i < cnt; i++) {
+			std::vector<uint8_t> tmp(TEX_SIZE * TEX_SIZE * 3, 0);
+			decodeTex64(texelOffsets[uniqueTexelIds[i]*2], texelOffsets[uniqueTexelIds[i]*2+1], tmp.data());
+			for (int y = 0; y < TEX_SIZE; y++)
+				memcpy(&atlasImg[(y * atlasW + i * TEX_SIZE) * 3], &tmp[y * TEX_SIZE * 3], TEX_SIZE * 3);
+		}
+		std::string atlasPath = texDir + "/d1_wtexels.png";
+		stbi_write_png(atlasPath.c_str(), atlasW, TEX_SIZE, 3, atlasImg.data(), atlasW * 3);
+		printf("  Atlas: %d textures as %dx%d: %s\n", cnt, atlasW, TEX_SIZE, atlasPath.c_str());
+	}
+
+	// 2. Export individual PNGs per BSP texture index (d1_wall_NNN.png)
+	//    BSP line texture → textureIds[bsp_tex] → actual texel/palette
+	int count = 0;
+	std::vector<bool> bspExported(textureCnt, false);
+	for (int bspTex = 0; bspTex < textureCnt; bspTex++) {
+		int actualId = textureIds[bspTex];
+		if (actualId < 0 || actualId * 2 + 1 >= texelCnt) continue;
+		if (bspExported[bspTex]) continue;
+
+		std::vector<uint8_t> pixels(TEX_SIZE * TEX_SIZE * 3, 0);
+		decodeTex64(texelOffsets[actualId * 2], texelOffsets[actualId * 2 + 1], pixels.data());
+
+		char filename[64];
+		snprintf(filename, sizeof(filename), "d1_wall_%03d.png", bspTex);
+		stbi_write_png((texDir + "/" + filename).c_str(), TEX_SIZE, TEX_SIZE, 3, pixels.data(), TEX_SIZE * 3);
+
+		bspExported[bspTex] = true;
+		count++;
+	}
+
+	printf("  Individual: %d wall textures (d1_wall_NNN.png)\n", count);
 
 	free(palData);
 	free(mapData);

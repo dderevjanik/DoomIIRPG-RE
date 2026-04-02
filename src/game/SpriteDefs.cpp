@@ -74,6 +74,15 @@ bool SpriteDefs::parse(const DataNode& config) {
 					SpriteDefs::tileIndexToPng[src.id] = src.file;
 					printf("[sprites] PNG override: tile %d (%s) -> %s\n", src.id, name.c_str(), src.file.c_str());
 				}
+				// Explicit png: field overrides the binary texture with a PNG file
+				DataNode pngNode = entry["png"];
+				if (pngNode) {
+					std::string pngPath = pngNode.asString("");
+					if (!pngPath.empty()) {
+						SpriteDefs::tileIndexToPng[src.id] = pngPath;
+						printf("[sprites] PNG override (png: field): tile %d (%s) -> %s\n", src.id, name.c_str(), pngPath.c_str());
+					}
+				}
 			} else if (frameSizeNode) {
 				// Sprite sheet with frame metadata
 				src.type = SpriteSourceType::Sheet;

@@ -211,9 +211,9 @@ static void generateGeometry(const D1BSP& bsp,
                     Polygon p; p.numVerts = 4;
                     p.tileNum = D2_FLOOR_TILE; p.isWall = false;
                     p.tileCenterX = tcx; p.tileCenterY = tcy;
-                    p.verts[0] = {bx0, by1, (uint8_t)bzl, 0, 1};
-                    p.verts[1] = {bx1, by1, (uint8_t)bzl, 1, 1};
-                    p.verts[2] = {bx1, by0, (uint8_t)bzl, 1, 0};
+                    p.verts[0] = {bx0, by1, (uint8_t)bzl, 0, 16};
+                    p.verts[1] = {bx1, by1, (uint8_t)bzl, 16, 16};
+                    p.verts[2] = {bx1, by0, (uint8_t)bzl, 16, 0};
                     p.verts[3] = {bx0, by0, (uint8_t)bzl, 0, 0};
                     polys.push_back(p);
                 }
@@ -222,9 +222,9 @@ static void generateGeometry(const D1BSP& bsp,
                     p.tileNum = D2_CEIL_TILE; p.isWall = false;
                     p.tileCenterX = tcx; p.tileCenterY = tcy;
                     p.verts[0] = {bx0, by0, (uint8_t)bzh, 0, 0};
-                    p.verts[1] = {bx1, by0, (uint8_t)bzh, 1, 0};
-                    p.verts[2] = {bx1, by1, (uint8_t)bzh, 1, 1};
-                    p.verts[3] = {bx0, by1, (uint8_t)bzh, 0, 1};
+                    p.verts[1] = {bx1, by0, (uint8_t)bzh, 16, 0};
+                    p.verts[2] = {bx1, by1, (uint8_t)bzh, 16, 16};
+                    p.verts[3] = {bx0, by1, (uint8_t)bzh, 0, 16};
                     polys.push_back(p);
                 }
             } else if (dtype == 1) {
@@ -238,29 +238,29 @@ static void generateGeometry(const D1BSP& bsp,
                 { Polygon p; p.numVerts = 3; p.tileNum = D2_FLOOR_TILE; p.isWall = false;
                   p.tileCenterX = cxa; p.tileCenterY = cya;
                   p.verts[0] = {bx0, by0, (uint8_t)bzl, 0, 0};
-                  p.verts[1] = {bx1, by0, (uint8_t)bzl, 1, 0};
-                  p.verts[2] = {bx0, by1, (uint8_t)bzl, 0, 1};
+                  p.verts[1] = {bx1, by0, (uint8_t)bzl, 16, 0};
+                  p.verts[2] = {bx0, by1, (uint8_t)bzl, 0, 16};
                   polys.push_back(p); }
                 // Floor tri B (CW)
                 { Polygon p; p.numVerts = 3; p.tileNum = D2_FLOOR_TILE; p.isWall = false;
                   p.tileCenterX = cxb; p.tileCenterY = cyb;
-                  p.verts[0] = {bx1, by0, (uint8_t)bzl, 1, 0};
-                  p.verts[1] = {bx1, by1, (uint8_t)bzl, 1, 1};
-                  p.verts[2] = {bx0, by1, (uint8_t)bzl, 0, 1};
+                  p.verts[0] = {bx1, by0, (uint8_t)bzl, 16, 0};
+                  p.verts[1] = {bx1, by1, (uint8_t)bzl, 16, 16};
+                  p.verts[2] = {bx0, by1, (uint8_t)bzl, 0, 16};
                   polys.push_back(p); }
                 // Ceiling tri A (CCW)
                 { Polygon p; p.numVerts = 3; p.tileNum = D2_CEIL_TILE; p.isWall = false;
                   p.tileCenterX = cxa; p.tileCenterY = cya;
                   p.verts[0] = {bx0, by0, (uint8_t)bzh, 0, 0};
-                  p.verts[1] = {bx0, by1, (uint8_t)bzh, 0, 1};
-                  p.verts[2] = {bx1, by0, (uint8_t)bzh, 1, 0};
+                  p.verts[1] = {bx0, by1, (uint8_t)bzh, 0, 16};
+                  p.verts[2] = {bx1, by0, (uint8_t)bzh, 16, 0};
                   polys.push_back(p); }
                 // Ceiling tri B (CCW)
                 { Polygon p; p.numVerts = 3; p.tileNum = D2_CEIL_TILE; p.isWall = false;
                   p.tileCenterX = cxb; p.tileCenterY = cyb;
-                  p.verts[0] = {bx1, by0, (uint8_t)bzh, 1, 0};
-                  p.verts[1] = {bx0, by1, (uint8_t)bzh, 0, 1};
-                  p.verts[2] = {bx1, by1, (uint8_t)bzh, 1, 1};
+                  p.verts[0] = {bx1, by0, (uint8_t)bzh, 16, 0};
+                  p.verts[1] = {bx0, by1, (uint8_t)bzh, 0, 16};
+                  p.verts[2] = {bx1, by1, (uint8_t)bzh, 16, 16};
                   polys.push_back(p); }
             } else {
                 // NW-SE diagonal: line from (x0,y0) to (x1,y1)
@@ -272,29 +272,29 @@ static void generateGeometry(const D1BSP& bsp,
                 { Polygon p; p.numVerts = 3; p.tileNum = D2_FLOOR_TILE; p.isWall = false;
                   p.tileCenterX = cxa; p.tileCenterY = cya;
                   p.verts[0] = {bx0, by0, (uint8_t)bzl, 0, 0};
-                  p.verts[1] = {bx1, by0, (uint8_t)bzl, 1, 0};
-                  p.verts[2] = {bx1, by1, (uint8_t)bzl, 1, 1};
+                  p.verts[1] = {bx1, by0, (uint8_t)bzl, 16, 0};
+                  p.verts[2] = {bx1, by1, (uint8_t)bzl, 16, 16};
                   polys.push_back(p); }
                 // Floor tri B (CW)
                 { Polygon p; p.numVerts = 3; p.tileNum = D2_FLOOR_TILE; p.isWall = false;
                   p.tileCenterX = cxb; p.tileCenterY = cyb;
                   p.verts[0] = {bx0, by0, (uint8_t)bzl, 0, 0};
-                  p.verts[1] = {bx1, by1, (uint8_t)bzl, 1, 1};
-                  p.verts[2] = {bx0, by1, (uint8_t)bzl, 0, 1};
+                  p.verts[1] = {bx1, by1, (uint8_t)bzl, 16, 16};
+                  p.verts[2] = {bx0, by1, (uint8_t)bzl, 0, 16};
                   polys.push_back(p); }
                 // Ceiling tri A (CCW)
                 { Polygon p; p.numVerts = 3; p.tileNum = D2_CEIL_TILE; p.isWall = false;
                   p.tileCenterX = cxa; p.tileCenterY = cya;
                   p.verts[0] = {bx0, by0, (uint8_t)bzh, 0, 0};
-                  p.verts[1] = {bx1, by1, (uint8_t)bzh, 1, 1};
-                  p.verts[2] = {bx1, by0, (uint8_t)bzh, 1, 0};
+                  p.verts[1] = {bx1, by1, (uint8_t)bzh, 16, 16};
+                  p.verts[2] = {bx1, by0, (uint8_t)bzh, 16, 0};
                   polys.push_back(p); }
                 // Ceiling tri B (CCW)
                 { Polygon p; p.numVerts = 3; p.tileNum = D2_CEIL_TILE; p.isWall = false;
                   p.tileCenterX = cxb; p.tileCenterY = cyb;
                   p.verts[0] = {bx0, by0, (uint8_t)bzh, 0, 0};
-                  p.verts[1] = {bx0, by1, (uint8_t)bzh, 0, 1};
-                  p.verts[2] = {bx1, by1, (uint8_t)bzh, 1, 1};
+                  p.verts[1] = {bx0, by1, (uint8_t)bzh, 0, 16};
+                  p.verts[2] = {bx1, by1, (uint8_t)bzh, 16, 16};
                   polys.push_back(p); }
             }
 
@@ -313,26 +313,26 @@ static void generateGeometry(const D1BSP& bsp,
 
             if (isSolid(bsp.blockMap, col, row - 1)) { // North
                 uint8_t by = wy0 >> 3;
-                addWall({bx1,by,(uint8_t)bzh,1,1}, {bx0,by,(uint8_t)bzh,0,1},
-                        {bx0,by,(uint8_t)bzl,0,0}, {bx1,by,(uint8_t)bzl,1,0},
+                addWall({bx1,by,(uint8_t)bzh,16,16}, {bx0,by,(uint8_t)bzh,0,16},
+                        {bx0,by,(uint8_t)bzl,0,0}, {bx1,by,(uint8_t)bzl,16,0},
                         bx0, bx1, by, by);
             }
             if (isSolid(bsp.blockMap, col, row + 1)) { // South
                 uint8_t by = wy1 >> 3;
-                addWall({bx0,by,(uint8_t)bzh,0,1}, {bx1,by,(uint8_t)bzh,1,1},
-                        {bx1,by,(uint8_t)bzl,1,0}, {bx0,by,(uint8_t)bzl,0,0},
+                addWall({bx0,by,(uint8_t)bzh,0,16}, {bx1,by,(uint8_t)bzh,16,16},
+                        {bx1,by,(uint8_t)bzl,16,0}, {bx0,by,(uint8_t)bzl,0,0},
                         bx0, bx1, by, by);
             }
             if (isSolid(bsp.blockMap, col - 1, row)) { // West
                 uint8_t bx = wx0 >> 3;
-                addWall({bx,by0,(uint8_t)bzh,0,1}, {bx,by1,(uint8_t)bzh,1,1},
-                        {bx,by1,(uint8_t)bzl,1,0}, {bx,by0,(uint8_t)bzl,0,0},
+                addWall({bx,by0,(uint8_t)bzh,0,16}, {bx,by1,(uint8_t)bzh,16,16},
+                        {bx,by1,(uint8_t)bzl,16,0}, {bx,by0,(uint8_t)bzl,0,0},
                         bx, bx, by0, by1);
             }
             if (isSolid(bsp.blockMap, col + 1, row)) { // East
                 uint8_t bx = wx1 >> 3;
-                addWall({bx,by1,(uint8_t)bzh,1,1}, {bx,by0,(uint8_t)bzh,0,1},
-                        {bx,by0,(uint8_t)bzl,0,0}, {bx,by1,(uint8_t)bzl,1,0},
+                addWall({bx,by1,(uint8_t)bzh,16,16}, {bx,by0,(uint8_t)bzh,0,16},
+                        {bx,by0,(uint8_t)bzl,0,0}, {bx,by1,(uint8_t)bzl,16,0},
                         bx, bx, by0, by1);
             }
         }
@@ -376,9 +376,9 @@ static void generateGeometry(const D1BSP& bsp,
             p.tileNum = D2_WALL_TILE; p.isWall = true; p.isDiag = true;
             p.tileCenterX = midX + openNx; p.tileCenterY = midY + openNy;
             p.diagDx = dx; p.diagDy = dy;
-            p.verts[0] = {bx1, by1, (uint8_t)bzh, 0, 1};
-            p.verts[1] = {bx2, by2, (uint8_t)bzh, 1, 1};
-            p.verts[2] = {bx2, by2, (uint8_t)bzl, 1, 0};
+            p.verts[0] = {bx1, by1, (uint8_t)bzh, 0, 16};
+            p.verts[1] = {bx2, by2, (uint8_t)bzh, 16, 16};
+            p.verts[2] = {bx2, by2, (uint8_t)bzl, 16, 0};
             p.verts[3] = {bx1, by1, (uint8_t)bzl, 0, 0};
             polys.push_back(p);
         }
