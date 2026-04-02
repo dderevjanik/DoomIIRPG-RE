@@ -22,6 +22,7 @@ add_executable(${CONVERTER_TGT_NAME}
 	main.cpp
 	d2-converter.cpp
 	d1-converter.cpp
+	BspToBin.cpp
 	Error.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/../engine/ZipFile.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/../editor/MapDataIO.cpp

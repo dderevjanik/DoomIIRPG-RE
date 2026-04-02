@@ -170,9 +170,30 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 
-	// Both games use the same D2RPG converter for now.
-	// D1RPG-specific logic will be added later.
+	// Run the D2RPG converter for base asset extraction (both games use it)
 	bool ok = convertD2RPG(zip, *game, outputDir);
+
+	// For D1RPG: also convert .bsp levels to .bin (geometry)
+	if (game == &GAME_DOOM1RPG) {
+		// D1 BSP files are in a separate zip (DoomRPG.zip)
+		// Try to open it from the same directory as the IPA
+		std::string d1ZipPath = ipaPath;
+		auto slash = d1ZipPath.rfind('/');
+		if (slash != std::string::npos) d1ZipPath = d1ZipPath.substr(0, slash + 1);
+		else d1ZipPath = "";
+		d1ZipPath += "DoomRPG.zip";
+
+		ZipFile d1Zip;
+		d1Zip.openZipFile(d1ZipPath.c_str());
+		if (d1Zip.getEntryCount() > 0) {
+			convertD1Levels(d1Zip, *game, outputDir);
+			d1Zip.closeZipFile();
+		} else {
+			printf("Warning: DoomRPG.zip not found at '%s', skipping D1 level conversion.\n",
+			       d1ZipPath.c_str());
+			printf("Place DoomRPG.zip next to the IPA file for D1 level conversion.\n");
+		}
+	}
 
 	zip.closeZipFile();
 

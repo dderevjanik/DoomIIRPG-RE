@@ -928,8 +928,38 @@ static ConvertResult convertBSPtoBIN(const D1BSP& bsp) {
     return {out, (int)polys.size(), numLinesOut, numNodes};
 }
 
-// ── Main ────────────────────────────────────────────────────────────────────
+// ── Public API (for converter integration) ──────────────────────────────────
 
+#ifdef BSP2BIN_LIBRARY
+#include "BspToBin.h"
+
+BspToBin::Result BspToBin::convert(const uint8_t* bspData, int bspLen) {
+    D1BSP d1 = parseD1BSP(bspData, bspLen);
+    auto cr = convertBSPtoBIN(d1);
+
+    Result r;
+    r.binData   = std::move(cr.binData);
+    r.numPolys  = cr.numPolys;
+    r.numLines  = cr.numLines;
+    r.numNodes  = cr.numNodes;
+    r.mapName   = d1.mapName;
+    r.spawnIndex = d1.spawnIndex;
+    r.spawnDir  = (d1.spawnDir / 32) & 7;
+
+    // Extract door info from D1 lines
+    for (auto& l : d1.lines) {
+        if (l.texture < 0 || l.texture > 10) continue;
+        int mx = (l.v1x + l.v2x) / 2, my = (l.v1y + l.v2y) / 2;
+        int dx = abs(l.v2x - l.v1x), dy = abs(l.v2y - l.v1y);
+        r.doors.push_back({mx, my, dx > dy});
+    }
+    return r;
+}
+#endif // BSP2BIN_LIBRARY
+
+// ── Main (standalone tool) ──────────────────────────────────────────────────
+
+#ifndef BSP2BIN_LIBRARY
 int main(int argc, char** argv) {
     if (argc < 2) {
         fprintf(stderr, "Usage: bsp2bin <input.bsp> [output.bin]\n");
@@ -966,3 +996,4 @@ int main(int argc, char** argv) {
 
     return 0;
 }
+#endif // !BSP2BIN_LIBRARY
