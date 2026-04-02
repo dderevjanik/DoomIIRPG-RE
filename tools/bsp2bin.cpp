@@ -53,12 +53,21 @@ static void wrMarker(std::vector<uint8_t>& o, uint32_t m) { wrU32(o, m); }
 
 struct D1Line { int v1x, v1y, v2x, v2y; int16_t texture; int32_t flags; };
 
+struct D1Node {
+    int x1, y1, x2, y2;     // bounding box (world coords)
+    int nodeType;            // 0=leaf, 1=Y-split, 2=X-split
+    int splitPos;            // split position (world coords, for interior nodes)
+    int arg1, arg2;          // leaf: arg1=firstLineIdx, arg2=lineCount
+                             // interior: arg1=child1, arg2=child2
+};
+
 struct D1BSP {
     char     mapName[17] = {};
     uint8_t  floorTex = 0, ceilTex = 0;
     int16_t  spawnIndex = 0;
     uint8_t  spawnDir = 0;
     uint8_t  blockMap[1024] = {};
+    std::vector<D1Node> nodes;
     std::vector<D1Line> lines;
 };
 
@@ -77,9 +86,19 @@ static D1BSP parseD1BSP(const uint8_t* d, int len) {
     bsp.spawnDir   = rdU8(d, p);
     p += 2; // cameraSpawnIndex
 
-    // Skip D1 nodes
+    // Read D1 BSP nodes
     int16_t nn = rdI16(d, p);
-    p += nn * 10;
+    bsp.nodes.resize(nn);
+    for (int i = 0; i < nn; i++) {
+        bsp.nodes[i].x1 = rdU8(d, p) << 3;
+        bsp.nodes[i].y1 = rdU8(d, p) << 3;
+        bsp.nodes[i].x2 = rdU8(d, p) << 3;
+        bsp.nodes[i].y2 = rdU8(d, p) << 3;
+        bsp.nodes[i].nodeType = rdU8(d, p);
+        bsp.nodes[i].splitPos = rdU8(d, p) << 3;
+        bsp.nodes[i].arg1 = (uint16_t)rdI16(d, p);
+        bsp.nodes[i].arg2 = (uint16_t)rdI16(d, p);
+    }
 
     // Read D1 lines
     int16_t nl = rdI16(d, p);
@@ -137,14 +156,14 @@ static bool isDoorTile(const D1BSP& bsp, int col, int row) {
 struct Vertex { uint8_t x, y, z, s, t; };
 
 struct Polygon {
-    Vertex   verts[4];
+    Vertex   verts[5];         // max 5 verts (triangles use 3, quads use 4)
     int      numVerts = 4;
     int      tileNum  = 0;
     bool     isWall   = false;
-    bool     isDiag   = false; // diagonal wall (for BSP post-split)
+    bool     isDiag   = false;
     int      tileCenterX = 0;  // world coords — for BSP classification
     int      tileCenterY = 0;
-    int      diagDx = 0, diagDy = 0; // D1 line direction (for diagonal normal selection)
+    int      diagDx = 0, diagDy = 0;
 };
 
 struct CollLine { uint8_t x1, x2, y1, y2; uint8_t flags; };
@@ -156,7 +175,26 @@ static void generateGeometry(const D1BSP& bsp,
     int bzl = FLOOR_HEIGHT >> 3; // floor Z byte
     int bzh = bzl + 8;           // ceiling Z byte
 
-    // ── Part A: Floors, ceilings, and axis-aligned walls from blockmap (proven) ──
+    // ── Pre-scan: find which tiles have diagonal lines crossing them ──
+    // For each tile, store the diagonal type: 0=none, 1=NE-SW (dx>0,dy<0), 2=NW-SE (dx>0,dy>0)
+    // NE-SW: goes from (x0,y1) to (x1,y0) — splits TL-BR to BL-TR
+    // NW-SE: goes from (x0,y0) to (x1,y1) — splits TL-BR the other way
+    int tileDiag[MAP_SIZE * MAP_SIZE] = {};
+    for (auto& dl : bsp.lines) {
+        if (dl.v1x == dl.v2x || dl.v1y == dl.v2y) continue; // axis-aligned
+        int dx = dl.v2x - dl.v1x, dy = dl.v2y - dl.v1y;
+        // Mark tiles at both endpoints
+        int tc1 = dl.v1x / TILE_SIZE, tr1 = dl.v1y / TILE_SIZE;
+        int tc2 = dl.v2x / TILE_SIZE, tr2 = dl.v2y / TILE_SIZE;
+        // Diagonal type: if dx and dy have same sign → NW-SE (type 2), else NE-SW (type 1)
+        int dtype = ((dx > 0) == (dy > 0)) ? 2 : 1;
+        for (int r = std::min(tr1,tr2); r <= std::max(tr1,tr2); r++)
+            for (int c = std::min(tc1,tc2); c <= std::max(tc1,tc2); c++)
+                if (c >= 0 && c < MAP_SIZE && r >= 0 && r < MAP_SIZE)
+                    tileDiag[r * MAP_SIZE + c] = dtype;
+    }
+
+    // ── Part A: Floors, ceilings, and axis-aligned walls from blockmap ──
     for (int row = 0; row < MAP_SIZE; row++) {
         for (int col = 0; col < MAP_SIZE; col++) {
             if (isSolid(bsp.blockMap, col, row)) continue;
@@ -167,27 +205,99 @@ static void generateGeometry(const D1BSP& bsp,
             uint8_t bx1 = wx1 >> 3, by1 = wy1 >> 3;
             int tcx = col * 64 + 32, tcy = row * 64 + 32;
 
-            // Floor — CW from above
-            {
-                Polygon p;
-                p.tileNum = D2_FLOOR_TILE; p.isWall = false;
-                p.tileCenterX = tcx; p.tileCenterY = tcy;
-                p.verts[0] = {bx0, by1, (uint8_t)bzl, 0, 1};
-                p.verts[1] = {bx1, by1, (uint8_t)bzl, 1, 1};
-                p.verts[2] = {bx1, by0, (uint8_t)bzl, 1, 0};
-                p.verts[3] = {bx0, by0, (uint8_t)bzl, 0, 0};
-                polys.push_back(p);
-            }
-            // Ceiling — CCW from above
-            {
-                Polygon p;
-                p.tileNum = D2_CEIL_TILE; p.isWall = false;
-                p.tileCenterX = tcx; p.tileCenterY = tcy;
-                p.verts[0] = {bx0, by0, (uint8_t)bzh, 0, 0};
-                p.verts[1] = {bx1, by0, (uint8_t)bzh, 1, 0};
-                p.verts[2] = {bx1, by1, (uint8_t)bzh, 1, 1};
-                p.verts[3] = {bx0, by1, (uint8_t)bzh, 0, 1};
-                polys.push_back(p);
+            int dtype = tileDiag[row * MAP_SIZE + col];
+
+            if (dtype == 0) {
+                // No diagonal — normal quad floor/ceiling
+                {
+                    Polygon p; p.numVerts = 4;
+                    p.tileNum = D2_FLOOR_TILE; p.isWall = false;
+                    p.tileCenterX = tcx; p.tileCenterY = tcy;
+                    p.verts[0] = {bx0, by1, (uint8_t)bzl, 0, 1};
+                    p.verts[1] = {bx1, by1, (uint8_t)bzl, 1, 1};
+                    p.verts[2] = {bx1, by0, (uint8_t)bzl, 1, 0};
+                    p.verts[3] = {bx0, by0, (uint8_t)bzl, 0, 0};
+                    polys.push_back(p);
+                }
+                {
+                    Polygon p; p.numVerts = 4;
+                    p.tileNum = D2_CEIL_TILE; p.isWall = false;
+                    p.tileCenterX = tcx; p.tileCenterY = tcy;
+                    p.verts[0] = {bx0, by0, (uint8_t)bzh, 0, 0};
+                    p.verts[1] = {bx1, by0, (uint8_t)bzh, 1, 0};
+                    p.verts[2] = {bx1, by1, (uint8_t)bzh, 1, 1};
+                    p.verts[3] = {bx0, by1, (uint8_t)bzh, 0, 1};
+                    polys.push_back(p);
+                }
+            } else if (dtype == 1) {
+                // NE-SW diagonal: line from (x0,y1) to (x1,y0)
+                // Split into two triangles along that diagonal
+                // Triangle A (left/top): (x0,y0), (x1,y0), (x0,y1) — centroid at (wx0+21, wy0+21)
+                // Triangle B (right/bottom): (x1,y0), (x1,y1), (x0,y1) — centroid at (wx0+43, wy0+43)
+                int cxa = wx0 + 21, cya = wy0 + 21;
+                int cxb = wx0 + 43, cyb = wy0 + 43;
+                // Floor tri A (CW)
+                { Polygon p; p.numVerts = 3; p.tileNum = D2_FLOOR_TILE; p.isWall = false;
+                  p.tileCenterX = cxa; p.tileCenterY = cya;
+                  p.verts[0] = {bx0, by0, (uint8_t)bzl, 0, 0};
+                  p.verts[1] = {bx1, by0, (uint8_t)bzl, 1, 0};
+                  p.verts[2] = {bx0, by1, (uint8_t)bzl, 0, 1};
+                  polys.push_back(p); }
+                // Floor tri B (CW)
+                { Polygon p; p.numVerts = 3; p.tileNum = D2_FLOOR_TILE; p.isWall = false;
+                  p.tileCenterX = cxb; p.tileCenterY = cyb;
+                  p.verts[0] = {bx1, by0, (uint8_t)bzl, 1, 0};
+                  p.verts[1] = {bx1, by1, (uint8_t)bzl, 1, 1};
+                  p.verts[2] = {bx0, by1, (uint8_t)bzl, 0, 1};
+                  polys.push_back(p); }
+                // Ceiling tri A (CCW)
+                { Polygon p; p.numVerts = 3; p.tileNum = D2_CEIL_TILE; p.isWall = false;
+                  p.tileCenterX = cxa; p.tileCenterY = cya;
+                  p.verts[0] = {bx0, by0, (uint8_t)bzh, 0, 0};
+                  p.verts[1] = {bx0, by1, (uint8_t)bzh, 0, 1};
+                  p.verts[2] = {bx1, by0, (uint8_t)bzh, 1, 0};
+                  polys.push_back(p); }
+                // Ceiling tri B (CCW)
+                { Polygon p; p.numVerts = 3; p.tileNum = D2_CEIL_TILE; p.isWall = false;
+                  p.tileCenterX = cxb; p.tileCenterY = cyb;
+                  p.verts[0] = {bx1, by0, (uint8_t)bzh, 1, 0};
+                  p.verts[1] = {bx0, by1, (uint8_t)bzh, 0, 1};
+                  p.verts[2] = {bx1, by1, (uint8_t)bzh, 1, 1};
+                  polys.push_back(p); }
+            } else {
+                // NW-SE diagonal: line from (x0,y0) to (x1,y1)
+                // Triangle A (right/top): (x0,y0), (x1,y0), (x1,y1) — centroid at (wx0+43, wy0+21)
+                // Triangle B (left/bottom): (x0,y0), (x1,y1), (x0,y1) — centroid at (wx0+21, wy0+43)
+                int cxa = wx0 + 43, cya = wy0 + 21;
+                int cxb = wx0 + 21, cyb = wy0 + 43;
+                // Floor tri A (CW)
+                { Polygon p; p.numVerts = 3; p.tileNum = D2_FLOOR_TILE; p.isWall = false;
+                  p.tileCenterX = cxa; p.tileCenterY = cya;
+                  p.verts[0] = {bx0, by0, (uint8_t)bzl, 0, 0};
+                  p.verts[1] = {bx1, by0, (uint8_t)bzl, 1, 0};
+                  p.verts[2] = {bx1, by1, (uint8_t)bzl, 1, 1};
+                  polys.push_back(p); }
+                // Floor tri B (CW)
+                { Polygon p; p.numVerts = 3; p.tileNum = D2_FLOOR_TILE; p.isWall = false;
+                  p.tileCenterX = cxb; p.tileCenterY = cyb;
+                  p.verts[0] = {bx0, by0, (uint8_t)bzl, 0, 0};
+                  p.verts[1] = {bx1, by1, (uint8_t)bzl, 1, 1};
+                  p.verts[2] = {bx0, by1, (uint8_t)bzl, 0, 1};
+                  polys.push_back(p); }
+                // Ceiling tri A (CCW)
+                { Polygon p; p.numVerts = 3; p.tileNum = D2_CEIL_TILE; p.isWall = false;
+                  p.tileCenterX = cxa; p.tileCenterY = cya;
+                  p.verts[0] = {bx0, by0, (uint8_t)bzh, 0, 0};
+                  p.verts[1] = {bx1, by1, (uint8_t)bzh, 1, 1};
+                  p.verts[2] = {bx1, by0, (uint8_t)bzh, 1, 0};
+                  polys.push_back(p); }
+                // Ceiling tri B (CCW)
+                { Polygon p; p.numVerts = 3; p.tileNum = D2_CEIL_TILE; p.isWall = false;
+                  p.tileCenterX = cxb; p.tileCenterY = cyb;
+                  p.verts[0] = {bx0, by0, (uint8_t)bzh, 0, 0};
+                  p.verts[1] = {bx0, by1, (uint8_t)bzh, 0, 1};
+                  p.verts[2] = {bx1, by1, (uint8_t)bzh, 1, 1};
+                  polys.push_back(p); }
             }
 
             // Axis-aligned walls at solid/open tile boundaries
@@ -256,22 +366,18 @@ static void generateGeometry(const D1BSP& bsp,
         uint8_t bx1 = (uint8_t)(v1x >> 3), by1 = (uint8_t)(v1y >> 3);
         uint8_t bx2 = (uint8_t)(v2x >> 3), by2 = (uint8_t)(v2y >> 3);
 
-        // Emit diagonal wall poly into BOTH adjacent tile leaves to prevent
-        // painter's algorithm bleed-through at tile boundaries.
-        // Compute the two tile centers on each side of the diagonal.
-        int tile1Col = dl.v1x / TILE_SIZE, tile1Row = dl.v1y / TILE_SIZE;
-        int tile2Col = dl.v2x / TILE_SIZE, tile2Row = dl.v2y / TILE_SIZE;
-        int tc1x = tile1Col * TILE_SIZE + TILE_SIZE / 2;
-        int tc1y = tile1Row * TILE_SIZE + TILE_SIZE / 2;
-        int tc2x = tile2Col * TILE_SIZE + TILE_SIZE / 2;
-        int tc2y = tile2Row * TILE_SIZE + TILE_SIZE / 2;
-
-        // Diagonal wall poly — single copy, BSP post-split will handle ordering
+        // Single wall poly — nudge classification point toward open side
+        // so it ends up in the same BSP leaf as the floor triangles on that side
         {
+            // After swap, right-normal of (v1→v2) points toward open side
+            int sdx = v2x - v1x, sdy = v2y - v1y;
+            int openNx = (sdy > 0 ? 24 : (sdy < 0 ? -24 : 0));
+            int openNy = (-sdx > 0 ? 24 : (-sdx < 0 ? -24 : 0));
+
             Polygon p;
             p.tileNum = D2_WALL_TILE; p.isWall = true; p.isDiag = true;
-            p.tileCenterX = midX; p.tileCenterY = midY;
-            p.diagDx = dl.v2x - dl.v1x; p.diagDy = dl.v2y - dl.v1y;
+            p.tileCenterX = midX + openNx; p.tileCenterY = midY + openNy;
+            p.diagDx = dx; p.diagDy = dy;
             p.verts[0] = {bx1, by1, (uint8_t)bzh, 0, 1};
             p.verts[1] = {bx2, by2, (uint8_t)bzh, 1, 1};
             p.verts[2] = {bx2, by2, (uint8_t)bzl, 1, 0};
@@ -490,29 +596,19 @@ static void postSplitDiagonals(std::vector<BSPNode>& nodes,
         int midX = dp.tileCenterX, midY = dp.tileCenterY;
         int offset = diagComputeOffset(midX, midY, normalIdx);
 
-        // Classify polys: walls by their center, floors/ceilings go in BOTH children
-        // (floor/ceiling quads span the full tile and can't be cleanly split by a diagonal)
+        // Classify ALL polys by their center point (works because triangle-split
+        // floors have centroids on the correct side of the diagonal)
         std::vector<int> frontPolys, backPolys;
         for (int pi : nodes[i].polyIndices) {
-            if (!polys[pi].isWall) {
-                // Floor/ceiling → duplicate into both children
+            int cx = polys[pi].tileCenterX, cy = polys[pi].tileCenterY;
+            int side = diagClassify(cx, cy, normalIdx, offset);
+            if (side >= 0)
                 frontPolys.push_back(pi);
+            else
                 backPolys.push_back(pi);
-            } else {
-                int cx = polys[pi].tileCenterX, cy = polys[pi].tileCenterY;
-                int side = diagClassify(cx, cy, normalIdx, offset);
-                if (side >= 0)
-                    frontPolys.push_back(pi);
-                else
-                    backPolys.push_back(pi);
-            }
         }
 
-        // Need at least one wall on each side for the split to help
-        bool hasWallFront = false, hasWallBack = false;
-        for (int pi : frontPolys) if (polys[pi].isWall) { hasWallFront = true; break; }
-        for (int pi : backPolys) if (polys[pi].isWall) { hasWallBack = true; break; }
-        if (!hasWallFront || !hasWallBack) continue;
+        if (frontPolys.empty() || backPolys.empty()) continue;
 
         // Classify collision lines
         std::vector<int> frontLines, backLines;
@@ -622,20 +718,20 @@ struct ConvertResult {
 static ConvertResult convertBSPtoBIN(const D1BSP& bsp) {
     // 1. Geometry
     std::vector<Polygon>  polys;
-    std::vector<CollLine> lines;
-    generateGeometry(bsp, polys, lines);
+    std::vector<CollLine> collLines;
+    generateGeometry(bsp, polys, collLines);
 
-    // 2. BSP tree
-    std::vector<int> allPolyIdx(polys.size()), allLineIdx(lines.size());
+    // 2. Build tile-boundary BSP (proven glitch-free for axis-aligned geometry)
+    std::vector<int> allPolyIdx(polys.size()), allLineIdx(collLines.size());
     for (int i = 0; i < (int)polys.size(); i++) allPolyIdx[i] = i;
-    for (int i = 0; i < (int)lines.size(); i++) allLineIdx[i] = i;
+    for (int i = 0; i < (int)collLines.size(); i++) allLineIdx[i] = i;
 
     std::vector<BSPNode> nodes;
-    buildBSP(bsp.blockMap, polys, lines, allPolyIdx, allLineIdx,
+    buildBSP(bsp.blockMap, polys, collLines, allPolyIdx, allLineIdx,
              0, 0, MAP_SIZE * TILE_SIZE, MAP_SIZE * TILE_SIZE, 0, nodes);
 
-    // 2b. Post-split leaves containing diagonal walls
-    postSplitDiagonals(nodes, polys, lines);
+    // 2b. Post-split: refine leaves containing diagonal walls with diagonal split planes
+    postSplitDiagonals(nodes, polys, collLines);
 
     // 3. Collect lines in leaf order
     std::vector<CollLine> orderedLines;
@@ -644,7 +740,8 @@ static ConvertResult convertBSPtoBIN(const D1BSP& bsp) {
         if (!nodes[i].isLeaf) continue;
         leafLineStart[i] = (int)orderedLines.size();
         leafLineCount[i] = (int)nodes[i].lineIndices.size();
-        for (int li : nodes[i].lineIndices) orderedLines.push_back(lines[li]);
+        for (int li : nodes[i].lineIndices) orderedLines.push_back(collLines[li]);
+
     }
 
     // 4. Pack poly data per leaf
@@ -657,12 +754,12 @@ static ConvertResult convertBSPtoBIN(const D1BSP& bsp) {
         allPolyData.insert(allPolyData.end(), d.begin(), d.end());
     }
 
-    // 5. Normals: X-axis, Y-axis, diagonal NE-SW, diagonal NW-SE
+    // 5. Normals: X-axis, Y-axis, + two 45° diagonals (matching real D2 levels)
     int16_t normals[] = {
         -16384, 0, 0,       // 0: X-axis
         0, -16384, 0,       // 1: Y-axis
-        DIAG_N, DIAG_N, 0,  // 2: NE-SW diagonal (-11585, -11585, 0)
-        DIAG_N, -DIAG_N, 0, // 3: NW-SE diagonal (-11585,  11585, 0)
+        DIAG_N, DIAG_N, 0,  // 2: NE-SW diagonal
+        DIAG_N, -DIAG_N, 0, // 3: NW-SE diagonal
     };
     int numNormals = 4;
 
@@ -714,7 +811,7 @@ static ConvertResult convertBSPtoBIN(const D1BSP& bsp) {
     for (auto& n : nodes) {
         if (n.isLeaf)
             wrU16(out, 0xFFFF);
-        else if (n.axis >= 2) // diagonal split
+        else if (n.axis >= 2) // diagonal split — use precomputed render-space offset
             wrU16(out, (uint16_t)(n.diagOffset & 0xFFFF));
         else // axis-aligned split
             wrU16(out, (uint16_t)((n.splitCoord * 16) & 0xFFFF));
