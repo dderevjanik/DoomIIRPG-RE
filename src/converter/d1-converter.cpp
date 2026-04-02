@@ -2,6 +2,8 @@
 #include "BspToBin.h"
 #include "../engine/ZipFile.h"
 #include <cstdio>
+#include <cstring>
+#include <stb_image_write.h>
 
 // ========================================================================
 // D1RPG game definition
@@ -61,6 +63,136 @@ static const D1LevelMapping D1_LEVELS[] = {
 	{"reactor.bsp",              "11_enpro",    11},
 };
 static constexpr int D1_NUM_LEVELS = sizeof(D1_LEVELS) / sizeof(D1_LEVELS[0]);
+
+// ========================================================================
+// Extract D1 wall textures to PNG (one horizontal strip per texture file)
+// ========================================================================
+
+bool extractD1Textures(ZipFile& zip, const std::string& outputDir) {
+	printf("\n[d1-converter] Extracting D1 textures...\n");
+
+	// Read binary files from zip
+	int palLen = 0, mapLen = 0, wtxLen = 0;
+	uint8_t* palData = zip.readZipFileEntry("palettes.bin", &palLen);
+	uint8_t* mapData = zip.readZipFileEntry("mappings.bin", &mapLen);
+	uint8_t* wtxData = zip.readZipFileEntry("wtexels.bin", &wtxLen);
+
+	if (!palData || !mapData || !wtxData) {
+		printf("  Missing D1 texture files (palettes.bin, mappings.bin, wtexels.bin)\n");
+		if (palData) free(palData);
+		if (mapData) free(mapData);
+		if (wtxData) free(wtxData);
+		return false;
+	}
+
+	// Parse palettes (BGR565 → RGB8)
+	int palPos = 0;
+	uint32_t palDataSize = *(uint32_t*)(palData + palPos); palPos += 4;
+	int numColors = palDataSize / 2;
+	struct RGB { uint8_t r, g, b; };
+	std::vector<RGB> palette(numColors);
+	for (int i = 0; i < numColors; i++) {
+		uint16_t c = *(uint16_t*)(palData + palPos); palPos += 2;
+		uint8_t b5 = (c >> 11) & 0x1F;
+		uint8_t g6 = (c >> 5) & 0x3F;
+		uint8_t r5 = c & 0x1F;
+		palette[i] = {
+			(uint8_t)((r5 << 3) | (r5 >> 2)),
+			(uint8_t)((g6 << 2) | (g6 >> 4)),
+			(uint8_t)((b5 << 3) | (b5 >> 2))
+		};
+	}
+
+	// Parse mappings
+	int mPos = 0;
+	int texelCntRaw = *(int32_t*)(mapData + mPos); mPos += 4;
+	int bitshapeCntRaw = *(int32_t*)(mapData + mPos); mPos += 4;
+	int textureCnt = *(int32_t*)(mapData + mPos); mPos += 4;
+	int spriteCnt = *(int32_t*)(mapData + mPos); mPos += 4;
+
+	int texelCnt = texelCntRaw * 2;
+	std::vector<int32_t> texelOffsets(texelCnt);
+	for (int i = 0; i < texelCnt; i++) {
+		texelOffsets[i] = *(int32_t*)(mapData + mPos); mPos += 4;
+	}
+
+	// Skip bitshape offsets
+	mPos += bitshapeCntRaw * 2 * 4;
+
+	// Read texture IDs
+	std::vector<int16_t> textureIds(textureCnt);
+	for (int i = 0; i < textureCnt; i++) {
+		textureIds[i] = *(int16_t*)(mapData + mPos); mPos += 2;
+	}
+
+	// Collect unique texture IDs in order
+	std::vector<int> uniqueIds;
+	std::vector<bool> seen(texelCnt / 2, false);
+	for (int texIdx = 0; texIdx < textureCnt; texIdx++) {
+		int texId = textureIds[texIdx];
+		if (texId < 0 || texId * 2 + 1 >= texelCnt) continue;
+		if (seen[texId]) continue;
+		seen[texId] = true;
+		uniqueIds.push_back(texId);
+	}
+
+	int count = (int)uniqueIds.size();
+	if (count == 0) {
+		printf("  No textures found\n");
+		free(palData); free(mapData); free(wtxData);
+		return false;
+	}
+
+	// Build one horizontal atlas: count * 64 wide, 64 tall
+	int atlasW = count * 64, atlasH = 64;
+	std::vector<uint8_t> atlas(atlasW * atlasH * 3, 0);
+
+	for (int i = 0; i < count; i++) {
+		int texId = uniqueIds[i];
+		int texelOffset = texelOffsets[texId * 2];
+		int paletteOffset = texelOffsets[texId * 2 + 1];
+		int base = 4 + texelOffset;
+
+		for (int y = 0; y < 64; y++) {
+			for (int x = 0; x < 64; x += 2) {
+				int byteIdx = base + (y * 32) + (x / 2);
+				if (byteIdx < 0 || byteIdx >= wtxLen) continue;
+
+				uint8_t byteVal = wtxData[byteIdx];
+				int pix1 = byteVal & 0x0F;
+				int pix2 = (byteVal >> 4) & 0x0F;
+				int palIdx1 = paletteOffset + pix1;
+				int palIdx2 = paletteOffset + pix2;
+
+				int ax = i * 64 + x; // atlas X position
+				if (palIdx1 >= 0 && palIdx1 < numColors) {
+					atlas[(y * atlasW + ax) * 3 + 0] = palette[palIdx1].r;
+					atlas[(y * atlasW + ax) * 3 + 1] = palette[palIdx1].g;
+					atlas[(y * atlasW + ax) * 3 + 2] = palette[palIdx1].b;
+				}
+				if (palIdx2 >= 0 && palIdx2 < numColors) {
+					atlas[(y * atlasW + (ax + 1)) * 3 + 0] = palette[palIdx2].r;
+					atlas[(y * atlasW + (ax + 1)) * 3 + 1] = palette[palIdx2].g;
+					atlas[(y * atlasW + (ax + 1)) * 3 + 2] = palette[palIdx2].b;
+				}
+			}
+		}
+	}
+
+	// Write atlas PNG
+	std::string texDir = outputDir + "/levels/textures";
+	mkdirRecursive(texDir);
+	std::string outPath = texDir + "/d1_wtexels.png";
+	stbi_write_png(outPath.c_str(), atlasW, atlasH, 3, atlas.data(), atlasW * 3);
+
+	printf("  Exported %d wall textures as %dx%d atlas: %s\n",
+	       count, atlasW, atlasH, outPath.c_str());
+
+	free(palData);
+	free(mapData);
+	free(wtxData);
+	return true;
+}
 
 // ========================================================================
 // Generate level.yaml for a converted D1 level

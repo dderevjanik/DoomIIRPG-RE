@@ -187,6 +187,7 @@ int main(int argc, char* argv[]) {
 		d1Zip.openZipFile(d1ZipPath.c_str());
 		if (d1Zip.getEntryCount() > 0) {
 			convertD1Levels(d1Zip, *game, outputDir);
+			extractD1Textures(d1Zip, outputDir);
 			d1Zip.closeZipFile();
 		} else {
 			printf("Warning: DoomRPG.zip not found at '%s', skipping D1 level conversion.\n",
