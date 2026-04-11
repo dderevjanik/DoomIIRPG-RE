@@ -47,6 +47,13 @@ game:
     13: levels/10_test_map/strings.yaml
     14: strings/Translations.yaml
 
+  # Entity definition files — loaded and merged in order.
+  entities:
+    - monsters.yaml
+    - npcs.yaml
+    - pickups.yaml
+    - decorations.yaml
+
   # Subdirectories to search when resolving asset files.
   # The engine tries the exact path first, then searches these dirs in order.
   search_dirs:

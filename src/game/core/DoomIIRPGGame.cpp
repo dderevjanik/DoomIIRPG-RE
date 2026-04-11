@@ -84,12 +84,21 @@ void DoomIIRPGGame::registerLoaders(ResourceManager* rm) {
 	rm->registerParser("item_defs", "items.yaml",
 		[](const DataNode& d) { return ItemDefs::parse(d); }, 30, true);
 
-	// entities.yaml — entity type/subtype names + entity definitions
-	rm->registerParser("entity_names", "entities.yaml",
-		[app](const DataNode& d) {
-			if (!EntityNames::parseTypes(d)) return false;
-			return EntityDefManager::parse(app->entityDefManager.get(), d);
-		}, 40);
+	// Entity definition files — load all files listed in game.yaml entities:, merge, then parse
+	rm->registerLoader("entity_names", [app](ResourceManager* rm) {
+		const auto& files = CAppContainer::getInstance()->gameConfig.entityFiles;
+		DataNode merged;
+		for (const auto& path : files) {
+			DataNode data = rm->loadData(path.c_str());
+			if (!data) {
+				LOG_ERROR("entity_names: failed to load %s\n", path.c_str());
+				return false;
+			}
+			merged = merged ? DataNode::mergeDeep(merged, data) : data;
+		}
+		if (!EntityNames::parseTypes(merged)) return false;
+		return EntityDefManager::parse(app->entityDefManager.get(), merged);
+	}, 40);
 
 	// weapons.yaml — weapon names (before entity defs, needed for parm resolution)
 	rm->registerParser("weapon_names", "weapons.yaml",
@@ -133,9 +142,20 @@ void DoomIIRPGGame::registerLoaders(ResourceManager* rm) {
 		return parseDialogStyles(app, data);
 	}, 120);
 
-	// Monster combat data from entities.yaml (after weapons and sounds)
-	rm->registerParser("monster_combat", "entities.yaml",
-		[app](const DataNode& d) { return parseMonsterCombatFromEntities(app, d); }, 130);
+	// Monster combat data from entity files (after weapons and sounds)
+	rm->registerLoader("monster_combat", [app](ResourceManager* rm) {
+		const auto& files = CAppContainer::getInstance()->gameConfig.entityFiles;
+		DataNode merged;
+		for (const auto& path : files) {
+			DataNode data = rm->loadData(path.c_str());
+			if (!data) {
+				LOG_ERROR("monster_combat: failed to load %s\n", path.c_str());
+				return false;
+			}
+			merged = merged ? DataNode::mergeDeep(merged, data) : data;
+		}
+		return parseMonsterCombatFromEntities(app, merged);
+	}, 130);
 }
 
 void DoomIIRPGGame::registerOpcodes(Applet* app) {

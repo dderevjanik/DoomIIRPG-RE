@@ -34,6 +34,7 @@ struct GameConfig {
 	std::vector<std::string> searchDirs;  // VFS search subdirectories for asset resolution
 	std::unordered_map<int, std::string> stringFiles;  // group index -> YAML file path (from game.yaml strings:)
 	std::map<int, LevelInfo> levelInfos;  // map_id -> per-level paths
+	std::vector<std::string> entityFiles = {"entities.yaml"};  // entity definition files (from game.yaml entities:)
 
 	// Inventory/ammo capacity caps
 	int capCredits = 9999;

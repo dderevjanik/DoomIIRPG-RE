@@ -258,6 +258,14 @@ int main(int argc, char* args[]) {
 				}
 			}
 
+			DataNode entitiesNode = game["entities"];
+			if (entitiesNode) {
+				gc.entityFiles.clear();
+				for (auto it = entitiesNode.begin(); it != entitiesNode.end(); ++it) {
+					gc.entityFiles.push_back(it.value().asString());
+				}
+			}
+
 			DataNode stringsNode = game["strings"];
 			if (stringsNode && stringsNode.isMap()) {
 				for (auto it = stringsNode.begin(); it != stringsNode.end(); ++it) {

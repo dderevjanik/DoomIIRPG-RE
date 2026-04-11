@@ -1,0 +1,95 @@
+entities:
+  npc_0:
+    sprite: npc_riley_oconnor
+    type: npc
+    subtype: 0
+    parm: 0
+    text: {name: 173, long_name: 159, description: 159}
+    rendering:
+      body_parts: {idle_torso_z: -18, flip_torso_walk: true}
+  npc_1:
+    sprite: npc_major
+    type: npc
+    subtype: 1
+    parm: 0
+    text: {name: 174, long_name: 159, description: 159}
+    rendering:
+      body_parts: {idle_torso_z: -18, flip_torso_walk: true}
+  npc_2:
+    sprite: npc_bob
+    type: npc
+    subtype: 2
+    parm: 0
+    text: {name: 175, long_name: 159, description: 159}
+    rendering:
+      fear_eyes: {eye_l: -4, eye_r: 4, z_add: -192, z_always_pre: 192}
+      body_parts: {idle_torso_z: -18, flip_torso_walk: true}
+      floater: {z_offset: 192, has_idle_frame_increment: true}
+  npc_3:
+    sprite: npc_civilian
+    type: npc
+    subtype: 3
+    parm: 0
+    text: {name: 176, long_name: 159, description: 159}
+    rendering:
+      fear_eyes: {eye_l: -3, eye_r: 3, z_add: 294}
+      body_parts: {idle_torso_z: -18, flip_torso_walk: true}
+  npc_4:
+    sprite: npc_sarge
+    type: npc
+    subtype: 4
+    parm: 0
+    text: {name: 177, long_name: 159, description: 159}
+    rendering:
+      fear_eyes: {eye_l: -3, eye_r: 3, z_add: 388}
+      body_parts: {idle_torso_z: -18, flip_torso_walk: true}
+      sprite_anim: {has_frame_dependent_head: true, head_z_frame0: 17, head_x_frame0: 2, head_z_frame1: 16}
+  npc_5:
+    sprite: npc_female
+    type: npc
+    subtype: 5
+    parm: 0
+    text: {name: 179, long_name: 159, description: 159}
+    rendering:
+      fear_eyes: {eye_l: -5, eye_r: 5, z_add: 35}
+      body_parts: {idle_torso_z: -18, flip_torso_walk: true}
+  npc_6:
+    sprite: npc_evil_scientist
+    type: npc
+    subtype: 6
+    parm: 0
+    text: {name: 179, long_name: 159, description: 159}
+    rendering:
+      fear_eyes: {eye_l: 0, eye_r: -1, z_add: 32, single_eye: true}
+      body_parts: {idle_torso_z: -18, flip_torso_walk: true}
+      floater: {has_back_extra_sprite: true, back_extra_sprite_idx: 7}
+  npc_7:
+    sprite: npc_scientist
+    type: npc
+    subtype: 7
+    parm: 0
+    text: {name: 180, long_name: 159, description: 159}
+    rendering:
+      fear_eyes: {eye_l: -1, eye_r: 4, z_add: 274}
+      body_parts: {idle_torso_z: -18, flip_torso_walk: true}
+      floater: {type: multipart, back_view_frame: 6, idle_front_frame: 2, head_z_offset: -11, has_dead_loot: true}
+  npc_8:
+    sprite: npc_researcher
+    type: npc
+    subtype: 8
+    parm: 0
+    text: {name: 181, long_name: 159, description: 159}
+    rendering:
+      fear_eyes: {eye_l: -3, eye_r: 3, z_add: 280}
+      gun_flare: {dual: true, flash1_x: -24, flash1_z: 160, flash2_x: 22, flash2_z: 128}
+      body_parts: {idle_torso_z: -18, flip_torso_walk: true}
+  npc_9:
+    sprite: npc_civilian2
+    type: npc
+    subtype: 9
+    parm: 0
+    text: {name: 176, long_name: 159, description: 159}
+    rendering:
+      fear_eyes: {eye_l: -2, eye_r: 5, z_add: 324, z_always_pre: 160, z_idle_pre: 32, eye_l_flip: -5, eye_r_flip: 2}
+      gun_flare: {dual: true, flash1_x: -9, flash1_z: 736, flash2_x: 15, flash2_z: 736}
+      body_parts: {idle_torso_z: -18, flip_torso_walk: true}

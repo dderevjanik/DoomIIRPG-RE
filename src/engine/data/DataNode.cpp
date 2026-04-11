@@ -127,6 +127,24 @@ DataNode DataNode::merge(const DataNode& base, const DataNode& overlay, const ch
 	return result;
 }
 
+DataNode DataNode::mergeDeep(const DataNode& base, const DataNode& overlay) {
+	DataNode result = base.clone();
+	if (!overlay.impl || !overlay.impl->node.IsDefined()) return result;
+	if (!result.impl) result.impl = std::make_shared<Impl>();
+	for (auto it = overlay.impl->node.begin(); it != overlay.impl->node.end(); ++it) {
+		std::string key = it->first.as<std::string>();
+		if (result.impl->node[key].IsMap() && it->second.IsMap()) {
+			// Merge map contents instead of overwriting
+			for (auto sub = it->second.begin(); sub != it->second.end(); ++sub) {
+				result.impl->node[key][sub->first] = sub->second;
+			}
+		} else {
+			result.impl->node[key] = it->second;
+		}
+	}
+	return result;
+}
+
 // --- DataNode::Iterator::Impl ---
 
 struct DataNode::Iterator::Impl {

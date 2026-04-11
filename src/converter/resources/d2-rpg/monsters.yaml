@@ -1,0 +1,653 @@
+entities:
+  sentry_bot_parm1:
+    sprite: monster_red_sentry_bot
+    type: monster
+    subtype: sentry_bot
+    parm: 1
+    text: {name: 29, long_name: 29, description: 159}
+    rendering:
+      flags:
+      - gun_flare
+      gun_flare: {flash2_z: -64}
+      body_parts: {sentry_head_flip: true}
+    combat:
+      stats: {health: 20, armor: 0, defense: 10, strength: 24, accuracy: 100, agility: 25}
+      attacks: {attack1: m_machine_gun, attack2: assault_rifle, chance: 0}
+      weakness: {holy_water_pistol: 12.5}
+      sounds: {alert1: sentrybot_activate, alert2: sentrybot_activate, alert3: sentrybot_activate, attack1: chaingun, attack2: none,
+        idle: sentrybot_return, pain: sentrybot_pain, death: sentrybot_death}
+  sentry_bot_parm0:
+    sprite: monster_sentry_bot
+    type: monster
+    subtype: sentry_bot
+    parm: 0
+    text: {name: 28, long_name: 28, description: 159}
+    rendering:
+      flags:
+      - gun_flare
+      gun_flare: {flash2_z: -64}
+      body_parts: {sentry_head_flip: true}
+    combat:
+      stats: {health: 10, armor: 0, defense: 5, strength: 12, accuracy: 97, agility: 15}
+      attacks: {attack1: m_machine_gun, attack2: assault_rifle, chance: 0}
+      weakness: {holy_water_pistol: 12.5}
+      sounds: {alert1: sentrybot_activate, alert2: sentrybot_activate, alert3: sentrybot_activate, attack1: chaingun, attack2: none,
+        idle: sentrybot_return, pain: sentrybot_pain, death: sentrybot_death}
+  zombie_parm0:
+    sprite: monster_zombie
+    type: monster
+    subtype: zombie
+    parm: 0
+    text: {name: 30, long_name: 30, description: 159}
+    rendering:
+      body_parts: {no_head_on_attack: true}
+    combat:
+      stats: {health: 8, armor: 0, defense: 5, strength: 12, accuracy: 95, agility: 0}
+      attacks: {attack1: m_flesh_throw, attack2: assault_rifle, chance: 0}
+      weakness: {chainsaw: 200, holy_water_pistol: 12.5}
+      sounds: {alert1: zombie_sight1, alert2: zombie_sight2, alert3: 144, attack1: revenant_swing, attack2: none, idle: zombie_active,
+        pain: monster_pain, death: zombie_death1}
+      blood_color: '#E901A6'
+  zombie_parm1:
+    sprite: monster_zombie2
+    type: monster
+    subtype: zombie
+    parm: 1
+    text: {name: 31, long_name: 31, description: 159}
+    rendering:
+      body_parts: {no_head_on_attack: true}
+    combat:
+      stats: {health: 10, armor: 0, defense: 10, strength: 18, accuracy: 97, agility: 0}
+      attacks: {attack1: m_flesh_throw, attack2: assault_rifle, chance: 0}
+      weakness: {chainsaw: 200, holy_water_pistol: 12.5}
+      sounds: {alert1: zombie_sight1, alert2: zombie_sight2, alert3: 144, attack1: revenant_swing, attack2: none, idle: zombie_active,
+        pain: monster_pain, death: zombie_death1}
+      blood_color: '#E901A6'
+  zombie_parm2:
+    sprite: monster_zombie3
+    type: monster
+    subtype: zombie
+    parm: 2
+    text: {name: 32, long_name: 32, description: 159}
+    rendering:
+      body_parts: {no_head_on_attack: true}
+    combat:
+      stats: {health: 12, armor: 0, defense: 10, strength: 25, accuracy: 100, agility: 0}
+      attacks: {attack1: m_flesh_throw, attack2: assault_rifle, chance: 0}
+      weakness: {chainsaw: 200, holy_water_pistol: 12.5}
+      sounds: {alert1: zombie_sight1, alert2: zombie_sight2, alert3: 144, attack1: revenant_swing, attack2: none, idle: zombie_active,
+        pain: monster_pain, death: zombie_death1}
+      blood_color: '#E901A6'
+  imp_parm0:
+    sprite: monster_imp
+    type: monster
+    subtype: imp
+    parm: 0
+    text: {name: 33, long_name: 33, description: 159}
+    rendering:
+      fear_eyes: {eye_l: -3, eye_r: 3, z_add: 294}
+      body_parts: {no_head_on_attack: true}
+    combat:
+      stats: {health: 10, armor: 0, defense: 5, strength: 12, accuracy: 95, agility: 0}
+      attacks: {attack1: m_claw, attack2: assault_rifle, chance: 0}
+      weakness: {holy_water_pistol: 200, super_shotgun: 200}
+      sounds: {alert1: imp_sight1, alert2: imp_sight2, alert3: imp_sight2, attack1: impclaw, attack2: fireball, idle: imp_active,
+        pain: monster_pain, death: imp_death1}
+      blood_color: '#92F59A'
+  imp_parm1:
+    sprite: monster_imp2
+    type: monster
+    subtype: imp
+    parm: 1
+    text: {name: 34, long_name: 34, description: 159}
+    rendering:
+      fear_eyes: {eye_l: -3, eye_r: 3, z_add: 294}
+      body_parts: {no_head_on_attack: true}
+    combat:
+      stats: {health: 12, armor: 0, defense: 10, strength: 15, accuracy: 97, agility: 5}
+      attacks: {attack1: m_claw, attack2: m_fireball, chance: 75}
+      weakness: {holy_water_pistol: 200, super_shotgun: 200}
+      sounds: {alert1: imp_sight1, alert2: imp_sight2, alert3: imp_sight2, attack1: impclaw, attack2: fireball, idle: imp_active,
+        pain: monster_pain, death: imp_death1}
+      blood_color: '#92F59A'
+  imp_parm2:
+    sprite: monster_imp3
+    type: monster
+    subtype: imp
+    parm: 2
+    text: {name: 35, long_name: 35, description: 159}
+    rendering:
+      fear_eyes: {eye_l: -3, eye_r: 3, z_add: 294}
+      body_parts: {no_head_on_attack: true}
+    combat:
+      stats: {health: 15, armor: 0, defense: 10, strength: 18, accuracy: 100, agility: 10}
+      attacks: {attack1: m_claw, attack2: m_fireball, chance: 50}
+      weakness: {holy_water_pistol: 200, super_shotgun: 200}
+      sounds: {alert1: imp_sight1, alert2: imp_sight2, alert3: imp_sight2, attack1: impclaw, attack2: fireball, idle: imp_active,
+        pain: monster_pain, death: imp_death1}
+      blood_color: '#92F59A'
+  sawcubus_parm0:
+    sprite: monster_saw_goblin
+    type: monster
+    subtype: sawcubus
+    parm: 0
+    text: {name: 36, long_name: 36, description: 159}
+    rendering:
+      fear_eyes: {eye_l: -3, eye_r: 3, z_add: 388}
+      body_parts: {attack_torso_z_f0: 96, attack_torso_z_f1: -100, attack_head_z: 16}
+      sprite_anim: {has_frame_dependent_head: true, head_z_frame0: 17, head_x_frame0: 2, head_z_frame1: 16}
+    combat:
+      stats: {health: 10, armor: 0, defense: 10, strength: 18, accuracy: 100, agility: 5}
+      attacks: {attack1: m_punch, attack2: assault_rifle, chance: 0}
+      weakness: {chainsaw: 12.5, holy_water_pistol: 200, super_shotgun: 200}
+      sounds: {alert1: chainsawgoblin_sight, alert2: chainsawgoblin_sight, alert3: chainsawgoblin_sight, attack1: chainsawgoblin_attack,
+        attack2: none, idle: imp_active, pain: chainsawgoblin_pain, death: chainsawgoblin_death}
+      blood_color: '#27565A'
+  sawcubus_parm1:
+    sprite: monster_saw_goblin2
+    type: monster
+    subtype: sawcubus
+    parm: 1
+    text: {name: 37, long_name: 37, description: 159}
+    rendering:
+      fear_eyes: {eye_l: -3, eye_r: 3, z_add: 388}
+      body_parts: {attack_torso_z_f0: 96, attack_torso_z_f1: -100, attack_head_z: 16}
+      sprite_anim: {has_frame_dependent_head: true, head_z_frame0: 17, head_x_frame0: 2, head_z_frame1: 16}
+    combat:
+      stats: {health: 12, armor: 0, defense: 15, strength: 22, accuracy: 100, agility: 10}
+      attacks: {attack1: m_punch, attack2: assault_rifle, chance: 0}
+      weakness: {chainsaw: 12.5, holy_water_pistol: 200, super_shotgun: 200}
+      sounds: {alert1: chainsawgoblin_sight, alert2: chainsawgoblin_sight, alert3: chainsawgoblin_sight, attack1: chainsawgoblin_attack,
+        attack2: none, idle: imp_active, pain: chainsawgoblin_pain, death: chainsawgoblin_death}
+      blood_color: '#27565A'
+  sawcubus_parm2:
+    sprite: monster_saw_goblin3
+    type: monster
+    subtype: sawcubus
+    parm: 2
+    text: {name: 38, long_name: 38, description: 159}
+    rendering:
+      fear_eyes: {eye_l: -3, eye_r: 3, z_add: 388}
+      body_parts: {attack_torso_z_f0: 96, attack_torso_z_f1: -100, attack_head_z: 16}
+      sprite_anim: {has_frame_dependent_head: true, head_z_frame0: 17, head_x_frame0: 2, head_z_frame1: 16}
+    combat:
+      stats: {health: 15, armor: 0, defense: 15, strength: 28, accuracy: 100, agility: 15}
+      attacks: {attack1: m_punch, attack2: assault_rifle, chance: 0}
+      weakness: {chainsaw: 12.5, holy_water_pistol: 200, super_shotgun: 200}
+      sounds: {alert1: chainsawgoblin_sight, alert2: chainsawgoblin_sight, alert3: chainsawgoblin_sight, attack1: chainsawgoblin_attack,
+        attack2: none, idle: imp_active, pain: chainsawgoblin_pain, death: chainsawgoblin_death}
+      blood_color: '#27565A'
+  lost_soul_parm0:
+    sprite: monster_lost_soul
+    type: monster
+    subtype: lost_soul
+    parm: 0
+    text: {name: 54, long_name: 54, description: 159}
+    rendering:
+      flags:
+      - floater
+      fear_eyes: {eye_l: -4, eye_r: 4, z_add: -192, z_always_pre: 192}
+      floater: {z_offset: 192, has_idle_frame_increment: true}
+    combat:
+      stats: {health: 20, armor: 0, defense: 20, strength: 38, accuracy: 97, agility: 25}
+      attacks: {attack1: m_bite, attack2: m_charge, chance: 75}
+      weakness: {holy_water_pistol: 200}
+      sounds: {alert1: lostsoul_attack, alert2: lostsoul_attack, alert3: lostsoul_attack, attack1: claw, attack2: lostsoul_attack,
+        idle: demon_active, pain: demon_pain, death: fireball_impact}
+      blood_color: '#BC77AF'
+  lost_soul_parm1:
+    sprite: monster_lost_soul2
+    type: monster
+    subtype: lost_soul
+    parm: 1
+    text: {name: 55, long_name: 55, description: 159}
+    rendering:
+      flags:
+      - floater
+      fear_eyes: {eye_l: -4, eye_r: 4, z_add: -192, z_always_pre: 192}
+      floater: {z_offset: 192, has_idle_frame_increment: true}
+    combat:
+      stats: {health: 22, armor: 0, defense: 25, strength: 44, accuracy: 97, agility: 30}
+      attacks: {attack1: m_bite, attack2: m_charge, chance: 75}
+      weakness: {holy_water_pistol: 200}
+      sounds: {alert1: lostsoul_attack, alert2: lostsoul_attack, alert3: lostsoul_attack, attack1: claw, attack2: lostsoul_attack,
+        idle: demon_active, pain: demon_pain, death: fireball_impact}
+      blood_color: '#BC77AF'
+  lost_soul_parm2:
+    sprite: monster_lost_soul3
+    type: monster
+    subtype: lost_soul
+    parm: 2
+    text: {name: 56, long_name: 56, description: 159}
+    rendering:
+      flags:
+      - floater
+      fear_eyes: {eye_l: -4, eye_r: 4, z_add: -192, z_always_pre: 192}
+      floater: {z_offset: 192, has_idle_frame_increment: true}
+    combat:
+      stats: {health: 25, armor: 0, defense: 30, strength: 50, accuracy: 100, agility: 35}
+      attacks: {attack1: m_bite, attack2: m_charge, chance: 75}
+      weakness: {holy_water_pistol: 200}
+      sounds: {alert1: lostsoul_attack, alert2: lostsoul_attack, alert3: lostsoul_attack, attack1: claw, attack2: lostsoul_attack,
+        idle: demon_active, pain: demon_pain, death: fireball_impact}
+      blood_color: '#BC77AF'
+  pinky_parm0:
+    sprite: monster_pinky
+    type: monster
+    subtype: pinky
+    parm: 0
+    text: {name: 39, long_name: 39, description: 159}
+    rendering:
+      fear_eyes: {eye_l: -5, eye_r: 5, z_add: 35}
+      body_parts: {no_head_on_back: true}
+    combat:
+      stats: {health: 16, armor: 0, defense: 10, strength: 18, accuracy: 95, agility: 0}
+      attacks: {attack1: m_bite, attack2: m_charge, chance: 75}
+      weakness: {holy_water_pistol: 200}
+      sounds: {alert1: pinky_sight, alert2: pinky_sight, alert3: pinky_sight, attack1: pinky_attack, attack2: pinky_attack,
+        idle: demon_active, pain: demon_pain, death: pinky_death}
+      blood_color: '#7A7A3A'
+  pinky_parm1:
+    sprite: monster_pinky2
+    type: monster
+    subtype: pinky
+    parm: 1
+    text: {name: 40, long_name: 40, description: 159}
+    rendering:
+      fear_eyes: {eye_l: -5, eye_r: 5, z_add: 35}
+      body_parts: {no_head_on_back: true}
+    combat:
+      stats: {health: 18, armor: 0, defense: 15, strength: 25, accuracy: 97, agility: 5}
+      attacks: {attack1: m_bite, attack2: m_charge, chance: 152}
+      weakness: {holy_water_pistol: 200}
+      sounds: {alert1: pinky_sight, alert2: pinky_sight, alert3: pinky_sight, attack1: pinky_attack, attack2: pinky_attack,
+        idle: demon_active, pain: demon_pain, death: pinky_death}
+      blood_color: '#7A7A3A'
+  pinky_parm2:
+    sprite: monster_pinky3
+    type: monster
+    subtype: pinky
+    parm: 2
+    text: {name: 41, long_name: 41, description: 159}
+    rendering:
+      fear_eyes: {eye_l: -5, eye_r: 5, z_add: 35}
+      body_parts: {no_head_on_back: true}
+    combat:
+      stats: {health: 20, armor: 0, defense: 20, strength: 32, accuracy: 100, agility: 10}
+      attacks: {attack1: m_bite, attack2: m_charge, chance: 178}
+      weakness: {holy_water_pistol: 200}
+      sounds: {alert1: pinky_sight, alert2: pinky_sight, alert3: pinky_sight, attack1: pinky_attack, attack2: pinky_attack,
+        idle: demon_active, pain: demon_pain, death: pinky_death}
+      blood_color: '#7A7A3A'
+  revenant_parm0:
+    sprite: monster_revenant
+    type: monster
+    subtype: revenant
+    parm: 0
+    text: {name: 60, long_name: 60, description: 159}
+    rendering:
+      flags:
+      - gun_flare
+      fear_eyes: {eye_l: -2, eye_r: 5, z_add: 324, z_always_pre: 160, z_idle_pre: 32, eye_l_flip: -5, eye_r_flip: 2}
+      gun_flare: {dual: true, flash1_x: -9, flash1_z: 736, flash2_x: 15, flash2_z: 736}
+      body_parts: {idle_torso_z: -30, idle_head_z: 140, walk_head_z: 160, attack_head_z: 20, attack_head_x: 2, attack_rev_atk2_torso_z: 130}
+    combat:
+      stats: {health: 30, armor: 0, defense: 35, strength: 50, accuracy: 95, agility: 20}
+      attacks: {attack1: m_rockets, attack2: m_punch, chance: 178}
+      weakness: {holy_water_pistol: 200, plasma_gun: 150}
+      sounds: {alert1: revenant_sight, alert2: revenant_sight, alert3: revenant_sight, attack1: revenant_attack, attack2: revenant_punch,
+        idle: revenant_active, pain: monster_pain, death: revenant_death}
+  revenant_parm1:
+    sprite: monster_revenant2
+    type: monster
+    subtype: revenant
+    parm: 1
+    text: {name: 61, long_name: 61, description: 159}
+    rendering:
+      flags:
+      - gun_flare
+      fear_eyes: {eye_l: -2, eye_r: 5, z_add: 324, z_always_pre: 160, z_idle_pre: 32, eye_l_flip: -5, eye_r_flip: 2}
+      gun_flare: {dual: true, flash1_x: -9, flash1_z: 736, flash2_x: 15, flash2_z: 736}
+      body_parts: {idle_torso_z: -30, idle_head_z: 140, walk_head_z: 160, attack_head_z: 20, attack_head_x: 2, attack_rev_atk2_torso_z: 130}
+    combat:
+      stats: {health: 35, armor: 0, defense: 40, strength: 62, accuracy: 95, agility: 30}
+      attacks: {attack1: m_rockets, attack2: m_punch, chance: 203}
+      weakness: {holy_water_pistol: 200, plasma_gun: 150}
+      sounds: {alert1: revenant_sight, alert2: revenant_sight, alert3: revenant_sight, attack1: revenant_attack, attack2: revenant_punch,
+        idle: revenant_active, pain: monster_pain, death: revenant_death}
+  revenant_parm2:
+    sprite: monster_revenant3
+    type: monster
+    subtype: revenant
+    parm: 2
+    text: {name: 62, long_name: 62, description: 159}
+    rendering:
+      flags:
+      - gun_flare
+      fear_eyes: {eye_l: -2, eye_r: 5, z_add: 324, z_always_pre: 160, z_idle_pre: 32, eye_l_flip: -5, eye_r_flip: 2}
+      gun_flare: {dual: true, flash1_x: -9, flash1_z: 736, flash2_x: 15, flash2_z: 736}
+      body_parts: {idle_torso_z: -30, idle_head_z: 140, walk_head_z: 160, attack_head_z: 20, attack_head_x: 2, attack_rev_atk2_torso_z: 130}
+    combat:
+      stats: {health: 40, armor: 0, defense: 45, strength: 70, accuracy: 95, agility: 35}
+      attacks: {attack1: m_rockets, attack2: m_punch, chance: 229}
+      weakness: {holy_water_pistol: 200, plasma_gun: 150}
+      sounds: {alert1: revenant_sight, alert2: revenant_sight, alert3: revenant_sight, attack1: revenant_attack, attack2: revenant_punch,
+        idle: revenant_active, pain: monster_pain, death: revenant_death}
+  mancubus_parm0:
+    sprite: monster_mancubus
+    type: monster
+    subtype: mancubus
+    parm: 0
+    text: {name: 42, long_name: 42, description: 159}
+    rendering:
+      flags:
+      - gun_flare
+      fear_eyes: {eye_l: -3, eye_r: 3, z_add: 280}
+      gun_flare: {dual: true, flash1_x: -24, flash1_z: 160, flash2_x: 22, flash2_z: 128}
+      body_parts: {attack_head_z: -112, attack_head_x: 7, no_head_on_manc_atk: true}
+    combat:
+      stats: {health: 25, armor: 0, defense: 55, strength: 50, accuracy: 95, agility: 5}
+      attacks: {attack1: m_rockets, attack2: assault_rifle, chance: 0}
+      weakness: {holy_water_pistol: 200, plasma_gun: 150}
+      sounds: {alert1: mancubus_sight, alert2: mancubus_sight, alert3: mancubus_sight, attack1: mancubus_attack, attack2: none,
+        idle: zombie_active, pain: mancubus_pain, death: mancubus_death}
+  mancubus_parm1:
+    sprite: monster_mancubus2
+    type: monster
+    subtype: mancubus
+    parm: 1
+    text: {name: 43, long_name: 43, description: 159}
+    rendering:
+      flags:
+      - gun_flare
+      fear_eyes: {eye_l: -3, eye_r: 3, z_add: 280}
+      gun_flare: {dual: true, flash1_x: -24, flash1_z: 160, flash2_x: 22, flash2_z: 128}
+      body_parts: {attack_head_z: -112, attack_head_x: 7, no_head_on_manc_atk: true}
+    combat:
+      stats: {health: 27, armor: 0, defense: 60, strength: 58, accuracy: 97, agility: 5}
+      attacks: {attack1: m_rockets, attack2: assault_rifle, chance: 0}
+      weakness: {holy_water_pistol: 200, plasma_gun: 150}
+      sounds: {alert1: mancubus_sight, alert2: mancubus_sight, alert3: mancubus_sight, attack1: mancubus_attack, attack2: none,
+        idle: zombie_active, pain: mancubus_pain, death: mancubus_death}
+  mancubus_parm2:
+    sprite: monster_mancubus3
+    type: monster
+    subtype: mancubus
+    parm: 2
+    text: {name: 44, long_name: 44, description: 159}
+    rendering:
+      flags:
+      - gun_flare
+      fear_eyes: {eye_l: -3, eye_r: 3, z_add: 280}
+      gun_flare: {dual: true, flash1_x: -24, flash1_z: 160, flash2_x: 22, flash2_z: 128}
+      body_parts: {attack_head_z: -112, attack_head_x: 7, no_head_on_manc_atk: true}
+    combat:
+      stats: {health: 30, armor: 0, defense: 65, strength: 58, accuracy: 97, agility: 5}
+      attacks: {attack1: m_rockets, attack2: assault_rifle, chance: 0}
+      weakness: {holy_water_pistol: 200, plasma_gun: 150}
+      sounds: {alert1: mancubus_sight, alert2: mancubus_sight, alert3: mancubus_sight, attack1: mancubus_attack, attack2: none,
+        idle: zombie_active, pain: mancubus_pain, death: mancubus_death}
+  cacodemon_parm0:
+    sprite: monster_cacodemon
+    type: monster
+    subtype: cacodemon
+    parm: 0
+    text: {name: 45, long_name: 45, description: 159}
+    rendering:
+      flags:
+      - floater
+      fear_eyes: {eye_l: 0, eye_r: -1, z_add: 32, single_eye: true}
+      floater: {has_back_extra_sprite: true, back_extra_sprite_idx: 7}
+    combat:
+      stats: {health: 20, armor: 0, defense: 20, strength: 25, accuracy: 95, agility: 20}
+      attacks: {attack1: m_bite, attack2: m_plasma, chance: 0}
+      weakness: {holy_water_pistol: 200, chaingun: 200}
+      sounds: {alert1: cacodemon_sight, alert2: cacodemon_sight, alert3: cacodemon_sight, attack1: claw, attack2: fireball,
+        idle: demon_active, pain: demon_pain, death: cacodemon_death}
+  cacodemon_parm1:
+    sprite: monster_cacodemon2
+    type: monster
+    subtype: cacodemon
+    parm: 1
+    text: {name: 46, long_name: 46, description: 159}
+    rendering:
+      flags:
+      - floater
+      fear_eyes: {eye_l: 0, eye_r: -1, z_add: 32, single_eye: true}
+      floater: {has_back_extra_sprite: true, back_extra_sprite_idx: 7}
+    combat:
+      stats: {health: 22, armor: 0, defense: 25, strength: 32, accuracy: 97, agility: 25}
+      attacks: {attack1: m_bite, attack2: m_plasma, chance: 0}
+      weakness: {holy_water_pistol: 200, chaingun: 200}
+      sounds: {alert1: cacodemon_sight, alert2: cacodemon_sight, alert3: cacodemon_sight, attack1: claw, attack2: fireball,
+        idle: demon_active, pain: demon_pain, death: cacodemon_death}
+  cacodemon_parm2:
+    sprite: monster_cacodemon3
+    type: monster
+    subtype: cacodemon
+    parm: 2
+    text: {name: 47, long_name: 47, description: 159}
+    rendering:
+      flags:
+      - floater
+      fear_eyes: {eye_l: 0, eye_r: -1, z_add: 32, single_eye: true}
+      floater: {has_back_extra_sprite: true, back_extra_sprite_idx: 7}
+    combat:
+      stats: {health: 25, armor: 0, defense: 30, strength: 38, accuracy: 97, agility: 30}
+      attacks: {attack1: m_bite, attack2: m_plasma, chance: 0}
+      weakness: {holy_water_pistol: 200, chaingun: 200}
+      sounds: {alert1: cacodemon_sight, alert2: cacodemon_sight, alert3: cacodemon_sight, attack1: claw, attack2: fireball,
+        idle: demon_active, pain: demon_pain, death: cacodemon_death}
+  sentinel_parm0:
+    sprite: monster_sentinel
+    type: monster
+    subtype: sentinel
+    parm: 0
+    text: {name: 48, long_name: 48, description: 159}
+    rendering:
+      flags:
+      - floater
+      fear_eyes: {eye_l: -1, eye_r: 4, z_add: 274}
+      floater: {type: multipart, back_view_frame: 6, idle_front_frame: 2, head_z_offset: -11, has_dead_loot: true}
+    combat:
+      stats: {health: 10, armor: 0, defense: 18, strength: 25, accuracy: 95, agility: 30}
+      attacks: {attack1: m_floor_strike, attack2: assault_rifle, chance: 0}
+      weakness: {holy_water_pistol: 200}
+      sounds: {alert1: sentinel_sight, alert2: sentinel_sight, alert3: sentinel_sight, attack1: sentinel_attack, attack2: none,
+        idle: revenant_active, pain: sentinel_pain, death: sentinel_death}
+  sentinel_parm1:
+    sprite: monster_sentinel2
+    type: monster
+    subtype: sentinel
+    parm: 1
+    text: {name: 49, long_name: 49, description: 159}
+    rendering:
+      flags:
+      - floater
+      fear_eyes: {eye_l: -1, eye_r: 4, z_add: 274}
+      floater: {type: multipart, back_view_frame: 6, idle_front_frame: 2, head_z_offset: -11, has_dead_loot: true}
+    combat:
+      stats: {health: 18, armor: 0, defense: 20, strength: 32, accuracy: 97, agility: 35}
+      attacks: {attack1: m_floor_strike, attack2: assault_rifle, chance: 0}
+      weakness: {holy_water_pistol: 200}
+      sounds: {alert1: sentinel_sight, alert2: sentinel_sight, alert3: sentinel_sight, attack1: sentinel_attack, attack2: none,
+        idle: revenant_active, pain: sentinel_pain, death: sentinel_death}
+  sentinel_parm2:
+    sprite: monster_sentinel3
+    type: monster
+    subtype: sentinel
+    parm: 2
+    text: {name: 50, long_name: 50, description: 159}
+    rendering:
+      flags:
+      - floater
+      fear_eyes: {eye_l: -1, eye_r: 4, z_add: 274}
+      floater: {type: multipart, back_view_frame: 6, idle_front_frame: 2, head_z_offset: -11, has_dead_loot: true}
+    combat:
+      stats: {health: 20, armor: 0, defense: 25, strength: 38, accuracy: 97, agility: 40}
+      attacks: {attack1: m_floor_strike, attack2: assault_rifle, chance: 0}
+      weakness: {holy_water_pistol: 200}
+      sounds: {alert1: sentinel_sight, alert2: sentinel_sight, alert3: sentinel_sight, attack1: sentinel_attack, attack2: none,
+        idle: revenant_active, pain: sentinel_pain, death: sentinel_death}
+  arch_vile_parm0:
+    sprite: monster_arch_vile
+    type: monster
+    subtype: arch_vile
+    parm: 0
+    text: {name: 57, long_name: 57, description: 159}
+    rendering:
+      fear_eyes: {eye_l: -3, eye_r: 3, z_add: 403, z_idle_pre: 48}
+      body_parts: {idle_torso_z: -36, idle_head_z: 109, walk_torso_z: -36, walk_head_z: 109, attack_torso_z_f0: 288, flip_torso_walk: true,
+        no_head_on_attack: true}
+    combat:
+      stats: {health: 30, armor: 0, defense: 35, strength: 44, accuracy: 95, agility: 15}
+      attacks: {attack1: m_fire, attack2: assault_rifle, chance: 0}
+      weakness: {holy_water_pistol: 200, rocket_launcher: 150}
+      sounds: {alert1: archvile_sight, alert2: archvile_sight, alert3: archvile_sight, attack1: archvile_attack, attack2: gib,
+        idle: archvile_active, pain: archvile_pain, death: archvile_death}
+  arch_vile_parm1:
+    sprite: monster_arch_vile2
+    type: monster
+    subtype: arch_vile
+    parm: 1
+    text: {name: 58, long_name: 58, description: 159}
+    rendering:
+      fear_eyes: {eye_l: -3, eye_r: 3, z_add: 403, z_idle_pre: 48}
+      body_parts: {idle_torso_z: -36, idle_head_z: 109, walk_torso_z: -36, walk_head_z: 109, attack_torso_z_f0: 288, flip_torso_walk: true,
+        no_head_on_attack: true}
+    combat:
+      stats: {health: 35, armor: 0, defense: 35, strength: 50, accuracy: 95, agility: 20}
+      attacks: {attack1: m_fire, attack2: assault_rifle, chance: 0}
+      weakness: {holy_water_pistol: 200, rocket_launcher: 150}
+      sounds: {alert1: archvile_sight, alert2: archvile_sight, alert3: archvile_sight, attack1: archvile_attack, attack2: gib,
+        idle: archvile_active, pain: archvile_pain, death: archvile_death}
+  arch_vile_parm2:
+    sprite: monster_arch_vile3
+    type: monster
+    subtype: arch_vile
+    parm: 2
+    text: {name: 59, long_name: 59, description: 159}
+    rendering:
+      fear_eyes: {eye_l: -3, eye_r: 3, z_add: 403, z_idle_pre: 48}
+      body_parts: {idle_torso_z: -36, idle_head_z: 109, walk_torso_z: -36, walk_head_z: 109, attack_torso_z_f0: 288, flip_torso_walk: true,
+        no_head_on_attack: true}
+    combat:
+      stats: {health: 40, armor: 0, defense: 35, strength: 56, accuracy: 95, agility: 25}
+      attacks: {attack1: m_fire, attack2: assault_rifle, chance: 0}
+      weakness: {holy_water_pistol: 200, rocket_launcher: 150}
+      sounds: {alert1: archvile_sight, alert2: archvile_sight, alert3: archvile_sight, attack1: archvile_attack, attack2: gib,
+        idle: archvile_active, pain: archvile_pain, death: archvile_death}
+  cyberdemon_parm0:
+    sprite: boss_cyberdemon
+    type: monster
+    subtype: cyberdemon
+    parm: 0
+    text: {name: 64, long_name: 64, description: 159}
+    rendering:
+      flags:
+      - gun_flare
+      gun_flare: {flash2_x: 14, flash2_z: 352}
+      body_parts: {idle_torso_z: -30, idle_head_z: -15}
+      sprite_anim: {clamp_scale: true, attack_leg_offset: -3, attack_leg_offset_on_flip: true}
+    combat:
+      stats: {health: 80, armor: 0, defense: 40, strength: 50, accuracy: 95, agility: 25}
+      attacks: {attack1: m_rockets, attack2: assault_rifle, chance: 0}
+      weakness: {holy_water_pistol: 200}
+      sounds: {alert1: cyberdemon_sight, alert2: cyberdemon_sight, alert3: cyberdemon_sight, attack1: rocketlauncher, attack2: none,
+        idle: demon_active, pain: demon_pain, death: cyberdemon_death}
+  mastermind_parm0:
+    sprite: boss_pinky
+    type: monster
+    subtype: mastermind
+    parm: 0
+    text: {name: 65, long_name: 65, description: 159}
+    rendering:
+      flags:
+      - special_boss
+      special_boss: {type: multipart, torso_z: 384, idle_sprite_idx: 3, attack_sprite_idx: 8, pain_sprite_idx: 12}
+    combat:
+      stats: {health: 60, armor: 0, defense: 30, strength: 38, accuracy: 97, agility: 5}
+      attacks: {attack1: m_acid_spit, attack2: assault_rifle, chance: 0}
+      weakness: {holy_water_pistol: 200}
+      sounds: {alert1: pinkinator_sight, alert2: pinkinator_sight, alert3: pinkinator_sight, attack1: pinkinator_attack, attack2: none,
+        idle: demon_active, pain: pinkinator_pain, death: pinkinator_death}
+  boss_vios_parm0:
+    sprite: boss_vios
+    type: monster
+    subtype: boss_vios
+    parm: 0
+    text: {name: 67, long_name: 67, description: 159}
+    rendering:
+      flags:
+      - special_boss
+      special_boss: {type: ethereal, render_mode_override: 3, pain_render_mode: 5}
+    combat:
+      stats: {health: 80, armor: 0, defense: 15, strength: 38, accuracy: 100, agility: 65}
+      attacks: {attack1: m_vios_plasma, attack2: assault_rifle, chance: 0}
+      weakness: {}
+      sounds: {alert1: vios_sight, alert2: vios_sight, alert3: vios_sight, attack1: vios_attack1, attack2: vios_attack2, idle: none,
+        pain: vios_pain, death: vios_death}
+  boss_vios_parm1:
+    sprite: boss_vios2
+    type: monster
+    subtype: boss_vios
+    parm: 1
+    text: {name: 67, long_name: 67, description: 159}
+    rendering:
+      flags:
+      - special_boss
+      special_boss: {type: ethereal, render_mode_override: 3, pain_render_mode: 5}
+    combat:
+      stats: {health: 80, armor: 0, defense: 15, strength: 50, accuracy: 100, agility: 65}
+      attacks: {attack1: m_vios_plasma, attack2: m_vios_lightning, chance: 152}
+      weakness: {}
+      sounds: {alert1: vios_sight, alert2: vios_sight, alert3: vios_sight, attack1: vios_attack1, attack2: vios_attack2, idle: none,
+        pain: vios_pain, death: vios_death}
+  boss_vios_parm2:
+    sprite: boss_vios3
+    type: monster
+    subtype: boss_vios
+    parm: 2
+    text: {name: 67, long_name: 67, description: 159}
+    rendering:
+      flags:
+      - special_boss
+      special_boss: {type: ethereal, render_mode_override: 3, pain_render_mode: 5}
+    combat:
+      stats: {health: 80, armor: 0, defense: 15, strength: 62, accuracy: 100, agility: 65}
+      attacks: {attack1: m_vios_plasma, attack2: m_vios_lightning, chance: 152}
+      weakness: {}
+      sounds: {alert1: vios_sight, alert2: vios_sight, alert3: vios_sight, attack1: vios_attack1, attack2: vios_attack2, idle: none,
+        pain: vios_pain, death: vios_death}
+  boss_vios_parm3:
+    sprite: boss_vios4
+    type: monster
+    subtype: boss_vios
+    parm: 3
+    text: {name: 67, long_name: 67, description: 159}
+    rendering:
+      flags:
+      - special_boss
+      special_boss: {type: ethereal, render_mode_override: 3, pain_render_mode: 5}
+    combat:
+      stats: {health: 80, armor: 0, defense: 15, strength: 62, accuracy: 100, agility: 65}
+      attacks: {attack1: m_vios_plasma, attack2: m_vios_lightning, chance: 152}
+      weakness: {}
+      sounds: {alert1: vios_sight, alert2: vios_sight, alert3: vios_sight, attack1: vios_attack1, attack2: vios_attack2, idle: none,
+        pain: vios_pain, death: vios_death}
+  boss_vios_parm4:
+    sprite: boss_vios5
+    type: monster
+    subtype: boss_vios
+    parm: 4
+    text: {name: 67, long_name: 67, description: 159}
+    rendering:
+      flags:
+      - special_boss
+      special_boss: {type: ethereal, render_mode_override: 3, pain_render_mode: 5}
+    combat:
+      stats: {health: 80, armor: 0, defense: 15, strength: 62, accuracy: 100, agility: 65}
+      attacks: {attack1: m_vios_plasma, attack2: m_vios_lightning, chance: 152}
+      weakness: {}
+      sounds: {alert1: vios_sight, alert2: vios_sight, alert3: vios_sight, attack1: vios_attack1, attack2: vios_attack2, idle: none,
+        pain: vios_pain, death: vios_death}

@@ -43,6 +43,9 @@ public:
 	// Merge: clone base, overlay all keys from other on top (skips a given key)
 	static DataNode merge(const DataNode& base, const DataNode& overlay, const char* skipKey = nullptr);
 
+	// Deep merge: like merge but for map-valued keys, merges their contents instead of overwriting
+	static DataNode mergeDeep(const DataNode& base, const DataNode& overlay);
+
 	// Iteration — works for maps and sequences
 	class Iterator {
 	public:
