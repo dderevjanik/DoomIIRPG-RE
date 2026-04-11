@@ -84,3 +84,10 @@ add_executable(${TEST_PLAYER_INV_TGT} test_player_inventory.cpp)
 set_target_properties(${TEST_PLAYER_INV_TGT} PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
 target_link_libraries(${TEST_PLAYER_INV_TGT} drpg-engine-lib)
 add_test(NAME player-inventory COMMAND ${TEST_PLAYER_INV_TGT})
+
+# --- Script VM opcode tests ---
+set(TEST_SCRIPT_VM_TGT test-script-vm)
+add_executable(${TEST_SCRIPT_VM_TGT} test_script_vm.cpp)
+set_target_properties(${TEST_SCRIPT_VM_TGT} PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
+target_link_libraries(${TEST_SCRIPT_VM_TGT} drpg-engine-lib)
+add_test(NAME script-vm COMMAND ${TEST_SCRIPT_VM_TGT})
