@@ -21,7 +21,7 @@ TinyGL::~TinyGL() {
 
 bool TinyGL::startup(int screenWidth, int screenHeight) {
 	this->app = CAppContainer::getInstance()->app;
-	Canvas* canvas = this->app->canvas;
+	Canvas* canvas = this->app->canvas.get();
 
 	LOG_INFO("TinyGL::startup, w [%d], h [%d]\n", screenWidth, screenHeight);
 
@@ -54,7 +54,7 @@ uint16_t* TinyGL::getFogPalette(int i) {
 
 void TinyGL::clearColorBuffer(int color) {
 
-	Canvas* canvas = app->canvas;
+	Canvas* canvas = app->canvas.get();
 
 	if (!app->render->_gles->ClearBuffer(color)) {
 		/*canvas->graphics.fillRect(

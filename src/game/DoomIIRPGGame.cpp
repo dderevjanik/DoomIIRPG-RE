@@ -26,14 +26,14 @@ REGISTER_GAME_MODULE("doom2rpg", DoomIIRPGGame);
 
 void DoomIIRPGGame::createGameObjects(Applet* app) {
 	LOG_INFO("[game] createGameObjects\n");
-	app->game = new Game;
-	app->player = new Player;
-	app->combat = new Combat;
-	app->entityDefManager = new EntityDefManager;
-	app->hackingGame = new HackingGame;
-	app->sentryBotGame = new SentryBotGame;
-	app->vendingMachine = new VendingMachine;
-	app->comicBook = new ComicBook;
+	app->game = std::make_unique<Game>();
+	app->player = std::make_unique<Player>();
+	app->combat = std::make_unique<Combat>();
+	app->entityDefManager = std::make_unique<EntityDefManager>();
+	app->hackingGame = std::make_unique<HackingGame>();
+	app->sentryBotGame = std::make_unique<SentryBotGame>();
+	app->vendingMachine = std::make_unique<VendingMachine>();
+	app->comicBook = std::make_unique<ComicBook>();
 }
 
 bool DoomIIRPGGame::startup(Applet* app) {
@@ -50,9 +50,9 @@ bool DoomIIRPGGame::startup(Applet* app) {
 
 	// Register minigames
 	auto& mgReg = CAppContainer::getInstance()->minigameRegistry;
-	mgReg.registerMinigame(0, app->sentryBotGame, "sentrybot");
-	mgReg.registerMinigame(2, app->hackingGame,   "hacking");
-	mgReg.registerMinigame(4, app->vendingMachine, "vending");
+	mgReg.registerMinigame(0, app->sentryBotGame.get(), "sentrybot");
+	mgReg.registerMinigame(2, app->hackingGame.get(),   "hacking");
+	mgReg.registerMinigame(4, app->vendingMachine.get(), "vending");
 
 	return true;
 }
@@ -88,7 +88,7 @@ void DoomIIRPGGame::registerLoaders(ResourceManager* rm) {
 	rm->registerParser("entity_names", "entities.yaml",
 		[app](const DataNode& d) {
 			if (!EntityNames::parseTypes(d)) return false;
-			return EntityDefManager::parse(app->entityDefManager, d);
+			return EntityDefManager::parse(app->entityDefManager.get(), d);
 		}, 40);
 
 	// weapons.yaml — weapon names (before entity defs, needed for parm resolution)

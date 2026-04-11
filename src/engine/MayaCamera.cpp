@@ -49,8 +49,8 @@ void MayaCamera::NextKey() {
 void MayaCamera::Update(int i, int i2) {
     if (!this->app) this->app = CAppContainer::getInstance()->app;
     Applet* app = this->app;
-    Combat* combat = app->combat;
-    Game* game = app->game;
+    Combat* combat = app->combat.get();
+    Game* game = app->game.get();
 
     int16_t* mayaCameraKeys = game->mayaCameraKeys;
     int8_t* mayaCameraTweens = game->mayaCameraTweens;
@@ -337,8 +337,8 @@ void MayaCamera::Render() {
 void MayaCamera::Snap(int i) {
     if (!this->app) this->app = CAppContainer::getInstance()->app;
     Applet* app = this->app;
-    Canvas* canvas = app->canvas;
-    Game* game = app->game;
+    Canvas* canvas = app->canvas.get();
+    Game* game = app->game.get();
 
     int16_t* mayaCameraKeys = game->mayaCameraKeys;
     if (this->complete) {

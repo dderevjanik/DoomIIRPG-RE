@@ -81,7 +81,7 @@ bool GameScript::loadFromFile(const char* path) {
 }
 
 void GameScript::injectForTick(int currentTick) {
-	Canvas* canvas = CAppContainer::getInstance()->app->canvas;
+	Canvas* canvas = CAppContainer::getInstance()->app->canvas.get();
 	while (nextIndex < commands.size() && commands[nextIndex].tick <= currentTick) {
 		int avk = commands[nextIndex].avkAction;
 		if (canvas->numEvents < Canvas::MAX_EVENTS) {

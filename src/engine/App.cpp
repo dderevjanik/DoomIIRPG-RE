@@ -33,11 +33,9 @@
 #include "ResourceManager.h"
 
 
-Applet::Applet() {
-	std::memset(this, 0, sizeof(Applet));
-}
+Applet::Applet() = default;
 
-Applet::~Applet() {}
+Applet::~Applet() = default;
 
 void Applet::setGameModule(IGameModule* module) {
 	this->gameModule = module;
@@ -85,15 +83,15 @@ bool Applet::startup() {
 	this->field_0x7c = 0;
 	this->field_0x80 = 0;
 	// Engine subsystems
-	this->canvas = new Canvas;
-	this->resource = new Resource;
-	this->localization = new Localization;
-	this->render = new Render;
-	this->tinyGL = new TinyGL;
-	this->menuSystem = new MenuSystem;
-	this->sound = new Sound;
-	this->hud = new Hud;
-	this->particleSystem = new ParticleSystem;
+	this->canvas = std::make_unique<Canvas>();
+	this->resource = std::make_unique<Resource>();
+	this->localization = std::make_unique<Localization>();
+	this->render = std::make_unique<Render>();
+	this->tinyGL = std::make_unique<TinyGL>();
+	this->menuSystem = std::make_unique<MenuSystem>();
+	this->sound = std::make_unique<Sound>();
+	this->hud = std::make_unique<Hud>();
+	this->particleSystem = std::make_unique<ParticleSystem>();
 
 	// Game objects — created by the active game module
 	if (this->gameModule) {
@@ -594,7 +592,6 @@ void Applet::CalcAccelerometerAngles() {
 			v14 = -200;
 		}
 		this->canvas->zoomAngle = v14;
-		this->canvas = this->canvas;
 	LABEL_13:
 		this->canvas->zoomPitch = (int)(float)((float)(this->field_0x418 - this->field_0x424) * 420.0);
 		zoomMaxAngle = this->canvas->zoomMaxAngle;

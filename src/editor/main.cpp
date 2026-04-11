@@ -75,8 +75,8 @@ static void editorLoadMap(int mapID) {
 
 	// Create lightweight entity stubs for rendering (instead of full loadMapEntities)
 	{
-		auto* game = app->game;
-		auto* render = app->render;
+		auto* game = app->game.get();
+		auto* render = app->render.get();
 
 		// Reset entity state
 		for (int i = 0; i < game->numEntities; i++)

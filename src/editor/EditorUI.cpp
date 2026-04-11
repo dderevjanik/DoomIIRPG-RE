@@ -90,7 +90,7 @@ void EditorUI::drawMapInfo(int currentMapID) {
     }
 
     auto* app = CAppContainer::getInstance()->app;
-    auto* render = app->render;
+    auto* render = app->render.get();
 
     ImGui::Text("Map: %d (map%02d.bin)", currentMapID, currentMapID - 1);
     ImGui::Text("Nodes: %d", render->numNodes);
@@ -121,7 +121,7 @@ void EditorUI::drawMapList() {
 
 void EditorUI::drawAutomap(const Camera& camera) {
     auto* app = CAppContainer::getInstance()->app;
-    auto* render = app->render;
+    auto* render = app->render.get();
 
     ImGui::SetNextWindowSize(ImVec2(300, 320), ImGuiCond_FirstUseEver);
     ImGui::Begin("Automap", &showAutomap);
@@ -261,7 +261,7 @@ void EditorUI::drawTileInspector() {
         return;
 
     auto* app = CAppContainer::getInstance()->app;
-    auto* render = app->render;
+    auto* render = app->render.get();
 
     int col = selectedTileIdx_ % 32;
     int row = selectedTileIdx_ / 32;
@@ -369,7 +369,7 @@ void EditorUI::drawEntityList(int currentMapID) {
     if (currentMapID <= 0) return;
 
     auto* app = CAppContainer::getInstance()->app;
-    auto* render = app->render;
+    auto* render = app->render.get();
 
     ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_FirstUseEver);
     ImGui::Begin("Entities", &showEntities);

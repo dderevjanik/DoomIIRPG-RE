@@ -44,7 +44,7 @@ void gles::GLInit(Render* render) {
 
 	_glesObj = this;
 	this->render = render;
-	this->tinyGL = this->app->tinyGL;
+	this->tinyGL = this->app->tinyGL.get();
 	this->isInit = true;
 
 	int j = 0;
@@ -117,7 +117,7 @@ void gles::SetGLState() {
 void gles::BeginFrame(int x, int y, int w, int h, int* mtxView, int* mtxProjection) {
 	if (CAppContainer::getInstance()->headless) { return; }
 
-	Canvas* canvas = app->canvas;
+	Canvas* canvas = app->canvas.get();
 	int posX, posY;
 
 	//printf("gles::BeginFrame\n");

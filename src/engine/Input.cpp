@@ -716,7 +716,7 @@ void Input::handleEvents() noexcept {
 
 	SDL_Event sdlEvent;
     SDLGL* sdlGL = CAppContainer::getInstance()->sdlGL;
-    Canvas* canvas = this->app->canvas;
+    Canvas* canvas = this->app->canvas.get();
 
     int winVidWidth = sdlGL->winVidWidth;
     int winVidHeight = sdlGL->winVidHeight;
@@ -772,8 +772,8 @@ void Input::handleEvents() noexcept {
                     }
 
                     if (scancode == SDL_SCANCODE_F1) {
-                        Canvas* canvas = this->app->canvas;
-                        TinyGL* tinyGL = this->app->tinyGL;
+                        Canvas* canvas = this->app->canvas.get();
+                        TinyGL* tinyGL = this->app->tinyGL.get();
                         _glesObj->isInit = !_glesObj->isInit;
 
                         if (canvas->state == Canvas::ST_CAMERA) {
@@ -1101,7 +1101,7 @@ void Input::handleEvents() noexcept {
 // Should be called whenever inputs have been processed for a frame.
 //------------------------------------------------------------------------------------------------------------------------------------------
 void Input::consumeEvents() noexcept {
-    const Canvas* canvas = this->app->canvas;
+    const Canvas* canvas = this->app->canvas.get();
     // Clear all events
     if (!canvas->keyDownCausedMove) {
         gKeyboardKeysJustPressed.clear();

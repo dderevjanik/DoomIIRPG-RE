@@ -3,6 +3,7 @@
 
 #include <cstring>
 #include <stdint.h>
+#include <memory>
 #include <map>
 
 #include "IDIB.h"
@@ -60,67 +61,68 @@ public:
 	static constexpr int CHAR_SPACING[4] = { 11, 11, 12, 22 };
 
 	//------------------
-	IDIB* backBuffer;
-	int upTimeMs;
-	int lastTime;
-	int time;
-	int gameTime;
-	int startupMemory;
-	int imageMemory;
-	char* peakMemoryDesc;
-	int peakMemoryUsage;
-	int idError;
-	bool initLoadImages;
+	IDIB* backBuffer = nullptr;
+	int upTimeMs = 0;
+	int lastTime = 0;
+	int time = 0;
+	int gameTime = 0;
+	int startupMemory = 0;
+	int imageMemory = 0;
+	char* peakMemoryDesc = nullptr;
+	int peakMemoryUsage = 0;
+	int idError = 0;
+	bool initLoadImages = false;
 
-	int sysAdvTime;
-	int osTime[8];
-	int codeTime[8];
-	int field_0x26c;
-	int field_0x270;
-	int field_0x278;
-	int field_0x27c;
-	int fontType;
-	int accelerationIndex;
-	bool field_0x290;
-	bool field_0x291;
-	int field_0x7c;
-	int field_0x80;
+	int sysAdvTime = 0;
+	int osTime[8] = {};
+	int codeTime[8] = {};
+	int field_0x26c = 0;
+	int field_0x270 = 0;
+	int field_0x278 = 0;
+	int field_0x27c = 0;
+	int fontType = 0;
+	int accelerationIndex = 0;
+	bool field_0x290 = false;
+	bool field_0x291 = false;
+	int field_0x7c = 0;
+	int field_0x80 = 0;
 
 	// Iphone Only
-	float accelerationX[32];
-	float accelerationY[32];
-	float accelerationZ[32];
+	float accelerationX[32] = {};
+	float accelerationY[32] = {};
+	float accelerationZ[32] = {};
 
-	float field_0x414;
-	float field_0x418;
-	float field_0x41c;
-	float field_0x420;
-	float field_0x424;
-	float field_0x428;
-	bool closeApplet;
+	float field_0x414 = 0.0f;
+	float field_0x418 = 0.0f;
+	float field_0x41c = 0.0f;
+	float field_0x420 = 0.0f;
+	float field_0x424 = 0.0f;
+	float field_0x428 = 0.0f;
+	bool closeApplet = false;
 
-	//-------------------------
-	Localization* localization;
-	Resource* resource;
-	Render* render;
-	TinyGL* tinyGL;
-	Canvas* canvas;
-	Game* game;
-	MenuSystem* menuSystem;
-	Player* player;
-	Sound* sound;
-	Combat* combat;
-	Hud* hud;
-	EntityDefManager* entityDefManager;
-	ParticleSystem* particleSystem;
-	HackingGame* hackingGame;
-	SentryBotGame* sentryBotGame;
-	VendingMachine* vendingMachine;
-	ComicBook* comicBook;
-	//-------------------------
-	IGameModule* gameModule;
-	Image* testImg;
-	int seed;
+	//--- Owned subsystems (engine) ---
+	std::unique_ptr<Localization> localization;
+	std::unique_ptr<Resource> resource;
+	std::unique_ptr<Render> render;
+	std::unique_ptr<TinyGL> tinyGL;
+	std::unique_ptr<Canvas> canvas;
+	std::unique_ptr<MenuSystem> menuSystem;
+	std::unique_ptr<Sound> sound;
+	std::unique_ptr<Hud> hud;
+	std::unique_ptr<ParticleSystem> particleSystem;
+	//--- Owned subsystems (game module) ---
+	std::unique_ptr<Game> game;
+	std::unique_ptr<Player> player;
+	std::unique_ptr<Combat> combat;
+	std::unique_ptr<EntityDefManager> entityDefManager;
+	std::unique_ptr<HackingGame> hackingGame;
+	std::unique_ptr<SentryBotGame> sentryBotGame;
+	std::unique_ptr<VendingMachine> vendingMachine;
+	std::unique_ptr<ComicBook> comicBook;
+	//--- Non-owning pointers ---
+	IGameModule* gameModule = nullptr;
+	Image* testImg = nullptr;
+	int seed = 0;
 
 	// Constructor
 	Applet();

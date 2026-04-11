@@ -185,7 +185,7 @@ int ScriptThread::peekNextCmd() {
 }
 
 void ScriptThread::setupCamera(int n) {
-    Game* game = this->app->game;
+    Game* game = this->app->game.get();
     game->cinUnpauseTime = this->app->gameTime + 1000;
     game->activeCameraView = true;
     MayaCamera* activeCamera = &game->mayaCameras[n];

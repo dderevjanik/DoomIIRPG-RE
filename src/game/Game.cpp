@@ -717,7 +717,7 @@ void Game::prepareMonsters() {
 				EntityMonster* monster = entity->monster;
 				if (0x0 != (entity->info & 0x1010000) && 0x0 == (monster->flags & 0x90) && n4 < n3 / 2 && n2 < 8 &&
 				    app->nextByte() <= 100) {
-					Render* render = app->render;
+					Render* render = app->render.get();
 					if (this->findMapEntity(render->mapSprites[render->S_X + sprite],
 					                        render->mapSprites[render->S_Y + sprite], 15535) == nullptr) {
 						entity->resurrect(render->mapSprites[render->S_X + sprite],

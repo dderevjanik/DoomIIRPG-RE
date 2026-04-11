@@ -513,7 +513,7 @@ bool parseProjectiles(Applet* app, const DataNode& config) {
 
 bool parseEffects(Applet* app, const DataNode& config) {
 	// Initialize defaults matching original hardcoded values
-	Player* p = app->player;
+	Player* p = app->player.get();
 	for (int i = 0; i < 15; i++) {
 		p->buffMaxStacks[i] = 3;
 		p->buffBlockedBy[i] = -1;
@@ -607,7 +607,7 @@ bool parseEffects(Applet* app, const DataNode& config) {
 }
 
 bool parseDialogStyles(Applet* app, const DataNode& config) {
-	Canvas* c = app->canvas;
+	Canvas* c = app->canvas.get();
 
 	// Initialize with hardcoded defaults
 	static const DialogStyleDef defaults[] = {
@@ -675,7 +675,7 @@ bool parseDialogStyles(Applet* app, const DataNode& config) {
 }
 
 bool parseItems(Applet* app, const DataNode& config, const DataNode& effectsConfig) {
-	Player* p = app->player;
+	Player* p = app->player.get();
 	if (!p->itemDefs) {
 		p->itemDefs = new std::vector<ItemDef>();
 	}

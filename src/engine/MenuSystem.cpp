@@ -1470,7 +1470,7 @@ void MenuSystem::paint(Graphics* graphics) {
 		app->comicBook->Draw(graphics);
 		return;
 	}
-	canvas = app->canvas;
+	canvas = app->canvas.get();
 	menuRect = canvas->menuRect;
 	screenRect = canvas->screenRect;
 	textBuffer1 = app->localization->getLargeBuffer();
@@ -1852,7 +1852,7 @@ void MenuSystem::paint(Graphics* graphics) {
 		else
 		{
 			v59 = 0.0;
-			vendingMachine = app->vendingMachine;
+			vendingMachine = app->vendingMachine.get();
 		}
 		if (v60 >= Menus::MENU_VENDING_MACHINE)
 		{
@@ -1862,7 +1862,7 @@ void MenuSystem::paint(Graphics* graphics) {
 		}
 		graphics->drawImage(imgGameMenuTornPage, v61, v82, 0, 0, 0);
 		v62 = app->localization->getLargeBuffer();
-		v63 = app->canvas;
+		v63 = app->canvas.get();
 		v64 = v62;
 		menuHelpMaxChars = v63->menuHelpMaxChars;
 		v63->menuHelpMaxChars = this->imgGameMenuTornPage->width / Applet::FONT_WIDTH[app->fontType];
@@ -3581,8 +3581,8 @@ void MenuSystem::select(int i) {
 		}
 
 		case Menus::ACTION_TOG_TINYGL: { // [GEC]
-			Canvas* canvas = this->app->canvas;
-			TinyGL* tinyGL = this->app->tinyGL;
+			Canvas* canvas = this->app->canvas.get();
+			TinyGL* tinyGL = this->app->tinyGL.get();
 			_glesObj->isInit = !_glesObj->isInit;
 
 			if (canvas->state == Canvas::ST_CAMERA) {
@@ -4785,7 +4785,7 @@ LABEL_17:
 						{
 							if (v28 != 1)
 								goto LABEL_60;
-							vendingMachine = app->vendingMachine;
+							vendingMachine = app->vendingMachine.get();
 							currentItemQuantity = vendingMachine->currentItemQuantity;
 							if (currentItemQuantity <= 1)
 								goto LABEL_60;
@@ -4793,7 +4793,7 @@ LABEL_17:
 						}
 						else
 						{
-							v29 = app->vendingMachine;
+							v29 = app->vendingMachine.get();
 							v30 = v29->currentItemQuantity;
 							if (app->player->inventory[24] < v29->currentItemPrice + v30 * v29->currentItemPrice)
 								goto LABEL_60;
@@ -5609,7 +5609,7 @@ void MenuSystem::drawOptionsScreen(Graphics* graphics)
 		app->localization->composeText(MenuSystem::INDEX_OTHER, MenuStrings::SOUND_FX_VOLUME, v64);
 		v64->dehyphenate();
 		graphics->drawString(v64, v59 + 15, 200, 36);
-		sound = app->sound;
+		sound = app->sound.get();
 		v13 = sound->soundFxVolume;
 		if (!sound->allowSounds)
 			v13 = 0;
@@ -5643,7 +5643,7 @@ void MenuSystem::drawOptionsScreen(Graphics* graphics)
 		app->localization->composeText(MenuSystem::INDEX_OTHER, MenuStrings::SOUND_MUSIC_VOLUME, v64);
 		v64->dehyphenate();
 		graphics->drawString(v64, v59 + 15, 267, 36);
-		v17 = app->sound;
+		v17 = app->sound.get();
 		v18 = app->sound->musicVolume;
 		if (!app->sound->allowMusics) {
 			v18 = 0;
@@ -5673,7 +5673,7 @@ void MenuSystem::drawOptionsScreen(Graphics* graphics)
 		v64->append("SoundFx Volume");
 		v64->dehyphenate();
 		graphics->drawString(v64, v23 + 4, v19 + 10, 20);
-		v25 = app->sound;
+		v25 = app->sound.get();
 		v26 = app->sound->soundFxVolume;
 		if (!app->sound->allowSounds)
 			v26 = 0;
@@ -5724,7 +5724,7 @@ void MenuSystem::drawOptionsScreen(Graphics* graphics)
 		}
 
 		graphics->drawString(v64, v23 + 4, v34, 20);
-		v35 = app->sound;
+		v35 = app->sound.get();
 		v36 = app->sound->musicVolume;
 		if (!app->sound->allowMusics)
 			v36 = 0;

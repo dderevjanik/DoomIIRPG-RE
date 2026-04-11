@@ -39,7 +39,7 @@ void HackingGame::playFromMainMenu() {
 
 void HackingGame::setupGlobalData() {
 
-	Canvas* canvas = app->canvas;
+	Canvas* canvas = app->canvas.get();
 
 	this->confirmationCursor = 0;
 	this->stateVars = canvas->stateVars;

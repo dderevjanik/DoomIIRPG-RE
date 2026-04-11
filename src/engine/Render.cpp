@@ -1358,7 +1358,7 @@ bool Render::beginLoadMap(int mapNameID) {
 void Render::draw2DSprite(int tileNum, int frame, int x, int y, int flags, int renderMode, int renderFlags,
                           int scaleFactor) {
 
-	TinyGL* tinyGL = app->tinyGL;
+	TinyGL* tinyGL = app->tinyGL.get();
 
 	TGLVert* vert1 = &tinyGL->cv[0];
 	TGLVert* vert2 = &tinyGL->cv[1];

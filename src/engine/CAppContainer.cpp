@@ -32,15 +32,9 @@ CAppContainer::CAppContainer() {
 }
 
 CAppContainer::~CAppContainer() {
-
-	if (this->app) {
-
-		if (this->app->sound) {
-			this->app->sound->~Sound();
-		}
-		delete this->app;
-		this->app = nullptr;
-	}
+	// Applet's unique_ptrs automatically destroy all subsystems (Sound, Game, etc.)
+	delete this->app;
+	this->app = nullptr;
 
 	if (this->sdlGL) {
 		this->sdlGL->~SDLGL();

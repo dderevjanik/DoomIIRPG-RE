@@ -1016,7 +1016,7 @@ void Text::toUpper() {
 
 void Text::dispose() {
 
-	Localization* loc = CAppContainer::getInstance()->app->localization;
+	Localization* loc = CAppContainer::getInstance()->app->localization.get();
 
 	for (int i = 0; i < 7; ++i) {
 		if (loc->scratchBuffers[i] == this) {

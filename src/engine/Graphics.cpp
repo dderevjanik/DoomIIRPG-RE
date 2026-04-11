@@ -21,7 +21,7 @@ Graphics::~Graphics() {
 }
 
 void Graphics::setGraphics() {
-	Canvas* canvas = this->app->canvas;
+	Canvas* canvas = this->app->canvas.get();
 	LOG_INFO("Graphics::setGraphics\n");
 
 	this->graphClipRect[0] = canvas->displayRect[0];
@@ -473,17 +473,17 @@ void Graphics::drawBevel(int color1, int color2, int x, int y, int w, int h) {
 }
 
 void Graphics::drawString(Text* text, int x, int y, int flags) {
-    Canvas* canvas = this->app->canvas;
+    Canvas* canvas = this->app->canvas.get();
     this->drawString(canvas->imgFont, text, x, y, 16, flags, 0, text->length());
 }
 
 void Graphics::drawString(Text* text, int x, int y, int flags, int strBeg, int strEnd) {
-    Canvas* canvas = this->app->canvas;
+    Canvas* canvas = this->app->canvas.get();
     this->drawString(canvas->imgFont, text, x, y, 16, flags, strBeg, strEnd);
 }
 
 void Graphics::drawString(Text* text, int x, int y, int h, int flags, int strBeg, int strEnd) {
-    Canvas* canvas = this->app->canvas;
+    Canvas* canvas = this->app->canvas.get();
     this->drawString(canvas->imgFont, text, x, y, h, flags, strBeg, strEnd);
 }
 
@@ -642,7 +642,7 @@ void Graphics::drawString(Image* img, Text* text, int x, int y, int h, int flags
 }
 
 void Graphics::drawChar(Image* img, char c, int x, int y, int rotateMode) {
-    Localization* loc = this->app->localization;
+    Localization* loc = this->app->localization.get();
     int renderMode, index1, index2;
 
     loc->getCharIndices(c, &index1, &index2);
@@ -670,7 +670,7 @@ void Graphics::drawChar(Image* img, char c, int x, int y, int rotateMode) {
 }
 
 void Graphics::drawBuffIcon(int texY, int posX, int posY, int flags) {
-    Canvas* canvas = this->app->canvas;
+    Canvas* canvas = this->app->canvas.get();
     this->drawRegion(canvas->imgIcons_Buffs, 0, texY * 30, 30, 30, posX, posY, flags, 0, 0);
 }
 
@@ -679,7 +679,7 @@ void Graphics::drawCursor(int x, int y, int flags) {
 }
 
 void Graphics::drawCursor(int x, int y, int flags, bool b) {
-    Localization* loc = this->app->localization;
+    Localization* loc = this->app->localization.get();
     Text* smallBuffer = loc->getSmallBuffer();
     smallBuffer->setLength(0);
     if (b) {
@@ -755,7 +755,7 @@ void Graphics::setScreenSpace(int x, int y, int w, int h) {
 }
 
 void Graphics::resetScreenSpace() {
-    Canvas* canvas = this->app->canvas;
+    Canvas* canvas = this->app->canvas.get();
     this->setScreenSpace(canvas->displayRect);
 }
 

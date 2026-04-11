@@ -396,7 +396,7 @@ void Hud::drawTopBar(Graphics* graphics) {
 }
 
 void Hud::drawImportantMessage(Graphics* graphics, Text* text, int color) {
-	Canvas* canvas = this->app->canvas;
+	Canvas* canvas = this->app->canvas.get();
 
 	canvas->dialogRect[0] = canvas->viewRect[0];
 	canvas->dialogRect[1] = canvas->viewRect[1];
@@ -448,7 +448,7 @@ void Hud::drawCenterMessage(Graphics* graphics, Text* text, int color) {
 
 void Hud::drawCinematicText(Graphics* graphics) {
 
-	Canvas* canvas = this->app->canvas;
+	Canvas* canvas = this->app->canvas.get();
 
 	int scr_CX = canvas->SCR_CX;
 	int flags = 1;
@@ -1070,7 +1070,7 @@ void Hud::drawCurrentKeys(Graphics* graphics, int x, int y) {
 
 	int v9;
 
-	Player* player = app->player;
+	Player* player = app->player.get();
 	if (player->inventory[19] <= 0) {
 		if (player->inventory[20] <= 0) {
 			v9 = 0;
