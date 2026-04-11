@@ -2398,7 +2398,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 			}
 			if (entity != nullptr && entity->def->eType == Enums::ET_DOOR && dist2 <= app->combat->tileDistances[0] && !app->combat->getWeaponFlags(weapon2).isThrowableItem) {
 				if (!app->player->isFamiliar) {
-					if (entity->def->eSubType == 1) {
+					if (entity->def->eSubType == Enums::DOOR_LOCKED) {
 						app->hud->addMessage((short)44, 2);
 					}
 					else {
