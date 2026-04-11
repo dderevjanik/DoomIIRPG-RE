@@ -84,10 +84,10 @@ public:
 
 	Entity* facingEntity = nullptr;
 	short inventory[26] = {};
-	short ammo[9] = {};
+	std::vector<short> ammo;
 	int weapons = 0;
 	short inventoryCopy[26] = {};
-	short ammoCopy[9] = {};
+	std::vector<short> ammoCopy;
 	int weaponsCopy = 0;
 	int goldCopy = 0;
 	int currentWeaponCopy = 0;

@@ -51,7 +51,7 @@ void Player::setFamiliar(short familiarType) {
 	this->playerEntityCopyIndex =
 	    app->game->spawnPlayerEntityCopy((short)app->canvas->saveX, (short)app->canvas->saveY)->getIndex();
 	this->weaponsCopy = 0;
-	for (int i = 0; i < 9; ++i) {
+	for (int i = 0; i < Enums::MAX_AMMO; ++i) {
 		this->ammoCopy[i] = 0;
 	}
 	for (int j = 0; j < 26; ++j) {
@@ -215,7 +215,7 @@ void Player::explodeFamiliar(int n, int n2, int n3) {
 bool Player::stealFamiliarsInventory() {
 	int weaponsCopy = this->weaponsCopy;
 	short* inventoryCopy = this->inventoryCopy;
-	short* ammoCopy = this->ammoCopy;
+	short* ammoCopy = this->ammoCopy.data();
 
 	bool b = false;
 	for (int i = 0; i < 26; ++i) {
@@ -224,7 +224,7 @@ bool Player::stealFamiliarsInventory() {
 			b = true;
 		}
 	}
-	for (int j = 0; j < 9; ++j) {
+	for (int j = 0; j < Enums::MAX_AMMO; ++j) {
 		if (ammoCopy[j] != 0) {
 			this->give(2, j, ammoCopy[j], true);
 			b = true;
@@ -243,7 +243,7 @@ void Player::handleBotRemains(int n, int n2, int n3) {
 
 	int weaponsCopy = this->weaponsCopy;
 	short* inventoryCopy = this->inventoryCopy;
-	short* ammoCopy = this->ammoCopy;
+	short* ammoCopy = this->ammoCopy.data();
 	short n4 = 0;
 	short n5 = 0;
 	for (int i = 0; i < 26; ++i) {
@@ -284,7 +284,7 @@ void Player::handleBotRemains(int n, int n2, int n3) {
 			}
 		}
 	}
-	for (int j = 1; j < 9; ++j) {
+	for (int j = 1; j < Enums::MAX_AMMO; ++j) {
 		if (ammoCopy[j] != 0) {
 			switch (j) {
 				case 1:

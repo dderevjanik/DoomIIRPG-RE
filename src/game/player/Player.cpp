@@ -32,6 +32,8 @@ bool Player::startup() {
 	LOG_INFO("[player] startup\n");
 	this->app = CAppContainer::getInstance()->app;
 	Applet* app = this->app;
+	this->ammo.resize(Enums::MAX_AMMO, 0);
+	this->ammoCopy.resize(Enums::MAX_AMMO, 0);
 	this->isFamiliar = false;
 	this->noclip = false;
 	this->god = false;
@@ -626,7 +628,7 @@ bool Player::give(int n, int n2, int n3, bool b, bool b2) {
 			break;
 		}
 		case 2: {
-			short* array2 = (this->isFamiliar && !b2 && n2 != 6) ? this->ammoCopy : this->ammo;
+			short* array2 = (this->isFamiliar && !b2 && n2 != 6) ? this->ammoCopy.data() : this->ammo.data();
 			const GameConfig& gc2 = CAppContainer::getInstance()->gameConfig;
 			int n6 = n3 + array2[n2];
 			if (n6 > gc2.capAmmo) {
@@ -865,8 +867,8 @@ void Player::giveAll() {
 		this->selectNextWeapon();
 	}
 	const GameConfig& gc = CAppContainer::getInstance()->gameConfig;
-	for (int j = 0; j < 9; ++j) {
-		if (j != 8) {
+	for (int j = 0; j < Enums::MAX_AMMO; ++j) {
+		if (j != Enums::AMMO_ITEM) {
 			this->give(2, j, gc.capAmmo, true);
 		}
 	}

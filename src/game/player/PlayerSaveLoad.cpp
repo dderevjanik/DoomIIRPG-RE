@@ -58,10 +58,10 @@ bool Player::loadState(InputStream* IS) {
 	}
 	this->lastSkipCode = IS->readByte();
 
-	for (int i = 0; i < 9; ++i) {
+	for (int i = 0; i < Enums::MAX_AMMO; ++i) {
 		this->ammo[i] = IS->readShort();
 	}
-	for (int j = 0; j < 9; ++j) {
+	for (int j = 0; j < Enums::MAX_AMMO; ++j) {
 		this->ammoCopy[j] = IS->readShort();
 	}
 	for (int k = 0; k < 26; ++k) {
@@ -141,10 +141,10 @@ bool Player::saveState(OutputStream* OS) {
 		OS->writeInt(it != this->killGrantCounts.end() ? it->second : 0);
 	}
 	OS->writeByte(this->lastSkipCode);
-	for (int i = 0; i < 9; ++i) {
+	for (int i = 0; i < Enums::MAX_AMMO; ++i) {
 		OS->writeShort(this->ammo[i]);
 	}
-	for (int j = 0; j < 9; ++j) {
+	for (int j = 0; j < Enums::MAX_AMMO; ++j) {
 		OS->writeShort(this->ammoCopy[j]);
 	}
 	for (int k = 0; k < 26; ++k) {
@@ -242,7 +242,7 @@ void Player::reset() {
 	app->canvas->viewAngle = (app->canvas->destAngle = (app->canvas->saveAngle = 0));
 	app->canvas->viewPitch = (app->canvas->destPitch = (app->canvas->savePitch = 0));
 	this->inCombat = false;
-	for (int j = 0; j < 9; ++j) {
+	for (int j = 0; j < Enums::MAX_AMMO; ++j) {
 		this->ammo[j] = 0;
 	}
 	for (int k = 0; k < 26; ++k) {
@@ -341,10 +341,10 @@ void Player::stripInventoryForViosBattle() {
 
 void Player::stripInventoryForTargetPractice() {
 	this->currentWeaponCopy = this->ce->weapon;
-	std::memcpy(this->ammoCopy, this->ammo, sizeof(this->ammo));
+	this->ammoCopy = this->ammo;
 
 	this->weaponsCopy = (this->weapons & -1);
-	for (int i = 0; i < 9; ++i) {
+	for (int i = 0; i < Enums::MAX_AMMO; ++i) {
 		this->ammo[i] = 0;
 	}
 	this->weapons = 0;
@@ -388,7 +388,7 @@ void Player::restoreInventory() {
 	} else {
 		int tpWpn = CAppContainer::getInstance()->gameConfig.tpWeaponIdx;
 		bool b = (this->weaponsCopy & (1 << tpWpn)) != 0x0;
-		for (int i = 0; i < 9; ++i) {
+		for (int i = 0; i < Enums::MAX_AMMO; ++i) {
 			this->ammo[i] = 0;
 			this->give(2, i, this->ammoCopy[i], true);
 		}
