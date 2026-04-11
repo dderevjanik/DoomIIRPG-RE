@@ -89,3 +89,9 @@ int ConfigEnums::controlLayoutFromString(const std::string& name) {
 std::string ConfigEnums::controlLayoutToString(int value) {
 	return lookupByValue(controlLayoutByValue, value, "chevrons");
 }
+
+int ConfigEnums::resolveEnum(const std::string& enumName, const std::string& valueName) {
+	if (enumName == "difficulty") return difficultyFromString(valueName);
+	if (enumName == "control_layout") return controlLayoutFromString(valueName);
+	try { return std::stoi(valueName); } catch (...) { return 0; }
+}

@@ -6,6 +6,7 @@
 #include "Log.h"
 
 #include "CAppContainer.h"
+#include "ConfigEnums.h"
 #include "DataNode.h"
 #include "App.h"
 #include "Hud.h"
@@ -704,11 +705,16 @@ bool MenuSystem::loadMenusFromYAML(const char* path) {
 				if (itype == "background" || itype == "image") continue;
 				int stringId = item["string_id"].asInt(0);
 				int flags = flagsFromString(item["flags"].asString("normal").c_str());
-				int action = actionFromString(item["action"].asString("none").c_str());
+				std::string actionName = item["action"].asString("none");
+				int action = actionFromString(actionName.c_str());
 				int param = item["param"].asInt(0);
 				DataNode gotoNode = item["goto"];
 				if (gotoNode) {
 					param = menuNameToId(gotoNode.asString(""));
+				}
+				DataNode namedParam = item[actionName.c_str()];
+				if (namedParam) {
+					param = ConfigEnums::resolveEnum(actionName, namedParam.asString(""));
 				}
 				int helpString = item["help_string"].asInt(0);
 				itemWords.push_back((uint32_t)((stringId & 0xFFFF) << 16) | (uint32_t)(flags & 0xFFFF));
@@ -792,11 +798,16 @@ bool MenuSystem::loadMenusFromYAML(const char* path) {
 					}
 					mi.textField = item["string_id"].asInt(0);
 					mi.flags = flagsFromString(item["flags"].asString("normal").c_str());
-					mi.action = actionFromString(item["action"].asString("none").c_str());
+					std::string actionName = item["action"].asString("none");
+					mi.action = actionFromString(actionName.c_str());
 					mi.param = item["param"].asInt(0);
 					DataNode gotoNode = item["goto"];
 					if (gotoNode) {
 						mi.param = menuNameToId(gotoNode.asString(""));
+					}
+					DataNode namedParam = item[actionName.c_str()];
+					if (namedParam) {
+						mi.param = ConfigEnums::resolveEnum(actionName, namedParam.asString(""));
 					}
 					mi.helpField = item["help_string"].asInt(0);
 					mi.text = item["text"].asString("");

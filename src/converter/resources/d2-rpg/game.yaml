@@ -120,10 +120,9 @@ game:
 # Config enum name/value mappings (used by settings UI)
 config_enums:
   difficulty:
-    baby: 0
-    normal: 1
-    hard: 2
-    nightmare: 3
+    easy: 1
+    normal: 2
+    nightmare: 4
   language:
     english: 0
     french: 1

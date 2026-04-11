@@ -219,15 +219,15 @@ menus:
       - string_id: 207
         flags: align_center
         action: difficulty
-        param: 1
+        difficulty: easy
       - string_id: 208
         flags: align_center
         action: difficulty
-        param: 2
+        difficulty: normal
       - string_id: 209
         flags: align_center
         action: difficulty
-        param: 4
+        difficulty: nightmare
   ingame:
     menu_id: 29
     type: list

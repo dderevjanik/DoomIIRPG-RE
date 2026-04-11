@@ -31,6 +31,9 @@ class ConfigEnums {
 
 	static int controlLayoutFromString(const std::string& name);
 	static std::string controlLayoutToString(int value);
+
+	// Generic resolver: look up a named value in the enum identified by enumName
+	static int resolveEnum(const std::string& enumName, const std::string& valueName);
 };
 
 #endif
