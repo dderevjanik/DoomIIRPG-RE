@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <algorithm>
+#include "Log.h"
 
 #include "CAppContainer.h"
 #include "App.h"

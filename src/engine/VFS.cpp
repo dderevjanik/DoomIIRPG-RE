@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <dirent.h>
 #include <sys/stat.h>
+#include "Log.h"
 
 #include "VFS.h"
 
@@ -75,7 +76,7 @@ void VFS::buildFileIndex() {
 		}
 	}
 	fileIndexBuilt = true;
-	printf("VFS: file index built with %zu entries\n", fileIndex.size());
+	LOG_INFO("VFS: file index built with %zu entries\n", fileIndex.size());
 }
 
 uint8_t* VFS::readFromDir(const VFSMount& mount, const char* path, int* sizeOut) {
@@ -131,11 +132,11 @@ uint8_t* VFS::readFile(const char* path, int* sizeOut) {
 				}
 			}
 		} else {
-			printf("VFS: '%s' not in file index\n", path);
+			LOG_WARN("VFS: '%s' not in file index\n", path);
 		}
 	}
 
-	printf("VFS: file not found: %s\n", path);
+	LOG_WARN("VFS: file not found: %s\n", path);
 	return nullptr;
 }
 

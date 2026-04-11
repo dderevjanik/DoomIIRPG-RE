@@ -1,5 +1,4 @@
 #include <stdexcept>
-#include <cstdio>
 #include <algorithm>
 #include <map>
 
@@ -7,6 +6,7 @@
 
 #include "CAppContainer.h"
 #include "App.h"
+#include "Log.h"
 #include "IGameModule.h"
 #include "IDIB.h"
 #include "Text.h"
@@ -44,7 +44,7 @@ void Applet::setGameModule(IGameModule* module) {
 }
 
 bool Applet::startup() {
-	printf("[app] Applet::startup\n");
+	LOG_INFO("[app] Applet::startup\n");
 
 	this->closeApplet = false;
 	this->fontType = 0;
@@ -77,7 +77,7 @@ bool Applet::startup() {
 	this->backBuffer->height = CAppContainer::getInstance()->sdlGL->vidHeight;
 	this->backBuffer->pitch = CAppContainer::getInstance()->sdlGL->vidWidth;
 
-	printf("[app] w: %d || h: %d\n", backBuffer->width, backBuffer->height);
+	LOG_INFO("[app] w: %d || h: %d\n", backBuffer->width, backBuffer->height);
 
 	this->initLoadImages = false;
 	this->time = 0;
@@ -97,7 +97,7 @@ bool Applet::startup() {
 
 	// Game objects — created by the active game module
 	if (this->gameModule) {
-		printf("[app] creating game objects via %s module\n", this->gameModule->getName());
+		LOG_INFO("[app] creating game objects via %s module\n", this->gameModule->getName());
 		this->gameModule->createGameObjects(this);
 	} else {
 		this->Error("No game module set. Call setGameModule() before startup().");
@@ -111,24 +111,24 @@ bool Applet::startup() {
 	this->startupMemory = Applet::MAXMEMORY;
 
 	// Engine subsystem startup
-	if (!this->canvas->startup()) { printf("[app] error fatal: canvas\n"); return false; }
+	if (!this->canvas->startup()) { LOG_ERROR("[app] error fatal: canvas\n"); return false; }
 	this->testImg = Applet::loadImage("cockpit.bmp", true);
 	this->canvas->loadMiniGameImages();
-	if (!this->localization->startup()) { printf("[app] error fatal: localization\n"); return false; }
-	if (!this->render->startup()) { printf("[app] error fatal: render\n"); return false; }
+	if (!this->localization->startup()) { LOG_ERROR("[app] error fatal: localization\n"); return false; }
+	if (!this->render->startup()) { LOG_ERROR("[app] error fatal: render\n"); return false; }
 	this->resource->initTableLoading();
 	this->loadTables();
 	if (!this->tinyGL->startup(this->render->screenWidth, this->render->screenHeight)) {
-		printf("[app] error fatal: tinyGL\n"); return false;
+		LOG_ERROR("[app] error fatal: tinyGL\n"); return false;
 	}
 
 	// Game module startup (EntityDefManager -> Player -> Game -> Combat)
-	if (!this->gameModule->startup(this)) { printf("[app] error fatal: game module\n"); return false; }
+	if (!this->gameModule->startup(this)) { LOG_ERROR("[app] error fatal: game module\n"); return false; }
 
 	// Remaining engine subsystems that depend on game objects
-	if (!this->menuSystem->startup()) { printf("[app] error fatal: menuSystem\n"); return false; }
-	if (!this->sound->startup()) { printf("[app] error fatal: sound\n"); return false; }
-	if (!this->particleSystem->startup()) { printf("[app] error fatal: particleSystem\n"); return false; }
+	if (!this->menuSystem->startup()) { LOG_ERROR("[app] error fatal: menuSystem\n"); return false; }
+	if (!this->sound->startup()) { LOG_ERROR("[app] error fatal: sound\n"); return false; }
+	if (!this->particleSystem->startup()) { LOG_ERROR("[app] error fatal: particleSystem\n"); return false; }
 
 	// Game module post-startup
 	this->gameModule->loadConfig(this);
@@ -151,8 +151,8 @@ bool Applet::startup() {
 	this->accelerationIndex = 0;
 	this->field_0x290 = false;
 	this->field_0x291 = '\0';
-	printf("[app] Startup took %i ms\n", this->upTimeMs - time);
-	printf("[app] Fragment size %i ms\n", 0);
+	LOG_INFO("[app] Startup took %i ms\n", this->upTimeMs - time);
+	LOG_INFO("[app] Fragment size %i ms\n", 0);
 
 	return true;
 }
@@ -384,7 +384,7 @@ void Applet::Error(const char* fmt, ...) {
 }
 
 void Applet::Error(int id) {
-	std::printf("[app] Error id: %i\n", id);
+	LOG_ERROR("[app] Error id: %i\n", id);
 	this->Error("App Error");
 	this->idError = id;
 }

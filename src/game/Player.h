@@ -45,7 +45,7 @@ class Player
 private:
 
 public:
-	Applet* app; // Set in startup(), replaces CAppContainer::getInstance()->app
+	Applet* app = nullptr; // Set in startup(), replaces CAppContainer::getInstance()->app
 
 	static constexpr int EXPIRE_DURATION = 5;
 	static constexpr int MAX_DISPLAY_BUFFS = 6;
@@ -66,97 +66,97 @@ public:
 	static constexpr int COLD_TURNS = 5;
 
 	// Buff data loaded from effects.yaml
-	int8_t buffMaxStacks[15];
-	int8_t buffBlockedBy[15];     // -1 = none
-	int16_t buffApplySound[15];   // -1 = none
-	int8_t buffPerTurnDamage[15]; // 0 = none, >0 = flat damage per turn
-	bool buffPerTurnHealByAmount[15]; // true = heals by buff amount per turn
-	int buffNoAmountMask;
-	int buffAmtNotDrawnMask;
-	int buffWarningTime;
+	int8_t buffMaxStacks[15] = {};
+	int8_t buffBlockedBy[15] = {};     // -1 = none
+	int16_t buffApplySound[15] = {};   // -1 = none
+	int8_t buffPerTurnDamage[15] = {}; // 0 = none, >0 = flat damage per turn
+	bool buffPerTurnHealByAmount[15] = {}; // true = heals by buff amount per turn
+	int buffNoAmountMask = 0;
+	int buffAmtNotDrawnMask = 0;
+	int buffWarningTime = 0;
 
-	// Item data loaded from items.yaml (pointer to avoid memset UB)
-	std::vector<ItemDef>* itemDefs;
+	// Item data loaded from items.yaml
+	std::vector<ItemDef>* itemDefs = nullptr;
 	static constexpr int BOX_X1 = 17;
 	static constexpr int BOX_X2 = 31;
 	static constexpr int BOX_X3 = 43;
 	static constexpr int BOX_X4 = 55;
 
-	Entity* facingEntity;
-	short inventory[26];
-	short ammo[9];
-	int weapons;
-	short inventoryCopy[26];
-	short ammoCopy[9];
-	int weaponsCopy;
-	int goldCopy;
-	int currentWeaponCopy;
-	bool tookBotsInventory;
-	bool botReturnedDueToMonster;
-	bool unsetFamiliarOnceOutOfCinematic;
-	int disabledWeapons;
-	int level;
-	int currentXP;
-	int nextLevelXP;
-	CombatEntity* baseCe;
-	CombatEntity* ce;
-	EntityDef* activeWeaponDef;
-	bool noclip;
-	bool god;
-	short characterChoice;
-	bool isFamiliar;
-	short familiarType;
-	bool attemptingToSelfDestructFamiliar;
+	Entity* facingEntity = nullptr;
+	short inventory[26] = {};
+	short ammo[9] = {};
+	int weapons = 0;
+	short inventoryCopy[26] = {};
+	short ammoCopy[9] = {};
+	int weaponsCopy = 0;
+	int goldCopy = 0;
+	int currentWeaponCopy = 0;
+	bool tookBotsInventory = false;
+	bool botReturnedDueToMonster = false;
+	bool unsetFamiliarOnceOutOfCinematic = false;
+	int disabledWeapons = 0;
+	int level = 0;
+	int currentXP = 0;
+	int nextLevelXP = 0;
+	CombatEntity* baseCe = nullptr;
+	CombatEntity* ce = nullptr;
+	EntityDef* activeWeaponDef = nullptr;
+	bool noclip = false;
+	bool god = false;
+	short characterChoice = 0;
+	bool isFamiliar = false;
+	short familiarType = 0;
+	bool attemptingToSelfDestructFamiliar = false;
 	std::unordered_map<int, int> killGrantCounts; // per-weapon kill counters for on_kill_grant
-	uint8_t lastSkipCode;
-	bool inTargetPractice;
-	int targetPracticeScore;
-	int playTime;
-	int totalTime;
-	int moves;
-	int totalMoves;
-	int completedLevels;
-	int killedMonstersLevels;
-	int foundSecretsLevels;
-	int xpGained;
-	int currentLevelDeaths;
-	int totalDeaths;
-	int currentGrades;
-	int bestGrades;
-	short notebookIndexes[Player::MAX_NOTEBOOK_INDEXES];
-	short notebookPositions[Player::MAX_NOTEBOOK_INDEXES];
-	uint8_t questComplete;
-	uint8_t questFailed;
-	int hackedVendingMachines;
-	int vendingMachineHackTriesLeft1;
-	int vendingMachineHackTriesLeft2;
-	int numNotebookIndexes;
-	int helpBitmask;
-	int invHelpBitmask;
-	int ammoHelpBitmask;
-	int weaponHelpBitmask;
-	int armorHelpBitmask;
-	int gamePlayedMask;
-	int lastCombatTurn;
-	bool inCombat;
-	bool enableHelp;
-	int turnTime;
-	int highestMap;
-	int prevWeapon;
-	bool noDeathFlag;
-	bool noFamiliarRemains;
-	int numStatusEffects;
-	int numStatusEffectsCopy;
-	int statusEffects[54];
-	int statusEffectsCopy[54];
-	short buffs[30];
-	short buffsCopy[30];
-	int numbuffs;
-	int numbuffsCopy;
-	bool gameCompleted;
-	int playerEntityCopyIndex;
-	int counters[8];
-	int monsterStats[2];
+	uint8_t lastSkipCode = 0;
+	bool inTargetPractice = false;
+	int targetPracticeScore = 0;
+	int playTime = 0;
+	int totalTime = 0;
+	int moves = 0;
+	int totalMoves = 0;
+	int completedLevels = 0;
+	int killedMonstersLevels = 0;
+	int foundSecretsLevels = 0;
+	int xpGained = 0;
+	int currentLevelDeaths = 0;
+	int totalDeaths = 0;
+	int currentGrades = 0;
+	int bestGrades = 0;
+	short notebookIndexes[Player::MAX_NOTEBOOK_INDEXES] = {};
+	short notebookPositions[Player::MAX_NOTEBOOK_INDEXES] = {};
+	uint8_t questComplete = 0;
+	uint8_t questFailed = 0;
+	int hackedVendingMachines = 0;
+	int vendingMachineHackTriesLeft1 = 0;
+	int vendingMachineHackTriesLeft2 = 0;
+	int numNotebookIndexes = 0;
+	int helpBitmask = 0;
+	int invHelpBitmask = 0;
+	int ammoHelpBitmask = 0;
+	int weaponHelpBitmask = 0;
+	int armorHelpBitmask = 0;
+	int gamePlayedMask = 0;
+	int lastCombatTurn = 0;
+	bool inCombat = false;
+	bool enableHelp = false;
+	int turnTime = 0;
+	int highestMap = 0;
+	int prevWeapon = 0;
+	bool noDeathFlag = false;
+	bool noFamiliarRemains = false;
+	int numStatusEffects = 0;
+	int numStatusEffectsCopy = 0;
+	int statusEffects[54] = {};
+	int statusEffectsCopy[54] = {};
+	short buffs[30] = {};
+	short buffsCopy[30] = {};
+	int numbuffs = 0;
+	int numbuffsCopy = 0;
+	bool gameCompleted = false;
+	int playerEntityCopyIndex = 0;
+	int counters[8] = {};
+	int monsterStats[2] = {};
 
 	// Constructor
 	Player();

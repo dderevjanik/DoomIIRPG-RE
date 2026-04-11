@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <stdio.h>
+#include "Log.h"
 
 #include "TGLEdge.h"
 #include "TGLVert.h"
@@ -11,7 +12,7 @@ TGLEdge::~TGLEdge() {
 }
 
 bool TGLEdge::startup() {
-	printf("TGLEdge::startup\n");
+	LOG_INFO("TGLEdge::startup\n");
 
 	return false;
 }

@@ -1,6 +1,6 @@
 #include "ConfigEnums.h"
 #include "DataNode.h"
-#include <cstdio>
+#include "Log.h"
 
 // Static member definitions
 std::unordered_map<std::string, int> ConfigEnums::difficulty;
@@ -31,7 +31,7 @@ static void loadSection(const DataNode& config, const char* key,
 bool ConfigEnums::parse(const DataNode& root) {
 	DataNode config = root["config_enums"];
 	if (!config || !config.isMap()) {
-		printf("[config_enums] no config_enums section\n");
+		LOG_ERROR("[config_enums] no config_enums section\n");
 		return false;
 	}
 
@@ -40,7 +40,7 @@ bool ConfigEnums::parse(const DataNode& root) {
 	loadSection(config, "window_mode", ConfigEnums::windowMode, ConfigEnums::windowModeByValue);
 	loadSection(config, "control_layout", ConfigEnums::controlLayout, ConfigEnums::controlLayoutByValue);
 
-	printf("[config_enums] loaded\n");
+	LOG_INFO("[config_enums] loaded\n");
 	return true;
 }
 

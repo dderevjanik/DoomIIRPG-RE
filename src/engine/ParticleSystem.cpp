@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <algorithm>
+#include "Log.h"
 
 #include "CAppContainer.h"
 #include "App.h"
@@ -151,7 +152,7 @@ ParticleSystem::~ParticleSystem() {
 
 bool ParticleSystem::startup() {
 	this->app = CAppContainer::getInstance()->app;
-	printf("ParticleSystem::startup\n");
+	LOG_INFO("ParticleSystem::startup\n");
 
 	for (int i = 0; i < 4; i++) {
 		this->particleEmitter[i].systems = this;

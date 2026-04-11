@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <algorithm>
+#include "Log.h"
 
 #include "CAppContainer.h"
 #include "App.h"
@@ -31,7 +32,7 @@ Hud::~Hud() {
 bool Hud::startup() {
 	this->app = CAppContainer::getInstance()->app;
 	Applet* app = this->app;
-	printf("[hud] startup\n");
+	LOG_INFO("[hud] startup\n");
 
 	for (int i = 0; i < Hud::MAX_MESSAGES; i++) {
 		this->messages[i] = new Text(Hud::MS_PER_CHAR);
@@ -1266,7 +1267,7 @@ void Hud::handleUserTouch(int pressX, int pressY, bool highlighted) {
 							app->canvas->handlePlayingEvents(0, Enums::ACTION_QUESTLOG);
 							break;
 						default:
-							printf("[hud] ERROR: undefined touch button ID: %d\n", buttonID_1);
+							LOG_ERROR("[hud] ERROR: undefined touch button ID: %d\n", buttonID_1);
 							break;
 					}
 				}

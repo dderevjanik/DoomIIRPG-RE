@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <algorithm>
+#include "Log.h"
 
 #include "CAppContainer.h"
 #include "App.h"
@@ -29,7 +30,7 @@ VendingMachine::~VendingMachine() {
 }
 
 bool VendingMachine::startup() {
-	printf("[vending] startup\n");
+	LOG_INFO("[vending] startup\n");
 
 	this->app = CAppContainer::getInstance()->app;
 

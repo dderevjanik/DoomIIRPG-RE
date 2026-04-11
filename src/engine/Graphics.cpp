@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <algorithm>
+#include "Log.h"
 
 #include "CAppContainer.h"
 #include "Graphics.h"
@@ -21,7 +22,7 @@ Graphics::~Graphics() {
 
 void Graphics::setGraphics() {
 	Canvas* canvas = this->app->canvas;
-	printf("Graphics::setGraphics\n");
+	LOG_INFO("Graphics::setGraphics\n");
 
 	this->graphClipRect[0] = canvas->displayRect[0];
 	this->graphClipRect[1] = canvas->displayRect[1];

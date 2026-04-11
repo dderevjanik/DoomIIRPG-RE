@@ -1,6 +1,7 @@
 #include <stdexcept>
 #include <assert.h>
 #include <algorithm>
+#include "Log.h"
 
 #include "SDLGL.h"
 #include "App.h"
@@ -59,7 +60,7 @@ bool Canvas::startup() {
 	int viewWidth, viewHeight;
 	fmButton* button;
 
-	printf("[canvas] startup\n");
+	LOG_INFO("[canvas] startup\n");
 
 	this->displayRect[0] = 0;
 	this->displayRect[1] = 0;
@@ -1114,7 +1115,7 @@ static const char* canvasStateName(int state) {
 
 void Canvas::setState(int state) {
 
-	printf("[canvas] setState: %s -> %s\n", canvasStateName(this->state), canvasStateName(state));
+	LOG_INFO("[canvas] setState: %s -> %s\n", canvasStateName(this->state), canvasStateName(state));
 	this->stateChanged = true;
 	for (int i = 0; i < 9; ++i) {
 		this->stateVars[i] = 0;
@@ -1845,7 +1846,7 @@ void Canvas::saveState(int saveType, short n, short n2) {
 
 void Canvas::loadMap(int loadMapID, bool b, bool tm_NewGame) {
 
-	printf("[canvas] loadMap: id=%d newGame=%d\n", loadMapID, tm_NewGame);
+	LOG_INFO("[canvas] loadMap: id=%d newGame=%d\n", loadMapID, tm_NewGame);
 	if (loadMapID > 0 && loadMapID < 11) {
 		bool b2 = false;
 		int n = loadMapID - 1;
@@ -3074,7 +3075,7 @@ void Canvas::runInputEvents() {
 
 bool Canvas::loadMedia() {
 
-	printf("[canvas] loadMedia\n");
+	LOG_INFO("[canvas] loadMedia\n");
 
 	//printf("Canvas::isLoaded %d\n", Canvas::isLoaded);
 	if (Canvas::isLoaded == false) {
@@ -3931,7 +3932,7 @@ void Canvas::logoState() {
 		if (mg) {
 			mg->playFromMainMenu();
 		} else {
-			printf("[canvas] Unknown minigame: %s\n", mgName);
+			LOG_WARN("[canvas] Unknown minigame: %s\n", mgName);
 		}
 		return;
 	}

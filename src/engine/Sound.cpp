@@ -1,6 +1,7 @@
 #include <stdexcept>
 #include <al.h>
 #include <alc.h>
+#include "Log.h"
 
 #include "App.h"
 #include "CAppContainer.h"
@@ -21,13 +22,13 @@ Sound::~Sound() {
 #define OpenAL_ERROR(id)                                                                                               \
 	error = alGetError();                                                                                              \
 	if (error != AL_NO_ERROR) {                                                                                        \
-		printf("OpenAL error: %s, file: %s [%d]\n", alGetString(error),                                                \
+		LOG_ERROR("OpenAL error: %s, file: %s [%d]\n", alGetString(error),                                                \
 		       "/Users/greghodges/doom2rpg/trunk/Doom2rpg_iphone/xcode/Classes/Sound.cpp", id);                        \
 	}
 
 bool Sound::startup() {
 	this->app = CAppContainer::getInstance()->app;
-	printf("[sound] startup\n");
+	LOG_INFO("[sound] startup\n");
 
 	this->field_0x162 = 0;
 	this->app = app;
@@ -57,7 +58,7 @@ bool Sound::startup() {
 
 void Sound::openAL_Init() {
 	ALenum error;
-	printf("[sound] openAL_Init\n");
+	LOG_INFO("[sound] openAL_Init\n");
 
 	alGetError();
 	if (alcGetCurrentContext()) {
@@ -179,7 +180,7 @@ void Sound::openAL_PlaySound(ALuint source, ALint loop) {
 
 void Sound::openAL_LoadSound(int resID, Sound::SoundStream* channel) {
 	ALenum error;
-	printf("[sound] openAL_LoadSound: resID=%d buffer=%d\n", resID, channel->bufferId);
+	LOG_INFO("[sound] openAL_LoadSound: resID=%d buffer=%d\n", resID, channel->bufferId);
 	int index = (uint16_t)(resID - 1000);
 	OpenAL_ERROR(596);
 
@@ -189,7 +190,7 @@ void Sound::openAL_LoadSound(int resID, Sound::SoundStream* channel) {
 		return;
 	}
 
-	printf("[sound] Loading sound: name=%s resID=%d buffer=%d\n", fileName, resID, channel->bufferId);
+	LOG_INFO("[sound] Loading sound: name=%s resID=%d buffer=%d\n", fileName, resID, channel->bufferId);
 	if (this->openAL_LoadWAVFromFile(channel->bufferId, fileName)) {
 		OpenAL_ERROR(606);
 	} else {
@@ -205,7 +206,7 @@ bool Sound::openAL_LoadWAVFromFile(ALuint bufferId, const char* fileName) {
 	ALenum format;
 
 	data = nullptr;
-	printf("[sound] Loading wav: %s\n", fileName);
+	LOG_INFO("[sound] Loading wav: %s\n", fileName);
 	if (this->openAL_LoadAudioFileData(fileName, &format, &data, &size, &freq)) {
 		alBufferData(bufferId, format, data, size, freq);
 		std::free(data);

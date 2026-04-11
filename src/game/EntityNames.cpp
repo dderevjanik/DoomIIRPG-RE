@@ -4,7 +4,7 @@
 #include "CAppContainer.h"
 #include "App.h"
 #include "Combat.h"
-#include <cstdio>
+#include "Log.h"
 
 // Static member definitions
 std::unordered_map<std::string, int> EntityNames::entityTypes;
@@ -93,7 +93,7 @@ bool EntityNames::parseTypes(const DataNode&) {
 
 	buildIndexVector(entityTypes, entityTypesByIndex);
 
-	printf("[entity_names] initialized %d entity types, %d monster subtypes\n",
+	LOG_INFO("[entity_names] initialized %d entity types, %d monster subtypes\n",
 		(int)entityTypes.size(), (int)monsterSubtypes.size());
 	return true;
 }
@@ -121,7 +121,7 @@ bool EntityNames::parseWeapons(const DataNode& config) {
 
 	buildIndexVector(EntityNames::weaponNames, EntityNames::weaponNamesByIndex);
 
-	printf("[entity_names] loaded %d weapon names, %d ammo parms\n",
+	LOG_INFO("[entity_names] loaded %d weapon names, %d ammo parms\n",
 		(int)EntityNames::weaponNames.size(), (int)EntityNames::ammoParms.size());
 	return true;
 }

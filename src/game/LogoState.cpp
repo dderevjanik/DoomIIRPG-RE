@@ -11,6 +11,7 @@
 #include "Enums.h"
 #include "CombatEntity.h"
 #include "IMinigame.h"
+#include "Log.h"
 
 void LogoState::onEnter(Canvas* canvas) {
 	// No special setup needed — pacLogoTime is zeroed by memset
@@ -90,7 +91,7 @@ void LogoState::update(Canvas* canvas) {
 		if (mg) {
 			mg->playFromMainMenu();
 		} else {
-			printf("[logostate] Unknown minigame: %s\n", mgName);
+			LOG_WARN("[logostate] Unknown minigame: %s\n", mgName);
 		}
 		return;
 	}

@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <cstdio>
+#include "Log.h"
 
 #include "JavaStream.h"
 #include "CAppContainer.h"

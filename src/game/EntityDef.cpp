@@ -1,7 +1,7 @@
 #include <stdexcept>
-#include <cstdio>
 #include <string>
 #include <vector>
+#include "Log.h"
 
 #include "CAppContainer.h"
 #include "App.h"
@@ -24,7 +24,7 @@ EntityDefManager::EntityDefManager() {
 EntityDefManager::~EntityDefManager() {}
 
 bool EntityDefManager::startup() {
-	printf("[entitydef] startup\n");
+	LOG_INFO("[entitydef] startup\n");
 	// Entity definitions are now loaded via ResourceManager::loadAllDefinitions()
 	// startup() only needs to verify they were loaded
 	return (this->numDefs > 0);
@@ -200,7 +200,7 @@ bool EntityDefManager::parse(EntityDefManager* mgr, const DataNode& config) {
 		#undef R_BOOL
 	}
 
-	printf("[entitydef] loaded %d entities\n", numDefs);
+	LOG_INFO("[entitydef] loaded %d entities\n", numDefs);
 
 	return true;
 }

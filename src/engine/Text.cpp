@@ -1,7 +1,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <string>
-#include <cstdio>
+#include "Log.h"
 
 #include "CAppContainer.h"
 #include "App.h"
@@ -31,7 +31,7 @@ Localization::~Localization() {
 
 bool Localization::startup() {
 	this->app = CAppContainer::getInstance()->app;
-	printf("Localization::startup\n");
+	LOG_INFO("Localization::startup\n");
 
 	this->text = new char* [Localization::MAXTEXT]();
 	this->textMap =  new uint16_t* [Localization::MAXTEXT]();
@@ -59,7 +59,7 @@ bool Localization::startup() {
 	this->textCount[13] = 15;
 	this->textCount[14] = 3;
 
-	printf("Localization: loading from strings.yaml\n");
+	LOG_INFO("Localization: loading from strings.yaml\n");
 	if (!this->loadFromYAML("strings.yaml")) {
 		this->app->Error("Failed to load strings.yaml\n");
 		return false;
@@ -110,22 +110,22 @@ bool Localization::loadFromYAML(const char* path) {
 				this->groupYamlData[groupId] = node;
 				loaded++;
 			} else {
-				printf("Localization: warning: could not load %s (group %d)\n", filePath.c_str(), groupId);
+				LOG_WARN("Localization: warning: could not load %s (group %d)\n", filePath.c_str(), groupId);
 				delete node;
 				this->groupYamlData[groupId] = nullptr;
 			}
 		}
-		printf("Localization: loaded %d group files from game.yaml strings\n", loaded);
+		LOG_INFO("Localization: loaded %d group files from game.yaml strings\n", loaded);
 	} else {
 		// Legacy: load single strings.yaml
 		DataNode* root = new DataNode(DataNode::loadFile(path));
 		if (!*root) {
-			printf("Localization: failed to load %s\n", path);
+			LOG_ERROR("Localization: failed to load %s\n", path);
 			delete root;
 			return false;
 		}
 		this->yamlData = root;
-		printf("Localization: loaded strings from %s (legacy format)\n", path);
+		LOG_INFO("Localization: loaded strings from %s (legacy format)\n", path);
 	}
 
 	// Load initial groups (0, 1, 3, 14) — same as binary startup
@@ -600,7 +600,7 @@ void Localization::getCharIndices(char c, int* i, int* i2)
 // --------------------
 
 Text::Text(int countChars) {
-	printf("[text] init\n");
+	LOG_INFO("[text] init\n");
 
 	this->chars = new char[countChars];
 	std::memset(this->chars, 0, countChars);
@@ -613,7 +613,7 @@ Text::~Text() {
 }
 
 bool Text::startup() {
-	printf("[text] startup\n");
+	LOG_INFO("[text] startup\n");
 
 	return false;
 }

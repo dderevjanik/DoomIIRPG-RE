@@ -1,4 +1,5 @@
 #include <stdexcept>
+#include "Log.h"
 
 #include "CAppContainer.h"
 #include "OpcodeRegistry.h"

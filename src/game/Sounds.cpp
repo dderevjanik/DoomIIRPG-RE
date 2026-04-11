@@ -1,6 +1,6 @@
 #include "Sounds.h"
 #include "DataNode.h"
-#include <cstdio>
+#include "Log.h"
 
 // Static member definitions
 std::vector<std::string> Sounds::soundFileNames;
@@ -9,7 +9,7 @@ std::unordered_map<std::string, int> Sounds::soundNameToIndex;
 bool Sounds::parse(const DataNode& config) {
 	DataNode sounds = config["sounds"];
 	if (!sounds || !sounds.isMap()) {
-		printf("[sounds] missing or invalid 'sounds' map\n");
+		LOG_ERROR("[sounds] missing or invalid 'sounds' map\n");
 		return false;
 	}
 
@@ -34,7 +34,7 @@ bool Sounds::parse(const DataNode& config) {
 		}
 	}
 
-	printf("[sounds] loaded %d sound definitions\n", (int)Sounds::soundFileNames.size());
+	LOG_INFO("[sounds] loaded %d sound definitions\n", (int)Sounds::soundFileNames.size());
 	return true;
 }
 

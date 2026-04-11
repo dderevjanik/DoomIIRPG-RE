@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include "Log.h"
 
 #include "CAppContainer.h"
 #include "DataNode.h"
@@ -38,25 +39,16 @@
 #include "SoundNames.h"
 #include "Sounds.h"
 
-MenuSystem::MenuSystem() {
-	// Save vector/map members before memset (they have non-trivial constructors)
-	// Then placement-new them back after zeroing the POD fields
-	std::memset(this, 0, sizeof(MenuSystem));
-	new (&yamlMenuDefs) std::vector<YAMLMenuDef>();
-	new (&yamlMenuById) std::unordered_map<int, int>();
-}
+MenuSystem::MenuSystem() = default;
 
-MenuSystem::~MenuSystem() {
-	yamlMenuDefs.~vector();
-	yamlMenuById.~unordered_map();
-}
+MenuSystem::~MenuSystem() = default;
 
 bool MenuSystem::startup() {
 	this->app = CAppContainer::getInstance()->app;
 	Applet* app = this->app;
-	printf("[menu] startup\n");
+	LOG_INFO("[menu] startup\n");
 
-	printf("[menu] loading from menus.yaml\n");
+	LOG_INFO("[menu] loading from menus.yaml\n");
 	if (!this->loadMenusFromYAML("menus.yaml")) {
 		app->Error("Failed to load menus.yaml\n");
 		return false;
@@ -157,7 +149,7 @@ bool MenuSystem::startup() {
 
 	// Load UI definitions (button containers + themes) from ui.yaml
 	// Must be called after images are loaded since it references them for button creation
-	printf("[menu] loading from ui.yaml\n");
+	LOG_INFO("[menu] loading from ui.yaml\n");
 	if (!this->loadUIFromYAML("ui.yaml")) {
 		app->Error("Failed to load ui.yaml\n");
 		return false;
@@ -356,7 +348,7 @@ static int menuNameToId(const std::string& name) {
 bool MenuSystem::loadUIFromYAML(const char* path) {
 	DataNode config = DataNode::loadFile(path);
 	if (!config) {
-		printf("[menu] failed to load %s\n", path);
+		LOG_ERROR("[menu] failed to load %s\n", path);
 		return false;
 	}
 
@@ -428,7 +420,7 @@ bool MenuSystem::loadUIFromYAML(const char* path) {
 			}
 		}
 		if (!sndConfig) {
-			printf("[menu] warning: could not load ui_sounds from sounds.yaml\n");
+			LOG_WARN("[menu] warning: could not load ui_sounds from sounds.yaml\n");
 		}
 	}
 
@@ -628,7 +620,7 @@ bool MenuSystem::loadUIFromYAML(const char* path) {
 			if (bit != buttonNameToId.end()) {
 				def.visibleButtons.push_back(bit->second);
 			} else {
-				printf("[menu] warning: unknown button name '%s' in menu '%s'\n", name.c_str(), def.name.c_str());
+				LOG_WARN("[menu] warning: unknown button name '%s' in menu '%s'\n", name.c_str(), def.name.c_str());
 			}
 		}
 		for (const auto& name : def.visibleButtonsConditionalNames) {
@@ -636,13 +628,13 @@ bool MenuSystem::loadUIFromYAML(const char* path) {
 			if (bit != buttonNameToId.end()) {
 				def.visibleButtonsConditional.push_back(bit->second);
 			} else {
-				printf("[menu] warning: unknown conditional button name '%s' in menu '%s'\n", name.c_str(), def.name.c_str());
+				LOG_WARN("[menu] warning: unknown conditional button name '%s' in menu '%s'\n", name.c_str(), def.name.c_str());
 			}
 		}
 	}
 
 	int containerCount = (this->m_menuButtons ? 1 : 0) + (this->m_infoButtons ? 1 : 0) + (this->m_vendingButtons ? 1 : 0);
-	printf("[menu] loaded %d screens, resolved %d menu themes, %d button names from %s\n",
+	LOG_INFO("[menu] loaded %d screens, resolved %d menu themes, %d button names from %s\n",
 		containerCount, resolvedCount, (int)buttonNameToId.size(), path);
 	return true;
 }
@@ -755,13 +747,13 @@ static MenuSystem::MenuLayout parseLayout(const DataNode& node) {
 bool MenuSystem::loadMenusFromYAML(const char* path) {
 	DataNode config = DataNode::loadFile(path);
 	if (!config) {
-		printf("[menu] failed to load %s\n", path);
+		LOG_ERROR("[menu] failed to load %s\n", path);
 		return false;
 	}
 
 	DataNode menus = config["menus"];
 	if (!menus || !menus.isMap() || menus.size() == 0) {
-		printf("[menu] menus.yaml has missing or empty 'menus' map\n");
+		LOG_ERROR("[menu] menus.yaml has missing or empty 'menus' map\n");
 		return false;
 	}
 
@@ -1019,7 +1011,7 @@ bool MenuSystem::loadMenusFromYAML(const char* path) {
 	this->menuItems = new uint32_t[itemWords.size() > 0 ? itemWords.size() : 1];
 	std::memcpy(this->menuItems, itemWords.data(), itemWords.size() * sizeof(uint32_t));
 
-	printf("[menu] loaded %d menus (%d extended) + %d injected, %d item words from %s\n",
+	LOG_INFO("[menu] loaded %d menus (%d extended) + %d injected, %d item words from %s\n",
 		binaryCount, yamlMenuCount, injectCount, this->menuItemsCount, path);
 	return true;
 }
@@ -1373,7 +1365,7 @@ void MenuSystem::back() {
 void MenuSystem::setMenu(int menu) {
 
 
-	printf("[menu] menu %d\n", menu);
+	LOG_INFO("[menu] menu %d\n", menu);
 	this->cheatCombo = 0;
 	this->menuMode = 0;
 	if ((menu == Menus::MENU_MAIN_BEGIN || menu == Menus::MENU_INGAME) || (menu == Menus::MENU_INGAME_KICKING)) {

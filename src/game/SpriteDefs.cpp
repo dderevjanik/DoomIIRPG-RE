@@ -1,6 +1,6 @@
 #include "SpriteDefs.h"
 #include "DataNode.h"
-#include <cstdio>
+#include "Log.h"
 
 // Static member definitions
 std::unordered_map<std::string, int> SpriteDefs::tileNameToIndex;
@@ -18,7 +18,7 @@ bool SpriteDefs::parse(const DataNode& config) {
 		tiles = config["tiles"];
 	}
 	if (!tiles || !tiles.isMap()) {
-		printf("[sprites] missing or invalid 'sprites' map\n");
+		LOG_ERROR("[sprites] missing or invalid 'sprites' map\n");
 		return false;
 	}
 
@@ -72,7 +72,7 @@ bool SpriteDefs::parse(const DataNode& config) {
 				// If file is an image, register as PNG override for this tile
 				if (fileIsImage) {
 					SpriteDefs::tileIndexToPng[src.id] = src.file;
-					printf("[sprites] PNG override: tile %d (%s) -> %s\n", src.id, name.c_str(), src.file.c_str());
+					LOG_INFO("[sprites] PNG override: tile %d (%s) -> %s\n", src.id, name.c_str(), src.file.c_str());
 				}
 				// Explicit png: field overrides the binary texture with a PNG file
 				DataNode pngNode = entry["png"];
@@ -80,7 +80,7 @@ bool SpriteDefs::parse(const DataNode& config) {
 					std::string pngPath = pngNode.asString("");
 					if (!pngPath.empty()) {
 						SpriteDefs::tileIndexToPng[src.id] = pngPath;
-						printf("[sprites] PNG override (png: field): tile %d (%s) -> %s\n", src.id, name.c_str(), pngPath.c_str());
+						LOG_INFO("[sprites] PNG override (png: field): tile %d (%s) -> %s\n", src.id, name.c_str(), pngPath.c_str());
 					}
 				}
 			} else if (frameSizeNode) {
@@ -127,7 +127,7 @@ bool SpriteDefs::parse(const DataNode& config) {
 		if (v.type == SpriteSourceType::Sheet) sheetCount++;
 	}
 	int binCount = (int)SpriteDefs::tileNameToIndex.size() - imageCount - sheetCount;
-	printf("[sprites] loaded %d sprite names (%d bin, %d image, %d sheet), %d ranges\n",
+	LOG_INFO("[sprites] loaded %d sprite names (%d bin, %d image, %d sheet), %d ranges\n",
 		(int)SpriteDefs::tileNameToIndex.size(),
 		binCount, imageCount, sheetCount,
 		(int)SpriteDefs::ranges.size());

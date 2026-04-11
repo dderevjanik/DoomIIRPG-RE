@@ -1,6 +1,6 @@
 #include "ItemDefs.h"
 #include "DataNode.h"
-#include <cstdio>
+#include "Log.h"
 
 // Static member definitions
 std::unordered_map<std::string, int> ItemDefs::inventoryNameToIndex;
@@ -25,7 +25,7 @@ bool ItemDefs::parse(const DataNode& config) {
 		}
 	}
 
-	printf("[items] loaded %d inventory names, %d ammo names\n",
+	LOG_INFO("[items] loaded %d inventory names, %d ammo names\n",
 		(int)ItemDefs::inventoryNameToIndex.size(), (int)ItemDefs::ammoNameToIndex.size());
 	return true;
 }

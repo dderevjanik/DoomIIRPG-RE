@@ -1,4 +1,5 @@
 #include <stdexcept>
+#include "Log.h"
 
 #include "SDLGL.h"
 #include "CAppContainer.h"
@@ -1024,7 +1025,7 @@ void ComicBook::handleComicBookEvents(int key, int keyAction) {
     int cY = app->canvas->SCR_CY;
     int i;
 
-    printf("[comicbook] handleComicBookEvents %d, %d\n", key, keyAction);
+    LOG_INFO("[comicbook] handleComicBookEvents %d, %d\n", key, keyAction);
 
     CAppContainer::getInstance()->userPressed(cX, cY);
     if (keyAction == Enums::ACTION_LEFT) {

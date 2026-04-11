@@ -1,4 +1,5 @@
 #include <stdexcept>
+#include "Log.h"
 
 #include "SDLGL.h"
 #include "VFS.h"
@@ -193,7 +194,7 @@ void CAppContainer::UpdateAccelerometer(float x, float y, float z, bool useMouse
 }
 
 void CAppContainer::Construct(SDLGL* sdlGL, VFS* vfs, IGameModule* gameModule) {
-	printf("CAppContainer::Construct\n");
+	LOG_INFO("CAppContainer::Construct\n");
 	this->sdlGL = sdlGL;
 	this->vfs = vfs;
 

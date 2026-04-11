@@ -1,4 +1,5 @@
 #include <stdexcept>
+#include "Log.h"
 
 #include "CAppContainer.h"
 #include "App.h"
@@ -379,7 +380,7 @@ static void rescanGameControllers() noexcept {
         // If we find a valid game controller or generic joystick then try to open it.
         // If we succeed then our work is done!
         if (SDL_IsGameController(joyIdx)) {
-            printf("IsGameController\n");
+            LOG_INFO("IsGameController\n");
             // This is a game controller - try opening that way
             gpGameController = SDL_GameControllerOpen(joyIdx);
 
@@ -389,7 +390,7 @@ static void rescanGameControllers() noexcept {
 
                 // Check if joystick supports Rumble
                 if (!SDL_GameControllerHasRumble(gpGameController)) {
-                    printf("Warning: Game controller does not have rumble! SDL Error: %s\n", SDL_GetError());
+                    LOG_WARN("Warning: Game controller does not have rumble! SDL Error: %s\n", SDL_GetError());
                 }
                 break;
             }
@@ -403,20 +404,20 @@ static void rescanGameControllers() noexcept {
 
             // Check if joystick supports haptic
             if (!SDL_JoystickIsHaptic(gpJoystick)) {
-                printf("Warning: Controller does not support haptics! SDL Error: %s\n", SDL_GetError());
+                LOG_WARN("Warning: Controller does not support haptics! SDL Error: %s\n", SDL_GetError());
             }
             else
             {
                 // Get joystick haptic device
                 gJoyHaptic = SDL_HapticOpenFromJoystick(gpJoystick);
                 if (gJoyHaptic == NULL) {
-                    printf("Warning: Unable to get joystick haptics! SDL Error: %s\n", SDL_GetError());
+                    LOG_WARN("Warning: Unable to get joystick haptics! SDL Error: %s\n", SDL_GetError());
                 }
                 else
                 {
                     // Initialize rumble
                     if (SDL_HapticRumbleInit(gJoyHaptic) < 0) {
-                        printf("Warning: Unable to initialize haptic rumble! SDL Error: %s\n", SDL_GetError());
+                        LOG_WARN("Warning: Unable to initialize haptic rumble! SDL Error: %s\n", SDL_GetError());
                     }
                 }
             }
@@ -726,13 +727,13 @@ void Input::handleEvents() noexcept {
     while (SDL_PollEvent(&sdlEvent) != 0) {
         switch (sdlEvent.type) {
             case SDL_QUIT: {
-                printf("handleEvents::SDL_QUIT\n");
+                LOG_INFO("handleEvents::SDL_QUIT\n");
                 this->app->shutdown();
             }   break;
 
             /*case SDL_WINDOWEVENT: {
                 if (sdlEvent.window.event == SDL_WINDOWEVENT_RESIZED) {
-                    printf("SDL_WINDOWEVENT_RESIZED\n");
+                    LOG_INFO("SDL_WINDOWEVENT_RESIZED\n");
                     SDL_GetWindowSize(sdlGL->window, &winVidWidth, &winVidHeight);
                     sdlGL->updateWinVid(winVidWidth, winVidHeight);
                 }

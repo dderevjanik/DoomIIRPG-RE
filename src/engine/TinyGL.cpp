@@ -1,4 +1,5 @@
 #include <stdexcept>
+#include "Log.h"
 
 #include "SDLGL.h"
 #include "CAppContainer.h"
@@ -22,7 +23,7 @@ bool TinyGL::startup(int screenWidth, int screenHeight) {
 	this->app = CAppContainer::getInstance()->app;
 	Canvas* canvas = this->app->canvas;
 
-	printf("TinyGL::startup, w [%d], h [%d]\n", screenWidth, screenHeight);
+	LOG_INFO("TinyGL::startup, w [%d], h [%d]\n", screenWidth, screenHeight);
 
 	this->scratchPalette = new uint16_t[256];
 	this->screenWidth = screenWidth;

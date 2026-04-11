@@ -2,9 +2,9 @@
 #include "DataNode.h"
 #include "VFS.h"
 #include <yaml-cpp/yaml.h>
-#include <cstdio>
 #include <cstdlib>
 #include <algorithm>
+#include "Log.h"
 
 // --- Cache implementation (hides YAML types from header) ---
 
@@ -25,17 +25,17 @@ struct ResourceManager::CacheImpl {
 
 		std::string content = rm->readFileAsString(path);
 		if (content.empty()) {
-			printf("[resource] failed to read %s via VFS\n", path);
+			LOG_ERROR("[resource] failed to read %s via VFS\n", path);
 			return nullptr;
 		}
 
 		try {
 			YAML::Node* node = new YAML::Node(YAML::Load(content));
 			yamlCache[path] = node;
-			printf("[resource] loaded %s via VFS\n", path);
+			LOG_INFO("[resource] loaded %s via VFS\n", path);
 			return node;
 		} catch (const YAML::Exception& e) {
-			printf("[resource] YAML parse error in %s: %s\n", path, e.what());
+			LOG_ERROR("[resource] YAML parse error in %s: %s\n", path, e.what());
 			return nullptr;
 		}
 	}
@@ -133,10 +133,10 @@ bool ResourceManager::loadAllDefinitions() {
 		entriesSorted = true;
 	}
 
-	printf("[resource] loading %d registered definitions\n", (int)entries.size());
+	LOG_INFO("[resource] loading %d registered definitions\n", (int)entries.size());
 
 	for (auto& entry : entries) {
-		printf("[resource] running: %s (priority %d)\n", entry.name.c_str(), entry.priority);
+		LOG_INFO("[resource] running: %s (priority %d)\n", entry.name.c_str(), entry.priority);
 
 		bool ok;
 		if (!entry.dataPath.empty()) {
@@ -144,11 +144,11 @@ bool ResourceManager::loadAllDefinitions() {
 			DataNode data = loadData(entry.dataPath.c_str());
 			if (!data) {
 				if (entry.optional) {
-					printf("[resource] %s: %s not found (optional, skipping)\n",
+					LOG_WARN("[resource] %s: %s not found (optional, skipping)\n",
 						   entry.name.c_str(), entry.dataPath.c_str());
 					continue;
 				}
-				printf("[resource] %s: failed to load %s\n",
+				LOG_ERROR("[resource] %s: failed to load %s\n",
 					   entry.name.c_str(), entry.dataPath.c_str());
 				return false;
 			}
@@ -159,12 +159,12 @@ bool ResourceManager::loadAllDefinitions() {
 		}
 
 		if (!ok) {
-			printf("[resource] failed: %s\n", entry.name.c_str());
+			LOG_ERROR("[resource] failed: %s\n", entry.name.c_str());
 			return false;
 		}
 	}
 
-	printf("[resource] all definitions loaded successfully\n");
+	LOG_INFO("[resource] all definitions loaded successfully\n");
 	return true;
 }
 

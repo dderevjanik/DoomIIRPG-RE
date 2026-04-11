@@ -1,4 +1,3 @@
-#include <cstdio>
 #include <cstring>
 #include <string>
 #include <vector>
@@ -6,6 +5,7 @@
 #include <unordered_map>
 #include <sstream>
 #include <algorithm>
+#include "Log.h"
 
 #include "GameDataParsers.h"
 #include "App.h"
@@ -78,7 +78,7 @@ static int tileFromName(const std::string& name) {
 	if (idx != 0)
 		return idx;
 	try { return std::stoi(name); } catch (...) {
-		printf("[app] Warning: unknown tile name '%s'\n", name.c_str());
+		LOG_WARN("[app] Warning: unknown tile name '%s'\n", name.c_str());
 		return 0;
 	}
 }
@@ -140,7 +140,7 @@ bool parseSpriteAnims(Applet* app, const DataNode& config) {
 			def.posOffset = sa["pos_offset"].asInt(0);
 			gSpriteAnimDefs[tileId] = def;
 		}
-		printf("[app] Animations: loaded %d sprite anim overrides\n", (int)gSpriteAnimDefs.size());
+		LOG_INFO("[app] Animations: loaded %d sprite anim overrides\n", (int)gSpriteAnimDefs.size());
 	}
 
 	return true;
@@ -404,7 +404,7 @@ bool parseWeapons(Applet* app, const DataNode& config) {
 		app->combat->familiarAmmoType = app->combat->weapons[famW * 9 + Combat::WEAPON_FIELD_AMMOTYPE];
 	}
 
-	printf("[app] Weapons: loaded %d weapon definitions (%d familiars)\n",
+	LOG_INFO("[app] Weapons: loaded %d weapon definitions (%d familiars)\n",
 		(int)weapons.size(), (int)famDefs.size());
 	return true;
 }
@@ -412,12 +412,12 @@ bool parseWeapons(Applet* app, const DataNode& config) {
 bool parseProjectiles(Applet* app, const DataNode& config) {
 	DataNode projectilesNode = config["projectiles"];
 	if (!projectilesNode) {
-		printf("[app] Warning: projectiles.yaml empty, using defaults\n");
+		LOG_WARN("[app] Warning: projectiles.yaml empty, using defaults\n");
 		return true;
 	}
 
 	if (!projectilesNode.isMap()) {
-		printf("[app] Warning: projectiles section is not a map\n");
+		LOG_WARN("[app] Warning: projectiles section is not a map\n");
 		return true;
 	}
 	int count = (int)projectilesNode.size();
@@ -507,7 +507,7 @@ bool parseProjectiles(Applet* app, const DataNode& config) {
 		}
 	}
 
-	printf("[app] Projectiles: loaded %d types\n", count);
+	LOG_INFO("[app] Projectiles: loaded %d types\n", count);
 	return true;
 }
 
@@ -542,7 +542,7 @@ bool parseEffects(Applet* app, const DataNode& config) {
 
 	DataNode buffs = config["buffs"];
 	if (!buffs) {
-		printf("[app] Warning: effects.yaml has no buffs section, using defaults\n");
+		LOG_WARN("[app] Warning: effects.yaml has no buffs section, using defaults\n");
 		return true;
 	}
 
@@ -602,7 +602,7 @@ bool parseEffects(Applet* app, const DataNode& config) {
 		p->buffPerTurnHealByAmount[i] = (perTurn == "heal_by_amount");
 	}
 
-	printf("[app] Effects: loaded %d buffs\n", count);
+	LOG_INFO("[app] Effects: loaded %d buffs\n", count);
 	return true;
 }
 
@@ -640,7 +640,7 @@ bool parseDialogStyles(Applet* app, const DataNode& config) {
 
 	DataNode styles = config["dialog_styles"];
 	if (!styles) {
-		printf("[app] Warning: dialogs.yaml has no dialog_styles section\n");
+		LOG_WARN("[app] Warning: dialogs.yaml has no dialog_styles section\n");
 		return true;
 	}
 
@@ -670,7 +670,7 @@ bool parseDialogStyles(Applet* app, const DataNode& config) {
 			def.positionTop = ptNode.asBool(def.positionTop);
 	}
 
-	printf("[app] Dialog styles: loaded\n");
+	LOG_INFO("[app] Dialog styles: loaded\n");
 	return true;
 }
 
@@ -728,7 +728,7 @@ bool parseItems(Applet* app, const DataNode& config, const DataNode& effectsConf
 
 	DataNode items = config["items"];
 	if (!items) {
-		printf("[app] Warning: items.yaml has no items section\n");
+		LOG_WARN("[app] Warning: items.yaml has no items section\n");
 		return false;
 	}
 
@@ -778,7 +778,7 @@ bool parseItems(Applet* app, const DataNode& config, const DataNode& effectsConf
 		p->itemDefs->push_back(def);
 	}
 
-	printf("[app] Items: loaded %d item definitions\n", (int)p->itemDefs->size());
+	LOG_INFO("[app] Items: loaded %d item definitions\n", (int)p->itemDefs->size());
 	return true;
 }
 
@@ -874,7 +874,7 @@ bool parseTables(Applet* app, const DataNode& config) {
 		}
 	}
 
-	printf("[app] loadTables: loaded tables\n");
+	LOG_INFO("[app] loadTables: loaded tables\n");
 	return true;
 }
 
@@ -1127,6 +1127,6 @@ bool parseMonsters(Applet* app, const DataNode& config) {
 		}
 	}
 
-	printf("[app] loadMonstersFromYAML: loaded %d monsters\n", (int)monsters.size());
+	LOG_INFO("[app] loadMonstersFromYAML: loaded %d monsters\n", (int)monsters.size());
 	return true;
 }

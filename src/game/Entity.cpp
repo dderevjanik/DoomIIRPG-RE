@@ -1,6 +1,6 @@
 #include <stdexcept>
 #include <algorithm>
-#include <cstdio>
+#include "Log.h"
 
 #include "CAppContainer.h"
 #include "App.h"
@@ -428,7 +428,7 @@ void Entity::checkMonsterDeath(bool b, bool b2) {
 
 void Entity::died(bool b, Entity* entity) {
 
-    printf("[entity] died: type=%d subType=%d sprite=%d\n", this->def->eType, this->def->eSubType, this->getSprite());
+    LOG_INFO("[entity] died: type=%d subType=%d sprite=%d\n", this->def->eType, this->def->eSubType, this->getSprite());
     int sprite = this->getSprite();
     short n = app->render->mapSprites[app->render->S_X + sprite];
     short n2 = app->render->mapSprites[app->render->S_Y + sprite];
@@ -1345,7 +1345,7 @@ void Entity::raiseTarget(int n) {
 
 void Entity::resurrect(int n, int n2, int n3) {
 
-    printf("[entity] resurrect: type=%d subType=%d at (%d,%d)\n", this->def->eType, this->def->eSubType, n, n2);
+    LOG_INFO("[entity] resurrect: type=%d subType=%d at (%d,%d)\n", this->def->eType, this->def->eSubType, n, n2);
     int sprite = this->getSprite();
     this->def = app->entityDefManager->find(2, this->def->eSubType, this->def->parm);
     this->name = (short)(this->def->name | 0x400);
