@@ -92,9 +92,7 @@ bool InputStream::loadFile(const char* fileName, int loadType) {
 			return true;
 		}
 	} else if (loadType == LT_FILE) {
-		std::strcpy(namePath, getSaveDir().c_str());
-		std::strcat(namePath, "/");
-		std::strcat(namePath, fileName);
+		std::snprintf(namePath, sizeof(namePath), "%s/%s", getSaveDir().c_str(), fileName);
 
 		this->file = std::fopen(namePath, "rb");
 
@@ -207,18 +205,14 @@ int OutputStream::openFile(const char* fileName, int openMode) {
 
 	struct stat sb;
 	if (stat(getSaveDir().c_str(), &sb)) {
-		char command[64];
-		std::strcpy(command, "mkdir ");
-		std::strcat(command, "\"");
-		std::strcat(command, getSaveDir().c_str());
-		std::strcat(command, "\"");
-		// printf("command %s\n", command);
-		std::system(command);
+#ifdef _WIN32
+		_mkdir(getSaveDir().c_str());
+#else
+		mkdir(getSaveDir().c_str(), 0755);
+#endif
 	}
 
-	std::strcpy(namePath, getSaveDir().c_str());
-	std::strcat(namePath, "/");
-	std::strcat(namePath, fileName);
+	std::snprintf(namePath, sizeof(namePath), "%s/%s", getSaveDir().c_str(), fileName);
 
 	// printf("output file: %s\n", namePath);
 	this->buffer = (uint8_t*)std::malloc(512);

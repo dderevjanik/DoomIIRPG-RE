@@ -239,19 +239,19 @@ void ComicBook::DrawLoading(Graphics* graphics) {
     switch (this->field_0x14c / 5 % 4)
     {
     case 0:
-        sprintf(__s, "Loading   ");
+        std::snprintf(__s, sizeof(__s), "Loading   ");
         break;
     case 1:
-        sprintf(__s, "Loading.  ");
+        std::snprintf(__s, sizeof(__s), "Loading.  ");
         break;
     case 2:
-        sprintf(__s, "Loading.. ");
+        std::snprintf(__s, sizeof(__s), "Loading.. ");
         break;
     case 3:
-        sprintf(__s, "Loading...");
+        std::snprintf(__s, sizeof(__s), "Loading...");
         break;
     default:
-        sprintf(__s, "Loading....");
+        std::snprintf(__s, sizeof(__s), "Loading....");
         break;
     }
     textBuff->append(__s);
@@ -1010,7 +1010,7 @@ void ComicBook::DrawExitButton(Graphics* graphics) {
     graphics->fillRect(v3, v4, v5, v6, (v8 << 8) | (v8 << 16) | 0xFF);
     SmallBuffer = app->localization->getSmallBuffer();
     SmallBuffer->setLength(0);
-    sprintf(__s, "Done", this->curPage + 1);
+    std::snprintf(__s, sizeof(__s), "Done");
     SmallBuffer->append(__s);
     SmallBuffer->dehyphenate();
     graphics->drawString(SmallBuffer, v3 + v5 / 2, v4 + v6 / 2, (this->is_iPhoneComic) ? 67 : 3);

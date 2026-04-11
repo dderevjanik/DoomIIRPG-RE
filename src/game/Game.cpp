@@ -4013,10 +4013,8 @@ char* Game::getProfileSaveFileName(const char* name) {
 
 		int len1 = std::strlen(saveDir);
 		int len2 = std::strlen(name);
-		char* namePath = new char[len1 + len2 + 200];
-		std::strcpy(namePath, saveDir);
-		std::strcat(namePath, "/");
-		std::strcat(namePath, name);
+		char* namePath = new char[len1 + len2 + 2]; // +2 for '/' and '\0'
+		std::snprintf(namePath, len1 + len2 + 2, "%s/%s", saveDir, name);
 		return namePath;
 	} else {
 		puts("getProfileSaveFileName2: ERROR -> filename is NULL! ");
