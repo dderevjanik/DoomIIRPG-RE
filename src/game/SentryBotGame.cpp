@@ -47,7 +47,7 @@ void SentryBotGame::setupGlobalData() {
 }
 
 void SentryBotGame::initGame(ScriptThread* scriptThread, short botType) {
-    if (!this->app) this->app = CAppContainer::getInstance()->app;
+
     Applet* app = this->app;
     this->callingThread = scriptThread;
     this->gamePlayedFromMainMenu = (this->callingThread == nullptr) ? true : false;
@@ -137,7 +137,7 @@ void SentryBotGame::initGame(ScriptThread* scriptThread, short botType) {
 }
 
 void SentryBotGame::handleInput(int action) {
-    if (!this->app) this->app = CAppContainer::getInstance()->app;
+
     Applet* app = this->app;
 
     if ((this->stateVars[2] == 2 || (this->stateVars[2] == 1 && this->gamePlayedFromMainMenu)) && (action == 7 || action == 15 || action == 6)) {
@@ -307,7 +307,7 @@ void SentryBotGame::handleInput(int action) {
 }
 
 void SentryBotGame::updateGame(Graphics* graphics) {
-    if (!this->app) this->app = CAppContainer::getInstance()->app;
+
     Applet* app = this->app;
     graphics->clipRect(0, 0, app->canvas->menuRect[2], app->canvas->menuRect[3]);
     graphics->setClipRect(0, 0, Applet::IOS_WIDTH, Applet::IOS_HEIGHT);
@@ -335,7 +335,7 @@ void SentryBotGame::updateGame(Graphics* graphics) {
 }
 
 void SentryBotGame::drawFailureScreen(Graphics* graphics) {
-    if (!this->app) this->app = CAppContainer::getInstance()->app;
+
     Applet* app = this->app;
     graphics->drawImage(this->imgMatrixSkip_BG, 0, 0, 0, 0, 0);
     app->canvas->setLeftSoftKey((short)0, (short)30);
@@ -386,7 +386,7 @@ void SentryBotGame::drawFailureScreen(Graphics* graphics) {
 
 
 void SentryBotGame::drawSuccessScreen(Graphics* graphics) {
-    if (!this->app) this->app = CAppContainer::getInstance()->app;
+
     Applet* app = this->app;
 
     graphics->drawImage(this->imgMatrixSkip_BG, 0, 0, 0, 0, 0);
@@ -489,7 +489,7 @@ void SentryBotGame::drawSuccessScreen(Graphics* graphics) {
 }
 
 void SentryBotGame::drawHelpScreen(Graphics* graphics) {
-    if (!this->app) this->app = CAppContainer::getInstance()->app;
+
     Applet* app = this->app;
     app->canvas->drawMiniGameHelpScreen(graphics, Localization::STRINGID((short)0, (short)171), Localization::STRINGID((short)0, (short)172), this->imgHelpScreenAssets);
     Text* text = app->localization->getSmallBuffer();
@@ -504,7 +504,7 @@ void SentryBotGame::drawHelpScreen(Graphics* graphics) {
 }
 
 void SentryBotGame::drawGameScreen(Graphics* graphics) {
-    if (!this->app) this->app = CAppContainer::getInstance()->app;
+
     Applet* app = this->app;
     int n = (app->canvas->screenRect[2] - app->canvas->screenRect[0]) / 2;
     int n2 = app->canvas->screenRect[1];
@@ -745,7 +745,7 @@ void SentryBotGame::drawGameScreen(Graphics* graphics) {
 }
 
 void SentryBotGame::drawPlayersGuess(int n, int n2, bool b, Text* text, Graphics* graphics) {
-    if (!this->app) this->app = CAppContainer::getInstance()->app;
+
     Applet* app = this->app;
     graphics->drawRegion(this->imgGameAssets, 0, 91, 95, 33, n - 95, n2, 20, 0, 0);
     graphics->drawRegion(this->imgGameAssets, 0, 91, 95, 33, n, n2, 20, 4, 0);
@@ -766,7 +766,7 @@ void SentryBotGame::drawPlayersGuess(int n, int n2, bool b, Text* text, Graphics
 }
 
 void SentryBotGame::drawCursor(int n, int n2, bool b, Graphics* graphics) {
-    if (!this->app) this->app = CAppContainer::getInstance()->app;
+
     Applet* app = this->app;
     if (!b || (app->time - this->timeSinceLastCursorMove & 0x200) == 0x0) {
         graphics->drawRegion(this->imgGameAssets, 95, 91, 22, 22, n + 1, n2, 3, 0, 0);
@@ -792,7 +792,7 @@ bool SentryBotGame::playerCouldStillWin() {
 }
 
 void SentryBotGame::forceWin() {
-    if (!this->app) this->app = CAppContainer::getInstance()->app;
+
     Applet* app = this->app;
     for (int i = 0; i < 4; ++i) {
         this->usersGuess[i] = this->solution[i];
@@ -803,7 +803,7 @@ void SentryBotGame::forceWin() {
 }
 
 void SentryBotGame::awardSentryBot(int n) {
-    if (!this->app) this->app = CAppContainer::getInstance()->app;
+
     Applet* app = this->app;
 
     for (int i = 0; i < app->combat->familiarDefCount; i++) {
@@ -818,7 +818,7 @@ void SentryBotGame::awardSentryBot(int n) {
 }
 
 void SentryBotGame::endGame(int n) {
-    if (!this->app) this->app = CAppContainer::getInstance()->app;
+
     Applet* app = this->app;
 
     app->sound->playSound((n == 1) ? 1043 : 1040, 0, 3, 0);
