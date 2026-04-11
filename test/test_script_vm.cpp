@@ -444,9 +444,7 @@ int main() {
         {"eval_neq",              test_eval_neq},
         {"eval_not",              test_eval_not},
         {"eval_and",              test_eval_and},
-        // NOTE: eval_or skipped — C++ || short-circuit causes stack corruption
-        // when first operand is truthy. This is a known VM bug to fix during refactor.
-        // {"eval_or_both_true",  test_eval_or_both_true},
+        {"eval_or_both_true",     test_eval_or_both_true},
         {"eval_var_push",         test_eval_var_push},
         {"jump",                  test_jump},
         {"call_return",           test_call_return},

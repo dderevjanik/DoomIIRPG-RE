@@ -269,11 +269,15 @@ uint32_t ScriptThread::run() {
                     else {
                         switch (uByteArg) {
                             case Enums::EVAL_AND: { // and
-                                this->push(this->pop() == 1 && this->pop() == 1);
+                                int a = this->pop();
+                                int b = this->pop();
+                                this->push(a == 1 && b == 1);
                                 break;
                             }
                             case Enums::EVAL_OR: { // or
-                                this->push(this->pop() == 1 || this->pop() == 1);
+                                int a = this->pop();
+                                int b = this->pop();
+                                this->push(a == 1 || b == 1);
                                 break;
                             }
                             case Enums::EVAL_LTE: { // less than or equal to
