@@ -166,7 +166,8 @@ class CAppContainer {
 	GameConfig gameConfig;         // Loaded from game.yaml
 	OpcodeRegistry opcodeRegistry; // Extension script opcodes (128-254)
 	MinigameRegistry minigameRegistry; // Minigame dispatch registry
-	const char* customMapFile;     // --map override
+	const char* customMapFile;     // --map override (raw file path, used when no level ID match)
+	int customMapID;               // --map override resolved to a level ID (0 = not set)
 	const char* minigameName;     // --minigame override
 	int pendingEquipLevel;         // deferred equipForLevel after --map load (0 = none)
 	bool skipTravelMap;            // --skip-travel-map

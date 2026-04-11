@@ -72,7 +72,7 @@ int main(int argc, char* args[]) {
 			printf("  -h, --help              Show this help message and exit\n");
 			printf("  --game <name>           Select game from games/ directory\n");
 			printf("  --gamedir <path>        Set game directory (default: auto-detect)\n");
-			printf("  --map <file>            Load a custom map file\n");
+			printf("  --map <path>            Load a level directory or map file\n");
 			printf("  --minigame <name>       Launch a specific minigame\n");
 			printf("  --skip-intro            Skip the intro sequence\n");
 			printf("  --skip-travel-map       Skip the travel map screen\n");
@@ -107,9 +107,6 @@ int main(int argc, char* args[]) {
 
 	if (headless) {
 		CAppContainer::getInstance()->headless = true;
-	}
-	if (customMap) {
-		CAppContainer::getInstance()->skipTravelMap = true;
 	}
 	if (hasSeed) {
 		std::srand(seed);
@@ -491,8 +488,31 @@ int main(int argc, char* args[]) {
 	input.init(); // [GEC] Port: set default Binds — must be after Construct() so app pointer exists
 
 	if (customMap) {
-		CAppContainer::getInstance()->customMapFile = customMap;
-		printf("[main] Custom map: %s\n", customMap);
+		// Try to resolve --map argument against registered levels in game.yaml
+		const auto& gc = CAppContainer::getInstance()->gameConfig;
+		std::string mapArg(customMap);
+		int resolvedID = 0;
+
+		// Match against levelInfos directories and map files
+		for (const auto& [id, info] : gc.levelInfos) {
+			if (mapArg == info.dir || mapArg == info.mapFile ||
+			    mapArg == info.dir + "/" || mapArg == info.dir + "/map.bin") {
+				resolvedID = id;
+				break;
+			}
+		}
+
+		if (resolvedID > 0) {
+			CAppContainer::getInstance()->customMapID = resolvedID;
+			CAppContainer::getInstance()->skipTravelMap = true;
+			printf("[main] Custom map: level %d (%s)\n", resolvedID,
+			       gc.levelInfos.at(resolvedID).dir.c_str());
+		} else {
+			// Fall back to raw file path for standalone .bin files
+			CAppContainer::getInstance()->customMapFile = customMap;
+			CAppContainer::getInstance()->skipTravelMap = true;
+			printf("[main] Custom map file: %s\n", customMap);
+		}
 	}
 
 	// Load script if specified (works in both headless and windowed modes)

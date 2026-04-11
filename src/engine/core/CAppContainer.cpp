@@ -22,6 +22,7 @@ CAppContainer::CAppContainer() {
 	this->MoveY = 0.0;
 	this->MoveAng = 0.0;
 	this->customMapFile = nullptr;
+	this->customMapID = 0;
 	this->minigameName = nullptr;
 	this->pendingEquipLevel = 0;
 	this->skipTravelMap = false;

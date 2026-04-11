@@ -3325,7 +3325,7 @@ void Canvas::logoState() {
 		app->sound->cacheSounds();
 	}
 
-	if (CAppContainer::getInstance()->customMapFile) {
+	if (CAppContainer::getInstance()->customMapID || CAppContainer::getInstance()->customMapFile) {
 		// Replicate startGame(true) + character selection init
 		if (app->menuSystem->background != app->menuSystem->imgMainBG) {
 			app->menuSystem->background->~Image();
@@ -3356,6 +3356,10 @@ void Canvas::logoState() {
 		app->game->difficulty = 1; // Normal
 		app->player->setCharacterChoice(1); // Major (default)
 		app->player->reset();
+
+		if (CAppContainer::getInstance()->customMapID) {
+			this->startupMap = CAppContainer::getInstance()->customMapID;
+		}
 
 		this->loadMap(this->startupMap, false, true);
 		return;
