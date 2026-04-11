@@ -8,6 +8,7 @@
 #include "DataNode.h"
 #include "EntityDef.h"
 #include "EntityNames.h"
+#include "Enums.h"
 #include "SpriteDefs.h"
 #include "Combat.h"
 #include "JavaStream.h"
@@ -45,6 +46,7 @@ bool EntityDefManager::parse(EntityDefManager* mgr, const DataNode& config) {
 	numDefs = count;
 	list = new EntityDef[count];
 
+	int monsterCount = 0;
 	int i = 0;
 	for (auto eit = entities.begin(); eit != entities.end(); ++eit, ++i) {
 		DataNode e = eit.value();
@@ -65,6 +67,11 @@ bool EntityDefManager::parse(EntityDefManager* mgr, const DataNode& config) {
 		list[i].eType = (uint8_t)EntityNames::entityTypeFromString(e["type"].asString("world"));
 		list[i].eSubType = (uint8_t)EntityNames::lookupSubtype(list[i].eType, e["subtype"].asString("0"));
 		list[i].parm = (uint8_t)EntityNames::lookupParm(list[i].eType, list[i].eSubType, e["parm"].asString("0"));
+
+		// Assign sequential monster index
+		if (list[i].eType == Enums::ET_MONSTER) {
+			list[i].monsterIdx = monsterCount++;
+		}
 
 		// Text resource IDs: support both nested text: group and flat fields
 		DataNode text = e["text"];
@@ -217,7 +224,8 @@ bool EntityDefManager::parse(EntityDefManager* mgr, const DataNode& config) {
 		#undef R_BOOL
 	}
 
-	LOG_INFO("[entitydef] loaded %d entities\n", numDefs);
+	mgr->numMonsterDefs = monsterCount;
+	LOG_INFO("[entitydef] loaded %d entities (%d monsters)\n", numDefs, monsterCount);
 
 	return true;
 }
