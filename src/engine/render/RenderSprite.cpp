@@ -935,7 +935,7 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 
 	switch (anim) {
 		case Enums::MANIM_IDLE_BACK: {
-			n12 = 4;
+			n12 = bp.backViewOffset;
 		}
 		case Enums::MANIM_IDLE: {
 			int n20 = (app->time + n * 1337) / 1024 & 0x1;
@@ -947,7 +947,7 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 			// Shadow
 			this->renderSprite(x, y, n13, TILE_SHADOW, 0, flags, renderMode, n14, renderFlags);
 			// Legs
-			this->renderSprite(x, y, z, tileNum, n12, flags, renderMode, scaleFactor, renderFlags);
+			this->renderSprite(x, y, z, tileNum, bp.legsFrame + n12, flags, renderMode, scaleFactor, renderFlags);
 
 			if (anim == Enums::MANIM_IDLE) {
 				n15 = bp.idleTorsoZ;
@@ -955,13 +955,13 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 
 			// Torso
 			this->renderSprite(x + (n17 * this->viewRightStepX >> 6), y + (n17 * this->viewRightStepY >> 6),
-			                   (z + n21) + n15, tileNum, n12 + 2, flags, renderMode, scaleFactor, renderFlags);
+			                   (z + n21) + n15, tileNum, bp.torsoFrame + n12, flags, renderMode, scaleFactor, renderFlags);
 
 			// Head
 			if (bp.sentryHeadFlip) {
 				flags ^= (((app->time + n * 1337) / 2048) & 0x1) << 17; // Flip Head
 				this->renderSprite(x + (n17 * this->viewRightStepX >> 6), y + (n17 * this->viewRightStepY >> 6),
-				                   (z + n21) + n16, tileNum, n12 + 3, flags, renderMode, scaleFactor, renderFlags);
+				                   (z + n21) + n16, tileNum, bp.headFrame + n12, flags, renderMode, scaleFactor, renderFlags);
 				break;
 			}
 			if (n19 != 0 && (!bp.noHeadOnBack || anim != Enums::MANIM_IDLE_BACK)) {
@@ -969,20 +969,20 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 					n16 = bp.idleHeadZ;
 				}
 				this->renderSprite(x + (n17 * this->viewRightStepX >> 6), y + (n17 * this->viewRightStepY >> 6),
-				                   (z + n21) + n16, tileNum, n12 + 3, flags, renderMode, scaleFactor, renderFlags);
+				                   (z + n21) + n16, tileNum, bp.headFrame + n12, flags, renderMode, scaleFactor, renderFlags);
 				break;
 			}
 			break;
 		}
 		case Enums::MANIM_WALK_BACK: {
-			n12 = 4;
+			n12 = bp.backViewOffset;
 		}
 		case Enums::MANIM_WALK_FRONT: {
 			int n22 = ((frame & 0x2) >> 1 ^ 0x1) << 17;
 			// Shadow
 			this->renderSprite(x, y, n13, TILE_SHADOW, 0, flags, renderMode, n14, renderFlags);
 			// Legs
-			this->renderSprite(x, y, z, tileNum, n12 + (frame & 0x1), flags ^ n22, renderMode, scaleFactor,
+			this->renderSprite(x, y, z, tileNum, bp.legsFrame + n12 + (frame & 0x1), flags ^ n22, renderMode, scaleFactor,
 			                   renderFlags);
 			int n23 = frame & 0x1;
 			if ((frame & 0x2) == 0x0) {
@@ -994,7 +994,7 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 			n15 = bp.walkTorsoZ;
 			// Torso
 			this->renderSprite(x + (n17 * this->viewRightStepX >> 6), y + (n17 * this->viewRightStepY >> 6),
-			                   z + n15 + ((frame & 0x1) << 4), tileNum, n12 + 2, bp.flipTorsoWalk ? n22 : flags,
+			                   z + n15 + ((frame & 0x1) << 4), tileNum, bp.torsoFrame + n12, bp.flipTorsoWalk ? n22 : flags,
 			                   renderMode, scaleFactor, renderFlags);
 
 			// Head
@@ -1004,7 +1004,7 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 			if (n19 != 0 && (!bp.noHeadOnBack || anim != Enums::MANIM_WALK_BACK)) {
 				n16 = bp.walkHeadZ;
 				this->renderSprite(x + (n18 * this->viewRightStepX >> 6), y + (n18 * this->viewRightStepY >> 6),
-				                   z + n16 + ((frame & 0x1) << 4), tileNum, n12 + 3, flags, renderMode, scaleFactor,
+				                   z + n16 + ((frame & 0x1) << 4), tileNum, bp.headFrame + n12, flags, renderMode, scaleFactor,
 				                   renderFlags);
 				break;
 			}
@@ -1012,16 +1012,16 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 		}
 		case Enums::MANIM_ATTACK1:
 		case Enums::MANIM_ATTACK2: {
-			int n24 = 0;
+			int n24 = bp.legsFrame;
 			int n25 = flags;
 			if (bp.noHeadOnAttack && frame == 1) { // Zombie-like: flip torso on frame 1
 				n25 ^= 0x20000;
 			}
 			int n26;
 			if (anim == Enums::MANIM_ATTACK1) {
-				n26 = 8;
+				n26 = bp.attack1Frame;
 			} else {
-				n26 = 10;
+				n26 = bp.attack2Frame;
 			}
 			// Shadow
 			this->renderSprite(x, y, n13, TILE_SHADOW, 0, flags, renderMode, n14, renderFlags);
@@ -1031,8 +1031,8 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 			}
 			if (bp.noHeadOnBack) { // Pinky-type: unique attack path (legs, torso, head/attack)
 				int n27 = n26;
-				int n28 = 2;
-				this->renderSprite(x, y, z, tileNum, n24, flags ^ 0x20000, renderMode, scaleFactor, renderFlags);
+				int n28 = bp.torsoFrame;
+				this->renderSprite(x, y, z, tileNum, bp.legsFrame, flags ^ 0x20000, renderMode, scaleFactor, renderFlags);
 				this->renderSprite(x + (n17 * this->viewRightStepX >> 6), y + ((n17 * this->viewRightStepY) >> 6), z,
 				                   tileNum, n28, flags, renderMode, scaleFactor, renderFlags);
 				this->renderSprite(x + (n18 * this->viewRightStepX >> 6), y + ((n18 * this->viewRightStepY) >> 6), z,
@@ -1088,7 +1088,7 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 			}
 
 			if (n19 != 0 && !bp.noHeadOnAttack && renderHead) {
-				int n29 = 3;
+				int n29 = bp.headFrame;
 				n18 = bp.attackHeadX;
 				n16 = bp.attackHeadZ;
 				if (animDef && animDef->spriteAnim.hasFrameDependentHead) {
@@ -1148,35 +1148,35 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 		}
 		case Enums::MANIM_PAIN: {
 			this->renderSprite(x, y, n13, TILE_SHADOW, 0, flags, renderMode, n14, renderFlags);
-			this->renderSprite(x, y, z + n15, tileNum, 12, flags, renderMode, scaleFactor, renderFlags);
+			this->renderSprite(x, y, z + n15, tileNum, bp.painFrame, flags, renderMode, scaleFactor, renderFlags);
 			break;
 		}
 		case Enums::MANIM_SLAP: {
 			// Shadow
 			this->renderSprite(x, y, n13, TILE_SHADOW, 0, flags, renderMode, n14, renderFlags);
 			// Legs
-			this->renderSprite(x, y, z, tileNum, 0, flags, renderMode, scaleFactor, renderFlags);
+			this->renderSprite(x, y, z, tileNum, bp.legsFrame, flags, renderMode, scaleFactor, renderFlags);
 			// Slap torso
 			this->renderSprite(x + (n17 * this->viewRightStepX >> 6), y + (n17 * this->viewRightStepY >> 6),
-			                   z, tileNum, 14, flags, renderMode, scaleFactor, renderFlags);
+			                   z, tileNum, bp.slapTorsoFrame, flags, renderMode, scaleFactor, renderFlags);
 			// Slap head (alternates between frame 15 and 16)
 			if (n19 != 0) {
 				this->renderSprite(x + (n18 * this->viewRightStepX >> 6), y + (n18 * this->viewRightStepY >> 6),
-				                   z + n16, tileNum, 15 + (frame & 0x1), flags, renderMode, scaleFactor, renderFlags);
+				                   z + n16, tileNum, bp.slapHeadFrame + (frame & 0x1), flags, renderMode, scaleFactor, renderFlags);
 			}
 			break;
 		}
 		case Enums::MANIM_DEAD: {
 			if (entity->monster != nullptr && (entity->monster->flags & 0x800) == 0x0 && app->canvas->state != 18 &&
 			    !entity->hasEmptyLootSet()) {
-				this->renderSprite(x, y, z, tileNum, 13, flags, 0, (18 * scaleFactor) >> 4, 512);
+				this->renderSprite(x, y, z, tileNum, bp.deadFrame, flags, 0, (18 * scaleFactor) >> 4, 512);
 			}
-			this->renderSprite(x, y, z, tileNum, 13, flags, renderMode, scaleFactor, renderFlags);
+			this->renderSprite(x, y, z, tileNum, bp.deadFrame, flags, renderMode, scaleFactor, renderFlags);
 			break;
 		}
 		case Enums::MANIM_NPC_BACK_ACTION: {
 			this->renderSprite(x, y, n13, TILE_SHADOW, 0, flags, renderMode, n14, renderFlags);
-			this->renderSprite(x, y, z, tileNum, 8 + frame, flags, renderMode, scaleFactor, renderFlags);
+			this->renderSprite(x, y, z, tileNum, bp.attack1Frame + frame, flags, renderMode, scaleFactor, renderFlags);
 			break;
 		}
 		case Enums::MANIM_NPC_TALK: {
@@ -1223,15 +1223,15 @@ void Render::renderFloaterAnim(int n, int frame, int x, int y, int z, int tileNu
 				break;
 			}
 			case Enums::MANIM_ATTACK2: {
-				n13 = 2;
+				n13 = fl.attack2Offset;
 			}
 			case Enums::MANIM_ATTACK1: {
-				this->renderSprite(x, y, z, tileNum, 8 + n13 + (n12 & 0x1), flags, renderMode, scaleFactor,
+				this->renderSprite(x, y, z, tileNum, fl.attackFrame + n13 + (n12 & 0x1), flags, renderMode, scaleFactor,
 				                   renderFlags);
 				break;
 			}
 			case Enums::MANIM_PAIN: {
-				this->renderSprite(x, y, z, tileNum, 12, flags, renderMode, scaleFactor, renderFlags);
+				this->renderSprite(x, y, z, tileNum, fl.painFrame, flags, renderMode, scaleFactor, renderFlags);
 				break;
 			}
 			case Enums::MANIM_DEAD: {
@@ -1239,10 +1239,10 @@ void Render::renderFloaterAnim(int n, int frame, int x, int y, int z, int tileNu
 					Entity* entity = &app->game->entities[this->mapSprites[this->S_ENT + n]];
 					if (entity->monster != nullptr && (entity->monster->flags & 0x800) == 0x0 &&
 					    app->canvas->state != 18 && !entity->hasEmptyLootSet()) {
-						this->renderSprite(x, y, z, tileNum, 13, flags, 0, 17 * scaleFactor >> 4, 512);
+						this->renderSprite(x, y, z, tileNum, fl.deadFrame, flags, 0, 17 * scaleFactor >> 4, 512);
 					}
 				}
-				this->renderSprite(x, y, z, tileNum, 13, flags, renderMode, scaleFactor, renderFlags);
+				this->renderSprite(x, y, z, tileNum, fl.deadFrame, flags, renderMode, scaleFactor, renderFlags);
 				break;
 			}
 		}
@@ -1270,18 +1270,18 @@ void Render::renderFloaterAnim(int n, int frame, int x, int y, int z, int tileNu
 			break;
 		}
 		case Enums::MANIM_ATTACK2: {
-			n13 = 2;
+			n13 = fl.attack2Offset;
 		}
 		case Enums::MANIM_ATTACK1: {
-			this->renderSprite(x, y, z, tileNum, 8 + n13 + (n12 & 0x1), flags, renderMode, scaleFactor, renderFlags);
+			this->renderSprite(x, y, z, tileNum, fl.attackFrame + n13 + (n12 & 0x1), flags, renderMode, scaleFactor, renderFlags);
 			break;
 		}
 		case Enums::MANIM_PAIN: {
-			this->renderSprite(x, y, z, tileNum, 12, flags, renderMode, scaleFactor, renderFlags);
+			this->renderSprite(x, y, z, tileNum, fl.painFrame, flags, renderMode, scaleFactor, renderFlags);
 			break;
 		}
 		case Enums::MANIM_DEAD: {
-			this->renderSprite(x, y, z, tileNum, 13, flags, renderMode, scaleFactor, renderFlags);
+			this->renderSprite(x, y, z, tileNum, fl.deadFrame, flags, renderMode, scaleFactor, renderFlags);
 			break;
 		}
 	}
@@ -1321,9 +1321,9 @@ void Render::renderSpecialBossAnim(int n, int frame, int x, int y, int z, int ti
 		if (anim == Enums::MANIM_DEAD) {
 			if (entity->monster != nullptr && (entity->monster->flags & 0x800) == 0x0 && app->canvas->state != 18 &&
 			    !entity->hasEmptyLootSet()) {
-				this->renderSprite(x, y, z, tileNum, 13, flags, 0, 17 * scaleFactor >> 4, 512);
+				this->renderSprite(x, y, z, tileNum, sb.deadFrame, flags, 0, 17 * scaleFactor >> 4, 512);
 			}
-			this->renderSprite(x, y, z, tileNum, 13, flags, renderMode, scaleFactor, renderFlags);
+			this->renderSprite(x, y, z, tileNum, sb.deadFrame, flags, renderMode, scaleFactor, renderFlags);
 			return;
 		}
 		int headSprite = sb.idleSpriteIdx;
@@ -1498,9 +1498,9 @@ void Render::renderSpecialBossAnim(int n, int frame, int x, int y, int z, int ti
 			case Enums::MANIM_DEAD: {
 				if (entity->monster != nullptr && (entity->monster->flags & 0x800) == 0x0 && app->canvas->state != 18 &&
 				    !entity->hasEmptyLootSet()) {
-					this->renderSprite(x, y, z, tileNum, 13, flags, 0, 17 * scaleFactor >> 4, 512);
+					this->renderSprite(x, y, z, tileNum, sb.deadFrame, flags, 0, 17 * scaleFactor >> 4, 512);
 				}
-				this->renderSprite(x, y, z, tileNum, 13, flags, renderMode, scaleFactor, renderFlags);
+				this->renderSprite(x, y, z, tileNum, sb.deadFrame, flags, renderMode, scaleFactor, renderFlags);
 				return;
 			}
 		}

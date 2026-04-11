@@ -78,6 +78,11 @@ class EntityDef {
 		int8_t idleFrontFrame = 2;         // Start frame for idle/walk front
 		int16_t headZOffset = -11;         // Head Z relative to torso
 		bool hasDeadLoot = false;          // Show loot indicator on dead
+		// Sub-sprite frame indices
+		int8_t attackFrame = 8;            // Attack base frame
+		int8_t attack2Offset = 2;          // Offset added for ATTACK2 vs ATTACK1
+		int8_t painFrame = 12;             // Pain frame
+		int8_t deadFrame = 13;             // Dead frame
 	};
 
 	// Special boss rendering data (used by Render::renderSpecialBossAnim)
@@ -108,6 +113,8 @@ class EntityDef {
 		int16_t flareZOffset = 288;       // Gun flare Z offset
 		int8_t flareLateralPos = 0;       // Gun flare lateral position
 		int16_t flareTorsoZExtra = 10;    // Extra Z added to torso for flare positioning
+		// Sub-sprite frame index
+		int8_t deadFrame = 13;            // Dead frame (used by all boss types)
 	};
 
 	// Render data for Cyberdemon/ChainsawGoblin specific checks in renderSpriteAnim
@@ -138,6 +145,17 @@ class EntityDef {
 		bool noHeadOnAttack = false;     // No separate head in attack (Zombie, Imp)
 		bool noHeadOnMancAtk = false;    // No head on attack (Mancubus merged torso/head)
 		int16_t attackRevAtk2TorsoZ = 0; // Special: Revenant attack2 torso Z offset
+		// Sub-sprite frame indices (match default sprite sheet layout)
+		int8_t legsFrame = 0;            // Idle/walk legs
+		int8_t torsoFrame = 2;           // Idle/walk torso
+		int8_t headFrame = 3;            // Idle/walk head
+		int8_t backViewOffset = 4;       // Added to frame indices for back-facing views
+		int8_t attack1Frame = 8;         // Attack1 torso base frame
+		int8_t attack2Frame = 10;        // Attack2 torso base frame
+		int8_t painFrame = 12;           // Pain single-sprite frame
+		int8_t deadFrame = 13;           // Dead single-sprite frame
+		int8_t slapTorsoFrame = 14;      // Slap melee torso frame
+		int8_t slapHeadFrame = 15;       // Slap melee head base (alternates +0/+1)
 	};
 
 	int16_t tileIndex;

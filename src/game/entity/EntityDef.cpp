@@ -136,6 +136,17 @@ bool EntityDefManager::parse(EntityDefManager* mgr, const DataNode& config) {
 		list[i].bodyParts.noHeadOnAttack = R_BOOL("body_parts", "no_head_on_attack", "no_head_on_attack", defBody.noHeadOnAttack);
 		list[i].bodyParts.noHeadOnMancAtk = R_BOOL("body_parts", "no_head_on_manc_atk", "no_head_on_manc_atk", defBody.noHeadOnMancAtk);
 		list[i].bodyParts.attackRevAtk2TorsoZ = (int16_t)R_INT("body_parts", "attack_rev_atk2_torso_z", "attack_rev_atk2_torso_z", defBody.attackRevAtk2TorsoZ);
+		// Sub-sprite frame indices
+		list[i].bodyParts.legsFrame = (int8_t)R_INT("body_parts", "legs_frame", "legs_frame", defBody.legsFrame);
+		list[i].bodyParts.torsoFrame = (int8_t)R_INT("body_parts", "torso_frame", "torso_frame", defBody.torsoFrame);
+		list[i].bodyParts.headFrame = (int8_t)R_INT("body_parts", "head_frame", "head_frame", defBody.headFrame);
+		list[i].bodyParts.backViewOffset = (int8_t)R_INT("body_parts", "back_view_offset", "back_view_offset", defBody.backViewOffset);
+		list[i].bodyParts.attack1Frame = (int8_t)R_INT("body_parts", "attack1_frame", "attack1_frame", defBody.attack1Frame);
+		list[i].bodyParts.attack2Frame = (int8_t)R_INT("body_parts", "attack2_frame", "attack2_frame", defBody.attack2Frame);
+		list[i].bodyParts.painFrame = (int8_t)R_INT("body_parts", "pain_frame", "pain_frame", defBody.painFrame);
+		list[i].bodyParts.deadFrame = (int8_t)R_INT("body_parts", "dead_frame", "dead_frame", defBody.deadFrame);
+		list[i].bodyParts.slapTorsoFrame = (int8_t)R_INT("body_parts", "slap_torso_frame", "slap_torso_frame", defBody.slapTorsoFrame);
+		list[i].bodyParts.slapHeadFrame = (int8_t)R_INT("body_parts", "slap_head_frame", "slap_head_frame", defBody.slapHeadFrame);
 
 		// Floater rendering data
 		EntityDef::FloaterData defFloat;
@@ -148,6 +159,11 @@ bool EntityDefManager::parse(EntityDefManager* mgr, const DataNode& config) {
 		list[i].floater.idleFrontFrame = (int8_t)R_INT("floater", "idle_front_frame", "floater_idle_front_frame", defFloat.idleFrontFrame);
 		list[i].floater.headZOffset = (int16_t)R_INT("floater", "head_z_offset", "floater_head_z", defFloat.headZOffset);
 		list[i].floater.hasDeadLoot = R_BOOL("floater", "has_dead_loot", "floater_dead_loot", defFloat.hasDeadLoot);
+		// Floater sub-sprite frame indices
+		list[i].floater.attackFrame = (int8_t)R_INT("floater", "attack_frame", "floater_attack_frame", defFloat.attackFrame);
+		list[i].floater.attack2Offset = (int8_t)R_INT("floater", "attack2_offset", "floater_attack2_offset", defFloat.attack2Offset);
+		list[i].floater.painFrame = (int8_t)R_INT("floater", "pain_frame", "floater_pain_frame", defFloat.painFrame);
+		list[i].floater.deadFrame = (int8_t)R_INT("floater", "dead_frame", "floater_dead_frame", defFloat.deadFrame);
 
 		// Special boss rendering data
 		EntityDef::SpecialBossData defBoss;
@@ -185,6 +201,7 @@ bool EntityDefManager::parse(EntityDefManager* mgr, const DataNode& config) {
 		list[i].specialBoss.flareZOffset = (int16_t)R_INT("special_boss", "flare_z_offset", "boss_flare_z", defBoss.flareZOffset);
 		list[i].specialBoss.flareLateralPos = (int8_t)R_INT("special_boss", "flare_lateral_pos", "boss_flare_lateral", defBoss.flareLateralPos);
 		list[i].specialBoss.flareTorsoZExtra = (int16_t)R_INT("special_boss", "flare_torso_z_extra", "boss_flare_torso_z_extra", defBoss.flareTorsoZExtra);
+		list[i].specialBoss.deadFrame = (int8_t)R_INT("special_boss", "dead_frame", "boss_dead_frame", defBoss.deadFrame);
 
 		// Sprite anim overrides
 		EntityDef::SpriteAnimData defAnim;
