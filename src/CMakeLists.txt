@@ -20,7 +20,7 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} PREFIX "Resources Files" FILES ${R
 
 # Engine+game as static library (exclude Main.cpp — each target has its own)
 set(LIB_SOURCE_FILES ${SOURCE_FILES})
-list(FILTER LIB_SOURCE_FILES EXCLUDE REGEX "engine/Main\\.cpp$")
+list(FILTER LIB_SOURCE_FILES EXCLUDE REGEX "engine/core/Main\\.cpp$")
 
 add_library(drpg-engine-lib STATIC ${HEADER_FILES} ${LIB_SOURCE_FILES} ${RESOURCES_FILES})
 
@@ -31,8 +31,31 @@ set_target_properties(drpg-engine-lib PROPERTIES
 )
 
 target_include_directories(drpg-engine-lib PUBLIC
+	# engine root + subfolders
 	${CMAKE_CURRENT_SOURCE_DIR}/engine
+	${CMAKE_CURRENT_SOURCE_DIR}/engine/canvas
+	${CMAKE_CURRENT_SOURCE_DIR}/engine/render
+	${CMAKE_CURRENT_SOURCE_DIR}/engine/menu
+	${CMAKE_CURRENT_SOURCE_DIR}/engine/graphics
+	${CMAKE_CURRENT_SOURCE_DIR}/engine/audio
+	${CMAKE_CURRENT_SOURCE_DIR}/engine/input
+	${CMAKE_CURRENT_SOURCE_DIR}/engine/ui
+	${CMAKE_CURRENT_SOURCE_DIR}/engine/core
+	${CMAKE_CURRENT_SOURCE_DIR}/engine/resource
+	${CMAKE_CURRENT_SOURCE_DIR}/engine/script
+	${CMAKE_CURRENT_SOURCE_DIR}/engine/data
+	# game root + subfolders
 	${CMAKE_CURRENT_SOURCE_DIR}/game
+	${CMAKE_CURRENT_SOURCE_DIR}/game/core
+	${CMAKE_CURRENT_SOURCE_DIR}/game/entity
+	${CMAKE_CURRENT_SOURCE_DIR}/game/combat
+	${CMAKE_CURRENT_SOURCE_DIR}/game/player
+	${CMAKE_CURRENT_SOURCE_DIR}/game/script
+	${CMAKE_CURRENT_SOURCE_DIR}/game/minigame
+	${CMAKE_CURRENT_SOURCE_DIR}/game/data
+	${CMAKE_CURRENT_SOURCE_DIR}/game/ui
+	${CMAKE_CURRENT_SOURCE_DIR}/game/asset
+	# third-party
 	${CMAKE_SOURCE_DIR}/third_party_libs/stb
 )
 
@@ -44,7 +67,7 @@ target_link_libraries(drpg-engine-lib PUBLIC
 	yaml-cpp::yaml-cpp)
 
 # Main game executable
-add_executable(${PROJECT_NAME} engine/Main.cpp)
+add_executable(${PROJECT_NAME} engine/core/Main.cpp)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     CXX_STANDARD 17

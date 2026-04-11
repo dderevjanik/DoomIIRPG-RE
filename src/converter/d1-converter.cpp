@@ -1,6 +1,6 @@
 #include "d1-converter.h"
 #include "BspToBin.h"
-#include "../engine/ZipFile.h"
+#include "ZipFile.h"
 #include <cstdio>
 #include <cstring>
 #include <stb_image_write.h>
