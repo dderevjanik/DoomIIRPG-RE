@@ -65,7 +65,23 @@ int main(int argc, char* args[]) {
 	const char* scriptFile = nullptr;
 
 	for (int i = 1; i < argc; i++) {
-		if (strcmp(args[i], "--gamedir") == 0 && i + 1 < argc) {
+		if (strcmp(args[i], "--help") == 0 || strcmp(args[i], "-h") == 0) {
+			printf("DRPGEngine %s\n", PROJECT_VERSION);
+			printf("Usage: %s [options]\n\n", args[0]);
+			printf("Options:\n");
+			printf("  -h, --help              Show this help message and exit\n");
+			printf("  --game <name>           Select game from games/ directory\n");
+			printf("  --gamedir <path>        Set game directory (default: auto-detect)\n");
+			printf("  --map <file>            Load a custom map file\n");
+			printf("  --minigame <name>       Launch a specific minigame\n");
+			printf("  --skip-intro            Skip the intro sequence\n");
+			printf("  --skip-travel-map       Skip the travel map screen\n");
+			printf("  --headless              Run without a window (deterministic loop)\n");
+			printf("  --ticks <n>             Quit after n ticks (headless/script mode)\n");
+			printf("  --seed <n>              Set random seed for deterministic runs\n");
+			printf("  --script <file>         Load and replay an input script\n");
+			return 0;
+		} else if (strcmp(args[i], "--gamedir") == 0 && i + 1 < argc) {
 			gameDir = args[++i];
 		} else if (strcmp(args[i], "--game") == 0 && i + 1 < argc) {
 			gameName = args[++i];

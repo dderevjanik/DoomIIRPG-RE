@@ -52,6 +52,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     CXX_EXTENSIONS OFF
 )
 
+target_compile_definitions(${PROJECT_NAME} PRIVATE PROJECT_VERSION="${PROJECT_VERSION}")
 target_link_libraries(${PROJECT_NAME} drpg-engine-lib)
 
 # Converter tool
