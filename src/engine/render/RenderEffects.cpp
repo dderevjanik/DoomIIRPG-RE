@@ -844,88 +844,27 @@ void Render::rockView(int rockViewDur, int x, int y, int z) {
 
 bool Render::isNPC(int n) {
 	EntityDef* def = app->entityDefManager->lookup(n);
-	if (def)
-		return def->hasRenderFlag(EntityDef::RFLAG_NPC);
-	return n >= TILE_FIRST_NPC && n <= TILE_LAST_NPC;
+	return def && def->hasRenderFlag(EntityDef::RFLAG_NPC);
 }
 
-bool Render::isImp(int n) {
+bool Render::hasNoFlareAltAttack(int n) {
 	EntityDef* def = app->entityDefManager->lookup(n);
-	if (def)
-		return def->hasRenderFlag(EntityDef::RFLAG_IMP_TYPE);
-	return n >= TILE_MONSTER_IMP && n <= TILE_MONSTER_IMP3;
-}
-
-bool Render::isSentinel(int n) {
-	return n >= TILE_MONSTER_SENTINEL && n <= TILE_MONSTER_SENTINEL3;
-}
-
-bool Render::isPinky(int n) {
-	return n >= TILE_MONSTER_PINKY && n <= TILE_MONSTER_PINKY3;
-}
-
-bool Render::isRevenant(int n) {
-	EntityDef* def = app->entityDefManager->lookup(n);
-	if (def)
-		return def->hasRenderFlag(EntityDef::RFLAG_REVENANT_TYPE);
-	return n >= TILE_MONSTER_REVENANT && n <= TILE_MONSTER_REVENANT3;
-}
-
-bool Render::isMancubus(int n) {
-	return n >= TILE_MONSTER_MANCUBUS && n <= TILE_MONSTER_MANCUBUS3;
-}
-
-bool Render::isArchVile(int n) {
-	return n >= TILE_MONSTER_ARCH_VILE && n <= TILE_MONSTER_ARCH_VILE3;
-}
-
-bool Render::isChainsawGoblin(int n) {
-	return n >= TILE_MONSTER_SAW_GOBLIN && n <= TILE_MONSTER_SAW_GOBLIN3;
-}
-
-bool Render::isCacodemon(int n) {
-	return n >= TILE_MONSTER_CACODEMON && n <= TILE_MONSTER_CACODEMON3;
-}
-
-bool Render::isLostSoul(int n) {
-	return n >= TILE_MONSTER_LOST_SOUL && n <= TILE_MONSTER_LOST_SOUL3;
-}
-
-bool Render::isSentryBot(int n) {
-	return n == TILE_MONSTER_SENTRY_BOT || n == TILE_MONSTER_RED_SENTRY_BOT;
-}
-
-bool Render::isZombie(int n) {
-	return n >= TILE_MONSTER_ZOMBIE && n <= TILE_MONSTER_ZOMBIE3;
+	return def && def->hasRenderFlag(EntityDef::RFLAG_NO_FLARE_ALT_ATTACK);
 }
 
 bool Render::hasGunFlare(int n) {
-
 	EntityDef* def = app->entityDefManager->lookup(n);
-	if (def)
-		return def->hasRenderFlag(EntityDef::RFLAG_GUN_FLARE);
-	// Fallback for unknown tiles
-	return isMancubus(n) || isRevenant(n) || isSentryBot(n) || n == TILE_BOSS_CYBERDEMON ||
-	       n == TILE_BOSS_MASTERMIND;
+	return def && def->hasRenderFlag(EntityDef::RFLAG_GUN_FLARE);
 }
 
 bool Render::isFloater(int n) {
-
 	EntityDef* def = app->entityDefManager->lookup(n);
-	if (def)
-		return def->hasRenderFlag(EntityDef::RFLAG_FLOATER);
-	// Fallback for unknown tiles
-	return isSentinel(n) || isLostSoul(n) || isCacodemon(n);
+	return def && def->hasRenderFlag(EntityDef::RFLAG_FLOATER);
 }
 
 bool Render::isSpecialBoss(int n) {
-
 	EntityDef* def = app->entityDefManager->lookup(n);
-	if (def)
-		return def->hasRenderFlag(EntityDef::RFLAG_SPECIAL_BOSS);
-	// Fallback for unknown tiles
-	return n == TILE_BOSS_MASTERMIND || n == TILE_MONSTER_ARACHNOTRON ||
-	       n == TILE_BOSS_PINKY || (n >= TILE_BOSS_VIOS && n <= TILE_BOSS_VIOS5);
+	return def && def->hasRenderFlag(EntityDef::RFLAG_SPECIAL_BOSS);
 }
 
 //--------------------

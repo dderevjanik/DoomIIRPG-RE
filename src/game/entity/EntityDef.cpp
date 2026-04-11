@@ -97,8 +97,8 @@ bool EntityDefManager::parse(EntityDefManager* mgr, const DataNode& config) {
 				else if (flag == "gun_flare") list[i].renderFlags |= EntityDef::RFLAG_GUN_FLARE;
 				else if (flag == "special_boss") list[i].renderFlags |= EntityDef::RFLAG_SPECIAL_BOSS;
 				else if (flag == "npc") list[i].renderFlags |= EntityDef::RFLAG_NPC;
-				else if (flag == "imp_type") list[i].renderFlags |= EntityDef::RFLAG_IMP_TYPE;
-				else if (flag == "revenant_type") list[i].renderFlags |= EntityDef::RFLAG_REVENANT_TYPE;
+				else if (flag == "no_flare_alt_attack") list[i].renderFlags |= EntityDef::RFLAG_NO_FLARE_ALT_ATTACK;
+				else if (flag == "tall_hitbox") list[i].renderFlags |= EntityDef::RFLAG_TALL_HITBOX;
 			}
 		}
 

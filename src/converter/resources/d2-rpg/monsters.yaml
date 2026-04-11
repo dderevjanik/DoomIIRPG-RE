@@ -85,6 +85,7 @@ entities:
     parm: 0
     text: {name: 33, long_name: 33, description: 159}
     rendering:
+
       fear_eyes: {eye_l: -3, eye_r: 3, z_add: 294}
       body_parts: {no_head_on_attack: true}
     combat:
@@ -101,6 +102,7 @@ entities:
     parm: 1
     text: {name: 34, long_name: 34, description: 159}
     rendering:
+
       fear_eyes: {eye_l: -3, eye_r: 3, z_add: 294}
       body_parts: {no_head_on_attack: true}
     combat:
@@ -117,6 +119,7 @@ entities:
     parm: 2
     text: {name: 35, long_name: 35, description: 159}
     rendering:
+
       fear_eyes: {eye_l: -3, eye_r: 3, z_add: 294}
       body_parts: {no_head_on_attack: true}
     combat:
@@ -286,8 +289,7 @@ entities:
     parm: 0
     text: {name: 60, long_name: 60, description: 159}
     rendering:
-      flags:
-      - gun_flare
+      flags: [gun_flare, no_flare_alt_attack, tall_hitbox]
       fear_eyes: {eye_l: -2, eye_r: 5, z_add: 324, z_always_pre: 160, z_idle_pre: 32, eye_l_flip: -5, eye_r_flip: 2}
       gun_flare: {dual: true, flash1_x: -9, flash1_z: 736, flash2_x: 15, flash2_z: 736}
       body_parts: {idle_torso_z: -30, idle_head_z: 140, walk_head_z: 160, attack_head_z: 20, attack_head_x: 2, attack_rev_atk2_torso_z: 130}
@@ -304,8 +306,7 @@ entities:
     parm: 1
     text: {name: 61, long_name: 61, description: 159}
     rendering:
-      flags:
-      - gun_flare
+      flags: [gun_flare, no_flare_alt_attack, tall_hitbox]
       fear_eyes: {eye_l: -2, eye_r: 5, z_add: 324, z_always_pre: 160, z_idle_pre: 32, eye_l_flip: -5, eye_r_flip: 2}
       gun_flare: {dual: true, flash1_x: -9, flash1_z: 736, flash2_x: 15, flash2_z: 736}
       body_parts: {idle_torso_z: -30, idle_head_z: 140, walk_head_z: 160, attack_head_z: 20, attack_head_x: 2, attack_rev_atk2_torso_z: 130}
@@ -322,8 +323,7 @@ entities:
     parm: 2
     text: {name: 62, long_name: 62, description: 159}
     rendering:
-      flags:
-      - gun_flare
+      flags: [gun_flare, no_flare_alt_attack, tall_hitbox]
       fear_eyes: {eye_l: -2, eye_r: 5, z_add: 324, z_always_pre: 160, z_idle_pre: 32, eye_l_flip: -5, eye_r_flip: 2}
       gun_flare: {dual: true, flash1_x: -9, flash1_z: 736, flash2_x: 15, flash2_z: 736}
       body_parts: {idle_torso_z: -30, idle_head_z: 140, walk_head_z: 160, attack_head_z: 20, attack_head_x: 2, attack_rev_atk2_torso_z: 130}

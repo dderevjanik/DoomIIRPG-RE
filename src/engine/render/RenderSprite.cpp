@@ -1108,7 +1108,7 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 				                   z + n16, tileNum, n29, flags, renderMode, scaleFactor, renderFlags);
 			}
 			if (frame == 1 && this->hasGunFlare(tileNum) &&
-			    (!this->isRevenant(tileNum) || anim != Enums::MANIM_ATTACK2)) {
+			    (!this->hasNoFlareAltAttack(tileNum) || anim != Enums::MANIM_ATTACK2)) {
 				EntityDef* flareDef = app->entityDefManager->lookup(tileNum);
 				static const EntityDef::GunFlareData defaultFlare{};
 				const EntityDef::GunFlareData& flare = flareDef ? flareDef->gunFlare : defaultFlare;

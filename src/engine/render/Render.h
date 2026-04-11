@@ -391,17 +391,7 @@ public:
 	void drawRGB(Graphics* graphics);
 	void rockView(int rockViewDur, int x, int y, int z);
 	bool isNPC(int n);
-	bool isImp(int n);
-	bool isSentinel(int n);
-	bool isPinky(int n);
-	bool isRevenant(int n);
-	bool isMancubus(int n);
-	bool isArchVile(int n);
-	bool isChainsawGoblin(int n);
-	bool isCacodemon(int n);
-	bool isLostSoul(int n);
-	bool isSentryBot(int n);
-	bool isZombie(int n);
+	bool hasNoFlareAltAttack(int n);
 	bool hasGunFlare(int n);
 	bool isFloater(int n);
 	bool isSpecialBoss(int n);
@@ -454,34 +444,6 @@ public:
 	int TILE_SHADOW;
 	int TILE_GLASS;
 
-	// Monster tile ranges (for isX() checks)
-	int TILE_FIRST_NPC;
-	int TILE_LAST_NPC;
-	int TILE_LAST_MONSTER;
-	int TILE_MONSTER_IMP;
-	int TILE_MONSTER_IMP3;
-	int TILE_MONSTER_SENTINEL;
-	int TILE_MONSTER_SENTINEL3;
-	int TILE_MONSTER_PINKY;
-	int TILE_MONSTER_PINKY3;
-	int TILE_MONSTER_REVENANT;
-	int TILE_MONSTER_REVENANT3;
-	int TILE_MONSTER_MANCUBUS;
-	int TILE_MONSTER_MANCUBUS3;
-	int TILE_MONSTER_ARCH_VILE;
-	int TILE_MONSTER_ARCH_VILE3;
-	int TILE_MONSTER_SAW_GOBLIN;
-	int TILE_MONSTER_SAW_GOBLIN3;
-	int TILE_MONSTER_CACODEMON;
-	int TILE_MONSTER_CACODEMON3;
-	int TILE_MONSTER_LOST_SOUL;
-	int TILE_MONSTER_LOST_SOUL3;
-	int TILE_MONSTER_ZOMBIE;
-	int TILE_MONSTER_ZOMBIE3;
-	int TILE_BOSS_CYBERDEMON;
-	int TILE_BOSS_MASTERMIND;
-	int TILE_BOSS_PINKY;
-	int TILE_MONSTER_ARACHNOTRON;
 };
 
 #endif

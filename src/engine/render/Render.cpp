@@ -63,33 +63,6 @@ void Render::initSpriteDefs() {
 	TILE_SENTINEL_SPIKES_DUMMY = SpriteDefs::getIndex("sentinel_spikes_dummy");
 	TILE_SHADOW = SpriteDefs::getIndex("shadow");
 	TILE_GLASS = SpriteDefs::getIndex("glass");
-	TILE_FIRST_NPC = SpriteDefs::getRange("first_npc");
-	TILE_LAST_NPC = SpriteDefs::getRange("last_npc");
-	TILE_LAST_MONSTER = SpriteDefs::getRange("last_monster");
-	TILE_MONSTER_IMP = SpriteDefs::getIndex("monster_imp");
-	TILE_MONSTER_IMP3 = SpriteDefs::getIndex("monster_imp3");
-	TILE_MONSTER_SENTINEL = SpriteDefs::getIndex("monster_sentinel");
-	TILE_MONSTER_SENTINEL3 = SpriteDefs::getIndex("monster_sentinel3");
-	TILE_MONSTER_PINKY = SpriteDefs::getIndex("monster_pinky");
-	TILE_MONSTER_PINKY3 = SpriteDefs::getIndex("monster_pinky3");
-	TILE_MONSTER_REVENANT = SpriteDefs::getIndex("monster_revenant");
-	TILE_MONSTER_REVENANT3 = SpriteDefs::getIndex("monster_revenant3");
-	TILE_MONSTER_MANCUBUS = SpriteDefs::getIndex("monster_mancubus");
-	TILE_MONSTER_MANCUBUS3 = SpriteDefs::getIndex("monster_mancubus3");
-	TILE_MONSTER_ARCH_VILE = SpriteDefs::getIndex("monster_arch_vile");
-	TILE_MONSTER_ARCH_VILE3 = SpriteDefs::getIndex("monster_arch_vile3");
-	TILE_MONSTER_SAW_GOBLIN = SpriteDefs::getIndex("monster_saw_goblin");
-	TILE_MONSTER_SAW_GOBLIN3 = SpriteDefs::getIndex("monster_saw_goblin3");
-	TILE_MONSTER_CACODEMON = SpriteDefs::getIndex("monster_cacodemon");
-	TILE_MONSTER_CACODEMON3 = SpriteDefs::getIndex("monster_cacodemon3");
-	TILE_MONSTER_LOST_SOUL = SpriteDefs::getIndex("monster_lost_soul");
-	TILE_MONSTER_LOST_SOUL3 = SpriteDefs::getIndex("monster_lost_soul3");
-	TILE_MONSTER_ZOMBIE = SpriteDefs::getIndex("monster_zombie");
-	TILE_MONSTER_ZOMBIE3 = SpriteDefs::getIndex("monster_zombie3");
-	TILE_BOSS_CYBERDEMON = SpriteDefs::getIndex("boss_cyberdemon");
-	TILE_BOSS_MASTERMIND = SpriteDefs::getIndex("boss_mastermind");
-	TILE_BOSS_PINKY = SpriteDefs::getIndex("boss_pinky");
-	TILE_MONSTER_ARACHNOTRON = SpriteDefs::getIndex("monster_arachnotron");
 }
 
 Render::Render() {

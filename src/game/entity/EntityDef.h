@@ -42,8 +42,8 @@ class EntityDef {
 	static constexpr uint32_t RFLAG_GUN_FLARE = 0x2;     // Shows gun flash on attack
 	static constexpr uint32_t RFLAG_SPECIAL_BOSS = 0x4;  // Uses special boss rendering path
 	static constexpr uint32_t RFLAG_NPC = 0x8;           // Is an NPC (shadow placement, body composition)
-	static constexpr uint32_t RFLAG_IMP_TYPE = 0x10;     // Imp-like (double-claw attack anim)
-	static constexpr uint32_t RFLAG_REVENANT_TYPE = 0x20;// Revenant-like (special attack2 anim)
+	static constexpr uint32_t RFLAG_NO_FLARE_ALT_ATTACK = 0x10; // Skip gun flare on ATTACK2 animation
+	static constexpr uint32_t RFLAG_TALL_HITBOX = 0x20;         // Extended head hitbox for scoped weapons
 
 	// Fear eye rendering offsets (used by Render::renderFearEyes)
 	struct FearEyeData {

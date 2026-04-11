@@ -8,6 +8,7 @@
 #include "JavaStream.h"
 #include "EntityMonster.h"
 #include "Entity.h"
+#include "EntityDef.h"
 #include "Combat.h"
 #include "Player.h"
 #include "Render.h"
@@ -188,7 +189,7 @@ int CombatEntity::calcHit(CombatEntity* ce, CombatEntity* ce2, bool b, int i, bo
             std::memset(v57, 0, sizeof(v57));
             std::memset(v56, 0, sizeof(v56));
 
-            if (app->render->isRevenant(curTarget->def->tileIndex)){
+            if (curTarget->def->hasRenderFlag(EntityDef::RFLAG_TALL_HITBOX)){
                 v56[0][0] -= 1;
                 v56[0][1] += 60;
             }
