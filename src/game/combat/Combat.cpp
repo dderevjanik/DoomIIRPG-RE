@@ -23,23 +23,14 @@
 #include "Sounds.h"
 
 Combat::Combat() {
-	// Zero all POD members. The map is default-constructed (empty).
-	// We skip the map by zeroing in two ranges around it.
-	char* thisPtr = reinterpret_cast<char*>(this);
-	char* mapStart = reinterpret_cast<char*>(&this->monsterNameToIndex);
-	char* mapEnd = mapStart + sizeof(this->monsterNameToIndex);
-	char* objEnd = thisPtr + sizeof(Combat);
-	std::memset(thisPtr, 0, mapStart - thisPtr);
-	if (mapEnd < objEnd) {
-		std::memset(mapEnd, 0, objEnd - mapEnd);
-	}
+	std::memset(this, 0, sizeof(Combat));
 }
 
 Combat::~Combat() {
 }
 
-short Combat::getWeaponWeakness(int n, int n2, int n3) {
-    return (short)((this->monsterWeakness[(n2 * this->tiersPerMonster + n3) * 8 + n / 2] >> ((n & 0x1) << 2) & 0xF) + 1 << 5);
+short Combat::getWeaponWeakness(int weaponIdx, int monsterIdx) {
+    return (short)((this->monsterWeakness[monsterIdx * 8 + weaponIdx / 2] >> ((weaponIdx & 0x1) << 2) & 0xF) + 1 << 5);
 }
 
 bool Combat::startup() {
@@ -47,8 +38,8 @@ bool Combat::startup() {
 	Applet* app = this->app;
 	LOG_INFO("[combat] startup\n");
 
-	this->monsters = new CombatEntity*[this->monsterSlotCount];
-	for (int n = 0, i = 0; i < this->monsterSlotCount; ++i, n += 6) {
+	this->monsters = new CombatEntity*[this->numMonsterDefs];
+	for (int n = 0, i = 0; i < this->numMonsterDefs; ++i, n += 6) {
 		this->monsters[i] = new CombatEntity(5 * (this->monsterStats[n + 0] & 0xFF), this->monsterStats[n + 1], this->monsterStats[n + 2], this->monsterStats[n + 3], this->monsterStats[n + 4], this->monsterStats[n + 5]);
 	}
 
@@ -496,7 +487,7 @@ int Combat::monsterSeq() {
             monsterSound = atkWpFlags.attackSoundOverride;
         }
         else {
-            monsterSound = app->game->getMonsterSound(this->curAttacker->def->eSubType, this->curAttacker->def->parm, soundType);
+            monsterSound = app->game->getMonsterSound(this->curAttacker->def->monsterIdx, soundType);
         }
         app->sound->playCombatSound(monsterSound, 0, 4);
 
@@ -528,7 +519,7 @@ int Combat::monsterSeq() {
             this->curAttacker->monster->frameTime = app->time + lerpSprite->travelTime;
             this->launchProjectile();
         }
-        MonsterBehaviors& atkBeh = app->combat->monsterBehaviors[this->curAttacker->def->eSubType];
+        MonsterBehaviors& atkBeh = app->combat->monsterBehaviors[this->curAttacker->def->monsterIdx];
         if (this->gotHit && (this->getWeaponFlags(this->attackerWeaponId).poisonOnHit || atkBeh.onHitPoison)) {
             app->player->addStatusEffect(atkBeh.onHitPoison ? atkBeh.onHitPoisonId : 13, atkBeh.onHitPoison ? atkBeh.onHitPoisonDuration : 5, atkBeh.onHitPoison ? atkBeh.onHitPoisonPower : 3);
             app->player->translateStatusEffects();
@@ -921,7 +912,7 @@ void Combat::explodeOnPlayer() {
                         this->totalDamage += (this->totalDamage >> 1) + loadMapID / this->weapons[this->attackerWeapon + 7];
                     }
                     EntityDef* def = this->curAttacker->def;
-                    if (def->eType == Enums::ET_MONSTER && this->monsterBehaviors[def->eSubType].isVios) {
+                    if (def->eType == Enums::ET_MONSTER && def->monsterIdx >= 0 && this->monsterBehaviors[def->monsterIdx].isVios) {
                         if (def->parm == 4) {
                             this->totalDamage += app->game->numMallocsForVIOS * 8;
                         }
@@ -946,7 +937,7 @@ void Combat::explodeOnPlayer() {
                         }
                         app->render->rockView(200, app->canvas->viewX + a * 6, app->canvas->viewY + a2 * 6, app->canvas->viewZ);
                     }
-                    if (app->player->ce->getStat(Enums::STAT_HEALTH) > 0 && app->combat->monsterBehaviors[this->curAttacker->def->eSubType].knockbackWeaponId >= 0 && app->combat->monsterBehaviors[this->curAttacker->def->eSubType].knockbackWeaponId == this->attackerWeaponId) {
+                    if (app->player->ce->getStat(Enums::STAT_HEALTH) > 0 && app->combat->monsterBehaviors[this->curAttacker->def->monsterIdx].knockbackWeaponId >= 0 && app->combat->monsterBehaviors[this->curAttacker->def->monsterIdx].knockbackWeaponId == this->attackerWeaponId) {
                         entity->knockback(app->render->mapSprites[app->render->S_X + sprite], app->render->mapSprites[app->render->S_Y + sprite], 1);
                     }
                 }
@@ -988,7 +979,7 @@ void Combat::explodeOnPlayer() {
 }
 
 int Combat::getMonsterField(EntityDef* entityDef, int n) {
-    return this->monsterAttacks[(entityDef->eSubType * 9) + (entityDef->parm * 3) + n];
+    return this->monsterAttacks[entityDef->monsterIdx * 3 + n];
 }
 
 void Combat::checkForBFGDeaths(int x, int y) {
@@ -1082,7 +1073,7 @@ void Combat::hurtEntityAt(int n, int n2, int n3, int n4, int n5, int n6, Entity*
                 if ((mapEntity->info & 0x40000) == 0x0) {
                     app->game->activate(mapEntity, true, false, true, true);
                 }
-                int n7 = this->getWeaponWeakness(this->attackerWeaponId, mapEntity->def->eSubType, mapEntity->def->parm) * n6 >> 8;
+                int n7 = this->getWeaponWeakness(this->attackerWeaponId, mapEntity->def->monsterIdx) * n6 >> 8;
                 int n8 = n7 - (mapEntity->monster->ce.getStatPercent(Enums::STAT_DEFENSE) * n7 >> 8);
                 if (n8 > 0) {
                     if (this->attackerWeaponProj == 5) {
@@ -1243,7 +1234,7 @@ void Combat::updateProjectile() {
                     const auto& pv = this->projVisuals[this->attackerWeaponProj];
                     if (pv.causesFear && this->curTarget != nullptr && (this->crFlags & 0x1007) != 0x0) {
                         EntityMonster* monster = this->curTarget->monster;
-                        if (monster != nullptr && !app->combat->monsterBehaviors[this->curTarget->def->eSubType].fearImmune) {
+                        if (monster != nullptr && !app->combat->monsterBehaviors[this->curTarget->def->monsterIdx].fearImmune) {
                             monster->resetGoal();
                             monster->goalType = 4;
                             monster->goalParam = 3;

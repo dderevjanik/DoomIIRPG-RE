@@ -407,7 +407,7 @@ int Game::updateLerpSprite(LerpSprite* lerpSprite) {
 			if (anim == Enums::MANIM_WALK_FRONT || anim == Enums::MANIM_WALK_BACK) {
 
 				if (entity->def->eType == Enums::ET_MONSTER) {
-					int walkSnd = app->combat->monsterBehaviors[entity->def->eSubType].walkSoundResId;
+					int walkSnd = app->combat->monsterBehaviors[entity->def->monsterIdx].walkSoundResId;
 					if (walkSnd >= 0) {
 						if ((1 + (n8 * lerpSprite->dist >> 12) & 0x3) >> 1 !=
 						    ((((app->render->mapSpriteInfo[n2]) & 0xFF00) >> 8) & 3) >> 1) {

@@ -1,7 +1,6 @@
 #ifndef __COMBAT_H__
 #define __COMBAT_H__
 
-#include <map>
 #include <string>
 
 class Entity;
@@ -292,11 +291,8 @@ public:
 	int8_t* weapons;
 	int8_t* monsterWeakness;
 	MonsterBehaviors* monsterBehaviors;
-	CombatEntity** monsters;    // Dynamic array: numMonsterTypes * tiersPerMonster slots
-	int numMonsterTypes;        // Number of monster types (default: 17)
-	int tiersPerMonster;        // Tiers per monster type (default: 3)
-	int monsterSlotCount;       // Total: numMonsterTypes * tiersPerMonster
-	std::map<std::string, int> monsterNameToIndex; // Monster name → subtype index (built from monsters.yaml)
+	CombatEntity** monsters;    // Dynamic array indexed by monsterIdx
+	int numMonsterDefs;         // Number of monster entity defs (from EntityDefManager)
 	int worldDist;
 	int tileDist;
 	int crFlags;
@@ -316,7 +312,7 @@ public:
 	// Destructor
 	~Combat();
 
-	short getWeaponWeakness(int n, int n2, int n3);
+	short getWeaponWeakness(int weaponIdx, int monsterIdx);
 	bool startup();
 	void performAttack(Entity* curAttacker, Entity* curTarget, int attackX, int attackY, bool b);
 	void checkMonsterFX();

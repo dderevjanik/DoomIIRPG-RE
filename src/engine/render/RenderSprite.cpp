@@ -828,7 +828,7 @@ void Render::renderFearEyes(Entity* entity, int frame, int x, int y, int z, int 
 	frame &= Enums::MFRAME_MASK;
 
 	if ((anim != 0 && anim != 32) || entity->monster == nullptr ||
-	    app->combat->monsterBehaviors[eSubType].fearImmune || entity->monster->goalType != 4) {
+	    app->combat->monsterBehaviors[entity->def->monsterIdx].fearImmune || entity->monster->goalType != 4) {
 		return;
 	}
 
@@ -1522,7 +1522,7 @@ void Render::handleMonsterIdleSounds(Entity* entity) {
 	    (this->monsterIdleTime[entity->def->eSubType] <= app->time)) {
 		if (entity->distFrom(app->canvas->viewX, app->canvas->viewY) < app->combat->tileDistances[3]) {
 			int MonsterSound =
-			    app->game->getMonsterSound(entity->def->eSubType, (char)entity->def->parm, Enums::MSOUND_IDLE);
+			    app->game->getMonsterSound(entity->def->monsterIdx, Enums::MSOUND_IDLE);
 			app->sound->playSound(MonsterSound, 0, 1, 0);
 		}
 		this->monsterIdleTime[entity->def->eSubType] = ((app->nextByte() % 10) * 1000) + app->time + 6000;

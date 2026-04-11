@@ -62,7 +62,7 @@ void Entity::initspawn() {
 
     int tileNum = app->render->mapSpriteInfo[sprite] & 0xFF;
     if (eType == Enums::ET_MONSTER) {
-        app->combat->monsters[eSubType * app->combat->tiersPerMonster + (int8_t)this->def->parm]->clone(&this->monster->ce);
+        app->combat->monsters[this->def->monsterIdx]->clone(&this->monster->ce);
 
         if (app->game->difficulty == Enums::DIFFICULTY_NIGHTMARE || (app->game->difficulty == Enums::DIFFICULTY_NORMAL && !this->isBoss())) {
             int stat = this->monster->ce.getStat(1);
@@ -74,13 +74,13 @@ void Entity::initspawn() {
         short n4 = 64;
         app->render->mapSprites[app->render->S_Z + sprite] = (short)(32 + app->render->getHeight(app->render->mapSprites[app->render->S_X + sprite], app->render->mapSprites[app->render->S_Y + sprite]));
         app->render->relinkSprite(sprite);
-        if (app->combat->monsterBehaviors[eSubType].smallParm0Scale >= 0 && this->def->parm == 0) {
-            n4 = (short)app->combat->monsterBehaviors[eSubType].smallParm0Scale;
+        if (app->combat->monsterBehaviors[this->def->monsterIdx].smallParm0Scale >= 0 && this->def->parm == 0) {
+            n4 = (short)app->combat->monsterBehaviors[this->def->monsterIdx].smallParm0Scale;
         }
         app->render->mapSprites[app->render->S_SCALEFACTOR + sprite] = n4;
         app->render->mapSprites[app->render->S_RENDERMODE + sprite] = n3;
         this->info |= 0x20000;
-        if (app->combat->monsterBehaviors[eSubType].isVios) {
+        if (app->combat->monsterBehaviors[this->def->monsterIdx].isVios) {
             this->param = app->nextInt() % 3 + 3;
         }
     }
@@ -148,7 +148,7 @@ int* Entity::calcPosition() {
 }
 
 bool Entity::isBoss() {
-	const MonsterBehaviors& mb = app->combat->monsterBehaviors[this->def->eSubType];
+	const MonsterBehaviors& mb = app->combat->monsterBehaviors[this->def->monsterIdx];
 	return mb.isBoss && this->def->parm >= mb.bossMinTier;
 }
 
@@ -237,13 +237,13 @@ void Entity::populateDefaultLootSet() {
     this->lootSet[2] = 0;
 
     if (this->def->eType == Enums::ET_CORPSE) {
-        const MonsterBehaviors& mb = app->combat->monsterBehaviors[this->def->eSubType];
+        const MonsterBehaviors& mb = app->combat->monsterBehaviors[this->def->monsterIdx];
         if (!mb.lootConfig.noCorpseLoot) {
             this->lootSet[0] = 1089;
         }
     }
     else {
-        const MonsterBehaviors& mb = app->combat->monsterBehaviors[this->def->eSubType];
+        const MonsterBehaviors& mb = app->combat->monsterBehaviors[this->def->monsterIdx];
         const auto& lc = (mb.hasLootTiers && this->def->parm < MonsterBehaviors::MAX_LOOT_TIERS)
             ? mb.lootTiers[this->def->parm] : mb.lootConfig;
         if (lc.modulus > 0) {

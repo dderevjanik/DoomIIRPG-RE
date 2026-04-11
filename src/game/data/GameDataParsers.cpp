@@ -24,6 +24,7 @@
 #include "Enums.h"
 #include "ParticleSystem.h"
 #include "VendingMachine.h"
+#include "EntityDef.h"
 
 // --- Helpers for data parsing (file-static) ---
 
@@ -878,6 +879,9 @@ bool parseTables(Applet* app, const DataNode& config) {
 	return true;
 }
 
+// parseMonsters() removed — combat data now loaded from entities.yaml by parseMonsterCombatFromEntities()
+
+#if 0 // Legacy parseMonsters — kept for reference, will be deleted
 bool parseMonsters(Applet* app, const DataNode& config) {
 	DataNode monsters = config["monsters"];
 	if (!monsters || !monsters.isMap()) {
@@ -1128,5 +1132,212 @@ bool parseMonsters(Applet* app, const DataNode& config) {
 	}
 
 	LOG_INFO("[app] loadMonstersFromYAML: loaded %d monsters\n", (int)monsters.size());
+	return true;
+}
+#endif
+
+// ---------------------------------------------------------------------------
+// New parser: reads combat data from entities.yaml "combat:" blocks.
+// Replaces parseMonsters() — no more tier system, each entity is self-contained.
+// ---------------------------------------------------------------------------
+bool parseMonsterCombatFromEntities(Applet* app, const DataNode& config) {
+	DataNode entities = config["entities"];
+	if (!entities || !entities.isMap()) {
+		return false;
+	}
+
+	int N = app->entityDefManager->getNumMonsterDefs();
+	if (N == 0) {
+		LOG_INFO("[monster_combat] no monster entities found\n");
+		return true;
+	}
+
+	// Allocate all arrays indexed by monsterIdx
+	app->combat->numMonsterDefs = N;
+	app->combat->monsterAttacks = new short[N * 3];
+	std::memset(app->combat->monsterAttacks, 0, N * 3 * sizeof(short));
+
+	app->combat->monsterStats = new int8_t[N * 6];
+	std::memset(app->combat->monsterStats, 0, N * 6);
+
+	app->combat->monsterWeakness = new int8_t[N * 8];
+	std::memset(app->combat->monsterWeakness, 0, N * 8);
+
+	app->game->monsterSounds = new uint8_t[N * 8];
+	std::memset(app->game->monsterSounds, 255, N * 8);
+
+	app->particleSystem->monsterColors = new uint8_t[N * 3];
+	std::memset(app->particleSystem->monsterColors, 0, N * 3);
+
+	app->combat->monsterBehaviors = new MonsterBehaviors[N]();
+
+	static const char* soundFields[] = {"alert1", "alert2", "alert3", "attack1",
+	                                    "attack2", "idle", "pain", "death"};
+	static const char* statFields[] = {"health", "armor", "defense", "strength",
+	                                   "accuracy", "agility"};
+
+	int loaded = 0;
+	for (auto eit = entities.begin(); eit != entities.end(); ++eit) {
+		DataNode e = eit.value();
+		std::string typeStr = e["type"].asString("");
+		if (typeStr != "monster") continue;
+
+		// Find the EntityDef to get monsterIdx
+		uint8_t eType = (uint8_t)EntityNames::entityTypeFromString(typeStr);
+		uint8_t eSubType = (uint8_t)EntityNames::lookupSubtype(eType, e["subtype"].asString("0"));
+		uint8_t parm = (uint8_t)EntityNames::lookupParm(eType, eSubType, e["parm"].asString("0"));
+
+		EntityDef* def = app->entityDefManager->find(eType, eSubType, parm);
+		if (!def || def->monsterIdx < 0) continue;
+		int mi = def->monsterIdx;
+
+		DataNode combat = e["combat"];
+		if (!combat) continue;
+
+		// Stats
+		DataNode stats = combat["stats"];
+		if (stats) {
+			int base = mi * 6;
+			for (int s = 0; s < 6; s++) {
+				app->combat->monsterStats[base + s] = (int8_t)stats[statFields[s]].asInt(0);
+			}
+		}
+
+		// Attacks
+		DataNode atk = combat["attacks"];
+		if (atk) {
+			int base = mi * 3;
+			app->combat->monsterAttacks[base + 0] = (short)EntityNames::weaponToIndex(atk["attack1"].asString("0").c_str());
+			app->combat->monsterAttacks[base + 1] = (short)EntityNames::weaponToIndex(atk["attack2"].asString("0").c_str());
+			app->combat->monsterAttacks[base + 2] = (short)atk["chance"].asInt(0);
+		}
+
+		// Weakness
+		DataNode weak = combat["weakness"];
+		if (weak) {
+			int weakBase = mi * 8;
+			if (weak.isMap()) {
+				for (int w = 0; w < 8; w++) {
+					app->combat->monsterWeakness[weakBase + w] = 0x77;
+				}
+				for (auto it = weak.begin(); it != weak.end(); ++it) {
+					std::string wname = it.key().asString();
+					double pct = (double)it.value().asFloat(100.0f);
+					int weaponIdx = EntityNames::weaponToIndex(wname);
+					if (weaponIdx >= 0 && weaponIdx < 16) {
+						int nibble = std::max(0, std::min(15, (int)(pct / 12.5) - 1));
+						int byteIdx = weaponIdx / 2;
+						int8_t& b = app->combat->monsterWeakness[weakBase + byteIdx];
+						uint8_t ub = (uint8_t)b;
+						if (weaponIdx % 2 == 0) {
+							ub = (ub & 0xF0) | (nibble & 0x0F);
+						} else {
+							ub = (ub & 0x0F) | ((nibble & 0x0F) << 4);
+						}
+						b = (int8_t)ub;
+					}
+				}
+			} else if (weak.isSequence()) {
+				int weakCount = std::min((int)weak.size(), 8);
+				for (int w = 0; w < weakCount; w++) {
+					app->combat->monsterWeakness[weakBase + w] = (int8_t)weak[w].asInt(0);
+				}
+			}
+		}
+
+		// Sounds
+		DataNode snd = combat["sounds"];
+		if (snd) {
+			int sndBase = mi * 8;
+			for (int f = 0; f < 8; f++) {
+				DataNode sv = snd[soundFields[f]];
+				if (sv) {
+					std::string val = sv.asString("none");
+					if (val == "none") {
+						app->game->monsterSounds[sndBase + f] = 255;
+					} else {
+						int soundIdx = Sounds::getIndexByName(val);
+						app->game->monsterSounds[sndBase + f] = (soundIdx >= 0) ? (uint8_t)soundIdx : (uint8_t)std::atoi(val.c_str());
+					}
+				}
+			}
+		}
+
+		// Blood color
+		DataNode bc = combat["blood_color"];
+		if (bc) {
+			std::string hex = bc.asString("");
+			if (hex.size() == 7 && hex[0] == '#') {
+				app->particleSystem->monsterColors[mi * 3 + 0] = (uint8_t)std::stoi(hex.substr(1, 2), nullptr, 16);
+				app->particleSystem->monsterColors[mi * 3 + 1] = (uint8_t)std::stoi(hex.substr(3, 2), nullptr, 16);
+				app->particleSystem->monsterColors[mi * 3 + 2] = (uint8_t)std::stoi(hex.substr(5, 2), nullptr, 16);
+			}
+		}
+
+		// Behaviors
+		DataNode beh = combat["behavior"];
+		if (beh) {
+			MonsterBehaviors& mb = app->combat->monsterBehaviors[mi];
+			mb.isBoss = beh["is_boss"].asBool(false);
+			mb.bossMinTier = beh["boss_min_tier"].asInt(0);
+			mb.fearImmune = beh["fear_immune"].asBool(false);
+			mb.evading = beh["evading"].asBool(false);
+			mb.moveToAttack = beh["move_to_attack"].asBool(false);
+			mb.canResurrect = beh["can_resurrect"].asBool(false);
+			mb.onHitPoison = beh["on_hit_poison"].asBool(false);
+			mb.floats = beh["floats"].asBool(false);
+			mb.isVios = beh["is_vios"].asBool(false);
+			mb.boneGibs = beh["bone_gibs"].asBool(false);
+			mb.smallParm0Scale = beh["small_parm0_scale"].asInt(-1);
+			DataNode poison = beh["on_hit_poison_params"];
+			if (poison) {
+				mb.onHitPoisonId = poison["id"].asInt(13);
+				mb.onHitPoisonDuration = poison["duration"].asInt(5);
+				mb.onHitPoisonPower = poison["power"].asInt(3);
+			}
+			std::string kbWeapon = beh["knockback_weapon"].asString("none");
+			mb.knockbackWeaponId = (kbWeapon == "none") ? -1 : EntityNames::weaponToIndex(kbWeapon);
+			std::string ws = beh["walk_sound"].asString("none");
+			mb.walkSoundResId = (ws == "none") ? -1 : Sounds::getResIDByName(ws);
+			DataNode wmods = beh["weakness_modifiers"];
+			if (wmods) {
+				for (auto wit = wmods.begin(); wit != wmods.end(); ++wit) {
+					std::string wname = wit.key().asString();
+					int weaponIdx = EntityNames::weaponToIndex(wname);
+					if (weaponIdx >= 0 && weaponIdx < MonsterBehaviors::MAX_WEAKNESS_MODS) {
+						std::string val = wit.value().asString("0");
+						if (val == "immune") {
+							mb.weaknessMods[weaponIdx] = -1;
+						} else {
+							mb.weaknessMods[weaponIdx] = (int8_t)std::atoi(val.c_str());
+						}
+					}
+				}
+			}
+			DataNode rds = beh["random_death_sounds"];
+			if (rds) {
+				int count = std::min((int)rds.size(), 4);
+				mb.numRandomDeathSounds = (int8_t)count;
+				for (int d = 0; d < count; d++) {
+					std::string sname = rds[d].asString("none");
+					mb.randomDeathSounds[d] = (sname == "none") ? -1 : (int16_t)Sounds::getResIDByName(sname);
+				}
+			}
+		}
+
+		// Loot
+		DataNode loot = combat["loot"];
+		if (loot) {
+			MonsterBehaviors& mb = app->combat->monsterBehaviors[mi];
+			mb.lootConfig.base = (int16_t)loot["base"].asInt(0);
+			mb.lootConfig.modulus = (int8_t)loot["modulus"].asInt(0);
+			mb.lootConfig.offset = (int8_t)loot["offset"].asInt(0);
+			mb.lootConfig.noCorpseLoot = loot["no_corpse_loot"].asBool(false);
+		}
+
+		loaded++;
+	}
+
+	LOG_INFO("[monster_combat] loaded combat data for %d/%d monster entities\n", loaded, N);
 	return true;
 }

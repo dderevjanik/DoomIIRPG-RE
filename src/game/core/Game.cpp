@@ -193,9 +193,9 @@ void Game::loadMapEntities() {
 					this->deactivate(entity3);
 
 					app->sound->cacheCombatSound(
-					    this->getMonsterSound(lookup->eSubType, lookup->parm, Enums::MSOUND_ATTACK1));
+					    this->getMonsterSound(lookup->monsterIdx, Enums::MSOUND_ATTACK1));
 					app->sound->cacheCombatSound(
-					    this->getMonsterSound(lookup->eSubType, lookup->parm, Enums::MSOUND_ATTACK2));
+					    this->getMonsterSound(lookup->monsterIdx, Enums::MSOUND_ATTACK2));
 				} else if (entity3->def->eType == Enums::ET_ATTACK_INTERACTIVE && entity3->def->eSubType != Enums::INTERACT_PICKUP && entity3->def->eSubType != Enums::INTERACT_CRATE) {
 					this->numDestroyableObj++;
 				}

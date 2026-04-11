@@ -133,9 +133,9 @@ void DoomIIRPGGame::registerLoaders(ResourceManager* rm) {
 		return parseDialogStyles(app, data);
 	}, 120);
 
-	// monsters.yaml (after weapons and sounds)
-	rm->registerParser("monsters", "monsters.yaml",
-		[app](const DataNode& d) { return parseMonsters(app, d); }, 130);
+	// Monster combat data from entities.yaml (after weapons and sounds)
+	rm->registerParser("monster_combat", "entities.yaml",
+		[app](const DataNode& d) { return parseMonsterCombatFromEntities(app, d); }, 130);
 }
 
 void DoomIIRPGGame::registerOpcodes(Applet* app) {

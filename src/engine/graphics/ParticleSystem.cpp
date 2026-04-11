@@ -236,7 +236,7 @@ void ParticleSystem::spawnMonsterBlood(Entity* entity, bool b) {
     }
     int sprite = entity->getSprite();
     uint16_t* palette = app->render->getPalette(app->render->mapSpriteInfo[sprite] & 0xFF, 0, 0);
-    int palColor = palette[this->monsterColors[entity->def->eSubType]];
+    int palColor = palette[this->monsterColors[entity->def->monsterIdx]];
     int color = ((palColor & 0x7E0) << 5) | ((palColor & 0xF800) << 8) | ((palColor & 0x1F) << 3);
 
     short z = 0;
@@ -244,7 +244,7 @@ void ParticleSystem::spawnMonsterBlood(Entity* entity, bool b) {
         z -= 26;
     }
 
-    if (b && app->combat->monsterBehaviors[entity->def->eSubType].boneGibs) {
+    if (b && app->combat->monsterBehaviors[entity->def->monsterIdx].boneGibs) {
         this->spawnParticles(4, color, app->render->mapSprites[app->render->S_X + sprite], app->render->mapSprites[app->render->S_Y + sprite], app->render->mapSprites[app->render->S_Z + sprite] + z);
     }
     else {

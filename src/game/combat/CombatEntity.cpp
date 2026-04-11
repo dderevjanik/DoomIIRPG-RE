@@ -343,9 +343,9 @@ int CombatEntity::calcDamage(CombatEntity* ce, Entity* entity, CombatEntity* ce2
         if (app->player->buffs[8] > 0) {
             dmgStrMin += (app->player->buffs[23] << 8) / 100 * dmgStrMin >> 8;
         }
-        int weaponWeakness = app->combat->getWeaponWeakness(ce->weapon, entity->def->eSubType, entity->def->parm);
+        int weaponWeakness = app->combat->getWeaponWeakness(ce->weapon, entity->def->monsterIdx);
         if (ce->weapon >= 0 && ce->weapon < MonsterBehaviors::MAX_WEAKNESS_MODS) {
-            int8_t mod = app->combat->monsterBehaviors[entity->def->eSubType].weaknessMods[ce->weapon];
+            int8_t mod = app->combat->monsterBehaviors[entity->def->monsterIdx].weaknessMods[ce->weapon];
             if (mod == -1) {
                 weaponWeakness = 0;
             } else if (mod > 0) {

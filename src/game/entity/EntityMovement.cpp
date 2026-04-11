@@ -308,7 +308,7 @@ void Entity::aiReachedGoal_MOVE() {
     EntityMonster* monster = this->monster;
     EntityDef* def = this->def;
     this->info &= ~0x10000000;
-    if (monster->goalType != 4 && monster->goalType != 5 && (app->combat->monsterBehaviors[def->eSubType].moveToAttack || (app->combat->monsterBehaviors[def->eSubType].evading && !(monster->flags & 0x1)))) {
+    if (monster->goalType != 4 && monster->goalType != 5 && (app->combat->monsterBehaviors[def->monsterIdx].moveToAttack || (app->combat->monsterBehaviors[def->monsterIdx].evading && !(monster->flags & 0x1)))) {
         Entity* target = &app->game->entities[1];
         int aiWeaponForTarget = this->aiWeaponForTarget(target);
         if (aiWeaponForTarget != -1) {
@@ -323,7 +323,7 @@ void Entity::aiReachedGoal_MOVE() {
             return;
         }
     }
-    if (app->combat->monsterBehaviors[def->eSubType].evading) {
+    if (app->combat->monsterBehaviors[def->monsterIdx].evading) {
         monster->flags |= 0x1;
     }
     if ((monster->goalFlags & 0x10) != 0x0) {

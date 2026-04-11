@@ -252,7 +252,7 @@ bool Entity::pain(int n, Entity* entity) {
         this->monster->ce.setStat(0, n2);
         if (n2 > 0) {
 
-            int monsterSound = app->game->getMonsterSound(this->def->eSubType, (char)this->def->parm, Enums::MSOUND_PAIN);
+            int monsterSound = app->game->getMonsterSound(this->def->monsterIdx, Enums::MSOUND_PAIN);
             app->sound->playSound(monsterSound, 0, 3, 0);
 
             if (app->combat->punchingMonster == 0 && 0x0 == (this->monster->monsterEffects & 0x2)) {
@@ -309,7 +309,7 @@ void Entity::checkMonsterDeath(bool b, bool b2) {
     }
     if (this->monster != nullptr) {
         if (b2) {
-            int resourceID = app->game->getMonsterSound(this->def->eSubType, this->def->parm, Enums::MSOUND_DEATH);
+            int resourceID = app->game->getMonsterSound(this->def->monsterIdx, Enums::MSOUND_DEATH);
             app->sound->playSound(resourceID, 0, 5, false);
         }
         if (b) {
@@ -342,6 +342,7 @@ void Entity::died(bool b, Entity* entity) {
     this->info &= 0xFFFDFFFF;
     uint8_t  eType = this->def->eType;
     uint8_t  eSubType = this->def->eSubType;
+    int16_t  monsterIdx = this->def->monsterIdx;
     if (eType == Enums::ET_ATTACK_INTERACTIVE) {
         app->localization->resetTextArgs();
         Text* smallBuffer = app->localization->getSmallBuffer();
@@ -396,13 +397,13 @@ void Entity::died(bool b, Entity* entity) {
             app->player->inCombat = false;
             app->game->executeStaticFunc(5);
         }
-        else if (app->combat->monsterBehaviors[eSubType].floats) {
+        else if (app->combat->monsterBehaviors[monsterIdx].floats) {
             app->game->gsprite_allocAnim(241, n, n2, app->render->mapSprites[app->render->S_Z + sprite]);
             n3 |= 0x10000;
             app->game->spawnDropItem(this);
         }
         this->checkMonsterDeath(b, true);
-        if ((this->info & 0x10000) != 0x0 || app->combat->monsterBehaviors[eSubType].floats) {
+        if ((this->info & 0x10000) != 0x0 || app->combat->monsterBehaviors[monsterIdx].floats) {
             this->info = ((this->info & 0xFEFDFFFF) | 0x10000);
             app->game->unlinkEntity(this);
         }
@@ -443,10 +444,10 @@ bool Entity::deathByExplosion(Entity* entity) {
 void Entity::aiCalcSimpleGoal(bool b) {
 
 
-    if (app->combat->monsterBehaviors[this->def->eSubType].canResurrect && this->findRaiseTarget(0x19000, 0, 0) != -1) {
+    if (app->combat->monsterBehaviors[this->def->monsterIdx].canResurrect && this->findRaiseTarget(0x19000, 0, 0) != -1) {
         return;
     }
-    if (app->player->buffs[11] > 0 && !app->combat->monsterBehaviors[this->def->eSubType].fearImmune) {
+    if (app->player->buffs[11] > 0 && !app->combat->monsterBehaviors[this->def->monsterIdx].fearImmune) {
         this->monster->goalType = 4;
         this->monster->goalParam = 1;
         return;
@@ -460,14 +461,14 @@ void Entity::aiCalcSimpleGoal(bool b) {
     if (b2) {
         this->monster->goalType = 3;
         this->monster->goalParam = 1;
-        if (app->combat->monsterBehaviors[this->def->eSubType].evading) {
+        if (app->combat->monsterBehaviors[this->def->monsterIdx].evading) {
             this->monster->flags |= 0x1;
         }
     }
     else {
         this->monster->goalType = 2;
         this->monster->goalParam = 1;
-        if (app->combat->monsterBehaviors[this->def->eSubType].evading) {
+        if (app->combat->monsterBehaviors[this->def->monsterIdx].evading) {
             this->monster->flags &= ~0x1;
         }
     }
@@ -477,7 +478,7 @@ void Entity::aiChooseNewGoal(bool b) {
     uint8_t eSubType = this->def->eSubType;
     this->monster->resetGoal();
     this->aiCalcSimpleGoal(b);
-    if (app->combat->monsterBehaviors[eSubType].evading && this->monster->goalType == 3) {
+    if (app->combat->monsterBehaviors[this->def->monsterIdx].evading && this->monster->goalType == 3) {
         this->monster->goalFlags |= 0x8;
     }
 }

@@ -117,7 +117,7 @@ void Game::activate(Entity* entity, bool b, bool b2, bool b3, bool b4) {
 		monster->flags &= ~Enums::MFLAG_TRIGGERONACTIVATE;
 	}
 	if (app->canvas->state == Canvas::ST_PLAYING && b3) {
-		int MonsterSound = this->getMonsterSound(entity->def->eSubType, (char)entity->def->parm, Enums::MSOUND_ALERT1);
+		int MonsterSound = this->getMonsterSound(entity->def->monsterIdx, Enums::MSOUND_ALERT1);
 		app->sound->playSound(MonsterSound, 0, 3, 0);
 	}
 }
@@ -898,7 +898,7 @@ bool Game::monsterClipExists(int n, int n2) {
 	return (this->baseVisitedTiles[n2] >> n & 0x1) == 0x1;
 }
 
-int Game::getMonsterSound(int eSubType, int param, int soundType) {
+int Game::getMonsterSound(int monsterIdx, int soundType) {
 
 	int monsterSoundResId = 0;
 	int rand = 0;
@@ -907,15 +907,14 @@ int Game::getMonsterSound(int eSubType, int param, int soundType) {
 		rand = app->nextByte() % 3;
 	}
 
-	// Per-tier sound lookup: monsterSounds[(eSubType * tiersPerMonster + param) * 8 + soundType]
-	int tierIdx = eSubType * app->combat->tiersPerMonster + param;
-	monsterSoundResId = this->monsterSounds[tierIdx * Enums::MSOUND_TYPES + soundType + rand];
+	// Sound lookup by monsterIdx
+	monsterSoundResId = this->monsterSounds[monsterIdx * Enums::MSOUND_TYPES + soundType + rand];
 	if (monsterSoundResId != Enums::MSOUND_NONE) {
 		monsterSoundResId += 1000;
 	}
 
 	// Random death sound override (e.g. imp has 2 death sounds, zombie has 3)
-	const MonsterBehaviors& mb = app->combat->monsterBehaviors[eSubType];
+	const MonsterBehaviors& mb = app->combat->monsterBehaviors[monsterIdx];
 	if (soundType == Enums::MSOUND_DEATH && mb.numRandomDeathSounds > 0) {
 		monsterSoundResId = mb.randomDeathSounds[app->nextInt() % mb.numRandomDeathSounds];
 	}

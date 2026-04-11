@@ -293,7 +293,7 @@ public:
 
     const char* GetSaveFile(int i, int i2);
     char* getProfileSaveFileName(const char* name);
-    int getMonsterSound(int eSubType, int param, int soundType);
+    int getMonsterSound(int monsterIdx, int soundType);
 };
 
 #endif

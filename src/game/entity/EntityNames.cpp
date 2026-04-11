@@ -147,16 +147,8 @@ const char* EntityNames::entityTypeToString(int index) {
 int EntityNames::lookupSubtype(int eType, const std::string& name) {
 	switch (eType) {
 		case Enums::ET_MONSTER:
-		case Enums::ET_CORPSE: {
-			// Try monsters.yaml index first (dynamic, data-driven)
-			Applet* app = CAppContainer::getInstance()->app;
-			if (app && app->combat) {
-				auto it = app->combat->monsterNameToIndex.find(name);
-				if (it != app->combat->monsterNameToIndex.end())
-					return it->second;
-			}
+		case Enums::ET_CORPSE:
 			return lookupInMap(monsterSubtypes, name, 0);
-		}
 		case Enums::ET_ITEM:
 		case Enums::ET_MONSTERBLOCK_ITEM:
 			return lookupInMap(itemSubtypes, name, 0);
