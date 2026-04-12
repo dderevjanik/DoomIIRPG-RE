@@ -464,7 +464,7 @@ void MenuSystem::back() {
 void MenuSystem::setMenu(int menu) {
 
 
-	LOG_INFO("[menu] menu %d\n", menu);
+	LOG_INFO("[menu] menu {}\n", menu);
 	this->cheatCombo = 0;
 	this->menuMode = 0;
 	if ((menu == Menus::MENU_MAIN_BEGIN || menu == Menus::MENU_INGAME) || (menu == Menus::MENU_INGAME_KICKING)) {

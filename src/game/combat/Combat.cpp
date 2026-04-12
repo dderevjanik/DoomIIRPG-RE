@@ -59,7 +59,7 @@ bool Combat::startup() {
 
 void Combat::performAttack(Entity* curAttacker, Entity* curTarget, int attackX, int attackY, bool b) {
 
-    LOG_INFO("[combat] performAttack: attacker=%s target=%s at (%d,%d)\n",
+    LOG_INFO("[combat] performAttack: attacker={} target={} at ({},{})\n",
         curAttacker ? "monster" : "player",
         curTarget ? "monster" : "player",
         attackX, attackY);
@@ -802,7 +802,7 @@ int Combat::calcHit(Entity* entity) {
 
 void Combat::explodeOnMonster() {
 
-    LOG_INFO("[combat] explodeOnMonster: weaponId=%d dmg=%d hit=%d\n", this->attackerWeaponId, this->totalDamage, this->hitType);
+    LOG_INFO("[combat] explodeOnMonster: weaponId={} dmg={} hit={}\n", this->attackerWeaponId, this->totalDamage, this->hitType);
     if (this->explodeThread != nullptr) {
         this->explodeThread->run();
         this->explodeThread = nullptr;
@@ -869,7 +869,7 @@ void Combat::explodeOnMonster() {
 
 void Combat::explodeOnPlayer() {
 
-    LOG_INFO("[combat] explodeOnPlayer: dmg=%d armorDmg=%d hit=%d\n", this->totalDamage, this->totalArmorDamage, this->gotHit);
+    LOG_INFO("[combat] explodeOnPlayer: dmg={} armorDmg={} hit={}\n", this->totalDamage, this->totalArmorDamage, this->gotHit);
     if (this->curTarget != nullptr) {
         return;
     }

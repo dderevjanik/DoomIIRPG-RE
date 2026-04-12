@@ -84,7 +84,7 @@ bool Game::startup() {
 
 void Game::loadMapEntities() {
 
-	LOG_INFO("[game] loadMapEntities: mapId=%d\n", app->canvas->loadMapID);
+	LOG_INFO("[game] loadMapEntities: mapId={}\n", app->canvas->loadMapID);
 	app->eventBus->emit(LevelLoadEvent{app->canvas->loadMapID, (app->canvas->loadType == 0)});
 	this->interpolatingMonsters = false;
 	this->monstersTurn = 0;
@@ -263,7 +263,7 @@ void Game::loadMapEntities() {
 			}
 		}
 	}
-	LOG_INFO("[game] loadMapEntities: loaded %d entities, %d monsters\n", this->numEntities, this->numMonsters);
+	LOG_INFO("[game] loadMapEntities: loaded {} entities, {} monsters\n", this->numEntities, this->numMonsters);
 }
 
 void Game::loadTableCamera(int i, int i2) {
@@ -461,7 +461,7 @@ void Game::UpdatePlayerVars() {
 
 void Game::spawnPlayer() {
 
-	LOG_INFO("[game] spawnPlayer: mapId=%d\n", app->canvas->loadMapID);
+	LOG_INFO("[game] spawnPlayer: mapId={}\n", app->canvas->loadMapID);
 	int n;
 	int n2;
 	int mapSpawnDir;
@@ -552,7 +552,7 @@ void Game::givemap(int n, int n2, int n3, int n4) {
 
 void Game::advanceTurn() {
 
-	LOG_INFO("[game] advanceTurn: playerMoves=%d hp=%d/%d pos=(%d,%d)\n",
+	LOG_INFO("[game] advanceTurn: playerMoves={} hp={}/{} pos=({},{})\n",
 		app->player->totalMoves,
 		app->player->ce->getStat(Enums::STAT_HEALTH),
 		app->player->ce->getStat(Enums::STAT_MAX_HEALTH),

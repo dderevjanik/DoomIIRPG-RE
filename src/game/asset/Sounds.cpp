@@ -6,11 +6,10 @@
 std::vector<std::string> Sounds::soundFileNames;
 std::unordered_map<std::string, int> Sounds::soundNameToIndex;
 
-bool Sounds::parse(const DataNode& config) {
+std::expected<void, std::string> Sounds::parse(const DataNode& config) {
 	DataNode sounds = config["sounds"];
 	if (!sounds || !sounds.isMap()) {
-		LOG_ERROR("[sounds] missing or invalid 'sounds' map\n");
-		return false;
+		return std::unexpected("missing or invalid 'sounds' map");
 	}
 
 	Sounds::soundFileNames.clear();
@@ -34,8 +33,8 @@ bool Sounds::parse(const DataNode& config) {
 		}
 	}
 
-	LOG_INFO("[sounds] loaded %d sound definitions\n", (int)Sounds::soundFileNames.size());
-	return true;
+	LOG_INFO("[sounds] loaded {} sound definitions\n", (int)Sounds::soundFileNames.size());
+	return {};
 }
 
 

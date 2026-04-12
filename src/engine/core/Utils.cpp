@@ -42,8 +42,8 @@ bool checkFileMD5Hash(const void* data, uint64_t numBytes, uint64_t checkHashWor
     uint64_t actualHashWord2 = {};
 
     if (getFileMD5Hash(data, numBytes, actualHashWord1, actualHashWord2)) {
-        LOG_INFO("[Utils] actualHashWord1 %I64X\n", actualHashWord1);
-        LOG_INFO("[Utils] actualHashWord2 %I64X\n", actualHashWord2);
+        LOG_INFO("[Utils] actualHashWord1 {}64X\n", actualHashWord1);
+        LOG_INFO("[Utils] actualHashWord2 {}64X\n", actualHashWord2);
         return ((actualHashWord1 == checkHashWord1) && (actualHashWord2 == checkHashWord2));
     }
     else {

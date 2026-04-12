@@ -25,17 +25,17 @@ struct ResourceManager::CacheImpl {
 
 		std::string content = rm->readFileAsString(path);
 		if (content.empty()) {
-			LOG_ERROR("[resource] failed to read %s via VFS\n", path);
+			LOG_ERROR("[resource] failed to read {} via VFS\n", path);
 			return nullptr;
 		}
 
 		try {
 			YAML::Node* node = new YAML::Node(YAML::Load(content));
 			yamlCache[path] = node;
-			LOG_INFO("[resource] loaded %s via VFS\n", path);
+			LOG_INFO("[resource] loaded {} via VFS\n", path);
 			return node;
 		} catch (const YAML::Exception& e) {
-			LOG_ERROR("[resource] YAML parse error in %s: %s\n", path, e.what());
+			LOG_ERROR("[resource] YAML parse error in {}: {}\n", path, e.what());
 			return nullptr;
 		}
 	}
@@ -99,7 +99,7 @@ void ResourceManager::invalidateAll() {
 }
 
 void ResourceManager::registerParser(const char* name, const char* dataPath,
-									 std::function<bool(const DataNode&)> parser,
+									 std::function<ParseResult(const DataNode&)> parser,
 									 int priority, bool optional) {
 	DefinitionEntry e;
 	e.name = name;
@@ -112,7 +112,7 @@ void ResourceManager::registerParser(const char* name, const char* dataPath,
 }
 
 void ResourceManager::registerLoader(const char* name,
-									 std::function<bool(ResourceManager*)> loader,
+									 std::function<ParseResult(ResourceManager*)> loader,
 									 int priority) {
 	DefinitionEntry e;
 	e.name = name;
@@ -123,7 +123,7 @@ void ResourceManager::registerLoader(const char* name,
 	entriesSorted = false;
 }
 
-bool ResourceManager::loadAllDefinitions() {
+ResourceManager::ParseResult ResourceManager::loadAllDefinitions() {
 	if (!entriesSorted) {
 		std::ranges::sort(entries, [](const DefinitionEntry& a, const DefinitionEntry& b) {
 			return a.priority < b.priority;
@@ -131,39 +131,38 @@ bool ResourceManager::loadAllDefinitions() {
 		entriesSorted = true;
 	}
 
-	LOG_INFO("[resource] loading %d registered definitions\n", (int)entries.size());
+	LOG_INFO("[resource] loading {} registered definitions\n", (int)entries.size());
 
 	for (auto& entry : entries) {
-		LOG_INFO("[resource] running: %s (priority %d)\n", entry.name.c_str(), entry.priority);
+		LOG_INFO("[resource] running: {} (priority {})\n", entry.name.c_str(), entry.priority);
 
-		bool ok;
+		ParseResult result;
 		if (!entry.dataPath.empty()) {
 			// Parser: ResourceManager loads the data, then calls the parser
 			DataNode data = loadData(entry.dataPath.c_str());
 			if (!data) {
 				if (entry.optional) {
-					LOG_WARN("[resource] %s: %s not found (optional, skipping)\n",
+					LOG_WARN("[resource] {}: {} not found (optional, skipping)\n",
 						   entry.name.c_str(), entry.dataPath.c_str());
 					continue;
 				}
-				LOG_ERROR("[resource] %s: failed to load %s\n",
-					   entry.name.c_str(), entry.dataPath.c_str());
-				return false;
+				return std::unexpected(
+					std::format("{}: failed to load {}", entry.name, entry.dataPath));
 			}
-			ok = entry.parser(data);
+			result = entry.parser(data);
 		} else {
 			// Raw loader: callback handles everything
-			ok = entry.loader(this);
+			result = entry.loader(this);
 		}
 
-		if (!ok) {
-			LOG_ERROR("[resource] failed: %s\n", entry.name.c_str());
-			return false;
+		if (!result) {
+			return std::unexpected(
+				std::format("{}: {}", entry.name, result.error()));
 		}
 	}
 
 	LOG_INFO("[resource] all definitions loaded successfully\n");
-	return true;
+	return {};
 }
 
 bool ResourceManager::fileExists(const char* path) {

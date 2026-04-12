@@ -38,7 +38,7 @@ int GameScript::parseAction(const std::string& name) {
 bool GameScript::loadFromFile(const char* path) {
 	std::ifstream file(path);
 	if (!file.is_open()) {
-		LOG_ERROR("[script] Error: cannot open '%s'\n", path);
+		LOG_ERROR("[script] Error: cannot open '{}'\n", path);
 		return false;
 	}
 
@@ -64,19 +64,19 @@ bool GameScript::loadFromFile(const char* path) {
 		if (sscanf(line.c_str(), "tick %d: %63s", &tick, actionBuf) == 2) {
 			int avk = parseAction(actionBuf);
 			if (avk == AVK_UNDEFINED) {
-				LOG_WARN("[script] Warning: unknown action '%s' at line %d\n", actionBuf, lineNum);
+				LOG_WARN("[script] Warning: unknown action '{}' at line {}\n", actionBuf, lineNum);
 				continue;
 			}
 			commands.push_back({tick, avk});
 		} else {
-			LOG_WARN("[script] Warning: cannot parse line %d: %s\n", lineNum, line.c_str());
+			LOG_WARN("[script] Warning: cannot parse line {}: {}\n", lineNum, line.c_str());
 		}
 	}
 
 	// Sort by tick (in case script is unordered)
 	std::ranges::sort(commands, [](const ScriptCommand& a, const ScriptCommand& b) { return a.tick < b.tick; });
 
-	LOG_INFO("[script] Loaded %d commands from '%s'\n", (int)commands.size(), path);
+	LOG_INFO("[script] Loaded {} commands from '{}'\n", (int)commands.size(), path);
 	return true;
 }
 

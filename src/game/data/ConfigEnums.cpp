@@ -28,11 +28,10 @@ static void loadSection(const DataNode& config, const char* key,
 	}
 }
 
-bool ConfigEnums::parse(const DataNode& root) {
+std::expected<void, std::string> ConfigEnums::parse(const DataNode& root) {
 	DataNode config = root["config_enums"];
 	if (!config || !config.isMap()) {
-		LOG_ERROR("[config_enums] no config_enums section\n");
-		return false;
+		return std::unexpected("no config_enums section in game.yaml");
 	}
 
 	loadSection(config, "difficulty", ConfigEnums::difficulty, ConfigEnums::difficultyByValue);
@@ -41,7 +40,7 @@ bool ConfigEnums::parse(const DataNode& root) {
 	loadSection(config, "control_layout", ConfigEnums::controlLayout, ConfigEnums::controlLayoutByValue);
 
 	LOG_INFO("[config_enums] loaded\n");
-	return true;
+	return {};
 }
 
 static std::string lookupByValue(const std::unordered_map<int, std::string>& map,

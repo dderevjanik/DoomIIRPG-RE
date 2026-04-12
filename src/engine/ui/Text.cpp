@@ -110,22 +110,22 @@ bool Localization::loadFromYAML(const char* path) {
 				this->groupYamlData[groupId] = node;
 				loaded++;
 			} else {
-				LOG_WARN("Localization: warning: could not load %s (group %d)\n", filePath.c_str(), groupId);
+				LOG_WARN("Localization: warning: could not load {} (group {})\n", filePath.c_str(), groupId);
 				delete node;
 				this->groupYamlData[groupId] = nullptr;
 			}
 		}
-		LOG_INFO("Localization: loaded %d group files from game.yaml strings\n", loaded);
+		LOG_INFO("Localization: loaded {} group files from game.yaml strings\n", loaded);
 	} else {
 		// Legacy: load single strings.yaml
 		DataNode* root = new DataNode(DataNode::loadFile(path));
 		if (!*root) {
-			LOG_ERROR("Localization: failed to load %s\n", path);
+			LOG_ERROR("Localization: failed to load {}\n", path);
 			delete root;
 			return false;
 		}
 		this->yamlData = root;
-		LOG_INFO("Localization: loaded strings from %s (legacy format)\n", path);
+		LOG_INFO("Localization: loaded strings from {} (legacy format)\n", path);
 	}
 
 	// Load initial groups (0, 1, 3, 14) — same as binary startup

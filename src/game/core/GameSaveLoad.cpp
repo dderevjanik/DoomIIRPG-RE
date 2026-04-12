@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <format>
 #include <memory>
+#include <print>
 #include <stdexcept>
 #include <sys/stat.h>
 #include "Log.h"
@@ -381,7 +382,7 @@ void Game::saveWorldState(OutputStream* OS, bool b) {
 
 void Game::loadWorldState() {
 
-	LOG_INFO("[game] loadWorldState: mapId=%d activeLoadType=%d\n", app->canvas->loadMapID, this->activeLoadType);
+	LOG_INFO("[game] loadWorldState: mapId={} activeLoadType={}\n", app->canvas->loadMapID, this->activeLoadType);
 	const char* name;
 	InputStream IS;
 
@@ -744,7 +745,7 @@ void Game::saveState(int lastMapID, int loadMapID, int viewX, int viewY, int vie
 	const char* name;
 	OutputStream OS;
 
-	LOG_INFO("[game] saveState: lastMap=%d loadMap=%d saveType=%d\n", lastMapID, loadMapID, saveType);
+	LOG_INFO("[game] saveState: lastMap={} loadMap={} saveType={}\n", lastMapID, loadMapID, saveType);
 	app->canvas->recentBriefSave = ((saveType & 0x20) != 0x0);
 	bool briefSave = app->canvas->recentBriefSave;
 	app->canvas->freeRuntimeData();
@@ -1195,7 +1196,7 @@ char* Game::getProfileSaveFileName(const char* name) {
 		std::snprintf(namePath, len1 + len2 + 2, "%s/%s", saveDir, name);
 		return namePath;
 	} else {
-		puts("getProfileSaveFileName2: ERROR -> filename is NULL! ");
+		std::println(stderr, "getProfileSaveFileName2: ERROR -> filename is NULL!");
 		return nullptr;
 	}
 }

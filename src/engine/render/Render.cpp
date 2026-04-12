@@ -1286,7 +1286,7 @@ bool Render::beginLoadMap(int mapNameID) {
 			if (idx > 0) {
 				skyTableBase = idx;
 			} else {
-				LOG_WARN("[render] Unknown sky_box '%s' for map %d, using fallback\n",
+				LOG_WARN("[render] Unknown sky_box '{}' for map {}, using fallback\n",
 					lit->second.skyBox.c_str(), this->mapNameID);
 				skyTableBase = 16 + ((this->mapNameID - 1) / 5 % 2) * 2;
 			}

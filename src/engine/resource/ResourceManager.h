@@ -1,9 +1,10 @@
 #pragma once
+#include <cstdint>
+#include <expected>
+#include <functional>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <functional>
-#include <cstdint>
 
 class DataNode;
 class VFS;
@@ -38,21 +39,24 @@ public:
 
 	// --- Registered loader/parser pattern ---
 
+	// Parse result: void on success, error message on failure.
+	using ParseResult = std::expected<void, std::string>;
+
 	// Register a parser for a data file. ResourceManager handles loadData()
 	// and calls the parser with the resulting DataNode.
 	// If optional=true, a missing file is not an error (parser is skipped).
 	void registerParser(const char* name, const char* dataPath,
-						std::function<bool(const DataNode&)> parser,
+						std::function<ParseResult(const DataNode&)> parser,
 						int priority = 100, bool optional = false);
 
 	// Register a loader callback for multi-file or custom loading scenarios.
 	// The loader receives ResourceManager* and handles loadData() itself.
 	void registerLoader(const char* name,
-						std::function<bool(ResourceManager*)> loader,
+						std::function<ParseResult(ResourceManager*)> loader,
 						int priority = 100);
 
-	// Run all registered parsers and loaders in priority order. Returns false if any fail.
-	[[nodiscard]] bool loadAllDefinitions();
+	// Run all registered parsers and loaders in priority order.
+	[[nodiscard]] ParseResult loadAllDefinitions();
 
 	// --- Utility ---
 
@@ -70,8 +74,8 @@ private:
 	struct DefinitionEntry {
 		std::string name;
 		std::string dataPath;                              // empty for raw loaders
-		std::function<bool(const DataNode&)> parser;       // used when dataPath is set
-		std::function<bool(ResourceManager*)> loader;      // used when dataPath is empty
+		std::function<ParseResult(const DataNode&)> parser; // used when dataPath is set
+		std::function<ParseResult(ResourceManager*)> loader; // used when dataPath is empty
 		int priority;
 		bool optional;
 	};

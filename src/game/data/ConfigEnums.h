@@ -1,4 +1,5 @@
 #pragma once
+#include <expected>
 #include <string>
 #include <unordered_map>
 
@@ -16,7 +17,7 @@ class ConfigEnums {
 	static std::unordered_map<int, std::string> controlLayoutByValue;
 
 	// Parse config enums from a DataNode (called by ResourceManager)
-	static bool parse(const class DataNode& config);
+	static std::expected<void, std::string> parse(const class DataNode& config);
 
 	static int difficultyFromString(const std::string& name);
 	static std::string difficultyToString(int value);

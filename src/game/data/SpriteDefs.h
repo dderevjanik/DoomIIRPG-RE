@@ -1,4 +1,5 @@
 #pragma once
+#include <expected>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -39,7 +40,7 @@ class SpriteDefs {
 	static std::unordered_map<std::string, int, StringHash, std::equal_to<>> ranges;
 
 	// Parse sprite definitions from a DataNode (called by ResourceManager)
-	[[nodiscard]] static bool parse(const class DataNode& config);
+	[[nodiscard]] static std::expected<void, std::string> parse(const class DataNode& config);
 
 	// Get tile index by name, returns 0 if not found (returns -1 for external sprites)
 	[[nodiscard]] static int getIndex(std::string_view name);

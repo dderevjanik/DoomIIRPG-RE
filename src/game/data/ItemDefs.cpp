@@ -6,7 +6,7 @@
 std::unordered_map<std::string, int, StringHash, std::equal_to<>> ItemDefs::inventoryNameToIndex;
 std::unordered_map<std::string, int, StringHash, std::equal_to<>> ItemDefs::ammoNameToIndex;
 
-bool ItemDefs::parse(const DataNode& config) {
+std::expected<void, std::string> ItemDefs::parse(const DataNode& config) {
 	// Load inventory section
 	DataNode inventory = config["inventory"];
 	ItemDefs::inventoryNameToIndex.clear();
@@ -25,9 +25,9 @@ bool ItemDefs::parse(const DataNode& config) {
 		}
 	}
 
-	LOG_INFO("[items] loaded %d inventory names, %d ammo names\n",
+	LOG_INFO("[items] loaded {} inventory names, {} ammo names\n",
 		(int)ItemDefs::inventoryNameToIndex.size(), (int)ItemDefs::ammoNameToIndex.size());
-	return true;
+	return {};
 }
 
 int ItemDefs::getInventoryIndex(std::string_view name) {

@@ -145,7 +145,7 @@ void Player::readyWeapon() {
 
 void Player::selectWeapon(int i) {
 
-	LOG_INFO("[player] selectWeapon: %d -> %d\n", this->ce->weapon, i);
+	LOG_INFO("[player] selectWeapon: {} -> {}\n", this->ce->weapon, i);
 	if (this->isFamiliar) {
 		return;
 	}
@@ -282,7 +282,7 @@ bool Player::requireItem(int n, int n2, int n3, int n4) {
 
 void Player::addXP(int xp) {
 
-	LOG_INFO("[player] addXP: %d (total=%d, nextLevel=%d)\n", xp, this->currentXP + xp, this->nextLevelXP);
+	LOG_INFO("[player] addXP: {} (total={}, nextLevel={})\n", xp, this->currentXP + xp, this->nextLevelXP);
 	app->localization->resetTextArgs();
 	app->localization->addTextArg(xp);
 	if (xp < 0) {
@@ -303,7 +303,7 @@ void Player::addLevel() {
 	Text* textBuff;
 	int stat;
 
-	LOG_INFO("[player] levelUp: %d -> %d\n", this->level, this->level + 1);
+	LOG_INFO("[player] levelUp: {} -> {}\n", this->level, this->level + 1);
 	this->level++;
 	this->nextLevelXP = this->calcLevelXP(this->level);
 
@@ -807,7 +807,7 @@ void Player::showWeaponHelp(int n, bool b) {
 
 void Player::setCharacterChoice(short i) {
 
-	LOG_INFO("[player] setCharacterChoice: %d\n", i);
+	LOG_INFO("[player] setCharacterChoice: {}\n", i);
 	this->characterChoice = i;
 	app->game->scriptStateVars[14] = i;
 }

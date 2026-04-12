@@ -98,8 +98,9 @@ void DoomIIRPGGame::registerLoaders(ResourceManager* rm) {
 
 	// sprites.yaml — sprite definitions + sprite anims
 	rm->registerParser("sprites", "sprites.yaml",
-		[app](const DataNode& d) {
-			if (!SpriteDefs::parse(d)) return false;
+		[app](const DataNode& d) -> ResourceManager::ParseResult {
+			auto r = SpriteDefs::parse(d);
+			if (!r) return r;
 			app->render->initSpriteDefs();
 			return parseSpriteAnims(app, d);
 		}, 20);
@@ -109,18 +110,18 @@ void DoomIIRPGGame::registerLoaders(ResourceManager* rm) {
 		[](const DataNode& d) { return ItemDefs::parse(d); }, 30, true);
 
 	// Entity definition files — load all files listed in game.yaml entities:, merge, then parse
-	rm->registerLoader("entity_names", [app](ResourceManager* rm) {
+	rm->registerLoader("entity_names", [app](ResourceManager* rm) -> ResourceManager::ParseResult {
 		const auto& files = CAppContainer::getInstance()->gameConfig.entityFiles;
 		DataNode merged;
 		for (const auto& path : files) {
 			DataNode data = rm->loadData(path.c_str());
 			if (!data) {
-				LOG_ERROR("entity_names: failed to load %s\n", path.c_str());
-				return false;
+				return std::unexpected("entity_names: failed to load " + path);
 			}
 			merged = merged ? DataNode::mergeDeep(merged, data) : data;
 		}
-		if (!EntityNames::parseTypes(merged)) return false;
+		auto r = EntityNames::parseTypes(merged);
+		if (!r) return r;
 		return EntityDefManager::parse(app->entityDefManager.get(), merged);
 	}, 40);
 
@@ -145,36 +146,35 @@ void DoomIIRPGGame::registerLoaders(ResourceManager* rm) {
 		[app](const DataNode& d) { return parseProjectiles(app, d); }, 90, true);
 
 	// effects.yaml (optional — parser runs with empty node to init defaults)
-	rm->registerLoader("effects", [app](ResourceManager* rm) {
+	rm->registerLoader("effects", [app](ResourceManager* rm) -> ResourceManager::ParseResult {
 		DataNode data = rm->loadData("effects.yaml");
 		if (!data) data = DataNode();
 		return parseEffects(app, data);
 	}, 100);
 
 	// items.yaml + effects.yaml — item use definitions (multi-file)
-	rm->registerLoader("items", [app](ResourceManager* rm) {
+	rm->registerLoader("items", [app](ResourceManager* rm) -> ResourceManager::ParseResult {
 		DataNode itemsData = rm->loadData("items.yaml");
-		if (!itemsData) return true; // optional
+		if (!itemsData) return {}; // optional
 		DataNode effectsData = rm->loadData("effects.yaml");
 		return parseItems(app, itemsData, effectsData);
 	}, 110);
 
 	// dialogs.yaml (optional — parser runs with empty node to init defaults)
-	rm->registerLoader("dialogs", [app](ResourceManager* rm) {
+	rm->registerLoader("dialogs", [app](ResourceManager* rm) -> ResourceManager::ParseResult {
 		DataNode data = rm->loadData("dialogs.yaml");
 		if (!data) data = DataNode();
 		return parseDialogStyles(app, data);
 	}, 120);
 
 	// Monster combat data from entity files (after weapons and sounds)
-	rm->registerLoader("monster_combat", [app](ResourceManager* rm) {
+	rm->registerLoader("monster_combat", [app](ResourceManager* rm) -> ResourceManager::ParseResult {
 		const auto& files = CAppContainer::getInstance()->gameConfig.entityFiles;
 		DataNode merged;
 		for (const auto& path : files) {
 			DataNode data = rm->loadData(path.c_str());
 			if (!data) {
-				LOG_ERROR("monster_combat: failed to load %s\n", path.c_str());
-				return false;
+				return std::unexpected("monster_combat: failed to load " + path);
 			}
 			merged = merged ? DataNode::mergeDeep(merged, data) : data;
 		}
@@ -189,29 +189,29 @@ void DoomIIRPGGame::registerOpcodes(Applet* app) {
 
 void DoomIIRPGGame::registerEventListeners(Applet* app) {
 	app->eventBus->subscribe<MonsterDeathEvent>([](const MonsterDeathEvent& e) {
-		LOG_INFO("[event] MonsterDeath: xp=%d explosion=%d pos=(%d,%d)\n",
+		LOG_INFO("[event] MonsterDeath: xp={} explosion={} pos=({},{})\n",
 			e.xpAwarded, e.byExplosion, e.mapX, e.mapY);
 	});
 	app->eventBus->subscribe<ItemPickupEvent>([](const ItemPickupEvent& e) {
-		LOG_INFO("[event] ItemPickup: type=%d param=%d dropped=%d\n",
+		LOG_INFO("[event] ItemPickup: type={} param={} dropped={}\n",
 			e.itemType, e.itemParam, e.wasDropped);
 	});
 	app->eventBus->subscribe<WeaponSwitchEvent>([](const WeaponSwitchEvent& e) {
-		LOG_INFO("[event] WeaponSwitch: %d -> %d\n", e.previousWeapon, e.newWeapon);
+		LOG_INFO("[event] WeaponSwitch: {} -> {}\n", e.previousWeapon, e.newWeapon);
 	});
 	app->eventBus->subscribe<LevelLoadEvent>([](const LevelLoadEvent& e) {
-		LOG_INFO("[event] LevelLoad: mapID=%d newGame=%d\n", e.mapID, e.isNewGame);
+		LOG_INFO("[event] LevelLoad: mapID={} newGame={}\n", e.mapID, e.isNewGame);
 	});
 	app->eventBus->subscribe<LevelLoadCompleteEvent>([](const LevelLoadCompleteEvent& e) {
-		LOG_INFO("[event] LevelLoadComplete: mapID=%d entities=%d\n", e.mapID, e.entityCount);
+		LOG_INFO("[event] LevelLoadComplete: mapID={} entities={}\n", e.mapID, e.entityCount);
 	});
 	app->eventBus->subscribe<DoorEvent>([](const DoorEvent& e) {
-		LOG_INFO("[event] Door: opening=%d pos=(%d,%d)\n", e.opening, e.mapX, e.mapY);
+		LOG_INFO("[event] Door: opening={} pos=({},{})\n", e.opening, e.mapX, e.mapY);
 	});
 	app->eventBus->subscribe<PlayerHealEvent>([](const PlayerHealEvent& e) {
-		LOG_INFO("[event] PlayerHeal: +%d (%d -> %d)\n", e.amount, e.healthBefore, e.healthAfter);
+		LOG_INFO("[event] PlayerHeal: +{} ({} -> {})\n", e.amount, e.healthBefore, e.healthAfter);
 	});
 	app->eventBus->subscribe<PlayerDamageEvent>([](const PlayerDamageEvent& e) {
-		LOG_INFO("[event] PlayerDamage: -%d (%d -> %d)\n", e.damage, e.healthBefore, e.healthAfter);
+		LOG_INFO("[event] PlayerDamage: -{} ({} -> {})\n", e.damage, e.healthBefore, e.healthAfter);
 	});
 }

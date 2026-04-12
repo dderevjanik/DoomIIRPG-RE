@@ -1,5 +1,6 @@
-#include <stdexcept>
 #include <algorithm>
+#include <print>
+#include <stdexcept>
 #include "Log.h"
 
 #include "CAppContainer.h"
@@ -1054,7 +1055,7 @@ void Hud::drawNumbers(Graphics* graphics, int x, int y, int space, int num, int 
 		graphics->drawRegion(this->imgNumbers, 0, 20 * (9 - v15), 10, 20, space + posX + 10, y, 20, 0, 0);
 	}
 	else {
-		puts("ERROR: drawnumbers() does not currently support values over 999 ");
+		std::println(stderr, "ERROR: drawnumbers() does not currently support values over 999");
 	}
 }
 
@@ -1259,7 +1260,7 @@ void Hud::handleUserTouch(int pressX, int pressY, bool highlighted) {
 							app->canvas->handlePlayingEvents(0, Enums::ACTION_QUESTLOG);
 							break;
 						default:
-							LOG_ERROR("[hud] ERROR: undefined touch button ID: %d\n", buttonID_1);
+							LOG_ERROR("[hud] ERROR: undefined touch button ID: {}\n", buttonID_1);
 							break;
 					}
 				}

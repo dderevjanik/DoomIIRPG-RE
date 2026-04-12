@@ -51,7 +51,7 @@ bool SDLGL::Initialize() {
 
 		SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
 		if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
-			LOG_ERROR("Could not initialize SDL: %s", SDL_GetError());
+			LOG_ERROR("Could not initialize SDL: {}", SDL_GetError());
 		}
 
 		flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN /* | SDL_WINDOW_RESIZABLE*/;
@@ -71,7 +71,7 @@ bool SDLGL::Initialize() {
 		    SDL_CreateWindow(CAppContainer::getInstance()->gameConfig.windowTitle.c_str(), SDL_WINDOWPOS_UNDEFINED,
 		                     SDL_WINDOWPOS_UNDEFINED, winVidWidth, winVidHeight, flags);
 		if (!this->window) {
-			LOG_ERROR("Could not set %dx%d video mode: %s", winVidWidth, winVidHeight, SDL_GetError());
+			LOG_ERROR("Could not set {}x{} video mode: {}", winVidWidth, winVidHeight, SDL_GetError());
 		}
 
 		this->vidWidth = Applet::IOS_WIDTH;
@@ -115,7 +115,7 @@ void SDLGL::Error(const char* fmt, ...) {
 #endif
 	va_end(ap);
 
-	LOG_ERROR("%s", errMsg);
+	LOG_ERROR("{}", errMsg);
 
 	const SDL_MessageBoxButtonData buttons[] = {
 	    {/* .flags, .buttonid, .text */ 0, 0, "Ok"},

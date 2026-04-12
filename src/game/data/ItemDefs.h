@@ -1,4 +1,5 @@
 #pragma once
+#include <expected>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -13,7 +14,7 @@ class ItemDefs {
 	static std::unordered_map<std::string, int, StringHash, std::equal_to<>> ammoNameToIndex;
 
 	// Parse item definitions from a DataNode (called by ResourceManager)
-	[[nodiscard]] static bool parse(const class DataNode& config);
+	[[nodiscard]] static std::expected<void, std::string> parse(const class DataNode& config);
 
 	// Get inventory item index by name, returns -1 if not found
 	[[nodiscard]] static int getInventoryIndex(std::string_view name);

@@ -1,4 +1,5 @@
 #pragma once
+#include <expected>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -19,9 +20,9 @@ class EntityNames {
 	static std::vector<std::string> weaponNamesByIndex;
 
 	// Parse entity type/subtype names from a DataNode (called by ResourceManager)
-	static bool parseTypes(const class DataNode& config);
+	static std::expected<void, std::string> parseTypes(const class DataNode& config);
 	// Parse weapon names and ammo parms from a DataNode (called by ResourceManager)
-	static bool parseWeapons(const class DataNode& config);
+	static std::expected<void, std::string> parseWeapons(const class DataNode& config);
 
 	// Entity type lookups
 	static int entityTypeFromString(const std::string& name);

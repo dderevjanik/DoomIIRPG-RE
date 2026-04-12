@@ -1,4 +1,5 @@
 #pragma once
+#include <expected>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -12,7 +13,7 @@ class Sounds {
 	static std::unordered_map<std::string, int> soundNameToIndex;
 
 	// Parse sound definitions from a DataNode (called by ResourceManager)
-	static bool parse(const class DataNode& config);
+	static std::expected<void, std::string> parse(const class DataNode& config);
 
 	// Get filename for a sound index, with bounds checking
 	static const char* getFileName(int index);

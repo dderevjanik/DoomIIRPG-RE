@@ -77,7 +77,7 @@ bool Applet::startup() {
 	this->backBuffer->height = CAppContainer::getInstance()->sdlGL->vidHeight;
 	this->backBuffer->pitch = CAppContainer::getInstance()->sdlGL->vidWidth;
 
-	LOG_INFO("[app] w: %d || h: %d\n", backBuffer->width, backBuffer->height);
+	LOG_INFO("[app] w: {} || h: {}\n", backBuffer->width, backBuffer->height);
 
 	this->initLoadImages = false;
 	this->time = 0;
@@ -98,7 +98,7 @@ bool Applet::startup() {
 
 	// Game objects — created by the active game module
 	if (this->gameModule) {
-		LOG_INFO("[app] creating game objects via %s module\n", this->gameModule->getName());
+		LOG_INFO("[app] creating game objects via {} module\n", this->gameModule->getName());
 		this->gameModule->createGameObjects(this);
 	} else {
 		this->Error("No game module set. Call setGameModule() before startup().");
@@ -153,8 +153,8 @@ bool Applet::startup() {
 	this->accelerationIndex = 0;
 	this->field_0x290 = false;
 	this->field_0x291 = '\0';
-	LOG_INFO("[app] Startup took %i ms\n", this->upTimeMs - time);
-	LOG_INFO("[app] Fragment size %i ms\n", 0);
+	LOG_INFO("[app] Startup took {} ms\n", this->upTimeMs - time);
+	LOG_INFO("[app] Fragment size {} ms\n", 0);
 
 	return true;
 }
@@ -386,7 +386,7 @@ void Applet::Error(const char* fmt, ...) {
 }
 
 void Applet::Error(int id) {
-	LOG_ERROR("[app] Error id: %i\n", id);
+	LOG_ERROR("[app] Error id: {}\n", id);
 	this->Error("App Error");
 	this->idError = id;
 }
@@ -399,8 +399,8 @@ void Applet::loadTables() {
 	ResourceManager* rm = CAppContainer::getInstance()->resourceManager;
 	if (rm && this->gameModule) {
 		this->gameModule->registerLoaders(rm);
-		if (!rm->loadAllDefinitions()) {
-			this->Error("ResourceManager: failed to load definitions (check console for details)\n");
+		if (auto result = rm->loadAllDefinitions(); !result) {
+			this->Error("ResourceManager: failed to load definitions: %s", result.error().c_str());
 		}
 	}
 }

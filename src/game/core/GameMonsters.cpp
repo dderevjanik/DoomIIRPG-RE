@@ -698,7 +698,7 @@ bool Game::tileObstructsAttack(int n, int n2) {
 void Game::awardSecret(bool b) {
 
 
-	LOG_INFO("[game] awardSecret: %d/%d on map %d\n", this->mapSecretsFound + 1, this->totalSecrets, app->canvas->loadMapID);
+	LOG_INFO("[game] awardSecret: {}/{} on map {}\n", this->mapSecretsFound + 1, this->totalSecrets, app->canvas->loadMapID);
 	app->hud->addMessage((short)119);
 	this->mapSecretsFound++;
 

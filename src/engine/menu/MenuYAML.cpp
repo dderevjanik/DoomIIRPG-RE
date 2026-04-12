@@ -220,7 +220,7 @@ static int menuNameToId(const std::string& name) {
 bool MenuSystem::loadUIFromYAML(const char* path) {
 	DataNode config = DataNode::loadFile(path);
 	if (!config) {
-		LOG_ERROR("[menu] failed to load %s\n", path);
+		LOG_ERROR("[menu] failed to load {}\n", path);
 		return false;
 	}
 
@@ -490,20 +490,20 @@ bool MenuSystem::loadUIFromYAML(const char* path) {
 			if (auto bit = buttonNameToId.find(name); bit != buttonNameToId.end()) {
 				def.visibleButtons.push_back(bit->second);
 			} else {
-				LOG_WARN("[menu] warning: unknown button name '%s' in menu '%s'\n", name.c_str(), def.name.c_str());
+				LOG_WARN("[menu] warning: unknown button name '{}' in menu '{}'\n", name.c_str(), def.name.c_str());
 			}
 		}
 		for (const auto& name : def.visibleButtonsConditionalNames) {
 			if (auto bit = buttonNameToId.find(name); bit != buttonNameToId.end()) {
 				def.visibleButtonsConditional.push_back(bit->second);
 			} else {
-				LOG_WARN("[menu] warning: unknown conditional button name '%s' in menu '%s'\n", name.c_str(), def.name.c_str());
+				LOG_WARN("[menu] warning: unknown conditional button name '{}' in menu '{}'\n", name.c_str(), def.name.c_str());
 			}
 		}
 	}
 
 	int containerCount = (this->m_menuButtons ? 1 : 0) + (this->m_infoButtons ? 1 : 0) + (this->m_vendingButtons ? 1 : 0);
-	LOG_INFO("[menu] loaded %d screens, resolved %d menu themes, %d button names from %s\n",
+	LOG_INFO("[menu] loaded {} screens, resolved {} menu themes, {} button names from {}\n",
 		containerCount, resolvedCount, (int)buttonNameToId.size(), path);
 	return true;
 }
@@ -616,7 +616,7 @@ static MenuSystem::MenuLayout parseLayout(const DataNode& node) {
 bool MenuSystem::loadMenusFromYAML(const char* path) {
 	DataNode config = DataNode::loadFile(path);
 	if (!config) {
-		LOG_ERROR("[menu] failed to load %s\n", path);
+		LOG_ERROR("[menu] failed to load {}\n", path);
 		return false;
 	}
 
@@ -894,7 +894,7 @@ bool MenuSystem::loadMenusFromYAML(const char* path) {
 	this->menuItems = new uint32_t[itemWords.size() > 0 ? itemWords.size() : 1];
 	std::memcpy(this->menuItems, itemWords.data(), itemWords.size() * sizeof(uint32_t));
 
-	LOG_INFO("[menu] loaded %d menus (%d extended) + %d injected, %d item words from %s\n",
+	LOG_INFO("[menu] loaded {} menus ({} extended) + {} injected, {} item words from {}\n",
 		binaryCount, yamlMenuCount, injectCount, this->menuItemsCount, path);
 	return true;
 }

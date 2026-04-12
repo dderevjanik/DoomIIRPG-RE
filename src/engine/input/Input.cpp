@@ -384,7 +384,7 @@ static void rescanGameControllers() noexcept {
 
                 // Check if joystick supports Rumble
                 if (!SDL_GameControllerHasRumble(gpGameController)) {
-                    LOG_WARN("Warning: Game controller does not have rumble! SDL Error: %s\n", SDL_GetError());
+                    LOG_WARN("Warning: Game controller does not have rumble! SDL Error: {}\n", SDL_GetError());
                 }
                 break;
             }
@@ -398,20 +398,20 @@ static void rescanGameControllers() noexcept {
 
             // Check if joystick supports haptic
             if (!SDL_JoystickIsHaptic(gpJoystick)) {
-                LOG_WARN("Warning: Controller does not support haptics! SDL Error: %s\n", SDL_GetError());
+                LOG_WARN("Warning: Controller does not support haptics! SDL Error: {}\n", SDL_GetError());
             }
             else
             {
                 // Get joystick haptic device
                 gJoyHaptic = SDL_HapticOpenFromJoystick(gpJoystick);
                 if (gJoyHaptic == nullptr) {
-                    LOG_WARN("Warning: Unable to get joystick haptics! SDL Error: %s\n", SDL_GetError());
+                    LOG_WARN("Warning: Unable to get joystick haptics! SDL Error: {}\n", SDL_GetError());
                 }
                 else
                 {
                     // Initialize rumble
                     if (SDL_HapticRumbleInit(gJoyHaptic) < 0) {
-                        LOG_WARN("Warning: Unable to initialize haptic rumble! SDL Error: %s\n", SDL_GetError());
+                        LOG_WARN("Warning: Unable to initialize haptic rumble! SDL Error: {}\n", SDL_GetError());
                     }
                 }
             }

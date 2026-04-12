@@ -77,7 +77,7 @@ void VFS::buildFileIndex() {
 		}
 	}
 	fileIndexBuilt = true;
-	LOG_INFO("VFS: file index built with %zu entries\n", fileIndex.size());
+	LOG_INFO("VFS: file index built with {} entries\n", fileIndex.size());
 }
 
 uint8_t* VFS::readFromDir(const VFSMount& mount, const char* path, int* sizeOut) {
@@ -132,11 +132,11 @@ uint8_t* VFS::readFile(const char* path, int* sizeOut) {
 				}
 			}
 		} else {
-			LOG_WARN("VFS: '%s' not in file index\n", path);
+			LOG_WARN("VFS: '{}' not in file index\n", path);
 		}
 	}
 
-	LOG_WARN("VFS: file not found: %s\n", path);
+	LOG_WARN("VFS: file not found: {}\n", path);
 	return nullptr;
 }
 

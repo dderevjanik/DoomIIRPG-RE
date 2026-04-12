@@ -254,7 +254,7 @@ void gles::CreateFadeTexture(int mediaID) {
 		assert(ct != &activeChain);
 		//__assert_rtn("CreateFadeTexture", "/Users/greghodges/doom2rpg/trunk/Doom2rpg_iphone/xcode/Classes/GLES.cpp", 366, "ct != &activeChain");
 
-		LOG_INFO("Freeing media ID %i, %ix%i\n", (int)((intptr_t)ct - (intptr_t)this->chains) / sizeof(glChain), ct->width, ct->height);
+		LOG_INFO("Freeing media ID {}, {}x{}\n", (int)((intptr_t)ct - (intptr_t)this->chains) / sizeof(glChain), ct->width, ct->height);
 		ct->next->prev = ct->prev;
 		ct->prev->next = ct->next;
 		ct->prev = nullptr;
@@ -280,7 +280,7 @@ void gles::CreateFadeTexture(int mediaID) {
 	ct->prev->next = ct;
 	ct->width = FADE_WIDTH;
 	ct->height = FADE_HEIGHT;
-	LOG_INFO("Allocating media ID %i, %ix%i, activeTexels = %3.1f meg\n", (int)((intptr_t)ct - (intptr_t)this->chains) / sizeof(glChain), ct->width, ct->height, BYTES_TO_MEGABYTES(this->activeTexels));
+	LOG_INFO("Allocating media ID {}, {}x{}, activeTexels = {:3.1f} meg\n", (int)((intptr_t)ct - (intptr_t)this->chains) / sizeof(glChain), ct->width, ct->height, BYTES_TO_MEGABYTES(this->activeTexels));
 
 	glGenTextures(1, &ct->texnum);
 	glBindTexture(GL_TEXTURE_2D, ct->texnum);
@@ -888,7 +888,7 @@ void gles::CreateTextureForMediaID(int n, int mediaID, bool b) {
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 					stbi_image_free(rgba);
-					LOG_INFO("[gles] Loaded PNG texture: %s (%dx%d) for tile %d media %d\n",
+					LOG_INFO("[gles] Loaded PNG texture: {} ({}x{}) for tile {} media {}\n",
 					       pngPath.c_str(), pw, ph, n, mediaID);
 					return;
 				}
@@ -921,7 +921,7 @@ void gles::CreateTextureForMediaID(int n, int mediaID, bool b) {
 		v10 = (v12 >> 4) & 0xF;
 
 		if (mediaID == render->mediaMappings[SpriteDefs::getIndex("anim_water")] && n == SpriteDefs::getIndex("anim_water")) {
-			LOG_INFO("TILENUM_ANIM_WATER %d\n", mediaID);
+			LOG_INFO("TILENUM_ANIM_WATER {}\n", mediaID);
 		}
 	}
 	v13 = 0;
@@ -1135,7 +1135,7 @@ void gles::CreateTextureForMediaID(int n, int mediaID, bool b) {
 		assert(ct != &activeChain);
 		//__assert_rtn("CreateTextureForMediaID","/Users/greghodges/doom2rpg/trunk/Doom2rpg_iphone/xcode/Classes/GLES.cpp", 753,"ct != &activeChain");
 
-		LOG_INFO("Freeing media ID %i, %ix%i\n", (int)((intptr_t)ct - (intptr_t)this->chains) / sizeof(glChain), ct->width, ct->height);
+		LOG_INFO("Freeing media ID {}, {}x{}\n", (int)((intptr_t)ct - (intptr_t)this->chains) / sizeof(glChain), ct->width, ct->height);
 
 		next = ct->next;
 		next->prev = ct->prev;
@@ -1165,7 +1165,7 @@ void gles::CreateTextureForMediaID(int n, int mediaID, bool b) {
 	ct->prev->next = ct;
 	ct->width = width;
 	ct->height = height;
-	LOG_INFO("Allocating media ID %i, %ix%i, activeTexels = %3.1f meg\n", (int)((intptr_t)ct - (intptr_t)this->chains) / sizeof(glChain), width, height, BYTES_TO_MEGABYTES(this->activeTexels));
+	LOG_INFO("Allocating media ID {}, {}x{}, activeTexels = {:3.1f} meg\n", (int)((intptr_t)ct - (intptr_t)this->chains) / sizeof(glChain), width, height, BYTES_TO_MEGABYTES(this->activeTexels));
 
 	glGenTextures(1, &ct->texnum);
 	glBindTexture(GL_TEXTURE_2D, ct->texnum);

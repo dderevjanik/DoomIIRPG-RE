@@ -31,7 +31,7 @@ static void buildIndexVector(const std::unordered_map<std::string, int>& map,
 	}
 }
 
-bool EntityNames::parseTypes(const DataNode&) {
+std::expected<void, std::string> EntityNames::parseTypes(const DataNode&) {
 	// Entity types — hardcoded engine constants
 	entityTypes = {
 		{"world", Enums::ET_WORLD},
@@ -93,12 +93,12 @@ bool EntityNames::parseTypes(const DataNode&) {
 
 	buildIndexVector(entityTypes, entityTypesByIndex);
 
-	LOG_INFO("[entity_names] initialized %d entity types, %d monster subtypes\n",
+	LOG_INFO("[entity_names] initialized {} entity types, {} monster subtypes\n",
 		(int)entityTypes.size(), (int)monsterSubtypes.size());
-	return true;
+	return {};
 }
 
-bool EntityNames::parseWeapons(const DataNode& config) {
+std::expected<void, std::string> EntityNames::parseWeapons(const DataNode& config) {
 	// Build weapon name map from weapons: section (each weapon has name -> index)
 	EntityNames::weaponNames.clear();
 	DataNode weapons = config["weapons"];
@@ -121,9 +121,9 @@ bool EntityNames::parseWeapons(const DataNode& config) {
 
 	buildIndexVector(EntityNames::weaponNames, EntityNames::weaponNamesByIndex);
 
-	LOG_INFO("[entity_names] loaded %d weapon names, %d ammo parms\n",
+	LOG_INFO("[entity_names] loaded {} weapon names, {} ammo parms\n",
 		(int)EntityNames::weaponNames.size(), (int)EntityNames::ammoParms.size());
-	return true;
+	return {};
 }
 
 int EntityNames::lookupInMap(const std::unordered_map<std::string, int>& map,

@@ -97,7 +97,7 @@ void LogoState::update(Canvas* canvas) {
 		if (mg) {
 			mg->playFromMainMenu();
 		} else {
-			LOG_WARN("[logostate] Unknown minigame: %s\n", mgName);
+			LOG_WARN("[logostate] Unknown minigame: {}\n", mgName);
 		}
 		return;
 	}

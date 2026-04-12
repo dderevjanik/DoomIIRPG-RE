@@ -153,7 +153,7 @@ void Player::painEvent(Entity* entity, bool b) {
 
 void Player::pain(int n, Entity* entity, bool b) {
 
-	LOG_INFO("[player] pain: dmg=%d hp=%d/%d\n", n, this->ce->getStat(Enums::STAT_HEALTH), this->ce->getStat(Enums::STAT_MAX_HEALTH));
+	LOG_INFO("[player] pain: dmg={} hp={}/{}\n", n, this->ce->getStat(Enums::STAT_HEALTH), this->ce->getStat(Enums::STAT_MAX_HEALTH));
 	if (this->god) {
 		return;
 	}
@@ -208,7 +208,7 @@ void Player::pain(int n, Entity* entity, bool b) {
 
 void Player::died() {
 
-	LOG_INFO("[player] died: totalDeaths=%d mapId=%d\n", this->totalDeaths + 1, app->canvas->loadMapID);
+	LOG_INFO("[player] died: totalDeaths={} mapId={}\n", this->totalDeaths + 1, app->canvas->loadMapID);
 	if (app->canvas->state == Canvas::ST_DYING) {
 		return;
 	}

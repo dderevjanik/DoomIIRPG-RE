@@ -1,8 +1,9 @@
-#include <stdexcept>
 #include <algorithm>
+#include <print>
+#include <stdexcept>
 #include <string>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 #include "Log.h"
 
 #include "CAppContainer.h"
@@ -1305,7 +1306,7 @@ void MenuSystem::drawNumbers(Graphics* graphics, int x, int y, int space, int nu
 		graphics->drawRegion(this->imgHudNumbers, 0, ((num * 10 - number % 100) + 9) * 20, 10, 20, x, y, 20, 0, 0);
 	}
 	else {
-		puts("ERROR: drawnumbers() does not currently support values over 999 ");
+		std::println(stderr, "ERROR: drawnumbers() does not currently support values over 999");
 	}
 }
 

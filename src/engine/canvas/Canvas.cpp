@@ -982,7 +982,7 @@ static const char* canvasStateName(int state) {
 
 void Canvas::setState(int state) {
 
-	LOG_INFO("[canvas] setState: %s -> %s\n", canvasStateName(this->state), canvasStateName(state));
+	LOG_INFO("[canvas] setState: {} -> {}\n", canvasStateName(this->state), canvasStateName(state));
 	this->stateChanged = true;
 	for (int i = 0; i < 9; ++i) {
 		this->stateVars[i] = 0;
@@ -1515,7 +1515,7 @@ void Canvas::saveState(int saveType, short n, short n2) {
 
 void Canvas::loadMap(int loadMapID, bool b, bool tm_NewGame) {
 
-	LOG_INFO("[canvas] loadMap: id=%d newGame=%d\n", loadMapID, tm_NewGame);
+	LOG_INFO("[canvas] loadMap: id={} newGame={}\n", loadMapID, tm_NewGame);
 	if (loadMapID > 0 && loadMapID < 11) {
 		bool b2 = false;
 		int n = loadMapID - 1;
@@ -2780,7 +2780,7 @@ void Canvas::logoState() {
 		if (mg) {
 			mg->playFromMainMenu();
 		} else {
-			LOG_WARN("[canvas] Unknown minigame: %s\n", mgName);
+			LOG_WARN("[canvas] Unknown minigame: {}\n", mgName);
 		}
 		return;
 	}

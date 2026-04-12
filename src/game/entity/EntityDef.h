@@ -1,5 +1,7 @@
 #pragma once
 #include <cstdint>
+#include <expected>
+#include <string>
 class EntityDef;
 
 // -----------------------
@@ -22,7 +24,7 @@ class EntityDefManager {
 	bool startup();
 
 	// Parse entity definitions from a DataNode (called by ResourceManager)
-	static bool parse(EntityDefManager* mgr, const class DataNode& config);
+	static std::expected<void, std::string> parse(EntityDefManager* mgr, const class DataNode& config);
 	EntityDef* find(int eType, int eSubType);
 	EntityDef* find(int eType, int eSubType, int parm);
 	EntityDef* lookup(int tileIndex);

@@ -31,15 +31,14 @@ bool EntityDefManager::startup() {
 	return (this->numDefs > 0);
 }
 
-bool EntityDefManager::parse(EntityDefManager* mgr, const DataNode& config) {
+std::expected<void, std::string> EntityDefManager::parse(EntityDefManager* mgr, const DataNode& config) {
 	EntityDef*& list = mgr->list;
 	int& numDefs = mgr->numDefs;
 	Applet* app = CAppContainer::getInstance()->app;
 
 	DataNode entities = config["entities"];
 	if (!entities || !entities.isMap() || entities.size() == 0) {
-		app->Error("entities.yaml: missing or empty 'entities' map\n");
-		return false;
+		return std::unexpected("entities.yaml: missing or empty 'entities' map");
 	}
 
 	int count = (int)entities.size();
@@ -225,9 +224,9 @@ bool EntityDefManager::parse(EntityDefManager* mgr, const DataNode& config) {
 	}
 
 	mgr->numMonsterDefs = monsterCount;
-	LOG_INFO("[entitydef] loaded %d entities (%d monsters)\n", numDefs, monsterCount);
+	LOG_INFO("[entitydef] loaded {} entities ({} monsters)\n", numDefs, monsterCount);
 
-	return true;
+	return {};
 }
 
 EntityDef* EntityDefManager::find(int eType, int eSubType) {

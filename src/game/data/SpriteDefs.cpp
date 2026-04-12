@@ -12,15 +12,14 @@ std::unordered_map<std::string, int, StringHash, std::equal_to<>> SpriteDefs::ra
 
 static const std::string EMPTY_STRING;
 
-bool SpriteDefs::parse(const DataNode& config) {
+std::expected<void, std::string> SpriteDefs::parse(const DataNode& config) {
 	// Load sprites section (fall back to "tiles" for backwards compat)
 	DataNode tiles = config["sprites"];
 	if (!tiles || !tiles.isMap()) {
 		tiles = config["tiles"];
 	}
 	if (!tiles || !tiles.isMap()) {
-		LOG_ERROR("[sprites] missing or invalid 'sprites' map\n");
-		return false;
+		return std::unexpected("missing or invalid 'sprites' map");
 	}
 
 	SpriteDefs::tileNameToIndex.clear();
@@ -73,7 +72,7 @@ bool SpriteDefs::parse(const DataNode& config) {
 				// If file is an image, register as PNG override for this tile
 				if (fileIsImage) {
 					SpriteDefs::tileIndexToPng[src.id] = src.file;
-					LOG_INFO("[sprites] PNG override: tile %d (%s) -> %s\n", src.id, name.c_str(), src.file.c_str());
+					LOG_INFO("[sprites] PNG override: tile {} ({}) -> {}\n", src.id, name.c_str(), src.file.c_str());
 				}
 				// Explicit png: field overrides the binary texture with a PNG file
 				DataNode pngNode = entry["png"];
@@ -81,7 +80,7 @@ bool SpriteDefs::parse(const DataNode& config) {
 					std::string pngPath = pngNode.asString("");
 					if (!pngPath.empty()) {
 						SpriteDefs::tileIndexToPng[src.id] = pngPath;
-						LOG_INFO("[sprites] PNG override (png: field): tile %d (%s) -> %s\n", src.id, name.c_str(), pngPath.c_str());
+						LOG_INFO("[sprites] PNG override (png: field): tile {} ({}) -> {}\n", src.id, name.c_str(), pngPath.c_str());
 					}
 				}
 			} else if (frameSizeNode) {
@@ -128,11 +127,11 @@ bool SpriteDefs::parse(const DataNode& config) {
 		if (v.type == SpriteSourceType::Sheet) sheetCount++;
 	}
 	int binCount = (int)SpriteDefs::tileNameToIndex.size() - imageCount - sheetCount;
-	LOG_INFO("[sprites] loaded %d sprite names (%d bin, %d image, %d sheet), %d ranges\n",
+	LOG_INFO("[sprites] loaded {} sprite names ({} bin, {} image, {} sheet), {} ranges\n",
 		(int)SpriteDefs::tileNameToIndex.size(),
 		binCount, imageCount, sheetCount,
 		(int)SpriteDefs::ranges.size());
-	return true;
+	return {};
 }
 
 int SpriteDefs::getIndex(std::string_view name) {

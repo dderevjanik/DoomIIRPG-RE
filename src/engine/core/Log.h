@@ -1,7 +1,8 @@
 #pragma once
-#include <cstdio>
-#include <cstdarg>
+#include <format>
+#include <print>
 #include <source_location>
+#include <string_view>
 
 // Log levels — higher value = more important
 enum LogLevel {
@@ -30,59 +31,56 @@ inline LogLevel& logLevel() {
 inline void logSetLevel(LogLevel level) { logLevel() = level; }
 inline LogLevel logGetLevel() { return logLevel(); }
 
-// Core logging function (with source location for DEBUG/WARN/ERROR)
-inline void logMsg(LogLevel level, std::source_location loc, const char* fmt, ...) {
+// Type-safe logging using std::print (C++23).
+// Accepts std::format syntax: "{}", "{:02d}", etc.
+template <typename... Args>
+inline void logPrint(LogLevel level, std::source_location loc,
+                     std::format_string<Args...> fmt, Args&&... args) {
     if (level < logLevel()) return;
 
     static const char* prefixes[] = { "DEBUG", "INFO", "WARN", "ERROR" };
     if (level <= LOG_LEVEL_ERROR) {
         if (level == LOG_LEVEL_INFO) {
-            std::fprintf(stderr, "[%s] ", prefixes[level]);
+            std::print(stderr, "[{}] ", prefixes[level]);
         } else {
-            // Include file:line for DEBUG, WARN, ERROR
-            std::fprintf(stderr, "[%s %s:%u] ", prefixes[level], loc.file_name(), loc.line());
+            std::print(stderr, "[{} {}:{}] ", prefixes[level], loc.file_name(), loc.line());
         }
     }
 
-    va_list ap;
-    va_start(ap, fmt);
-    std::vfprintf(stderr, fmt, ap);
-    va_end(ap);
+    std::print(stderr, fmt, std::forward<Args>(args)...);
 }
 
-// Overload without source_location for backward compat (used internally)
-inline void logMsg(LogLevel level, const char* fmt, ...) {
+// Overload without source location (for LOG_INFO)
+template <typename... Args>
+inline void logPrint(LogLevel level, std::format_string<Args...> fmt, Args&&... args) {
     if (level < logLevel()) return;
 
     static const char* prefixes[] = { "DEBUG", "INFO", "WARN", "ERROR" };
     if (level <= LOG_LEVEL_ERROR) {
-        std::fprintf(stderr, "[%s] ", prefixes[level]);
+        std::print(stderr, "[{}] ", prefixes[level]);
     }
 
-    va_list ap;
-    va_start(ap, fmt);
-    std::vfprintf(stderr, fmt, ap);
-    va_end(ap);
+    std::print(stderr, fmt, std::forward<Args>(args)...);
 }
 
 // Convenience macros — compile-time elimination when below LOG_MIN_LEVEL
 // std::source_location::current() is captured at the macro call site
 #if LOG_MIN_LEVEL <= LOG_LEVEL_DEBUG
-#define LOG_DEBUG(fmt, ...) logMsg(LOG_LEVEL_DEBUG, std::source_location::current(), fmt, ##__VA_ARGS__)
+#define LOG_DEBUG(fmt, ...) logPrint(LOG_LEVEL_DEBUG, std::source_location::current(), fmt __VA_OPT__(,) __VA_ARGS__)
 #else
 #define LOG_DEBUG(fmt, ...) ((void)0)
 #endif
 
 #if LOG_MIN_LEVEL <= LOG_LEVEL_INFO
-#define LOG_INFO(fmt, ...) logMsg(LOG_LEVEL_INFO, fmt, ##__VA_ARGS__)
+#define LOG_INFO(fmt, ...) logPrint(LOG_LEVEL_INFO, fmt __VA_OPT__(,) __VA_ARGS__)
 #else
 #define LOG_INFO(fmt, ...) ((void)0)
 #endif
 
 #if LOG_MIN_LEVEL <= LOG_LEVEL_WARN
-#define LOG_WARN(fmt, ...) logMsg(LOG_LEVEL_WARN, std::source_location::current(), fmt, ##__VA_ARGS__)
+#define LOG_WARN(fmt, ...) logPrint(LOG_LEVEL_WARN, std::source_location::current(), fmt __VA_OPT__(,) __VA_ARGS__)
 #else
 #define LOG_WARN(fmt, ...) ((void)0)
 #endif
 
-#define LOG_ERROR(fmt, ...) logMsg(LOG_LEVEL_ERROR, std::source_location::current(), fmt, ##__VA_ARGS__)
+#define LOG_ERROR(fmt, ...) logPrint(LOG_LEVEL_ERROR, std::source_location::current(), fmt __VA_OPT__(,) __VA_ARGS__)

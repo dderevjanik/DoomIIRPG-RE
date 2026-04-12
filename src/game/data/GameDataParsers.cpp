@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cstring>
+#include <expected>
 #include <map>
 #include <ranges>
 #include <sstream>
@@ -80,7 +81,7 @@ static int tileFromName(const std::string& name) {
 	if (idx != 0)
 		return idx;
 	try { return std::stoi(name); } catch (...) {
-		LOG_WARN("[app] Warning: unknown tile name '%s'\n", name.c_str());
+		LOG_WARN("[app] Warning: unknown tile name '{}'\n", name.c_str());
 		return 0;
 	}
 }
@@ -114,7 +115,7 @@ static std::vector<int> parseIntList(const std::string& str) {
 
 // --- Parse functions ---
 
-bool parseSpriteAnims(Applet* app, const DataNode& config) {
+std::expected<void, std::string> parseSpriteAnims(Applet* app, const DataNode& config) {
 	DataNode spriteAnims = config["sprite_anims"];
 	if (spriteAnims && spriteAnims.isMap()) {
 		for (auto it = spriteAnims.begin(); it != spriteAnims.end(); ++it) {
@@ -141,16 +142,16 @@ bool parseSpriteAnims(Applet* app, const DataNode& config) {
 			def.posOffset = sa["pos_offset"].asInt(0);
 			gSpriteAnimDefs[tileId] = def;
 		}
-		LOG_INFO("[app] Animations: loaded %d sprite anim overrides\n", (int)gSpriteAnimDefs.size());
+		LOG_INFO("[app] Animations: loaded {} sprite anim overrides\n", (int)gSpriteAnimDefs.size());
 	}
 
-	return true;
+	return {};
 }
 
-bool parseWeapons(Applet* app, const DataNode& config) {
+std::expected<void, std::string> parseWeapons(Applet* app, const DataNode& config) {
 	DataNode weapons = config["weapons"];
 	if (!weapons || !weapons.isMap()) {
-		return false;
+		return std::unexpected("weapons section missing or not a map");
 	}
 
 	// First pass: find max index
@@ -403,21 +404,21 @@ bool parseWeapons(Applet* app, const DataNode& config) {
 		app->combat->familiarAmmoType = app->combat->weapons[famW * 9 + Combat::WEAPON_FIELD_AMMOTYPE];
 	}
 
-	LOG_INFO("[app] Weapons: loaded %d weapon definitions (%d familiars)\n",
+	LOG_INFO("[app] Weapons: loaded {} weapon definitions ({} familiars)\n",
 		(int)weapons.size(), (int)famDefs.size());
-	return true;
+	return {};
 }
 
-bool parseProjectiles(Applet* app, const DataNode& config) {
+std::expected<void, std::string> parseProjectiles(Applet* app, const DataNode& config) {
 	DataNode projectilesNode = config["projectiles"];
 	if (!projectilesNode) {
 		LOG_WARN("[app] Warning: projectiles.yaml empty, using defaults\n");
-		return true;
+		return {};
 	}
 
 	if (!projectilesNode.isMap()) {
 		LOG_WARN("[app] Warning: projectiles section is not a map\n");
-		return true;
+		return {};
 	}
 	int count = (int)projectilesNode.size();
 	app->combat->numProjTypes = count;
@@ -506,11 +507,11 @@ bool parseProjectiles(Applet* app, const DataNode& config) {
 		}
 	}
 
-	LOG_INFO("[app] Projectiles: loaded %d types\n", count);
-	return true;
+	LOG_INFO("[app] Projectiles: loaded {} types\n", count);
+	return {};
 }
 
-bool parseEffects(Applet* app, const DataNode& config) {
+std::expected<void, std::string> parseEffects(Applet* app, const DataNode& config) {
 	// Initialize defaults matching original hardcoded values
 	Player* p = app->player.get();
 	for (int i = 0; i < 15; i++) {
@@ -542,7 +543,7 @@ bool parseEffects(Applet* app, const DataNode& config) {
 	DataNode buffs = config["buffs"];
 	if (!buffs) {
 		LOG_WARN("[app] Warning: effects.yaml has no buffs section, using defaults\n");
-		return true;
+		return {};
 	}
 
 	int count = std::min((int)buffs.size(), 15);
@@ -600,11 +601,11 @@ bool parseEffects(Applet* app, const DataNode& config) {
 		p->buffPerTurnHealByAmount[i] = (perTurn == "heal_by_amount");
 	}
 
-	LOG_INFO("[app] Effects: loaded %d buffs\n", count);
-	return true;
+	LOG_INFO("[app] Effects: loaded {} buffs\n", count);
+	return {};
 }
 
-bool parseDialogStyles(Applet* app, const DataNode& config) {
+std::expected<void, std::string> parseDialogStyles(Applet* app, const DataNode& config) {
 	Canvas* c = app->canvas.get();
 
 	// Initialize with hardcoded defaults
@@ -640,7 +641,7 @@ bool parseDialogStyles(Applet* app, const DataNode& config) {
 	DataNode styles = config["dialog_styles"];
 	if (!styles) {
 		LOG_WARN("[app] Warning: dialogs.yaml has no dialog_styles section\n");
-		return true;
+		return {};
 	}
 
 	for (auto it = styles.begin(); it != styles.end(); ++it) {
@@ -670,10 +671,10 @@ bool parseDialogStyles(Applet* app, const DataNode& config) {
 	}
 
 	LOG_INFO("[app] Dialog styles: loaded\n");
-	return true;
+	return {};
 }
 
-bool parseItems(Applet* app, const DataNode& config, const DataNode& effectsConfig) {
+std::expected<void, std::string> parseItems(Applet* app, const DataNode& config, const DataNode& effectsConfig) {
 	Player* p = app->player.get();
 	if (!p->itemDefs) {
 		p->itemDefs = new std::vector<ItemDef>();
@@ -727,8 +728,7 @@ bool parseItems(Applet* app, const DataNode& config, const DataNode& effectsConf
 
 	DataNode items = config["items"];
 	if (!items) {
-		LOG_WARN("[app] Warning: items.yaml has no items section\n");
-		return false;
+		return std::unexpected("items.yaml has no items section");
 	}
 
 	for (auto it = items.begin(); it != items.end(); ++it) {
@@ -777,11 +777,11 @@ bool parseItems(Applet* app, const DataNode& config, const DataNode& effectsConf
 		p->itemDefs->push_back(def);
 	}
 
-	LOG_INFO("[app] Items: loaded %d item definitions\n", (int)p->itemDefs->size());
-	return true;
+	LOG_INFO("[app] Items: loaded {} item definitions\n", (int)p->itemDefs->size());
+	return {};
 }
 
-bool parseTables(Applet* app, const DataNode& config) {
+std::expected<void, std::string> parseTables(Applet* app, const DataNode& config) {
 	// === CombatMasks ===
 	DataNode masks = config["combat_masks"];
 	if (masks) {
@@ -874,7 +874,7 @@ bool parseTables(Applet* app, const DataNode& config) {
 	}
 
 	LOG_INFO("[app] loadTables: loaded tables\n");
-	return true;
+	return {};
 }
 
 // parseMonsters() removed — combat data now loaded from entities.yaml by parseMonsterCombatFromEntities()
@@ -1129,7 +1129,7 @@ bool parseMonsters(Applet* app, const DataNode& config) {
 		}
 	}
 
-	LOG_INFO("[app] loadMonstersFromYAML: loaded %d monsters\n", (int)monsters.size());
+	LOG_INFO("[app] loadMonstersFromYAML: loaded {} monsters\n", (int)monsters.size());
 	return true;
 }
 #endif
@@ -1138,16 +1138,16 @@ bool parseMonsters(Applet* app, const DataNode& config) {
 // New parser: reads combat data from entities.yaml "combat:" blocks.
 // Replaces parseMonsters() — no more tier system, each entity is self-contained.
 // ---------------------------------------------------------------------------
-bool parseMonsterCombatFromEntities(Applet* app, const DataNode& config) {
+std::expected<void, std::string> parseMonsterCombatFromEntities(Applet* app, const DataNode& config) {
 	DataNode entities = config["entities"];
 	if (!entities || !entities.isMap()) {
-		return false;
+		return std::unexpected("entities section missing or not a map for monster combat data");
 	}
 
 	int N = app->entityDefManager->getNumMonsterDefs();
 	if (N == 0) {
 		LOG_INFO("[monster_combat] no monster entities found\n");
-		return true;
+		return {};
 	}
 
 	// Allocate all arrays indexed by monsterIdx
@@ -1336,6 +1336,6 @@ bool parseMonsterCombatFromEntities(Applet* app, const DataNode& config) {
 		loaded++;
 	}
 
-	LOG_INFO("[monster_combat] loaded combat data for %d/%d monster entities\n", loaded, N);
-	return true;
+	LOG_INFO("[monster_combat] loaded combat data for {}/{} monster entities\n", loaded, N);
+	return {};
 }

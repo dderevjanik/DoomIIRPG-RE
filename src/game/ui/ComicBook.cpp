@@ -1024,7 +1024,7 @@ void ComicBook::handleComicBookEvents(int key, int keyAction) {
     int cY = app->canvas->SCR_CY;
     int i;
 
-    LOG_INFO("[comicbook] handleComicBookEvents %d, %d\n", key, keyAction);
+    LOG_INFO("[comicbook] handleComicBookEvents {}, {}\n", key, keyAction);
 
     CAppContainer::getInstance()->userPressed(cX, cY);
     if (keyAction == Enums::ACTION_LEFT) {
