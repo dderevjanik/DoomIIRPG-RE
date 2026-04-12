@@ -230,9 +230,9 @@ void fmButton::Render(Graphics* graphics) {
 // fmButtonContainer Class
 // ------------------------
 
-void createButtons(fmButtonContainer* container, const ButtonDef* defs, int count) {
-	for (int i = 0; i < count; i++) {
-		fmButton* btn = new fmButton(defs[i].id, defs[i].x, defs[i].y, defs[i].w, defs[i].h, defs[i].soundResID);
+void createButtons(fmButtonContainer* container, std::span<const ButtonDef> defs) {
+	for (const auto& def : defs) {
+		fmButton* btn = new fmButton(def.id, def.x, def.y, def.w, def.h, def.soundResID);
 		container->AddButton(btn);
 	}
 }

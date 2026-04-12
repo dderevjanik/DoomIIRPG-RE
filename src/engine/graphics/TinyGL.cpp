@@ -1,3 +1,4 @@
+#include <span>
 #include <stdexcept>
 #include "Log.h"
 
@@ -228,7 +229,7 @@ void TinyGL::drawModelVerts(TGLVert* array, int n) {
 		return;
 	}
 
-	if (!app->render->_gles->DrawModelVerts(array, n)) {
+	if (!app->render->_gles->DrawModelVerts(std::span(array, n))) {
 		if (this->faceCull != TinyGL::CULL_NONE) {
 			TGLVert* tglVert = &array[0];
 			TGLVert* tglVert2 = &array[1];
@@ -532,7 +533,7 @@ void TinyGL::RasterizeConvexPolygon(int n) {
 		return;
 	}
 
-	if (!app->render->_gles->RasterizeConvexPolygon(n, this->cv)) {
+	if (!app->render->_gles->RasterizeConvexPolygon(std::span(this->cv, n))) {
 		for (int i = 0; i < n; ++i) {
 			TGLVert* tglVert = &this->cv[i];
 			tglVert->x = this->viewportXBias + ((tglVert->x * this->viewportXScale) / tglVert->w);

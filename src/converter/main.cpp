@@ -34,11 +34,11 @@ bool mkdirRecursive(const std::string& path) {
 	return true;
 }
 
-bool writeFile(const std::string& path, const uint8_t* data, int size) {
+bool writeFile(const std::string& path, std::span<const uint8_t> data) {
 	FILE* f = fopen(path.c_str(), "wb");
 	if (!f)
 		return false;
-	fwrite(data, 1, size, f);
+	fwrite(data.data(), 1, data.size(), f);
 	fclose(f);
 	return true;
 }
@@ -68,9 +68,9 @@ uint32_t readUInt(const uint8_t* data, int offset) {
 	return (uint32_t)(data[offset] | (data[offset + 1] << 8) | (data[offset + 2] << 16) | (data[offset + 3] << 24));
 }
 
-std::string escapeString(const uint8_t* raw, int len) {
+std::string escapeString(std::span<const uint8_t> raw) {
 	std::string result;
-	for (int i = 0; i < len; i++) {
+	for (size_t i = 0; i < raw.size(); i++) {
 		uint8_t ch = raw[i];
 		if (ch == '"') {
 			result += "\\\"";

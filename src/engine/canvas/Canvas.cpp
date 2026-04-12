@@ -264,7 +264,7 @@ bool Canvas::startup() {
 		{
 			this->m_sniperScopeButtons = new fmButtonContainer();
 			static const ButtonDef sniperDef = {.id = 6, .x = 122, .y = 20, .w = 236, .h = 236, .soundResID = -1};
-			createButtons(this->m_sniperScopeButtons, &sniperDef, 1);
+			createButtons(this->m_sniperScopeButtons, std::span(&sniperDef, 1));
 		}
 
 		// Setup Control Buttons
@@ -347,7 +347,7 @@ bool Canvas::startup() {
 				{.id = 3, .x = 0, .y = 0, .w = 0, .h = 0, .soundResID = 1027},
 				{.id = 4, .x = 0, .y = 0, .w = 0, .h = 0, .soundResID = 1027},
 			};
-			createButtons(this->m_characterButtons, charDefs, 5);
+			createButtons(this->m_characterButtons, charDefs);
 		}
 
 		// Setup Dialog Buttons
@@ -360,7 +360,7 @@ bool Canvas::startup() {
 				{.id = 3, .x = 0, .y = 0, .w = 0, .h = 0, .soundResID = 1027},
 				{.id = 4, .x = 0, .y = 0, .w = 0, .h = 0, .soundResID = 1027},
 			};
-			createButtons(this->m_dialogButtons, dialogBaseDefs, 5);
+			createButtons(this->m_dialogButtons, dialogBaseDefs);
 			button = new fmButton(5, 390, 20, 90, 90, 1027);
 			button->SetImage(this->imgPageUP_Icon, true);
 			button->SetHighlightImage(this->imgPageUP_Icon, true);
@@ -390,7 +390,7 @@ bool Canvas::startup() {
 				{.id = 19, .x = 0, .y = 250, .w = 100, .h = 70, .soundResID = 1027},
 				{.id = 20, .x = 380, .y = 250, .w = 100, .h = 70, .soundResID = 1027},
 			};
-			createButtons(this->m_softKeyButtons, softKeyDefs, 2);
+			createButtons(this->m_softKeyButtons, softKeyDefs);
 		}
 
 		// Setup Mixing Buttons
@@ -406,7 +406,7 @@ bool Canvas::startup() {
 				{1, 380, 280, 100, 40, 1027}, // Next
 				{2, 420, 0,   60,  40, 1027}, // Skip
 			};
-			createButtons(this->m_storyButtons, storyDefs, 3);
+			createButtons(this->m_storyButtons, storyDefs);
 		}
 
 		// Setup TreadMill Buttons

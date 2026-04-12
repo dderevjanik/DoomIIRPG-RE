@@ -1,4 +1,5 @@
 #pragma once
+#include <span>
 #include "SDLGL.h"
 
 using PFNGLACTIVETEXTUREPROC = void (APIENTRYP)(GLenum texture);
@@ -76,12 +77,12 @@ public:
 	void ResetGLState();
 	void CreateFadeTexture(int mediaID);
 	void CreateAllActiveTextures();
-	bool RasterizeConvexPolygon(int numVerts, TGLVert* verts);
-	bool RasterizeConvexPolygon(int numVerts, GLVert* verts);
+	bool RasterizeConvexPolygon(std::span<TGLVert> verts);
+	bool RasterizeConvexPolygon(std::span<GLVert> verts);
 	void UnloadSkyMap();
 	void ResetTextureChains();
 	bool DrawWorldSpaceSpriteLine(TGLVert* vert1, TGLVert* vert2, TGLVert* vert3, int flags);
-	bool DrawModelVerts(TGLVert* verts, int numVerts);
+	bool DrawModelVerts(std::span<TGLVert> verts);
 	void SetupTexture(int n, int n2, int renderMode, int flags);
 	void CreateTextureForMediaID(int n, int mediaID, bool b);
 	// Get OpenGL texture ID for a media index. If create=false, only returns already-loaded textures.

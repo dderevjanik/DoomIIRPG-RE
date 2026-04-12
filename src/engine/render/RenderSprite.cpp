@@ -1,3 +1,4 @@
+#include <span>
 #include <stdexcept>
 #include "Log.h"
 
@@ -503,7 +504,7 @@ bool Render::renderStreamSpriteGL(TGLVert* array, int n) {
 				quad[quadCnt].s = (int)pos[3];
 				quad[quadCnt].t = (int)pos[4];
 				if (++quadCnt >= 4) {
-					app->render->_gles->DrawModelVerts(quad, 4);
+					app->render->_gles->DrawModelVerts(std::span(quad, 4));
 					quadCnt = 0;
 				}
 			}

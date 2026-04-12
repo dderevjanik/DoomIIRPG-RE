@@ -166,7 +166,7 @@ static bool convertStrings(ZipFile& zip, const std::string& outDir) {
 				while (nul < endPos && chunks[chunkId][nul] != 0)
 					nul++;
 				int len = nul - pos;
-				groupData[grp].strings[lang].push_back(escapeString(chunks[chunkId] + pos, len));
+				groupData[grp].strings[lang].push_back(escapeString({chunks[chunkId] + pos, static_cast<size_t>(len)}));
 				pos = nul + 1;
 			}
 			totalStrings += (int)groupData[grp].strings[lang].size();
@@ -301,7 +301,7 @@ static void copyImageAssets(ZipFile& zip, const std::string& outDir) {
 			if (slash != std::string::npos) {
 				mkdirRecursive(outPath.substr(0, slash));
 			}
-			writeFile(outPath, data, size);
+			writeFile(outPath, {data, static_cast<size_t>(size)});
 			free(data);
 			copied++;
 		}
@@ -329,7 +329,7 @@ static void copyAudioAssets(ZipFile& zip, const std::string& outDir) {
 		int size = 0;
 		uint8_t* data = zip.readZipFileEntry(name, &size);
 		if (data) {
-			writeFile(audioDir + "/" + fileName, data, size);
+			writeFile(audioDir + "/" + fileName, {data, static_cast<size_t>(size)});
 			free(data);
 			copied++;
 		}
@@ -745,7 +745,7 @@ static void copyBinaryAssets(ZipFile& zip, const std::string& outDir) {
 				mkdirRecursive(outPath.substr(0, slash));
 			}
 
-			writeFile(outPath, data, size);
+			writeFile(outPath, {data, static_cast<size_t>(size)});
 			free(data);
 			copied++;
 		}

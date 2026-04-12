@@ -1,3 +1,4 @@
+#include <span>
 #include <stdexcept>
 #include <assert.h>
 #include "Log.h"
@@ -304,7 +305,9 @@ void gles::CreateFadeTexture(int mediaID) {
 void gles::CreateAllActiveTextures() {
 }
 
-bool gles::RasterizeConvexPolygon(int numVerts, TGLVert* verts) {
+bool gles::RasterizeConvexPolygon(std::span<TGLVert> vertsSpan) {
+	int numVerts = static_cast<int>(vertsSpan.size());
+	TGLVert* verts = vertsSpan.data();
 	if (CAppContainer::getInstance()->headless) { return false; }
 
 	Vertex* immediate;
@@ -392,7 +395,9 @@ bool gles::RasterizeConvexPolygon(int numVerts, TGLVert* verts) {
 	return false;
 }
 
-bool gles::RasterizeConvexPolygon(int numVerts, GLVert* verts) {
+bool gles::RasterizeConvexPolygon(std::span<GLVert> vertsSpan) {
+	int numVerts = static_cast<int>(vertsSpan.size());
+	GLVert* verts = vertsSpan.data();
 	Vertex* immediate;
 	GLfloat projectionMatrix[MAX_GLVERTS];
 
@@ -564,12 +569,14 @@ bool gles::DrawWorldSpaceSpriteLine(TGLVert* vert1, TGLVert* vert2, TGLVert* ver
 			verts[i].t = (verts[i].t * 176) / this->tinyGL->tHeight;
 		}
 
-		return this->DrawModelVerts(verts, 4);
+		return this->DrawModelVerts(std::span(verts, 4));
 	}
 	return false;
 }
 
-bool gles::DrawModelVerts(TGLVert* verts, int numVerts) {
+bool gles::DrawModelVerts(std::span<TGLVert> vertsSpan) {
+	int numVerts = static_cast<int>(vertsSpan.size());
+	TGLVert* verts = vertsSpan.data();
 	Vertex* immediate;
 
 	if (this->isInit) {
@@ -1224,7 +1231,7 @@ bool gles::DrawSkyMap() {
 		this->fogMode = 0;
 		glDisable(GL_FOG);
 		this->render->isSkyMap = true;
-		this->RasterizeConvexPolygon(4, v5);
+		this->RasterizeConvexPolygon(std::span(v5, 4));
 		this->render->isSkyMap = false;
 		this->fogMode = fogMode;
 		if (this->fogMode) {

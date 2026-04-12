@@ -300,7 +300,7 @@ bool convertD1Levels(ZipFile& zip, const GameDef& game, const std::string& outpu
 
 		// Write map.bin
 		writeFile(levelPath + "/map.bin",
-		          result.binData.data(), (int)result.binData.size());
+		          std::span(result.binData));
 
 		// Write level.yaml
 		std::string yaml = generateLevelYaml(result, lvl);

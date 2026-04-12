@@ -1,4 +1,5 @@
 #pragma once
+#include <span>
 class Image;
 class Graphics;
 
@@ -114,7 +115,7 @@ public:
 };
 
 // Create buttons from a ButtonDef array and add them to a container
-void createButtons(fmButtonContainer* container, const ButtonDef* defs, int count);
+void createButtons(fmButtonContainer* container, std::span<const ButtonDef> defs);
 
 // ---------------------
 // fmScrollButton Class

@@ -1,4 +1,5 @@
 #pragma once
+#include <span>
 #include "JavaStream.h"
 
 class InputStream;
@@ -46,12 +47,12 @@ public:
 	~Resource();
 
 	bool startup();
-    void readByteArray(InputStream* IS, uint8_t* dest, int off, int size);
-    void readUByteArray(InputStream* IS, short* dest, int off, int size);
-    void readCoordArray(InputStream* IS, short* dest, int off, int size);
-    void readShortArray(InputStream* IS, short* dest, int off, int size);
-    void readUShortArray(InputStream* IS, int* dest, int off, int size);
-    void readIntArray(InputStream* IS, int* dest, int off, int size);
+    void readByteArray(InputStream* IS, std::span<uint8_t> dest);
+    void readUByteArray(InputStream* IS, std::span<short> dest);
+    void readCoordArray(InputStream* IS, std::span<short> dest);
+    void readShortArray(InputStream* IS, std::span<short> dest);
+    void readUShortArray(InputStream* IS, std::span<int> dest);
+    void readIntArray(InputStream* IS, std::span<int> dest);
     void readMarker(InputStream* IS, int i);
     void readMarker(InputStream* IS);
     void writeMarker(OutputStream* OS, int i);

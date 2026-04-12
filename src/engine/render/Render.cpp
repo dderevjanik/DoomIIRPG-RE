@@ -1,3 +1,4 @@
+#include <span>
 #include <stdexcept>
 #include "Log.h"
 
@@ -565,7 +566,7 @@ void Render::FinalizeMedia() {
 				app->resource->bufSkip(&IS, n12 - n11, true);
 			}
 			// printf("n14 %d\n", n14);
-			app->resource->readByteArray(&IS, this->mediaTexels[n9], 0, n14);
+			app->resource->readByteArray(&IS, std::span(this->mediaTexels[n9], n14));
 
 			// [GEC]: Verifica los datos del sprite de agua animada
 			{
@@ -665,11 +666,11 @@ bool Render::beginLoadMap(int mapNameID) {
 
 	app->canvas->updateLoadingBar(false);
 	IS.loadResource(Resources::RES_NEWMAPPINGS_BIN_GZ);
-	app->resource->readShortArray(&IS, this->mediaMappings, 0, Render::MEDIA_MAX_MAPPINGS);
-	app->resource->readByteArray(&IS, (uint8_t*)this->mediaDimensions, 0, Render::MEDIA_MAX_IMAGES);
-	app->resource->readShortArray(&IS, this->mediaBounds, 0, (Render::MEDIA_MAX_IMAGES * 4));
-	app->resource->readIntArray(&IS, this->mediaPalColors, 0, Render::MEDIA_MAX_IMAGES);
-	app->resource->readIntArray(&IS, this->mediaTexelSizes, 0, Render::MEDIA_MAX_IMAGES);
+	app->resource->readShortArray(&IS, std::span(this->mediaMappings, Render::MEDIA_MAX_MAPPINGS));
+	app->resource->readByteArray(&IS, std::span((uint8_t*)this->mediaDimensions, Render::MEDIA_MAX_IMAGES));
+	app->resource->readShortArray(&IS, std::span(this->mediaBounds, (Render::MEDIA_MAX_IMAGES * 4)));
+	app->resource->readIntArray(&IS, std::span(this->mediaPalColors, Render::MEDIA_MAX_IMAGES));
+	app->resource->readIntArray(&IS, std::span(this->mediaTexelSizes, Render::MEDIA_MAX_IMAGES));
 	IS.close();
 
 	this->mediaMappings[TILE_SKY_BOX] =
@@ -859,30 +860,30 @@ bool Render::beginLoadMap(int mapNameID) {
 	app->resource->readMarker(&IS, 0xDEADBEEF);
 	app->resource->read(&IS, mediaCount * 2 + 2);
 	app->resource->readMarker(&IS, 0xDEADBEEF);
-	app->resource->readShortArray(&IS, this->normals, 0, this->numNormals * 3);
+	app->resource->readShortArray(&IS, std::span(this->normals, this->numNormals * 3));
 	app->resource->readMarker(&IS);
-	app->resource->readShortArray(&IS, this->nodeOffsets, 0, this->numNodes);
+	app->resource->readShortArray(&IS, std::span(this->nodeOffsets, this->numNodes));
 	app->resource->readMarker(&IS);
-	app->resource->readByteArray(&IS, this->nodeNormalIdxs, 0, this->numNodes);
+	app->resource->readByteArray(&IS, std::span(this->nodeNormalIdxs, this->numNodes));
 	app->resource->readMarker(&IS);
-	app->resource->readShortArray(&IS, this->nodeChildOffset1, 0, this->numNodes);
-	app->resource->readShortArray(&IS, this->nodeChildOffset2, 0, this->numNodes);
+	app->resource->readShortArray(&IS, std::span(this->nodeChildOffset1, this->numNodes));
+	app->resource->readShortArray(&IS, std::span(this->nodeChildOffset2, this->numNodes));
 	app->resource->readMarker(&IS);
-	app->resource->readByteArray(&IS, this->nodeBounds, 0, this->numNodes * 4);
+	app->resource->readByteArray(&IS, std::span(this->nodeBounds, this->numNodes * 4));
 	app->resource->readMarker(&IS);
 	app->canvas->updateLoadingBar(false);
-	app->resource->readByteArray(&IS, this->nodePolys, 0, dataSizePolys);
+	app->resource->readByteArray(&IS, std::span(this->nodePolys, dataSizePolys));
 	app->resource->readMarker(&IS);
-	app->resource->readByteArray(&IS, this->lineFlags, 0, (this->numLines + 1) / 2);
-	app->resource->readByteArray(&IS, this->lineXs, 0, this->numLines * 2);
-	app->resource->readByteArray(&IS, this->lineYs, 0, this->numLines * 2);
+	app->resource->readByteArray(&IS, std::span(this->lineFlags, (this->numLines + 1) / 2));
+	app->resource->readByteArray(&IS, std::span(this->lineXs, this->numLines * 2));
+	app->resource->readByteArray(&IS, std::span(this->lineYs, this->numLines * 2));
 	app->resource->readMarker(&IS);
-	app->resource->readByteArray(&IS, this->heightMap, 0, 1024);
+	app->resource->readByteArray(&IS, std::span(this->heightMap, 1024));
 	app->resource->readMarker(&IS);
 	app->canvas->updateLoadingBar(false);
 	// Read sprite data from binary (uses binary counts — may be 0 if sprites are in YAML)
-	app->resource->readCoordArray(&IS, this->mapSprites, this->S_X, binNumMapSprites);
-	app->resource->readCoordArray(&IS, this->mapSprites, this->S_Y, binNumMapSprites);
+	app->resource->readCoordArray(&IS, std::span(this->mapSprites + this->S_X, binNumMapSprites));
+	app->resource->readCoordArray(&IS, std::span(this->mapSprites + this->S_Y, binNumMapSprites));
 	app->canvas->updateLoadingBar(false);
 
 	// Initialize default fields for all map sprites (YAML or binary)
@@ -921,7 +922,7 @@ bool Render::beginLoadMap(int mapNameID) {
 	}
 
 	app->resource->readMarker(&IS);
-	app->resource->readUByteArray(&IS, this->mapSprites, this->S_Z + binNumNormalSprites, binNumZSprites);
+	app->resource->readUByteArray(&IS, std::span(this->mapSprites + this->S_Z + binNumNormalSprites, binNumZSprites));
 	app->resource->readMarker(&IS);
 
 	int binNormIdx = binNumNormalSprites;
@@ -1000,9 +1001,9 @@ bool Render::beginLoadMap(int mapNameID) {
 			this->mapSpriteInfo[idx] = (int)info;
 		}
 	}
-	app->resource->readUShortArray(&IS, this->staticFuncs, 0, 12);
+	app->resource->readUShortArray(&IS, std::span(this->staticFuncs, 12));
 	app->resource->readMarker(&IS);
-	app->resource->readIntArray(&IS, this->tileEvents, 0, app->render->numTileEvents * 2);
+	app->resource->readIntArray(&IS, std::span(this->tileEvents, app->render->numTileEvents * 2));
 
 	for (int i = 0; i < this->numTileEvents; i++) {
 		int index = this->tileEvents[i << 1] & 0x3FF;
@@ -1010,7 +1011,7 @@ bool Render::beginLoadMap(int mapNameID) {
 	}
 
 	app->resource->readMarker(&IS);
-	app->resource->readByteArray(&IS, this->mapByteCode, 0, this->mapByteCodeSize);
+	app->resource->readByteArray(&IS, std::span(this->mapByteCode, this->mapByteCodeSize));
 	app->resource->readMarker(&IS);
 	app->canvas->updateLoadingBar(false);
 	app->game->loadMayaCameras(&IS);

@@ -74,7 +74,7 @@ bool Hud::startup() {
 		{5, 133, 258, imgHealthNormal->width,        imgHealthNormal->height,       1121}, // Health
 		{6, 375, 258, imgKeyNormal->width,           44,                            1121}, // Key
 	};
-	createButtons(this->m_hudButtons, hudButtons, 7);
+	createButtons(this->m_hudButtons, hudButtons);
 	
 	this->m_weaponsButtons = new fmButtonContainer;
 	for (int i = 0; i < CAppContainer::getInstance()->gameConfig.maxWeaponButtons; i++) {

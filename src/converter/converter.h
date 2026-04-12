@@ -1,5 +1,6 @@
 #pragma once
 
+#include <span>
 #include <string>
 #include <cstdint>
 
@@ -30,7 +31,7 @@ class ZipFile;
 // ========================================================================
 bool dirExists(const char* path);
 bool mkdirRecursive(const std::string& path);
-bool writeFile(const std::string& path, const uint8_t* data, int size);
+bool writeFile(const std::string& path, std::span<const uint8_t> data);
 bool writeString(const std::string& path, const std::string& content);
 
 int16_t  readShort(const uint8_t* data, int offset);
@@ -38,7 +39,7 @@ uint16_t readUShort(const uint8_t* data, int offset);
 int32_t  readInt(const uint8_t* data, int offset);
 uint32_t readUInt(const uint8_t* data, int offset);
 
-std::string escapeString(const uint8_t* raw, int len);
+std::string escapeString(std::span<const uint8_t> raw);
 
 // ========================================================================
 // Game conversion entry point

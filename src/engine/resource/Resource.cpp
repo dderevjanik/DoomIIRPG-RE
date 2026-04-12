@@ -1,3 +1,4 @@
+#include <span>
 #include <stdexcept>
 #include "Log.h"
 
@@ -24,11 +25,13 @@ bool Resource::startup() {
 	return false;
 }
 
-void Resource::readByteArray(InputStream* IS, uint8_t* dest, int off, int size) {
-	IS->read(dest, off, size);
+void Resource::readByteArray(InputStream* IS, std::span<uint8_t> dest) {
+	IS->read(dest.data(), 0, static_cast<int>(dest.size()));
 }
 
-void Resource::readUByteArray(InputStream* IS, short* dest, int off, int size) {
+void Resource::readUByteArray(InputStream* IS, std::span<short> dest) {
+    int off = 0;
+    int size = static_cast<int>(dest.size());
     while (size > 0) {
         int n2 = (Resource::IO_SIZE > size) ? size : Resource::IO_SIZE;
         size -= n2;
@@ -39,7 +42,9 @@ void Resource::readUByteArray(InputStream* IS, short* dest, int off, int size) {
     }
 }
 
-void Resource::readCoordArray(InputStream* IS, short* dest, int off, int size) {
+void Resource::readCoordArray(InputStream* IS, std::span<short> dest) {
+    int off = 0;
+    int size = static_cast<int>(dest.size());
     while (size > 0) {
         int n2 = (Resource::IO_SIZE > size) ? size : Resource::IO_SIZE;
         size -= n2;
@@ -50,7 +55,9 @@ void Resource::readCoordArray(InputStream* IS, short* dest, int off, int size) {
     }
 }
 
-void Resource::readShortArray(InputStream* IS, short* dest, int off, int size) {
+void Resource::readShortArray(InputStream* IS, std::span<short> dest) {
+    int off = 0;
+    int size = static_cast<int>(dest.size());
     while (size > 0) {
         int n2 = (Resource::IO_SIZE > size) ? size : Resource::IO_SIZE;
         size -= n2;
@@ -61,7 +68,9 @@ void Resource::readShortArray(InputStream* IS, short* dest, int off, int size) {
     }
 }
 
-void Resource::readUShortArray(InputStream* IS, int* dest, int off, int size) {
+void Resource::readUShortArray(InputStream* IS, std::span<int> dest) {
+    int off = 0;
+    int size = static_cast<int>(dest.size());
     while (size > 0) {
         int n2 = (Resource::IO_SIZE > size) ? size : Resource::IO_SIZE;
         size -= n2;
@@ -72,7 +81,9 @@ void Resource::readUShortArray(InputStream* IS, int* dest, int off, int size) {
     }
 }
 
-void Resource::readIntArray(InputStream* IS, int* dest, int off, int size) {
+void Resource::readIntArray(InputStream* IS, std::span<int> dest) {
+    int off = 0;
+    int size = static_cast<int>(dest.size());
     while (size > 0) {
         int n2 = (Resource::IO_SIZE > size) ? size : Resource::IO_SIZE;
         size -= n2;
