@@ -33,6 +33,8 @@
 #include "SoundNames.h"
 #include "Sounds.h"
 #include "ConfigEnums.h"
+#include "EventBus.h"
+#include "GameEvents.h"
 
 Game::Game() {
 	std::memset(this, 0, sizeof(Game));
@@ -83,6 +85,7 @@ bool Game::startup() {
 void Game::loadMapEntities() {
 
 	LOG_INFO("[game] loadMapEntities: mapId=%d\n", app->canvas->loadMapID);
+	app->eventBus->emit(LevelLoadEvent{app->canvas->loadMapID, (app->canvas->loadType == 0)});
 	this->interpolatingMonsters = false;
 	this->monstersTurn = 0;
 	for (int i = 0; i < 4; ++i) {
@@ -486,6 +489,7 @@ void Game::spawnPlayer() {
 	app->player->relink();
 	this->lastTurnTime = app->time;
 	app->canvas->invalidateRect();
+	app->eventBus->emit(LevelLoadCompleteEvent{app->canvas->loadMapID, this->numEntities});
 }
 
 void Game::eventFlagsForMovement(int n, int n2, int n3, int n4) {

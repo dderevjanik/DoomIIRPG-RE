@@ -19,6 +19,8 @@
 #include "JavaStream.h"
 #include "Enums.h"
 #include "SpriteDefs.h"
+#include "EventBus.h"
+#include "GameEvents.h"
 #include "Sound.h"
 #include "SoundNames.h"
 #include "Sounds.h"
@@ -182,6 +184,7 @@ bool Entity::touchedItem() {
             app->game->foundLoot(this->getSprite(), 1);
         }
     }
+    app->eventBus->emit(ItemPickupEvent{this, (int)this->def->eSubType, (int)this->def->parm, 1, this->isDroppedEntity()});
     app->game->removeEntity(this);
     app->sound->playSound(Sounds::getResIDByName(SoundName::ITEM_PICKUP), 0, 4, false);
     return true;
@@ -251,6 +254,7 @@ bool Entity::pain(int n, Entity* entity) {
             n2 = 1;
         }
         this->combat->setStat(0, n2);
+        app->eventBus->emit(MonsterPainEvent{this, entity, n, n2});
         if (n2 > 0) {
 
             int monsterSound = app->game->getMonsterSound(this->def->monsterIdx, Enums::MSOUND_PAIN);
@@ -302,9 +306,9 @@ bool Entity::pain(int n, Entity* entity) {
     return b;
 }
 
-void Entity::checkMonsterDeath(bool b, bool b2) {
+int Entity::checkMonsterDeath(bool b, bool b2) {
 
-
+    int xpAwarded = 0;
     if (b && (app->player->weapons & 0x2000) != 0x0 && app->combat->attackerWeaponId != 13) {
         app->player->give(2, 6, 1);
     }
@@ -314,11 +318,11 @@ void Entity::checkMonsterDeath(bool b, bool b2) {
             app->sound->playSound(resourceID, 0, 5, false);
         }
         if (b) {
-            int calcXP = this->combat->calcXP();
+            xpAwarded = this->combat->calcXP();
             if (this->isBoss()) {
-                calcXP += 130;
+                xpAwarded += 130;
             }
-            app->player->addXP(calcXP);
+            app->player->addXP(xpAwarded);
         }
         if ((this->monsterFlags & 0x80) == 0x0) {
             app->player->fillMonsterStats();
@@ -328,6 +332,7 @@ void Entity::checkMonsterDeath(bool b, bool b2) {
             }
         }
     }
+    return xpAwarded;
 }
 
 void Entity::died(bool b, Entity* entity) {
@@ -403,7 +408,8 @@ void Entity::died(bool b, Entity* entity) {
             n3 |= 0x10000;
             app->game->spawnDropItem(this);
         }
-        this->checkMonsterDeath(b, true);
+        int xpAwarded = this->checkMonsterDeath(b, true);
+        app->eventBus->emit(MonsterDeathEvent{this, entity, xpAwarded, this->deathByExplosion(entity), (int)n, (int)n2});
         if ((this->info & 0x10000) != 0x0 || app->combat->monsterBehaviors[monsterIdx].floats) {
             this->info = ((this->info & 0xFEFDFFFF) | 0x10000);
             app->game->unlinkEntity(this);

@@ -53,6 +53,10 @@ public:
 	// Register custom script opcodes. Called after OpcodeRegistry is available.
 	virtual void registerOpcodes(Applet* app) {}
 
+	// Register event listeners with the EventBus. Called after registerOpcodes().
+	// Override this to subscribe to game events (monster death, item pickup, etc.).
+	virtual void registerEventListeners(Applet* app) {}
+
 	// Called when a new map is loaded, after engine has loaded map geometry.
 	virtual void onMapLoaded(Applet* app, int mapID) {}
 

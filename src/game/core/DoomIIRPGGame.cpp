@@ -21,6 +21,8 @@
 #include "ConfigEnums.h"
 #include "Render.h"
 #include "Log.h"
+#include "EventBus.h"
+#include "GameEvents.h"
 
 REGISTER_GAME_MODULE("doom2rpg", DoomIIRPGGame);
 
@@ -161,4 +163,33 @@ void DoomIIRPGGame::registerLoaders(ResourceManager* rm) {
 void DoomIIRPGGame::registerOpcodes(Applet* app) {
 	// Base Doom II RPG uses built-in opcodes (0-97) only.
 	// Custom games can override this to register extension opcodes (128-254).
+}
+
+void DoomIIRPGGame::registerEventListeners(Applet* app) {
+	app->eventBus->subscribe<MonsterDeathEvent>([](const MonsterDeathEvent& e) {
+		LOG_INFO("[event] MonsterDeath: xp=%d explosion=%d pos=(%d,%d)\n",
+			e.xpAwarded, e.byExplosion, e.mapX, e.mapY);
+	});
+	app->eventBus->subscribe<ItemPickupEvent>([](const ItemPickupEvent& e) {
+		LOG_INFO("[event] ItemPickup: type=%d param=%d dropped=%d\n",
+			e.itemType, e.itemParam, e.wasDropped);
+	});
+	app->eventBus->subscribe<WeaponSwitchEvent>([](const WeaponSwitchEvent& e) {
+		LOG_INFO("[event] WeaponSwitch: %d -> %d\n", e.previousWeapon, e.newWeapon);
+	});
+	app->eventBus->subscribe<LevelLoadEvent>([](const LevelLoadEvent& e) {
+		LOG_INFO("[event] LevelLoad: mapID=%d newGame=%d\n", e.mapID, e.isNewGame);
+	});
+	app->eventBus->subscribe<LevelLoadCompleteEvent>([](const LevelLoadCompleteEvent& e) {
+		LOG_INFO("[event] LevelLoadComplete: mapID=%d entities=%d\n", e.mapID, e.entityCount);
+	});
+	app->eventBus->subscribe<DoorEvent>([](const DoorEvent& e) {
+		LOG_INFO("[event] Door: opening=%d pos=(%d,%d)\n", e.opening, e.mapX, e.mapY);
+	});
+	app->eventBus->subscribe<PlayerHealEvent>([](const PlayerHealEvent& e) {
+		LOG_INFO("[event] PlayerHeal: +%d (%d -> %d)\n", e.amount, e.healthBefore, e.healthAfter);
+	});
+	app->eventBus->subscribe<PlayerDamageEvent>([](const PlayerDamageEvent& e) {
+		LOG_INFO("[event] PlayerDamage: -%d (%d -> %d)\n", e.damage, e.healthBefore, e.healthAfter);
+	});
 }

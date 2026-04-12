@@ -13,6 +13,7 @@
 #include "Player.h"
 #include "Sound.h"
 #include "Menus.h"
+#include "EventBus.h"
 
 static CAppContainer _mContainer;
 int CAppContainer::m_cheatEntry = 0;
@@ -61,6 +62,7 @@ void CAppContainer::DoLoop(int time) {
 	}
 	this->app->canvas->staleView = true;
 	this->app->canvas->run();
+	this->app->eventBus->flush();
 	if (!this->headless) {
 		this->app->sound->endFrame();
 	}

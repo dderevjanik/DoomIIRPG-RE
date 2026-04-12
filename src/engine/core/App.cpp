@@ -6,6 +6,7 @@
 
 #include "CAppContainer.h"
 #include "App.h"
+#include "EventBus.h"
 #include "Log.h"
 #include "IGameModule.h"
 #include "IDIB.h"
@@ -83,6 +84,7 @@ bool Applet::startup() {
 	this->field_0x7c = 0;
 	this->field_0x80 = 0;
 	// Engine subsystems
+	this->eventBus = std::make_unique<EventBus>();
 	this->canvas = std::make_unique<Canvas>();
 	this->resource = std::make_unique<Resource>();
 	this->localization = std::make_unique<Localization>();
@@ -131,6 +133,7 @@ bool Applet::startup() {
 	// Game module post-startup
 	this->gameModule->loadConfig(this);
 	this->gameModule->registerOpcodes(this);
+	this->gameModule->registerEventListeners(this);
 
 	if (this->canvas->isFlipControls != false) {
 		this->canvas->isFlipControls = false;

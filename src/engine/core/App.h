@@ -26,6 +26,7 @@ class SDLGL;
 class IDIB;
 class Image;
 class IGameModule;
+class EventBus;
 
 class Localization;
 class Resource;
@@ -101,6 +102,7 @@ public:
 	bool closeApplet = false;
 
 	//--- Owned subsystems (engine) ---
+	std::unique_ptr<EventBus> eventBus;
 	std::unique_ptr<Localization> localization;
 	std::unique_ptr<Resource> resource;
 	std::unique_ptr<Render> render;

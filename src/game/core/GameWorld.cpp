@@ -32,6 +32,8 @@
 #include <fstream>
 #include "SoundNames.h"
 #include "Sounds.h"
+#include "EventBus.h"
+#include "GameEvents.h"
 #include "ConfigEnums.h"
 
 void Game::unlinkEntity(Entity* entity) {
@@ -437,6 +439,7 @@ bool Game::performDoorEvent(int n, ScriptThread* scriptThread, Entity* watchLine
 	                                             allocLerpSprite->srcY + allocLerpSprite->dstY >> 1, true))) {
 		this->snapLerpSprites(sprite);
 	}
+	app->eventBus->emit(DoorEvent{watchLine, (n == 0), (int)allocLerpSprite->srcX, (int)allocLerpSprite->srcY});
 	return true;
 }
 

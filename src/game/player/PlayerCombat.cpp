@@ -21,6 +21,8 @@
 #include "SoundNames.h"
 #include "Sounds.h"
 #include "ItemDefs.h"
+#include "EventBus.h"
+#include "GameEvents.h"
 
 bool Player::addHealth(int i) {
 	return this->addHealth(i, true);
@@ -57,6 +59,13 @@ bool Player::addHealth(int i, bool b) {
 		app->localization->resetTextArgs();
 		app->localization->addTextArg(n2 - stat);
 		app->hud->addMessage((short)111);
+	}
+	if (!this->isFamiliar) {
+		if (i > 0) {
+			app->eventBus->emit(PlayerHealEvent{i, stat, n2});
+		} else if (i < 0) {
+			app->eventBus->emit(PlayerDamageEvent{-i, nullptr, stat, n2});
+		}
 	}
 	return true;
 }

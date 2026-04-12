@@ -21,6 +21,8 @@
 #include "SoundNames.h"
 #include "Sounds.h"
 #include "ItemDefs.h"
+#include "EventBus.h"
+#include "GameEvents.h"
 
 Player::Player() = default;
 
@@ -175,6 +177,9 @@ void Player::selectWeapon(int i) {
 	this->activeWeaponDef = app->entityDefManager->find(6, 1, i);
 	app->canvas->updateFacingEntity = true;
 	app->hud->repaintFlags |= 0x4;
+	if (i != this->prevWeapon) {
+		app->eventBus->emit(WeaponSwitchEvent{this->prevWeapon, i});
+	}
 }
 
 void Player::selectPrevWeapon() {

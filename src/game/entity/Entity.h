@@ -54,7 +54,7 @@ public:
 	bool touched();
 	bool touchedItem();
 	bool pain(int n, Entity* entity);
-	void checkMonsterDeath(bool b, bool b2);
+	int checkMonsterDeath(bool b, bool b2);
 	void died(bool b, Entity* entity);
 	bool deathByExplosion(Entity* entity);
 	void aiCalcSimpleGoal(bool b);
