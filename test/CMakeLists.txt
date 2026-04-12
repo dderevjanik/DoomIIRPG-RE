@@ -7,7 +7,7 @@ add_executable(${TEST_MAPDATA_TGT}
 )
 
 set_target_properties(${TEST_MAPDATA_TGT} PROPERTIES
-	CXX_STANDARD 20
+	CXX_STANDARD 23
 	CXX_STANDARD_REQUIRED ON
 	CXX_EXTENSIONS OFF
 )
@@ -28,7 +28,7 @@ add_executable(${TEST_COMBAT_ENTITY_TGT}
 )
 
 set_target_properties(${TEST_COMBAT_ENTITY_TGT} PROPERTIES
-	CXX_STANDARD 20
+	CXX_STANDARD 23
 	CXX_STANDARD_REQUIRED ON
 	CXX_EXTENSIONS OFF
 )
@@ -50,7 +50,7 @@ add_executable(${TEST_PLAYER_STATS_TGT}
 )
 
 set_target_properties(${TEST_PLAYER_STATS_TGT} PROPERTIES
-	CXX_STANDARD 20
+	CXX_STANDARD 23
 	CXX_STANDARD_REQUIRED ON
 	CXX_EXTENSIONS OFF
 )
@@ -67,27 +67,27 @@ add_test(NAME player-stats COMMAND ${TEST_PLAYER_STATS_TGT})
 # --- Game math tests ---
 set(TEST_GAME_MATH_TGT test-game-math)
 add_executable(${TEST_GAME_MATH_TGT} test_game_math.cpp)
-set_target_properties(${TEST_GAME_MATH_TGT} PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
+set_target_properties(${TEST_GAME_MATH_TGT} PROPERTIES CXX_STANDARD 23 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
 target_link_libraries(${TEST_GAME_MATH_TGT} drpg-engine-lib)
 add_test(NAME game-math COMMAND ${TEST_GAME_MATH_TGT})
 
 # --- Script VM stack tests ---
 set(TEST_SCRIPT_STACK_TGT test-script-stack)
 add_executable(${TEST_SCRIPT_STACK_TGT} test_script_stack.cpp)
-set_target_properties(${TEST_SCRIPT_STACK_TGT} PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
+set_target_properties(${TEST_SCRIPT_STACK_TGT} PROPERTIES CXX_STANDARD 23 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
 target_link_libraries(${TEST_SCRIPT_STACK_TGT} drpg-engine-lib)
 add_test(NAME script-stack COMMAND ${TEST_SCRIPT_STACK_TGT})
 
 # --- Player inventory tests ---
 set(TEST_PLAYER_INV_TGT test-player-inventory)
 add_executable(${TEST_PLAYER_INV_TGT} test_player_inventory.cpp)
-set_target_properties(${TEST_PLAYER_INV_TGT} PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
+set_target_properties(${TEST_PLAYER_INV_TGT} PROPERTIES CXX_STANDARD 23 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
 target_link_libraries(${TEST_PLAYER_INV_TGT} drpg-engine-lib)
 add_test(NAME player-inventory COMMAND ${TEST_PLAYER_INV_TGT})
 
 # --- Script VM opcode tests ---
 set(TEST_SCRIPT_VM_TGT test-script-vm)
 add_executable(${TEST_SCRIPT_VM_TGT} test_script_vm.cpp)
-set_target_properties(${TEST_SCRIPT_VM_TGT} PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
+set_target_properties(${TEST_SCRIPT_VM_TGT} PROPERTIES CXX_STANDARD 23 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
 target_link_libraries(${TEST_SCRIPT_VM_TGT} drpg-engine-lib)
 add_test(NAME script-vm COMMAND ${TEST_SCRIPT_VM_TGT})

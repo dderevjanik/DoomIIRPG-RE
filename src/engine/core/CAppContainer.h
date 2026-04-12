@@ -1,6 +1,6 @@
 #pragma once
+#include <flat_map>
 #include <format>
-#include <map>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -33,7 +33,7 @@ struct GameConfig {
 	std::vector<int> noFogMaps;  // Map IDs where fog is disabled (e.g. outdoor maps)
 	std::vector<std::string> searchDirs;  // VFS search subdirectories for asset resolution
 	std::unordered_map<int, std::string> stringFiles;  // group index -> YAML file path (from game.yaml strings:)
-	std::map<int, LevelInfo> levelInfos;  // map_id -> per-level paths
+	std::flat_map<int, LevelInfo> levelInfos;  // map_id -> per-level paths
 	std::vector<std::string> entityFiles = {"entities.yaml"};  // entity definition files (from game.yaml entities:)
 
 	// Inventory/ammo capacity caps
@@ -118,7 +118,7 @@ struct GameConfig {
 	std::vector<IQHint> vendIQHints = { {80, 3}, {50, 2}, {20, 1} };
 
 	// Per-map joke item tables: mapID → list of item IDs (selected by sprite % count)
-	std::map<int, std::vector<int>> jokeItems;
+	std::flat_map<int, std::vector<int>> jokeItems;
 
 	// Automap color configuration
 	struct AutomapDoorColor {

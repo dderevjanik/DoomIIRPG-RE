@@ -1,4 +1,5 @@
 #include <stdexcept>
+#include <cstdlib>
 #include <al.h>
 #include <alc.h>
 #include "Log.h"

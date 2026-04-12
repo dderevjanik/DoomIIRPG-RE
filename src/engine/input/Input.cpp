@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <ranges>
 #include <stdexcept>
+#include <utility>
 #include "Log.h"
 
 #include "CAppContainer.h"
@@ -131,19 +132,19 @@ GamepadInput sdlButtonToInput(const uint8_t button) noexcept {
 //------------------------------------------------------------------------------------------------------------------------------------------
 uint32_t sdlJoyButtonToInput(const uint32_t button) noexcept {
     switch (button) {
-    case 0: return (int)GamepadInput::BTN_A;
-    case 1: return (int)GamepadInput::BTN_B;
-    case 2: return (int)GamepadInput::BTN_X;
-    case 3: return (int)GamepadInput::BTN_Y;
-    case 4: return (int)GamepadInput::BTN_LEFT_SHOULDER;
-    case 5: return (int)GamepadInput::BTN_RIGHT_SHOULDER;
-    case 6: return (int)GamepadInput::BTN_BACK;
-    case 7: return (int)GamepadInput::BTN_START;
-    case 8: return (int)GamepadInput::BTN_LEFT_STICK;
-    case 9: return (int)GamepadInput::BTN_RIGHT_STICK;
-    case 10: return (int)GamepadInput::BTN_GUIDE;
+    case 0: return std::to_underlying(GamepadInput::BTN_A);
+    case 1: return std::to_underlying(GamepadInput::BTN_B);
+    case 2: return std::to_underlying(GamepadInput::BTN_X);
+    case 3: return std::to_underlying(GamepadInput::BTN_Y);
+    case 4: return std::to_underlying(GamepadInput::BTN_LEFT_SHOULDER);
+    case 5: return std::to_underlying(GamepadInput::BTN_RIGHT_SHOULDER);
+    case 6: return std::to_underlying(GamepadInput::BTN_BACK);
+    case 7: return std::to_underlying(GamepadInput::BTN_START);
+    case 8: return std::to_underlying(GamepadInput::BTN_LEFT_STICK);
+    case 9: return std::to_underlying(GamepadInput::BTN_RIGHT_STICK);
+    case 10: return std::to_underlying(GamepadInput::BTN_GUIDE);
     default:
-        return (int)GamepadInput::INVALID;
+        return std::to_underlying(GamepadInput::INVALID);
     }
 }
 
@@ -549,7 +550,7 @@ bool isJoystickAxisButtonJustReleased() noexcept { // [GEC]
 
 
 bool isGamepadAxisInputPressed(GamepadInput inputIn) noexcept { // [GEC]
-    for (int i = (int)GamepadInput::AXIS_LEFT_X; i <= (int)GamepadInput::AXIS_TRIG_RIGHT; i++) {
+    for (int i = std::to_underlying(GamepadInput::AXIS_LEFT_X); i <= std::to_underlying(GamepadInput::AXIS_TRIG_RIGHT); i++) {
         const GamepadInput input = (GamepadInput)i;
         const uint8_t inputIdx = (uint8_t)input;
         if (isGamepadInputPressed(input)) {
@@ -563,7 +564,7 @@ bool isGamepadAxisInputPressed(GamepadInput inputIn) noexcept { // [GEC]
 }
 
 bool isGamepadAxisInputJustPressed(GamepadInput inputIn) noexcept { // [GEC]
-    for (int i = (int)GamepadInput::AXIS_LEFT_X; i <= (int)GamepadInput::AXIS_TRIG_RIGHT; i++) {
+    for (int i = std::to_underlying(GamepadInput::AXIS_LEFT_X); i <= std::to_underlying(GamepadInput::AXIS_TRIG_RIGHT); i++) {
         const GamepadInput input = (GamepadInput)i;
         const uint8_t inputIdx = (uint8_t)input;
         if (isGamepadInputJustPressed(input)) {
@@ -576,7 +577,7 @@ bool isGamepadAxisInputJustPressed(GamepadInput inputIn) noexcept { // [GEC]
 }
 
 bool isGamepadAxisInputJustReleased() noexcept { // [GEC]
-    for (int i = (int)GamepadInput::AXIS_LEFT_X; i <= (int)GamepadInput::AXIS_TRIG_RIGHT; i++) {
+    for (int i = std::to_underlying(GamepadInput::AXIS_LEFT_X); i <= std::to_underlying(GamepadInput::AXIS_TRIG_RIGHT); i++) {
         const GamepadInput input = (GamepadInput)i;
         if (isGamepadInputJustReleased(input)) {
             removeValueFromVector(input, gGamepadInputsJustReleased);
@@ -925,7 +926,7 @@ void Input::handleEvents() noexcept {
                 if (!gpGameController) {
                     if (sdlEvent.jbutton.which == gJoystickId) {
                         const uint32_t button = (uint32_t)sdlJoyButtonToInput(sdlEvent.jbutton.button);
-                        if (button != (int)GamepadInput::INVALID) {
+                        if (button != std::to_underlying(GamepadInput::INVALID)) {
                             if (app->menuSystem->activeSlider == MenuSystem::SliderMode::Binding) {
                                 this->setInputBind((int)button | IS_CONTROLLER_BUTTON);
                                 app->menuSystem->activeSlider = MenuSystem::SliderMode::None;

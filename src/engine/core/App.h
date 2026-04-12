@@ -1,8 +1,8 @@
 #pragma once
 #include <cstring>
-#include <stdint.h>
+#include <flat_map>
 #include <memory>
-#include <map>
+#include <stdint.h>
 
 #include "IDIB.h"
 
@@ -18,7 +18,7 @@ struct SpriteAnimDef {
 	int posOffset = 0;
 };
 
-extern std::map<int, SpriteAnimDef> gSpriteAnimDefs;
+extern std::flat_map<int, SpriteAnimDef> gSpriteAnimDefs;
 
 class SDLGL;
 class IDIB;

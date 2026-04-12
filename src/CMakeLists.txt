@@ -25,7 +25,7 @@ list(FILTER LIB_SOURCE_FILES EXCLUDE REGEX "engine/core/Main\\.cpp$")
 add_library(drpg-engine-lib STATIC ${HEADER_FILES} ${LIB_SOURCE_FILES} ${RESOURCES_FILES})
 
 set_target_properties(drpg-engine-lib PROPERTIES
-    CXX_STANDARD 20
+    CXX_STANDARD 23
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF
 )
@@ -83,7 +83,7 @@ else()
 endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
-    CXX_STANDARD 20
+    CXX_STANDARD 23
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF
 )

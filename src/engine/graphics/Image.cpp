@@ -1,4 +1,5 @@
 #include <stdexcept>
+#include <cstdlib>
 
 #include "CAppContainer.h"
 #include "App.h"

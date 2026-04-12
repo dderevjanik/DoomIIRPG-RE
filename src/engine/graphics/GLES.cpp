@@ -1,4 +1,5 @@
 #include <span>
+#include <cstdlib>
 #include <stdexcept>
 #include <assert.h>
 #include "Log.h"

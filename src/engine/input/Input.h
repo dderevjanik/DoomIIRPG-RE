@@ -1,4 +1,5 @@
 #pragma once
+#include <utility>
 //------------------------------------------------------------------------------------------------------------------------------------------
 // Enum representing an input source on a non-generic game controller recognized by SDL (axis or button)
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -36,7 +37,7 @@ enum class GamepadInput : uint8_t {
 	INVALID
 };
 
-static constexpr uint8_t NUM_GAMEPAD_INPUTS = (uint32_t)GamepadInput::INVALID;
+static constexpr uint8_t NUM_GAMEPAD_INPUTS = std::to_underlying(GamepadInput::INVALID);
 
 // Direction for a joystick hat (d-pad)
 enum class JoyHatDir : uint8_t {

@@ -1,4 +1,5 @@
 #include <stdexcept>
+#include <cstdlib>
 #include <algorithm>
 #include <map>
 
@@ -405,7 +406,7 @@ void Applet::loadTables() {
 }
 
 // Global sprite animation overrides, populated from sprites.yaml sprite_anims section
-std::map<int, SpriteAnimDef> gSpriteAnimDefs;
+std::flat_map<int, SpriteAnimDef> gSpriteAnimDefs;
 
 
 void Applet::loadRuntimeImages() {

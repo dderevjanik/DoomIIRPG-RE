@@ -33,7 +33,7 @@ add_executable(${CONVERTER_TGT_NAME}
 add_dependencies(${CONVERTER_TGT_NAME} converter_resources)
 
 set_target_properties(${CONVERTER_TGT_NAME} PROPERTIES
-	CXX_STANDARD 20
+	CXX_STANDARD 23
 	CXX_STANDARD_REQUIRED ON
 	CXX_EXTENSIONS OFF
 )

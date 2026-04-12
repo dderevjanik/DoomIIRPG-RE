@@ -1,4 +1,5 @@
 #include <stdexcept>
+#include <cstdlib>
 #include <stdio.h>
 #include <stdlib.h>
 #include <md5.h>
