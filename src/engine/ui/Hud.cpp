@@ -428,23 +428,26 @@ void Hud::drawCenterMessage(Graphics* graphics, Text* text, int color) {
 	graphics->drawRect(x - (w / 2), y, w - 1, (16 * numLines) + 3);
 
 	y += 3;
-	int i = 0;
-	Text* textBuff = app->localization->getSmallBuffer();
-	int first;
-	while ((first = text->findFirstOf('|', i)) >= 0) {
-		textBuff->setLength(0);
-		text->substring(textBuff, i, first);
-		graphics->drawString(textBuff, x, y, 17, 0, first - i);
-		y += 16;
-		i = first + 1;
-	}
-
-	textBuff->setLength(0);
-	text->substring(textBuff, i);
-	graphics->drawString(textBuff, x, y, 17, 0, text->length() - i);
-	textBuff->dispose();
+	drawDelimitedLines(graphics, text, '|', x, y, 16, 17);
 }
 
+void Hud::drawDelimitedLines(Graphics* graphics, Text* text, char delimiter,
+                              int x, int y, int lineHeight, int anchorFlags) {
+	Text* textBuff = app->localization->getSmallBuffer();
+	int i = 0;
+	int first;
+	while ((first = text->findFirstOf(delimiter, i)) >= 0) {
+		textBuff->setLength(0);
+		text->substring(textBuff, i, first);
+		graphics->drawString(textBuff, x, y, anchorFlags, 0, first - i);
+		y += lineHeight;
+		i = first + 1;
+	}
+	textBuff->setLength(0);
+	text->substring(textBuff, i);
+	graphics->drawString(textBuff, x, y, anchorFlags, 0, text->length() - i);
+	textBuff->dispose();
+}
 
 void Hud::drawCinematicText(Graphics* graphics) {
 

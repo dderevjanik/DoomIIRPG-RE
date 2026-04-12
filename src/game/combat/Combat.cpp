@@ -78,11 +78,11 @@ void Combat::performAttack(Entity* curAttacker, Entity* curTarget, int attackX, 
     if (curTarget != nullptr) {
         curTarget->info |= 0x200000;
     }
-    if (curTarget == nullptr || (curAttacker == nullptr && curTarget->def->eType == Enums::ET_MONSTER)) {
+    if (curTarget == nullptr || (curAttacker == nullptr && curTarget->def != nullptr && curTarget->def->eType == Enums::ET_MONSTER)) {
         app->player->lastCombatTurn = app->player->totalMoves;
         app->player->inCombat = true;
     }
-    if (curTarget != nullptr) {
+    if (curTarget != nullptr && curTarget->def != nullptr) {
         this->targetType = curTarget->def->eType;
         this->targetSubType = curTarget->def->eSubType;
         this->targetMonster = curTarget->monster;

@@ -105,6 +105,15 @@ public:
 
 	static constexpr int viewStepValues[] = { 64, 0, 64, -64, 0, -64, -64, -64, -64, 0, -64, 64, 0, 64, 64, 64 };
 
+	// Text layout constants
+	static constexpr int CHAR_WIDTH = 9;
+	static constexpr int DIALOG_PADDING = 2;
+	static constexpr int SCROLLBAR_PADDING = 9;
+	static constexpr int INGAME_SCROLLBAR_PADDING = 34;
+	static constexpr int HELP_PADDING = 32;
+	static constexpr int STATUS_BAR_HEIGHT = 35;
+	static constexpr int VIEW_RECT_Y = 20;
+
 	static constexpr int NPC_DLG_COLOR = 0xFF002864;
 	static constexpr int MONSTER_DLG_COLOR = 0xFF800000;
 	static constexpr int PLAYER_DLG_COLOR = 0xFF005617; // Old -> 0xFF4F5617

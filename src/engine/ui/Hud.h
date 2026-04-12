@@ -157,6 +157,9 @@ public:
     void handleUserMoved(int pressX, int pressY);
     void handleUserTouch(int pressX, int pressY, bool highlighted);
     void update();
+
+private:
+    void drawDelimitedLines(Graphics* graphics, Text* text, char delimiter, int x, int y, int lineHeight, int anchorFlags);
 };
 
 #endif

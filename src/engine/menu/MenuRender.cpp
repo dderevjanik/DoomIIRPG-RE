@@ -502,7 +502,7 @@ void MenuSystem::paint(Graphics* graphics) {
 
 
 
-	if (this->setBinding) {
+	if (this->activeSlider == SliderMode::Binding) {
 		graphics->FMGL_fillRect(0, 0, Applet::IOS_WIDTH, Applet::IOS_HEIGHT, 0, 0, 0, 0.75f);
 		textBuffer1->setLength(0);
 		textBuffer1->append("Press New Key For");
@@ -814,7 +814,7 @@ int MenuSystem::drawCustomScrollbar(Graphics* graphics, MenuItem* item, Text* te
 		valueScroll = this->sfxVolumeScroll;
 		button = this->m_menuButtons->GetButton(12);
 		disable = false;
-		change = app->menuSystem->changeSfxVolume;
+		change = (app->menuSystem->activeSlider == MenuSystem::SliderMode::SfxVolume);
 		if (change) { text->append("< "); }
 		text->append(value);
 		if (change) { text->append(" >"); }
@@ -824,7 +824,7 @@ int MenuSystem::drawCustomScrollbar(Graphics* graphics, MenuItem* item, Text* te
 		valueScroll = this->musicVolumeScroll;
 		button = this->m_menuButtons->GetButton(13);
 		disable = !isUserMusicOn();
-		change = app->menuSystem->changeMusicVolume;
+		change = (app->menuSystem->activeSlider == MenuSystem::SliderMode::MusicVolume);
 		if (change) { text->append("< "); }
 		text->append(value);
 		if (change) { text->append(" >"); }
@@ -834,7 +834,7 @@ int MenuSystem::drawCustomScrollbar(Graphics* graphics, MenuItem* item, Text* te
 		valueScroll = this->alphaScroll;
 		button = this->m_menuButtons->GetButton(14);
 		disable = false;
-		change = app->menuSystem->changeButtonsAlpha;
+		change = (app->menuSystem->activeSlider == MenuSystem::SliderMode::ButtonsAlpha);
 		if (change) { text->append("< "); }
 		text->append(value);
 		if (change) { text->append(" >"); }
@@ -844,7 +844,7 @@ int MenuSystem::drawCustomScrollbar(Graphics* graphics, MenuItem* item, Text* te
 		valueScroll = this->vibrationIntensityScroll;
 		button = this->m_menuButtons->GetButton(16);
 		disable = false;
-		change = app->menuSystem->changeVibrationIntensity;
+		change = (app->menuSystem->activeSlider == MenuSystem::SliderMode::VibrationIntensity);
 		if (change) { text->append("< "); }
 		text->append(value);
 		if (change) { text->append(" >"); }
@@ -854,7 +854,7 @@ int MenuSystem::drawCustomScrollbar(Graphics* graphics, MenuItem* item, Text* te
 		valueScroll = this->deadzoneScroll;
 		button = this->m_menuButtons->GetButton(17);
 		disable = false;
-		change = app->menuSystem->changeDeadzone;
+		change = (app->menuSystem->activeSlider == MenuSystem::SliderMode::Deadzone);
 		if (change) { text->append("< "); }
 		text->append(value);
 		if (change) { text->append(" >"); }

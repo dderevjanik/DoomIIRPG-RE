@@ -500,6 +500,9 @@ int Render::CapsuleToLineTrace(int* array, int n, int* array2) {
 }
 
 int Render::traceWorld(int n, int* array, int n2, int* array2, int n3) {
+	if (this->nodeBounds == nullptr) {
+		return 16384;
+	}
 	if (array2[0] > ((this->nodeBounds[(n << 2) + 2] & 0xFF) << 3)) {
 		return 16384;
 	}

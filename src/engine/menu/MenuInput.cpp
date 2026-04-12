@@ -106,7 +106,7 @@ void MenuSystem::handleMenuEvents(int key, int keyAction) {
 		return;
 	}
 
-	if (!this->changeValues) { // Old changeSfxVolume
+	if (!this->isChangingValues()) { // Old changeSfxVolume
 		// [GEC] Evita cualquer movimiento si esta activo
 		if (this->drawHelpText) {
 			if ((keyAction == Enums::ACTION_MENU) ||
@@ -389,8 +389,7 @@ void MenuSystem::select(int i) {
 			break;
 		}
 		case Menus::ACTION_CHANGESFXVOLUME: { // ACTION_CHANGESFXVOLUME
-			this->changeSfxVolume = !this->changeSfxVolume;
-			this->changeValues = !this->changeValues; //[GEC]
+			this->activeSlider = (this->activeSlider == SliderMode::SfxVolume) ? SliderMode::None : SliderMode::SfxVolume;
 			this->setMenu(this->menu);
 			break;
 		}
@@ -545,15 +544,13 @@ void MenuSystem::select(int i) {
 		}
 
 		case Menus::ACTION_CHANGEMUSICVOLUME: { // [GEC]
-			this->changeMusicVolume = !this->changeMusicVolume;
-			this->changeValues = !this->changeValues;
+			this->activeSlider = (this->activeSlider == SliderMode::MusicVolume) ? SliderMode::None : SliderMode::MusicVolume;
 			this->setMenu(this->menu);
 			break;
 		}
 
 		case Menus::ACTION_CHANGEALPHA: { // [GEC]
-			this->changeButtonsAlpha = !this->changeButtonsAlpha;
-			this->changeValues = !this->changeValues;
+			this->activeSlider = (this->activeSlider == SliderMode::ButtonsAlpha) ? SliderMode::None : SliderMode::ButtonsAlpha;
 			this->setMenu(this->menu);
 			break;
 		}
@@ -587,9 +584,8 @@ void MenuSystem::select(int i) {
 			break;
 		}
 
-		case Menus::ACTION_SET_BINDING: { // [GEC]	
-			this->setBinding = !this->setBinding;
-			this->changeValues = !this->changeValues;
+		case Menus::ACTION_SET_BINDING: { // [GEC]
+			this->activeSlider = (this->activeSlider == SliderMode::Binding) ? SliderMode::None : SliderMode::Binding;
 			this->setMenu(this->menu);
 			break;
 		}
@@ -612,15 +608,13 @@ void MenuSystem::select(int i) {
 		}
 
 		case Menus::ACTION_CHANGE_VIBRATION_INTENSITY: { // [GEC]
-			this->changeVibrationIntensity = !this->changeVibrationIntensity;
-			this->changeValues = !this->changeValues;
+			this->activeSlider = (this->activeSlider == SliderMode::VibrationIntensity) ? SliderMode::None : SliderMode::VibrationIntensity;
 			this->setMenu(this->menu);
 			break;
 		}
 
 		case Menus::ACTION_CHANGE_DEADZONE: { // [GEC]
-			this->changeDeadzone = !this->changeDeadzone;
-			this->changeValues = !this->changeValues;
+			this->activeSlider = (this->activeSlider == SliderMode::Deadzone) ? SliderMode::None : SliderMode::Deadzone;
 			this->setMenu(this->menu);
 			break;
 		}

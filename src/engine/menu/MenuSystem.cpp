@@ -63,13 +63,7 @@ bool MenuSystem::startup() {
 	this->maxItems = 0;
 	this->cheatCombo = 0;
 	this->goBackToStation = false;
-	this->changeSfxVolume = false;
-	this->changeMusicVolume = false; // [GEC]
-	this->changeButtonsAlpha = false; // [GEC]
-	this->changeValues = false; // [GEC]
-	this->setBinding = false; // [GEC]
-	this->changeVibrationIntensity = false; // [GEC]
-	this->changeDeadzone = false; // [GEC]
+	this->activeSlider = SliderMode::None;
 
 	this->imgVendingButtonLarge = app->loadImage("vending_button_large.bmp", true);
 	this->imgInGameMenuOptionButton = app->loadImage("inGame_menu_option_button.bmp", true);

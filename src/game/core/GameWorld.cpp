@@ -185,7 +185,7 @@ void Game::trace(int n, int n2, int n3, int traceCollisionX, int traceCollisionY
 			Entity* nextOnTile = this->entityDb[i + 32 * j];
 			if (nextOnTile != nullptr) {
 				while (nextOnTile != nullptr) {
-					if (nextOnTile != entity && 0x0 != (n4 & 1 << nextOnTile->def->eType)) {
+					if (nextOnTile != entity && nextOnTile->def != nullptr && 0x0 != (n4 & 1 << nextOnTile->def->eType)) {
 						if (nextOnTile->def->eType != Enums::ET_WORLD) {
 							int sprite = nextOnTile->getSprite();
 							int destX;

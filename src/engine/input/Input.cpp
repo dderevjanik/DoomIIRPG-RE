@@ -744,10 +744,9 @@ void Input::handleEvents() noexcept {
                 if ((!sdlEvent.key.repeat) && (scancode < SDL_NUM_SCANCODES)) {
                     //printf("%d\n", scancode);
 
-                    if (app->menuSystem->setBinding) {
+                    if (app->menuSystem->activeSlider == MenuSystem::SliderMode::Binding) {
                         this->setInputBind(scancode);
-                        app->menuSystem->setBinding = !app->menuSystem->setBinding;
-                        app->menuSystem->changeValues = !app->menuSystem->changeValues;
+                        app->menuSystem->activeSlider = MenuSystem::SliderMode::None;
                         break;
                     }
 
@@ -851,11 +850,10 @@ void Input::handleEvents() noexcept {
                             // Generate events for the analog input
                             if (bPrevPressed != bNowPressed) {
                                 if (bNowPressed) {
-                                    if (app->menuSystem->setBinding) {
+                                    if (app->menuSystem->activeSlider == MenuSystem::SliderMode::Binding) {
                                         GamepadInput inputBind = sdlAxisToInput2(input, inputF); // [GEC]
                                         this->setInputBind((int)inputBind | IS_CONTROLLER_BUTTON);
-                                        app->menuSystem->setBinding = !app->menuSystem->setBinding;
-                                        app->menuSystem->changeValues = !app->menuSystem->changeValues;
+                                        app->menuSystem->activeSlider = MenuSystem::SliderMode::None;
                                         break;
                                     }
                                     removeValueFromVector(input, gGamepadInputsJustReleased);
@@ -891,11 +889,10 @@ void Input::handleEvents() noexcept {
                         // Generate events for the analog input
                         if (bPrevPressed != bNowPressed) {
                             if (bNowPressed) {
-                                if (app->menuSystem->setBinding) {
+                                if (app->menuSystem->activeSlider == MenuSystem::SliderMode::Binding) {
                                     const GamepadInput inputBind = sdlJoyAxisToInput(axis, inputF); // [GEC]
                                     this->setInputBind((int)inputBind | IS_CONTROLLER_BUTTON);
-                                    app->menuSystem->setBinding = !app->menuSystem->setBinding;
-                                    app->menuSystem->changeValues = !app->menuSystem->changeValues;
+                                    app->menuSystem->activeSlider = MenuSystem::SliderMode::None;
                                     break;
                                 }
                                 removeValueFromVector(axis, gJoystickAxesJustReleased);
@@ -917,10 +914,9 @@ void Input::handleEvents() noexcept {
                     if (sdlEvent.cbutton.which == gJoystickId) {
                         const GamepadInput input = sdlButtonToInput(sdlEvent.cbutton.button);
                         if (input != GamepadInput::INVALID) {
-                            if (app->menuSystem->setBinding) {
+                            if (app->menuSystem->activeSlider == MenuSystem::SliderMode::Binding) {
                                 this->setInputBind((int)input | IS_CONTROLLER_BUTTON);
-                                app->menuSystem->setBinding = !app->menuSystem->setBinding;
-                                app->menuSystem->changeValues = !app->menuSystem->changeValues;
+                                app->menuSystem->activeSlider = MenuSystem::SliderMode::None;
                                 break;
                             }
                             removeValueFromVector(input, gGamepadInputsJustReleased);
@@ -937,10 +933,9 @@ void Input::handleEvents() noexcept {
                     if (sdlEvent.jbutton.which == gJoystickId) {
                         const uint32_t button = (uint32_t)sdlJoyButtonToInput(sdlEvent.jbutton.button);
                         if (button != (int)GamepadInput::INVALID) {
-                            if (app->menuSystem->setBinding) {
+                            if (app->menuSystem->activeSlider == MenuSystem::SliderMode::Binding) {
                                 this->setInputBind((int)button | IS_CONTROLLER_BUTTON);
-                                app->menuSystem->setBinding = !app->menuSystem->setBinding;
-                                app->menuSystem->changeValues = !app->menuSystem->changeValues;
+                                app->menuSystem->activeSlider = MenuSystem::SliderMode::None;
                                 break;
                             }
                             removeValueFromVector(button, gJoystickButtonsJustReleased);

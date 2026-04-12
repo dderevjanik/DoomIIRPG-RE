@@ -155,7 +155,9 @@ public:
     Text* detailsHelpText = nullptr;
     bool goBackToStation = false;
     int moreGamesPage = 0;
-    bool changeSfxVolume = false;
+    enum class SliderMode { None, SfxVolume, MusicVolume, ButtonsAlpha, Binding, VibrationIntensity, Deadzone };
+    SliderMode activeSlider = SliderMode::None;
+    bool isChangingValues() const { return activeSlider != SliderMode::None; }
     int oldLanguageSetting = 0;
     int sfxVolumeScroll = 0;
     int musicVolumeScroll = 0;
@@ -228,9 +230,6 @@ public:
     int animTime = 0;
 
     // [GEC]
-    bool changeMusicVolume = false;
-    bool changeButtonsAlpha = false;
-    bool changeValues = false;
     int old_0x44 = 0;
     int old_0x48 = 0;
     int scrollY1Stack[10] = {};
@@ -238,14 +237,11 @@ public:
     int scrollI2Stack[10] = {};
     int nextMsgTime = 0;
     int nextMsg = 0;
-    bool setBinding = false;
     Image* imgMenuButtonBackgroundExt = nullptr;
     Image* imgMenuButtonBackgroundExtOn = nullptr;
 
     Image* imgMenuBtnBackground = nullptr; // [GEC]
     Image* imgMenuBtnBackgroundOn = nullptr; // [GEC]
-    bool changeVibrationIntensity = false; // [GEC]
-    bool changeDeadzone = false; // [GEC]
     int vibrationIntensityScroll = 0; // [GEC]
     int deadzoneScroll = 0; // [GEC]
     int resolutionIndex = 0; // [GEC]

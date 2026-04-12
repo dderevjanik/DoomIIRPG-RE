@@ -292,7 +292,7 @@ void MenuSystem::initMenu(int menu) {
 			if (app->sound->allowSounds)
 			{
 				this->items[1].textField2 = Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::SOUND_LABEL);
-				this->items[2].flags = (this->changeSfxVolume) ? 0x10000 : 0 | this->items[2].flags & 0xFFFFFFFB;
+				this->items[2].flags = (this->activeSlider == SliderMode::SfxVolume) ? 0x10000 : 0 | this->items[2].flags & 0xFFFFFFFB;
 				this->items[2].textField2 = this->getLastArgString();
 			}
 			else {

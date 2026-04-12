@@ -103,18 +103,18 @@ bool Canvas::startup() {
 	this->screenRect[2] = this->displayRect[2];
 	this->screenRect[3] = this->displayRect[3];
 
-	this->dialogMaxChars = (this->displayRect[2] - 2) / 9;
-	this->scrollMaxChars = (this->displayRect[2] - 2) / 9;
-	this->dialogWithBarMaxChars		= (this->displayRect[2] - 9) / 9;
-	this->scrollWithBarMaxChars		= (this->displayRect[2] - 9) / 9;
-	this->menuScrollWithBarMaxChars = (this->displayRect[2] - 9) / 9;
-	this->ingameScrollWithBarMaxChars = (this->displayRect[2] - 34) / 9;
-	this->menuHelpMaxChars = (this->displayRect[2] - 32) / 9;
-	this->subtitleMaxChars = this->displayRect[2] / 9;
+	this->dialogMaxChars = (this->displayRect[2] - DIALOG_PADDING) / CHAR_WIDTH;
+	this->scrollMaxChars = (this->displayRect[2] - DIALOG_PADDING) / CHAR_WIDTH;
+	this->dialogWithBarMaxChars		= (this->displayRect[2] - SCROLLBAR_PADDING) / CHAR_WIDTH;
+	this->scrollWithBarMaxChars		= (this->displayRect[2] - SCROLLBAR_PADDING) / CHAR_WIDTH;
+	this->menuScrollWithBarMaxChars = (this->displayRect[2] - SCROLLBAR_PADDING) / CHAR_WIDTH;
+	this->ingameScrollWithBarMaxChars = (this->displayRect[2] - INGAME_SCROLLBAR_PADDING) / CHAR_WIDTH;
+	this->menuHelpMaxChars = (this->displayRect[2] - HELP_PADDING) / CHAR_WIDTH;
+	this->subtitleMaxChars = this->displayRect[2] / CHAR_WIDTH;
 
 	if (app->hud->startup()) {
 
-		int n2 = this->screenRect[3] - 35 - 35;
+		int n2 = this->screenRect[3] - STATUS_BAR_HEIGHT - STATUS_BAR_HEIGHT;
 		if (this->displayRect[3] >= 128) {
 			this->displaySoftKeys = true;
 			this->softKeyY = this->displayRect[3] - 0;
@@ -127,7 +127,7 @@ bool Canvas::startup() {
 		}
 
 		int n3 = n2 & 0xFFFFFFFE;
-		this->screenRect[3] = n3 + 35 + 35;
+		this->screenRect[3] = n3 + STATUS_BAR_HEIGHT + STATUS_BAR_HEIGHT;
 		this->screenRect[0] = (this->displayRect[2] - this->screenRect[2]) / 2;
 		if (this->displaySoftKeys) {
 			this->screenRect[1] = (this->softKeyY - this->screenRect[3]) / 2;
@@ -139,7 +139,7 @@ bool Canvas::startup() {
 		this->SCR_CX = this->screenRect[2] / 2;
 		this->SCR_CY = this->screenRect[3] / 2;
 		this->viewRect[0] = this->screenRect[0];
-		this->viewRect[1] = 20;//this->screenRect[1] + 35;
+		this->viewRect[1] = VIEW_RECT_Y;//this->screenRect[1] + STATUS_BAR_HEIGHT;
 		this->viewRect[2] = this->screenRect[2];
 		this->viewRect[3] = n3;
 
@@ -1364,6 +1364,9 @@ void Canvas::checkFacingEntity() {
 	int *view = app->tinyGL->view;
 	app->game->trace(destX + (-view[2] * 28 >> 14), destY + (-view[6] * 28 >> 14), destZ + (-view[10] * 28 >> 14), destX + (6 * -view[2] >> 8), destY + (6 * -view[6] >> 8), destZ + (6 * -view[10] >> 8), nullptr, n, 2, this->isZoomedIn);
 	Entity* traceEntity = app->game->traceEntity;
+	if (traceEntity != nullptr && traceEntity->def == nullptr) {
+		traceEntity = nullptr;
+	}
 	if (traceEntity != nullptr && (traceEntity->def->eType == Enums::ET_ITEM || traceEntity->def->eType == Enums::ET_MONSTERBLOCK_ITEM || traceEntity->def->eType == Enums::ET_SPRITEWALL || traceEntity->def->eType == Enums::ET_ATTACK_INTERACTIVE || traceEntity->def->eType == Enums::ET_DECOR_NOCLIP)) {
 		int i = 0;
 		while (i < app->game->numTraceEntities) {
@@ -2584,8 +2587,8 @@ bool Canvas::handleEvent(int key) {
 		return true;
 	}
 
-	if (this->state == Canvas::ST_MENU && app->menuSystem->changeValues) {
-		if (app->menuSystem->changeSfxVolume) { // [GEC]
+	if (this->state == Canvas::ST_MENU && app->menuSystem->isChangingValues()) {
+		if (app->menuSystem->activeSlider == MenuSystem::SliderMode::SfxVolume) { // [GEC]
 			if (keyAction == Enums::ACTION_RIGHT) {
 				app->sound->volumeUp(10);
 				app->menuSystem->soundClick();
@@ -2599,7 +2602,7 @@ bool Canvas::handleEvent(int key) {
 				return true;
 			}
 		}
-		else if (app->menuSystem->changeMusicVolume) { // [GEC]
+		else if (app->menuSystem->activeSlider == MenuSystem::SliderMode::MusicVolume) { // [GEC]
 			if (keyAction == Enums::ACTION_RIGHT) {
 				app->sound->musicVolumeUp(10);
 				app->menuSystem->soundClick();
@@ -2613,7 +2616,7 @@ bool Canvas::handleEvent(int key) {
 				return true;
 			}
 		}
-		else if (app->menuSystem->changeButtonsAlpha) { // [GEC]
+		else if (app->menuSystem->activeSlider == MenuSystem::SliderMode::ButtonsAlpha) { // [GEC]
 			if (keyAction == Enums::ACTION_RIGHT) {
 				this->m_controlAlpha += 10;
 				if (this->m_controlAlpha > 100) {
@@ -2633,7 +2636,7 @@ bool Canvas::handleEvent(int key) {
 				return true;
 			}
 		}
-		else if (app->menuSystem->changeVibrationIntensity) { // [GEC]
+		else if (app->menuSystem->activeSlider == MenuSystem::SliderMode::VibrationIntensity) { // [GEC]
 			if (keyAction == Enums::ACTION_RIGHT) {
 				gVibrationIntensity += 10;
 				if (gVibrationIntensity > 100) {
@@ -2653,7 +2656,7 @@ bool Canvas::handleEvent(int key) {
 				return true;
 			}
 		}
-		else if (app->menuSystem->changeDeadzone) { // [GEC]
+		else if (app->menuSystem->activeSlider == MenuSystem::SliderMode::Deadzone) { // [GEC]
 			if (keyAction == Enums::ACTION_RIGHT) {
 				gDeadZone += 5;
 				if (gDeadZone > 100) {
@@ -2678,7 +2681,7 @@ bool Canvas::handleEvent(int key) {
 #if 0 // IOS
 	if (app->sound->allowSounds) {
 		bool refresh = false;
-		if (this->state == Canvas::ST_MENU && app->menuSystem->changeSfxVolume) {
+		if (this->state == Canvas::ST_MENU && app->menuSystem->activeSlider == MenuSystem::SliderMode::SfxVolume) {
 			refresh = true;
 		}
 		if (key == 27) {
@@ -3242,7 +3245,7 @@ void Canvas::menuState() {
 			this->setLeftSoftKey((short)3, (short)80);
 		}
 		if (n != -1) {
-			if (!app->menuSystem->changeValues) { // Old changeSfxVolume
+			if (!app->menuSystem->isChangingValues()) { // Old changeSfxVolume
 				this->setRightSoftKey((short)0, n);
 			}
 		}

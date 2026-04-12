@@ -712,9 +712,11 @@ bool MenuSystem::loadMenusFromYAML(const char* path) {
 				if (gotoNode) {
 					param = menuNameToId(gotoNode.asString(""));
 				}
-				DataNode namedParam = item[actionName.c_str()];
-				if (namedParam) {
-					param = ConfigEnums::resolveEnum(actionName, namedParam.asString(""));
+				if (actionName != "goto") {
+					DataNode namedParam = item[actionName.c_str()];
+					if (namedParam) {
+						param = ConfigEnums::resolveEnum(actionName, namedParam.asString(""));
+					}
 				}
 				int helpString = item["help_string"].asInt(0);
 				itemWords.push_back((uint32_t)((stringId & 0xFFFF) << 16) | (uint32_t)(flags & 0xFFFF));
@@ -805,9 +807,11 @@ bool MenuSystem::loadMenusFromYAML(const char* path) {
 					if (gotoNode) {
 						mi.param = menuNameToId(gotoNode.asString(""));
 					}
-					DataNode namedParam = item[actionName.c_str()];
-					if (namedParam) {
-						mi.param = ConfigEnums::resolveEnum(actionName, namedParam.asString(""));
+					if (actionName != "goto") {
+						DataNode namedParam = item[actionName.c_str()];
+						if (namedParam) {
+							mi.param = ConfigEnums::resolveEnum(actionName, namedParam.asString(""));
+						}
 					}
 					mi.helpField = item["help_string"].asInt(0);
 					mi.text = item["text"].asString("");
