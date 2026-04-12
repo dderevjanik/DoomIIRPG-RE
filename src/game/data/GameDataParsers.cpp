@@ -611,24 +611,25 @@ bool parseDialogStyles(Applet* app, const DataNode& config) {
 	Canvas* c = app->canvas.get();
 
 	// Initialize with hardcoded defaults
+	//                                                                                              hasHdr grad  port  cust  chest iconX iconY  iW  iH  iBot green
 	static const DialogStyleDef defaults[] = {
-		{ 0, (int)0xFF000000, -1, -1, 0, 0, false },  // normal
-		{ 1, (int)0xFF002864, -1, -1, 0, 0, false },  // npc
-		{ 2, (int)0xFF000000, -1, (int)0xFF000000, 0, 0, false },  // help (header_color used for color2)
-		{ 3, 0, -1, -1, 0, 0, false },                 // scroll (custom draw)
-		{ 4, (int)0xFF005A00, (int)0xFFB18A01, -1, 0, 0, false },  // chest
-		{ 5, (int)0xFF800000, -1, -1, 0, 2, false },   // monster
-		{ 6, (int)0xFF002864, -1, -1, 0, 0, false },   // ghost
-		{ 7, (int)0xFF000000, -1, -1, 0, 0, false },   // yell
-		{ 8, Canvas::PLAYER_DLG_COLOR, -1, -1, -64, 0, false },  // player
-		{ 9, (int)0xFF000000, -1, (int)0xFF000000, 0, 0, false },  // terminal
-		{10, (int)0xFF2E0854, -1, -1, 0, 0, true },    // elevator
-		{11, (int)0xFF800000, -1, -1, 0, 2, false },   // vios
-		{12, (int)0xFFB18A01, -1, -1, 0, 0, false },   // self_destruct_confirm
-		{13, (int)0xFFB18A01, -1, -1, 0, 0, false },   // armor_repair
-		{14, (int)0xFF002864, -1, -1, -20, 0, false },  // comm_link
-		{15, (int)0xFFFF9600, -1, -1, 0, 0, false },   // sal
-		{16, (int)0xFF000000, -1, (int)0xFF000066, 0, 0, false },  // special
+		{ 0, (int)0xFF000000, -1, -1, 0, 0, false,                                                 false, false, false, false, false, -1, 0, 0, 0, false, false },  // normal
+		{ 1, (int)0xFF002864, -1, -1, 0, 0, false,                                                 false, false, false, false, false, 10, 0, 10, 6, false, false },  // npc (icon: speech bubble)
+		{ 2, (int)0xFF000000, -1, (int)0xFF000000, 0, 0, false,                                    true,  false, false, false, false, -1, 0, 0, 0, false, false },  // help
+		{ 3, 0, -1, -1, 0, 0, false,                                                               false, false, false, true,  false, -1, 0, 0, 0, false, false },  // scroll (custom draw)
+		{ 4, (int)0xFF005A00, (int)0xFFB18A01, -1, 0, 0, false,                                    false, false, false, false, true,  -1, 0, 0, 0, false, false },  // chest
+		{ 5, (int)0xFF800000, -1, -1, 0, 2, false,                                                 false, false, false, false, false,  0,12, 10, 6, false, false },  // monster (icon: skull, top/bottom by flag)
+		{ 6, (int)0xFF002864, -1, -1, 0, 0, false,                                                 false, false, false, false, false, -1, 0, 0, 0, false, false },  // ghost
+		{ 7, (int)0xFF000000, -1, -1, 0, 0, false,                                                 false, false, false, false, false, -1, 0, 0, 0, false, false },  // yell
+		{ 8, Canvas::PLAYER_DLG_COLOR, -1, -1, -64, 0, false,                                      false, true,  true,  false, false, 30, 0, 15, 9, true,  false },  // player (gradient + portrait + icon)
+		{ 9, (int)0xFF000000, -1, (int)0xFF000000, 0, 0, false,                                    true,  false, false, false, false, -1, 0, 0, 0, false, true  },  // terminal (header + green text)
+		{10, (int)0xFF2E0854, -1, -1, 0, 0, true,                                                  false, false, false, false, false, 20, 6, 10, 6, true,  false },  // elevator (icon at bottom)
+		{11, (int)0xFF800000, -1, -1, 0, 2, false,                                                 false, false, false, false, false, -1, 0, 0, 0, false, false },  // vios
+		{12, (int)0xFFB18A01, -1, -1, 0, 0, false,                                                 false, false, false, false, false, -1, 0, 0, 0, false, false },  // self_destruct_confirm
+		{13, (int)0xFFB18A01, -1, -1, 0, 0, false,                                                 false, false, false, false, false, -1, 0, 0, 0, false, false },  // armor_repair
+		{14, (int)0xFF002864, -1, -1, -20, 0, false,                                               false, false, false, false, false, 45, 0, 15, 9, true,  false },  // comm_link (icon at bottom)
+		{15, (int)0xFFFF9600, -1, -1, 0, 0, false,                                                 false, false, false, false, false, -1, 0, 0, 0, false, false },  // sal
+		{16, (int)0xFF000000, -1, (int)0xFF000066, 0, 0, false,                                    true,  false, false, false, false, -1, 0, 0, 0, false, false },  // special (header)
 	};
 	int defaultCount = sizeof(defaults) / sizeof(defaults[0]);
 

@@ -102,8 +102,12 @@ void Canvas::dialogState(Graphics* graphics) {
 		this->m_dialogButtons->GetButton(4)->drawButton = false;
 	}
 
+	const DialogStyleDef& style = (this->dialogStyle >= 0 && this->dialogStyle < this->dialogStyleDefCount)
+		? this->dialogStyleDefs[this->dialogStyle] : this->dialogStyleDefs[0];
+
 	int currentDialogLine = 0;
-	if (this->dialogStyle == 2 || this->dialogStyle == 16 || this->dialogStyle == 9) {
+	if (style.hasHeader) {
+		// Header bar above dialog (help, terminal, special)
 		currentDialogLine = 1;
 		graphics->setColor(n2);
 		graphics->fillRect(dialogRect[0], dialogRect[1], dialogRect[2], dialogRect[3]);
@@ -122,12 +126,13 @@ void Canvas::dialogState(Graphics* graphics) {
 			graphics->drawRegion(app->hud->imgActions, 0, 18 * this->specialLootIcon, 18, 18, dialogRect[0], dialogRect[1] - 17, 0, 0, 0);
 			graphics->drawRegion(app->hud->imgActions, 0, 18 * this->specialLootIcon, 18, 18, dialogRect[2] - 18, dialogRect[1] - 17, 0, 0, 0);
 		}
-		if (this->dialogStyle == 9) {
+		if (style.greenTerminal) {
 			this->graphics.currentCharColor = 2;
 		}
 		graphics->drawString(this->dialogBuffer, this->SCR_CX, dialogRect[1] - 16, 1, this->dialogIndexes[0], this->dialogIndexes[1]);
 	}
-	else if (this->dialogStyle == 4) {
+	else if (style.hasChestHeader) {
+		// Chest dialog with optional item name header
 		graphics->setColor(n2);
 		graphics->fillRect(dialogRect[0], dialogRect[1], dialogRect[2], dialogRect[3]);
 		graphics->setColor(color);
@@ -149,12 +154,15 @@ void Canvas::dialogState(Graphics* graphics) {
 			Button->SetTouchArea(*dialogRect, dialogRect[1], dialogRect[2], dialogRect[3]);
 		}
 	}
-	else if (this->dialogStyle != 3) {
+	else if (!style.customDraw) {
+		// Standard dialog box
 		graphics->setColor(n2);
 		graphics->fillRect(dialogRect[0], dialogRect[1], dialogRect[2], dialogRect[3]);
 		graphics->setColor(color);
 		graphics->drawRect(dialogRect[0], dialogRect[1], dialogRect[2] - 1, dialogRect[3]);
-		if (this->dialogStyle == 8) {
+
+		// Gradient fill
+		if (style.hasGradient) {
 			int n6;
 			int n5 = n6 = dialogRect[1] + 1;
 			int n7 = n6 + (dialogRect[3] - 1);
@@ -163,44 +171,35 @@ void Canvas::dialogState(Graphics* graphics) {
 				graphics->setColor((((n2 & 0xFF00FF00) >> 8) * n8 & 0xFF00FF00) | ((n2 & 0xFF00FF) * n8 >> 8 & 0xFF00FF) & 0xDE);
 				graphics->drawLine(dialogRect[0] + 1, n5, dialogRect[0] + (dialogRect[2] - 2), n5);
 			}
-			graphics->drawRegion(this->imgUIImages, 30, 0, 15, 9, this->SCR_CX + 10, dialogRect[1] + dialogRect[3], 0, 0, 0);
+		}
+
+		// Player portrait
+		if (style.hasPortrait) {
 			int width = app->hud->imgPortraitsSM->width;
 			int n9 = app->hud->imgPortraitsSM->height / 3;
-			int n10 = 0;
-			switch (app->player->characterChoice) {
-			case 1: {
-				n10 = 0;
-				break;
-			}
-			case 2: {
-				n10 = 1;
-				break;
-			}
-			case 3: {
-				n10 = 2;
-				break;
-			}
-			}
+			int n10 = (app->player->characterChoice == 2) ? 1 : (app->player->characterChoice == 3) ? 2 : 0;
 			graphics->drawRegion(app->hud->imgPortraitsSM, 0, n9 * n10, width, n9, dialogRect[0] + 2, dialogRect[1] + 3, 0, 0, 0);
-			n += app->hud->imgPortraitsSM->width;
-			n += 2;
+			n += app->hud->imgPortraitsSM->width + 2;
 		}
-		else if (this->dialogStyle == 5) {
-			if ((this->dialogFlags & 0x2) != 0x0) {
-				graphics->drawRegion(this->imgUIImages, 0, 12, 10, 6, this->SCR_CX - 64, dialogRect[1] + dialogRect[3] + 6, 36, 0, 0);
+
+		// Icon from imgUIImages
+		if (style.iconSrcX >= 0) {
+			int iconX, iconY, iconAnchor;
+			if (style.iconBottom) {
+				iconX = this->SCR_CX + 10;
+				iconY = dialogRect[1] + dialogRect[3];
+				iconAnchor = 0;
+			} else if (this->dialogStyle == 5 && (this->dialogFlags & 0x2) != 0x0) {
+				// Monster icon: positioned at bottom when flag set
+				iconX = this->SCR_CX - 64;
+				iconY = dialogRect[1] + dialogRect[3] + 6;
+				iconAnchor = 36;
+			} else {
+				iconX = this->SCR_CX - 64;
+				iconY = dialogRect[1] + 1;
+				iconAnchor = 36;
 			}
-			else {
-				graphics->drawRegion(this->imgUIImages, 0, 0, 10, 6, this->SCR_CX - 64, dialogRect[1] + 1, 36, 0, 0);
-			}
-		}
-		else if (this->dialogStyle == 1) {
-			graphics->drawRegion(this->imgUIImages, 10, 0, 10, 6, this->SCR_CX - 64, dialogRect[1] + 1, 36, 0, 0);
-		}
-		else if (this->dialogStyle == 10) {
-			graphics->drawRegion(this->imgUIImages, 20, 6, 10, 6, this->SCR_CX + 10, dialogRect[1] + dialogRect[3], 0, 0, 0);
-		}
-		else if (this->dialogStyle == 14) {
-			graphics->drawRegion(this->imgUIImages, 45, 0, 15, 9, this->SCR_CX + 10, dialogRect[1] + dialogRect[3], 0, 0, 0);
+			graphics->drawRegion(this->imgUIImages, style.iconSrcX, style.iconSrcY, style.iconW, style.iconH, iconX, iconY, iconAnchor, 0, 0);
 		}
 	}
 	if (this->currentDialogLine < currentDialogLine) {

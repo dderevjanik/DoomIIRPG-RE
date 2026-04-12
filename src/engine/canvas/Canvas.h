@@ -25,6 +25,16 @@ struct DialogStyleDef {
 	int yAdjust;          // pixel offset to default Y position
 	int posTopOnFlag;     // move to top when dialogFlags & this != 0 (0 = disabled)
 	bool positionTop;     // always position at top
+	bool hasHeader;       // draw header bar above dialog (styles 2, 9, 16)
+	bool hasGradient;     // apply gradient fill effect (style 8)
+	bool hasPortrait;     // draw player portrait in dialog (style 8)
+	bool customDraw;      // use custom scroll-style rendering (style 3)
+	bool hasChestHeader;  // draw mini header when dialogItem present (style 4)
+	int iconSrcX;         // imgUIImages source X for icon (-1 = no icon)
+	int iconSrcY;         // imgUIImages source Y
+	int iconW, iconH;     // icon dimensions
+	bool iconBottom;      // true = draw icon at bottom of dialog, false = top
+	bool greenTerminal;   // use green text color (style 9)
 };
 
 class Canvas
@@ -114,17 +124,8 @@ public:
 	static constexpr int STATUS_BAR_HEIGHT = 35;
 	static constexpr int VIEW_RECT_Y = 20;
 
-	static constexpr int NPC_DLG_COLOR = 0xFF002864;
-	static constexpr int MONSTER_DLG_COLOR = 0xFF800000;
-	static constexpr int PLAYER_DLG_COLOR = 0xFF005617; // Old -> 0xFF4F5617
-	static constexpr int CHEST_DLG_COLOR = 0xFF005A00;
-	static constexpr int CHEST_OFFER_DLG_COLOR = 0xFFB18A01;
-	static constexpr int MEDAL_DLG_COLOR = 0xFF000066;
-	static constexpr int TERMINAL_DLG_COLOR = 0xFF000000;
-	static constexpr int ELEVATOR_DLG_COLOR = 0xFF2E0854;
-	static constexpr int CONFIRMATION_DLG_COLOR = 0xFFB18A01;
-	static constexpr int VIOS_DLG_COLOR = 0xFF800000;
-	static constexpr int SAL_DLG_COLOR = 0xFFFF9600;
+	// Dialog colors are now in DialogStyleDef defaults (GameDataParsers.cpp)
+	static constexpr int PLAYER_DLG_COLOR = 0xFF005617; // Referenced by defaults array
 
 	// Dialog style data loaded from dialogs.yaml (pointer to avoid memset UB)
 	DialogStyleDef* dialogStyleDefs;
