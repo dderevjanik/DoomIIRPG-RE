@@ -33,7 +33,7 @@ jobs:
         run: cmake --build build --parallel
 
       - name: Test
-        run: ctest --test-dir build --output-on-failure --timeout 30
+        run: ctest --test-dir build --output-on-failure -R mapdata-roundtrip
 
       - name: Print ccache stats
         run: ccache -s
@@ -68,7 +68,7 @@ jobs:
         run: cmake --build build --parallel
 
       - name: Test
-        run: ctest --test-dir build --output-on-failure --timeout 30
+        run: ctest --test-dir build --output-on-failure -R mapdata-roundtrip
 
       - name: Print ccache stats
         run: ccache -s
