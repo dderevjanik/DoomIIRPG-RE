@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <ranges>
 #include <stdexcept>
 #include "Log.h"
 
@@ -294,21 +296,12 @@ GamepadInput sdlJoyAxisToInput(const uint8_t axis, const float value) noexcept {
 //------------------------------------------------------------------------------------------------------------------------------------------
 template <class T>
 static inline bool vectorContainsValue(const std::vector<T>& vec, const T val) noexcept {
-    const auto endIter = vec.end();
-    const auto iter = std::find(vec.begin(), endIter, val);
-    return (iter != endIter);
+    return std::ranges::find(vec, val) != vec.end();
 }
 
 template <class T>
 static inline void removeValueFromVector(const T val, std::vector<T>& vec) noexcept {
-    auto endIter = vec.end();
-    auto iter = std::find(vec.begin(), endIter, val);
-
-    while (iter != endIter) {
-        iter = vec.erase(iter);
-        endIter = vec.end();
-        iter = std::find(iter, endIter, val);
-    }
+    std::erase(vec, val);
 }
 
 template <class T>
@@ -452,7 +445,7 @@ float getJoystickAxisValue(const uint32_t axis) noexcept {
 //------------------------------------------------------------------------------------------------------------------------------------------
 static void updateJoystickAxisValue(const uint32_t axis, const float value) noexcept {
     // Search for the existing value of this axis: will need to remove or update it if found
-    auto iter = std::find_if(gJoystickAxes.begin(), gJoystickAxes.end(), [=](const JoystickAxis& axisValue) noexcept { return (axisValue.axis == axis); });
+    auto iter = std::ranges::find_if(gJoystickAxes, [=](const JoystickAxis& axisValue) noexcept { return (axisValue.axis == axis); });
 
     if (value == 0.0f) {
         if (iter != gJoystickAxes.end()) {

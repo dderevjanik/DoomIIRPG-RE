@@ -1,8 +1,9 @@
+#include <cstdlib>
+#include <ranges>
 #include "ResourceManager.h"
 #include "DataNode.h"
 #include "VFS.h"
 #include <yaml-cpp/yaml.h>
-#include <cstdlib>
 #include <algorithm>
 #include "Log.h"
 
@@ -124,10 +125,9 @@ void ResourceManager::registerLoader(const char* name,
 
 bool ResourceManager::loadAllDefinitions() {
 	if (!entriesSorted) {
-		std::sort(entries.begin(), entries.end(),
-				  [](const DefinitionEntry& a, const DefinitionEntry& b) {
-					  return a.priority < b.priority;
-				  });
+		std::ranges::sort(entries, [](const DefinitionEntry& a, const DefinitionEntry& b) {
+			return a.priority < b.priority;
+		});
 		entriesSorted = true;
 	}
 

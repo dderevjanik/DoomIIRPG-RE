@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
+#include <ranges>
 #include <format>
 
 // Helper: case-insensitive substring match
@@ -13,8 +14,8 @@ static bool matchesFilter(const std::string& text, const char* filter) {
 	if (!filter || filter[0] == '\0') return true;
 	std::string lower = text;
 	std::string filt = filter;
-	std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
-	std::transform(filt.begin(), filt.end(), filt.begin(), ::tolower);
+	std::ranges::transform(lower, lower.begin(), ::tolower);
+	std::ranges::transform(filt, filt.begin(), ::tolower);
 	return lower.find(filt) != std::string::npos;
 }
 
@@ -1663,8 +1664,7 @@ void AssetBrowser::loadLevels() {
 			levels_.push_back(std::move(lev));
 		}
 		// Sort by map number
-		std::sort(levels_.begin(), levels_.end(),
-			[](const LevelEntry& a, const LevelEntry& b) { return a.mapNumber < b.mapNumber; });
+		std::ranges::sort(levels_, [](const LevelEntry& a, const LevelEntry& b) { return a.mapNumber < b.mapNumber; });
 		std::fprintf(stderr, "Loaded %zu levels\n", levels_.size());
 	} catch (const YAML::Exception& ex) {
 		std::fprintf(stderr, "Failed to load levels: %s\n", ex.what());

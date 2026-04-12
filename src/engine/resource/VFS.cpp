@@ -1,8 +1,9 @@
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <algorithm>
 #include <dirent.h>
+#include <ranges>
 #include <sys/stat.h>
 #include "Log.h"
 
@@ -20,7 +21,7 @@ void VFS::mountDir(const char* dirPath, int priority) {
 	mount.priority = priority;
 	mounts.push_back(mount);
 
-	std::sort(mounts.begin(), mounts.end(), [](const VFSMount& a, const VFSMount& b) {
+	std::ranges::sort(mounts, [](const VFSMount& a, const VFSMount& b) {
 		return a.priority > b.priority;
 	});
 

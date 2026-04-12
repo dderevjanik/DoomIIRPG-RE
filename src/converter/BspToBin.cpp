@@ -15,6 +15,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <map>
+#include <ranges>
 #include <string>
 #include <vector>
 
@@ -795,7 +796,7 @@ static ConvertResult convertBSPtoBIN(const D1BSP& bsp) {
     uint16_t mediaIndices[] = {D2_FLOOR_TILE, D2_WALL_TILE, D2_CEIL_TILE}; // sorted
     // actually sort them
     std::vector<uint16_t> media = {D2_WALL_TILE, D2_FLOOR_TILE, D2_CEIL_TILE};
-    std::sort(media.begin(), media.end());
+    std::ranges::sort(media);
     wrMarker(out, MARKER_DEAD);
     wrU16(out, (uint16_t)media.size());
     for (auto m : media) wrU16(out, m);

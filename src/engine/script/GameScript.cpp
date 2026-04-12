@@ -1,7 +1,8 @@
+#include <algorithm>
 #include <cstdio>
 #include <cstring>
-#include <algorithm>
 #include <fstream>
+#include <ranges>
 #include <sstream>
 #include "Log.h"
 
@@ -73,8 +74,7 @@ bool GameScript::loadFromFile(const char* path) {
 	}
 
 	// Sort by tick (in case script is unordered)
-	std::sort(commands.begin(), commands.end(),
-		[](const ScriptCommand& a, const ScriptCommand& b) { return a.tick < b.tick; });
+	std::ranges::sort(commands, [](const ScriptCommand& a, const ScriptCommand& b) { return a.tick < b.tick; });
 
 	LOG_INFO("[script] Loaded %d commands from '%s'\n", (int)commands.size(), path);
 	return true;

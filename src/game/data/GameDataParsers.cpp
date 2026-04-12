@@ -1,10 +1,11 @@
-#include <cstring>
-#include <string>
-#include <vector>
-#include <map>
-#include <unordered_map>
-#include <sstream>
 #include <algorithm>
+#include <cstring>
+#include <map>
+#include <ranges>
+#include <sstream>
+#include <string>
+#include <unordered_map>
+#include <vector>
 #include "Log.h"
 
 #include "GameDataParsers.h"
@@ -391,7 +392,7 @@ bool parseWeapons(Applet* app, const DataNode& config) {
 	app->combat->familiarDefCount = (int)famDefs.size();
 	if (!famDefs.empty()) {
 		app->combat->familiarDefs = new Combat::FamiliarDef[famDefs.size()];
-		std::copy(famDefs.begin(), famDefs.end(), app->combat->familiarDefs);
+		std::ranges::copy(famDefs, app->combat->familiarDefs);
 	}
 	app->combat->defaultFamiliarType = 1;
 
