@@ -17,16 +17,26 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake build-essential libsdl2-dev zlib1g-dev libopenal-dev libgl-dev
+          sudo apt-get install -y cmake build-essential libsdl2-dev zlib1g-dev libopenal-dev libgl-dev ccache
+
+      - name: Setup ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-linux-${{ hashFiles('src/**', 'CMakeLists.txt', 'src/CMakeLists.txt') }}
+          restore-keys: ccache-linux-
 
       - name: Configure
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Build
         run: cmake --build build --parallel
 
       - name: Test
         run: ctest --test-dir build --output-on-failure
+
+      - name: Print ccache stats
+        run: ccache -s
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -42,16 +52,26 @@ jobs:
           submodules: true
 
       - name: Install dependencies
-        run: brew install sdl2 openal-soft
+        run: brew install sdl2 openal-soft ccache
+
+      - name: Setup ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/ccache
+          key: ccache-macos-${{ hashFiles('src/**', 'CMakeLists.txt', 'src/CMakeLists.txt') }}
+          restore-keys: ccache-macos-
 
       - name: Configure
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Build
         run: cmake --build build --parallel
 
       - name: Test
         run: ctest --test-dir build --output-on-failure
+
+      - name: Print ccache stats
+        run: ccache -s
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

@@ -114,7 +114,7 @@ public:
 	static constexpr int viewStepValues[] = { 64, 0, 64, -64, 0, -64, -64, -64, -64, 0, -64, 64, 0, 64, 64, 64 };
 
 	// Text layout constants
-	static constexpr int CHAR_WIDTH = 9;
+	static constexpr int TEXT_CHAR_WIDTH = 9;
 	static constexpr int DIALOG_PADDING = 2;
 	static constexpr int SCROLLBAR_PADDING = 9;
 	static constexpr int INGAME_SCROLLBAR_PADDING = 34;

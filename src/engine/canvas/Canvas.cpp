@@ -103,14 +103,14 @@ bool Canvas::startup() {
 	this->screenRect[2] = this->displayRect[2];
 	this->screenRect[3] = this->displayRect[3];
 
-	this->dialogMaxChars = (this->displayRect[2] - DIALOG_PADDING) / CHAR_WIDTH;
-	this->scrollMaxChars = (this->displayRect[2] - DIALOG_PADDING) / CHAR_WIDTH;
-	this->dialogWithBarMaxChars		= (this->displayRect[2] - SCROLLBAR_PADDING) / CHAR_WIDTH;
-	this->scrollWithBarMaxChars		= (this->displayRect[2] - SCROLLBAR_PADDING) / CHAR_WIDTH;
-	this->menuScrollWithBarMaxChars = (this->displayRect[2] - SCROLLBAR_PADDING) / CHAR_WIDTH;
-	this->ingameScrollWithBarMaxChars = (this->displayRect[2] - INGAME_SCROLLBAR_PADDING) / CHAR_WIDTH;
-	this->menuHelpMaxChars = (this->displayRect[2] - HELP_PADDING) / CHAR_WIDTH;
-	this->subtitleMaxChars = this->displayRect[2] / CHAR_WIDTH;
+	this->dialogMaxChars = (this->displayRect[2] - DIALOG_PADDING) / TEXT_CHAR_WIDTH;
+	this->scrollMaxChars = (this->displayRect[2] - DIALOG_PADDING) / TEXT_CHAR_WIDTH;
+	this->dialogWithBarMaxChars		= (this->displayRect[2] - SCROLLBAR_PADDING) / TEXT_CHAR_WIDTH;
+	this->scrollWithBarMaxChars		= (this->displayRect[2] - SCROLLBAR_PADDING) / TEXT_CHAR_WIDTH;
+	this->menuScrollWithBarMaxChars = (this->displayRect[2] - SCROLLBAR_PADDING) / TEXT_CHAR_WIDTH;
+	this->ingameScrollWithBarMaxChars = (this->displayRect[2] - INGAME_SCROLLBAR_PADDING) / TEXT_CHAR_WIDTH;
+	this->menuHelpMaxChars = (this->displayRect[2] - HELP_PADDING) / TEXT_CHAR_WIDTH;
+	this->subtitleMaxChars = this->displayRect[2] / TEXT_CHAR_WIDTH;
 
 	if (app->hud->startup()) {
 
