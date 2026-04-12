@@ -59,6 +59,15 @@ bool DoomIIRPGGame::startup(Applet* app) {
 	app->canvas->registerStateHandler(Canvas::ST_ERROR, &errorState);
 	app->canvas->registerStateHandler(Canvas::ST_BENCHMARK, &benchmarkState);
 	app->canvas->registerStateHandler(Canvas::ST_BENCHMARKDONE, &benchmarkState);
+	app->canvas->registerStateHandler(Canvas::ST_DIALOG, &dialogState);
+	app->canvas->registerStateHandler(Canvas::ST_LOOTING, &lootingState);
+	app->canvas->registerStateHandler(Canvas::ST_TREADMILL, &treadmillState);
+	app->canvas->registerStateHandler(Canvas::ST_CAMERA, &cameraState);
+	app->canvas->registerStateHandler(Canvas::ST_INTER_CAMERA, &interCameraState);
+	app->canvas->registerStateHandler(Canvas::ST_MINI_GAME, &miniGameState);
+	// ST_LOADING and ST_SAVING remain inline — their update() needs early return from run()
+	// app->canvas->registerStateHandler(Canvas::ST_LOADING, &loadingState);
+	// app->canvas->registerStateHandler(Canvas::ST_SAVING, &savingState);
 
 	// Register minigames
 	auto& mgReg = CAppContainer::getInstance()->minigameRegistry;

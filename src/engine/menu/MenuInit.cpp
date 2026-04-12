@@ -68,6 +68,9 @@ void MenuSystem::initMenu(int menu) {
 		if (menuDef->type > 0) {
 			this->type = menuDef->type;
 		}
+		if (menuDef->maxItems > 0) {
+			this->maxItems = menuDef->maxItems;
+		}
 		if (menuDef->selectedIndex > 0) {
 			this->selectedIndex = menuDef->selectedIndex;
 		}

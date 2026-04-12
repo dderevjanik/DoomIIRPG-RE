@@ -342,6 +342,7 @@ void MenuSystem::select(int i) {
 		}
 		case 7: { // ACTION_NEWGAME
 			app->canvas->m_controlAlpha = 0x32;
+			LOG_INFO("[menu] ACTION_NEWGAME: hasSavedState=%d\n", app->game->hasSavedState());
 			if (app->game->hasSavedState()) {
 				this->gotoMenu(Menus::MENU_MAIN_CONFIRMNEW);
 			}

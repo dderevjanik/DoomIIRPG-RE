@@ -14,6 +14,14 @@
 #include "BotDyingState.h"
 #include "ErrorState.h"
 #include "BenchmarkState.h"
+#include "DialogState.h"
+#include "LootingState.h"
+#include "TreadmillState.h"
+#include "CameraState.h"
+#include "InterCameraState.h"
+#include "MiniGameState.h"
+#include "LoadingState.h"
+#include "SavingState.h"
 
 // Default game module: D2RPG.
 // Creates and manages all D2RPG game objects.
@@ -32,6 +40,14 @@ public:
 	BotDyingState botDyingState;
 	ErrorState errorState;
 	BenchmarkState benchmarkState;
+	DialogState dialogState;
+	LootingState lootingState;
+	TreadmillState treadmillState;
+	CameraState cameraState;
+	InterCameraState interCameraState;
+	MiniGameState miniGameState;
+	LoadingState loadingState;
+	SavingState savingState;
 
 	DoomIIRPGGame() {}
 	~DoomIIRPGGame() override {}
