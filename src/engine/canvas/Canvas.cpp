@@ -471,49 +471,9 @@ void Canvas::backPaint(Graphics* graphics) {
 		this->drawTargetPracticeScore(graphics);
 	}
 
-	// Dispatch render to registered state handler if available
+	// Dispatch render to registered state handler
 	if (this->state >= 0 && this->state < MAX_STATE_ID && stateHandlers[this->state]) {
 		stateHandlers[this->state]->render(this, graphics);
-	}
-	else if (this->state == Canvas::ST_INTRO_MOVIE) {
-		this->playIntroMovie(graphics);
-	}
-	else if (this->state == Canvas::ST_CHARACTER_SELECTION) {
-		this->drawCharacterSelection(graphics);
-	}
-	else if (this->state == Canvas::ST_INTRO) {
-		this->drawStory(graphics);
-	}
-	else if (this->state == Canvas::ST_EPILOGUE) {
-		this->drawScrollingText(graphics);
-	}
-	else if (this->state == Canvas::ST_CREDITS) {
-		this->drawCredits(graphics);
-	}
-	else if (this->state == Canvas::ST_TRAVELMAP) {
-		this->drawTravelMap(graphics);
-	}
-	else if (this->state == Canvas::ST_AUTOMAP) {
-		this->drawAutomap(graphics, !this->automapDrawn);
-		this->m_softKeyButtons->Render(graphics);
-		app->hud->drawArrowControls(graphics);
-		this->automapDrawn = true;
-	}
-	else if (this->state == Canvas::ST_DIALOG) {
-		this->dialogState(graphics);
-	}
-	else if (this->state == Canvas::ST_MINI_GAME) {
-		IMinigame* mg = CAppContainer::getInstance()->minigameRegistry.getById(this->stateVars[0]);
-		if (mg) mg->updateGame(graphics);
-	}
-	else if (this->state == Canvas::ST_ERROR) {
-		//this->errorState(graphics);
-	}
-	else if (this->state == Canvas::ST_LOOTING) {
-		this->drawLootingMenu(graphics);
-	}
-	else if (this->state == Canvas::ST_TREADMILL) {
-		this->drawTreadmillReadout(graphics);
 	}
 
 	/*if ((this->repaintFlags & Canvas::REPAINT_SOFTKEYS) != 0x0) { // REPAINT_SOFTKEYS
@@ -844,175 +804,73 @@ void Canvas::run() {
 	app->game->updateAutomap = false;
 	//printf("this->state %d\n", this->state);
 
-	// Dispatch to registered state handler if available
+	// Dispatch to registered state handler
 	if (this->state >= 0 && this->state < MAX_STATE_ID && stateHandlers[this->state]) {
 		stateHandlers[this->state]->update(this);
 	}
-	else if (this->state == Canvas::ST_PLAYING) {
-
-		if (this->m_controlButton) {
-			this->handleEvent(this->m_controlButton->buttonID);
-		}
-
-		app->game->updateAutomap = true;
-		if (this->numHelpMessages == 0 && app->game->queueAdvanceTurn) {
-			app->game->snapMonsters(true);
-			app->game->advanceTurn();
-		}
-
-		this->playingState();
-		if (this->state == Canvas::ST_PLAYING) {
-			this->repaintFlags |= Canvas::REPAINT_HUD;
-			app->hud->repaintFlags |= 0x2f;
-		}
-	}
-	else if (this->state == Canvas::ST_INTER_CAMERA) {
-		this->repaintFlags |= Canvas::REPAINT_HUD;
-		app->hud->repaintFlags |= 0x2B;
-	}
-	else if (this->state != Canvas::ST_CREDITS && this->state != Canvas::ST_TRAVELMAP && this->state != Canvas::ST_MIXING) {
-		if (this->state != Canvas::ST_MINI_GAME) {
-			if (this->state == Canvas::ST_COMBAT) {
-				app->game->updateAutomap = true;
-				this->combatState();
-			}
-			else if (this->state == Canvas::ST_INTRO_MOVIE) {
-				if ((app->game->hasSeenIntro && this->numEvents != 0) || this->scrollingTextDone) {
-					this->dialogBuffer->dispose();
-					this->dialogBuffer = nullptr;
-					app->game->hasSeenIntro = true;
-					app->game->saveConfig();
-					this->backToMain(false);
-				}
-			}
-			else if (this->state == Canvas::ST_EPILOGUE) {
-				if (this->scrollingTextDone) {
-					this->disposeEpilogue();
-				}
-			}
-			else if (this->state != Canvas::ST_CHARACTER_SELECTION) {
-				if (this->state == Canvas::ST_INTRO) {
-					if (this->storyPage >= this->storyTotalPages) {
-						this->disposeIntro();
-					}
-				}
-				else if (this->state == Canvas::ST_SAVING) {
-					if ((this->saveType & 0x2) != 0x0 || (this->saveType & 0x1) != 0x0) {
-						if ((this->saveType & 0x8) != 0x0) {
-							if (app->game->spawnParam != 0) {
-								int n11 = 32 + ((app->game->spawnParam & 0x1F) << 6);
-								int n12 = 32 + ((app->game->spawnParam >> 5 & 0x1F) << 6);
-								app->game->saveState(this->lastMapID, this->loadMapID, n11, n12, (app->game->spawnParam >> 10 & 0xFF) << 7, 0, n11, n12, n11, n12, 36, 0, 0, this->saveType);
-							}
-							else {
-								app->game->saveState(this->lastMapID, this->loadMapID, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, this->saveType);
-							}
-						}
-						else if ((this->saveType & 0x10) != 0x0) {
-							int n13 = 32 + ((app->game->spawnParam & 0x1F) << 6);
-							int n14 = 32 + ((app->game->spawnParam >> 5 & 0x1F) << 6);
-							app->game->saveState(this->loadMapID, app->menuSystem->LEVEL_STATS_nextMap, n13, n14, (app->game->spawnParam >> 10 & 0xFF) << 7, 0, n13, n14, n13, n14, 36, 0, 0, this->saveType);
-						}
-						else {
-							app->game->saveState(this->loadMapID, this->loadMapID, this->destX, this->destY, this->destAngle, this->viewPitch, this->prevX, this->prevY, this->saveX, this->saveY, this->saveZ, this->saveAngle, this->savePitch, this->saveType);
-						}
-						app->hud->addMessage((short)0, (short)38);
-					}
-					else {
-						app->Error(48); // ERR_SAVESTATE
-					}
-
-					if ((this->saveType & 0x4) != 0x0) {
-						this->backToMain(false);
-					}
-					else if ((this->saveType & 0x40) != 0x0) {
-						app->shutdown();
-					}
-					else if ((this->saveType & 0x8) != 0x0) {
-						this->setState(Canvas::ST_TRAVELMAP);
-					}
-					else if ((this->saveType & 0x10) != 0x0) {
-						app->sound->playSound(Sounds::getResIDByName(SoundName::MUSIC_LEVEL_END), 1u, 3, saveType & 8);
-						app->menuSystem->setMenu(Menus::MENU_LEVEL_STATS);
-					}
-					else if ((this->saveType & 0x100) != 0x0) {
-						app->menuSystem->setMenu(Menus::MENU_END_FINALQUIT);
-					}
-					else {
-						if ((this->saveType & 0x80) != 0x0) {
-							app->menuSystem->returnToGame();
-						}
-						this->setState(Canvas::ST_PLAYING);
-					}
-					this->saveType = 0;
-					this->clearEvents(1);
-				}
-				else if (this->state == Canvas::ST_LOADING) {
-					if (this->loadType == 0) {
-						if (!this->loadMedia()) {
-							this->flushGraphics();
-							return;
-						}
-					}
-					else {
-						app->game->loadState(this->loadType);
-						app->hud->addMessage((short)0, (short)39);
-						this->loadType = 0;
-					}
-				}
-				else if (this->state == Canvas::ST_MENU) {
-					this->menuState();
-				}
-				else if (this->state == Canvas::ST_DIALOG) {
-					app->game->updateLerpSprites();
-					this->updateView();
-					this->repaintFlags |= (Canvas::REPAINT_HUD | Canvas::REPAINT_PARTICLES);
-					app->hud->repaintFlags |= 0x2B;
-					//app->hud->repaintFlags &= 0xFFFFFFBF;
-				}
-				else if (this->state == Canvas::ST_AUTOMAP) {
-					if (this->m_controlButton) {
-						if (app->gameTime > this->m_controlButtonTime) {
-							this->m_controlButtonTime = app->gameTime + 250;
-							this->handleEvent(this->m_controlButton->buttonID);
-						}
-					}
-					app->game->updateAutomap = true;
-					this->automapState();
-				}
-				else if (this->state == Canvas::ST_DYING) {
-					this->dyingState();
-				}
-				else if (this->state == Canvas::ST_LOOTING) {
-					this->lootingState();
-				}
-				else if (this->state == Canvas::ST_TREADMILL) {
-					this->treadmillState();
-				}
-				else if (this->state == Canvas::ST_BOT_DYING) {
-					this->familiarDyingState();
-				}
-				else if (this->state == Canvas::ST_CAMERA) {
-					if (app->game->activeCameraKey != -1) {
-						app->game->activeCamera->Update(app->game->activeCameraKey, app->gameTime - app->game->activeCameraTime);
-					}
-					app->game->updateLerpSprites();
-					this->updateView();
-					if (this->state == Canvas::ST_CAMERA && app->gameTime > app->game->cinUnpauseTime && this->softKeyRightID == -1) {
-						this->clearLeftSoftKey();
-						this->setRightSoftKey((short)0, (short)40);
-					}
-				}
-				else if (this->state == Canvas::ST_LOGO) {
-					this->logoState();
-				}
-				else if (this->state == Canvas::ST_BENCHMARK) {
-					this->renderOnlyState();
+	// ST_SAVING — inline (needs early return from run)
+	else if (this->state == Canvas::ST_SAVING) {
+		if ((this->saveType & 0x2) != 0x0 || (this->saveType & 0x1) != 0x0) {
+			if ((this->saveType & 0x8) != 0x0) {
+				if (app->game->spawnParam != 0) {
+					int n11 = 32 + ((app->game->spawnParam & 0x1F) << 6);
+					int n12 = 32 + ((app->game->spawnParam >> 5 & 0x1F) << 6);
+					app->game->saveState(this->lastMapID, this->loadMapID, n11, n12, (app->game->spawnParam >> 10 & 0xFF) << 7, 0, n11, n12, n11, n12, 36, 0, 0, this->saveType);
 				}
 				else {
-					app->Error(51); // ERR_STATE
+					app->game->saveState(this->lastMapID, this->loadMapID, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, this->saveType);
 				}
 			}
+			else if ((this->saveType & 0x10) != 0x0) {
+				int n13 = 32 + ((app->game->spawnParam & 0x1F) << 6);
+				int n14 = 32 + ((app->game->spawnParam >> 5 & 0x1F) << 6);
+				app->game->saveState(this->loadMapID, app->menuSystem->LEVEL_STATS_nextMap, n13, n14, (app->game->spawnParam >> 10 & 0xFF) << 7, 0, n13, n14, n13, n14, 36, 0, 0, this->saveType);
+			}
+			else {
+				app->game->saveState(this->loadMapID, this->loadMapID, this->destX, this->destY, this->destAngle, this->viewPitch, this->prevX, this->prevY, this->saveX, this->saveY, this->saveZ, this->saveAngle, this->savePitch, this->saveType);
+			}
+			app->hud->addMessage((short)0, (short)38);
+		}
+		else {
+			app->Error(48); // ERR_SAVESTATE
+		}
+		if ((this->saveType & 0x4) != 0x0) {
+			this->backToMain(false);
+		}
+		else if ((this->saveType & 0x40) != 0x0) {
+			app->shutdown();
+		}
+		else if ((this->saveType & 0x8) != 0x0) {
+			this->setState(Canvas::ST_TRAVELMAP);
+		}
+		else if ((this->saveType & 0x10) != 0x0) {
+			app->sound->playSound(Sounds::getResIDByName(SoundName::MUSIC_LEVEL_END), 1u, 3, saveType & 8);
+			app->menuSystem->setMenu(Menus::MENU_LEVEL_STATS);
+		}
+		else if ((this->saveType & 0x100) != 0x0) {
+			app->menuSystem->setMenu(Menus::MENU_END_FINALQUIT);
+		}
+		else {
+			if ((this->saveType & 0x80) != 0x0) {
+				app->menuSystem->returnToGame();
+			}
+			this->setState(Canvas::ST_PLAYING);
+		}
+		this->saveType = 0;
+		this->clearEvents(1);
+	}
+	// ST_LOADING — inline (needs early return from run for loadMedia)
+	else if (this->state == Canvas::ST_LOADING) {
+		if (this->loadType == 0) {
+			if (!this->loadMedia()) {
+				this->flushGraphics();
+				return;
+			}
+		}
+		else {
+			app->game->loadState(this->loadType);
+			app->hud->addMessage((short)0, (short)39);
+			this->loadType = 0;
 		}
 	}
 
@@ -1117,31 +975,6 @@ void Canvas::setState(int state) {
 	this->m_controlButtonIsTouched = false;
 	this->m_controlButton = 0;
 
-	// Skip inline exit cleanup for states with registered handlers (handled by onExit)
-	if (this->state >= 0 && this->state < MAX_STATE_ID && stateHandlers[this->state]) {
-		// onExit will be called below
-	}
-	else if (this->state == Canvas::ST_AUTOMAP) {
-		app->player->unpause(app->time - this->automapTime);
-	}
-	else if (this->state == Canvas::ST_MENU) {
-		app->player->unpause(app->time - app->menuSystem->startTime);
-		app->menuSystem->clearStack();
-	}
-	else if (this->state == Canvas::ST_CAMERA) {
-		app->render->disableRenderActivate = false;
-		app->game->skippingCinematic = false;
-	}
-	else if (this->state == Canvas::ST_COMBAT && state != Canvas::ST_COMBAT && app->combat->stage != Canvas::ST_MENU) {
-		app->combat->cleanUpAttack();
-	}
-	else if (this->state == Canvas::ST_CREDITS) {
-		this->dialogBuffer->dispose();
-		this->dialogBuffer = nullptr;
-	}
-	else if (this->state == Canvas::ST_INTER_CAMERA) {
-	}
-
 	// Call onExit for registered state handler
 	if (this->state >= 0 && this->state < MAX_STATE_ID && stateHandlers[this->state]) {
 		stateHandlers[this->state]->onExit(this);
@@ -1151,187 +984,11 @@ void Canvas::setState(int state) {
 	this->state = state;
 
 	//printf("state %d\n", state);
-	// Skip inline enter setup for states with registered handlers (handled by onEnter)
-	if (state >= 0 && state < MAX_STATE_ID && stateHandlers[state]) {
-		// onEnter will be called at the end of setState
-	}
-	else if (state == Canvas::ST_COMBAT) {
-		app->hud->repaintFlags = 47;
-		this->repaintFlags |= Canvas::REPAINT_HUD;
-		this->clearSoftKeys();
-		this->combatDone = false;
-	}
-	else if (state == Canvas::ST_TRAVELMAP) {
-		if (CAppContainer::getInstance()->skipTravelMap) {
-			this->setLoadingBarText((short)0, (short)41);
-			this->setState(Canvas::ST_LOADING);
-			return;
-		}
-		this->initTravelMap();
-	}
-	else if (state == Canvas::ST_PLAYING) {
-		app->hud->repaintFlags = 0x2f;
-		this->repaintFlags |= Canvas::REPAINT_HUD;
-		app->game->lastTurnTime = app->time;
-		if (app->game->monstersTurn == 0 || this->oldState == Canvas::ST_CAMERA) {
-			this->drawPlayingSoftKeys();
-		}
-		if (this->oldState == Canvas::ST_COMBAT && app->combat->curTarget != nullptr && app->combat->curTarget->def->eType == Enums::ET_NPC) {
-			app->game->executeStaticFunc(7);
-		}
-		this->updateFacingEntity = true;
-		if (this->oldState != Canvas::ST_COMBAT && this->oldState != Canvas::ST_DIALOG) {
-			this->invalidateRect();
-		}
-		if (CAppContainer::getInstance()->pendingEquipLevel > 0) {
-			app->player->equipForLevel(CAppContainer::getInstance()->pendingEquipLevel);
-			CAppContainer::getInstance()->pendingEquipLevel = 0;
-		}
-	}
-	else if (state == Canvas::ST_INTER_CAMERA) {
-		app->hud->repaintFlags = 43;
-		this->repaintFlags |= Canvas::REPAINT_HUD;
-	}
-	else if (state == Canvas::ST_DIALOG) {
-		if (app->canvas->isZoomedIn) {
-			this->isZoomedIn = 0;
-			app->StopAccelerometer();
-			this->destAngle = this->viewAngle = (this->viewAngle + this->zoomAngle + 127) & 0xFFFFFF00;
-			app->tinyGL->resetViewPort();
-			this->drawPlayingSoftKeys();
-		}
-		if (app->game->isCameraActive()) {
-			app->game->activeCameraTime = app->gameTime - app->game->activeCameraTime;
-		}
-		app->hud->repaintFlags = 47;
-		this->repaintFlags |= Canvas::REPAINT_HUD;
-		app->tinyGL->resetViewPort();
-		//this->clearLeftSoftKey();
-		/*this->setRightSoftKey((short)0, (short)40);
-		int n2 = 0;
-		if (this->dialogStyle == 2 || this->dialogStyle == 16 || this->dialogStyle == 9 || (this->dialogStyle == 4 && this->dialogItem != nullptr)) {
-			n2 = 1;
-		}
-		if (this->numDialogLines - n2 > this->dialogViewLines) {
-			this->setLeftSoftKey((short)0, (short)125);
-		}
-		else {
-			//this->clearLeftSoftKey();
-		}*/
-		this->clearSoftKeys();
-		this->clearEvents(1);
-	}
-	else if (state == Canvas::ST_DYING) {
-		app->hud->repaintFlags = 47;
-		this->repaintFlags |= Canvas::REPAINT_HUD;
-		if (this->isZoomedIn) {
-			this->isZoomedIn = false;
-			app->StopAccelerometer();
-			this->viewAngle += this->zoomAngle;
-			int n3 = 255;
-			this->destAngle = (this->viewAngle = (this->viewAngle + (n3 >> 1) & ~n3));
-			app->tinyGL->resetViewPort();
-			this->drawPlayingSoftKeys();
-		}
-		this->clearSoftKeys();
-		this->deathTime = app->time;
-		this->destPitch = 64;
-		this->numHelpMessages = 0;
-	}
-	else if (state == Canvas::ST_BOT_DYING) {
-		app->hud->repaintFlags = 47;
-		this->repaintFlags |= Canvas::REPAINT_HUD;
-		this->clearSoftKeys();
-		this->familiarDeathTime = app->time;
-		this->selfDestructScreenShakeStarted = false;
-		app->hud->brightenScreen(100, 0);
-		if (!this->familiarSelfDestructed) {
-			app->hud->smackScreen(100);
-		}
-		this->destPitch = 64;
-	}
-	else if (state == Canvas::ST_LOOTING) {
-		this->clearSoftKeys();
-		this->lootingTime = app->time;
-		this->crouchingForLoot = true;
-		this->lootingCachedPitch = this->destPitch;
-		this->field_0xac5_ = false;
-	}
-	else if (state == Canvas::ST_TREADMILL) {
-		this->clearSoftKeys();
-		//this->setRightSoftKey((short)0, (short)29); // J2ME
-		app->combat->shiftWeapon(true);
-		app->hud->repaintFlags |= 0x20;
-		this->repaintFlags |= Canvas::REPAINT_HUD;
-		this->treadmillNumSteps = 0;
-		this->treadmillLastStep = 1;
-		this->treadmillLastStepTime = app->time;
-		this->treadmillReturnCode = 0;
-	}
-	else if (state == Canvas::ST_EPILOGUE) {
-		app->player->levelGrade(true);
-		bool soundEnabled = app->sound->allowSounds;
-		app->sound->allowSounds = app->canvas->areSoundsAllowed;
-		app->sound->allowSounds = soundEnabled;
-		this->clearSoftKeys();
-		this->loadEpilogueText();
-		this->stateVars[0] = 1;
-	}
-	else if (state == Canvas::ST_CREDITS) {
-		app->localization->loadText(2);
-		this->initScrollingText(2, 0, false, 16, 5, 500);
-		app->localization->unloadText(2);
-	}
-	else if (state == Canvas::ST_CHARACTER_SELECTION) {
-		this->clearSoftKeys();
-		this->setupCharacterSelection();
-		this->stateVars[0] = 1;
-		this->stateVars[1] = 0;
-		this->stateVars[2] = 1;
-		this->stateVars[8] = 0; // [GEC]
-	}
-	else if (state == Canvas::ST_INTRO) {
-		this->clearSoftKeys();
-		this->loadPrologueText();
-		this->stateVars[0] = 1;
-	}
-	else if (state == Canvas::ST_INTRO_MOVIE) {
-		this->initScrollingText((short)0, (short)133, 0, 32, 1, 800);
-		this->stateVars[0] = 1;
-	}
-	else if (state == Canvas::ST_LOADING || state == Canvas::ST_SAVING) {
+	// Inline enter setup for states without handlers (ST_LOADING, ST_SAVING)
+	if (state == Canvas::ST_LOADING || state == Canvas::ST_SAVING) {
 		this->repaintFlags &= ~Canvas::REPAINT_HUD;
 		this->pacifierX = this->SCR_CX - 66;
 		this->updateLoadingBar(false);
-	}
-	else if (state == Canvas::ST_AUTOMAP) {
-		this->automapDrawn = false;
-		this->automapTime = app->time;
-	}
-	else if (state == Canvas::ST_MENU) {
-		app->menuSystem->startTime = app->time;
-		/*if (Canvas.oldState == Canvas::ST_PLAYING) {
-			Sound.playSound(3);
-		}
-		else if (Canvas.oldState == Canvas::ST_MIXING) {
-			MenuSystem.goBackToStation = true;
-		}*/
-
-		if (this->oldState != Canvas::ST_MENU) {
-			this->clearEvents(1);
-		}
-		app->beginImageLoading();
-		app->endImageLoading();
-	}
-	else if (state == Canvas::ST_CAMERA) {
-		app->hud->msgCount = 0;
-		app->hud->subTitleID = -1;
-		app->hud->cinTitleID = -1;
-		app->render->disableRenderActivate = true;
-		this->repaintFlags |= Canvas::REPAINT_HUD; // j2me 0x11;
-		app->hud->repaintFlags = 24;
-		this->clearSoftKeys();
-		app->tinyGL->setViewport(this->cinRect[0], this->cinRect[1], this->cinRect[2], this->cinRect[3]);
 	}
 
 	// Call onEnter for registered state handler
@@ -2557,275 +2214,13 @@ bool Canvas::handleEvent(int key) {
 	if (key == 26)
 		return true;
 
-	// Dispatch input to registered state handler if available
+	// Dispatch input to registered state handler
 	if (state >= 0 && state < MAX_STATE_ID && stateHandlers[state]) {
 		return stateHandlers[state]->handleInput(this, key, keyAction);
 	}
 
-	if (key == 18) {
-		switch (state)
-		{
-		case Canvas::ST_LOGO:
-			app->shutdown();
-			break;
-		case Canvas::ST_MENU:
-			if (app->menuSystem->menu == Menus::MENU_ENABLE_SOUNDS) {
-				app->shutdown();
-			}
-			break;
-		case Canvas::ST_INTRO_MOVIE:
-			this->exitIntroMovie(true);
-			app->shutdown();
-			break;
-		}
-		return true;
-	}
-
-	if (this->state == Canvas::ST_MENU && app->menuSystem->isChangingValues()) {
-		if (app->menuSystem->activeSlider == MenuSystem::SliderMode::SfxVolume) { // [GEC]
-			if (keyAction == Enums::ACTION_RIGHT) {
-				app->sound->volumeUp(10);
-				app->menuSystem->soundClick();
-				app->menuSystem->refresh();
-				return true;
-			}
-			else if (keyAction == Enums::ACTION_LEFT) {
-				app->sound->volumeDown(10);
-				app->menuSystem->soundClick();
-				app->menuSystem->refresh();
-				return true;
-			}
-		}
-		else if (app->menuSystem->activeSlider == MenuSystem::SliderMode::MusicVolume) { // [GEC]
-			if (keyAction == Enums::ACTION_RIGHT) {
-				app->sound->musicVolumeUp(10);
-				app->menuSystem->soundClick();
-				app->menuSystem->refresh();
-				return true;
-			}
-			else if (keyAction == Enums::ACTION_LEFT) {
-				app->sound->musicVolumeDown(10);
-				app->menuSystem->soundClick();
-				app->menuSystem->refresh();
-				return true;
-			}
-		}
-		else if (app->menuSystem->activeSlider == MenuSystem::SliderMode::ButtonsAlpha) { // [GEC]
-			if (keyAction == Enums::ACTION_RIGHT) {
-				this->m_controlAlpha += 10;
-				if (this->m_controlAlpha > 100) {
-					this->m_controlAlpha = 100;
-				}
-				app->menuSystem->soundClick();
-				app->menuSystem->refresh();
-				return true;
-			}
-			else if (keyAction == Enums::ACTION_LEFT) {
-				this->m_controlAlpha -= 10;
-				if (this->m_controlAlpha < 0) {
-					this->m_controlAlpha = 0;
-				}
-				app->menuSystem->soundClick();
-				app->menuSystem->refresh();
-				return true;
-			}
-		}
-		else if (app->menuSystem->activeSlider == MenuSystem::SliderMode::VibrationIntensity) { // [GEC]
-			if (keyAction == Enums::ACTION_RIGHT) {
-				gVibrationIntensity += 10;
-				if (gVibrationIntensity > 100) {
-					gVibrationIntensity = 100;
-				}
-				app->menuSystem->soundClick();
-				app->menuSystem->refresh();
-				return true;
-			}
-			else if (keyAction == Enums::ACTION_LEFT) {
-				gVibrationIntensity -= 10;
-				if (gVibrationIntensity < 0) {
-					gVibrationIntensity = 0;
-				}
-				app->menuSystem->soundClick();
-				app->menuSystem->refresh();
-				return true;
-			}
-		}
-		else if (app->menuSystem->activeSlider == MenuSystem::SliderMode::Deadzone) { // [GEC]
-			if (keyAction == Enums::ACTION_RIGHT) {
-				gDeadZone += 5;
-				if (gDeadZone > 100) {
-					gDeadZone = 100;
-				}
-				app->menuSystem->soundClick();
-				app->menuSystem->refresh();
-				return true;
-			}
-			else if (keyAction == Enums::ACTION_LEFT) {
-				gDeadZone -= 5;
-				if (gDeadZone < 0) {
-					gDeadZone = 0;
-				}
-				app->menuSystem->soundClick();
-				app->menuSystem->refresh();
-				return true;
-			}
-		}
-	}
-
-#if 0 // IOS
-	if (app->sound->allowSounds) {
-		bool refresh = false;
-		if (this->state == Canvas::ST_MENU && app->menuSystem->activeSlider == MenuSystem::SliderMode::SfxVolume) {
-			refresh = true;
-		}
-		if (key == 27) {
-			app->sound->volumeUp(10);
-			if (refresh) {
-				app->menuSystem->refresh();
-			}
-			return true;
-		}
-		if (key == 28) {
-			app->sound->volumeDown(10);
-			if (refresh) {
-				app->menuSystem->refresh();
-			}
-			return true;
-		}
-	}
-#endif
-
-	if (this->st_enabled) {
-		this->st_enabled = false;
-		this->renderOnly = false;
-	}
-
-	if (fadeFlags != 0 && (fadeFlags & 0x10) != 0x0) {
-		return true;
-	}
-
-	if (state == Canvas::ST_ERROR) {
-		if (keyAction == Enums::ACTION_FIRE || key == 18) {
-			app->shutdown();
-		}
-	}
-	else if (state == Canvas::ST_MENU) {
-		app->menuSystem->handleMenuEvents(key, keyAction);
-	}
-	else if (state == Canvas::ST_CHARACTER_SELECTION) {
-		this->handleCharacterSelectionInput(key, keyAction);
-	}
-	else if (state == Canvas::ST_INTRO) {
-		this->handleStoryInput(key, keyAction);
-	}
-	else if (state == Canvas::ST_INTRO_MOVIE) {
-		app->game->skipMovie = (keyAction == Enums::ACTION_FIRE);
-	}
-	else if (state == Canvas::ST_EPILOGUE) {
-		if (key == 18) {
-			this->disposeEpilogue();
-		}
-	}
-	else if (state == Canvas::ST_DIALOG) {
-		this->handleDialogEvents(key);
-	}
-	else if (state == Canvas::ST_MINI_GAME) { // [GEC] Restored from J2ME/BREW
-		IMinigame* mg = CAppContainer::getInstance()->minigameRegistry.getById(this->stateVars[0]);
-		if (mg) mg->handleInput(keyAction);
-	}
-	else if (state == Canvas::ST_BENCHMARK || state == Canvas::ST_BENCHMARKDONE) { // [GEC] Restored from J2ME/BREW
-		this->setState(Canvas::ST_PLAYING);
-		this->setAnimFrames(this->animFrames);
-	}
-	else if (state == Canvas::ST_AUTOMAP) {
-		this->automapDrawn = false;
-		return handlePlayingEvents(key, keyAction);
-	}
-	else if (state == Canvas::ST_PLAYING) {
-		if (this->isZoomedIn) {
-			return this->handleZoomEvents(key, keyAction);
-		}
-		return this->handlePlayingEvents(key, keyAction);
-	}
-	else if (state == Canvas::ST_COMBAT) {
-		if (app->combat->curAttacker != nullptr && !this->isZoomedIn) {
-			if (keyAction == Enums::ACTION_RIGHT) {
-				this->destAngle -= 256;
-			}
-			else if (keyAction == Enums::ACTION_LEFT) {
-				this->destAngle += 256;
-			}
-			this->startRotation(false);
-		}
-		if (this->combatDone && !app->game->interpolatingMonsters) {
-			this->setState(Canvas::ST_PLAYING);
-			if (app->combat->curAttacker == nullptr) {
-				app->game->advanceTurn();
-				if (state == Canvas::ST_PLAYING) {
-					if (this->isZoomedIn) {
-						return handleZoomEvents(key, keyAction);
-					}
-					return this->handlePlayingEvents(key, keyAction);
-				}
-			}
-		}
-	}
-	else if (state == Canvas::ST_CREDITS) {
-		if (this->endingGame) {
-			if ((keyAction == Enums::ACTION_FIRE && this->scrollingTextDone) || key == 18) {
-				this->endingGame = false;
-				app->sound->soundStop();
-				app->menuSystem->imgMainBG->~Image();
-				app->menuSystem->imgLogo->~Image();
-				app->menuSystem->imgMainBG = app->loadImage(Resources::RES_LOGO_BMP_GZ, true);
-				app->menuSystem->imgLogo = app->loadImage(Resources::RES_LOGO2_BMP_GZ, true);
-				app->menuSystem->background = app->menuSystem->imgMainBG;
-				app->menuSystem->setMenu(Menus::MENU_END_);
-			}
-		}
-		else if (keyAction == Enums::ACTION_BACK || keyAction == Enums::ACTION_FIRE) {
-			if (this->loadMapID == 0) {
-				int n2 = 3;
-				if (app->game->hasSavedState()) {
-					++n2;
-				}
-				app->menuSystem->pushMenu(3, n2, 0, 0, 0);
-				app->menuSystem->setMenu(Menus::MENU_MAIN_HELP);
-			}
-			else {
-				app->sound->soundStop();
-				app->menuSystem->pushMenu(29, 7, 0, 0, 0);
-				app->menuSystem->setMenu(Menus::MENU_INGAME_HELP);
-			}
-		}
-	}
-	else if (state == Canvas::ST_CAMERA) {
-		if (!this->changeMapStarted && app->gameTime > app->game->cinUnpauseTime && (keyAction == Enums::ACTION_PASSTURN || keyAction == Enums::ACTION_AUTOMAP || keyAction == Enums::ACTION_FIRE || key == 18)) {
-			app->game->skipCinematic();
-		}
-	}
-	else if (state == Canvas::ST_DYING) {
-		if (this->stateVars[0] > 0 && (keyAction == Enums::ACTION_FIRE || key == 18)) {
-			app->menuSystem->setMenu(Menus::MENU_INGAME_DEAD);
-		}
-	}
-	else if (state == Canvas::ST_MIXING) {
-		// No implementado
-	}
-	else if (state == Canvas::ST_TRAVELMAP) {
-		this->handleTravelMapInput(key, keyAction);
-	}
-	else if (state == Canvas::ST_LOOTING) {
-		this->handleLootingEvents(keyAction);
-	}
-	else if (state == Canvas::ST_TREADMILL) {
-		this->handleTreadmillEvents(keyAction);
-	}
-	else {
-		return false;
-	}
-
-	return true;
+	// Only ST_LOADING/ST_SAVING reach here (no handlers registered)
+	return false;
 }
 
 void Canvas::runInputEvents() {
