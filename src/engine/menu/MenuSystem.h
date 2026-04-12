@@ -394,6 +394,11 @@ public:
     void gotoMenu(int menu);
     void handleMenuEvents(int key, int keyAction);
     void select(int i);
+    void selectDebugAction(int i);
+    void selectVideoSettings(int i);
+    void selectControlSettings(int i);
+    void selectVendingAction(int i);
+    void selectItemAction(int i);
     void infiniteLoop();
     int infiniteRecursion(int* array);
     void systemTest(int sysType);

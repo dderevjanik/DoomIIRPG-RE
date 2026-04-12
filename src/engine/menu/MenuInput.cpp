@@ -342,7 +342,6 @@ void MenuSystem::select(int i) {
 		}
 		case 7: { // ACTION_NEWGAME
 			app->canvas->m_controlAlpha = 0x32;
-			LOG_INFO("[menu] ACTION_NEWGAME: hasSavedState=%d\n", app->game->hasSavedState());
 			if (app->game->hasSavedState()) {
 				this->gotoMenu(Menus::MENU_MAIN_CONFIRMNEW);
 			}
@@ -403,49 +402,16 @@ void MenuSystem::select(int i) {
 			app->canvas->loadMap(1 + this->items[i].param, false, false);
 			break;
 		}
-		case 18: { // ACTION_USEITEMWEAPON
-			this->saveIndexes(1);
-			if (i > 0) {
-				app->player->selectWeapon((short)this->items[i].param);
-				this->returnToGame();
-				break;
-			}
+		case 18: // ACTION_USEITEMWEAPON
+		case 20: // ACTION_USEITEMSYRING
+		case 21: // ACTION_USEITEMOTHER
+		case 24: { // ACTION_CONFIRMUSE
+			this->selectItemAction(i);
 			break;
 		}
 		case 19: { // ACTION_SELECT_LANGUAGE
 			app->localization->setLanguage(this->items[i].param);
 			this->back();
-			break;
-		}
-		case 20: // ACTION_USEITEMSYRING
-		case 21: { // ACTION_USEITEMOTHER
-			bool useItem = app->player->useItem((short)this->menuParam);
-			if (app->game->animatingEffects != 0) {
-				this->returnToGame();
-				break;
-			}
-			app->game->snapMonsters(true);
-			app->game->snapLerpSprites(-1);
-			if (app->canvas->state != Canvas::ST_MENU) {
-				break;
-			}
-			if (useItem) {
-				this->back();
-				break;
-			}
-			if (this->menuParam == 22) {
-				this->gotoMenu(Menus::MENU_ITEMS_HOLY_WATER_MAX);
-				break;
-			}
-			if (this->menuParam >= 16 && this->menuParam < 18) {
-				this->gotoMenu(Menus::MENU_ITEMS_HEALTHMSG);
-				break;
-			}
-			if (this->menuParam >= 11 && this->menuParam < 13) {
-				this->gotoMenu(Menus::MENU_ITEMS_ARMORMSG);
-				break;
-			}
-			this->gotoMenu(Menus::MENU_ITEMS_SYRINGEMSG);
 			break;
 		}
 		case 22: { // ACTION_CONTINUE
@@ -454,17 +420,6 @@ void MenuSystem::select(int i) {
 		}
 		case 23: { // ACTION_MAIN_SPECIAL
 			app->canvas->backToMain(false);
-			break;
-		}
-		case 24: { // ACTION_CONFIRMUSE
-			if (this->menu == Menus::MENU_ITEMS_DRINKS) {
-				this->saveIndexes(2);
-			}
-			else if (this->menu == Menus::MENU_ITEMS) {
-				this->saveIndexes(4);
-			}
-			this->menuParam = this->items[i].param;
-			this->gotoMenu(Menus::MENU_ITEMS_CONFIRM);
 			break;
 		}
 		case 25: { // ACTION_SAVEEXIT
@@ -491,37 +446,10 @@ void MenuSystem::select(int i) {
 			}
 			break;
 		}
-		case 28: { // ACTION_CONFIRMBUY
-			this->menuParam = this->items[i].param;
-			app->vendingMachine->currentItemQuantity = 1;
-			if (this->menu == Menus::MENU_VENDING_MACHINE_LAST) {
-				this->setMenu(Menus::MENU_VENDING_MACHINE_CONFIRM);
-			}
-			else {
-				this->gotoMenu(Menus::MENU_VENDING_MACHINE_CONFIRM);
-			}
-			break;
-		}
-		case 29: { // ACTION_BUYDRINK
-			if (app->vendingMachine->buyDrink(this->menuParam)) {
-				this->back();
-			}
-			else {
-				this->setMenu(Menus::MENU_VENDING_MACHINE_CANT_BUY);
-			}
-			break;
-		}
+		case 28: // ACTION_CONFIRMBUY
+		case 29: // ACTION_BUYDRINK
 		case 30: { // ACTION_BUYSNACK
-			if (app->player->inventory[24] < app->vendingMachine->currentItemPrice * app->vendingMachine->currentItemQuantity) {
-				this->setMenu(Menus::MENU_VENDING_MACHINE_CANT_BUY);
-			}
-			else {
-				for (int i = 0; i < app->vendingMachine->currentItemQuantity; ++i) {
-					app->player->inventory[24] -= (short)app->vendingMachine->getSnackPrice();
-					app->player->give(0, 16, 1, false);
-				}
-				this->back();
-			}
+			this->selectVendingAction(i);
 			break;
 		}
 		case 33: { // ACTION_RETURN_TO_PLAYER
@@ -529,248 +457,253 @@ void MenuSystem::select(int i) {
 			this->returnToGame();
 			break;
 		}
-		case 35: { // ACTION_FLIP_CONTROLS
-			app->canvas->flipControls();
-			this->setMenu(this->menu);
-			break;
-		}
-		case 36: { // ACTION_CONTROL_LAYOUT
-			++app->canvas->m_controlLayout;
-			if (app->canvas->m_controlLayout > 2) {
-				app->canvas->m_controlLayout = 0;
-			}
-			app->canvas->setControlLayout();
-			this->setMenu(this->menu);
-			break;
-		}
-
-		case Menus::ACTION_CHANGEMUSICVOLUME: { // [GEC]
-			this->activeSlider = (this->activeSlider == SliderMode::MusicVolume) ? SliderMode::None : SliderMode::MusicVolume;
-			this->setMenu(this->menu);
+		case 35: // ACTION_FLIP_CONTROLS
+		case 36: // ACTION_CONTROL_LAYOUT
+		case Menus::ACTION_CHANGEMUSICVOLUME:
+		case Menus::ACTION_CHANGEALPHA:
+		case Menus::ACTION_SET_BINDING:
+		case Menus::ACTION_DEFAULT_BINDINGS:
+		case Menus::ACTION_TOG_VIBRATION:
+		case Menus::ACTION_CHANGE_VIBRATION_INTENSITY:
+		case Menus::ACTION_CHANGE_DEADZONE: {
+			this->selectControlSettings(i);
 			break;
 		}
 
-		case Menus::ACTION_CHANGEALPHA: { // [GEC]
-			this->activeSlider = (this->activeSlider == SliderMode::ButtonsAlpha) ? SliderMode::None : SliderMode::ButtonsAlpha;
-			this->setMenu(this->menu);
+		case Menus::ACTION_CHANGE_VID_MODE:
+		case Menus::ACTION_TOG_VSYNC:
+		case Menus::ACTION_CHANGE_RESOLUTION:
+		case Menus::ACTION_APPLY_CHANGES:
+		case Menus::ACTION_TOG_TINYGL: {
+			this->selectVideoSettings(i);
 			break;
 		}
 
-		case Menus::ACTION_CHANGE_VID_MODE: { // [GEC]
-			if (++CAppContainer::getInstance()->sdlGL->windowMode > 2) {
-				CAppContainer::getInstance()->sdlGL->windowMode = 0;
-			}
-			this->setMenu(this->menu);
-			break;
-		}
-
-		case Menus::ACTION_TOG_VSYNC: { // [GEC]
-			CAppContainer::getInstance()->sdlGL->vSync = !CAppContainer::getInstance()->sdlGL->vSync;
-			this->setMenu(this->menu);
-			break;
-		}
-
-		case Menus::ACTION_CHANGE_RESOLUTION: { // [GEC]
-			if (++CAppContainer::getInstance()->sdlGL->resolutionIndex >= 18) {
-				CAppContainer::getInstance()->sdlGL->resolutionIndex = 0;
-			}
-			this->setMenu(this->menu);
-			break;
-		}
-
-		case Menus::ACTION_APPLY_CHANGES: { // [GEC]
-			CAppContainer::getInstance()->sdlGL->updateVideo();
-			app->game->saveConfig();
-			this->setMenu(this->menu);
-			break;
-		}
-
-		case Menus::ACTION_SET_BINDING: { // [GEC]
-			this->activeSlider = (this->activeSlider == SliderMode::Binding) ? SliderMode::None : SliderMode::Binding;
-			this->setMenu(this->menu);
-			break;
-		}
-
-		case Menus::ACTION_DEFAULT_BINDINGS: { // [GEC]
-			// Apply changes to default
-			std::memcpy(keyMappingTemp, keyMappingDefault, sizeof(keyMapping));
-			this->setMenu(this->menu);
-			break;
-		}
-
-		case Menus::ACTION_TOG_VIBRATION: { // [GEC]
-			app->canvas->vibrateEnabled ^= true;
-			if (app->canvas->vibrateEnabled) {
-				app->canvas->startShake(0, 0, 500);
-			}
-			this->items[(this->menu == Menus::MENU_MAIN_CONTROLLER) ? 2 : 1].textField2 = this->onOffValue(app->canvas->vibrateEnabled);
-			this->setMenu(this->menu);
-			break;
-		}
-
-		case Menus::ACTION_CHANGE_VIBRATION_INTENSITY: { // [GEC]
-			this->activeSlider = (this->activeSlider == SliderMode::VibrationIntensity) ? SliderMode::None : SliderMode::VibrationIntensity;
-			this->setMenu(this->menu);
-			break;
-		}
-
-		case Menus::ACTION_CHANGE_DEADZONE: { // [GEC]
-			this->activeSlider = (this->activeSlider == SliderMode::Deadzone) ? SliderMode::None : SliderMode::Deadzone;
-			this->setMenu(this->menu);
-			break;
-		}
-
-		case Menus::ACTION_TOG_TINYGL: { // [GEC]
-			Canvas* canvas = this->app->canvas.get();
-			TinyGL* tinyGL = this->app->tinyGL.get();
-			_glesObj->isInit = !_glesObj->isInit;
-
-			if (canvas->state == Canvas::ST_CAMERA) {
-				tinyGL->setViewport(canvas->cinRect[0], canvas->cinRect[1], canvas->cinRect[2], canvas->cinRect[3]);
-			}
-			else {
-				tinyGL->resetViewPort();
-			}
-
-			this->setMenu(this->menu);
-			break;
-		}
-
-		case 102: { // ACTION_GIVEALL
-			app->player->giveAll();
-			break;
-		}
-		case 103: { // ACTION_GIVEMAP
-			app->game->givemap(0, 0, 32, 32);
-			break;
-		}
-		case 104: { // ACTION_NOCLIP
-			app->player->noclip = !app->player->noclip;
-			this->setMenu(Menus::MENU_DEBUG);
-			break;
-		}
-		case 105: { // ACTION_DISABLEAI
-			app->game->disableAI = !app->game->disableAI;
-			this->setMenu(Menus::MENU_DEBUG);
-			break;
-		}
-		case 106: { // ACTION_NOHELP
-			app->player->enableHelp = !app->player->enableHelp;
-			app->game->saveConfig();
-			this->setMenu(Menus::MENU_DEBUG);
-			break;
-		}
-		case 107: { // ACTION_GODMODE
-			app->player->god = !app->player->god;
-			this->setMenu(Menus::MENU_DEBUG);
-			break;
-		}
-		case 108: { // ACTION_SHOWLOCATION
-			app->canvas->showLocation = !app->canvas->showLocation;
-			this->setMenu(Menus::MENU_DEBUG);
-			break;
-		}
-		case 109: { // ACTION_RFRAMES
-			int animFrames = app->canvas->animFrames + 1;
-			if (animFrames > 15) {
-				animFrames = 2;
-			}
-			app->canvas->setAnimFrames(animFrames);
-			app->game->saveConfig();
-			this->setMenu(Menus::MENU_DEBUG);
-			break;
-		}
-		case 110: { // ACTION_RSPEEDS
-			app->canvas->showSpeeds = !app->canvas->showSpeeds;
-			this->setMenu(Menus::MENU_DEBUG);
-			break;
-		}
-		case 111: { // ACTION_RSKIPFLATS
-			app->render->skipFlats = !app->render->skipFlats;
-			this->setMenu(Menus::MENU_DEBUG);
-			break;
-		}
-		case 112: { // ACTION_RSKIPCULL
-			app->render->skipCull = !app->render->skipCull;
-			this->setMenu(Menus::MENU_DEBUG);
-			break;
-		}
-		case 114: { // ACTION_RSKIPBSP
-			app->render->skipBSP = !app->render->skipBSP;
-			this->setMenu(Menus::MENU_DEBUG);
-			break;
-		}
-		case 115: { // ACTION_RSKIPLINES
-			app->render->skipLines = !app->render->skipLines;
-			this->setMenu(Menus::MENU_DEBUG);
-			break;
-		}
-		case 116: { // ACTION_RSKIPSPRITES
-			app->render->skipSprites = !app->render->skipSprites;
-			this->setMenu(Menus::MENU_DEBUG);
-			break;
-		}
-		case 117: { // ACTION_RONLYRENDER
-			app->canvas->renderOnly = !app->canvas->renderOnly;
-			this->setMenu(Menus::MENU_DEBUG);
-			break;
-		}
-		case 118: { // ACTION_RSKIPDECALS
-			app->render->skipDecals = !app->render->skipDecals;
-			this->setMenu(Menus::MENU_DEBUG);
-			break;
-		}
-		case 119: { // ACTION_RSKIP2DSTRETCH
-			app->render->skip2DStretch = !app->render->skip2DStretch;
-			this->setMenu(Menus::MENU_DEBUG);
-			break;
-		}
-		case 120: { // ACTION_DRIVING_MODE
-			this->setMenu(Menus::MENU_DEBUG);
-			break;
-		}
-		case 121: { // ACTION_RENDER_MODE
-			if (app->render->renderMode == 0) {
-				app->render->renderMode = 63;
-			}
-			else {
-				app->render->renderMode >>= 1;
-			}
-			this->setMenu(Menus::MENU_DEBUG);
-			break;
-		}
-		case 122: { // ACTION_EQUIPFORMAP
-			app->player->equipForLevel(app->canvas->loadMapID);
-			break;
-		}
-		case 123: { // ACTION_ONESHOT
-			app->combat->oneShotCheat = !app->combat->oneShotCheat;
-			this->setMenu(Menus::MENU_DEBUG);
-			break;
-		}
-		case 124: { // ACTION_DEBUG_FONT
-			app->canvas->enqueueHelpDialog((short)3, (short)342, (uint8_t)(-1));
-			this->returnToGame();
-			break;
-		}
-		case 125: { // ACTION_SYS_TEST
-			this->systemTest(this->items[i].param + 332);
-			break;
-		}
-		case 126: { // ACTION_SKIP_MINIGAMES
-			app->game->skipMinigames = !app->game->skipMinigames;
-			this->setMenu(Menus::MENU_DEBUG);
-			break;
-		}
-		case 127: { // ACTION_SHOW_HEAP
-			app->canvas->showFreeHeap = !app->canvas->showFreeHeap;
-			this->setMenu(Menus::MENU_DEBUG);
+		case 102: case 103: case 104: case 105: case 106: case 107: case 108:
+		case 109: case 110: case 111: case 112: case 114: case 115: case 116:
+		case 117: case 118: case 119: case 120: case 121: case 122: case 123:
+		case 124: case 125: case 126: case 127: {
+			this->selectDebugAction(i);
 			break;
 		}
 		default:
 			app->Error("Unhandled Menu Action: %i", this->items[i].action);
 			break;
 	}
+}
+
+void MenuSystem::selectItemAction(int i) {
+	Applet* app = this->app;
+	int action = this->items[i].action;
+	if (action == 18) { // ACTION_USEITEMWEAPON
+		this->saveIndexes(1);
+		if (i > 0) {
+			app->player->selectWeapon((short)this->items[i].param);
+			this->returnToGame();
+		}
+	}
+	else if (action == 20 || action == 21) { // ACTION_USEITEMSYRING / ACTION_USEITEMOTHER
+		bool useItem = app->player->useItem((short)this->menuParam);
+		if (app->game->animatingEffects != 0) {
+			this->returnToGame();
+			return;
+		}
+		app->game->snapMonsters(true);
+		app->game->snapLerpSprites(-1);
+		if (app->canvas->state != Canvas::ST_MENU) {
+			return;
+		}
+		if (useItem) {
+			this->back();
+			return;
+		}
+		if (this->menuParam == 22) {
+			this->gotoMenu(Menus::MENU_ITEMS_HOLY_WATER_MAX);
+		}
+		else if (this->menuParam >= 16 && this->menuParam < 18) {
+			this->gotoMenu(Menus::MENU_ITEMS_HEALTHMSG);
+		}
+		else if (this->menuParam >= 11 && this->menuParam < 13) {
+			this->gotoMenu(Menus::MENU_ITEMS_ARMORMSG);
+		}
+		else {
+			this->gotoMenu(Menus::MENU_ITEMS_SYRINGEMSG);
+		}
+	}
+	else if (action == 24) { // ACTION_CONFIRMUSE
+		if (this->menu == Menus::MENU_ITEMS_DRINKS) {
+			this->saveIndexes(2);
+		}
+		else if (this->menu == Menus::MENU_ITEMS) {
+			this->saveIndexes(4);
+		}
+		this->menuParam = this->items[i].param;
+		this->gotoMenu(Menus::MENU_ITEMS_CONFIRM);
+	}
+}
+
+void MenuSystem::selectVendingAction(int i) {
+	Applet* app = this->app;
+	int action = this->items[i].action;
+	if (action == 28) { // ACTION_CONFIRMBUY
+		this->menuParam = this->items[i].param;
+		app->vendingMachine->currentItemQuantity = 1;
+		if (this->menu == Menus::MENU_VENDING_MACHINE_LAST) {
+			this->setMenu(Menus::MENU_VENDING_MACHINE_CONFIRM);
+		}
+		else {
+			this->gotoMenu(Menus::MENU_VENDING_MACHINE_CONFIRM);
+		}
+	}
+	else if (action == 29) { // ACTION_BUYDRINK
+		if (app->vendingMachine->buyDrink(this->menuParam)) {
+			this->back();
+		}
+		else {
+			this->setMenu(Menus::MENU_VENDING_MACHINE_CANT_BUY);
+		}
+	}
+	else if (action == 30) { // ACTION_BUYSNACK
+		if (app->player->inventory[24] < app->vendingMachine->currentItemPrice * app->vendingMachine->currentItemQuantity) {
+			this->setMenu(Menus::MENU_VENDING_MACHINE_CANT_BUY);
+		}
+		else {
+			for (int j = 0; j < app->vendingMachine->currentItemQuantity; ++j) {
+				app->player->inventory[24] -= (short)app->vendingMachine->getSnackPrice();
+				app->player->give(0, 16, 1, false);
+			}
+			this->back();
+		}
+	}
+}
+
+void MenuSystem::selectControlSettings(int i) {
+	Applet* app = this->app;
+	int action = this->items[i].action;
+	switch (action) {
+		case 35: // ACTION_FLIP_CONTROLS
+			app->canvas->flipControls();
+			break;
+		case 36: { // ACTION_CONTROL_LAYOUT
+			++app->canvas->m_controlLayout;
+			if (app->canvas->m_controlLayout > 2) {
+				app->canvas->m_controlLayout = 0;
+			}
+			app->canvas->setControlLayout();
+			break;
+		}
+		case Menus::ACTION_CHANGEMUSICVOLUME:
+			this->activeSlider = (this->activeSlider == SliderMode::MusicVolume) ? SliderMode::None : SliderMode::MusicVolume;
+			break;
+		case Menus::ACTION_CHANGEALPHA:
+			this->activeSlider = (this->activeSlider == SliderMode::ButtonsAlpha) ? SliderMode::None : SliderMode::ButtonsAlpha;
+			break;
+		case Menus::ACTION_SET_BINDING:
+			this->activeSlider = (this->activeSlider == SliderMode::Binding) ? SliderMode::None : SliderMode::Binding;
+			break;
+		case Menus::ACTION_DEFAULT_BINDINGS:
+			std::memcpy(keyMappingTemp, keyMappingDefault, sizeof(keyMapping));
+			break;
+		case Menus::ACTION_TOG_VIBRATION:
+			app->canvas->vibrateEnabled ^= true;
+			if (app->canvas->vibrateEnabled) {
+				app->canvas->startShake(0, 0, 500);
+			}
+			this->items[(this->menu == Menus::MENU_MAIN_CONTROLLER) ? 2 : 1].textField2 = this->onOffValue(app->canvas->vibrateEnabled);
+			break;
+		case Menus::ACTION_CHANGE_VIBRATION_INTENSITY:
+			this->activeSlider = (this->activeSlider == SliderMode::VibrationIntensity) ? SliderMode::None : SliderMode::VibrationIntensity;
+			break;
+		case Menus::ACTION_CHANGE_DEADZONE:
+			this->activeSlider = (this->activeSlider == SliderMode::Deadzone) ? SliderMode::None : SliderMode::Deadzone;
+			break;
+	}
+	this->setMenu(this->menu);
+}
+
+void MenuSystem::selectVideoSettings(int i) {
+	Applet* app = this->app;
+	int action = this->items[i].action;
+	switch (action) {
+		case Menus::ACTION_CHANGE_VID_MODE:
+			if (++CAppContainer::getInstance()->sdlGL->windowMode > 2) {
+				CAppContainer::getInstance()->sdlGL->windowMode = 0;
+			}
+			break;
+		case Menus::ACTION_TOG_VSYNC:
+			CAppContainer::getInstance()->sdlGL->vSync = !CAppContainer::getInstance()->sdlGL->vSync;
+			break;
+		case Menus::ACTION_CHANGE_RESOLUTION:
+			if (++CAppContainer::getInstance()->sdlGL->resolutionIndex >= 18) {
+				CAppContainer::getInstance()->sdlGL->resolutionIndex = 0;
+			}
+			break;
+		case Menus::ACTION_APPLY_CHANGES:
+			CAppContainer::getInstance()->sdlGL->updateVideo();
+			app->game->saveConfig();
+			break;
+		case Menus::ACTION_TOG_TINYGL: {
+			Canvas* canvas = app->canvas.get();
+			TinyGL* tinyGL = app->tinyGL.get();
+			_glesObj->isInit = !_glesObj->isInit;
+			if (canvas->state == Canvas::ST_CAMERA) {
+				tinyGL->setViewport(canvas->cinRect[0], canvas->cinRect[1], canvas->cinRect[2], canvas->cinRect[3]);
+			}
+			else {
+				tinyGL->resetViewPort();
+			}
+			break;
+		}
+	}
+	this->setMenu(this->menu);
+}
+
+void MenuSystem::selectDebugAction(int i) {
+	Applet* app = this->app;
+	int action = this->items[i].action;
+	switch (action) {
+		case 102: app->player->giveAll(); return;
+		case 103: app->game->givemap(0, 0, 32, 32); return;
+		case 104: app->player->noclip = !app->player->noclip; break;
+		case 105: app->game->disableAI = !app->game->disableAI; break;
+		case 106:
+			app->player->enableHelp = !app->player->enableHelp;
+			app->game->saveConfig();
+			break;
+		case 107: app->player->god = !app->player->god; break;
+		case 108: app->canvas->showLocation = !app->canvas->showLocation; break;
+		case 109: {
+			int animFrames = app->canvas->animFrames + 1;
+			if (animFrames > 15) animFrames = 2;
+			app->canvas->setAnimFrames(animFrames);
+			app->game->saveConfig();
+			break;
+		}
+		case 110: app->canvas->showSpeeds = !app->canvas->showSpeeds; break;
+		case 111: app->render->skipFlats = !app->render->skipFlats; break;
+		case 112: app->render->skipCull = !app->render->skipCull; break;
+		case 114: app->render->skipBSP = !app->render->skipBSP; break;
+		case 115: app->render->skipLines = !app->render->skipLines; break;
+		case 116: app->render->skipSprites = !app->render->skipSprites; break;
+		case 117: app->canvas->renderOnly = !app->canvas->renderOnly; break;
+		case 118: app->render->skipDecals = !app->render->skipDecals; break;
+		case 119: app->render->skip2DStretch = !app->render->skip2DStretch; break;
+		case 120: break; // ACTION_DRIVING_MODE (no-op)
+		case 121: // ACTION_RENDER_MODE
+			if (app->render->renderMode == 0) app->render->renderMode = 63;
+			else app->render->renderMode >>= 1;
+			break;
+		case 122: app->player->equipForLevel(app->canvas->loadMapID); return;
+		case 123: app->combat->oneShotCheat = !app->combat->oneShotCheat; break;
+		case 124:
+			app->canvas->enqueueHelpDialog((short)3, (short)342, (uint8_t)(-1));
+			this->returnToGame();
+			return;
+		case 125: this->systemTest(this->items[i].param + 332); return;
+		case 126: app->game->skipMinigames = !app->game->skipMinigames; break;
+		case 127: app->canvas->showFreeHeap = !app->canvas->showFreeHeap; break;
+	}
+	this->setMenu(Menus::MENU_DEBUG);
 }
 
 void MenuSystem::handleUserTouch(int x, int y, bool b) {
