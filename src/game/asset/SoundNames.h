@@ -1,6 +1,4 @@
-#ifndef __SOUNDNAMES_H__
-#define __SOUNDNAMES_H__
-
+#pragma once
 // String constants for sound names used in hardcoded playSound calls.
 // These map to the "name" field in sounds.yaml entries.
 // Using constants gives compile-time safety for name-based sound lookups.
@@ -50,5 +48,3 @@ namespace SoundName {
 	constexpr const char* WEAPON_PICKUP = "weapon_pickup";
 	constexpr const char* WEAPON_SNIPER_SCOPE = "weapon_sniper_scope";
 } // namespace SoundName
-
-#endif

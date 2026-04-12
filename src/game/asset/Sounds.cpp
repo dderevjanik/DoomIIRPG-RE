@@ -47,8 +47,7 @@ const char* Sounds::getFileName(int index) {
 }
 
 int Sounds::getIndexByName(const std::string& name) {
-	auto it = soundNameToIndex.find(name);
-	if (it != soundNameToIndex.end()) {
+	if (auto it = soundNameToIndex.find(name); it != soundNameToIndex.end()) {
 		return it->second;
 	}
 	return -1;

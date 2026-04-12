@@ -1,6 +1,4 @@
-#ifndef __ITEMDEFS_H__
-#define __ITEMDEFS_H__
-
+#pragma once
 #include <string>
 #include <unordered_map>
 
@@ -13,13 +11,11 @@ class ItemDefs {
 	static std::unordered_map<std::string, int> ammoNameToIndex;
 
 	// Parse item definitions from a DataNode (called by ResourceManager)
-	static bool parse(const class DataNode& config);
+	[[nodiscard]] static bool parse(const class DataNode& config);
 
 	// Get inventory item index by name, returns -1 if not found
-	static int getInventoryIndex(const std::string& name);
+	[[nodiscard]] static int getInventoryIndex(const std::string& name);
 
 	// Get ammo type index by name, returns -1 if not found
-	static int getAmmoIndex(const std::string& name);
+	[[nodiscard]] static int getAmmoIndex(const std::string& name);
 };
-
-#endif

@@ -1,6 +1,4 @@
-#ifndef __MAYACAMERA_H__
-#define __MAYACAMERA_H__
-
+#pragma once
 class ScriptThread;
 
 class Applet;
@@ -54,5 +52,3 @@ public:
 	void Render();
 	void Snap(int i);
 };
-
-#endif

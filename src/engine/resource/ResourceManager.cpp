@@ -12,14 +12,13 @@ struct ResourceManager::CacheImpl {
 	std::unordered_map<std::string, YAML::Node*> yamlCache;
 
 	~CacheImpl() {
-		for (auto& kv : yamlCache) {
-			delete kv.second;
+		for (auto& [_, value] : yamlCache) {
+			delete value;
 		}
 	}
 
 	const YAML::Node* loadYAML(const char* path, ResourceManager* rm) {
-		auto it = yamlCache.find(path);
-		if (it != yamlCache.end()) {
+		if (auto it = yamlCache.find(path); it != yamlCache.end()) {
 			return it->second;
 		}
 
@@ -41,16 +40,15 @@ struct ResourceManager::CacheImpl {
 	}
 
 	void invalidate(const char* path) {
-		auto it = yamlCache.find(path);
-		if (it != yamlCache.end()) {
+		if (auto it = yamlCache.find(path); it != yamlCache.end()) {
 			delete it->second;
 			yamlCache.erase(it);
 		}
 	}
 
 	void invalidateAll() {
-		for (auto& kv : yamlCache) {
-			delete kv.second;
+		for (auto& [_, value] : yamlCache) {
+			delete value;
 		}
 		yamlCache.clear();
 	}

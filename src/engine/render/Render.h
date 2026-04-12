@@ -1,6 +1,4 @@
-#ifndef __RENDER_H__
-#define __RENDER_H__
-
+#pragma once
 #include "Span.h"
 
 class Image;
@@ -445,5 +443,3 @@ public:
 	int TILE_GLASS;
 
 };
-
-#endif

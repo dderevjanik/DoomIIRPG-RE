@@ -1,6 +1,4 @@
-#ifndef __LOOTCOMPONENT_H__
-#define __LOOTCOMPONENT_H__
-
+#pragma once
 struct LootComponent
 {
 	int lootSet[3];
@@ -8,5 +6,3 @@ struct LootComponent
 	LootComponent();
 	void reset();
 };
-
-#endif

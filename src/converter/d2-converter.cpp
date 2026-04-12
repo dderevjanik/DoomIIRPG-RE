@@ -448,8 +448,7 @@ static bool extractSpritesToYaml(const std::string& outDir) {
 		if (!mapData.mediaIndices.empty()) {
 			yaml += "\nmedia_indices:\n";
 			for (auto idx : mapData.mediaIndices) {
-				auto nameIt = tileIdToName.find((int)idx);
-				if (nameIt != tileIdToName.end()) {
+				if (auto nameIt = tileIdToName.find((int)idx); nameIt != tileIdToName.end()) {
 					yaml += "  - " + nameIt->second + "\n";
 				} else {
 					yaml += "  - " + std::to_string(idx) + "\n";
@@ -627,8 +626,7 @@ static bool extractSpritesToYaml(const std::string& outDir) {
 
 			yaml += "  - x: " + std::to_string(s.x) + "\n";
 			yaml += "    y: " + std::to_string(s.y) + "\n";
-			auto nameIt = tileIdToName.find(tile);
-			if (nameIt != tileIdToName.end()) {
+			if (auto nameIt = tileIdToName.find(tile); nameIt != tileIdToName.end()) {
 				yaml += "    tile: " + nameIt->second + "\n";
 			} else {
 				yaml += "    tile: " + std::to_string(tile) + "\n";

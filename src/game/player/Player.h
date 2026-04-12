@@ -1,6 +1,4 @@
-#ifndef __PLAYER_H__
-#define __PLAYER_H__
-
+#pragma once
 #include <vector>
 #include <string>
 #include <unordered_map>
@@ -266,5 +264,3 @@ public:
 	void restoreInventory();
 	void forceRemoveFromScopeZoom();
 };
-
-#endif

@@ -1,6 +1,4 @@
-#ifndef __GLES_H__
-#define __GLES_H__
-
+#pragma once
 #include "SDLGL.h"
 
 typedef void (APIENTRYP PFNGLACTIVETEXTUREPROC) (GLenum texture);
@@ -98,5 +96,3 @@ public:
 };
 
 extern gles* _glesObj;
-
-#endif

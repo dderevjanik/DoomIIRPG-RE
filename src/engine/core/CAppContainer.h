@@ -1,5 +1,4 @@
-#ifndef __CAPPCONTAINER_H__
-#define __CAPPCONTAINER_H__
+#pragma once
 #include <map>
 #include <string>
 #include <unordered_map>
@@ -148,8 +147,7 @@ struct GameConfig {
 
 	// Get map file path for a given map ID (falls back to legacy mapNN.bin naming)
 	std::string getMapFile(int mapId) const {
-		auto it = levelInfos.find(mapId);
-		if (it != levelInfos.end()) return it->second.mapFile;
+		if (auto it = levelInfos.find(mapId); it != levelInfos.end()) return it->second.mapFile;
 		char buf[32];
 		snprintf(buf, sizeof(buf), "map%02d.bin", mapId - 1);
 		return buf;
@@ -198,5 +196,3 @@ class CAppContainer {
 	void UpdateAccelerometer(float x, float y, float z, bool useMouse);
 	void Construct(SDLGL* sdlGL, VFS* vfs, IGameModule* gameModule = nullptr);
 };
-
-#endif

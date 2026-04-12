@@ -410,7 +410,7 @@ static void rescanGameControllers() noexcept {
             {
                 // Get joystick haptic device
                 gJoyHaptic = SDL_HapticOpenFromJoystick(gpJoystick);
-                if (gJoyHaptic == NULL) {
+                if (gJoyHaptic == nullptr) {
                     LOG_WARN("Warning: Unable to get joystick haptics! SDL Error: %s\n", SDL_GetError());
                 }
                 else

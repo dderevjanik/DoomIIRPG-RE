@@ -135,16 +135,14 @@ bool SpriteDefs::parse(const DataNode& config) {
 }
 
 int SpriteDefs::getIndex(const std::string& name) {
-	auto it = tileNameToIndex.find(name);
-	if (it != tileNameToIndex.end()) {
+	if (auto it = tileNameToIndex.find(name); it != tileNameToIndex.end()) {
 		return it->second;
 	}
 	return 0;
 }
 
 const SpriteSource* SpriteDefs::getSource(const std::string& name) {
-	auto it = tileNameToSource.find(name);
-	if (it != tileNameToSource.end()) {
+	if (auto it = tileNameToSource.find(name); it != tileNameToSource.end()) {
 		return &it->second;
 	}
 	return nullptr;
@@ -166,8 +164,7 @@ bool SpriteDefs::isExternal(const std::string& name) {
 }
 
 int SpriteDefs::getRange(const std::string& name) {
-	auto it = ranges.find(name);
-	if (it != ranges.end()) {
+	if (auto it = ranges.find(name); it != ranges.end()) {
 		return it->second;
 	}
 	return 0;
@@ -178,8 +175,7 @@ bool SpriteDefs::isInRange(int index, const std::string& first, const std::strin
 }
 
 const std::string& SpriteDefs::getPngOverride(int tileIndex) {
-	auto it = tileIndexToPng.find(tileIndex);
-	if (it != tileIndexToPng.end()) {
+	if (auto it = tileIndexToPng.find(tileIndex); it != tileIndexToPng.end()) {
 		return it->second;
 	}
 	return EMPTY_STRING;

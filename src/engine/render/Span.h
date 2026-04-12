@@ -1,5 +1,4 @@
-#ifndef __SPAN_H__
-#define __SPAN_H__
+#pragma once
 #include <stdexcept>
 #include <stdint.h>
 
@@ -61,7 +60,3 @@ extern void spanAddTextureDS(uint16_t*, int32_t, int32_t, uint32_t, int32_t, int
 extern void spanSubTexture(uint16_t*, int32_t, int32_t, uint32_t, int32_t, int32_t, int32_t, TinyGL*);
 extern void spanSubTextureDT(uint16_t*, int32_t, int32_t, uint32_t, int32_t, int32_t, int32_t, TinyGL*);
 extern void spanSubTextureDS(uint16_t*, int32_t, int32_t, uint32_t, int32_t, int32_t, int32_t, TinyGL*);
-
-
-
-#endif

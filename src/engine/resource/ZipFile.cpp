@@ -107,7 +107,7 @@ void ZipFile::openZipFile(const char* name) {
 	int i, n;
 
 	this->file = fopen(name, "rb");
-	if (this->file == NULL) {
+	if (this->file == nullptr) {
 		Error("openZipFile: cannot open file %s\n", name);
 	}
 
@@ -162,7 +162,7 @@ uint8_t* ZipFile::readZipFileEntry(const char* name, int* sizep) {
 		}
 	}
 
-	if (entry == NULL) {
+	if (entry == nullptr) {
 		Error("did not find the %s file in the zip file", name);
 	}
 

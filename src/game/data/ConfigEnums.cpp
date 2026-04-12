@@ -46,15 +46,13 @@ bool ConfigEnums::parse(const DataNode& root) {
 
 static std::string lookupByValue(const std::unordered_map<int, std::string>& map,
 								 int value, const char* fallback) {
-	auto it = map.find(value);
-	if (it != map.end()) return it->second;
+	if (auto it = map.find(value); it != map.end()) return it->second;
 	return fallback;
 }
 
 static int lookupByName(const std::unordered_map<std::string, int>& map,
 						const std::string& name, int fallback) {
-	auto it = map.find(name);
-	if (it != map.end()) return it->second;
+	if (auto it = map.find(name); it != map.end()) return it->second;
 	return fallback;
 }
 

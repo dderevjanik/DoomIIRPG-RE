@@ -1,6 +1,4 @@
-#ifndef __ICANVASSTATE_H__
-#define __ICANVASSTATE_H__
-
+#pragma once
 class Canvas;
 class Graphics;
 
@@ -26,5 +24,3 @@ public:
 	// Returns true if the event was consumed
 	virtual bool handleInput(Canvas* canvas, int key, int action) = 0;
 };
-
-#endif

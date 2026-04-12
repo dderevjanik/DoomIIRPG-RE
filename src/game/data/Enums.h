@@ -1,6 +1,4 @@
-#ifndef __ENUMS_H__
-#define __ENUMS_H__
-
+#pragma once
 #include <stdexcept>
 
 class Enums
@@ -1142,5 +1140,3 @@ public:
     static constexpr int GRADE_SHIFT = 3;
     static constexpr int NO_CURRENT_PRESS = -1;
 };
-
-#endif

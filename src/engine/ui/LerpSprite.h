@@ -1,6 +1,4 @@
-#ifndef __LERPSPRITE_H__
-#define __LERPSPRITE_H__
-
+#pragma once
 class ScriptThread;
 class OutputStream;
 class InputStream;
@@ -39,5 +37,3 @@ public:
     void calcDist();
     void loadState(InputStream* IS);
 };
-
-#endif

@@ -123,8 +123,7 @@ uint8_t* VFS::readFile(const char* path, int* sizeOut) {
 			buildFileIndex();
 		}
 
-		auto it = fileIndex.find(path);
-		if (it != fileIndex.end()) {
+		if (auto it = fileIndex.find(path); it != fileIndex.end()) {
 			for (const auto& mount : mounts) {
 				uint8_t* data = readFromDir(mount, it->second.c_str(), sizeOut);
 				if (data) {
@@ -162,8 +161,7 @@ bool VFS::fileExists(const char* path) {
 			buildFileIndex();
 		}
 
-		auto it = fileIndex.find(path);
-		if (it != fileIndex.end()) {
+		if (auto it = fileIndex.find(path); it != fileIndex.end()) {
 			for (const auto& mount : mounts) {
 				std::string fullPath = mount.basePath;
 				if (!fullPath.empty() && fullPath.back() != '/') {

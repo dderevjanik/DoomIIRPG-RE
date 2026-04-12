@@ -388,8 +388,7 @@ GLuint SpriteLoader::getCompositeMonster(int tileNum, const BodyPartOffsets& off
 	               ((uint64_t)((offsets.headZ + 512) & 0x3FF) << 8) |
 	               ((uint64_t)((offsets.headX + 128) & 0xFF));
 
-	auto it = compositeCache_.find(key);
-	if (it != compositeCache_.end()) return it->second;
+	if (auto it = compositeCache_.find(key); it != compositeCache_.end()) return it->second;
 
 	// Decode each body part
 	int legsMediaID = getMediaID(tileNum, legsFrame);

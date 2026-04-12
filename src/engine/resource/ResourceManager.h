@@ -1,6 +1,4 @@
-#ifndef __RESOURCEMANAGER_H__
-#define __RESOURCEMANAGER_H__
-
+#pragma once
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -20,17 +18,17 @@ public:
 	// --- VFS-backed file access ---
 
 	// Read a raw file through VFS. Returns malloc'd buffer, caller frees.
-	uint8_t* readFile(const char* path, int* sizeOut);
+	[[nodiscard]] uint8_t* readFile(const char* path, int* sizeOut);
 
 	// Read a file as a string through VFS.
-	std::string readFileAsString(const char* path);
+	[[nodiscard]] std::string readFileAsString(const char* path);
 
 	// --- Data loading with caching (YAML-free public API) ---
 
 	// Load and cache a data document by logical path.
 	// Returns a DataNode wrapping the parsed content.
 	// Returns an empty (falsy) DataNode on failure.
-	DataNode loadData(const char* path);
+	[[nodiscard]] DataNode loadData(const char* path);
 
 	// Invalidate a cached document (for future hot-reload).
 	void invalidateData(const char* path);
@@ -54,12 +52,12 @@ public:
 						int priority = 100);
 
 	// Run all registered parsers and loaders in priority order. Returns false if any fail.
-	bool loadAllDefinitions();
+	[[nodiscard]] bool loadAllDefinitions();
 
 	// --- Utility ---
 
-	bool fileExists(const char* path);
-	VFS* getVFS() { return vfs; }
+	[[nodiscard]] bool fileExists(const char* path);
+	[[nodiscard]] VFS* getVFS() { return vfs; }
 
 private:
 	VFS* vfs;
@@ -80,5 +78,3 @@ private:
 	std::vector<DefinitionEntry> entries;
 	bool entriesSorted;
 };
-
-#endif

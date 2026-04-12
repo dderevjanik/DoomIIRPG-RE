@@ -1,6 +1,4 @@
-#ifndef __WEAPON_NAMES_H__
-#define __WEAPON_NAMES_H__
-
+#pragma once
 #include <string>
 
 namespace WeaponNames {
@@ -60,5 +58,3 @@ static int toIndex(const std::string& name) {
 }
 
 } // namespace WeaponNames
-
-#endif

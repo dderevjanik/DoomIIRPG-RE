@@ -1,6 +1,4 @@
-#ifndef __SOUNDS_H__
-#define __SOUNDS_H__
-
+#pragma once
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -29,5 +27,3 @@ class Sounds {
 	static int getCount();
 
 };
-
-#endif

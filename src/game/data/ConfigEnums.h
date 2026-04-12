@@ -1,6 +1,4 @@
-#ifndef __CONFIGENUMS_H__
-#define __CONFIGENUMS_H__
-
+#pragma once
 #include <string>
 #include <unordered_map>
 
@@ -35,5 +33,3 @@ class ConfigEnums {
 	// Generic resolver: look up a named value in the enum identified by enumName
 	static int resolveEnum(const std::string& enumName, const std::string& valueName);
 };
-
-#endif

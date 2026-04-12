@@ -1,6 +1,4 @@
-#ifndef __HUD_H__
-#define __HUD_H__
-
+#pragma once
 class Image;
 class Text;
 class Entity;
@@ -161,5 +159,3 @@ public:
 private:
     void drawDelimitedLines(Graphics* graphics, Text* text, char delimiter, int x, int y, int lineHeight, int anchorFlags);
 };
-
-#endif

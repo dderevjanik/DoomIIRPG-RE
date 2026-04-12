@@ -1,6 +1,4 @@
-#ifndef __MINIGAMEREGISTRY_H__
-#define __MINIGAMEREGISTRY_H__
-
+#pragma once
 #include <cstring>
 
 class IMinigame;
@@ -47,5 +45,3 @@ private:
 	IMinigame* minigames[MAX_MINIGAMES];
 	const char* names[MAX_MINIGAMES];
 };
-
-#endif

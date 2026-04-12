@@ -136,10 +136,10 @@ bool Player::saveState(OutputStream* OS) {
 	OS->writeInt(this->hackedVendingMachines);
 	OS->writeInt(this->vendingMachineHackTriesLeft1);
 	OS->writeInt(this->vendingMachineHackTriesLeft2);
-	{
-		auto it = this->killGrantCounts.find(Enums::WP_CHAINSAW);
-		OS->writeInt(it != this->killGrantCounts.end() ? it->second : 0);
-	}
+	if (auto it = this->killGrantCounts.find(Enums::WP_CHAINSAW); it != this->killGrantCounts.end())
+		OS->writeInt(it->second);
+	else
+		OS->writeInt(0);
 	OS->writeByte(this->lastSkipCode);
 	for (int i = 0; i < Enums::MAX_AMMO; ++i) {
 		OS->writeShort(this->ammo[i]);

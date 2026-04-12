@@ -1,5 +1,4 @@
-#ifndef __SOUND_H__
-#define __SOUND_H__
+#pragma once
 #include <al.h>
 #include <alc.h>
 
@@ -105,5 +104,3 @@ public:
 	void musicVolumeUp(int volume); // [GEC]
 	void musicVolumeDown(int volume); // [GEC]
 };
-
-#endif

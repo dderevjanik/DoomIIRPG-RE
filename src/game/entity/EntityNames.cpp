@@ -20,13 +20,13 @@ std::vector<std::string> EntityNames::weaponNamesByIndex;
 static void buildIndexVector(const std::unordered_map<std::string, int>& map,
 							 std::vector<std::string>& vec) {
 	int maxIdx = 0;
-	for (auto& kv : map) {
-		if (kv.second > maxIdx) maxIdx = kv.second;
+	for (auto& [_, value] : map) {
+		if (value > maxIdx) maxIdx = value;
 	}
 	vec.assign(maxIdx + 1, "");
-	for (auto& kv : map) {
-		if (kv.second >= 0 && kv.second < (int)vec.size()) {
-			vec[kv.second] = kv.first;
+	for (auto& [key, value] : map) {
+		if (value >= 0 && value < (int)vec.size()) {
+			vec[value] = key;
 		}
 	}
 }
@@ -128,8 +128,7 @@ bool EntityNames::parseWeapons(const DataNode& config) {
 
 int EntityNames::lookupInMap(const std::unordered_map<std::string, int>& map,
 							 const std::string& name, int fallback) {
-	auto it = map.find(name);
-	if (it != map.end()) return it->second;
+	if (auto it = map.find(name); it != map.end()) return it->second;
 	try { return std::stoi(name); } catch (...) { return fallback; }
 }
 

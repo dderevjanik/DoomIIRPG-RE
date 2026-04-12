@@ -1,6 +1,4 @@
-#ifndef __IDIB_H__
-#define __IDIB_H__
-
+#pragma once
 #include <stdint.h>
 
 class IDIB
@@ -24,5 +22,3 @@ public:
 	// Destructor
 	~IDIB();
 };
-
-#endif

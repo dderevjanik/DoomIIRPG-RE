@@ -1,6 +1,4 @@
-#ifndef __CREDITSSTATE_H__
-#define __CREDITSSTATE_H__
-
+#pragma once
 #include "ICanvasState.h"
 
 class CreditsState : public ICanvasState {
@@ -11,5 +9,3 @@ public:
 	void render(Canvas* canvas, Graphics* graphics) override;
 	bool handleInput(Canvas* canvas, int key, int action) override;
 };
-
-#endif

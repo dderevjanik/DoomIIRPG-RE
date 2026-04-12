@@ -1,6 +1,4 @@
-#ifndef __VFS_H__
-#define __VFS_H__
-
+#pragma once
 #include <stdint.h>
 #include <vector>
 #include <string>
@@ -38,10 +36,8 @@ public:
 	// Read a file by logical name (e.g. "logo.bmp", "audio/hit.wav")
 	// Returns malloc'd buffer, caller must free(). Sets *sizeOut to file size.
 	// Returns nullptr if not found in any mount.
-	uint8_t* readFile(const char* path, int* sizeOut);
+	[[nodiscard]] uint8_t* readFile(const char* path, int* sizeOut);
 
 	// Check if a file exists in any mount
-	bool fileExists(const char* path);
+	[[nodiscard]] bool fileExists(const char* path);
 };
-
-#endif

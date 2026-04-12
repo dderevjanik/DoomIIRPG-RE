@@ -1,6 +1,4 @@
-#ifndef __GAMEEVENTS_H__
-#define __GAMEEVENTS_H__
-
+#pragma once
 #include <cstdint>
 
 class Entity;
@@ -82,5 +80,3 @@ struct XPGainEvent {
 	int amount;
 	int totalXP;
 };
-
-#endif

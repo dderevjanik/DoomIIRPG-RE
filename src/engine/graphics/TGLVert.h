@@ -1,6 +1,4 @@
-#ifndef __TGLVERT_H__
-#define __TGLVERT_H__
-
+#pragma once
 class TGLVert
 {
 private:
@@ -16,5 +14,3 @@ public:
 	int t;
 	int clipDist;
 };
-
-#endif

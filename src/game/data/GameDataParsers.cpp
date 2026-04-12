@@ -86,8 +86,7 @@ static int tileFromName(const std::string& name) {
 
 static int renderModeFromName(const std::string& name) {
 	auto& modes = CAppContainer::getInstance()->gameConfig.renderModes;
-	auto it = modes.find(name);
-	if (it != modes.end()) return it->second;
+	if (auto it = modes.find(name); it != modes.end()) return it->second;
 	try { return std::stoi(name); } catch (...) { return 0; }
 }
 
@@ -375,13 +374,11 @@ bool parseWeapons(Applet* app, const DataNode& config) {
 
 		std::string explWp = fam["explode_weapon"].asString("");
 		if (!explWp.empty()) {
-			auto it = weaponNameToIndex.find(explWp);
-			if (it != weaponNameToIndex.end()) fd.explodeWeaponIndex = it->second;
+			if (auto it = weaponNameToIndex.find(explWp); it != weaponNameToIndex.end()) fd.explodeWeaponIndex = it->second;
 		}
 		std::string deathWp = fam["death_remains_weapon"].asString("");
 		if (!deathWp.empty()) {
-			auto it = weaponNameToIndex.find(deathWp);
-			if (it != weaponNameToIndex.end()) fd.deathRemainsWeapon = it->second;
+			if (auto it = weaponNameToIndex.find(deathWp); it != weaponNameToIndex.end()) fd.deathRemainsWeapon = it->second;
 		}
 
 		fd.canShoot = fam["can_shoot"].asBool(false);
@@ -583,8 +580,7 @@ bool parseEffects(Applet* app, const DataNode& config) {
 		// blocked_by: resolve buff name to index
 		std::string blockedBy = b["blocked_by"].asString("");
 		if (!blockedBy.empty()) {
-			auto it = nameToIndex.find(blockedBy);
-			if (it != nameToIndex.end()) {
+			if (auto it = nameToIndex.find(blockedBy); it != nameToIndex.end()) {
 				p->buffBlockedBy[i] = (int8_t)it->second;
 			}
 		}
@@ -706,8 +702,8 @@ bool parseItems(Applet* app, const DataNode& config, const DataNode& effectsConf
 	}
 
 	auto resolveBuff = [&](const std::string& name) -> int {
-		auto it = buffNameToIndex.find(name);
-		return (it != buffNameToIndex.end()) ? it->second : -1;
+		if (auto it = buffNameToIndex.find(name); it != buffNameToIndex.end()) return it->second;
+		return -1;
 	};
 
 	auto parseEffect = [&](const DataNode& node) -> ItemEffect {

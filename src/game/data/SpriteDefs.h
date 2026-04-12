@@ -1,6 +1,4 @@
-#ifndef __SPRITEDEFS_H__
-#define __SPRITEDEFS_H__
-
+#pragma once
 #include <string>
 #include <unordered_map>
 
@@ -39,31 +37,29 @@ class SpriteDefs {
 	static std::unordered_map<std::string, int> ranges;
 
 	// Parse sprite definitions from a DataNode (called by ResourceManager)
-	static bool parse(const class DataNode& config);
+	[[nodiscard]] static bool parse(const class DataNode& config);
 
 	// Get tile index by name, returns 0 if not found (returns -1 for external sprites)
-	static int getIndex(const std::string& name);
+	[[nodiscard]] static int getIndex(const std::string& name);
 
 	// Get full source info by name, returns nullptr if not found
-	static const SpriteSource* getSource(const std::string& name);
+	[[nodiscard]] static const SpriteSource* getSource(const std::string& name);
 
 	// Check if a sprite is a single image (not from bin, no frames)
-	static bool isImage(const std::string& name);
+	[[nodiscard]] static bool isImage(const std::string& name);
 
 	// Check if a sprite is a sheet (has frame metadata)
-	static bool isSheet(const std::string& name);
+	[[nodiscard]] static bool isSheet(const std::string& name);
 
 	// Check if a sprite is external (Image or Sheet, not from bin)
-	static bool isExternal(const std::string& name);
+	[[nodiscard]] static bool isExternal(const std::string& name);
 
 	// Get PNG override path for a tile index, returns empty string if none
-	static const std::string& getPngOverride(int tileIndex);
+	[[nodiscard]] static const std::string& getPngOverride(int tileIndex);
 
 	// Get range value by name, returns 0 if not found
-	static int getRange(const std::string& name);
+	[[nodiscard]] static int getRange(const std::string& name);
 
 	// Check if an index falls within a named range (inclusive)
-	static bool isInRange(int index, const std::string& first, const std::string& last);
+	[[nodiscard]] static bool isInRange(int index, const std::string& first, const std::string& last);
 };
-
-#endif

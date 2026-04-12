@@ -924,8 +924,7 @@ void Player::equipForLevel(int highestMap) {
 		auto resolveWeapon = [&](const DataNode& node) -> int {
 			if (node.isScalar()) {
 				std::string s = node.asString();
-				auto it = weaponNameToIndex.find(s);
-				if (it != weaponNameToIndex.end()) return it->second;
+				if (auto it = weaponNameToIndex.find(s); it != weaponNameToIndex.end()) return it->second;
 				try { return std::stoi(s); } catch (...) { return -1; }
 			}
 			return node.asInt(-1);
@@ -934,9 +933,8 @@ void Player::equipForLevel(int highestMap) {
 		// Map 10 uses map 9 loadout
 		int lookupMap = (highestMap == 10) ? 9 : highestMap;
 		const GameConfig& gc = CAppContainer::getInstance()->gameConfig;
-		auto lit = gc.levelInfos.find(lookupMap);
 		DataNode config2;
-		if (lit != gc.levelInfos.end()) {
+		if (auto lit = gc.levelInfos.find(lookupMap); lit != gc.levelInfos.end()) {
 			config2 = DataNode::loadFile(lit->second.configFile.c_str());
 		}
 		DataNode r = config2 ? config2["starting_loadout"] : DataNode();

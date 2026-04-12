@@ -1,6 +1,4 @@
-#ifndef __ENTITYNAMES_H__
-#define __ENTITYNAMES_H__
-
+#pragma once
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -40,5 +38,3 @@ class EntityNames {
   private:
 	static int lookupInMap(const std::unordered_map<std::string, int>& map, const std::string& name, int fallback = 0);
 };
-
-#endif

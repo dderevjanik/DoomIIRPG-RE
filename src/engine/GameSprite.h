@@ -1,6 +1,4 @@
-#ifndef __GAMESPRITE_H__
-#define __GAMESPRITE_H__
-
+#pragma once
 class Entity;
 
 class GameSprite
@@ -34,5 +32,3 @@ public:
 	int scaleStep;
 	uint8_t numAnimFrames;
 };
-
-#endif

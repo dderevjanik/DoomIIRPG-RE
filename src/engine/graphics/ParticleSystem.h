@@ -1,6 +1,4 @@
-#ifndef __PARTICLESYSTEM_H__
-#define __PARTICLESYSTEM_H__
-
+#pragma once
 class ParticleSystem;
 class Image;
 class Graphics;
@@ -76,5 +74,3 @@ public:
 	void spawnParticles(int n, int color, int n2, int n3, int n4);
 	
 };
-
-#endif

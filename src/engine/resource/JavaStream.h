@@ -1,6 +1,4 @@
-#ifndef __JAVASTREAM_H__
-#define __JAVASTREAM_H__
-
+#pragma once
 #include <stdint.h>
 #include <stdio.h>
 #include <string>
@@ -88,5 +86,3 @@ class OutputStream {
 	void writeBoolean(bool b);
 	void write(uint8_t* buff, int off, int size);
 };
-
-#endif

@@ -31,8 +31,7 @@ bool ItemDefs::parse(const DataNode& config) {
 }
 
 int ItemDefs::getInventoryIndex(const std::string& name) {
-	auto it = inventoryNameToIndex.find(name);
-	if (it != inventoryNameToIndex.end()) {
+	if (auto it = inventoryNameToIndex.find(name); it != inventoryNameToIndex.end()) {
 		return it->second;
 	}
 	// Fall back to numeric string
@@ -40,8 +39,7 @@ int ItemDefs::getInventoryIndex(const std::string& name) {
 }
 
 int ItemDefs::getAmmoIndex(const std::string& name) {
-	auto it = ammoNameToIndex.find(name);
-	if (it != ammoNameToIndex.end()) {
+	if (auto it = ammoNameToIndex.find(name); it != ammoNameToIndex.end()) {
 		return it->second;
 	}
 	// Fall back to numeric string

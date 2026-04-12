@@ -1,6 +1,4 @@
-#ifndef __HACKINGGAME_H__
-#define __HACKINGGAME_H__
-
+#pragma once
 class Applet;
 class ScriptThread;
 class Image;
@@ -68,5 +66,3 @@ public:
 	void touchMove(int x, int y) override;
 	void touchEnd(int x, int y) override;
 };
-
-#endif

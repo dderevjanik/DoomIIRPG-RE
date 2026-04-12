@@ -1,6 +1,4 @@
-#ifndef __GAME_H__
-#define __GAME_H__
-
+#pragma once
 #include "EntityMonster.h"
 #include "AIComponent.h"
 #include "LootComponent.h"
@@ -301,5 +299,3 @@ public:
     char* getProfileSaveFileName(const char* name);
     int getMonsterSound(int monsterIdx, int soundType);
 };
-
-#endif

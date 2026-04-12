@@ -96,8 +96,7 @@ GameSprite* Game::gsprite_allocAnim(int n, int n2, int n3, int n4) {
 	gsprite_alloc->destScale = 64;
 	gsprite_alloc->startScale = 64;
 	gsprite_alloc->duration = 200 * gsprite_alloc->numAnimFrames;
-	auto saIt = gSpriteAnimDefs.find(n);
-	if (saIt != gSpriteAnimDefs.end()) {
+	if (auto saIt = gSpriteAnimDefs.find(n); saIt != gSpriteAnimDefs.end()) {
 		const SpriteAnimDef& sa = saIt->second;
 		if (sa.renderMode >= 0)
 			app->render->mapSprites[app->render->S_RENDERMODE + gsprite_alloc->sprite] = sa.renderMode;

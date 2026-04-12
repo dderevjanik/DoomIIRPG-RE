@@ -1,6 +1,4 @@
-#ifndef __COMICBOOK_H__
-#define __COMICBOOK_H__
-
+#pragma once
 class Image;
 class Graphics;
 
@@ -95,5 +93,3 @@ public:
 	void DrawExitButton(Graphics* graphics);
 	void handleComicBookEvents(int key, int keyAction);
 };
-
-#endif

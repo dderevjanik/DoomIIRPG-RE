@@ -1,6 +1,4 @@
-#ifndef __CHARACTERSELECTIONSTATE_H__
-#define __CHARACTERSELECTIONSTATE_H__
-
+#pragma once
 #include "ICanvasState.h"
 
 class CharacterSelectionState : public ICanvasState {
@@ -11,5 +9,3 @@ public:
 	void render(Canvas* canvas, Graphics* graphics) override;
 	bool handleInput(Canvas* canvas, int key, int action) override;
 };
-
-#endif

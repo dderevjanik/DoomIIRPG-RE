@@ -1,6 +1,4 @@
-#ifndef __CANVAS_H__
-#define __CANVAS_H__
-
+#pragma once
 #include "Graphics.h"
 
 class Applet;
@@ -636,5 +634,3 @@ public:
 	void evaluateMiniGameResults(int n);
 	void addEvents(int event); // [GEC]
 };
-
-#endif

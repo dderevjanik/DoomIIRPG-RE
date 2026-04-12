@@ -50,8 +50,8 @@ static void crashHandler(int sig) {
 #ifdef _WIN32
 	void* stack[64];
 	HANDLE process = GetCurrentProcess();
-	SymInitialize(process, NULL, TRUE);
-	WORD frames = CaptureStackBackTrace(1, 64, stack, NULL);
+	SymInitialize(process, nullptr, TRUE);
+	WORD frames = CaptureStackBackTrace(1, 64, stack, nullptr);
 
 	SYMBOL_INFO* symbol = (SYMBOL_INFO*)calloc(sizeof(SYMBOL_INFO) + 256 * sizeof(char), 1);
 	symbol->MaxNameLen = 255;

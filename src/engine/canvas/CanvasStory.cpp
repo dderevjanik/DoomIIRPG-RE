@@ -98,7 +98,7 @@ void Canvas::loadEpilogueText() {
 
 void Canvas::disposeIntro() {
 	this->dialogBuffer->dispose();
-	this->dialogBuffer = NULL;
+	this->dialogBuffer = nullptr;
 	this->loadMap(this->startupMap, false, true);
 }
 

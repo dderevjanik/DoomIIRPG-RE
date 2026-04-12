@@ -1,6 +1,4 @@
-#ifndef __VENDINGMACHINE_H__
-#define __VENDINGMACHINE_H__
-
+#pragma once
 class Applet;
 class ScriptThread;
 class Image;
@@ -95,5 +93,3 @@ public:
 	void handleTouchForGame(int pressX, int pressY);
 	void handleTouchForBasicVendingMachine(int pressX, int pressY);
 };
-
-#endif

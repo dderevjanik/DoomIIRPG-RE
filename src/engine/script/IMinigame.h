@@ -1,6 +1,4 @@
-#ifndef __IMINIGAME_H__
-#define __IMINIGAME_H__
-
+#pragma once
 class Graphics;
 
 // Abstract interface for minigames (hacking, sentrybot, vending, etc.)
@@ -29,5 +27,3 @@ public:
 	// End the game: 0=loss, 1=win, 2=quit
 	virtual void endGame(int n) = 0;
 };
-
-#endif

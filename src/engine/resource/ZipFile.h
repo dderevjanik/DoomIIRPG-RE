@@ -1,6 +1,4 @@
-#ifndef __ZIPFILE_H__
-#define __ZIPFILE_H__
-
+#pragma once
 #include <stdio.h>
 #include <stdlib.h>
 #include <cstring>
@@ -42,5 +40,3 @@ public:
 	int getEntryCount() const { return entry_count; }
 	const char* getEntryName(int i) const { return (i >= 0 && i < entry_count) ? entry[i].name : nullptr; }
 };
-
-#endif

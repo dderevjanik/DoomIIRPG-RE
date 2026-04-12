@@ -410,7 +410,7 @@ void Sound::playSound(int16_t resID, uint8_t flags, int priority, bool a5) {
 				channel->resID = resID;
 				channel->priority = priority;
 				alSourceStop(channel->sourceId);
-				alSourcei(channel->sourceId, AL_BUFFER, NULL);
+				alSourcei(channel->sourceId, AL_BUFFER, 0);
 				this->openAL_LoadSound(v5, &this->channel[FreeSlot]);
 				alSourcei(channel->sourceId, AL_BUFFER, channel->bufferId);
 				if ((unsigned int)(channel->resID - 1067) > 4)

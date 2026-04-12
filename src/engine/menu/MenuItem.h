@@ -1,6 +1,4 @@
-#ifndef __MENUITEM_H__
-#define __MENUITEM_H__
-
+#pragma once
 class Text;
 
 class MenuItem
@@ -25,5 +23,3 @@ public:
 	void Set(int textField, int textField2, int flags, int action, int param, int helpField);
 	void WrapHelpText(Text* text);
 };
-
-#endif

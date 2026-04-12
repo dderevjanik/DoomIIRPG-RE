@@ -35,7 +35,7 @@ void Error(const char* fmt, ...) {
 	                                                {255, 0, 255}}};
 	const SDL_MessageBoxData messageboxdata = {
 	    SDL_MESSAGEBOX_ERROR,                                               /* .flags */
-	    NULL,                                                               /* .window */
+	    nullptr,                                                               /* .window */
 	    (CAppContainer::getInstance()->gameConfig.name + " Error").c_str(), /* .title */
 	    errMsg,                                                             /* .message */
 	    SDL_arraysize(buttons),                                             /* .numbuttons */
@@ -43,6 +43,6 @@ void Error(const char* fmt, ...) {
 	    &colorScheme                                                        /* .colorScheme */
 	};
 
-	SDL_ShowMessageBox(&messageboxdata, NULL);
+	SDL_ShowMessageBox(&messageboxdata, nullptr);
 	exit(1);
 }

@@ -1,6 +1,4 @@
-#ifndef __SDLGL_H__
-#define __SDLGL_H__
-
+#pragma once
 #include <SDL.h>
 #include <SDL_opengl.h>
 
@@ -37,5 +35,3 @@ public:
 	void updateVideo();
 	void restore();
 };
-
-#endif

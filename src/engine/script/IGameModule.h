@@ -1,6 +1,4 @@
-#ifndef __IGAMEMODULE_H__
-#define __IGAMEMODULE_H__
-
+#pragma once
 class Applet;
 class Game;
 class Player;
@@ -67,5 +65,3 @@ public:
 	// Human-readable name for this game module (for logs/debug).
 	virtual const char* getName() const = 0;
 };
-
-#endif

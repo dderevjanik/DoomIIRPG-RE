@@ -1,6 +1,4 @@
-#ifndef __GAMEMODULEREGISTRY_H__
-#define __GAMEMODULEREGISTRY_H__
-
+#pragma once
 #include <vector>
 #include <string>
 
@@ -37,5 +35,3 @@ public:
 			GameModuleRegistry::registerModule(id, []() -> IGameModule* { return new Class(); }); \
 		} \
 	} _gameModuleReg_##Class;
-
-#endif

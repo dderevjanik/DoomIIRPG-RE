@@ -79,14 +79,12 @@ static const std::unordered_map<std::string, int> s_flags = {
 };
 
 static int menuTypeFromString(const std::string& str) {
-	auto it = s_menuTypes.find(str);
-	if (it != s_menuTypes.end()) return it->second;
+	if (auto it = s_menuTypes.find(str); it != s_menuTypes.end()) return it->second;
 	try { return std::stoi(str); } catch (...) { return 0; }
 }
 
 static int actionFromString(const std::string& str) {
-	auto it = s_actions.find(str);
-	if (it != s_actions.end()) return it->second;
+	if (auto it = s_actions.find(str); it != s_actions.end()) return it->second;
 	try { return std::stoi(str); } catch (...) { return 0; }
 }
 
@@ -100,8 +98,7 @@ static int flagsFromString(const std::string& str) {
 		std::string token = str.substr(start, end - start);
 		while (!token.empty() && token[0] == ' ') token.erase(0, 1);
 		while (!token.empty() && token.back() == ' ') token.pop_back();
-		auto it = s_flags.find(token);
-		if (it != s_flags.end()) {
+		if (auto it = s_flags.find(token); it != s_flags.end()) {
 			result |= it->second;
 		} else {
 			try { result |= std::stoi(token, nullptr, 0); } catch (...) {}
@@ -302,13 +299,13 @@ bool MenuSystem::loadUIFromYAML(const char* path) {
 	// Button creation helpers
 	auto resolveSound = [&](const DataNode& btn) -> int {
 		std::string sndName = btn["sound"].asString("");
-		auto sit = soundMap.find(sndName);
-		return (sit != soundMap.end()) ? sit->second : 0;
+		if (auto sit = soundMap.find(sndName); sit != soundMap.end()) return sit->second;
+		return 0;
 	};
 
 	auto resolveImage = [&](const std::string& imgName) -> Image* {
-		auto iit = imageMap.find(imgName);
-		return (iit != imageMap.end()) ? iit->second : nullptr;
+		if (auto iit = imageMap.find(imgName); iit != imageMap.end()) return iit->second;
+		return nullptr;
 	};
 
 	auto createButton = [&](const DataNode& btn, int id, int x, int y, int w, int h) -> fmButton* {
@@ -430,8 +427,7 @@ bool MenuSystem::loadUIFromYAML(const char* path) {
 		if (this->m_scrollBar) delete this->m_scrollBar;
 		std::string sndName = scrollbar["sound"].asString("");
 		int soundId = 0;
-		auto sit = soundMap.find(sndName);
-		if (sit != soundMap.end()) soundId = sit->second;
+		if (auto sit = soundMap.find(sndName); sit != soundMap.end()) soundId = sit->second;
 		bool vertical = scrollbar["vertical"].asBool(true);
 		this->m_scrollBar = new fmScrollButton(0, 0, 0, 0, vertical, soundId);
 	}
@@ -491,16 +487,14 @@ bool MenuSystem::loadUIFromYAML(const char* path) {
 	// Resolve button names to IDs for all menu defs
 	for (auto& def : this->yamlMenuDefs) {
 		for (const auto& name : def.visibleButtonNames) {
-			auto bit = buttonNameToId.find(name);
-			if (bit != buttonNameToId.end()) {
+			if (auto bit = buttonNameToId.find(name); bit != buttonNameToId.end()) {
 				def.visibleButtons.push_back(bit->second);
 			} else {
 				LOG_WARN("[menu] warning: unknown button name '%s' in menu '%s'\n", name.c_str(), def.name.c_str());
 			}
 		}
 		for (const auto& name : def.visibleButtonsConditionalNames) {
-			auto bit = buttonNameToId.find(name);
-			if (bit != buttonNameToId.end()) {
+			if (auto bit = buttonNameToId.find(name); bit != buttonNameToId.end()) {
 				def.visibleButtonsConditional.push_back(bit->second);
 			} else {
 				LOG_WARN("[menu] warning: unknown conditional button name '%s' in menu '%s'\n", name.c_str(), def.name.c_str());

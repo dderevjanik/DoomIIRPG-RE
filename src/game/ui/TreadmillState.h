@@ -1,6 +1,4 @@
-#ifndef __TREADMILLSTATE_H__
-#define __TREADMILLSTATE_H__
-
+#pragma once
 #include "ICanvasState.h"
 
 class TreadmillState : public ICanvasState {
@@ -11,5 +9,3 @@ public:
 	void render(Canvas* canvas, Graphics* graphics) override;
 	bool handleInput(Canvas* canvas, int key, int action) override;
 };
-
-#endif

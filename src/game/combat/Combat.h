@@ -1,6 +1,4 @@
-#ifndef __COMBAT_H__
-#define __COMBAT_H__
-
+#pragma once
 #include <string>
 
 class Entity;
@@ -342,5 +340,3 @@ public:
 	const FamiliarDef* getFamiliarDefByWeapon(int weaponIndex) const;
 
 };
-
-#endif

@@ -1,6 +1,4 @@
-#ifndef __SCRIPTTHREAD_H__
-#define __SCRIPTTHREAD_H__
-
+#pragma once
 class Text;
 class Applet;
 class OutputStream;
@@ -58,5 +56,3 @@ public:
 	void setAIGoal(Entity* entity, int n, int goalParam);
 	void corpsifyMonster(int x, int y, Entity* entity, bool b);
 };
-
-#endif

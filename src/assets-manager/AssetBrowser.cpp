@@ -789,8 +789,7 @@ void AssetBrowser::drawMonstersPanel() {
 
 		// Composite thumbnail
 		std::string tileName = "monster_" + m.name;
-		auto tileIt = tileNameToIndex_.find(tileName);
-		if (tileIt != tileNameToIndex_.end()) {
+		if (auto tileIt = tileNameToIndex_.find(tileName); tileIt != tileNameToIndex_.end()) {
 			// Find entity body parts for this monster
 			SpriteLoader::BodyPartOffsets offsets;
 			for (const auto& ent : entities_) {
@@ -835,8 +834,7 @@ void AssetBrowser::drawMonsterDetail(const MonsterEntry& m) {
 
 	// Monster sprite preview — composite body parts
 	std::string tileName = "monster_" + m.name;
-	auto tileIt = tileNameToIndex_.find(tileName);
-	if (tileIt != tileNameToIndex_.end()) {
+	if (auto tileIt = tileNameToIndex_.find(tileName); tileIt != tileNameToIndex_.end()) {
 		// Find the matching entity to get body part offsets
 		SpriteLoader::BodyPartOffsets offsets;
 		bool isFloater = false, isSpecialBoss = false;
@@ -946,8 +944,7 @@ void AssetBrowser::drawWeaponsPanel() {
 		if (!matchesFilter(w.name, filterText_)) continue;
 
 		// Sprite thumbnail
-		auto tileIt = tileNameToIndex_.find(w.name);
-		if (tileIt != tileNameToIndex_.end()) {
+		if (auto tileIt = tileNameToIndex_.find(w.name); tileIt != tileNameToIndex_.end()) {
 			GLuint thumb = sprites_.getTextureForTile(tileIt->second);
 			if (thumb) {
 				ImGui::Image((ImTextureID)(intptr_t)thumb, ImVec2(16, 16));
@@ -981,8 +978,7 @@ void AssetBrowser::drawWeaponDetail(const WeaponEntry& w) {
 	ImGui::Separator();
 
 	// Weapon sprite preview — look up tile index from sprites.yaml
-	auto tileIt = tileNameToIndex_.find(w.name);
-	if (tileIt != tileNameToIndex_.end()) {
+	if (auto tileIt = tileNameToIndex_.find(w.name); tileIt != tileNameToIndex_.end()) {
 		drawAnimatedSprite(tileIt->second, 4.0f);
 		ImGui::Separator();
 	}

@@ -1,6 +1,4 @@
-#ifndef __DOOM2RPGGAME_H__
-#define __DOOM2RPGGAME_H__
-
+#pragma once
 #include "IGameModule.h"
 #include "LogoState.h"
 #include "CreditsState.h"
@@ -67,5 +65,3 @@ public:
 	void registerEventListeners(Applet* app) override;
 	const char* getName() const override { return "D2RPG"; }
 };
-
-#endif

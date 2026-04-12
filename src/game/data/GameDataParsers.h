@@ -1,6 +1,4 @@
-#ifndef __GAMEDATAPARSERS_H__
-#define __GAMEDATAPARSERS_H__
-
+#pragma once
 class Applet;
 class DataNode;
 
@@ -14,5 +12,3 @@ bool parseDialogStyles(Applet* app, const DataNode& config);
 bool parseItems(Applet* app, const DataNode& config, const DataNode& effectsConfig);
 bool parseMonsters(Applet* app, const DataNode& config);
 bool parseMonsterCombatFromEntities(Applet* app, const DataNode& config);
-
-#endif

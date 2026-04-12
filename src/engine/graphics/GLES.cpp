@@ -255,8 +255,8 @@ void gles::CreateFadeTexture(int mediaID) {
 		LOG_INFO("Freeing media ID %i, %ix%i\n", (int)((intptr_t)ct - (intptr_t)this->chains) / sizeof(glChain), ct->width, ct->height);
 		ct->next->prev = ct->prev;
 		ct->prev->next = ct->next;
-		ct->prev = NULL;
-		ct->next = NULL;
+		ct->prev = nullptr;
+		ct->next = nullptr;
 		glDeleteTextures(1, &ct->texnum);
 		ct->texnum = 0;
 		this->activeTexels -= (ct->width * ct->height);
@@ -266,10 +266,10 @@ void gles::CreateFadeTexture(int mediaID) {
 	assert(ct->texnum == 0);
 	//__assert_rtn("CreateFadeTexture", "/Users/greghodges/doom2rpg/trunk/Doom2rpg_iphone/xcode/Classes/GLES.cpp", 367, "ct->texnum == 0");
 
-	assert(ct->next == NULL);
+	assert(ct->next == nullptr);
 	//__assert_rtn("CreateFadeTexture", "/Users/greghodges/doom2rpg/trunk/Doom2rpg_iphone/xcode/Classes/GLES.cpp", 368, "ct->next == NULL");
 
-	assert(ct->prev == NULL);
+	assert(ct->prev == nullptr);
 	//__assert_rtn("CreateFadeTexture", "/Users/greghodges/doom2rpg/trunk/Doom2rpg_iphone/xcode/Classes/GLES.cpp", 369, "ct->prev == NULL");
 
 	ct->prev = &this->activeChain;

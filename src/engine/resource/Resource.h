@@ -1,6 +1,4 @@
-#ifndef __RESOURCE_H__
-#define __RESOURCE_H__
-
+#pragma once
 #include "JavaStream.h"
 
 class InputStream;
@@ -82,5 +80,3 @@ public:
     void loadUByteTable(uint8_t* array, int index);
     void loadUShortTable(uint16_t* array, int index);
 };
-
-#endif

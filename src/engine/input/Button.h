@@ -1,6 +1,4 @@
-#ifndef __BUTTON_H__
-#define __BUTTON_H__
-
+#pragma once
 class Image;
 class Graphics;
 
@@ -196,5 +194,3 @@ public:
 	int UpdateSwipe(int x, int y, SwipeDir* swDir);
 	void Render(Graphics* graphics);
 };
-
-#endif

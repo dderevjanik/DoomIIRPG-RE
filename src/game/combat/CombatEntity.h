@@ -1,6 +1,4 @@
-#ifndef __COMBATENTITY_H__
-#define __COMBATENTITY_H__
-
+#pragma once
 class InputStream;
 class OutputStream;
 class Entity;
@@ -36,5 +34,3 @@ public:
 	int calcHit(CombatEntity* ce, CombatEntity* ce2, bool b, int i, bool b2);
 	int calcDamage(CombatEntity* ce, Entity* entity, CombatEntity* ce2, bool b, int n);
 };
-
-#endif

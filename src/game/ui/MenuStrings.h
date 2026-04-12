@@ -1,6 +1,4 @@
-#ifndef __MENUSTRINGS_H__
-#define __MENUSTRINGS_H__
-
+#pragma once
 #include <stdexcept>
 
 class Languages
@@ -451,5 +449,3 @@ public:
     static constexpr int16_t WALL_LABEL = 399;
     static constexpr int16_t MAX = 400;
 };
-
-#endif

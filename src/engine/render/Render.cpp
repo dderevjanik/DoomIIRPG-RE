@@ -712,8 +712,7 @@ bool Render::beginLoadMap(int mapNameID) {
 	DataNode levelYaml;
 	{
 		const auto& gc = CAppContainer::getInstance()->gameConfig;
-		auto lit = gc.levelInfos.find(mapNameID);
-		if (lit != gc.levelInfos.end()) {
+		if (auto lit = gc.levelInfos.find(mapNameID); lit != gc.levelInfos.end()) {
 			levelYaml = DataNode::loadFile(lit->second.configFile.c_str());
 			DataNode& lvl = levelYaml;
 
@@ -1150,8 +1149,7 @@ bool Render::beginLoadMap(int mapNameID) {
 	// Load scripts.yaml (tileEvents, staticFuncs, byteCode)
 	if (levelYaml) {
 		const auto& gc = CAppContainer::getInstance()->gameConfig;
-		auto lit = gc.levelInfos.find(mapNameID);
-		if (lit != gc.levelInfos.end()) {
+		if (auto lit = gc.levelInfos.find(mapNameID); lit != gc.levelInfos.end()) {
 			std::string scriptsPath = lit->second.dir + "/scripts.yaml";
 			DataNode scripts = DataNode::loadFile(scriptsPath.c_str());
 			if (scripts) {
@@ -1282,8 +1280,7 @@ bool Render::beginLoadMap(int mapNameID) {
 	int skyTableBase;
 	{
 		const auto& gc = CAppContainer::getInstance()->gameConfig;
-		auto lit = gc.levelInfos.find(this->mapNameID);
-		if (lit != gc.levelInfos.end() && !lit->second.skyBox.empty()) {
+		if (auto lit = gc.levelInfos.find(this->mapNameID); lit != gc.levelInfos.end() && !lit->second.skyBox.empty()) {
 			int idx = SpriteDefs::getIndex(lit->second.skyBox);
 			if (idx > 0) {
 				skyTableBase = idx;

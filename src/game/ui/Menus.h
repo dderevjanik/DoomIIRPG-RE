@@ -1,6 +1,4 @@
-#ifndef __MENUS_H__
-#define __MENUS_H__
-
+#pragma once
 class Menus
 {
 public:
@@ -311,5 +309,3 @@ public:
         MENU_COMIC_BOOK,
     };
 };
-
-#endif

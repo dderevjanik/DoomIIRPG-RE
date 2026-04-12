@@ -1,6 +1,4 @@
-#ifndef __OPCODEREGISTRY_H__
-#define __OPCODEREGISTRY_H__
-
+#pragma once
 #include <cstdint>
 #include <cstring>
 
@@ -66,5 +64,3 @@ private:
 	OpcodeHandler handlers[EXT_OPCODE_COUNT];
 	const char* names[EXT_OPCODE_COUNT];
 };
-
-#endif

@@ -1,6 +1,4 @@
-#ifndef __TINYGL_H__
-#define __TINYGL_H__
-
+#pragma once
 #include <climits>
 
 #include "Span.h"
@@ -142,5 +140,3 @@ public:
     void resetCounters();  
     void applyClearColorBuffer(); // [GEC]
 };
-
-#endif

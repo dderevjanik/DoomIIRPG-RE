@@ -1,6 +1,4 @@
-#ifndef __TEXT_H__
-#define __TEXT_H__
-
+#pragma once
 class Text;
 
 // -------------------
@@ -149,5 +147,3 @@ public:
 	void toUpper();
 	void dispose();
 };
-
-#endif

@@ -1,6 +1,4 @@
-#ifndef __ENTITYMONSTER_H__
-#define __ENTITYMONSTER_H__
-
+#pragma once
 #include <cstring>
 #include <stdint.h>
 
@@ -21,5 +19,3 @@ public:
 	// Constructor
 	EntityMonster();
 };
-
-#endif

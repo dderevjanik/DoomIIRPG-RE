@@ -1,6 +1,4 @@
-#ifndef __IMAGE_H__
-#define __IMAGE_H__
-
+#pragma once
 #include <SDL_opengl.h>
 
 class IDIB;
@@ -31,5 +29,3 @@ public:
 	void DrawTexture(int texX, int texY, int texW, int texH, int posX, int posY, int rotateMode, int renderMode);
 	void setRenderMode(int renderMode);
 };
-
-#endif

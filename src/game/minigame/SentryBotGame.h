@@ -1,6 +1,4 @@
-#ifndef __SENTRYBOTGAME_H__
-#define __SENTRYBOTGAME_H__
-
+#pragma once
 class ScriptThread;
 class Image;
 class fmButtonContainer;
@@ -72,5 +70,3 @@ public:
 	void handleTouchForHelpScreen(int pressX, int pressY);
 	void handleTouchForGame(int pressX, int pressY);
 };
-
-#endif

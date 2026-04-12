@@ -1,7 +1,4 @@
-#ifndef __INPUT_H__
-#define __INPUT_H__
-
-
+#pragma once
 //------------------------------------------------------------------------------------------------------------------------------------------
 // Enum representing an input source on a non-generic game controller recognized by SDL (axis or button)
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -186,4 +183,3 @@ public:
 	void handleEvents() noexcept;
 	void consumeEvents() noexcept;
 };
-#endif

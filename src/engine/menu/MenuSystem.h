@@ -1,6 +1,4 @@
-#ifndef __MENUSYSTEM_H__
-#define __MENUSYSTEM_H__
-
+#pragma once
 #include "Text.h"
 #include "MenuItem.h"
 #include "MenuStrings.h"
@@ -450,5 +448,3 @@ public:
     void refresh();
     void soundClick();
 };
-
-#endif

@@ -1,6 +1,4 @@
-#ifndef __AICOMPONENT_H__
-#define __AICOMPONENT_H__
-
+#pragma once
 #include <cstring>
 #include <stdint.h>
 
@@ -25,5 +23,3 @@ struct AIComponent
 	void saveGoalState(OutputStream* OS);
 	void loadGoalState(InputStream* IS);
 };
-
-#endif

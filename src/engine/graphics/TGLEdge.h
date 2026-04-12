@@ -1,6 +1,4 @@
-#ifndef __TGLEDGE_H__
-#define __TGLEDGE_H__
-
+#pragma once
 #include <stdint.h>
 
 class TGLVert;
@@ -35,5 +33,3 @@ public:
 	bool startup();
     void setFromVerts(TGLVert* tglVert, TGLVert* tglVert2);
 };
-
-#endif

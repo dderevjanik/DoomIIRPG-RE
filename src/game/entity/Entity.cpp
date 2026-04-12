@@ -256,8 +256,7 @@ void Entity::populateDefaultLootSet() {
 int Entity::findRandomJokeItem() {
     int sprite = this->getSprite();
     const auto& jokeItems = CAppContainer::getInstance()->gameConfig.jokeItems;
-    auto it = jokeItems.find(app->canvas->loadMapID);
-    if (it != jokeItems.end() && !it->second.empty()) {
+    if (auto it = jokeItems.find(app->canvas->loadMapID); it != jokeItems.end() && !it->second.empty()) {
         return it->second[sprite % it->second.size()];
     }
     app->Error(117); // ERR_ENT_LOOTSET

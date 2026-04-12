@@ -1,6 +1,4 @@
-#ifndef __LOGOSTATE_H__
-#define __LOGOSTATE_H__
-
+#pragma once
 #include "ICanvasState.h"
 
 class LogoState : public ICanvasState {
@@ -11,5 +9,3 @@ public:
 	void render(Canvas* canvas, Graphics* graphics) override;
 	bool handleInput(Canvas* canvas, int key, int action) override;
 };
-
-#endif

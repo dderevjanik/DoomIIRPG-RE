@@ -17,8 +17,7 @@ GLuint ImageLoader::loadTexture(const std::string& path) {
 }
 
 GLuint ImageLoader::loadTexture(const std::string& path, int& outWidth, int& outHeight) {
-	auto it = cache_.find(path);
-	if (it != cache_.end()) {
+	if (auto it = cache_.find(path); it != cache_.end()) {
 		outWidth = it->second.width;
 		outHeight = it->second.height;
 		return it->second.id;

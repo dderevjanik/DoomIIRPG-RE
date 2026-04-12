@@ -1,6 +1,4 @@
-#ifndef __LOOTINGSTATE_H__
-#define __LOOTINGSTATE_H__
-
+#pragma once
 #include "ICanvasState.h"
 
 class LootingState : public ICanvasState {
@@ -11,5 +9,3 @@ public:
 	void render(Canvas* canvas, Graphics* graphics) override;
 	bool handleInput(Canvas* canvas, int key, int action) override;
 };
-
-#endif

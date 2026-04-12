@@ -1,6 +1,4 @@
-#ifndef __APP_H__
-#define __APP_H__
-
+#pragma once
 #include <cstring>
 #include <stdint.h>
 #include <memory>
@@ -132,11 +130,11 @@ public:
 	~Applet();
 
 	void setGameModule(IGameModule* module);
-	bool startup();
+	[[nodiscard]] bool startup();
 	void loadConfig();
 
-	Image* createImage(InputStream* inputStream, bool isTransparentMask);
-	Image* loadImage(char* fileName, bool isTransparentMask);
+	[[nodiscard]] Image* createImage(InputStream* inputStream, bool isTransparentMask);
+	[[nodiscard]] Image* loadImage(char* fileName, bool isTransparentMask);
 
 	void beginImageLoading();
 	void endImageLoading();
@@ -158,6 +156,3 @@ public:
 	void StopAccelerometer();
 	void CalcAccelerometerAngles();
 };
-
-
-#endif

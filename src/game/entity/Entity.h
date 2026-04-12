@@ -1,6 +1,4 @@
-#ifndef __ENTITY_H__
-#define __ENTITY_H__
-
+#pragma once
 class Applet;
 struct AIComponent;
 class CombatEntity;
@@ -104,5 +102,3 @@ public:
 	
 	
 };
-
-#endif

@@ -1,6 +1,4 @@
-#ifndef __EVENTBUS_H__
-#define __EVENTBUS_H__
-
+#pragma once
 #include <cstdint>
 #include <functional>
 #include <typeindex>
@@ -44,10 +42,10 @@ public:
 	// Synchronous emit: calls all subscribers for T immediately, in priority order.
 	template <typename T>
 	void emit(const T& event) {
-		auto it = subscribers.find(std::type_index(typeid(T)));
-		if (it == subscribers.end()) return;
-		for (auto& sub : it->second) {
-			sub.callback(&event);
+		if (auto it = subscribers.find(std::type_index(typeid(T))); it != subscribers.end()) {
+			for (auto& sub : it->second) {
+				sub.callback(&event);
+			}
 		}
 	}
 
@@ -67,10 +65,10 @@ public:
 		auto pending = std::move(pendingEvents);
 		pendingEvents.clear();
 		for (auto& entry : pending) {
-			auto it = subscribers.find(entry.typeIdx);
-			if (it == subscribers.end()) continue;
-			for (auto& sub : it->second) {
-				sub.callback(entry.data.get());
+			if (auto it = subscribers.find(entry.typeIdx); it != subscribers.end()) {
+				for (auto& sub : it->second) {
+					sub.callback(entry.data.get());
+				}
 			}
 		}
 	}
@@ -97,5 +95,3 @@ private:
 	std::vector<QueuedEvent> pendingEvents;
 	EventHandle nextHandle = 1;
 };
-
-#endif

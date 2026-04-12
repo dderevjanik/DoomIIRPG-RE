@@ -1,6 +1,4 @@
-#ifndef __LOG_H__
-#define __LOG_H__
-
+#pragma once
 #include <cstdio>
 #include <cstdarg>
 
@@ -66,5 +64,3 @@ inline void logMsg(LogLevel level, const char* fmt, ...) {
 #endif
 
 #define LOG_ERROR(fmt, ...) logMsg(LOG_LEVEL_ERROR, fmt, ##__VA_ARGS__)
-
-#endif

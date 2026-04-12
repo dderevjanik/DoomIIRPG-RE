@@ -1,6 +1,4 @@
-#ifndef __ENTITYDEF_H__
-#define __ENTITYDEF_H__
-
+#pragma once
 class EntityDef;
 
 // -----------------------
@@ -183,5 +181,3 @@ class EntityDef {
 	// Render flag helpers
 	bool hasRenderFlag(uint32_t flag) const { return (renderFlags & flag) != 0; }
 };
-
-#endif

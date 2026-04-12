@@ -1,6 +1,4 @@
-#ifndef __UTILS_H__
-#define __UTILS_H__
-
+#pragma once
 #include <stdio.h>
 #include <stdlib.h>
 #include "Image.h"
@@ -37,5 +35,3 @@ bool pointInRectangle(int x, int y, int rectX, int rectY, int rectW, int rectH);
 float AxisHit(int aX, int aY, int x, int y, int w, int h, bool isXaxis, float activeFraction);
 void fixImage(Image* img);
 void enlargeButtonImage(Image* img);
-
-#endif

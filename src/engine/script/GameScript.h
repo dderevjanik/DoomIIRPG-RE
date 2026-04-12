@@ -1,6 +1,4 @@
-#ifndef __GAMESCRIPT_H__
-#define __GAMESCRIPT_H__
-
+#pragma once
 #include <vector>
 #include <string>
 #include <cstdint>
@@ -42,5 +40,3 @@ private:
 
 	static int parseAction(const std::string& name);
 };
-
-#endif

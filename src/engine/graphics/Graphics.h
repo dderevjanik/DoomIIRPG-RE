@@ -1,6 +1,4 @@
-#ifndef __GRAPHICS_H__
-#define __GRAPHICS_H__
-
+#pragma once
 #include <stdint.h>
 
 class Applet;
@@ -80,5 +78,3 @@ public:
 	void fade(int* rect, int alpha, int color);
 	void drawPixelPortal(int* rect, int x, int y, uint32_t color);
 };
-
-#endif
