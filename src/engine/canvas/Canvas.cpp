@@ -263,8 +263,8 @@ bool Canvas::startup() {
 		// Setup Sniper Scope Buttons
 		{
 			this->m_sniperScopeButtons = new fmButtonContainer();
-			button = new fmButton(6, 122, 20, 236, 236, -1);
-			this->m_sniperScopeButtons->AddButton(button);
+			static const ButtonDef sniperDef = {6, 122, 20, 236, 236, -1};
+			createButtons(this->m_sniperScopeButtons, &sniperDef, 1);
 		}
 
 		// Setup Control Buttons
@@ -340,19 +340,15 @@ bool Canvas::startup() {
 		// Setup Character Buttons
 		{
 			this->m_characterButtons = new fmButtonContainer();
-			for (int i = 0; i < 5; i++) {
-				button = new fmButton(i, 0, 0, 0, 0, 1027);
-				this->m_characterButtons->AddButton(button);
-			}
+			ButtonDef charDefs[] = {{0,0,0,0,0,1027}, {1,0,0,0,0,1027}, {2,0,0,0,0,1027}, {3,0,0,0,0,1027}, {4,0,0,0,0,1027}};
+			createButtons(this->m_characterButtons, charDefs, 5);
 		}
 
 		// Setup Dialog Buttons
 		{
 			this->m_dialogButtons = new fmButtonContainer();
-			for (int i = 0; i < 5; i++) {
-				button = new fmButton(i, 0, 0, 0, 0, 1027);
-				this->m_dialogButtons->AddButton(button);
-			}
+			ButtonDef dialogBaseDefs[] = {{0,0,0,0,0,1027}, {1,0,0,0,0,1027}, {2,0,0,0,0,1027}, {3,0,0,0,0,1027}, {4,0,0,0,0,1027}};
+			createButtons(this->m_dialogButtons, dialogBaseDefs, 5);
 			button = new fmButton(5, 390, 20, 90, 90, 1027);
 			button->SetImage(this->imgPageUP_Icon, true);
 			button->SetHighlightImage(this->imgPageUP_Icon, true);
@@ -378,10 +374,8 @@ bool Canvas::startup() {
 		// Setup SoftKey Buttons
 		{
 			this->m_softKeyButtons = new fmButtonContainer();
-			button = new fmButton(19, 0, 250, 100, 70, 1027);
-			this->m_softKeyButtons->AddButton(button);
-			button = new fmButton(20, 380, 250, 100, 70, 1027);
-			this->m_softKeyButtons->AddButton(button);
+			static const ButtonDef softKeyDefs[] = {{19, 0, 250, 100, 70, 1027}, {20, 380, 250, 100, 70, 1027}};
+			createButtons(this->m_softKeyButtons, softKeyDefs, 2);
 		}
 
 		// Setup Mixing Buttons
@@ -392,12 +386,12 @@ bool Canvas::startup() {
 		// Setup Story Buttons
 		{
 			this->m_storyButtons = new fmButtonContainer();
-			button = new fmButton(0, 0, 280, 60, 40, 1027); // Old -> (0, 0, 250, 100, 70, 1027);
-			this->m_storyButtons->AddButton(button);
-			button = new fmButton(1, 380, 280, 100, 40, 1027); // Old -> (1, 320, 250, 100, 70, 1027);
-			this->m_storyButtons->AddButton(button);
-			button = new fmButton(2, 420, 0, 60, 40, 1027);// Old -> (2, 380, 0, 100, 70, 1027);
-			this->m_storyButtons->AddButton(button);
+			static const ButtonDef storyDefs[] = {
+				{0, 0,   280, 60,  40, 1027}, // Back
+				{1, 380, 280, 100, 40, 1027}, // Next
+				{2, 420, 0,   60,  40, 1027}, // Skip
+			};
+			createButtons(this->m_storyButtons, storyDefs, 3);
 		}
 
 		// Setup TreadMill Buttons

@@ -65,27 +65,16 @@ bool Hud::startup() {
 	app->endImageLoading();
 
 	this->m_hudButtons = new fmButtonContainer;
-
-	fmButton *btnSwitchRight = new fmButton(0, 0, 256, 52, 64, 1121);
-	this->m_hudButtons->AddButton(btnSwitchRight);
-
-	fmButton* btnSwitchLeft = new fmButton(1, 428, 256, 52, 64, 1121);
-	this->m_hudButtons->AddButton(btnSwitchLeft);
-
-	fmButton* btnWeapon = new fmButton(2, 268, 258, this->imgWeaponNormal->width, 44, 1121);
-	this->m_hudButtons->AddButton(btnWeapon);
-
-	fmButton* btnPlayer = new fmButton(3, 219, 264, this->imgPlayerFaces->width + 10, 36, 1121);
-	this->m_hudButtons->AddButton(btnPlayer);
-
-	fmButton* btnShield = new fmButton(4, 49, 258, this->imgShieldNormal->width, this->imgShieldNormal->height, 1121);
-	this->m_hudButtons->AddButton(btnShield);
-
-	fmButton* btnHealth = new fmButton(5, 133, 258, this->imgHealthNormal->width, this->imgHealthNormal->height, 1121);
-	this->m_hudButtons->AddButton(btnHealth);
-
-	fmButton* btnKey = new fmButton(6, 375, 258, this->imgKeyNormal->width, 44, 1121);
-	this->m_hudButtons->AddButton(btnKey);
+	ButtonDef hudButtons[] = {
+		{0, 0,   256, 52,                            64,                            1121}, // Switch Right
+		{1, 428, 256, 52,                            64,                            1121}, // Switch Left
+		{2, 268, 258, imgWeaponNormal->width,        44,                            1121}, // Weapon
+		{3, 219, 264, imgPlayerFaces->width + 10,    36,                            1121}, // Player
+		{4, 49,  258, imgShieldNormal->width,        imgShieldNormal->height,       1121}, // Shield
+		{5, 133, 258, imgHealthNormal->width,        imgHealthNormal->height,       1121}, // Health
+		{6, 375, 258, imgKeyNormal->width,           44,                            1121}, // Key
+	};
+	createButtons(this->m_hudButtons, hudButtons, 7);
 	
 	this->m_weaponsButtons = new fmButtonContainer;
 	for (int i = 0; i < CAppContainer::getInstance()->gameConfig.maxWeaponButtons; i++) {

@@ -78,6 +78,16 @@ public:
 };
 
 // ------------------------
+// ButtonDef — data-driven button definition
+// ------------------------
+
+struct ButtonDef {
+	int id;
+	int x, y, w, h;
+	int soundResID;
+};
+
+// ------------------------
 // fmButtonContainer Class
 // ------------------------
 
@@ -104,6 +114,9 @@ public:
 	void FlipButtons();
 	void Render(Graphics* graphics);
 };
+
+// Create buttons from a ButtonDef array and add them to a container
+void createButtons(fmButtonContainer* container, const ButtonDef* defs, int count);
 
 // ---------------------
 // fmScrollButton Class

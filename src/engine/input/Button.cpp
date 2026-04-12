@@ -230,6 +230,13 @@ void fmButton::Render(Graphics* graphics) {
 // fmButtonContainer Class
 // ------------------------
 
+void createButtons(fmButtonContainer* container, const ButtonDef* defs, int count) {
+	for (int i = 0; i < count; i++) {
+		fmButton* btn = new fmButton(defs[i].id, defs[i].x, defs[i].y, defs[i].w, defs[i].h, defs[i].soundResID);
+		container->AddButton(btn);
+	}
+}
+
 fmButtonContainer::fmButtonContainer() {
 	//printf("fmButtonContainer::init\n");
 	std::memset(this, 0, sizeof(fmButtonContainer));
