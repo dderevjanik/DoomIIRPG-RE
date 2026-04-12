@@ -1,7 +1,8 @@
-#include <stdexcept>
 #include <algorithm>
 #include <cstdio>
+#include <format>
 #include <memory>
+#include <stdexcept>
 #include <sys/stat.h>
 #include "Log.h"
 
@@ -40,9 +41,7 @@
 
 static std::string resolutionToString(int index) {
 	if (index >= 0 && index < 18) {
-		char buf[32];
-		snprintf(buf, sizeof(buf), "%dx%d", sdlResVideoModes[index].width, sdlResVideoModes[index].height);
-		return buf;
+		return std::format("{}x{}", sdlResVideoModes[index].width, sdlResVideoModes[index].height);
 	}
 	return "480x320";
 }

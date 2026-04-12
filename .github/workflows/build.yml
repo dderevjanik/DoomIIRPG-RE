@@ -27,13 +27,13 @@ jobs:
           restore-keys: ccache-linux-
 
       - name: Configure
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TOOLS=OFF -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Build
-        run: cmake --build build --parallel --target DRPGEngine drpg-convert
+        run: cmake --build build --parallel
 
       - name: Test
-        run: cmake --build build --parallel --target test-mapdata-roundtrip && ctest --test-dir build --output-on-failure
+        run: ctest --test-dir build --output-on-failure
 
       - name: Print ccache stats
         run: ccache -s
@@ -62,13 +62,13 @@ jobs:
           restore-keys: ccache-macos-
 
       - name: Configure
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TOOLS=OFF -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Build
-        run: cmake --build build --parallel --target DRPGEngine drpg-convert
+        run: cmake --build build --parallel
 
       - name: Test
-        run: cmake --build build --parallel --target test-mapdata-roundtrip && ctest --test-dir build --output-on-failure
+        run: ctest --test-dir build --output-on-failure
 
       - name: Print ccache stats
         run: ccache -s

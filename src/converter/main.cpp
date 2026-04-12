@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <format>
 #include <string>
 #include <sys/stat.h>
 
@@ -82,13 +83,9 @@ std::string escapeString(const uint8_t* raw, int len) {
 		} else if (ch == 0x09) {
 			result += "\\t";
 		} else if (ch >= 0x80 && ch <= 0x9F) {
-			char buf[8];
-			snprintf(buf, sizeof(buf), "\\x%02X", ch);
-			result += buf;
+			result += std::format("\\x{:02X}", ch);
 		} else if (ch >= 0xA0) {
-			char buf[8];
-			snprintf(buf, sizeof(buf), "\\x%02X", ch);
-			result += buf;
+			result += std::format("\\x{:02X}", ch);
 		} else {
 			result += (char)ch;
 		}

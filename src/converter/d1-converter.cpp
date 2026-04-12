@@ -3,6 +3,7 @@
 #include "ZipFile.h"
 #include <cstdio>
 #include <cstring>
+#include <format>
 #include <stb_image_write.h>
 
 // ========================================================================
@@ -194,8 +195,7 @@ bool extractD1Textures(ZipFile& zip, const std::string& outputDir) {
 		std::vector<uint8_t> pixels(TEX_SIZE * TEX_SIZE * 3, 0);
 		decodeTex64(texelOffsets[actualId * 2], texelOffsets[actualId * 2 + 1], pixels.data());
 
-		char filename[64];
-		snprintf(filename, sizeof(filename), "d1_wall_%03d.png", bspTex);
+		auto filename = std::format("d1_wall_{:03d}.png", bspTex);
 		stbi_write_png((texDir + "/" + filename).c_str(), TEX_SIZE, TEX_SIZE, 3, pixels.data(), TEX_SIZE * 3);
 
 		bspExported[bspTex] = true;

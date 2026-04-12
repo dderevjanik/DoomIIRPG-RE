@@ -1,4 +1,5 @@
 #pragma once
+#include <format>
 #include <map>
 #include <string>
 #include <unordered_map>
@@ -148,9 +149,7 @@ struct GameConfig {
 	// Get map file path for a given map ID (falls back to legacy mapNN.bin naming)
 	std::string getMapFile(int mapId) const {
 		if (auto it = levelInfos.find(mapId); it != levelInfos.end()) return it->second.mapFile;
-		char buf[32];
-		snprintf(buf, sizeof(buf), "map%02d.bin", mapId - 1);
-		return buf;
+		return std::format("map{:02d}.bin", mapId - 1);
 	}
 };
 

@@ -81,8 +81,9 @@ target_link_libraries(${PROJECT_NAME} drpg-engine-lib)
 # Converter tool
 add_subdirectory(converter)
 
-# Map editor
-add_subdirectory(editor)
-
-# Assets manager
-add_subdirectory(assets-manager)
+# Map editor (optional — skipped in CI with -DBUILD_TOOLS=OFF)
+option(BUILD_TOOLS "Build editor and assets-manager" ON)
+if(BUILD_TOOLS)
+	add_subdirectory(editor)
+	add_subdirectory(assets-manager)
+endif()

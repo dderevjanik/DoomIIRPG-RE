@@ -1,3 +1,4 @@
+#include <format>
 #include "Camera.h"
 #include "EditorUI.h"
 #include "MapData.h"
@@ -47,9 +48,7 @@ static MapData mapData;
 static std::string currentMapPath;
 
 static std::string mapFilePath(int mapID) {
-	char buf[32];
-	std::snprintf(buf, sizeof(buf), "map%02d.bin", mapID - 1);
-	return std::string(buf);
+	return std::format("map{:02d}.bin", mapID - 1);
 }
 
 static void editorLoadMap(int mapID) {

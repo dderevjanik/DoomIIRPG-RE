@@ -1,3 +1,4 @@
+#include <format>
 #include <stdexcept>
 #include <cstdio>
 #include "Log.h"
@@ -75,7 +76,6 @@ bool InputStream::loadResource(const char* fileName) {
 }
 
 bool InputStream::loadFile(const char* fileName, int loadType) {
-	char namePath[2048];
 	this->cursor = 0;
 
 	if (loadType == LT_RESOURCE) {
@@ -86,15 +86,15 @@ bool InputStream::loadFile(const char* fileName, int loadType) {
 		}
 	} else if (loadType == LT_SOUND_RESOURCE) { // [GEC]
 		VFS* vfs = CAppContainer::getInstance()->vfs;
-		std::snprintf(namePath, sizeof(namePath), "audio/%s", fileName);
-		this->data = vfs->readFile(namePath, &this->fileSize);
+		auto namePath = std::format("audio/{}", fileName);
+		this->data = vfs->readFile(namePath.c_str(), &this->fileSize);
 		if (this->data) {
 			return true;
 		}
 	} else if (loadType == LT_FILE) {
-		std::snprintf(namePath, sizeof(namePath), "%s/%s", getSaveDir().c_str(), fileName);
+		auto namePath = std::format("{}/{}", getSaveDir(), fileName);
 
-		this->file = std::fopen(namePath, "rb");
+		this->file = std::fopen(namePath.c_str(), "rb");
 
 		if (this->file != nullptr) {
 			std::fseek(this->file, 0, SEEK_END);
@@ -201,8 +201,6 @@ OutputStream::~OutputStream() {
 #include <sys/stat.h>
 
 int OutputStream::openFile(const char* fileName, int openMode) {
-	char namePath[2060];
-
 	struct stat sb;
 	if (stat(getSaveDir().c_str(), &sb)) {
 #ifdef _WIN32
@@ -212,7 +210,7 @@ int OutputStream::openFile(const char* fileName, int openMode) {
 #endif
 	}
 
-	std::snprintf(namePath, sizeof(namePath), "%s/%s", getSaveDir().c_str(), fileName);
+	auto namePath = std::format("{}/{}", getSaveDir(), fileName);
 
 	// printf("output file: %s\n", namePath);
 	this->buffer = (uint8_t*)std::malloc(512);
@@ -230,13 +228,13 @@ int OutputStream::openFile(const char* fileName, int openMode) {
 
 	switch (openMode) {
 		case 1:
-			this->file = std::fopen(namePath, "wb");
+			this->file = std::fopen(namePath.c_str(), "wb");
 			break;
 		case 2:
-			this->file = std::fopen(namePath, "rb");
+			this->file = std::fopen(namePath.c_str(), "rb");
 			break;
 		case 3:
-			this->file = std::fopen(namePath, "w+b");
+			this->file = std::fopen(namePath.c_str(), "w+b");
 			break;
 		default:
 			return 0;

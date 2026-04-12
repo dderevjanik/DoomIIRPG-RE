@@ -3,8 +3,8 @@
 #include "Log.h"
 
 // Static member definitions
-std::unordered_map<std::string, int> ItemDefs::inventoryNameToIndex;
-std::unordered_map<std::string, int> ItemDefs::ammoNameToIndex;
+std::unordered_map<std::string, int, StringHash, std::equal_to<>> ItemDefs::inventoryNameToIndex;
+std::unordered_map<std::string, int, StringHash, std::equal_to<>> ItemDefs::ammoNameToIndex;
 
 bool ItemDefs::parse(const DataNode& config) {
 	// Load inventory section
@@ -30,18 +30,18 @@ bool ItemDefs::parse(const DataNode& config) {
 	return true;
 }
 
-int ItemDefs::getInventoryIndex(const std::string& name) {
+int ItemDefs::getInventoryIndex(std::string_view name) {
 	if (auto it = inventoryNameToIndex.find(name); it != inventoryNameToIndex.end()) {
 		return it->second;
 	}
 	// Fall back to numeric string
-	try { return std::stoi(name); } catch (...) { return -1; }
+	try { return std::stoi(std::string(name)); } catch (...) { return -1; }
 }
 
-int ItemDefs::getAmmoIndex(const std::string& name) {
+int ItemDefs::getAmmoIndex(std::string_view name) {
 	if (auto it = ammoNameToIndex.find(name); it != ammoNameToIndex.end()) {
 		return it->second;
 	}
 	// Fall back to numeric string
-	try { return std::stoi(name); } catch (...) { return -1; }
+	try { return std::stoi(std::string(name)); } catch (...) { return -1; }
 }

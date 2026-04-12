@@ -39,6 +39,7 @@ target_include_directories(${ASSETS_MGR_TGT_NAME} PRIVATE
 	${imgui_am_SOURCE_DIR}
 	${imgui_am_SOURCE_DIR}/backends
 	${CMAKE_SOURCE_DIR}/third_party_libs/stb
+	${CMAKE_SOURCE_DIR}/src/engine/core
 	${CMAKE_SOURCE_DIR}/src/game
 	${CMAKE_SOURCE_DIR}/src/game/data
 )

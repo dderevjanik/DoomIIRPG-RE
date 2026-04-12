@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
+#include <format>
 
 // Helper: case-insensitive substring match
 static bool matchesFilter(const std::string& text, const char* filter) {
@@ -889,9 +890,8 @@ void AssetBrowser::drawMonsterDetail(const MonsterEntry& m) {
 	// Tiers
 	for (int ti = 0; ti < (int)m.tiers.size(); ti++) {
 		auto& t = m.tiers[ti];
-		char label[32];
-		std::snprintf(label, sizeof(label), "Tier %d (parm %d)", ti, ti);
-		if (ImGui::CollapsingHeader(label, ImGuiTreeNodeFlags_DefaultOpen)) {
+		auto label = std::format("Tier {} (parm {})", ti, ti);
+		if (ImGui::CollapsingHeader(label.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
 			// Stats bar visualization
 			ImGui::Text("Stats:");
 			auto statBar = [](const char* name, int val, int maxVal, ImVec4 color) {
@@ -1253,9 +1253,8 @@ void AssetBrowser::drawMenusPanel() {
 		if (!matchesFilter(m.name, filterText_)) continue;
 
 		bool selected = (selectedMenu_ == i);
-		char label[128];
-		std::snprintf(label, sizeof(label), "%s (%d)", m.name.c_str(), m.menuId);
-		if (ImGui::Selectable(label, selected))
+		auto label = std::format("{} ({})", m.name, m.menuId);
+		if (ImGui::Selectable(label.c_str(), selected))
 			selectedMenu_ = i;
 		ImGui::SameLine(listWidth - 80);
 		ImGui::TextColored(menuTypeColor(m.type), "%s", m.type.c_str());
@@ -1678,11 +1677,10 @@ void AssetBrowser::drawLevelsPanel() {
 	ImGui::BeginChild("LevelList", ImVec2(listWidth, 0), true);
 	for (int i = 0; i < (int)levels_.size(); i++) {
 		auto& lev = levels_[i];
-		char label[64];
-		std::snprintf(label, sizeof(label), "%02d: %s", lev.mapNumber, lev.name.c_str());
+		auto label = std::format("{:02d}: {}", lev.mapNumber, lev.name);
 
 		bool selected = (selectedLevel_ == i);
-		if (ImGui::Selectable(label, selected))
+		if (ImGui::Selectable(label.c_str(), selected))
 			selectedLevel_ = i;
 	}
 	ImGui::EndChild();

@@ -5,6 +5,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <algorithm>
+#include <format>
 #include <map>
 #include <set>
 #include <string>
@@ -85,12 +86,11 @@ static bool convertStrings(ZipFile& zip, const std::string& outDir) {
 	uint8_t* chunks[3] = {};
 	int chunkSizes[3] = {};
 	for (int i = 0; i < 3; i++) {
-		char fname[32];
-		snprintf(fname, sizeof(fname), "strings%02d.bin", i);
+		auto fname = std::format("strings{:02d}.bin", i);
 		std::string chunkPath = std::string(g_game->pkgPrefix) + fname;
 		chunks[i] = zip.readZipFileEntry(chunkPath.c_str(), &chunkSizes[i]);
 		if (chunks[i]) {
-			printf("  %s: %d bytes\n", fname, chunkSizes[i]);
+			printf("  %s: %d bytes\n", fname.c_str(), chunkSizes[i]);
 		}
 	}
 
@@ -247,7 +247,7 @@ static bool convertStrings(ZipFile& zip, const std::string& outDir) {
 // Copy all BMP image files from the IPA Packages directory
 // ========================================================================
 static std::string classifyImage(const std::string& relPath) {
-	if (relPath.compare(0, 10, "ComicBook/") == 0) {
+	if (relPath.starts_with("ComicBook/")) {
 		return "comicbook/" + relPath.substr(10);
 	}
 
@@ -257,20 +257,20 @@ static std::string classifyImage(const std::string& relPath) {
 		name = name.substr(slash + 1);
 	}
 
-	if (name.compare(0, 4, "Font") == 0 || name == "WarFont.bmp") {
+	if (name.starts_with("Font") || name == "WarFont.bmp") {
 		return "fonts/" + name;
 	}
 
-	if (name.compare(0, 3, "Hud") == 0 || name.compare(0, 3, "HUD") == 0 ||
-	    name.compare(0, 3, "hud") == 0 ||
+	if (name.starts_with("Hud") || name.starts_with("HUD") ||
+	    name.starts_with("hud") ||
 	    name == "cockpit.bmp" || name == "damage.bmp" || name == "damage_bot.bmp" ||
 	    name == "Automap_Cursor.bmp" || name == "ui_images.bmp" ||
 	    name == "DialogScroll.bmp" ||
-	    name.compare(0, 6, "Switch") == 0 ||
+	    name.starts_with("Switch") ||
 	    name == "Soft_Key_Fill.bmp" ||
-	    name == "scope.bmp" || name.compare(0, 11, "SniperScope") == 0 ||
+	    name == "scope.bmp" || name.starts_with("SniperScope") ||
 	    name == "inGame_menu_softkey.bmp" ||
-	    name.compare(0, 15, "vending_softkey") == 0) {
+	    name.starts_with("vending_softkey")) {
 		return "hud/" + name;
 	}
 
@@ -286,11 +286,9 @@ static void copyImageAssets(ZipFile& zip, const std::string& outDir) {
 		if (!name) continue;
 		std::string entry(name);
 
-		if (entry.compare(0, prefix.size(), prefix) != 0) continue;
+		if (!entry.starts_with(prefix)) continue;
 
-		if (entry.size() < 4) continue;
-		std::string ext = entry.substr(entry.size() - 4);
-		if (ext != ".bmp" && ext != ".BMP") continue;
+		if (!entry.ends_with(".bmp") && !entry.ends_with(".BMP")) continue;
 
 		std::string relPath = entry.substr(prefix.size());
 		std::string classifiedPath = classifyImage(relPath);
@@ -323,7 +321,7 @@ static void copyAudioAssets(ZipFile& zip, const std::string& outDir) {
 		if (!name) continue;
 		std::string entry(name);
 
-		if (entry.compare(0, prefix.size(), prefix) != 0) continue;
+		if (!entry.starts_with(prefix)) continue;
 
 		std::string fileName = entry.substr(prefix.size());
 		if (fileName.empty()) continue;
@@ -380,10 +378,9 @@ static bool extractSpritesToYaml(const std::string& outDir) {
 		int added = 0;
 		for (int id : allMediaIds) {
 			if (tileIdToName.find(id) == tileIdToName.end()) {
-				char name[32];
-				snprintf(name, sizeof(name), "texture_%03d", id);
+				auto name = std::format("texture_{:03d}", id);
 				tileIdToName[id] = name;
-				appendYaml += "  " + std::string(name) + ": {file: tables.bin, id: " + std::to_string(id) + "}\n";
+				appendYaml += "  " + name + ": {file: tables.bin, id: " + std::to_string(id) + "}\n";
 				added++;
 			}
 		}
@@ -596,9 +593,7 @@ static bool extractSpritesToYaml(const std::string& outDir) {
 				for (size_t i = 0; i < mapData.byteCode.size(); i += 32) {
 					sYaml += "  ";
 					for (size_t j = i; j < i + 32 && j < mapData.byteCode.size(); j++) {
-						char hex[4];
-						snprintf(hex, sizeof(hex), "%02X", mapData.byteCode[j]);
-						sYaml += hex;
+						sYaml += std::format("{:02X}", mapData.byteCode[j]);
 					}
 					sYaml += "\n";
 				}
@@ -656,10 +651,8 @@ static bool extractSpritesToYaml(const std::string& outDir) {
 					}
 				}
 				if (remaining != 0) {
-					char buf[16];
-					snprintf(buf, sizeof(buf), "0x%X", remaining);
 					if (!first) yaml += ", ";
-					yaml += buf;
+					yaml += std::format("0x{:X}", remaining);
 				}
 				yaml += "]\n";
 			}
@@ -705,18 +698,13 @@ static bool extractSpritesToYaml(const std::string& outDir) {
 static void copyBinaryAssets(ZipFile& zip, const std::string& outDir) {
 	std::vector<std::string> binaryFiles;
 	for (int i = 0; i < g_game->numMaps; i++) {
-		char buf[64];
-		snprintf(buf, sizeof(buf), "Packages/map%02d.bin", i);
-		binaryFiles.push_back(buf);
-		snprintf(buf, sizeof(buf), "Packages/model_%04d.bin", i);
-		binaryFiles.push_back(buf);
+		binaryFiles.push_back(std::format("Packages/map{:02d}.bin", i));
+		binaryFiles.push_back(std::format("Packages/model_{:04d}.bin", i));
 	}
 	binaryFiles.push_back("Packages/newMappings.bin");
 	binaryFiles.push_back("Packages/newPalettes.bin");
 	for (int i = 0; i < g_game->numTextures; i++) {
-		char buf[64];
-		snprintf(buf, sizeof(buf), "Packages/newTexels%03d.bin", i);
-		binaryFiles.push_back(buf);
+		binaryFiles.push_back(std::format("Packages/newTexels{:03d}.bin", i));
 	}
 	binaryFiles.push_back("Packages/tables.bin");
 
@@ -729,23 +717,23 @@ static void copyBinaryAssets(ZipFile& zip, const std::string& outDir) {
 		uint8_t* data = zip.readZipFileEntry(ipaPath.c_str(), &size);
 		if (data) {
 			std::string outFile = relPath;
-			if (outFile.compare(0, 9, "Packages/") == 0) {
+			if (outFile.starts_with("Packages/")) {
 				outFile = outFile.substr(9);
 			}
 
-			if (outFile.compare(0, 3, "map") == 0 && outFile.find(".bin") != std::string::npos) {
+			if (outFile.starts_with("map") && outFile.ends_with(".bin")) {
 				int mapIdx = 0;
 				if (sscanf(outFile.c_str(), "map%d.bin", &mapIdx) == 1) {
 					int mapId = mapIdx + 1;
 					outFile = "levels/" + getLevelDirName(mapId) + "/map.bin";
 				}
-			} else if (outFile.compare(0, 6, "model_") == 0) {
+			} else if (outFile.starts_with("model_")) {
 				int modelIdx = 0;
 				if (sscanf(outFile.c_str(), "model_%d.bin", &modelIdx) == 1) {
 					int mapId = modelIdx + 1;
 					outFile = "levels/" + getLevelDirName(mapId) + "/model.bin";
 				}
-			} else if (outFile.compare(0, 3, "new") == 0) {
+			} else if (outFile.starts_with("new")) {
 				outFile = "levels/textures/" + outFile;
 			} else if (outFile == "tables.bin") {
 				outFile = "data/" + outFile;

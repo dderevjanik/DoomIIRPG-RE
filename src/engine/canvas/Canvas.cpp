@@ -263,7 +263,7 @@ bool Canvas::startup() {
 		// Setup Sniper Scope Buttons
 		{
 			this->m_sniperScopeButtons = new fmButtonContainer();
-			static const ButtonDef sniperDef = {6, 122, 20, 236, 236, -1};
+			static const ButtonDef sniperDef = {.id = 6, .x = 122, .y = 20, .w = 236, .h = 236, .soundResID = -1};
 			createButtons(this->m_sniperScopeButtons, &sniperDef, 1);
 		}
 
@@ -340,14 +340,26 @@ bool Canvas::startup() {
 		// Setup Character Buttons
 		{
 			this->m_characterButtons = new fmButtonContainer();
-			ButtonDef charDefs[] = {{0,0,0,0,0,1027}, {1,0,0,0,0,1027}, {2,0,0,0,0,1027}, {3,0,0,0,0,1027}, {4,0,0,0,0,1027}};
+			ButtonDef charDefs[] = {
+				{.id = 0, .x = 0, .y = 0, .w = 0, .h = 0, .soundResID = 1027},
+				{.id = 1, .x = 0, .y = 0, .w = 0, .h = 0, .soundResID = 1027},
+				{.id = 2, .x = 0, .y = 0, .w = 0, .h = 0, .soundResID = 1027},
+				{.id = 3, .x = 0, .y = 0, .w = 0, .h = 0, .soundResID = 1027},
+				{.id = 4, .x = 0, .y = 0, .w = 0, .h = 0, .soundResID = 1027},
+			};
 			createButtons(this->m_characterButtons, charDefs, 5);
 		}
 
 		// Setup Dialog Buttons
 		{
 			this->m_dialogButtons = new fmButtonContainer();
-			ButtonDef dialogBaseDefs[] = {{0,0,0,0,0,1027}, {1,0,0,0,0,1027}, {2,0,0,0,0,1027}, {3,0,0,0,0,1027}, {4,0,0,0,0,1027}};
+			ButtonDef dialogBaseDefs[] = {
+				{.id = 0, .x = 0, .y = 0, .w = 0, .h = 0, .soundResID = 1027},
+				{.id = 1, .x = 0, .y = 0, .w = 0, .h = 0, .soundResID = 1027},
+				{.id = 2, .x = 0, .y = 0, .w = 0, .h = 0, .soundResID = 1027},
+				{.id = 3, .x = 0, .y = 0, .w = 0, .h = 0, .soundResID = 1027},
+				{.id = 4, .x = 0, .y = 0, .w = 0, .h = 0, .soundResID = 1027},
+			};
 			createButtons(this->m_dialogButtons, dialogBaseDefs, 5);
 			button = new fmButton(5, 390, 20, 90, 90, 1027);
 			button->SetImage(this->imgPageUP_Icon, true);
@@ -374,7 +386,10 @@ bool Canvas::startup() {
 		// Setup SoftKey Buttons
 		{
 			this->m_softKeyButtons = new fmButtonContainer();
-			static const ButtonDef softKeyDefs[] = {{19, 0, 250, 100, 70, 1027}, {20, 380, 250, 100, 70, 1027}};
+			static const ButtonDef softKeyDefs[] = {
+				{.id = 19, .x = 0, .y = 250, .w = 100, .h = 70, .soundResID = 1027},
+				{.id = 20, .x = 380, .y = 250, .w = 100, .h = 70, .soundResID = 1027},
+			};
 			createButtons(this->m_softKeyButtons, softKeyDefs, 2);
 		}
 

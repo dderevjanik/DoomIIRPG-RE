@@ -788,7 +788,7 @@ bool parseTables(Applet* app, const DataNode& config) {
 		app->combat->tableCombatMasks = new int32_t[count];
 		for (int i = 0; i < count; i++) {
 			std::string val = masks[i].asString("0");
-			if (val.substr(0, 2) == "0x" || val.substr(0, 2) == "0X") {
+			if (val.starts_with("0x") || val.starts_with("0X")) {
 				app->combat->tableCombatMasks[i] = (int32_t)std::stoul(val, nullptr, 16);
 			} else {
 				app->combat->tableCombatMasks[i] = (int32_t)std::stoi(val);

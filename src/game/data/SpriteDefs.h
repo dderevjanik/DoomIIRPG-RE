@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
+#include <string_view>
 #include <unordered_map>
+#include "StringHash.h"
 
 // Bin   = legacy binary sprite from tables.bin (has id)
 // Image = single image file, no animation frames (png/bmp)
@@ -22,44 +24,44 @@ class SpriteDefs {
 
 	// Name-to-index map (populated from sprites.yaml "sprites" section)
 	// External sprites (Image/Sheet) are mapped to SPRITE_INDEX_EXTERNAL (-1)
-	static std::unordered_map<std::string, int> tileNameToIndex;
+	static std::unordered_map<std::string, int, StringHash, std::equal_to<>> tileNameToIndex;
 
 	// Index-to-name reverse map (for debugging/logging)
 	static std::unordered_map<int, std::string> tileIndexToName;
 
 	// Full source metadata for each tile name
-	static std::unordered_map<std::string, SpriteSource> tileNameToSource;
+	static std::unordered_map<std::string, SpriteSource, StringHash, std::equal_to<>> tileNameToSource;
 
 	// Tile index → PNG override path (for binary sprites with png: field)
 	static std::unordered_map<int, std::string> tileIndexToPng;
 
 	// Range boundaries (populated from sprites.yaml "ranges" section)
-	static std::unordered_map<std::string, int> ranges;
+	static std::unordered_map<std::string, int, StringHash, std::equal_to<>> ranges;
 
 	// Parse sprite definitions from a DataNode (called by ResourceManager)
 	[[nodiscard]] static bool parse(const class DataNode& config);
 
 	// Get tile index by name, returns 0 if not found (returns -1 for external sprites)
-	[[nodiscard]] static int getIndex(const std::string& name);
+	[[nodiscard]] static int getIndex(std::string_view name);
 
 	// Get full source info by name, returns nullptr if not found
-	[[nodiscard]] static const SpriteSource* getSource(const std::string& name);
+	[[nodiscard]] static const SpriteSource* getSource(std::string_view name);
 
 	// Check if a sprite is a single image (not from bin, no frames)
-	[[nodiscard]] static bool isImage(const std::string& name);
+	[[nodiscard]] static bool isImage(std::string_view name);
 
 	// Check if a sprite is a sheet (has frame metadata)
-	[[nodiscard]] static bool isSheet(const std::string& name);
+	[[nodiscard]] static bool isSheet(std::string_view name);
 
 	// Check if a sprite is external (Image or Sheet, not from bin)
-	[[nodiscard]] static bool isExternal(const std::string& name);
+	[[nodiscard]] static bool isExternal(std::string_view name);
 
 	// Get PNG override path for a tile index, returns empty string if none
 	[[nodiscard]] static const std::string& getPngOverride(int tileIndex);
 
 	// Get range value by name, returns 0 if not found
-	[[nodiscard]] static int getRange(const std::string& name);
+	[[nodiscard]] static int getRange(std::string_view name);
 
 	// Check if an index falls within a named range (inclusive)
-	[[nodiscard]] static bool isInRange(int index, const std::string& first, const std::string& last);
+	[[nodiscard]] static bool isInRange(int index, std::string_view first, std::string_view last);
 };

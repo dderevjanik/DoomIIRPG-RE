@@ -6,6 +6,7 @@
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <cmath>
+#include <format>
 
 #include "CAppContainer.h"
 #include "App.h"
@@ -107,10 +108,9 @@ void EditorUI::drawMapList() {
     ImGui::Text("Maps:");
     ImGui::BeginChild("MapList", ImVec2(0, 150), ImGuiChildFlags_Borders);
     for (int i = 1; i <= 10; i++) {
-        char label[32];
-        std::snprintf(label, sizeof(label), "Map %02d", i - 1);
+        auto label = std::format("Map {:02d}", i - 1);
         bool selected = (i - 1 == selectedMapIdx_);
-        if (ImGui::Selectable(label, selected)) {
+        if (ImGui::Selectable(label.c_str(), selected)) {
             selectedMapIdx_ = i - 1;
             selectedTileIdx_ = -1;
             if (loadCallback_) loadCallback_(i);
@@ -413,14 +413,13 @@ void EditorUI::drawEntityList(int currentMapID) {
         ImU32 color = entityTypeColor(eType);
         ImVec4 colVec = ImGui::ColorConvertU32ToFloat4(color);
 
-        char label[64];
         const char* typeName = def ? entityTypeName(eType) : "???";
-        std::snprintf(label, sizeof(label), "#%d [%d,%d] %s (tile %d)",
+        auto label = std::format("#{} [{},{}] {} (tile {})",
                       i, tileCol, tileRow, typeName, tileNum);
 
         ImGui::PushStyleColor(ImGuiCol_Text, colVec);
         bool selected = (selectedSpriteIdx_ == i);
-        if (ImGui::Selectable(label, selected)) {
+        if (ImGui::Selectable(label.c_str(), selected)) {
             selectedSpriteIdx_ = i;
             // Also select the tile this entity is on
             if (tileCol >= 0 && tileCol < 32 && tileRow >= 0 && tileRow < 32)

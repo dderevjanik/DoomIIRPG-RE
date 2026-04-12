@@ -1,13 +1,14 @@
+#include <string_view>
 #include "SpriteDefs.h"
 #include "DataNode.h"
 #include "Log.h"
 
 // Static member definitions
-std::unordered_map<std::string, int> SpriteDefs::tileNameToIndex;
+std::unordered_map<std::string, int, StringHash, std::equal_to<>> SpriteDefs::tileNameToIndex;
 std::unordered_map<int, std::string> SpriteDefs::tileIndexToName;
-std::unordered_map<std::string, SpriteSource> SpriteDefs::tileNameToSource;
+std::unordered_map<std::string, SpriteSource, StringHash, std::equal_to<>> SpriteDefs::tileNameToSource;
 std::unordered_map<int, std::string> SpriteDefs::tileIndexToPng;
-std::unordered_map<std::string, int> SpriteDefs::ranges;
+std::unordered_map<std::string, int, StringHash, std::equal_to<>> SpriteDefs::ranges;
 
 static const std::string EMPTY_STRING;
 
@@ -134,43 +135,43 @@ bool SpriteDefs::parse(const DataNode& config) {
 	return true;
 }
 
-int SpriteDefs::getIndex(const std::string& name) {
+int SpriteDefs::getIndex(std::string_view name) {
 	if (auto it = tileNameToIndex.find(name); it != tileNameToIndex.end()) {
 		return it->second;
 	}
 	return 0;
 }
 
-const SpriteSource* SpriteDefs::getSource(const std::string& name) {
+const SpriteSource* SpriteDefs::getSource(std::string_view name) {
 	if (auto it = tileNameToSource.find(name); it != tileNameToSource.end()) {
 		return &it->second;
 	}
 	return nullptr;
 }
 
-bool SpriteDefs::isImage(const std::string& name) {
+bool SpriteDefs::isImage(std::string_view name) {
 	const SpriteSource* src = getSource(name);
 	return src && src->type == SpriteSourceType::Image;
 }
 
-bool SpriteDefs::isSheet(const std::string& name) {
+bool SpriteDefs::isSheet(std::string_view name) {
 	const SpriteSource* src = getSource(name);
 	return src && src->type == SpriteSourceType::Sheet;
 }
 
-bool SpriteDefs::isExternal(const std::string& name) {
+bool SpriteDefs::isExternal(std::string_view name) {
 	const SpriteSource* src = getSource(name);
 	return src && (src->type == SpriteSourceType::Image || src->type == SpriteSourceType::Sheet);
 }
 
-int SpriteDefs::getRange(const std::string& name) {
+int SpriteDefs::getRange(std::string_view name) {
 	if (auto it = ranges.find(name); it != ranges.end()) {
 		return it->second;
 	}
 	return 0;
 }
 
-bool SpriteDefs::isInRange(int index, const std::string& first, const std::string& last) {
+bool SpriteDefs::isInRange(int index, std::string_view first, std::string_view last) {
 	return index >= getRange(first) && index <= getRange(last);
 }
 

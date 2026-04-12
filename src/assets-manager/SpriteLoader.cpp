@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
+#include <format>
 #include <fstream>
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -109,8 +110,7 @@ bool SpriteLoader::load(const std::string& gameDir) {
 	// Load all texel files
 	std::vector<std::vector<uint8_t>> texelFiles;
 	for (int f = 0; f < 100; f++) {
-		char fname[64];
-		std::snprintf(fname, sizeof(fname), "%s/newTexels%03d.bin", texDir.c_str(), f);
+		auto fname = std::format("{}/newTexels{:03d}.bin", texDir, f);
 		std::vector<uint8_t> td;
 		if (!readFile(fname, td)) break;
 		texelFiles.push_back(std::move(td));

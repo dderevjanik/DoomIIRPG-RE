@@ -1,4 +1,6 @@
 #include <stdexcept>
+#include <format>
+#include <string>
 #include "Log.h"
 
 #include "SDLGL.h"
@@ -221,8 +223,6 @@ void ComicBook::DrawLoading(Graphics* graphics) {
     int x; // r10
     int y; // r8
     int flags; // r0
-    char __s[148]; // [sp+4h] [bp-94h] BYREF
-
     ++this->field_0x1c;
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -236,25 +236,26 @@ void ComicBook::DrawLoading(Graphics* graphics) {
     }
     Text* textBuff = app->localization->getSmallBuffer();
     textBuff->setLength(0);
+    std::string loadingText;
     switch (this->field_0x14c / 5 % 4)
     {
     case 0:
-        std::snprintf(__s, sizeof(__s), "Loading   ");
+        loadingText = "Loading   ";
         break;
     case 1:
-        std::snprintf(__s, sizeof(__s), "Loading.  ");
+        loadingText = "Loading.  ";
         break;
     case 2:
-        std::snprintf(__s, sizeof(__s), "Loading.. ");
+        loadingText = "Loading.. ";
         break;
     case 3:
-        std::snprintf(__s, sizeof(__s), "Loading...");
+        loadingText = "Loading...";
         break;
     default:
-        std::snprintf(__s, sizeof(__s), "Loading....");
+        loadingText = "Loading....";
         break;
     }
-    textBuff->append(__s);
+    textBuff->append(loadingText.c_str());
     textBuff->dehyphenate();
     graphics->drawString(textBuff, x, y, (this->is_iPhoneComic) ? 67 : 3);
     textBuff->dispose();
@@ -986,8 +987,6 @@ void ComicBook::DrawExitButton(Graphics* graphics) {
     int v8; // r5
     Text* SmallBuffer; // r5
     int v10; // r0
-    char __s[152]; // [sp+14h] [bp-98h] BYREF
-
     v3 = this->exitBtnRect[0];
     v4 = this->exitBtnRect[1];
     v5 = this->exitBtnRect[2];
@@ -1010,8 +1009,7 @@ void ComicBook::DrawExitButton(Graphics* graphics) {
     graphics->fillRect(v3, v4, v5, v6, (v8 << 8) | (v8 << 16) | 0xFF);
     SmallBuffer = app->localization->getSmallBuffer();
     SmallBuffer->setLength(0);
-    std::snprintf(__s, sizeof(__s), "Done");
-    SmallBuffer->append(__s);
+    SmallBuffer->append("Done");
     SmallBuffer->dehyphenate();
     graphics->drawString(SmallBuffer, v3 + v5 / 2, v4 + v6 / 2, (this->is_iPhoneComic) ? 67 : 3);
     SmallBuffer->dispose();
