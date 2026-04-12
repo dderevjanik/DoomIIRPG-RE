@@ -9,7 +9,6 @@ This project is based on the Doom II RPG reverse engineering effort and aims to 
 ## Project Structure
 
 - **`src/converter/`** — CLI tool that extracts and converts assets from the original `.ipa` into `games/doom2rpg/`. Parses zip/binary formats and emits YAML + raw assets.
-- **`src/editor/`** — Map editor with BSP compiler, camera, and UI for editing map data.
 - **`src/engine/`** — Platform/rendering layer: SDL/GL backend, TinyGL software renderer, input, sound, resource/VFS, text, HUD, menus, scripting, and particle system.
 - **`src/game/`** — Game logic: entities, combat, player, maps, minigames (hacking, sentry bot, vending), and game states (logo, credits, automap).
 
@@ -27,8 +26,6 @@ macOS shortcut: `./build-macos.sh`
 **Targets:**
 - `DRPGEngine` — main game executable
 - `drpg-convert` — asset converter CLI
-- `drpg-editor` — map editor (`./build/src/editor/drpg-editor --game doom2rpg`)
-- `drpg-assets-manager` — asset browser
 
 ## Testing
 
@@ -60,7 +57,7 @@ After bigger refactors (engine, asset pipeline, entity system, rendering, level 
 `*.ipa` → `drpg-convert` (or `tools/*.py`) → YAML + binary assets in `games/doom2rpg/`
 
 - **YAML files** in `games/doom2rpg/` (entities, weapons, monsters, strings, etc.) are the modding/editing surface.
-- **Binary `.bin` map files** should not be hand-edited — use the editor or converter.
+- **Binary `.bin` map files** should not be hand-edited — use the converter.
 - Don't directly edit `games/doom2rpg/` assets that are converted from original game files. Instead edit `src/converter` to modify how assets are processed.
 - `tools/` contains Python extraction scripts (`extract_*.py`) and HTML viewers (`map-viewer.html`, `model-viewer.html`, `menu-editor.html`).
 

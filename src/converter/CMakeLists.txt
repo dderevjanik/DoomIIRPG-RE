@@ -26,8 +26,8 @@ add_executable(${CONVERTER_TGT_NAME}
 	stb_image_write_impl.cpp
 	Error.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/../engine/resource/ZipFile.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/../editor/MapDataIO.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/../editor/BSPCompiler.cpp
+	MapDataIO.cpp
+	BSPCompiler.cpp
 )
 
 add_dependencies(${CONVERTER_TGT_NAME} converter_resources)
@@ -45,7 +45,6 @@ target_include_directories(${CONVERTER_TGT_NAME} PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/../engine/resource
 	${CMAKE_CURRENT_SOURCE_DIR}/../engine/data
 	${CMAKE_CURRENT_SOURCE_DIR}/../game
-	${CMAKE_CURRENT_SOURCE_DIR}/../editor
 	${CMAKE_CURRENT_BINARY_DIR}
 	${CMAKE_SOURCE_DIR}/third_party_libs/stb
 )

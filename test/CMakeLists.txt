@@ -2,8 +2,8 @@ set(TEST_MAPDATA_TGT test-mapdata-roundtrip)
 
 add_executable(${TEST_MAPDATA_TGT}
 	test_mapdata_roundtrip.cpp
-	${CMAKE_SOURCE_DIR}/src/editor/MapDataIO.cpp
-	${CMAKE_SOURCE_DIR}/src/editor/BSPCompiler.cpp
+	${CMAKE_SOURCE_DIR}/src/converter/MapDataIO.cpp
+	${CMAKE_SOURCE_DIR}/src/converter/BSPCompiler.cpp
 )
 
 set_target_properties(${TEST_MAPDATA_TGT} PROPERTIES
@@ -13,7 +13,7 @@ set_target_properties(${TEST_MAPDATA_TGT} PROPERTIES
 )
 
 target_include_directories(${TEST_MAPDATA_TGT} PRIVATE
-	${CMAKE_SOURCE_DIR}/src/editor
+	${CMAKE_SOURCE_DIR}/src/converter
 )
 
 target_link_libraries(${TEST_MAPDATA_TGT} yaml-cpp)

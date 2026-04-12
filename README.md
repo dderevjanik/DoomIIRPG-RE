@@ -55,7 +55,6 @@ cmake --build build --config Release --parallel
 ```
 src/
 ├── converter/   # CLI tool: extracts assets from .ipa → YAML + binaries in games/
-├── editor/      # Map editor with BSP compiler, camera, and Dear ImGui UI
 ├── engine/      # Platform layer: SDL/GL, TinyGL renderer, input, sound, VFS, menus, scripting
 └── game/        # Game logic: entities, combat, player, minigames, game states
 
@@ -108,7 +107,7 @@ See [docs/d2-rpg/](docs/d2-rpg/) for Doom 2 RPG binary format specs and [docs/d1
 | ---------------------- | -------------------------------------------------------------- |
 | `--game <name>`        | Game module under `games/` (e.g. `doom2rpg`)                   |
 | `--gamedir <path>`     | Explicit game directory path                                   |
-| `--map <path>`         | Load a specific map (e.g. `levels/maps/map09.bin`)             |
+| `--map <path>`         | Load a specific level directory or map file (see below)        |
 | `--minigame <name>`    | Launch a minigame directly (`hacking`, `sentrybot`, `vending`) |
 | `--skip-intro`         | Skip the intro sequence                                        |
 | `--skip-travel-map`    | Skip the travel map (auto-set when `--map` is used)            |
@@ -116,6 +115,23 @@ See [docs/d2-rpg/](docs/d2-rpg/) for Doom 2 RPG binary format specs and [docs/d1
 | `--ticks <n>`          | Exit after N ticks (for testing)                               |
 | `--seed <n>`           | Set random seed (for reproducible runs)                        |
 | `--script <path>`      | Run a test script (e.g. `Testing/test_map09.script`)           |
+
+### Loading a Specific Level
+
+The `--map` flag accepts a level directory registered in `game.yaml`, a path to `map.bin`, or a raw binary file:
+
+```bash
+# Level directory (resolved against game.yaml levels section)
+./build/src/DRPGEngine --map levels/10_test_map
+
+# Explicit map.bin path within a level directory
+./build/src/DRPGEngine --map levels/10_test_map/map.bin
+
+# Combined with --game
+./build/src/DRPGEngine --game doom2rpg --map levels/01_tycho
+```
+
+When the path matches a registered level, the engine loads it through the full level system (textures, `level.yaml`, scripts, strings). Unrecognized paths are treated as standalone `.bin` files.
 
 ### Converter CLI Options
 
@@ -161,57 +177,6 @@ J2ME/BREW version - open menu and enter these numbers:<br>
 
 ## Editor
 
-The map editor lets you view and edit maps — change tile geometry, heights, textures and flags, with a live 3D preview using the game engine's renderer.
-
-### Building the Editor
-
-The editor is built alongside the main project:
-
-```bash
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build --target drpg-editor --parallel
-```
-
-### Running
-
-```bash
-./build/src/editor/drpg-editor --game doom2rpg
-```
-
-Options:
-
-| Flag                | Description                                                    |
-| ------------------- | -------------------------------------------------------------- |
-| `--game <name>`     | Game directory under `games/` (e.g. `doom2rpg`)                |
-| `--gamedir <path>`  | Explicit game directory path                                   |
-| `--map <1-10>`      | Map to load on startup (default: 1)                            |
-| `--minigame <name>` | Launch a minigame directly (`hacking`, `sentrybot`, `vending`) |
-
-### Editor Hotkeys
-
-**3D Viewport** (click in viewport to capture mouse):
-
-| Action            | Key          |
-| ----------------- | ------------ |
-| Move Forward/Back | W / S        |
-| Strafe Left/Right | A / D        |
-| Move Up/Down      | E / Q        |
-| Look Around       | Mouse        |
-| Sprint            | Shift        |
-| Zoom Speed        | Scroll Wheel |
-| Release Mouse     | Escape       |
-
-**Editor**:
-
-| Action         | Key    |
-| -------------- | ------ |
-| Toggle Automap | Tab    |
-| Toggle Noclip  | N      |
-| Save Map       | Ctrl+S |
-| Quit           | Ctrl+Q |
-
-**Automap**: click a tile to select it. The Inspector panel shows tile properties (height, solid flag, textures) that you can edit. Modified maps can be saved with Ctrl+S — the engine reloads the map automatically to preview changes.
-
 ## Testing
 
 ### Unit Tests
@@ -239,5 +204,5 @@ scripts/test_minigame_loading.sh   # loads hacking, sentrybot, vending minigames
 Test scripts in `Testing/` can exercise specific maps with deterministic seeds:
 
 ```bash
-./build/src/DRPGEngine --game doom2rpg --skip-travel-map --map levels/maps/map09.bin --script Testing/test_map09.script --seed 1337
+./build/src/DRPGEngine --game doom2rpg --map levels/09_vios --script Testing/test_map09.script --seed 1337
 ```
