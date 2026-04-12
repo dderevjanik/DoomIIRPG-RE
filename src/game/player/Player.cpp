@@ -123,8 +123,8 @@ void Player::fillMonsterStats() {
 	int n2 = 0;
 	for (int i = 0; i < app->game->numEntities; ++i) {
 		Entity* entity = &app->game->entities[i];
-		if (entity->monster != nullptr) {
-			if ((entity->monster->flags & 0x80) == 0x0) {
+		if (entity->isMonster()) {
+			if ((entity->monsterFlags & 0x80) == 0x0) {
 				++n;
 				if ((app->game->entities[i].info & 0x1010000) != 0x0) {
 					++n2;

@@ -36,6 +36,7 @@
 #include "Menus.h"
 #include "Input.h"
 #include "ICanvasState.h"
+#include "LootComponent.h"
 
 void Canvas::lootingState() {
 
@@ -163,7 +164,7 @@ void Canvas::poolLoot(int* array) {
 	this->lootPoolCredits = 0;
 	while (entity != nullptr) {
 		if (entity->def->eType == Enums::ET_CORPSE) {
-			if (entity->monster == nullptr) {
+			if (!entity->isMonster()) {
 				if (entity->param != 0) {
 					entity = entity->nextOnTile;
 					continue;
@@ -171,32 +172,32 @@ void Canvas::poolLoot(int* array) {
 				++entity->param;
 			}
 			else {
-				if ((entity->monster->flags & 0x800) != 0x0) {
+				if ((entity->monsterFlags & 0x800) != 0x0) {
 					entity = entity->nextOnTile;
 					continue;
 				}
-				entity->monster->flags |= 0x800;
+				entity->monsterFlags |= 0x800;
 			}
 			entity->info |= 0x400000;
 			for (int i = 0; i < 3; ++i) {
-				if (entity->lootSet[i] == 0) {
+				if (entity->loot->lootSet[i] == 0) {
 					break;
 				}
 				bool b = true;
-				int n = entity->lootSet[i] >> 12 & 0xF;
+				int n = entity->loot->lootSet[i] >> 12 & 0xF;
 				if (n == 6) {
-					int n2 = entity->lootSet[i] & 0xFFF;
+					int n2 = entity->loot->lootSet[i] & 0xFFF;
 					for (int j = 0; j < this->numPoolItems; ++j) {
-						if ((entity->lootSet[j] >> 12 & 0xF) == 0x6 && n2 == (this->lootPool[j] & 0xFFF)) {
+						if ((entity->loot->lootSet[j] >> 12 & 0xF) == 0x6 && n2 == (this->lootPool[j] & 0xFFF)) {
 							b = false;
 							break;
 						}
 					}
 				}
 				else {
-					int n3 = entity->lootSet[i] & 0x3F;
+					int n3 = entity->loot->lootSet[i] & 0x3F;
 					++this->numLootItems;
-					int n4 = (entity->lootSet[i] & 0xFC0) >> 6;
+					int n4 = (entity->loot->lootSet[i] & 0xFC0) >> 6;
 					if (n == 0) {
 						if (n4 == 24) {
 							this->lootPoolCredits += n3;
@@ -207,7 +208,7 @@ void Canvas::poolLoot(int* array) {
 							continue;
 						}
 					}
-					int n5 = entity->lootSet[i] >> 6;
+					int n5 = entity->loot->lootSet[i] >> 6;
 					for (int k = 0; k < this->numPoolItems; ++k) {
 						if (n5 == this->lootPool[k] >> 6) {
 							b = false;
@@ -217,7 +218,7 @@ void Canvas::poolLoot(int* array) {
 					}
 				}
 				if (b) {
-					this->lootPool[this->numPoolItems++] = entity->lootSet[i];
+					this->lootPool[this->numPoolItems++] = entity->loot->lootSet[i];
 				}
 			}
 		}

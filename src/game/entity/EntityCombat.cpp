@@ -22,6 +22,7 @@
 #include "Sound.h"
 #include "SoundNames.h"
 #include "Sounds.h"
+#include "AIComponent.h"
 
 bool Entity::touched() {
 
@@ -195,8 +196,8 @@ bool Entity::pain(int n, Entity* entity) {
         return b;
     }
     if (this->def->eType == Enums::ET_MONSTER) {
-        int stat = this->monster->ce.getStat(0);
-        int stat2 = this->monster->ce.getStat(1);
+        int stat = this->combat->getStat(0);
+        int stat2 = this->combat->getStat(1);
         int n2 = stat - n;
         if (this->isBoss()) {
             int n3 = stat2 >> 1;
@@ -207,12 +208,12 @@ bool Entity::pain(int n, Entity* entity) {
                     b = (app->game->executeStaticFunc(2) != 0);
                     if (n2 < n3) {
                         n2 = n3 + 1;
-                        this->monster->monsterEffects &= ~1u;
+                        this->monsterEffects &= ~1u;
                     }
                 }
                 else {
-                    n2 = this->monster->ce.getStat(0);
-                    this->monster->monsterEffects &= ~1u;
+                    n2 = this->combat->getStat(0);
+                    this->monsterEffects &= ~1u;
                 }
             }
             else if (n2 <= n3 && n2 + n > n3) {
@@ -220,12 +221,12 @@ bool Entity::pain(int n, Entity* entity) {
                     b = (app->game->executeStaticFunc(3) != 0);
                     if (n2 < n4) {
                         n2 = n4 + 1;
-                        this->monster->monsterEffects &= ~1u;
+                        this->monsterEffects &= ~1u;
                     }
                 }
                 else {
-                    n2 = this->monster->ce.getStat(0);
-                    this->monster->monsterEffects &= ~1u;
+                    n2 = this->combat->getStat(0);
+                    this->monsterEffects &= ~1u;
                 }
             }
             else if (n2 <= n4 && n2 + n > n4) {
@@ -233,46 +234,46 @@ bool Entity::pain(int n, Entity* entity) {
                     b = (app->game->executeStaticFunc(4) != 0);
                     if (n2 < 0) {
                         n2 = 1;
-                        this->monster->monsterEffects &= ~1u;
+                        this->monsterEffects &= ~1u;
                     }
                 }
                 else {
-                    n2 = this->monster->ce.getStat(0);
-                    this->monster->monsterEffects &= ~1u;
+                    n2 = this->combat->getStat(0);
+                    this->monsterEffects &= ~1u;
                 }
             }
-            if (b && (this->monster->flags & 0x20) != 0x0) {
+            if (b && (this->monsterFlags & 0x20) != 0x0) {
                 app->combat->animLoopCount = 1;
             }
         }
 
-        if ((this->monster->flags & 0x4) != 0x0 && n2 <= 0) {
+        if ((this->monsterFlags & 0x4) != 0x0 && n2 <= 0) {
             n2 = 1;
         }
-        this->monster->ce.setStat(0, n2);
+        this->combat->setStat(0, n2);
         if (n2 > 0) {
 
             int monsterSound = app->game->getMonsterSound(this->def->monsterIdx, Enums::MSOUND_PAIN);
             app->sound->playSound(monsterSound, 0, 3, 0);
 
-            if (app->combat->punchingMonster == 0 && 0x0 == (this->monster->monsterEffects & 0x2)) {
+            if (app->combat->punchingMonster == 0 && 0x0 == (this->monsterEffects & 0x2)) {
                 app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | 0x6000);
-                this->monster->frameTime = app->time + 250;
+                this->ai->frameTime = app->time + 250;
             }
             if (app->combat->attackerWeaponId != 2) {
-                this->monster->resetGoal();
+                this->ai->resetGoal();
             }
         }
-        else if ((this->monster->monsterEffects & 0x2) == 0x0) {
+        else if ((this->monsterEffects & 0x2) == 0x0) {
             app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | 0x6000);
             if (app->combat->animLoopCount > 0) {
-                this->monster->frameTime = app->time + 250;
+                this->ai->frameTime = app->time + 250;
             }
             if (app->combat->punchingMonster != 0) {
-                this->monster->frameTime = app->combat->animEndTime + 200;
+                this->ai->frameTime = app->combat->animEndTime + 200;
             }
             else {
-                this->monster->frameTime = app->time + 250 + 200;
+                this->ai->frameTime = app->time + 250 + 200;
             }
         }
     }
@@ -307,19 +308,19 @@ void Entity::checkMonsterDeath(bool b, bool b2) {
     if (b && (app->player->weapons & 0x2000) != 0x0 && app->combat->attackerWeaponId != 13) {
         app->player->give(2, 6, 1);
     }
-    if (this->monster != nullptr) {
+    if (this->isMonster()) {
         if (b2) {
             int resourceID = app->game->getMonsterSound(this->def->monsterIdx, Enums::MSOUND_DEATH);
             app->sound->playSound(resourceID, 0, 5, false);
         }
         if (b) {
-            int calcXP = this->monster->ce.calcXP();
+            int calcXP = this->combat->calcXP();
             if (this->isBoss()) {
                 calcXP += 130;
             }
             app->player->addXP(calcXP);
         }
-        if ((this->monster->flags & 0x80) == 0x0) {
+        if ((this->monsterFlags & 0x80) == 0x0) {
             app->player->fillMonsterStats();
             if (app->player->monsterStats[0] == app->player->monsterStats[1] && (app->player->killedMonstersLevels & 1 << (app->canvas->loadMapID - 1)) == 0x0) {
                 app->player->showAchievementMessage(2);
@@ -336,7 +337,7 @@ void Entity::died(bool b, Entity* entity) {
     short n = app->render->mapSprites[app->render->S_X + sprite];
     short n2 = app->render->mapSprites[app->render->S_Y + sprite];
     int n3 = app->render->mapSpriteInfo[sprite];
-    if ((this->info & 0x20000) == 0x0 || (this->monster != nullptr && (this->monster->flags & 0x4) != 0x0)) {
+    if ((this->info & 0x20000) == 0x0 || (this->isMonster() && (this->monsterFlags & 0x4) != 0x0)) {
         return;
     }
     this->info &= 0xFFFDFFFF;
@@ -359,18 +360,18 @@ void Entity::died(bool b, Entity* entity) {
         n3 |= 0x10000;
         this->info |= 0x410000;
         this->info &= 0xFFF7FFFF;
-        if (this->monster != nullptr) {
-            this->monster->monsterEffects = 0;
+        if (this->isMonster()) {
+            this->monsterEffects = 0;
         }
         app->player->counters[4]++;
         app->game->unlinkEntity(this);
     }
     else if (eType == Enums::ET_MONSTER) {
         this->info |= 0x400000;
-        this->monster->resetGoal();
+        this->ai->resetGoal();
         app->game->snapLerpSprites(this->getSprite());
         n3 = ((n3 & 0xFFFF00FF) | 0x7000);
-        this->monster->frameTime = app->time;
+        this->ai->frameTime = app->time;
         if ((this->info & 0x10000) != 0x0) {
             n3 |= 0x17000;
         }
@@ -378,18 +379,18 @@ void Entity::died(bool b, Entity* entity) {
             this->info |= 0x1020000;
             this->trimCorpsePile(n, n2);
         }
-        if ((this->monster->monsterEffects & 0x2) || (this->monster->monsterEffects & 0x1)) {
-            this->monster->clearEffects();
+        if ((this->monsterEffects & 0x2) || (this->monsterEffects & 0x1)) {
+            this->clearMonsterEffects();
         }
         else {
-            this->monster->monsterEffects &= 0xFFFF801F;
-            this->monster->monsterEffects |= 0x220220;
+            this->monsterEffects &= 0xFFFF801F;
+            this->monsterEffects |= 0x220220;
         }
-        if (app->game->difficulty == Enums::DIFFICULTY_NIGHTMARE && (this->monster->flags & 0x40) == 0x0) {
+        if (app->game->difficulty == Enums::DIFFICULTY_NIGHTMARE && (this->monsterFlags & 0x40) == 0x0) {
             int n5 = 2 + app->nextInt() % 3;
-            this->monster->monsterEffects &= 0xFFFE1FFB;
-            this->monster->monsterEffects |= n5 << 13;
-            this->monster->monsterEffects |= 0x4;
+            this->monsterEffects &= 0xFFFE1FFB;
+            this->monsterEffects |= n5 << 13;
+            this->monsterEffects |= 0x4;
         }
         app->game->deactivate(this);
         this->undoAttack();
@@ -410,10 +411,10 @@ void Entity::died(bool b, Entity* entity) {
         this->def = app->entityDefManager->find(9, eSubType, this->def->parm);
         this->name = (short)(this->def->name | 0x400);
         app->canvas->invalidateRect();
-        if (app->game->difficulty == Enums::DIFFICULTY_NIGHTMARE && (this->monster->flags & 0x40) == 0x0 && (this->info & 0x80000) == 0x0) {
+        if (app->game->difficulty == Enums::DIFFICULTY_NIGHTMARE && (this->monsterFlags & 0x40) == 0x0 && (this->info & 0x80000) == 0x0) {
             int n6 = 2 + app->nextInt() % 3;
-            this->monster->monsterEffects |= n6 << 13;
-            this->monster->monsterEffects |= 0x4;
+            this->monsterEffects |= n6 << 13;
+            this->monsterEffects |= 0x4;
         }
         else if ((this->info & 0x80000) != 0x0) {
             n3 |= 0x10000;
@@ -448,51 +449,51 @@ void Entity::aiCalcSimpleGoal(bool b) {
         return;
     }
     if (app->player->buffs[11] > 0 && !app->combat->monsterBehaviors[this->def->monsterIdx].fearImmune) {
-        this->monster->goalType = 4;
-        this->monster->goalParam = 1;
+        this->ai->goalType = 4;
+        this->ai->goalParam = 1;
         return;
     }
     int aiWeaponForTarget = this->aiWeaponForTarget(&app->game->entities[1]);
     bool b2 = false;
     if (aiWeaponForTarget != -1) {
-        this->monster->ce.weapon = aiWeaponForTarget;
+        this->combat->weapon = aiWeaponForTarget;
         b2 = true;
     }
     if (b2) {
-        this->monster->goalType = 3;
-        this->monster->goalParam = 1;
+        this->ai->goalType = 3;
+        this->ai->goalParam = 1;
         if (app->combat->monsterBehaviors[this->def->monsterIdx].evading) {
-            this->monster->flags |= 0x1;
+            this->monsterFlags |= 0x1;
         }
     }
     else {
-        this->monster->goalType = 2;
-        this->monster->goalParam = 1;
+        this->ai->goalType = 2;
+        this->ai->goalParam = 1;
         if (app->combat->monsterBehaviors[this->def->monsterIdx].evading) {
-            this->monster->flags &= ~0x1;
+            this->monsterFlags &= ~0x1;
         }
     }
 }
 
 void Entity::aiChooseNewGoal(bool b) {
     uint8_t eSubType = this->def->eSubType;
-    this->monster->resetGoal();
+    this->ai->resetGoal();
     this->aiCalcSimpleGoal(b);
-    if (app->combat->monsterBehaviors[this->def->monsterIdx].evading && this->monster->goalType == 3) {
-        this->monster->goalFlags |= 0x8;
+    if (app->combat->monsterBehaviors[this->def->monsterIdx].evading && this->ai->goalType == 3) {
+        this->ai->goalFlags |= 0x8;
     }
 }
 
 bool Entity::aiIsValidGoal() {
 
 
-    uint8_t goalType = this->monster->goalType;
-    if (this->monster->goalTurns >= 16 || goalType == 3 || goalType == 0) {
+    uint8_t goalType = this->ai->goalType;
+    if (this->ai->goalTurns >= 16 || goalType == 3 || goalType == 0) {
         return false;
     }
     if (goalType == 2) {
-        Entity* entity = &app->game->entities[this->monster->goalParam];
-        if (this->monster->goalParam != 1) {
+        Entity* entity = &app->game->entities[this->ai->goalParam];
+        if (this->ai->goalParam != 1) {
             int* calcPosition = entity->calcPosition();
             Entity* mapEntity = app->game->findMapEntity(calcPosition[0], calcPosition[1], 15535);
             if (entity->linkIndex != this->linkIndex && (mapEntity == nullptr || mapEntity == entity)) {
@@ -501,20 +502,20 @@ bool Entity::aiIsValidGoal() {
         }
     }
     else if (goalType == 1) {
-        if (this->linkIndex != this->monster->goalX + this->monster->goalY * 32) {
+        if (this->linkIndex != this->ai->goalX + this->ai->goalY * 32) {
             return true;
         }
     }
     else {
         if (goalType == 4 || goalType == 5) {
-            return this->monster->goalTurns < this->monster->goalParam;
+            return this->ai->goalTurns < this->ai->goalParam;
         }
         if (goalType == 6) {
-            if (this->monster->goalTurns < this->monster->goalParam) {
+            if (this->ai->goalTurns < this->ai->goalParam) {
                 return true;
             }
-            if (this->monster->goalTurns == this->monster->goalParam) {
-                this->monster->resetGoal();
+            if (this->ai->goalTurns == this->ai->goalParam) {
+                this->ai->resetGoal();
                 return false;
             }
         }
@@ -526,7 +527,7 @@ bool Entity::aiIsAttackValid() {
 
 
     EntityMonster* monster = this->monster;
-    int weapon = monster->ce.weapon;
+    int weapon = this->combat->weapon;
     if (weapon <= -1) { //[GEC]
         return false;
     }
@@ -541,10 +542,10 @@ bool Entity::aiIsAttackValid() {
             int n2 = calcPosition[1] - app->game->destY;
             b2 = ((n != 0 || n2 != 0) && (n == 0 || n2 == 0));
         }
-        if (monster->target == nullptr && traceEntity->def->eType == Enums::ET_PLAYER && b && b2) {
+        if (this->ai->target == nullptr && traceEntity->def->eType == Enums::ET_PLAYER && b && b2) {
             return true;
         }
-        if (monster->target == traceEntity && b && b2) {
+        if (this->ai->target == traceEntity && b && b2) {
             return true;
         }
     }
@@ -742,35 +743,35 @@ bool Entity::checkLineOfSight(int n, int n2, int n3, int n4, int n5) {
 
 void Entity::attack() {
 
-    if ((this->monster->flags & 0x400) == 0x0) {
-        this->monster->flags |= 0x400;
-        this->monster->nextAttacker = app->game->combatMonsters;
+    if ((this->monsterFlags & 0x400) == 0x0) {
+        this->monsterFlags |= 0x400;
+        this->nextAttacker = app->game->combatMonsters;
         app->game->combatMonsters = this;
     }
 }
 
 void Entity::undoAttack() {
 
-    if ((this->monster->flags & 0x400) == 0x0) {
+    if ((this->monsterFlags & 0x400) == 0x0) {
         return;
     }
-    monster->flags &= ~0x400;
+    this->monsterFlags &= ~0x400;
     int sprite = this->getSprite();
-    if (app->combat->getWeaponFlags(this->monster->ce.weapon).chargeAttack) {
+    if (app->combat->getWeaponFlags(this->combat->weapon).chargeAttack) {
         app->render->mapSpriteInfo[sprite] &= 0xFFFF00FF;
     }
-    this->monster->resetGoal();
+    this->ai->resetGoal();
     Entity* entity = app->game->combatMonsters;
     Entity* entity2 = nullptr;
     while (entity != nullptr && entity != this) {
         entity2 = entity;
-        entity = entity->monster->nextAttacker;
+        entity = entity->nextAttacker;
     }
     if (entity2 != nullptr) {
-        entity2->monster->nextAttacker = this->monster->nextAttacker;
+        entity2->nextAttacker = this->nextAttacker;
     }
     else if (app->game->combatMonsters != nullptr) {
-        app->game->combatMonsters = this->monster->nextAttacker;
+        app->game->combatMonsters = this->nextAttacker;
     }
 }
 
@@ -786,7 +787,7 @@ void Entity::trimCorpsePile(int n, int n2) {
                 entity->info = ((entity->info & 0xFEFFFFFF) | 0x10000);
                 app->game->unlinkEntity(entity);
             }
-            entity = entity->monster->nextOnList;
+            entity = entity->nextOnList;
         } while (entity != app->game->inactiveMonsters);
     }
 }
@@ -838,10 +839,10 @@ void Entity::knockback(int n, int n2, int n3) {
         }
     }
     else {
-        this->monster->goalType = 1;
-        this->monster->goalX = goalX;
-        this->monster->goalY = goalY;
-        this->monster->flags |= 0x1000;
+        this->ai->goalType = 1;
+        this->ai->goalX = goalX;
+        this->ai->goalY = goalY;
+        this->monsterFlags |= 0x1000;
         LerpSprite* aiInitLerp = this->aiInitLerp(400);
         app->game->unlinkEntity(this);
         app->game->linkEntity(this, goalX, goalY);
@@ -873,17 +874,17 @@ int Entity::findRaiseTarget(int n, int n2, int n3) {
     int n6 = 0;
     if (inactiveMonsters != nullptr) {
         do {
-            Entity* nextOnList = inactiveMonsters->monster->nextOnList;
+            Entity* nextOnList = inactiveMonsters->nextOnList;
             int sprite = inactiveMonsters->getSprite();
             if ((inactiveMonsters->info & 0x10000) == 0x0 &&
                 (inactiveMonsters->info & 0x8000000) == 0x0 &&
                 (inactiveMonsters->info & 0x1000000) != 0x0 &&
                 !inactiveMonsters->isBoss() &&
-                (n2 == 0 || (inactiveMonsters->monster->flags & n2) != 0x0) &&
-                (inactiveMonsters->monster->flags & n3) == 0x0 &&
+                (n2 == 0 || (inactiveMonsters->monsterFlags & n2) != 0x0) &&
+                (inactiveMonsters->monsterFlags & n3) == 0x0 &&
                 inactiveMonsters->distFrom(n4, n5) <= n &&
                 app->game->findMapEntity(app->render->mapSprites[app->render->S_X + sprite], app->render->mapSprites[app->render->S_Y + sprite], 15535) == nullptr &&
-                (app->game->difficulty != Enums::DIFFICULTY_NIGHTMARE || 0x0 == (inactiveMonsters->monster->monsterEffects & 0x4)))
+                (app->game->difficulty != Enums::DIFFICULTY_NIGHTMARE || 0x0 == (inactiveMonsters->monsterEffects & 0x4)))
             {
                 this->raiseTargets[n6++] = inactiveMonsters;
             }
@@ -931,7 +932,7 @@ void Entity::resurrect(int n, int n2, int n3) {
     int sprite = this->getSprite();
     this->def = app->entityDefManager->find(2, this->def->eSubType, this->def->parm);
     this->name = (short)(this->def->name | 0x400);
-    this->monster->clearEffects();
+    this->clearMonsterEffects();
     app->render->mapSprites[app->render->S_X + sprite] = (short)n;
     app->render->mapSprites[app->render->S_Y + sprite] = (short)n2;
     app->render->mapSprites[app->render->S_Z + sprite] = (short)n3;
@@ -942,10 +943,10 @@ void Entity::resurrect(int n, int n2, int n3) {
     app->render->relinkSprite(sprite);
     this->info &= 0xF6FEFFFF;
     this->info |= 0x20000;
-    CombatEntity* ce = &this->monster->ce;
+    CombatEntity* ce = this->combat;
     this->initspawn();
     ce->setStat(0, ce->getStat(1));
-    this->monster->flags &= ~0x1000;
+    this->monsterFlags &= ~0x1000;
     app->game->unlinkEntity(this);
     app->game->linkEntity(this, n >> 6, n2 >> 6);
     app->canvas->updateFacingEntity = true;

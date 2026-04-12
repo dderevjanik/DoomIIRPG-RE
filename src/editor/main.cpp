@@ -83,6 +83,8 @@ static void editorLoadMap(int mapID) {
 			game->entities[i].reset();
 		game->numEntities = 0;
 		game->numMonsters = 0;
+		game->numAIComponents = 0;
+		game->numLootComponents = 0;
 
 		// Create world + player placeholder entities (indices 0, 1)
 		Entity* worldEnt = &game->entities[game->numEntities++];
@@ -109,7 +111,10 @@ static void editorLoadMap(int mapID) {
 			if (def->eType == Enums::ET_MONSTER) {
 				if (game->numMonsters < 80) {
 					ent->monster = &game->entityMonsters[game->numMonsters++];
-					ent->monster->reset();
+					ent->combat = &ent->monster->ce;
+					ent->ai = &game->aiComponents[game->numAIComponents++];
+					// EntityMonster pool slot initialized by memset in constructor
+					ent->ai->reset();
 					ent->info |= 0x40000;
 				}
 			}

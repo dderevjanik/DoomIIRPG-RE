@@ -46,10 +46,10 @@ void Game::prepareMonsters() {
 		int n4 = n3 - app->player->monsterStats[0];
 		for (int i = 0; i < this->numEntities; ++i) {
 			Entity* entity = &this->entities[i];
-			if (entity->monster != nullptr) {
+			if (entity->isMonster()) {
 				int sprite = entity->getSprite();
 				EntityMonster* monster = entity->monster;
-				if (0x0 != (entity->info & 0x1010000) && 0x0 == (monster->flags & 0x90) && n4 < n3 / 2 && n2 < 8 &&
+				if (0x0 != (entity->info & 0x1010000) && 0x0 == (entity->monsterFlags & 0x90) && n4 < n3 / 2 && n2 < 8 &&
 				    app->nextByte() <= 100) {
 					Render* render = app->render.get();
 					if (this->findMapEntity(render->mapSprites[render->S_X + sprite],
@@ -89,32 +89,32 @@ void Game::activate(Entity* entity, bool b, bool b2, bool b3, bool b4) {
 	}
 	int sprite = entity->getSprite();
 	app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | 0x0);
-	if (monster->nextOnList != nullptr) {
-		if (entity == this->inactiveMonsters && monster->nextOnList == this->inactiveMonsters) {
+	if (entity->nextOnList != nullptr) {
+		if (entity == this->inactiveMonsters && entity->nextOnList == this->inactiveMonsters) {
 			this->inactiveMonsters = nullptr;
 		} else {
 			if (entity == this->inactiveMonsters) {
-				this->inactiveMonsters = monster->nextOnList;
+				this->inactiveMonsters = entity->nextOnList;
 			}
-			monster->nextOnList->monster->prevOnList = monster->prevOnList;
-			monster->prevOnList->monster->nextOnList = monster->nextOnList;
+			entity->nextOnList->prevOnList = entity->prevOnList;
+			entity->prevOnList->nextOnList = entity->nextOnList;
 		}
 	}
 	if (this->activeMonsters == nullptr) {
-		monster->nextOnList = entity;
-		monster->prevOnList = entity;
+		entity->nextOnList = entity;
+		entity->prevOnList = entity;
 		this->activeMonsters = entity;
 	} else {
-		monster->prevOnList = this->activeMonsters->monster->prevOnList;
-		monster->nextOnList = this->activeMonsters;
-		this->activeMonsters->monster->prevOnList->monster->nextOnList = entity;
-		this->activeMonsters->monster->prevOnList = entity;
+		entity->prevOnList = this->activeMonsters->prevOnList;
+		entity->nextOnList = this->activeMonsters;
+		this->activeMonsters->prevOnList->nextOnList = entity;
+		this->activeMonsters->prevOnList = entity;
 	}
 	entity->info |= 0x40000;
-	monster->flags &= ~Enums::MFLAG_NOACTIVATE;
-	if (b && 0x0 != (monster->flags & 0x2)) {
+	entity->monsterFlags &= ~Enums::MFLAG_NOACTIVATE;
+	if (b && 0x0 != (entity->monsterFlags & 0x2)) {
 		this->executeStaticFunc(9);
-		monster->flags &= ~Enums::MFLAG_TRIGGERONACTIVATE;
+		entity->monsterFlags &= ~Enums::MFLAG_TRIGGERONACTIVATE;
 	}
 	if (app->canvas->state == Canvas::ST_PLAYING && b3) {
 		int MonsterSound = this->getMonsterSound(entity->def->monsterIdx, Enums::MSOUND_ALERT1);
@@ -128,7 +128,7 @@ void Game::killAll() {
 		if (entity->def != nullptr && entity->def->eType == Enums::ET_MONSTER) {
 			if (!entity->isBoss()) {
 				if ((entity->info & 0x20000) != 0x0) {
-					if ((entity->monster->flags & 0x80) == 0x0) {
+					if ((entity->monsterFlags & 0x80) == 0x0) {
 						entity->died(false, nullptr);
 					}
 				}
@@ -142,27 +142,26 @@ void Game::deactivate(Entity* entity) {
 	if ((entity->info & 0x40000) == 0x0) {
 		return;
 	}
-	if (monster->nextOnList != nullptr) {
-		if (entity == this->activeMonsters && monster->nextOnList == this->activeMonsters) {
+	if (entity->nextOnList != nullptr) {
+		if (entity == this->activeMonsters && entity->nextOnList == this->activeMonsters) {
 			this->activeMonsters = nullptr;
 		} else {
 			if (entity == this->activeMonsters) {
-				this->activeMonsters = monster->nextOnList;
+				this->activeMonsters = entity->nextOnList;
 			}
-			monster->nextOnList->monster->prevOnList = monster->prevOnList;
-			monster->prevOnList->monster->nextOnList = monster->nextOnList;
+			entity->nextOnList->prevOnList = entity->prevOnList;
+			entity->prevOnList->nextOnList = entity->nextOnList;
 		}
 	}
 	if (this->inactiveMonsters == nullptr) {
-		EntityMonster* entityMonster = monster;
-		monster->nextOnList = entity;
-		entityMonster->prevOnList = entity;
+		entity->nextOnList = entity;
+		entity->prevOnList = entity;
 		this->inactiveMonsters = entity;
 	} else {
-		monster->prevOnList = this->inactiveMonsters->monster->prevOnList;
-		monster->nextOnList = this->inactiveMonsters;
-		this->inactiveMonsters->monster->prevOnList->monster->nextOnList = entity;
-		this->inactiveMonsters->monster->prevOnList = entity;
+		entity->prevOnList = this->inactiveMonsters->prevOnList;
+		entity->nextOnList = this->inactiveMonsters;
+		this->inactiveMonsters->prevOnList->nextOnList = entity;
+		this->inactiveMonsters->prevOnList = entity;
 	}
 	entity->info &= ~0x40000;
 }
@@ -182,11 +181,11 @@ void Game::monsterAI() {
 		int i = 0;
 		Entity* activeMonsters = this->activeMonsters;
 		do {
-			Entity* nextOnList = activeMonsters->monster->nextOnList;
-			if (0x0 == (activeMonsters->monster->monsterEffects & 0x2) &&
+			Entity* nextOnList = activeMonsters->nextOnList;
+			if (0x0 == (activeMonsters->monsterEffects & 0x2) &&
 			    (this->monstersTurn == 1 || (this->monstersTurn == 2 && activeMonsters->isHasteResistant()))) {
 				activeMonsters->aiThink(false);
-				if ((activeMonsters->monster->goalFlags & 0x1) != 0x0) {
+				if ((activeMonsters->ai->goalFlags & 0x1) != 0x0) {
 					i = 1;
 				}
 			}
@@ -197,11 +196,11 @@ void Game::monsterAI() {
 			Entity* nextAttacker;
 			for (Entity* combatMonsters = this->combatMonsters; combatMonsters != nullptr;
 			     combatMonsters = nextAttacker) {
-				nextAttacker = combatMonsters->monster->nextAttacker;
+				nextAttacker = combatMonsters->nextAttacker;
 				if (!combatMonsters->aiIsAttackValid()) {
 					combatMonsters->undoAttack();
 					combatMonsters->aiThink(false);
-					if ((combatMonsters->monster->goalFlags & 0x1) != 0x0) {
+					if ((combatMonsters->ai->goalFlags & 0x1) != 0x0) {
 						i = 1;
 					}
 				}
@@ -221,13 +220,13 @@ void Game::monsterLerp() {
 	if (this->activeMonsters != nullptr) {
 		Entity* entity = this->activeMonsters;
 		do {
-			if ((entity->monster->goalFlags & 0x1) != 0x0) {
+			if ((entity->ai->goalFlags & 0x1) != 0x0) {
 				interpolatingMonsters = true;
-				if (n == 0 && app->render->checkTileVisibilty(entity->monster->goalX, entity->monster->goalY)) {
+				if (n == 0 && app->render->checkTileVisibilty(entity->ai->goalX, entity->ai->goalY)) {
 					n = 1;
 				}
 			}
-			entity = entity->monster->nextOnList;
+			entity = entity->nextOnList;
 		} while (entity != this->activeMonsters);
 	}
 	if (interpolatingMonsters && n != 0) {
@@ -243,7 +242,7 @@ bool Game::canSnapMonsters() {
 	if (this->activeMonsters != nullptr) {
 		Entity* entity = this->activeMonsters;
 		while (0x0 == (entity->info & 0x10000000)) {
-			entity = entity->monster->nextOnList;
+			entity = entity->nextOnList;
 			if (entity == this->activeMonsters) {
 				return true;
 			}
@@ -280,7 +279,7 @@ bool Game::snapMonsters(bool b) {
 		Entity* activeMonsters = this->activeMonsters;
 		if (b2 && activeMonsters != nullptr) {
 			do {
-				Entity* nextOnList = activeMonsters->monster->nextOnList;
+				Entity* nextOnList = activeMonsters->nextOnList;
 				this->snapLerpSprites(activeMonsters->getSprite());
 				activeMonsters = nextOnList;
 			} while (activeMonsters != this->activeMonsters);
@@ -300,14 +299,14 @@ bool Game::snapMonsters(bool b) {
 		Entity* entity = this->activeMonsters;
 		do {
 			this->snapLerpSprites(entity->getSprite());
-			entity = entity->monster->nextOnList;
+			entity = entity->nextOnList;
 		} while (entity != this->activeMonsters);
 		app->canvas->updateFacingEntity = true;
 		app->canvas->invalidateRect();
 	}
 	this->monsterLerp();
 	if (this->combatMonsters != nullptr && !this->interpolatingMonsters) {
-		app->combat->performAttack(this->combatMonsters, this->combatMonsters->monster->target, 0, 0, false);
+		app->combat->performAttack(this->combatMonsters, this->combatMonsters->ai->target, 0, 0, false);
 		return false;
 	}
 	return b2;
@@ -327,7 +326,7 @@ void Game::updateMonsters() {
 	if (!this->interpolatingMonsters) {
 		app->canvas->updateFacingEntity = true;
 		if (this->combatMonsters != nullptr) {
-			app->combat->performAttack(this->combatMonsters, this->combatMonsters->monster->target, 0, 0, false);
+			app->combat->performAttack(this->combatMonsters, this->combatMonsters->ai->target, 0, 0, false);
 		} else {
 			this->endMonstersTurn();
 			if (!this->isCameraActive() && app->canvas->blockInputTime == 0) {
@@ -489,15 +488,15 @@ Entity* Game::spawnDropItem(int n, int n2, int n3, int n4, int n5, int n6, int n
 void Game::spawnDropItem(Entity* entity) {
 
 
-	bool b = entity->lootSet != nullptr;
+	bool b = entity->loot != nullptr;
 	bool b2;
-	if (entity->monster == nullptr) {
+	if (!entity->isMonster()) {
 		b2 = (b & entity->param == 0);
 	} else {
-		b2 = (b & (entity->monster->flags & 0x800) == 0x0);
+		b2 = (b & (entity->monsterFlags & 0x800) == 0x0);
 	}
 	if (b2) {
-		int n = entity->lootSet[0];
+		int n = entity->loot->lootSet[0];
 		int n2 = n >> 12 & 0xF;
 		if (n2 != 6) {
 			int n3 = (n & 0xFC0) >> 6;
@@ -658,7 +657,7 @@ bool Game::tileObstructsAttack(int n, int n2) {
 	if (n != n3 && n2 != n4) {
 		return false;
 	}
-	for (Entity* entity = this->combatMonsters; entity != nullptr; entity = entity->monster->nextAttacker) {
+	for (Entity* entity = this->combatMonsters; entity != nullptr; entity = entity->nextAttacker) {
 		int* calcPosition = entity->calcPosition();
 		int n5 = calcPosition[0] >> 6;
 		int n6 = calcPosition[1] >> 6;
@@ -782,14 +781,14 @@ void Game::raiseCorpses() {
 	int n = 0;
 	if (inactiveMonsters != nullptr) {
 		do {
-			Entity* nextOnList = inactiveMonsters->monster->nextOnList;
+			Entity* nextOnList = inactiveMonsters->nextOnList;
 			int sprite = inactiveMonsters->getSprite();
 			if ((inactiveMonsters->info & 0x10000) == 0x0 && (inactiveMonsters->info & 0x8000000) == 0x0 &&
 			    (inactiveMonsters->info & 0x1000000) != 0x0 && !inactiveMonsters->isBoss() &&
-			    (inactiveMonsters->monster->flags & 0x40) == 0x0 &&
+			    (inactiveMonsters->monsterFlags & 0x40) == 0x0 &&
 			    this->findMapEntity(app->render->mapSprites[app->render->S_X + sprite],
 			                        app->render->mapSprites[app->render->S_Y + sprite], 15535) == nullptr &&
-			    (this->difficulty != Enums::DIFFICULTY_NIGHTMARE || 0x0 == (inactiveMonsters->monster->monsterEffects & 0x4))) {
+			    (this->difficulty != Enums::DIFFICULTY_NIGHTMARE || 0x0 == (inactiveMonsters->monsterEffects & 0x4))) {
 				this->gridEntities[n++] = inactiveMonsters;
 				if (n == 9) {
 					break;

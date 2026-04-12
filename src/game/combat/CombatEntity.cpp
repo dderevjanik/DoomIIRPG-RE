@@ -139,7 +139,7 @@ void CombatEntity::calcCombat(CombatEntity* combatEntity, Entity* entity, bool b
     app->combat->crArmorDamage = 0;
     CombatEntity* combatEntity2;
     if (!b) {
-        combatEntity2 = &entity->monster->ce;
+        combatEntity2 = entity->combat;
     }
     else {
         combatEntity2 = app->player->ce;

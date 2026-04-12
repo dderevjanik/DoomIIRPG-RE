@@ -8,6 +8,7 @@
 #include "Combat.h"
 #include "CombatEntity.h"
 #include "Entity.h"
+#include "AIComponent.h"
 #include "EntityMonster.h"
 #include "EntityDef.h"
 #include "Player.h"
@@ -163,7 +164,7 @@ void Combat::performAttack(Entity* curAttacker, Entity* curTarget, int attackX, 
         allocLerpSprite->dstY = n6 - a2 * 28;
         allocLerpSprite->dstZ = app->render->getHeight(allocLerpSprite->dstX, allocLerpSprite->dstY) + 32;
         app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | this->attackFrame << 8);
-        this->curAttacker->monster->frameTime = 0x7FFFFFFF;//Integer.MAX_VALUE;
+        this->curAttacker->ai->frameTime = 0x7FFFFFFF;//Integer.MAX_VALUE;
         app->game->unlinkEntity(this->curAttacker);
         app->game->linkEntity(this->curAttacker, n5 >> 6, n6 >> 6);
         this->stage = -1;
@@ -175,12 +176,11 @@ void Combat::performAttack(Entity* curAttacker, Entity* curTarget, int attackX, 
 
 void Combat::checkMonsterFX() {
 
-    EntityMonster* monster = this->curTarget->monster;
-    int monsterEffects = monster->monsterEffects;
+    int monsterEffects = this->curTarget->monsterEffects;
     if (app->player->statusEffects[12] > 0) {
         monsterEffects |= (app->player->statusEffects[30] - 1 << 5 | 0x1);
     }
-    monster->monsterEffects = monsterEffects;
+    this->curTarget->monsterEffects = monsterEffects;
 }
 
 int Combat::playerSeq() {
@@ -361,7 +361,7 @@ int Combat::playerSeq() {
             }
             if (this->punchingMonster > 0 && !this->targetKilled && !this->punchMissed) {
                 int sprite = this->curTarget->getSprite();
-                if (sprite != -1 && this->curTarget->monster != nullptr) {
+                if (sprite != -1 && this->curTarget->isMonster()) {
                     app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | 0x0);
                 }
             }
@@ -401,23 +401,23 @@ int Combat::monsterSeq() {
     int n3 = n2 & 0xF0;
     int n4 = n2 & 0xF;
     if ((n3 == 64 || n3 == 80) && n4 == 0) {
-        if (app->time >= this->curAttacker->monster->frameTime) {
-            this->curAttacker->monster->frameTime = app->time + this->weapons[this->attackerWeapon + Combat::WEAPON_FIELD_SHOTHOLD] * 10;
+        if (app->time >= this->curAttacker->ai->frameTime) {
+            this->curAttacker->ai->frameTime = app->time + this->weapons[this->attackerWeapon + Combat::WEAPON_FIELD_SHOTHOLD] * 10;
             this->nextStageTime = app->gameTime + this->weapons[this->attackerWeapon + Combat::WEAPON_FIELD_SHOTHOLD] * 10;
             app->render->mapSpriteInfo[sprite] = ((n & 0xFFFF00FF) | (n3 | n4 + 1) << 8);
             this->launchProjectile();
         }
     }
     else if (this->nextStageTime != 0 && app->gameTime > this->nextStageTime && this->numActiveMissiles == 0 && app->game->animatingEffects == 0) {
-        if (this->reflectionDmg > 0 && this->curAttacker != nullptr && this->curAttacker->monster != nullptr) {
+        if (this->reflectionDmg > 0 && this->curAttacker != nullptr && this->curAttacker->isMonster()) {
             app->particleSystem->spawnMonsterBlood(this->curAttacker, false);
             this->curAttacker->pain(this->reflectionDmg / 2, app->player->getPlayerEnt());
             this->reflectionDmg = 0;
-            if (this->curAttacker->monster->ce.getStat(Enums::STAT_HEALTH) <= 0) {
+            if (this->curAttacker->combat->getStat(Enums::STAT_HEALTH) <= 0) {
                 this->curAttacker->died(true, app->player->getPlayerEnt());
             }
             else {
-                this->curAttacker->monster->frameTime = app->time + 250;
+                this->curAttacker->ai->frameTime = app->time + 250;
                 this->nextStageTime = app->gameTime + 250;
             }
         }
@@ -497,7 +497,7 @@ int Combat::monsterSeq() {
         this->animEndTime = this->animStartTime + this->animTime;
         if (!this->getWeaponFlags(this->attackerWeaponId).chargeAttack) {
             app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | this->attackFrame << 8);
-            this->curAttacker->monster->frameTime = app->time + this->animTime;
+            this->curAttacker->ai->frameTime = app->time + this->animTime;
         }
         if (this->curTarget != nullptr) {
             this->targetKilled = true;
@@ -516,7 +516,7 @@ int Combat::monsterSeq() {
             lerpSprite->dstZ = app->render->getHeight(lerpSprite->dstX, lerpSprite->dstY) + 32;
             lerpSprite->calcDist();
             app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | 0x0);
-            this->curAttacker->monster->frameTime = app->time + lerpSprite->travelTime;
+            this->curAttacker->ai->frameTime = app->time + lerpSprite->travelTime;
             this->launchProjectile();
         }
         MonsterBehaviors& atkBeh = app->combat->monsterBehaviors[this->curAttacker->def->monsterIdx];
@@ -562,7 +562,7 @@ int Combat::monsterSeq() {
             app->canvas->shakeTime = 0;
             app->hud->damageDir = 0;
             app->hud->damageTime = 0;
-            this->attackerMonster->flags |= 0x400;
+            this->curAttacker->monsterFlags |= 0x400;
             app->game->gsprite_clear(64);
             app->canvas->invalidateRect();
             return 0;
@@ -811,7 +811,7 @@ void Combat::explodeOnMonster() {
     if (this->getWeaponFlags(this->attackerWeaponId).isMelee && this->hitType == 0) {
         app->render->shotsFired = false;
     }
-    else if (this->curTarget->monster != nullptr && this->curTarget->def->eType == Enums::ET_MONSTER && (this->curTarget->info & 0x40000) == 0x0) {
+    else if (this->curTarget->isMonster() && this->curTarget->def->eType == Enums::ET_MONSTER && (this->curTarget->info & 0x40000) == 0x0) {
         app->game->activate(this->curTarget, true, false, true, true);
     }
     if (this->hitType == 0) {
@@ -829,7 +829,7 @@ void Combat::explodeOnMonster() {
             }
             if (this->targetMonster->ce.getStat(Enums::STAT_HEALTH) > 0) {
                 int n = 0;
-                if (0x0 != (this->targetMonster->monsterEffects & 0x2) || (this->targetMonster->flags & 0x1000) != 0x0 || pain) {
+                if (0x0 != (this->curTarget->monsterEffects & 0x2) || (this->curTarget->monsterFlags & 0x1000) != 0x0 || pain) {
                     n = 0;
                 }
                 if (n > 0) {
@@ -941,7 +941,7 @@ void Combat::explodeOnPlayer() {
                         entity->knockback(app->render->mapSprites[app->render->S_X + sprite], app->render->mapSprites[app->render->S_Y + sprite], 1);
                     }
                 }
-                else if (this->curAttacker->monster != nullptr) {
+                else if (this->curAttacker->isMonster()) {
                     this->accumRoundDamage = (this->reflectionDmg = this->totalDamage);
                     this->animLoopCount = 0;
                     this->nextStage = 1;
@@ -995,7 +995,7 @@ void Combat::checkForBFGDeaths(int x, int y) {
                     Entity* nextOnTile;
                     for (Entity* mapEntity = app->game->findMapEntity(j << 6, i << 6, 30381); mapEntity != nullptr; mapEntity = nextOnTile) {
                         nextOnTile = mapEntity->nextOnTile;
-                        if (mapEntity->monster != nullptr && mapEntity->monster->ce.getStat(0) <= 0 && mapEntity->def->eType != Enums::ET_CORPSE) {
+                        if (mapEntity->isMonster() && mapEntity->combat->getStat(0) <= 0 && mapEntity->def->eType != Enums::ET_CORPSE) {
                             mapEntity->died(true, app->player->getPlayerEnt());
                         }
                     }
@@ -1068,13 +1068,13 @@ void Combat::hurtEntityAt(int n, int n2, int n3, int n4, int n5, int n6, Entity*
                 mapEntity->info |= 0x10000;
                 app->particleSystem->spawnMonsterBlood(mapEntity, true);
             }
-            else if (mapEntity->monster != nullptr) {
+            else if (mapEntity->isMonster()) {
                 mapEntity->info |= 0x200000;
                 if ((mapEntity->info & 0x40000) == 0x0) {
                     app->game->activate(mapEntity, true, false, true, true);
                 }
                 int n7 = this->getWeaponWeakness(this->attackerWeaponId, mapEntity->def->monsterIdx) * n6 >> 8;
-                int n8 = n7 - (mapEntity->monster->ce.getStatPercent(Enums::STAT_DEFENSE) * n7 >> 8);
+                int n8 = n7 - (mapEntity->combat->getStatPercent(Enums::STAT_DEFENSE) * n7 >> 8);
                 if (n8 > 0) {
                     if (this->attackerWeaponProj == 5) {
                         int sprite = mapEntity->getSprite();
@@ -1088,13 +1088,13 @@ void Combat::hurtEntityAt(int n, int n2, int n3, int n4, int n5, int n6, Entity*
                         app->render->mapSprites[app->render->S_SCALEFACTOR + gSprite->sprite] = 32;
                     }
                     bool pain = mapEntity->pain(n8, nullptr);
-                    if ((mapEntity->monster->flags & 0x1000) == 0x0 && !pain) {
+                    if ((mapEntity->monsterFlags & 0x1000) == 0x0 && !pain) {
                         mapEntity->knockback((n3 << 6) + 32, (n4 << 6) + 32, n5);
                     }
                     app->localization->resetTextArgs();
                     app->localization->addTextIDArg(mapEntity->name);
                     app->localization->addTextArg(n8);
-                    if (mapEntity->monster->ce.getStat(Enums::STAT_HEALTH) <= 0) {
+                    if (mapEntity->combat->getStat(Enums::STAT_HEALTH) <= 0) {
                         app->hud->addMessage((short)74);
                         if (this->attackerWeaponProj != 5) {
                             if (b && entity != nullptr && entity->def->eType == Enums::ET_DECOR_NOCLIP && entity->def->eSubType == Enums::DECOR_DYNAMITE) {
@@ -1233,11 +1233,11 @@ void Combat::updateProjectile() {
                     this->attackerWeaponProj < this->numProjTypes) {
                     const auto& pv = this->projVisuals[this->attackerWeaponProj];
                     if (pv.causesFear && this->curTarget != nullptr && (this->crFlags & 0x1007) != 0x0) {
-                        EntityMonster* monster = this->curTarget->monster;
-                        if (monster != nullptr && !app->combat->monsterBehaviors[this->curTarget->def->monsterIdx].fearImmune) {
-                            monster->resetGoal();
-                            monster->goalType = 4;
-                            monster->goalParam = 3;
+                        AIComponent* targetAi = this->curTarget->ai;
+                        if (targetAi != nullptr && !app->combat->monsterBehaviors[this->curTarget->def->monsterIdx].fearImmune) {
+                            targetAi->resetGoal();
+                            targetAi->goalType = 4;
+                            targetAi->goalParam = 3;
                         }
                     }
                     if (pv.reflectsWithBuff && this->curTarget == nullptr && this->hitType != 0 &&

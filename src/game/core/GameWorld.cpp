@@ -189,10 +189,10 @@ void Game::trace(int n, int n2, int n3, int traceCollisionX, int traceCollisionY
 							int destX;
 							int destY;
 							int destZ;
-							if (nextOnTile->monster != nullptr) {
-								if ((nextOnTile->monster->goalFlags & 0x1) != 0x0) {
-									destX = 32 + (nextOnTile->monster->goalX << 6);
-									destY = 32 + (nextOnTile->monster->goalY << 6);
+							if (nextOnTile->ai != nullptr) {
+								if ((nextOnTile->ai->goalFlags & 0x1) != 0x0) {
+									destX = 32 + (nextOnTile->ai->goalX << 6);
+									destY = 32 + (nextOnTile->ai->goalY << 6);
 									destZ = app->render->mapSprites[app->render->S_Z + sprite];
 								} else {
 									destX = app->render->mapSprites[app->render->S_X + sprite];

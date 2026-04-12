@@ -675,7 +675,7 @@ void Render::renderSpriteObject(int n) {
 	if (entity != nullptr) {
 		if (monster != nullptr) {
 			if (!this->disableRenderActivate && app->game->activePropogators == 0 && app->game->animatingEffects == 0 &&
-			    !(entity->info & 0x1050000) && !(monster->flags & Enums::MFLAG_NOACTIVATE) && !app->player->noclip &&
+			    !(entity->info & 0x1050000) && !(entity->monsterFlags & Enums::MFLAG_NOACTIVATE) && !app->player->noclip &&
 			    !app->game->disableAI) {
 				app->game->trace(app->canvas->viewX, app->canvas->viewY, app->canvas->viewZ, x, y, z >> 4,
 				                 app->player->getPlayerEnt(), 5293, 2, true);
@@ -683,7 +683,7 @@ void Render::renderSpriteObject(int n) {
 					app->game->activate(entity, true, true, true, false);
 				}
 			}
-			int monsterEffects = monster->monsterEffects;
+			int monsterEffects = entity->monsterEffects;
 			int n11 = n7 & 0xF0;
 
 			if (0x0 != (monsterEffects & 0x2)) {
@@ -697,8 +697,8 @@ void Render::renderSpriteObject(int n) {
 				renderMode = 0;
 			}
 			if ((n10 & 0x4) == 0x0) { // RENDER_FLAG_GREYSHIFT
-				if ((monster->flags & 0x1000) == 0x0 && (n11 == 96 || n11 == 144) && app->time > monster->frameTime) {
-					monster->frameTime = 0;
+				if ((entity->monsterFlags & 0x1000) == 0x0 && (n11 == 96 || n11 == 144) && app->time > entity->ai->frameTime) {
+					entity->ai->frameTime = 0;
 					n7 = 0;
 				}
 				this->mapSpriteInfo[n] = ((n2 & 0xFFFF00FF) | n7 << 8);
@@ -827,8 +827,8 @@ void Render::renderFearEyes(Entity* entity, int frame, int x, int y, int z, int 
 	uint8_t eSubType = entity->def->eSubType;
 	frame &= Enums::MFRAME_MASK;
 
-	if ((anim != 0 && anim != 32) || entity->monster == nullptr ||
-	    app->combat->monsterBehaviors[entity->def->monsterIdx].fearImmune || entity->monster->goalType != 4) {
+	if ((anim != 0 && anim != 32) || entity->ai == nullptr ||
+	    app->combat->monsterBehaviors[entity->def->monsterIdx].fearImmune || entity->ai->goalType != 4) {
 		return;
 	}
 
@@ -916,7 +916,7 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 	static const EntityDef::BodyPartData defaultBody{};
 	const EntityDef::BodyPartData& bp = bpDef ? bpDef->bodyParts : defaultBody;
 
-	if ((entity->monster != nullptr && (entity->monster->flags & 0x4000) != 0x0) || this->isNPC(tileNum)) {
+	if ((entity->isMonster() && (entity->monsterFlags & 0x4000) != 0x0) || this->isNPC(tileNum)) {
 		n13 = z;
 		min = 0;
 	} else {
@@ -1167,7 +1167,7 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 			break;
 		}
 		case Enums::MANIM_DEAD: {
-			if (entity->monster != nullptr && (entity->monster->flags & 0x800) == 0x0 && app->canvas->state != 18 &&
+			if (entity->isMonster() && (entity->monsterFlags & 0x800) == 0x0 && app->canvas->state != 18 &&
 			    !entity->hasEmptyLootSet()) {
 				this->renderSprite(x, y, z, tileNum, bp.deadFrame, flags, 0, (18 * scaleFactor) >> 4, 512);
 			}
@@ -1237,7 +1237,7 @@ void Render::renderFloaterAnim(int n, int frame, int x, int y, int z, int tileNu
 			case Enums::MANIM_DEAD: {
 				if (fl.hasDeadLoot) {
 					Entity* entity = &app->game->entities[this->mapSprites[this->S_ENT + n]];
-					if (entity->monster != nullptr && (entity->monster->flags & 0x800) == 0x0 &&
+					if (entity->isMonster() && (entity->monsterFlags & 0x800) == 0x0 &&
 					    app->canvas->state != 18 && !entity->hasEmptyLootSet()) {
 						this->renderSprite(x, y, z, tileNum, fl.deadFrame, flags, 0, 17 * scaleFactor >> 4, 512);
 					}
@@ -1307,7 +1307,7 @@ void Render::renderSpecialBossAnim(int n, int frame, int x, int y, int z, int ti
 	Entity* entity = &app->game->entities[this->mapSprites[this->S_ENT + n]];
 	int n15;
 	int min;
-	if (entity->monster != nullptr && (entity->monster->flags & 0x4000) != 0x0) {
+	if (entity->isMonster() && (entity->monsterFlags & 0x4000) != 0x0) {
 		n15 = z;
 		min = 32;
 	} else {
@@ -1319,7 +1319,7 @@ void Render::renderSpecialBossAnim(int n, int frame, int x, int y, int z, int ti
 	if (sb.type == EntityDef::SpecialBossData::BOSS_MULTIPART) {
 		// Multi-part boss (Boss Pinky): shadow + legs + torso + head
 		if (anim == Enums::MANIM_DEAD) {
-			if (entity->monster != nullptr && (entity->monster->flags & 0x800) == 0x0 && app->canvas->state != 18 &&
+			if (entity->isMonster() && (entity->monsterFlags & 0x800) == 0x0 && app->canvas->state != 18 &&
 			    !entity->hasEmptyLootSet()) {
 				this->renderSprite(x, y, z, tileNum, sb.deadFrame, flags, 0, 17 * scaleFactor >> 4, 512);
 			}
@@ -1496,7 +1496,7 @@ void Render::renderSpecialBossAnim(int n, int frame, int x, int y, int z, int ti
 				return;
 			}
 			case Enums::MANIM_DEAD: {
-				if (entity->monster != nullptr && (entity->monster->flags & 0x800) == 0x0 && app->canvas->state != 18 &&
+				if (entity->isMonster() && (entity->monsterFlags & 0x800) == 0x0 && app->canvas->state != 18 &&
 				    !entity->hasEmptyLootSet()) {
 					this->renderSprite(x, y, z, tileNum, sb.deadFrame, flags, 0, 17 * scaleFactor >> 4, 512);
 				}

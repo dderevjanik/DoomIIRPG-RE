@@ -2232,8 +2232,8 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 #if 0 // J2ME
 								if (entity != nullptr && entity->def->eType == Enums::ET_CORPSE) {
 									if (entity->linkIndex < entity3->linkIndex) {
-										if (entity3->monster == nullptr && entity3->def->eSubType != Enums::MONSTER_SENTRY_BOT) {
-											if (entity3->param == 0 && entity3->lootSet != nullptr) {
+										if (!entity3->isMonster() && entity3->def->eSubType != Enums::MONSTER_SENTRY_BOT) {
+											if (entity3->param == 0 && entity3->loot != nullptr) {
 												entity = entity3;
 												n4 = n11;
 												n6 = 1;
@@ -2248,8 +2248,8 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 										}
 									}
 								}
-								else if (entity3->monster == nullptr && entity3->def->eSubType != Enums::MONSTER_SENTRY_BOT) {
-									if (entity3->param == 0 && entity3->lootSet != nullptr) {
+								else if (!entity3->isMonster() && entity3->def->eSubType != Enums::MONSTER_SENTRY_BOT) {
+									if (entity3->param == 0 && entity3->loot != nullptr) {
 										entity = entity3;
 										n4 = n11;
 										n6 = 1;
@@ -2271,14 +2271,14 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 #endif
 							}
 							else if (!this->isZoomedIn) {
-								if (entity3->monster == nullptr) {
-									if (entity3->param == 0 && entity3->lootSet != nullptr) {
+								if (!entity3->isMonster()) {
+									if (entity3->param == 0 && entity3->loot != nullptr) {
 										entity = entity3;
 										n4 = n11;
 										n6 = 1;
 									}
 								}
-								else if ((entity3->monster->flags & 0x800) == 0x0 && entity3->lootSet != nullptr) {
+								else if ((entity3->monsterFlags & 0x800) == 0x0 && entity3->loot != nullptr) {
 									entity = entity3;
 									n4 = n11;
 									n6 = 1;
@@ -3039,20 +3039,20 @@ void Canvas::combatState() {
 		}
 		else if (this->knockbackDist == 0) {
 			Entity* curAttacker = app->combat->curAttacker;
-			if ((curAttacker->monster->goalFlags & 0x8) != 0x0) {
-				curAttacker->monster->resetGoal();
-				curAttacker->monster->goalType = 5;
-				curAttacker->monster->goalParam = 1;
+			if ((curAttacker->ai->goalFlags & 0x8) != 0x0) {
+				curAttacker->ai->resetGoal();
+				curAttacker->ai->goalType = 5;
+				curAttacker->ai->goalParam = 1;
 				curAttacker->aiThink(false);
 			}
 			Entity* nextAttacker;
 			Entity* nextAttacker2;
-			for (nextAttacker = curAttacker->monster->nextAttacker; nextAttacker != nullptr && nextAttacker->monster->target == nullptr && !nextAttacker->aiIsAttackValid(); nextAttacker = nextAttacker2) {
-				nextAttacker2 = nextAttacker->monster->nextAttacker;
+			for (nextAttacker = curAttacker->nextAttacker; nextAttacker != nullptr && nextAttacker->ai->target == nullptr && !nextAttacker->aiIsAttackValid(); nextAttacker = nextAttacker2) {
+				nextAttacker2 = nextAttacker->nextAttacker;
 				nextAttacker->undoAttack();
 			}
 			if (nextAttacker != nullptr) {
-				app->combat->performAttack(nextAttacker, nextAttacker->monster->target, 0, 0, false);
+				app->combat->performAttack(nextAttacker, nextAttacker->ai->target, 0, 0, false);
 			}
 			else {
 				app->game->combatMonsters = nullptr;

@@ -22,6 +22,8 @@
 #include "Sound.h"
 #include "SoundNames.h"
 #include "Sounds.h"
+#include "LootComponent.h"
+#include "AIComponent.h"
 
 Entity::Entity() {
     std::memset(this, 0, sizeof(Entity));
@@ -45,11 +47,15 @@ void Entity::reset() {
 	this->info = 0;
 	this->param = 0;
 	this->monster = nullptr;
+	this->combat = nullptr;
+	this->ai = nullptr;
+	this->monsterFlags = 0;
+	this->monsterEffects = 0;
+	this->nextOnList = nullptr;
+	this->prevOnList = nullptr;
+	this->nextAttacker = nullptr;
 	this->name = -1;
-	if (this->lootSet) {
-		delete this->lootSet;
-	}
-	this->lootSet = nullptr;
+	this->loot = nullptr;
 }
 
 void Entity::initspawn() {
@@ -62,13 +68,13 @@ void Entity::initspawn() {
 
     int tileNum = app->render->mapSpriteInfo[sprite] & 0xFF;
     if (eType == Enums::ET_MONSTER) {
-        app->combat->monsters[this->def->monsterIdx]->clone(&this->monster->ce);
+        app->combat->monsters[this->def->monsterIdx]->clone(this->combat);
 
         if (app->game->difficulty == Enums::DIFFICULTY_NIGHTMARE || (app->game->difficulty == Enums::DIFFICULTY_NORMAL && !this->isBoss())) {
-            int stat = this->monster->ce.getStat(1);
+            int stat = this->combat->getStat(1);
             int n2 = stat + (stat >> 2);
-            this->monster->ce.setStat(1, n2);
-            this->monster->ce.setStat(0, n2);
+            this->combat->setStat(1, n2);
+            this->combat->setStat(0, n2);
         }
         short n3 = 0;
         short n4 = 64;
@@ -106,10 +112,7 @@ void Entity::initspawn() {
     }
 
     if (this->def->eType != Enums::ET_MONSTER && this->def->eType != Enums::ET_CORPSE) {
-        if (this->lootSet) {
-            delete this->lootSet;
-        }
-        this->lootSet = nullptr;
+        this->loot = nullptr;
     }
     else {
         this->populateDefaultLootSet();
@@ -174,10 +177,10 @@ short Entity::getIndex() {
 
 void Entity::updateMonsterFX() {
 
-    if (nullptr != this->monster) {
+    if (this->isMonster()) {
         for (int i = 0; i < 5; ++i) {
             int n = 1 << i;
-            int n2 = this->monster->monsterEffects;
+            int n2 = this->monsterEffects;
             if ((n2 & n) != 0x0) {
                 int n3 = 5 + i * 4;
                 int n4 = n2 >> n3 & 0xF;
@@ -203,10 +206,10 @@ void Entity::updateMonsterFX() {
                     }
                     if (n5 > 0) {
                         this->pain(n5, nullptr);
-                        n2 = this->monster->monsterEffects;
-                        if (this->monster->ce.getStat(0) <= 0) {
+                        n2 = this->monsterEffects;
+                        if (this->combat->getStat(0) <= 0) {
                             this->died(true, nullptr);
-                            n2 = ((this->monster->monsterEffects & 0xFFFF801F) | 0x220220);
+                            n2 = ((this->monsterEffects & 0xFFFF801F) | 0x220220);
                             n4 = 1;
                         }
                     }
@@ -219,27 +222,23 @@ void Entity::updateMonsterFX() {
                     --n4;
                     monsterEffects = ((n2 & ~(15 << n3)) | n4 << n3);
                 }
-                this->monster->monsterEffects = monsterEffects;
+                this->monsterEffects = monsterEffects;
             }
         }
     }
 }
 
 void Entity::populateDefaultLootSet() {
-    if (this->lootSet) {
-        delete this->lootSet;
-        this->lootSet = nullptr;
+    if (this->loot == nullptr) {
+        LootComponent* pool = app->game->lootComponents;
+        this->loot = &pool[app->game->numLootComponents++];
     }
-
-    this->lootSet = new int[3];
-    this->lootSet[0] = 0;
-    this->lootSet[1] = 0;
-    this->lootSet[2] = 0;
+    this->loot->reset();
 
     if (this->def->eType == Enums::ET_CORPSE) {
         const MonsterBehaviors& mb = app->combat->monsterBehaviors[this->def->monsterIdx];
         if (!mb.lootConfig.noCorpseLoot) {
-            this->lootSet[0] = 1089;
+            this->loot->lootSet[0] = 1089;
         }
     }
     else {
@@ -247,9 +246,9 @@ void Entity::populateDefaultLootSet() {
         const auto& lc = (mb.hasLootTiers && this->def->parm < MonsterBehaviors::MAX_LOOT_TIERS)
             ? mb.lootTiers[this->def->parm] : mb.lootConfig;
         if (lc.modulus > 0) {
-            this->lootSet[0] = lc.base | (this->getSprite() % lc.modulus + lc.offset);
+            this->loot->lootSet[0] = lc.base | (this->getSprite() % lc.modulus + lc.offset);
         } else {
-            this->lootSet[0] = (0x6000 | this->findRandomJokeItem());
+            this->loot->lootSet[0] = (0x6000 | this->findRandomJokeItem());
         }
     }
 }
@@ -266,10 +265,10 @@ int Entity::findRandomJokeItem() {
 }
 
 void Entity::addToLootSet(int n, int n2, int n3) {
-    if (this->lootSet != nullptr && n3 > 0) {
+    if (this->loot != nullptr && n3 > 0) {
         for (int i = 0; i < 3; ++i) {
-            if (this->lootSet[i] == 0) {
-                this->lootSet[i] = (n << 12 | n2 << 6 | n3);
+            if (this->loot->lootSet[i] == 0) {
+                this->loot->lootSet[i] = (n << 12 | n2 << 6 | n3);
                 return;
             }
         }
@@ -277,5 +276,5 @@ void Entity::addToLootSet(int n, int n2, int n3) {
 }
 
 bool Entity::hasEmptyLootSet() {
-    return this->lootSet == nullptr || this->lootSet[0] == 0;
+    return this->loot == nullptr || this->loot->lootSet[0] == 0;
 }

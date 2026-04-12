@@ -805,7 +805,7 @@ void Hud::drawMonsterHealth(Graphics* graphics) {
 
 
 	Entity* facingEntity = app->player->facingEntity;
-	if (facingEntity == nullptr || facingEntity->monster == nullptr) {
+	if (facingEntity == nullptr || facingEntity->combat == nullptr) {
 		if (this->lastTarget != nullptr) {
 			app->canvas->invalidateRect();
 		}
@@ -815,8 +815,8 @@ void Hud::drawMonsterHealth(Graphics* graphics) {
 	if (facingEntity->def->eType == Enums::ET_NPC || (facingEntity->def->eType == Enums::ET_MONSTER && (facingEntity->info & 0x20000) == 0x0)) {
 		return;
 	}
-	int stat = facingEntity->monster->ce.getStat(1);
-	int stat2 = facingEntity->monster->ce.getStat(0);
+	int stat = facingEntity->combat->getStat(1);
+	int stat2 = facingEntity->combat->getStat(0);
 	if (facingEntity != this->lastTarget) {
 		if (this->lastTarget != nullptr) {
 			app->canvas->invalidateRect();

@@ -223,7 +223,7 @@ void Player::died() {
 bool Player::fireWeapon(Entity* entity, int n, int n2) {
 
 
-	if (this->ce->weapon == Enums::WP_SOUL_CUBE && entity->monster == nullptr) {
+	if (this->ce->weapon == Enums::WP_SOUL_CUBE && !entity->isMonster()) {
 		return false;
 	}
 
@@ -239,8 +239,8 @@ bool Player::fireWeapon(Entity* entity, int n, int n2) {
 		app->combat->weaponDown = false;
 	}
 
-	if (entity->monster != nullptr) {
-		entity->monster->flags &= 0xfff7;
+	if (entity->isMonster()) {
+		entity->monsterFlags &= 0xfff7;
 	}
 
 	if (app->combat->getWeaponFlags(this->ce->weapon).chainsawHitEvent &&

@@ -22,21 +22,22 @@
 #include "Sound.h"
 #include "SoundNames.h"
 #include "Sounds.h"
+#include "AIComponent.h"
 
 void Entity::aiMoveToGoal() {
 
 
-    uint8_t goalType = this->monster->goalType;
-    EntityMonster* monster = this->monster;
+    uint8_t goalType = this->ai->goalType;
+    AIComponent* ai = this->ai;
     if (goalType == 2 || goalType == 1 || goalType == 4 || goalType == 5) {
         this->aiGoal_MOVE();
     }
     else if (goalType == 3) {
-        if (monster->goalParam == 1) {
-            monster->target = nullptr;
+        if (ai->goalParam == 1) {
+            ai->target = nullptr;
         }
         else {
-            monster->target = &app->game->entities[monster->goalParam];
+            ai->target = &app->game->entities[ai->goalParam];
         }
         this->attack();
     }
@@ -49,14 +50,14 @@ void Entity::aiMoveToGoal() {
 
 void Entity::aiThink(bool b) {
     EntityMonster* monster = this->monster;
-    if (monster->flags & 0x400) {
-        monster->flags &= ~0x400;
+    if (this->monsterFlags & 0x400) {
+        this->monsterFlags &= ~0x400;
     }
-    if (!(monster->flags & 0x20)) {
+    if (!(this->monsterFlags & 0x20)) {
         if (!this->aiIsValidGoal()) {
             this->aiChooseNewGoal(b);
         }
-        monster->goalTurns++;
+        ai->goalTurns++;
         this->aiMoveToGoal();
     }
 }
@@ -69,23 +70,23 @@ LerpSprite* Entity::aiInitLerp(int travelTime) {
     allocLerpSprite->srcX = app->render->mapSprites[app->render->S_X + sprite];
     allocLerpSprite->srcY = app->render->mapSprites[app->render->S_Y + sprite];
     allocLerpSprite->srcZ = app->render->mapSprites[app->render->S_Z + sprite];
-    allocLerpSprite->dstX = 32 + (this->monster->goalX << 6);
-    allocLerpSprite->dstY = 32 + (this->monster->goalY << 6);
+    allocLerpSprite->dstX = 32 + (this->ai->goalX << 6);
+    allocLerpSprite->dstY = 32 + (this->ai->goalY << 6);
     allocLerpSprite->dstZ = 32 + app->render->getHeight(allocLerpSprite->dstX, allocLerpSprite->dstY);
     allocLerpSprite->srcScale = allocLerpSprite->dstScale = app->render->mapSprites[app->render->S_SCALEFACTOR + sprite];
     allocLerpSprite->startTime = app->gameTime;
     allocLerpSprite->travelTime = travelTime;
     allocLerpSprite->flags |= (Enums::LS_FLAG_ENT_NORELINK | Enums::LS_FLAG_ASYNC);
-    this->monster->frameTime = app->time + travelTime;
+    this->ai->frameTime = app->time + travelTime;
     allocLerpSprite->calcDist();
-    this->monster->goalFlags |= 0x1;
+    this->ai->goalFlags |= 0x1;
     return allocLerpSprite;
 }
 
 void Entity::aiFinishLerp() {
-    this->monster->goalFlags &= ~1;
-    if ((this->monster->flags & 0x1000) != 0x0) {
-        this->monster->flags &= ~0x1000;
+    this->ai->goalFlags &= ~1;
+    if ((this->monsterFlags & 0x1000) != 0x0) {
+        this->monsterFlags &= ~0x1000;
         this->info &= ~0x10000000;
     }
     else {
@@ -235,35 +236,35 @@ bool Entity::aiGoal_MOVE() {
     app->game->lineOfSightWeight = 0;
     app->game->interactClipMask = 32;
     std::memcpy(app->game->visitedTiles, app->game->baseVisitedTiles, sizeof(app->game->visitedTiles));
-    if (this->monster->goalType == 2 && this->monster->goalParam == 1) {
+    if (this->ai->goalType == 2 && this->ai->goalParam == 1) {
         app->game->findEnt = &app->game->entities[1];
-        this->monster->goalX = app->game->destX >> 6;
-        this->monster->goalY = app->game->destY >> 6;
+        this->ai->goalX = app->game->destX >> 6;
+        this->ai->goalY = app->game->destY >> 6;
         app->game->lineOfSightWeight = -4;
     }
-    else if (this->monster->goalType == 5) {
-        this->monster->goalX = app->game->destX >> 6;
-        this->monster->goalY = app->game->destY >> 6;
+    else if (this->ai->goalType == 5) {
+        this->ai->goalX = app->game->destX >> 6;
+        this->ai->goalY = app->game->destY >> 6;
         app->game->interactClipMask = 0;
         b = true;
         app->game->lineOfSight = 1;
-        app->game->pathSearchDepth = this->monster->goalParam;
+        app->game->pathSearchDepth = this->ai->goalParam;
     }
-    else if (this->monster->goalType == 4) {
-        this->monster->goalX = app->game->destX >> 6;
-        this->monster->goalY = app->game->destY >> 6;
+    else if (this->ai->goalType == 4) {
+        this->ai->goalX = app->game->destX >> 6;
+        this->ai->goalY = app->game->destY >> 6;
         b = true;
         app->game->lineOfSight = 1;
     }
-    else if (this->monster->goalType == 2) {
-        app->game->findEnt = &app->game->entities[this->monster->goalParam];
-        this->monster->goalX = app->game->findEnt->linkIndex % 32;
-        this->monster->goalY = app->game->findEnt->linkIndex / 32;
+    else if (this->ai->goalType == 2) {
+        app->game->findEnt = &app->game->entities[this->ai->goalParam];
+        this->ai->goalX = app->game->findEnt->linkIndex % 32;
+        this->ai->goalY = app->game->findEnt->linkIndex / 32;
     }
     if (b) {
         app->game->closestPathDist = 0;
     }
-    int calcPath = this->calcPath(sX >> 6, sY >> 6, this->monster->goalX, this->monster->goalY, 15535, b) ? 1 : 0;
+    int calcPath = this->calcPath(sX >> 6, sY >> 6, this->ai->goalX, this->ai->goalY, 15535, b) ? 1 : 0;
     if (calcPath == 0 && app->game->closestPathDist < 999999999) {
         calcPath = 1;
         app->game->curPath = app->game->closestPath;
@@ -274,8 +275,8 @@ bool Entity::aiGoal_MOVE() {
         this->info &= 0xEFFFFFFF;
         int dX = sX + Canvas::viewStepValues[(int)((app->game->curPath & 0x3LL) << 2) + 0];
         int dY = sY + Canvas::viewStepValues[(int)((app->game->curPath & 0x3LL) << 2) + 1];
-        this->monster->goalX = dX >> 6;
-        this->monster->goalY = dY >> 6;
+        this->ai->goalX = dX >> 6;
+        this->ai->goalY = dY >> 6;
         app->game->trace(sX, sY, dX, dY, this, app->game->interactClipMask, 25);
         if (app->game->numTraceEntities == 0) {
             app->game->unlinkEntity(this);
@@ -292,8 +293,8 @@ bool Entity::aiGoal_MOVE() {
             }
         }
         else {
-            this->monster->goalX = sX >> 6;
-            this->monster->goalY = sY >> 6;
+            this->ai->goalX = sX >> 6;
+            this->ai->goalY = sY >> 6;
             if (app->game->traceEntity->def->eType == Enums::ET_DOOR) {
                 app->game->performDoorEvent(0, app->game->traceEntity, 2);
             }
@@ -306,35 +307,36 @@ bool Entity::aiGoal_MOVE() {
 void Entity::aiReachedGoal_MOVE() {
 
     EntityMonster* monster = this->monster;
+    AIComponent* ai = this->ai;
     EntityDef* def = this->def;
     this->info &= ~0x10000000;
-    if (monster->goalType != 4 && monster->goalType != 5 && (app->combat->monsterBehaviors[def->monsterIdx].moveToAttack || (app->combat->monsterBehaviors[def->monsterIdx].evading && !(monster->flags & 0x1)))) {
+    if (ai->goalType != 4 && ai->goalType != 5 && (app->combat->monsterBehaviors[def->monsterIdx].moveToAttack || (app->combat->monsterBehaviors[def->monsterIdx].evading && !(this->monsterFlags & 0x1)))) {
         Entity* target = &app->game->entities[1];
         int aiWeaponForTarget = this->aiWeaponForTarget(target);
         if (aiWeaponForTarget != -1) {
             if (target == &app->game->entities[1]) {
-                monster->target = nullptr;
+                ai->target = nullptr;
             }
             else {
-                monster->target = target;
+                ai->target = target;
             }
-            monster->ce.weapon = aiWeaponForTarget;
+            this->combat->weapon = aiWeaponForTarget;
             this->attack();
             return;
         }
     }
     if (app->combat->monsterBehaviors[def->monsterIdx].evading) {
-        monster->flags |= 0x1;
+        this->monsterFlags |= 0x1;
     }
-    if ((monster->goalFlags & 0x10) != 0x0) {
-        monster->goalFlags &= ~0x10;
+    if ((ai->goalFlags & 0x10) != 0x0) {
+        ai->goalFlags &= ~0x10;
         this->aiCalcSimpleGoal(false);
-        if (monster->goalType == 1 || monster->goalType == 2) {
-            if (!app->game->tileObstructsAttack(monster->goalX, monster->goalY)) {
+        if (ai->goalType == 1 || ai->goalType == 2) {
+            if (!app->game->tileObstructsAttack(ai->goalX, ai->goalY)) {
                 this->aiGoal_MOVE();
             }
             else {
-                monster->resetGoal();
+                ai->resetGoal();
             }
         }
     }

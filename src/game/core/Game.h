@@ -2,6 +2,8 @@
 #define __GAME_H__
 
 #include "EntityMonster.h"
+#include "AIComponent.h"
+#include "LootComponent.h"
 #include "GameSprite.h"
 #include "LerpSprite.h"
 #include "ScriptThread.h"
@@ -61,6 +63,10 @@ public:
     Entity* entityDb[1024];
     EntityMonster entityMonsters[80];
     int numMonsters;
+    AIComponent aiComponents[80];
+    int numAIComponents;
+    LootComponent lootComponents[128];
+    int numLootComponents;
     int spawnParam;
     bool disableAI;
     bool skipMinigames;

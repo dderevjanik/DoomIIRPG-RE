@@ -19,6 +19,8 @@
 #include "JavaStream.h"
 #include "Enums.h"
 #include "SpriteDefs.h"
+#include "LootComponent.h"
+#include "AIComponent.h"
 #include "Sound.h"
 #include "SoundNames.h"
 #include "Sounds.h"
@@ -129,7 +131,7 @@ void Entity::saveState(OutputStream* OS, int n) {
         OS->writeByte(mapSprites[app->render->S_X + sprite] >> 3);
         OS->writeByte(mapSprites[app->render->S_Y + sprite] >> 3);
         OS->writeByte((mapSpriteInfo[sprite] & 0xFF00) >> 8);
-        OS->writeShort(this->monster->flags);
+        OS->writeShort(this->monsterFlags);
         return;
     }
     OS->writeByte(this->info >> 16 & 0xFF);
@@ -147,16 +149,16 @@ void Entity::saveState(OutputStream* OS, int n) {
             OS->writeShort(this->linkIndex);
         }
     }
-    if (this->monster != nullptr) {
-        OS->writeShort(this->monster->flags);
+    if (this->isMonster()) {
+        OS->writeShort(this->monsterFlags);
         if ((this->info & 0x10000) == 0x0) {
-            if ((this->monster->flags & 0x200) != 0x0) {
+            if ((this->monsterFlags & 0x200) != 0x0) {
                 OS->writeByte(mapSprites[app->render->S_SCALEFACTOR + sprite]);
             }
             if ((n & 0x100000) == 0x0) {
-                OS->writeShort(this->monster->monsterEffects);
-                this->monster->ce.saveState(OS, false);
-                this->monster->saveGoalState(OS);
+                OS->writeShort(this->monsterEffects);
+                this->combat->saveState(OS, false);
+                this->ai->saveGoalState(OS);
             }
         }
     }
@@ -167,10 +169,10 @@ void Entity::saveState(OutputStream* OS, int n) {
             int v3;
             int v2;
             int v = v2 = (v3 = 0);
-            if (this->lootSet != nullptr) {
-                v2 = this->lootSet[0];
-                v = this->lootSet[1];
-                v3 = this->lootSet[2];
+            if (this->loot != nullptr) {
+                v2 = this->loot->lootSet[0];
+                v = this->loot->lootSet[1];
+                v3 = this->loot->lootSet[2];
             }
             OS->writeInt(v2);
             OS->writeInt(v);
@@ -247,17 +249,17 @@ void Entity::loadState(InputStream* IS, int n) {
         this->param = (((n & 0x200000) != 0x0) ? 1 : 0);
         this->param += (((n & 0x4000000) != 0x0) ? 1 : 0);
     }
-    if (this->monster != nullptr) {
+    if (this->isMonster()) {
         if ((n & 0x800000) != 0x0) {
-            this->monster->flags |= 0x10;
+            this->monsterFlags |= 0x10;
             this->info |= 0x400000;
         }
         if ((n & 0x400000) != 0x0) {
-            this->monster->flags |= 0x80;
+            this->monsterFlags |= 0x80;
             this->info |= 0x400000;
         }
         if ((n & 0x8000000) != 0x0) {
-            this->monster->flags |= 0x800;
+            this->monsterFlags |= 0x800;
             this->info |= 0x400000;
         }
     }
@@ -286,8 +288,8 @@ void Entity::loadState(InputStream* IS, int n) {
         else {
             app->game->linkEntity(this, n5 >> 6, n6 >> 6);
         }
-        this->monster->flags = IS->readShort();
-        if (this->monster->flags != 0 || n7 != 0) {
+        this->monsterFlags = IS->readShort();
+        if (this->monsterFlags != 0 || n7 != 0) {
             this->info |= 0x400000;
         }
         return;
@@ -300,7 +302,7 @@ void Entity::loadState(InputStream* IS, int n) {
         if (this->isDroppedEntity() || (app->render->mapSpriteInfo[sprite2] & 0xF000000) == 0x0) {
             app->render->mapSprites[app->render->S_X + sprite2] = (short)(IS->readUnsignedByte() << 3);
             app->render->mapSprites[app->render->S_Y + sprite2] = (short)(IS->readUnsignedByte() << 3);
-            if (this->monster != nullptr || this->isDroppedEntity()) {
+            if (this->isMonster() || this->isDroppedEntity()) {
                 app->render->mapSprites[app->render->S_Z + sprite2] = (short)(app->render->getHeight(app->render->mapSprites[app->render->S_X + sprite2], app->render->mapSprites[app->render->S_Y + sprite2]) + 32);
             }
             app->render->relinkSprite(sprite2);
@@ -328,19 +330,19 @@ void Entity::loadState(InputStream* IS, int n) {
     if ((n & 0x2000000) != 0x0) {
         this->info |= 0x80000;
     }
-    if (this->monster != nullptr) {
-        this->monster->flags = IS->readShort();
+    if (this->isMonster()) {
+        this->monsterFlags = IS->readShort();
         if ((this->info & 0x10000) == 0x0) {
-            if ((this->monster->flags & 0x200) != 0x0) {
+            if ((this->monsterFlags & 0x200) != 0x0) {
                 app->render->mapSprites[app->render->S_SCALEFACTOR + sprite2] = (short)IS->readUnsignedByte();
             }
             if ((n & 0x100000) != 0x0) {
                 this->info |= 0x1000000;
             }
             else {
-                this->monster->monsterEffects = IS->readShort();
-                this->monster->ce.loadState(IS, false);
-                this->monster->loadGoalState(IS);
+                this->monsterEffects = IS->readShort();
+                this->combat->loadState(IS, false);
+                this->ai->loadGoalState(IS);
             }
         }
         if ((this->info & 0x40000) != 0x0) {
@@ -368,9 +370,9 @@ void Entity::loadState(InputStream* IS, int n) {
             int int3 = IS->readInt();
             if (this->param == 0) {
                 this->populateDefaultLootSet();
-                this->lootSet[0] = int1;
-                this->lootSet[1] = int2;
-                this->lootSet[2] = int3;
+                this->loot->lootSet[0] = int1;
+                this->loot->lootSet[1] = int2;
+                this->loot->lootSet[2] = int3;
             }
             this->info |= 0x1000000;
         }
@@ -448,19 +450,19 @@ int Entity::getSaveHandle(bool b) {
             n |= 0x4000000;
         }
     }
-    if (this->monster != nullptr) {
-        if ((this->monster->flags & 0x10) != 0x0) {
+    if (this->isMonster()) {
+        if ((this->monsterFlags & 0x10) != 0x0) {
             n |= 0x800000;
         }
-        if ((this->monster->flags & 0x80) != 0x0) {
+        if ((this->monsterFlags & 0x80) != 0x0) {
             n |= 0x400000;
         }
-        if ((this->monster->flags & 0x800) != 0x0) {
+        if ((this->monsterFlags & 0x800) != 0x0) {
             n |= 0x8000000;
         }
     }
     if (b) {
-        if (this->def->eType == Enums::ET_CORPSE && this->def->eSubType != Enums::CORPSE_SKELETON && !droppedEntity && this->monster && 0x0 == (this->monster->flags & 0x80)) {
+        if (this->def->eType == Enums::ET_CORPSE && this->def->eSubType != Enums::CORPSE_SKELETON && !droppedEntity && this->isMonster() && 0x0 == (this->monsterFlags & 0x80)) {
             n = ((n & 0xFFFBFFFF) | 0x80000);
         }
         else if (this->def->eType == Enums::ET_MONSTER) {
@@ -534,7 +536,7 @@ void Entity::restoreBinaryState(int n) {
         case Enums::ET_CORPSE: {
             if (b) {
                 ++this->param;
-                this->lootSet = nullptr;
+                this->loot = nullptr;
                 break;
             }
             break;

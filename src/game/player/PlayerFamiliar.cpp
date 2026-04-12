@@ -163,7 +163,7 @@ void Player::familiarDied() {
 		app->canvas->shakeTime = 0;
 		app->hud->damageDir = 0;
 		app->hud->damageTime = 0;
-		app->combat->curAttacker->monster->flags |= 0x400;
+		app->combat->curAttacker->monsterFlags |= 0x400;
 		app->game->gsprite_clear(64);
 		app->canvas->invalidateRect();
 	}
@@ -313,7 +313,7 @@ void Player::attemptToDeploySentryBot() {
 	if (app->game->activeMonsters != nullptr) {
 		Entity* activeMonsters = app->game->activeMonsters;
 		do {
-			Entity* nextOnList = activeMonsters->monster->nextOnList;
+			Entity* nextOnList = activeMonsters->nextOnList;
 			if (activeMonsters->distFrom(app->canvas->destX, app->canvas->destY) <= app->combat->tileDistances[0] &&
 			    activeMonsters->aiIsAttackValid()) {
 				app->hud->addMessage((short)0, (short)219, 3);

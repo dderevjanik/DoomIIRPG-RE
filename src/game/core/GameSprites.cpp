@@ -382,7 +382,7 @@ int Game::updateLerpSprite(LerpSprite* lerpSprite) {
 		Entity* entity = &this->entities[app->render->mapSprites[app->render->S_ENT + n2]];
 		int n14 = entity->linkIndex % 32;
 		int n15 = entity->linkIndex / 32;
-		if (entity->def->eType == Enums::ET_NPC || entity->monster != nullptr) {
+		if (entity->def->eType == Enums::ET_NPC || entity->isMonster()) {
 			int anim = ((app->render->mapSpriteInfo[n2] & 0xFF00) >> 8) & Enums::MANIM_MASK;
 			int n17 = lerpSprite->dstX - lerpSprite->srcX;
 			int n18 = lerpSprite->dstY - lerpSprite->srcY;
@@ -530,7 +530,7 @@ LerpSprite* Game::allocLerpSprite(ScriptThread* thread, int n, bool b) {
 		if (-1 != app->render->mapSprites[app->render->S_ENT + n2]) {
 			entity = &this->entities[app->render->mapSprites[app->render->S_ENT + n2]];
 		}
-		if (entity != nullptr && entity->monster != nullptr) {
+		if (entity != nullptr && entity->isMonster()) {
 			int n3 = (app->render->mapSpriteInfo[n2] & 0xFF00) >> 8 & 0xF0;
 			if (n3 == 32 || (lerpSprite->flags & Enums::LS_FLAG_AUTO_FACE) != 0x0) {
 				n3 = 0;
@@ -577,8 +577,8 @@ void Game::freeLerpSprite(LerpSprite* lerpSprite) {
 	int n4 = lerpSprite->dstY >> 6;
 	if (nullptr != entity && 0x0 == (app->render->mapSpriteInfo[sprite] & 0x10000)) {
 		if (entity->def->eType == Enums::ET_NPC || entity->def->eType == Enums::ET_MONSTER) {
-			if (entity->monster != nullptr) {
-				entity->monster->frameTime = 0;
+			if (entity->ai != nullptr) {
+				entity->ai->frameTime = 0;
 			}
 			int n5 = (app->render->mapSpriteInfo[sprite] & 0xFF00) >> 8 & 0xF0;
 			if ((n5 == 16 || n5 == 48) && !(lerpSprite->flags & Enums::LS_FLAG_AUTO_FACE)) {
@@ -686,8 +686,8 @@ void Game::freeLerpSprite(LerpSprite* lerpSprite) {
 	this->numLerpSprites--;
 	if (entity != nullptr) {
 		uint8_t eSubType = entity->def->eSubType;
-		if (entity->monster != nullptr) {
-			if ((entity->monster->goalFlags & 0x1) != 0x0) {
+		if (entity->ai != nullptr) {
+			if ((entity->ai->goalFlags & 0x1) != 0x0) {
 				entity->aiFinishLerp();
 			}
 			if (app->player->isFamiliar &&
@@ -707,8 +707,8 @@ void Game::freeLerpSprite(LerpSprite* lerpSprite) {
 			if (mapEntity != nullptr) {
 				if (mapEntity->def->eSubType == Enums::INTERACT_BARRICADE && entity->def->eType == Enums::ET_MONSTER) {
 					if (eSubType != Enums::MONSTER_LOST_SOUL) {
-						entity->monster->monsterEffects |= 0x60008;
-						entity->monster->monsterEffects &= 0xFFFFE1FD;
+						entity->monsterEffects |= 0x60008;
+						entity->monsterEffects &= 0xFFFFE1FD;
 					}
 				} else {
 					entity->pain(5, mapEntity);

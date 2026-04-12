@@ -104,6 +104,8 @@ void Game::loadMapEntities() {
 	}
 	this->secretActive = false;
 	this->numMonsters = 0;
+	this->numAIComponents = 0;
+	this->numLootComponents = 0;
 	this->numLerpSprites = 0;
 	for (int n2 = 0; n2 < 16; ++n2) {
 		this->lerpSprites[n2].hSprite = 0;
@@ -183,7 +185,10 @@ void Game::loadMapEntities() {
 						return;
 					}
 					entity3->monster = &this->entityMonsters[this->numMonsters++];
-					entity3->monster->reset();
+					entity3->combat = &entity3->monster->ce;
+					entity3->ai = &this->aiComponents[this->numAIComponents++];
+					// EntityMonster pool slot initialized by memset in constructor
+					entity3->ai->reset();
 
 					app->render->mapSpriteInfo[n5] &= 0xF0FFFFFF;
 					if ((app->nextByte() & 0x1) == 0x0 && !entity3->isBoss()) {

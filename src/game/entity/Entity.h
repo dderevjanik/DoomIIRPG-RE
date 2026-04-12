@@ -2,11 +2,14 @@
 #define __ENTITY_H__
 
 class Applet;
+struct AIComponent;
+class CombatEntity;
 class EntityDef;
 class EntityMonster;
 class LerpSprite;
 class OutputStream;
 class InputStream;
+struct LootComponent;
 
 class Entity
 {
@@ -17,15 +20,22 @@ public:
 	int touchMe;
 	EntityDef* def;
 	EntityMonster* monster;
+	CombatEntity* combat;
+	AIComponent* ai;
 	Entity* nextOnTile;
 	Entity* prevOnTile;
 	short linkIndex;
 	short name;
 	int info;
 	int param;
-	int* lootSet;
+	LootComponent* loot;
+	short monsterFlags;
+	int monsterEffects;
 	int32_t knockbackDelta[2];
 	Entity* raiseTargets[4];
+	Entity* nextOnList;
+	Entity* prevOnList;
+	Entity* nextAttacker;
 	int pos[2];
 	int tempSaveBuf[2];
 
@@ -33,6 +43,9 @@ public:
 	Entity();
 	// Destructor
 	~Entity();
+
+	bool isMonster() const { return combat != nullptr && ai != nullptr; }
+	void clearMonsterEffects() { monsterEffects = 0; }
 
 	bool startup();
 	void reset();

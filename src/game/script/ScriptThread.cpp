@@ -15,6 +15,8 @@
 #include "Hud.h"
 #include "Entity.h"
 #include "EntityDef.h"
+#include "LootComponent.h"
+#include "AIComponent.h"
 #include "Combat.h"
 #include "ParticleSystem.h"
 #include "MenuSystem.h"
@@ -372,7 +374,7 @@ uint32_t ScriptThread::run() {
                 if (sEnt != -1) {
                     this->app->game->entities[sEnt].info |= 0x400000;
                     if (this->app->game->entities[sEnt].monster != nullptr) {
-                        this->app->game->entities[sEnt].monster->flags |= 0x4000;
+                        this->app->game->entities[sEnt].monsterFlags |= 0x4000;
                     }
                 }
                 lerpSprite->dstZ = this->app->render->getHeight(lerpSprite->dstX, lerpSprite->dstY) + dstZ;
@@ -684,8 +686,8 @@ uint32_t ScriptThread::run() {
                 this->app->canvas->staleView = true;
                 if (sEnt != -1) {
                     this->app->game->entities[sEnt].info |= 0x400000;
-                    if (this->app->game->entities[sEnt].monster != nullptr) {
-                        this->app->game->entities[sEnt].monster->frameTime = 0x7FFFFFFF;
+                    if (this->app->game->entities[sEnt].ai != nullptr) {
+                        this->app->game->entities[sEnt].ai->frameTime = 0x7FFFFFFF;
                     }
                 }
                 if (time > 0) {
@@ -716,10 +718,10 @@ uint32_t ScriptThread::run() {
                 short sEnt = this->app->render->mapSprites[this->app->render->S_ENT + sprite];
                 if (sEnt != -1) {
                     Entity* entity = &this->app->game->entities[sEnt];
-                    if (entity->monster != nullptr) {
+                    if (entity->isMonster()) {
                         entity->info |= 0x20000;
                         entity->pain(dmgVal, nullptr);
-                        if (entity->monster->ce.getStat(Enums::STAT_HEALTH) <= 0) {
+                        if (entity->combat->getStat(Enums::STAT_HEALTH) <= 0) {
                             entity->died(false, nullptr);
                         }
                     }
@@ -796,15 +798,15 @@ uint32_t ScriptThread::run() {
                 short n48 = this->app->render->mapSprites[this->app->render->S_ENT + uByteArg14];
                 if (n48 != -1) {
                     Entity* entity12 = &this->app->game->entities[n48];
-                    if (entity12->monster != nullptr) {
+                    if (entity12->isMonster()) {
                         if (n46 == 0) {
-                            entity12->monster->flags |= (short)n47;
+                            entity12->monsterFlags |= (short)n47;
                         }
                         else if (n46 == 1) {
-                            entity12->monster->flags &= (short)~n47;
+                            entity12->monsterFlags &= (short)~n47;
                         }
                         else {
-                            entity12->monster->flags = (short)n47;
+                            entity12->monsterFlags = (short)n47;
                         }
                         entity12->info |= 0x400000;
                     }
@@ -891,7 +893,7 @@ uint32_t ScriptThread::run() {
                 Entity* entity17 = &this->app->game->entities[n53];
                 if (entity17->def->eType == Enums::ET_MONSTER) {
                     int sprite = entity17->getSprite();
-                    entity17->monster->frameTime = 0;
+                    entity17->ai->frameTime = 0;
                     this->app->render->mapSpriteInfo[sprite] = ((this->app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | 0x0);
                     this->app->game->activate(entity17, true, false, false, true);
                     break;
@@ -1412,7 +1414,7 @@ uint32_t ScriptThread::run() {
                 if (n15 != -1) {
                     this->app->game->entities[n15].info |= 0x400000;
                     if (this->app->game->entities[n15].monster != nullptr) {
-                        this->app->game->entities[n15].monster->flags |= 0x4000;
+                        this->app->game->entities[n15].monsterFlags |= 0x4000;
                     }
                 }
                 allocLerpSprite2->dstZ = this->app->render->getHeight(allocLerpSprite2->dstX, allocLerpSprite2->dstY) + n14;
@@ -1625,7 +1627,7 @@ uint32_t ScriptThread::run() {
                 short n127 = (short)((this->getUByteArg() << 6) + 32);
                 short n128 = (short)((this->getUByteArg() << 6) + 32);
                 Entity* entity26 = &this->app->game->entities[this->app->render->mapSprites[this->app->render->S_ENT + uShortArg27]];
-                if (entity26->monster != nullptr) {
+                if (entity26->isMonster()) {
                     this->corpsifyMonster(n127, n128, entity26, true);
                     break;
                 }
@@ -1677,7 +1679,7 @@ uint32_t ScriptThread::run() {
                 if (n133 != -1) {
                     this->app->game->entities[n133].info |= 0x400000;
                     if (this->app->game->entities[n133].monster != nullptr) {
-                        this->app->game->entities[n133].monster->flags &= 0xFFFFBFFF;
+                        this->app->game->entities[n133].monsterFlags &= 0xFFFFBFFF;
                     }
                 }
                 allocLerpSprite4->srcX = this->app->render->mapSprites[this->app->render->S_X + n129];
@@ -1792,17 +1794,17 @@ uint32_t ScriptThread::run() {
                 int n69 = this->getUShortArg() & 0xFFF;
                 if (this->app->render->mapSprites[this->app->render->S_ENT + n69] != -1) {
                     Entity* entity22 = &this->app->game->entities[this->app->render->mapSprites[this->app->render->S_ENT + n69]];
-                    bool b8 = entity22->lootSet != nullptr;
+                    bool b8 = entity22->loot != nullptr;
                     short uByteArg26 = this->getUByteArg();
                     for (short n70 = 0; n70 < uByteArg26; ++n70) {
                         int uShortArg16 = this->getUShortArg();
                         if (b8) {
-                            entity22->lootSet[n70] = uShortArg16;
+                            entity22->loot->lootSet[n70] = uShortArg16;
                         }
                     }
                     if (b8) {
                         for (int j = uByteArg26; j < 3; ++j) {
-                            entity22->lootSet[j] = 0;
+                            entity22->loot->lootSet[j] = 0;
                         }
                     }
                     break;
@@ -1987,7 +1989,7 @@ uint32_t ScriptThread::run() {
                 if (n139 != -1) {
                     this->app->game->entities[n139].info |= 0x400000;
                     if (this->app->game->entities[n139].monster != nullptr) {
-                        this->app->game->entities[n139].monster->flags &= 0xFFFFBFFF;
+                        this->app->game->entities[n139].monsterFlags &= 0xFFFFBFFF;
                     }
                 }
                 allocLerpSprite5->srcX = this->app->render->mapSprites[this->app->render->S_X + n135];
@@ -2241,13 +2243,13 @@ void ScriptThread::composeLootDialog() {
 }
 
 void ScriptThread::setAIGoal(Entity* entity, int n, int goalParam) {
-    entity->monster->resetGoal();
-    entity->monster->goalType = (uint8_t)n;
+    entity->ai->resetGoal();
+    entity->ai->goalType = (uint8_t)n;
     if (n == 2 || n == 3) {
-        entity->monster->goalParam = 1;
+        entity->ai->goalParam = 1;
     }
     else if (n == 4 || n == 6) {
-        entity->monster->goalParam = goalParam;
+        entity->ai->goalParam = goalParam;
     }
     if (!this->app->player->noclip) {
         if ((entity->info & 0x40000) == 0x0) {
@@ -2256,9 +2258,9 @@ void ScriptThread::setAIGoal(Entity* entity, int n, int goalParam) {
         entity->aiThink(true);
     }
     if (n == 3) {
-        entity->monster->goalFlags &= 0xf7;
+        entity->ai->goalFlags &= 0xf7;
         if (this->app->game->combatMonsters != nullptr) {
-            this->app->combat->performAttack(this->app->game->combatMonsters, this->app->game->combatMonsters->monster->target, 0, 0, false);
+            this->app->combat->performAttack(this->app->game->combatMonsters, this->app->game->combatMonsters->ai->target, 0, 0, false);
         }
     }
 }
@@ -2266,8 +2268,8 @@ void ScriptThread::setAIGoal(Entity* entity, int n, int goalParam) {
 void ScriptThread::corpsifyMonster(int x, int y, Entity* entity, bool b) {
     int sprite = entity->getSprite();
     this->app->game->snapLerpSprites(sprite);
-    entity->monster->resetGoal();
-    entity->monster->clearEffects();
+    entity->ai->resetGoal();
+    entity->clearMonsterEffects();
     entity->undoAttack();
     this->app->game->deactivate(entity);
     this->app->render->mapSpriteInfo[sprite] = ((this->app->render->mapSpriteInfo[sprite] & 0xFFFE00FF) | 0x7000);
