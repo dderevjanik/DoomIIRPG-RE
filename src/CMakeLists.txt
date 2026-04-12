@@ -67,7 +67,20 @@ target_link_libraries(drpg-engine-lib PUBLIC
 	yaml-cpp::yaml-cpp)
 
 # Main game executable
-add_executable(${PROJECT_NAME} engine/core/Main.cpp)
+if(APPLE)
+	set(MACOSX_ICON "${CMAKE_CURRENT_SOURCE_DIR}/engine/appicon.icns")
+	set_source_files_properties(${MACOSX_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+	add_executable(${PROJECT_NAME} MACOSX_BUNDLE engine/core/Main.cpp ${MACOSX_ICON})
+	set_target_properties(${PROJECT_NAME} PROPERTIES
+	    MACOSX_BUNDLE_ICON_FILE appicon.icns
+	    MACOSX_BUNDLE_BUNDLE_NAME "DRPGEngine"
+	    MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
+	    MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
+	    MACOSX_BUNDLE_GUI_IDENTIFIER "com.drpg.engine"
+	)
+else()
+	add_executable(${PROJECT_NAME} engine/core/Main.cpp)
+endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     CXX_STANDARD 20
