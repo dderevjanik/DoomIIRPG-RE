@@ -65,6 +65,9 @@ bool DoomIIRPGGame::startup(Applet* app) {
 	app->canvas->registerStateHandler(Canvas::ST_CAMERA, &cameraState);
 	app->canvas->registerStateHandler(Canvas::ST_INTER_CAMERA, &interCameraState);
 	app->canvas->registerStateHandler(Canvas::ST_MINI_GAME, &miniGameState);
+	app->canvas->registerStateHandler(Canvas::ST_PLAYING, &playingState);
+	app->canvas->registerStateHandler(Canvas::ST_COMBAT, &combatState);
+	app->canvas->registerStateHandler(Canvas::ST_MENU, &menuState);
 	// ST_LOADING and ST_SAVING remain inline — their update() needs early return from run()
 	// app->canvas->registerStateHandler(Canvas::ST_LOADING, &loadingState);
 	// app->canvas->registerStateHandler(Canvas::ST_SAVING, &savingState);

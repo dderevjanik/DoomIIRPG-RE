@@ -22,6 +22,9 @@
 #include "MiniGameState.h"
 #include "LoadingState.h"
 #include "SavingState.h"
+#include "PlayingState.h"
+#include "CombatState.h"
+#include "MenuState.h"
 
 // Default game module: D2RPG.
 // Creates and manages all D2RPG game objects.
@@ -48,6 +51,9 @@ public:
 	MiniGameState miniGameState;
 	LoadingState loadingState;
 	SavingState savingState;
+	PlayingState playingState;
+	CombatState combatState;
+	MenuState menuState;
 
 	DoomIIRPGGame() {}
 	~DoomIIRPGGame() override {}
