@@ -49,6 +49,16 @@ bool DoomIIRPGGame::startup(Applet* app) {
 	app->canvas->registerStateHandler(Canvas::ST_LOGO, &logoState);
 	app->canvas->registerStateHandler(Canvas::ST_CREDITS, &creditsState);
 	app->canvas->registerStateHandler(Canvas::ST_AUTOMAP, &automapState);
+	app->canvas->registerStateHandler(Canvas::ST_INTRO_MOVIE, &introMovieState);
+	app->canvas->registerStateHandler(Canvas::ST_INTRO, &introState);
+	app->canvas->registerStateHandler(Canvas::ST_EPILOGUE, &epilogueState);
+	app->canvas->registerStateHandler(Canvas::ST_CHARACTER_SELECTION, &characterSelectionState);
+	app->canvas->registerStateHandler(Canvas::ST_TRAVELMAP, &travelMapState);
+	app->canvas->registerStateHandler(Canvas::ST_DYING, &dyingState);
+	app->canvas->registerStateHandler(Canvas::ST_BOT_DYING, &botDyingState);
+	app->canvas->registerStateHandler(Canvas::ST_ERROR, &errorState);
+	app->canvas->registerStateHandler(Canvas::ST_BENCHMARK, &benchmarkState);
+	app->canvas->registerStateHandler(Canvas::ST_BENCHMARKDONE, &benchmarkState);
 
 	// Register minigames
 	auto& mgReg = CAppContainer::getInstance()->minigameRegistry;

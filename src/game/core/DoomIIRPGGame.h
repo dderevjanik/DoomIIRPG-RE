@@ -5,6 +5,15 @@
 #include "LogoState.h"
 #include "CreditsState.h"
 #include "AutomapState.h"
+#include "IntroMovieState.h"
+#include "IntroState.h"
+#include "EpilogueState.h"
+#include "CharacterSelectionState.h"
+#include "TravelMapState.h"
+#include "DyingState.h"
+#include "BotDyingState.h"
+#include "ErrorState.h"
+#include "BenchmarkState.h"
 
 // Default game module: D2RPG.
 // Creates and manages all D2RPG game objects.
@@ -14,6 +23,15 @@ public:
 	LogoState logoState;
 	CreditsState creditsState;
 	AutomapState automapState;
+	IntroMovieState introMovieState;
+	IntroState introState;
+	EpilogueState epilogueState;
+	CharacterSelectionState characterSelectionState;
+	TravelMapState travelMapState;
+	DyingState dyingState;
+	BotDyingState botDyingState;
+	ErrorState errorState;
+	BenchmarkState benchmarkState;
 
 	DoomIIRPGGame() {}
 	~DoomIIRPGGame() override {}
