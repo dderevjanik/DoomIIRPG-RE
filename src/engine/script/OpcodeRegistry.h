@@ -8,7 +8,7 @@ class ScriptThread;
 // Returns: 0 = continue execution (like break), 1 = done (return), 2 = paused/yielded
 // The handler reads arguments from thread via getByteArg()/getShortArg()/etc.
 // and manipulates state via push()/pop()/IP.
-typedef int (*OpcodeHandler)(ScriptThread* thread);
+using OpcodeHandler = int (*)(ScriptThread* thread);
 
 // Registry for extension script opcodes (128-254).
 // Base opcodes (0-97) remain in the ScriptThread switch.

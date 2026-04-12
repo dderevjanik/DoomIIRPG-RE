@@ -4,19 +4,19 @@
 
 class TinyGL;
 
-typedef void (*SpanFunc)(uint16_t*, int32_t, int32_t, uint32_t, int32_t, int32_t, int32_t, TinyGL*);
-typedef void (*SpanFuncStretch)(uint16_t*, int32_t, int32_t, int32_t, int32_t, TinyGL*);
+using SpanFunc = void (*)(uint16_t*, int32_t, int32_t, uint32_t, int32_t, int32_t, int32_t, TinyGL*);
+using SpanFuncStretch = void (*)(uint16_t*, int32_t, int32_t, int32_t, int32_t, TinyGL*);
 
-typedef struct _SpanMode {
+struct SpanMode {
     SpanFunc Normal;
     SpanFunc DT;
     SpanFunc DS;
     SpanFuncStretch Stretch;
-}SpanMode;
+};
 
-typedef struct _SpanType {
+struct SpanType {
     SpanMode* Span;
-}SpanType;
+};
 
 
 extern void spanNoDraw(uint16_t*, int32_t, int32_t, uint32_t, int32_t, int32_t, int32_t, TinyGL*);

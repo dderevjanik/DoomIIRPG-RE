@@ -2,9 +2,9 @@
 #include <SDL.h>
 #include <SDL_opengl.h>
 
-typedef struct SDLResVidModes_s {
+struct SDLResVidModes {
 	int width, height;
-} SDLResVidModes;
+};
 extern SDLResVidModes sdlResVideoModes[18];
 
 class SDLGL

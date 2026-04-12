@@ -1,37 +1,34 @@
 #pragma once
 #include "SDLGL.h"
 
-typedef void (APIENTRYP PFNGLACTIVETEXTUREPROC) (GLenum texture);
-typedef void (APIENTRYP PFNGLCLIENTACTIVETEXTUREPROC) (GLenum texture);
+using PFNGLACTIVETEXTUREPROC = void (APIENTRYP)(GLenum texture);
+using PFNGLCLIENTACTIVETEXTUREPROC = void (APIENTRYP)(GLenum texture);
 
 class Render;
 class TinyGL;
 class TGLVert;
 
-typedef struct _glChain
-{
-	_glChain* next;
-	_glChain* prev;
+struct glChain {
+	glChain* next;
+	glChain* prev;
 	GLuint texnum;
 	GLuint width;
 	GLuint height;
-}glChain;
+};
 
-typedef struct _Vertex
-{
+struct Vertex {
 	float xyzw[4];
 	float st[2];
-}Vertex;
+};
 
-typedef struct _GLVert
-{
+struct GLVert {
 	int x;
 	int y;
 	int z;
 	int w;
 	int s;
 	int t;
-}GLVert;
+};
 
 class Applet;
 

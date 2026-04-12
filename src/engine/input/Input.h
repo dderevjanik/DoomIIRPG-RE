@@ -39,7 +39,7 @@ enum class GamepadInput : uint8_t {
 static constexpr uint8_t NUM_GAMEPAD_INPUTS = (uint32_t)GamepadInput::INVALID;
 
 // Direction for a joystick hat (d-pad)
-enum JoyHatDir : uint8_t {
+enum class JoyHatDir : uint8_t {
 	Up = 0,
 	Down = 1,
 	Left = 2,
@@ -80,15 +80,15 @@ struct JoystickAxis {
 
 extern char buttonNames[][NUM_GAMEPAD_INPUTS];
 
-#define KEYBINDS_MAX 10
-#define IS_MOUSE_BUTTON			0x100000
-#define IS_CONTROLLER_BUTTON	0x200000
-typedef struct keyMapping_s {
+static constexpr int KEYBINDS_MAX = 10;
+static constexpr int IS_MOUSE_BUTTON = 0x100000;
+static constexpr int IS_CONTROLLER_BUTTON = 0x200000;
+struct keyMapping_t {
 	int avk_action;
 	int keyBinds[KEYBINDS_MAX];
-} keyMapping_t;
+};
 
-#define KEY_MAPPIN_MAX 16
+static constexpr int KEY_MAPPIN_MAX = 16;
 extern keyMapping_t keyMapping[KEY_MAPPIN_MAX];
 extern keyMapping_t keyMappingTemp[KEY_MAPPIN_MAX];
 extern keyMapping_t keyMappingDefault[KEY_MAPPIN_MAX];

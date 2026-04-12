@@ -5,17 +5,16 @@
 #include <stdint.h>
 #include <zlib.h>
 
-#define ZIP_LOCAL_FILE_SIG 0x04034b50
-#define ZIP_CENTRAL_DIRECTORY_SIG 0x02014b50
-#define ZIP_END_OF_CENTRAL_DIRECTORY_SIG 0x06054b50
-#define ZIP_ENCRYPTED_FLAG 0x1
+static constexpr uint32_t ZIP_LOCAL_FILE_SIG = 0x04034b50;
+static constexpr uint32_t ZIP_CENTRAL_DIRECTORY_SIG = 0x02014b50;
+static constexpr uint32_t ZIP_END_OF_CENTRAL_DIRECTORY_SIG = 0x06054b50;
+static constexpr uint32_t ZIP_ENCRYPTED_FLAG = 0x1;
 
-typedef struct zip_entry_s
-{
+struct zip_entry_t {
 	char* name;
 	int offset;
 	int csize, usize;
-}zip_entry_t;
+};
 
 class ZipFile
 {

@@ -5,7 +5,7 @@
 class IGameModule;
 
 // Factory function type for creating game modules.
-typedef IGameModule* (*GameModuleFactory)();
+using GameModuleFactory = IGameModule* (*)();
 
 // Registry for game modules. Each module registers itself with a unique string
 // ID (e.g. "doom2rpg") and a factory function. Main.cpp reads the "module"

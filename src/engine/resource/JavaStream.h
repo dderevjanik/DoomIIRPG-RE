@@ -2,9 +2,9 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string>
-#define LT_RESOURCE 5
-#define LT_FILE 6
-#define LT_SOUND_RESOURCE 7 // [GEC]
+static constexpr int LT_RESOURCE = 5;
+static constexpr int LT_FILE = 6;
+static constexpr int LT_SOUND_RESOURCE = 7; // [GEC]
 
 // Save directory - set at startup from GameConfig.saveDir
 const std::string& getSaveDir();
