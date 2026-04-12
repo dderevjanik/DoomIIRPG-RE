@@ -30,10 +30,10 @@ jobs:
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Build
-        run: cmake --build build --parallel
+        run: cmake --build build --parallel --target DRPGEngine drpg-convert
 
       - name: Test
-        run: ctest --test-dir build --output-on-failure
+        run: cmake --build build --parallel --target test-mapdata-roundtrip && ctest --test-dir build --output-on-failure
 
       - name: Print ccache stats
         run: ccache -s
@@ -65,10 +65,10 @@ jobs:
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Build
-        run: cmake --build build --parallel
+        run: cmake --build build --parallel --target DRPGEngine drpg-convert
 
       - name: Test
-        run: ctest --test-dir build --output-on-failure
+        run: cmake --build build --parallel --target test-mapdata-roundtrip && ctest --test-dir build --output-on-failure
 
       - name: Print ccache stats
         run: ccache -s
