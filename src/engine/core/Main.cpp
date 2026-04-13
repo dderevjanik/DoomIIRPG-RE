@@ -36,11 +36,13 @@
 #include "CrashHandler.h"
 
 #include "DevConsole.h"
+#include "ModManager.h"
 
 #include <dirent.h>
 #include <signal.h>
 
 static DevConsole g_devConsole;
+static ModManager g_modManager;
 
 static void handleSIGTERM(int) {
 	// Gracefully request shutdown instead of letting the signal kill the process
@@ -85,7 +87,7 @@ int main(int argc, char* args[]) {
 			printf("  --ticks <n>             Quit after n ticks (headless/script mode)\n");
 			printf("  --seed <n>              Set random seed for deterministic runs\n");
 			printf("  --script <file>         Load and replay an input script\n");
-			printf("  --mod <dir>             Load a mod directory (repeatable, last wins)\n");
+			printf("  --mod <dir|zip>         Load a mod directory or .zip (repeatable)\n");
 			return 0;
 		} else if (strcmp(args[i], "--gamedir") == 0 && i + 1 < argc) {
 			gameDir = args[++i];
@@ -536,39 +538,10 @@ int main(int argc, char* args[]) {
 		vfs.addSearchDir(dir.c_str());
 	}
 
-	// Mount mod directories (later entries = higher priority, overriding earlier ones)
-	for (size_t i = 0; i < modDirs.size(); i++) {
-		int modPriority = 300 + static_cast<int>(i);
-		vfs.mountDir(modDirs[i].c_str(), modPriority);
-
-		// Try to read mod.yaml for metadata
-		std::string modYamlPath = modDirs[i] + "/mod.yaml";
-		DataNode modConfig = DataNode::loadFile(modYamlPath.c_str());
-		if (modConfig) {
-			DataNode mod = modConfig["mod"];
-			if (mod) {
-				std::string modName = mod["name"].asString("(unnamed)");
-				std::string modVersion = mod["version"].asString("");
-				std::string modAuthor = mod["author"].asString("");
-				printf("[mod] Loaded: %s%s%s (priority %d)\n",
-					modName.c_str(),
-					modVersion.empty() ? "" : (" v" + modVersion).c_str(),
-					modAuthor.empty() ? "" : (" by " + modAuthor).c_str(),
-					modPriority);
-
-				// Register additional search dirs from the mod
-				DataNode modSearchDirs = mod["search_dirs"];
-				if (modSearchDirs) {
-					for (auto it = modSearchDirs.begin(); it != modSearchDirs.end(); ++it) {
-						vfs.addSearchDir(it.value().asString().c_str());
-					}
-				}
-			}
-		} else {
-			printf("[mod] Mounted: %s (priority %d, no mod.yaml)\n",
-				modDirs[i].c_str(), modPriority);
-		}
-	}
+	// Discover and mount mods: auto-discover from mods/ directory + CLI --mod flags
+	g_modManager.discoverMods("mods", modDirs);
+	g_modManager.mountAll(vfs, 300);
+	CAppContainer::getInstance()->modManager = &g_modManager;
 
 	SDLGL sdlGL;
 	if (headless) {

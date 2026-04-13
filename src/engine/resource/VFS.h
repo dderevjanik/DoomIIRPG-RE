@@ -4,10 +4,13 @@
 #include <string>
 #include <unordered_map>
 
-// A mounted filesystem directory for the VFS
+class ZipFile;
+
+// A mounted filesystem source for the VFS (directory or ZIP archive)
 struct VFSMount {
-	std::string basePath;  // filesystem directory
+	std::string basePath;  // filesystem directory or zip file path
 	int priority;          // higher priority = checked first
+	ZipFile* zip = nullptr; // non-null = zip archive mount (owned by VFS)
 };
 
 class VFS {
@@ -20,7 +23,9 @@ private:
 	bool fileIndexBuilt = false;
 
 	uint8_t* readFromDir(const VFSMount& mount, const char* path, int* sizeOut);
+	uint8_t* readFromZip(const VFSMount& mount, const char* path, int* sizeOut);
 	void buildFileIndex();
+	void sortMounts();
 
 public:
 	VFS();
@@ -28,6 +33,9 @@ public:
 
 	// Mount a filesystem directory (e.g. "basedata/" or "mods/mymod/")
 	void mountDir(const char* dirPath, int priority);
+
+	// Mount a ZIP archive as a read-only filesystem
+	void mountZip(const char* zipPath, int priority);
 
 	// Register a subdirectory to search when a file isn't found at the mount root.
 	// Search dirs are tried in registration order after the exact path fails.

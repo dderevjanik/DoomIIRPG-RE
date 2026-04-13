@@ -6,9 +6,7 @@ file(GLOB_RECURSE SOURCE_FILES
 	"engine/*.cpp" "engine/*.c"
 	"game/*.cpp" "game/*.c")
 
-# ZipFile is only used by the converter tool, not the engine
-list(FILTER SOURCE_FILES EXCLUDE REGEX "ZipFile\\.cpp$")
-list(FILTER HEADER_FILES EXCLUDE REGEX "ZipFile\\.h$")
+# ZipFile is used by VFS for ZIP mod support and by the converter tool
 
 file(GLOB_RECURSE RESOURCES_FILES
 	"engine/*.rc" "engine/*.ico"
@@ -64,6 +62,7 @@ target_link_libraries(drpg-engine-lib PUBLIC
 	SDL2::SDL2
 	OpenAL::OpenAL
 	OpenGL::GL
+	ZLIB::ZLIB
 	${HASH_LIBRARY_TGT_NAME}
 	yaml-cpp::yaml-cpp
 	imgui)

@@ -5,6 +5,7 @@
 #include <SDL.h>
 
 #include "CAppContainer.h"
+#include "ModManager.h"
 #include "App.h"
 #include "Canvas.h"
 #include "Game.h"
@@ -120,6 +121,7 @@ void DevConsole::render() {
 	drawGameState();
 	drawEntityInspector();
 	drawScriptState();
+	drawMods();
 
 	if (showDemo) {
 		ImGui::ShowDemoWindow(&showDemo);
@@ -394,4 +396,72 @@ const char* DevConsole::stateName(int state) {
 		case 26: return "Logo";
 		default: return "Unknown";
 	}
+}
+
+void DevConsole::drawMods() {
+	auto* container = CAppContainer::getInstance();
+	if (!container || !container->modManager) return;
+
+	const auto& mods = container->modManager->getLoadedMods();
+	const auto& warnings = container->modManager->getWarnings();
+
+	ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_FirstUseEver);
+	if (!ImGui::Begin("Mods")) {
+		ImGui::End();
+		return;
+	}
+
+	if (mods.empty()) {
+		ImGui::TextDisabled("No mods loaded");
+		ImGui::TextWrapped("Place mod directories or .zip files in the mods/ folder, or use --mod <dir> on the command line.");
+	} else {
+		ImGui::Text("%d mod(s) loaded", (int)mods.size());
+		ImGui::Separator();
+
+		for (const auto& mod : mods) {
+			ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_DefaultOpen;
+			bool open = ImGui::TreeNodeEx(mod.id.c_str(), flags, "%s%s%s",
+				mod.name.c_str(),
+				mod.version.empty() ? "" : (" v" + mod.version).c_str(),
+				mod.isZip ? " [zip]" : "");
+
+			if (open) {
+				if (!mod.author.empty())
+					ImGui::Text("Author: %s", mod.author.c_str());
+				ImGui::Text("ID: %s", mod.id.c_str());
+				ImGui::Text("Priority: %d", mod.priority);
+				ImGui::Text("Path: %s", mod.path.c_str());
+
+				if (!mod.depends.empty()) {
+					ImGui::Text("Depends:");
+					ImGui::SameLine();
+					for (size_t i = 0; i < mod.depends.size(); i++) {
+						if (i > 0) ImGui::SameLine();
+						ImGui::TextColored(ImVec4(0.6f, 0.8f, 1.0f, 1.0f), "%s", mod.depends[i].c_str());
+					}
+				}
+
+				if (!mod.conflicts.empty()) {
+					ImGui::Text("Conflicts:");
+					ImGui::SameLine();
+					for (size_t i = 0; i < mod.conflicts.size(); i++) {
+						if (i > 0) ImGui::SameLine();
+						ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "%s", mod.conflicts[i].c_str());
+					}
+				}
+
+				ImGui::TreePop();
+			}
+		}
+	}
+
+	if (!warnings.empty()) {
+		ImGui::Separator();
+		ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "Warnings (%d):", (int)warnings.size());
+		for (const auto& w : warnings) {
+			ImGui::TextWrapped("%s", w.c_str());
+		}
+	}
+
+	ImGui::End();
 }

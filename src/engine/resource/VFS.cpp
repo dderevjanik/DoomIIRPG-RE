@@ -8,22 +8,61 @@
 #include "Log.h"
 
 #include "VFS.h"
+#include "ZipFile.h"
 
 VFS::VFS() {
 }
 
 VFS::~VFS() {
+	// Clean up owned ZipFile instances
+	for (auto& mount : mounts) {
+		if (mount.zip) {
+			mount.zip->closeZipFile();
+			delete mount.zip;
+			mount.zip = nullptr;
+		}
+	}
+}
+
+void VFS::sortMounts() {
+	std::ranges::sort(mounts, [](const VFSMount& a, const VFSMount& b) {
+		return a.priority > b.priority;
+	});
 }
 
 void VFS::mountDir(const char* dirPath, int priority) {
 	VFSMount mount;
 	mount.basePath = dirPath ? dirPath : "";
 	mount.priority = priority;
+	mount.zip = nullptr;
 	mounts.push_back(mount);
 
-	std::ranges::sort(mounts, [](const VFSMount& a, const VFSMount& b) {
-		return a.priority > b.priority;
-	});
+	sortMounts();
+
+	// Invalidate file index when mounts change
+	fileIndexBuilt = false;
+	fileIndex.clear();
+}
+
+void VFS::mountZip(const char* zipPath, int priority) {
+	ZipFile* zip = new ZipFile();
+	zip->openZipFile(zipPath);
+	if (zip->getEntryCount() == 0) {
+		LOG_WARN("VFS: failed to open zip or empty archive: {}\n", zipPath);
+		delete zip;
+		return;
+	}
+
+	VFSMount mount;
+	mount.basePath = zipPath ? zipPath : "";
+	mount.priority = priority;
+	mount.zip = zip;
+	mounts.push_back(mount);
+
+	sortMounts();
+
+	LOG_INFO("VFS: mounted zip '{}' with {} entries at priority {}\n",
+		zipPath, zip->getEntryCount(), priority);
 
 	// Invalidate file index when mounts change
 	fileIndexBuilt = false;
@@ -69,11 +108,36 @@ static void scanDirectory(const std::string& basePath, const std::string& subdir
 	closedir(dir);
 }
 
+static void scanZipForSearchDir(ZipFile* zip, const std::string& subdir,
+                                std::unordered_map<std::string, std::string>& index) {
+	std::string prefix = subdir + "/";
+	for (int i = 0; i < zip->getEntryCount(); i++) {
+		const char* entryName = zip->getEntryName(i);
+		if (!entryName) continue;
+
+		std::string name(entryName);
+		// Check if entry is under the search subdir
+		if (name.size() > prefix.size() && name.substr(0, prefix.size()) == prefix) {
+			// Only include direct children (no deeper subdirs)
+			std::string rest = name.substr(prefix.size());
+			if (rest.find('/') == std::string::npos) {
+				if (index.find(rest) == index.end()) {
+					index[rest] = name;
+				}
+			}
+		}
+	}
+}
+
 void VFS::buildFileIndex() {
 	fileIndex.clear();
 	for (const auto& mount : mounts) {
 		for (const auto& subdir : searchDirs) {
-			scanDirectory(mount.basePath, subdir, fileIndex);
+			if (mount.zip) {
+				scanZipForSearchDir(mount.zip, subdir, fileIndex);
+			} else {
+				scanDirectory(mount.basePath, subdir, fileIndex);
+			}
 		}
 	}
 	fileIndexBuilt = true;
@@ -109,10 +173,17 @@ uint8_t* VFS::readFromDir(const VFSMount& mount, const char* path, int* sizeOut)
 	return data;
 }
 
+uint8_t* VFS::readFromZip(const VFSMount& mount, const char* path, int* sizeOut) {
+	if (!mount.zip) return nullptr;
+	return mount.zip->readZipFileEntry(path, sizeOut);
+}
+
 uint8_t* VFS::readFile(const char* path, int* sizeOut) {
 	// First, try the exact path across all mounts
 	for (const auto& mount : mounts) {
-		uint8_t* data = readFromDir(mount, path, sizeOut);
+		uint8_t* data = mount.zip
+			? readFromZip(mount, path, sizeOut)
+			: readFromDir(mount, path, sizeOut);
 		if (data) {
 			return data;
 		}
@@ -126,7 +197,9 @@ uint8_t* VFS::readFile(const char* path, int* sizeOut) {
 
 		if (auto it = fileIndex.find(path); it != fileIndex.end()) {
 			for (const auto& mount : mounts) {
-				uint8_t* data = readFromDir(mount, it->second.c_str(), sizeOut);
+				uint8_t* data = mount.zip
+					? readFromZip(mount, it->second.c_str(), sizeOut)
+					: readFromDir(mount, it->second.c_str(), sizeOut);
 				if (data) {
 					return data;
 				}
@@ -143,16 +216,20 @@ uint8_t* VFS::readFile(const char* path, int* sizeOut) {
 bool VFS::fileExists(const char* path) {
 	// Try exact path first
 	for (const auto& mount : mounts) {
-		std::string fullPath = mount.basePath;
-		if (!fullPath.empty() && fullPath.back() != '/') {
-			fullPath += '/';
-		}
-		fullPath += path;
+		if (mount.zip) {
+			if (mount.zip->hasEntry(path)) return true;
+		} else {
+			std::string fullPath = mount.basePath;
+			if (!fullPath.empty() && fullPath.back() != '/') {
+				fullPath += '/';
+			}
+			fullPath += path;
 
-		FILE* f = std::fopen(fullPath.c_str(), "rb");
-		if (f) {
-			std::fclose(f);
-			return true;
+			FILE* f = std::fopen(fullPath.c_str(), "rb");
+			if (f) {
+				std::fclose(f);
+				return true;
+			}
 		}
 	}
 
@@ -164,16 +241,20 @@ bool VFS::fileExists(const char* path) {
 
 		if (auto it = fileIndex.find(path); it != fileIndex.end()) {
 			for (const auto& mount : mounts) {
-				std::string fullPath = mount.basePath;
-				if (!fullPath.empty() && fullPath.back() != '/') {
-					fullPath += '/';
-				}
-				fullPath += it->second;
+				if (mount.zip) {
+					if (mount.zip->hasEntry(it->second.c_str())) return true;
+				} else {
+					std::string fullPath = mount.basePath;
+					if (!fullPath.empty() && fullPath.back() != '/') {
+						fullPath += '/';
+					}
+					fullPath += it->second;
 
-				FILE* f = std::fopen(fullPath.c_str(), "rb");
-				if (f) {
-					std::fclose(f);
-					return true;
+					FILE* f = std::fopen(fullPath.c_str(), "rb");
+					if (f) {
+						std::fclose(f);
+						return true;
+					}
 				}
 			}
 		}

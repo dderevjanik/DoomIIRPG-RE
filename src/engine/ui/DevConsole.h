@@ -44,6 +44,7 @@ private:
 	void drawGameState();
 	void drawPerformance();
 	void drawRenderStats();
+	void drawMods();
 
 	// Helpers
 	static const char* stateName(int state);

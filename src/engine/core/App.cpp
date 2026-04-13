@@ -46,7 +46,7 @@ void Applet::setGameModule(IGameModule* module) {
 bool Applet::startup() {
 	LOG_INFO("[app] Applet::startup\n");
 
-	this->sdlGL = this->sdlGL;
+	this->sdlGL = CAppContainer::getInstance()->sdlGL;
 	this->closeApplet = false;
 	this->fontType = 0;
 	this->accelerationIndex = 0;
