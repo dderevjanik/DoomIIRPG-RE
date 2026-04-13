@@ -152,7 +152,7 @@ void Player::familiarDied() {
 	if (app->combat->curAttacker != nullptr) {
 		int sprite = app->combat->curAttacker->getSprite();
 		if (app->combat->curAttacker->def->eType == Enums::ET_MONSTER) {
-			app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | 0x0);
+			app->render->setSpriteFrame(sprite, 0);
 		}
 		app->localization->resetTextArgs();
 		if (app->combat->accumRoundDamage > 0) {

@@ -154,14 +154,14 @@ void Combat::performAttack(Entity* curAttacker, Entity* curTarget, int attackX, 
         allocLerpSprite->startTime = app->gameTime;
         allocLerpSprite->travelTime = n4 * 200;
         allocLerpSprite->flags |= Enums::LS_FLAG_ENT_NORELINK;
-        allocLerpSprite->srcScale = allocLerpSprite->dstScale = app->render->mapSprites[app->render->S_SCALEFACTOR + sprite];
+        allocLerpSprite->srcScale = allocLerpSprite->dstScale = app->render->getSpriteScaleFactor(sprite);
         allocLerpSprite->srcX = mapSprites[app->render->S_X + sprite];
         allocLerpSprite->srcY = mapSprites[app->render->S_Y + sprite];
         allocLerpSprite->srcZ = mapSprites[app->render->S_Z + sprite];
         allocLerpSprite->dstX = n5 - a * 28;
         allocLerpSprite->dstY = n6 - a2 * 28;
         allocLerpSprite->dstZ = app->render->getHeight(allocLerpSprite->dstX, allocLerpSprite->dstY) + 32;
-        app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | this->attackFrame << 8);
+        app->render->setSpriteInfoRaw(sprite, ((app->render->getSpriteInfoRaw(sprite) & 0xFFFF00FF) | this->attackFrame << 8));
         this->curAttacker->ai->frameTime = 0x7FFFFFFF;//Integer.MAX_VALUE;
         app->game->unlinkEntity(this->curAttacker);
         app->game->linkEntity(this->curAttacker, n5 >> 6, n6 >> 6);
@@ -341,7 +341,7 @@ int Combat::playerSeq() {
             }
             if (this->targetType == 9 && this->targetSubType == 17) {
                 int sprite = this->curTarget->getSprite();
-                app->game->executeTile(app->render->mapSprites[app->render->S_X + sprite] >> 6, app->render->mapSprites[app->render->S_Y + sprite] >> 6, 0xFF4 | app->canvas->flagForWeapon(this->attackerWeaponId), true);
+                app->game->executeTile(app->render->getSpriteX(sprite) >> 6, app->render->getSpriteY(sprite) >> 6, 0xFF4 | app->canvas->flagForWeapon(this->attackerWeaponId), true);
             }
             if (this->attackerWeaponProj == 5) {
                 this->checkForBFGDeaths(this->attackX >> 6, this->attackY >> 6);
@@ -360,7 +360,7 @@ int Combat::playerSeq() {
             if (this->punchingMonster > 0 && !this->targetKilled && !this->punchMissed) {
                 int sprite = this->curTarget->getSprite();
                 if (sprite != -1 && this->curTarget->isMonster()) {
-                    app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | 0x0);
+                    app->render->setSpriteInfoRaw(sprite, ((app->render->getSpriteInfoRaw(sprite) & 0xFFFF00FF) | 0x0));
                 }
             }
             this->punchingMonster = 0;
@@ -394,7 +394,7 @@ int Combat::playerSeq() {
 int Combat::monsterSeq() {
 
     int sprite = this->curAttacker->getSprite();
-    int n = app->render->mapSpriteInfo[sprite];
+    int n = app->render->getSpriteInfoRaw(sprite);
     int n2 = (n & 0xFF00) >> 8;
     int n3 = n2 & 0xF0;
     int n4 = n2 & 0xF;
@@ -402,7 +402,7 @@ int Combat::monsterSeq() {
         if (app->time >= this->curAttacker->ai->frameTime) {
             this->curAttacker->ai->frameTime = app->time + this->weapons[this->attackerWeapon + Combat::WEAPON_FIELD_SHOTHOLD] * 10;
             this->nextStageTime = app->gameTime + this->weapons[this->attackerWeapon + Combat::WEAPON_FIELD_SHOTHOLD] * 10;
-            app->render->mapSpriteInfo[sprite] = ((n & 0xFFFF00FF) | (n3 | n4 + 1) << 8);
+            app->render->setSpriteInfoRaw(sprite, ((n & 0xFFFF00FF) | (n3 | n4 + 1) << 8));
             this->launchProjectile();
         }
     }
@@ -494,7 +494,7 @@ int Combat::monsterSeq() {
         this->animStartTime = app->gameTime;
         this->animEndTime = this->animStartTime + this->animTime;
         if (!this->getWeaponFlags(this->attackerWeaponId).chargeAttack) {
-            app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | this->attackFrame << 8);
+            app->render->setSpriteInfoRaw(sprite, ((app->render->getSpriteInfoRaw(sprite) & 0xFFFF00FF) | this->attackFrame << 8));
             this->curAttacker->ai->frameTime = app->time + this->animTime;
         }
         if (this->curTarget != nullptr) {
@@ -505,15 +505,15 @@ int Combat::monsterSeq() {
             lerpSprite->startTime = app->gameTime;
             lerpSprite->travelTime = 500;
             lerpSprite->flags |= Enums::LS_FLAG_ENT_NORELINK;
-            lerpSprite->srcScale = lerpSprite->dstScale = app->render->mapSprites[app->render->S_SCALEFACTOR + sprite];
-            lerpSprite->srcX = app->render->mapSprites[app->render->S_X + sprite];
-            lerpSprite->srcY = app->render->mapSprites[app->render->S_Y + sprite];
-            lerpSprite->srcZ = app->render->mapSprites[app->render->S_Z + sprite];
+            lerpSprite->srcScale = lerpSprite->dstScale = app->render->getSpriteScaleFactor(sprite);
+            lerpSprite->srcX = app->render->getSpriteX(sprite);
+            lerpSprite->srcY = app->render->getSpriteY(sprite);
+            lerpSprite->srcZ = app->render->getSpriteZ(sprite);
             lerpSprite->dstX = (this->curAttacker->linkIndex % 32 << 6) + 32;
             lerpSprite->dstY = (this->curAttacker->linkIndex / 32 << 6) + 32;
             lerpSprite->dstZ = app->render->getHeight(lerpSprite->dstX, lerpSprite->dstY) + 32;
             lerpSprite->calcDist();
-            app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | 0x0);
+            app->render->setSpriteInfoRaw(sprite, ((app->render->getSpriteInfoRaw(sprite) & 0xFFFF00FF) | 0x0));
             this->curAttacker->ai->frameTime = app->time + lerpSprite->travelTime;
             this->launchProjectile();
         }
@@ -531,7 +531,7 @@ int Combat::monsterSeq() {
         }
         this->nextStageTime = this->animEndTime;
         if (this->getWeaponFlags(this->attackerWeaponId).flipSpriteOnEnd && this->animLoopCount == 0) {
-            app->render->mapSpriteInfo[sprite] ^= 0x20000;
+            app->render->setSpriteInfoRaw(sprite, app->render->getSpriteInfoRaw(sprite) ^ 0x20000);
         }
         this->updateProjectile();
         if ((this->crFlags & 0x80) != 0x0) {
@@ -542,7 +542,7 @@ int Combat::monsterSeq() {
     else {
         if (this->stage == 1) {
             if (this->curAttacker->def->eType == Enums::ET_MONSTER) {
-                app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | 0x0);
+                app->render->setSpriteInfoRaw(sprite, ((app->render->getSpriteInfoRaw(sprite) & 0xFFFF00FF) | 0x0));
             }
             if (this->targetKilled) {
                 this->curTarget->died(false, nullptr);
@@ -857,7 +857,7 @@ void Combat::explodeOnMonster() {
     }
     else if (this->targetType == 9) {
         int sprite = this->curTarget->getSprite();
-        app->render->mapSpriteInfo[sprite] |= 0x10000;
+        app->render->setSpriteInfoFlag(sprite, 0x10000);
         this->isGibbed = true;
         app->particleSystem->spawnMonsterBlood(this->curTarget, this->isGibbed);
         app->game->spawnDropItem(this->curTarget);
@@ -876,7 +876,7 @@ void Combat::explodeOnPlayer() {
     if (app->canvas->isZoomedIn) {
         viewAngle += app->canvas->zoomAngle;
     }
-    app->hud->damageDir = app->player->calcDamageDir(app->canvas->viewX, app->canvas->viewY, viewAngle, app->render->mapSprites[app->render->S_X + sprite], app->render->mapSprites[app->render->S_Y + sprite]);
+    app->hud->damageDir = app->player->calcDamageDir(app->canvas->viewX, app->canvas->viewY, viewAngle, app->render->getSpriteX(sprite), app->render->getSpriteY(sprite));
     if (this->animLoopCount > 0) {
         app->hud->damageTime = app->time + 150;
     }
@@ -936,7 +936,7 @@ void Combat::explodeOnPlayer() {
                         app->render->rockView(200, app->canvas->viewX + a * 6, app->canvas->viewY + a2 * 6, app->canvas->viewZ);
                     }
                     if (app->player->ce->getStat(Enums::STAT_HEALTH) > 0 && app->combat->monsterBehaviors[this->curAttacker->def->monsterIdx].knockbackWeaponId >= 0 && app->combat->monsterBehaviors[this->curAttacker->def->monsterIdx].knockbackWeaponId == this->attackerWeaponId) {
-                        entity->knockback(app->render->mapSprites[app->render->S_X + sprite], app->render->mapSprites[app->render->S_Y + sprite], 1);
+                        entity->knockback(app->render->getSpriteX(sprite), app->render->getSpriteY(sprite), 1);
                     }
                 }
                 else if (this->curAttacker->isMonster()) {
@@ -1076,14 +1076,14 @@ void Combat::hurtEntityAt(int n, int n2, int n3, int n4, int n5, int n6, Entity*
                 if (n8 > 0) {
                     if (this->attackerWeaponProj == 5) {
                         int sprite = mapEntity->getSprite();
-                        int sX = app->render->mapSprites[app->render->S_X + sprite];
-                        int sY = app->render->mapSprites[app->render->S_Y + sprite];
-                        int sZ = app->render->mapSprites[app->render->S_Z + sprite];
+                        int sX = app->render->getSpriteX(sprite);
+                        int sY = app->render->getSpriteY(sprite);
+                        int sZ = app->render->getSpriteZ(sprite);
                         GameSprite* gSprite = app->game->gsprite_allocAnim(244, sX, sY, sZ + (sZ >> 1));
                         gSprite->flags |= 0x800;
                         this->nextStageTime = app->gameTime + gSprite->duration;
-                        app->render->mapSprites[app->render->S_RENDERMODE + gSprite->sprite] = 4;
-                        app->render->mapSprites[app->render->S_SCALEFACTOR + gSprite->sprite] = 32;
+                        app->render->setSpriteRenderMode(gSprite->sprite, 4);
+                        app->render->setSpriteScaleFactor(gSprite->sprite, 32);
                     }
                     bool pain = mapEntity->pain(n8, nullptr);
                     if ((mapEntity->monsterFlags & 0x1000) == 0x0 && !pain) {
@@ -1175,12 +1175,12 @@ void Combat::updateProjectile() {
             GameSprite* actMissile = this->activeMissiles[i];
             if ((actMissile->flags & 0x2) != 0x0) {
                 if (this->missileAnim == 248) {
-                    app->render->mapSpriteInfo[actMissile->sprite] ^= 0x20000;
+                    app->render->setSpriteInfoRaw(actMissile->sprite, app->render->getSpriteInfoRaw(actMissile->sprite) ^ 0x20000);
                 }
                 else if (this->missileAnim == 171) {
                     int sprite = this->curAttacker->getSprite();
-                    int x1 = app->render->mapSprites[app->render->S_X + sprite];
-                    int y1 = app->render->mapSprites[app->render->S_Y + sprite];
+                    int x1 = app->render->getSpriteX(sprite);
+                    int y1 = app->render->getSpriteY(sprite);
                     int x2 = app->game->viewX;
                     int y2 = app->game->viewY;
                     int dx = 0;
@@ -1193,11 +1193,11 @@ void Combat::updateProjectile() {
                     }
                     int x = x1 + this->numThornParticleSystems * dx * 64 + dx * 32;
                     int y = y1 + this->numThornParticleSystems * dy * 64 + dy * 32;
-                    if (std::abs(app->render->mapSprites[app->render->S_X + actMissile->sprite] - x) <= 4 && std::abs(app->render->mapSprites[app->render->S_Y + actMissile->sprite] - y) <= 4) {
+                    if (std::abs(app->render->getSpriteX(actMissile->sprite) - x) <= 4 && std::abs(app->render->getSpriteY(actMissile->sprite) - y) <= 4) {
                         int height = app->render->getHeight(x, y);
                         app->particleSystem->spawnParticles(1, 0xFF81603D, x, y, height);
                         GameSprite* gSprite = app->game->gsprite_allocAnim(170, x, y, height + 32);
-                        app->render->mapSprites[app->render->S_SCALEFACTOR + gSprite->sprite] = 48;
+                        app->render->setSpriteScaleFactor(gSprite->sprite, 48);
                         gSprite->duration += actMissile->duration - (app->gameTime - actMissile->time);
                         ++this->numThornParticleSystems;
                     }
@@ -1277,13 +1277,13 @@ void Combat::updateProjectile() {
                     GameSprite* gSprite = app->game->gsprite_allocAnim(this->missileAnim, x, y, z);
                     gSprite->flags |= 0x800;
                     this->nextStageTime = app->gameTime + gSprite->duration;
-                    app->render->mapSprites[app->render->S_RENDERMODE + gSprite->sprite] = (short)renderMode;
-                    app->render->mapSprites[app->render->S_SCALEFACTOR + gSprite->sprite] = (short)scaleFactor;
+                    app->render->setSpriteRenderMode(gSprite->sprite, (short)renderMode);
+                    app->render->setSpriteScaleFactor(gSprite->sprite, (short)scaleFactor);
                     if (this->missileAnim == 243) {
-                        app->render->mapSprites[app->render->S_SCALEFACTOR + gSprite->sprite] -= 16;
+                        app->render->setSpriteScaleFactor(gSprite->sprite, app->render->getSpriteScaleFactor(gSprite->sprite) - 16);
                     }
-                    if (this->curAttacker != nullptr && (app->render->mapSpriteInfo[(this->curAttacker->info & 0xFFFF) - 1] & 0x20000) != 0x0) {
-                        app->render->mapSpriteInfo[gSprite->sprite] |= 0x20000;
+                    if (this->curAttacker != nullptr && (app->render->getSpriteInfoRaw((this->curAttacker->info & 0xFFFF) - 1) & 0x20000) != 0x0) {
+                        app->render->setSpriteInfoFlag(gSprite->sprite, 0x20000);
                     }
                 }
                 for (int k = i + 1; k < this->numActiveMissiles; ++k) {
@@ -1300,9 +1300,9 @@ void Combat::updateProjectile() {
         if (app->game->isInFront(calcPosition[0] >> 6, calcPosition[1] >> 6)) {
             GameSprite* gSprite = app->game->gsprite_allocAnim(this->missileAnim, app->canvas->destZ, app->canvas->destY, app->canvas->destZ);
             gSprite->flags |= 0x800;
-            app->render->mapSprites[app->render->S_RENDERMODE + gSprite->sprite] = 5;
-            if ((app->render->mapSpriteInfo[(this->curAttacker->info & 0xFFFF) - 1] & 0x20000) != 0x0 && this->missileAnim == 245) {
-                app->render->mapSpriteInfo[gSprite->sprite] |= 0x20000;
+            app->render->setSpriteRenderMode(gSprite->sprite, 5);
+            if ((app->render->getSpriteInfoRaw((this->curAttacker->info & 0xFFFF) - 1) & 0x20000) != 0x0 && this->missileAnim == 245) {
+                app->render->setSpriteInfoFlag(gSprite->sprite, 0x20000);
             }
         }
     }
@@ -1342,9 +1342,9 @@ void Combat::launchProjectile() {
     }
     else {
         int sprite = (this->curAttacker->info & 0xFFFF) - 1;
-        x1 = app->render->mapSprites[app->render->S_X + sprite];
-        y1 = app->render->mapSprites[app->render->S_Y + sprite];
-        z1 = app->render->mapSprites[app->render->S_Z + sprite];
+        x1 = app->render->getSpriteX(sprite);
+        y1 = app->render->getSpriteY(sprite);
+        z1 = app->render->getSpriteZ(sprite);
         n2 = 16;
     }
     int x2;
@@ -1362,9 +1362,9 @@ void Combat::launchProjectile() {
     }
     else {
         int n10 = (this->curTarget->info & 0xFFFF) - 1;
-        x2 = app->render->mapSprites[app->render->S_X + n10];
-        y2 = app->render->mapSprites[app->render->S_Y + n10];
-        z2 = app->render->mapSprites[app->render->S_Z + n10];
+        x2 = app->render->getSpriteX(n10);
+        y2 = app->render->getSpriteY(n10);
+        z2 = app->render->getSpriteZ(n10);
     }
     bool b = false;
 
@@ -1399,7 +1399,7 @@ void Combat::launchProjectile() {
 
         // Data-driven projectile launch behaviors
         if (pv.closeRangeZAdjust &&
-            app->render->mapSprites[app->render->S_SCALEFACTOR + this->curTarget->getSprite()] >= 64) {
+            app->render->getSpriteScaleFactor(this->curTarget->getSprite()) >= 64) {
             z2 += pv.closeRangeZAmount;
         }
         if (pv.monsterDamageBoost && this->curAttacker != nullptr) {
@@ -1460,7 +1460,7 @@ void Combat::launchProjectile() {
         }
         else {
             int n16 = 16;
-            if ((app->render->mapSpriteInfo[this->curAttacker->getSprite()] & 0x20000) != 0x0) {
+            if ((app->render->getSpriteInfoRaw(this->curAttacker->getSprite()) & 0x20000) != 0x0) {
                 n16 = -16;
             }
             x1 += n16 * app->canvas->viewRightStepX >> 6;
@@ -1469,27 +1469,27 @@ void Combat::launchProjectile() {
     }
     GameSprite* allocMissile = this->allocMissile(x1, y1, z1, x2, y2, z2, 1000 * std::max(dx, dy) / n, renderMode);
     if ((this->missileAnim == 4 && this->curTarget != nullptr) || this->missileAnim == 243) {
-        app->render->mapSpriteInfo[allocMissile->sprite] = ((app->render->mapSpriteInfo[allocMissile->sprite] & 0xFFFF00FF) | 0x1000);
+        app->render->setSpriteInfoRaw(allocMissile->sprite, ((app->render->getSpriteInfoRaw(allocMissile->sprite) & 0xFFFF00FF) | 0x1000));
         if (this->missileAnim == 243) {
-            app->render->mapSprites[app->render->S_SCALEFACTOR + allocMissile->sprite] -= 16;
+            app->render->setSpriteScaleFactor(allocMissile->sprite, app->render->getSpriteScaleFactor(allocMissile->sprite) - 16);
         }
     }
     else if (this->missileAnim >= 241 && this->missileAnim < 244) {
-        app->render->mapSpriteInfo[allocMissile->sprite] = ((app->render->mapSpriteInfo[allocMissile->sprite] & 0xFFFF00FF) | 0x2000);
+        app->render->setSpriteInfoRaw(allocMissile->sprite, ((app->render->getSpriteInfoRaw(allocMissile->sprite) & 0xFFFF00FF) | 0x2000));
     }
     else if (this->missileAnim == 244) {
-        app->render->mapSpriteInfo[allocMissile->sprite] = ((app->render->mapSpriteInfo[allocMissile->sprite] & 0xFFFF00FF) | 0x3000);
+        app->render->setSpriteInfoRaw(allocMissile->sprite, ((app->render->getSpriteInfoRaw(allocMissile->sprite) & 0xFFFF00FF) | 0x3000));
         if (this->curAttacker != nullptr) {
-            app->render->mapSprites[app->render->S_SCALEFACTOR + allocMissile->sprite] -= 16;
+            app->render->setSpriteScaleFactor(allocMissile->sprite, app->render->getSpriteScaleFactor(allocMissile->sprite) - 16);
         }
     }
     if (this->attackerWeaponProj == 2) {
         if (this->curAttacker == nullptr) {
-            app->render->mapSprites[app->render->S_ENT + allocMissile->sprite] = app->player->getPlayerEnt()->getIndex();
+            app->render->setSpriteEnt(allocMissile->sprite, app->player->getPlayerEnt()->getIndex());
             app->render->relinkSprite(allocMissile->sprite, allocMissile->pos[0] << 4, allocMissile->pos[1] << 4, allocMissile->pos[2] << 4);
         }
         else {
-            app->render->mapSprites[app->render->S_ENT + allocMissile->sprite] = this->curAttacker->getIndex();
+            app->render->setSpriteEnt(allocMissile->sprite, this->curAttacker->getIndex());
             app->render->relinkSprite(allocMissile->sprite, allocMissile->pos[3] << 4, allocMissile->pos[4] << 4, allocMissile->pos[5] << 4);
         }
         allocMissile->flags |= 0x4;
@@ -1500,7 +1500,7 @@ void Combat::launchProjectile() {
     }
     if (!b) {
         int sprite = allocMissile->sprite;
-        app->render->mapSpriteInfo[allocMissile->sprite] &= 0xFFF700FF;
+        app->render->setSpriteInfoRaw(allocMissile->sprite, app->render->getSpriteInfoRaw(allocMissile->sprite) & 0xFFF700FF);
     }
     this->exploded = false;
 }
@@ -1522,7 +1522,7 @@ GameSprite* Combat::allocMissile(int x1, int y1, int z1, int x2, int y2, int z2,
     mapSprites[app->render->S_X + gameSprite->sprite] = (gameSprite->pos[0] = (short)x1);
     mapSprites[app->render->S_Y + gameSprite->sprite] = (gameSprite->pos[1] = (short)y1);
     mapSprites[app->render->S_Z + gameSprite->sprite] = (gameSprite->pos[2] = (short)z1);
-    app->render->mapSpriteInfo[gameSprite->sprite] |= 0x80000;
+    app->render->setSpriteInfoFlag(gameSprite->sprite, 0x80000);
     gameSprite->pos[3] = (short)x2;
     gameSprite->pos[4] = (short)y2;
     gameSprite->pos[5] = (short)z2;
@@ -1547,7 +1547,7 @@ GameSprite* Combat::allocMissile(int x1, int y1, int z1, int x2, int y2, int z2,
         gameSprite->vel[0] = gameSprite->vel[1] = gameSprite->vel[2] = 0;
     }
     if (this->missileAnim == 0) {
-        app->render->mapSpriteInfo[gameSprite->sprite] |= 0x10000;
+        app->render->setSpriteInfoFlag(gameSprite->sprite, 0x10000);
         return gameSprite;
     }
     app->render->relinkSprite(gameSprite->sprite);
@@ -1564,14 +1564,14 @@ void Combat::launchSoulCube() {
         x1 = app->game->viewX;
         y1 = app->game->viewY;
         z1 = app->render->getHeight(x1, y1) + 32;
-        x2 = app->render->mapSprites[app->render->S_X + sprite];
-        y2 = app->render->mapSprites[app->render->S_Y + sprite];
-        z2 = app->render->mapSprites[app->render->S_Z + sprite];
+        x2 = app->render->getSpriteX(sprite);
+        y2 = app->render->getSpriteY(sprite);
+        z2 = app->render->getSpriteZ(sprite);
     }
     else {
-        x1 = app->render->mapSprites[app->render->S_X + sprite];
-        y1 = app->render->mapSprites[app->render->S_Y + sprite];
-        z1 = app->render->mapSprites[app->render->S_Z + sprite];
+        x1 = app->render->getSpriteX(sprite);
+        y1 = app->render->getSpriteY(sprite);
+        z1 = app->render->getSpriteZ(sprite);
         x2 = app->game->viewX;
         y2 = app->game->viewY;
         z2 = app->render->getHeight(x1, y1) + 32;

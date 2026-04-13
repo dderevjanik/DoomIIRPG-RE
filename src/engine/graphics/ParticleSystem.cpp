@@ -231,7 +231,7 @@ void ParticleSystem::spawnMonsterBlood(Entity* entity, bool b) {
         return;
     }
     int sprite = entity->getSprite();
-    uint16_t* palette = app->render->getPalette(app->render->mapSpriteInfo[sprite] & 0xFF, 0, 0);
+    uint16_t* palette = app->render->getPalette(app->render->getSpriteTileNum(sprite), 0, 0);
     int palColor = palette[this->monsterColors[entity->def->monsterIdx]];
     int color = ((palColor & 0x7E0) << 5) | ((palColor & 0xF800) << 8) | ((palColor & 0x1F) << 3);
 
@@ -241,16 +241,16 @@ void ParticleSystem::spawnMonsterBlood(Entity* entity, bool b) {
     }
 
     if (b && app->combat->monsterBehaviors[entity->def->monsterIdx].boneGibs) {
-        this->spawnParticles(4, color, app->render->mapSprites[app->render->S_X + sprite], app->render->mapSprites[app->render->S_Y + sprite], app->render->mapSprites[app->render->S_Z + sprite] + z);
+        this->spawnParticles(4, color, app->render->getSpriteX(sprite), app->render->getSpriteY(sprite), app->render->getSpriteZ(sprite) + z);
     }
     else {
-        this->spawnParticles(1, color, app->render->mapSprites[app->render->S_X + sprite], app->render->mapSprites[app->render->S_Y + sprite], app->render->mapSprites[app->render->S_Z + sprite] + z);
+        this->spawnParticles(1, color, app->render->getSpriteX(sprite), app->render->getSpriteY(sprite), app->render->getSpriteZ(sprite) + z);
     }
 }
 
 void ParticleSystem::spawnParticles(int n, int n2, int n3) {
     Applet* app = this->app;
-    this->spawnParticles(n, n2, app->render->mapSprites[app->render->S_X + n3], app->render->mapSprites[app->render->S_Y + n3], app->render->mapSprites[app->render->S_Z + n3]);
+    this->spawnParticles(n, n2, app->render->getSpriteX(n3), app->render->getSpriteY(n3), app->render->getSpriteZ(n3));
 }
 
 void ParticleSystem::spawnParticles(int n, int color, int n2, int n3, int n4) {

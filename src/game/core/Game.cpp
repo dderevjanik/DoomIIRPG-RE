@@ -131,8 +131,8 @@ void Game::loadMapEntities() {
 	EntityDef* find2 = app->entityDefManager->find(13, 0);
 	int n4 = 0;
 	for (int n5 = 0; n5 < app->render->numMapSprites; ++n5) {
-		int n6 = app->render->mapSpriteInfo[n5] & 0xFF;
-		if ((app->render->mapSpriteInfo[n5] & 0x400000) != 0x0) {
+		int n6 = app->render->getSpriteInfoRaw(n5) & 0xFF;
+		if ((app->render->getSpriteInfoRaw(n5) & 0x400000) != 0x0) {
 			n6 += 257;
 		}
 		int n7 = app->render->mediaMappings[n6 + 1] - app->render->mediaMappings[n6];
@@ -141,36 +141,36 @@ void Game::loadMapEntities() {
 		}
 		if (n6 == 156) {
 			n7 = 2;
-			app->render->mapSpriteInfo[n5] &= 0xFFFF00FF;
-			app->render->mapSpriteInfo[n5] |= (n7 << 8 | 0x80200);
+			app->render->setSpriteInfoRaw(n5, app->render->getSpriteInfoRaw(n5) & 0xFFFF00FF);
+			app->render->setSpriteInfoFlag(n5, (n7 << 8 | 0x80200));
 		}
 		if (n6 == 236) {
 			n7 = 3;
-			app->render->mapSpriteInfo[n5] &= 0xFFFF00FF;
-			app->render->mapSpriteInfo[n5] |= (n7 << 8 | 0x80300);
-			app->render->mapSprites[app->render->S_RENDERMODE + n5] = 3;
+			app->render->setSpriteInfoRaw(n5, app->render->getSpriteInfoRaw(n5) & 0xFFFF00FF);
+			app->render->setSpriteInfoFlag(n5, (n7 << 8 | 0x80300));
+			app->render->setSpriteRenderMode(n5, 3);
 		}
 		if (n6 == 136 || n6 == 234 || n6 == 130) {
-			app->render->mapSpriteInfo[n5] &= 0xFFFF00FF;
-			app->render->mapSpriteInfo[n5] |= (n7 << 8 | 0x80000);
+			app->render->setSpriteInfoRaw(n5, app->render->getSpriteInfoRaw(n5) & 0xFFFF00FF);
+			app->render->setSpriteInfoFlag(n5, (n7 << 8 | 0x80000));
 		}
-		if ((app->render->mapSpriteInfo[n5] & 0x200000) != 0x0) {
-			app->render->mapSpriteInfo[n5] &= 0xFFDFFFFF;
+		if ((app->render->getSpriteInfoRaw(n5) & 0x200000) != 0x0) {
+			app->render->setSpriteInfoRaw(n5, app->render->getSpriteInfoRaw(n5) & 0xFFDFFFFF);
 		} else {
-			int n15 = app->render->mapSprites[app->render->S_X + n5];
-			int n16 = app->render->mapSprites[app->render->S_Y + n5];
+			int n15 = app->render->getSpriteX(n5);
+			int n16 = app->render->getSpriteY(n5);
 			EntityDef* lookup = app->entityDefManager->lookup(n6);
 			if (n6 >= 1 && n6 <= 12) {
-				app->render->mapSpriteInfo[n5] |= 0x200;
+				app->render->setSpriteInfoFlag(n5, 0x200);
 			}
-			if ((app->render->mapSpriteInfo[n5] & 0xF000000) != 0x0 && ((n15 & 0x3F) == 0x0 || (n16 & 0x3F) == 0x0)) {
-				if ((app->render->mapSpriteInfo[n5] & 0x4000000) != 0x0) {
+			if ((app->render->getSpriteInfoRaw(n5) & 0xF000000) != 0x0 && ((n15 & 0x3F) == 0x0 || (n16 & 0x3F) == 0x0)) {
+				if ((app->render->getSpriteInfoRaw(n5) & 0x4000000) != 0x0) {
 					++n15;
-				} else if ((app->render->mapSpriteInfo[n5] & 0x2000000) != 0x0) {
+				} else if ((app->render->getSpriteInfoRaw(n5) & 0x2000000) != 0x0) {
 					++n16;
-				} else if ((app->render->mapSpriteInfo[n5] & 0x1000000) != 0x0) {
+				} else if ((app->render->getSpriteInfoRaw(n5) & 0x1000000) != 0x0) {
 					--n16;
-				} else if ((app->render->mapSpriteInfo[n5] & 0x8000000) != 0x0) {
+				} else if ((app->render->getSpriteInfoRaw(n5) & 0x8000000) != 0x0) {
 					--n15;
 				}
 			}
@@ -193,9 +193,9 @@ void Game::loadMapEntities() {
 					// EntityMonster pool slot initialized by memset in constructor
 					entity3->ai->reset();
 
-					app->render->mapSpriteInfo[n5] &= 0xF0FFFFFF;
+					app->render->setSpriteInfoRaw(n5, app->render->getSpriteInfoRaw(n5) & 0xF0FFFFFF);
 					if ((app->nextByte() & 0x1) == 0x0 && !entity3->isBoss()) {
-						app->render->mapSpriteInfo[n5] |= 0x20000;
+						app->render->setSpriteInfoFlag(n5, 0x20000);
 					}
 					entity3->info |= 0x40000;
 					this->deactivate(entity3);
@@ -208,15 +208,15 @@ void Game::loadMapEntities() {
 					this->numDestroyableObj++;
 				}
 				entity3->initspawn();
-				app->render->mapSprites[app->render->S_ENT + n5] = this->numEntities++;
-				if ((app->render->mapSpriteInfo[n5] & 0x10000) == 0x0) {
+				app->render->setSpriteEnt(n5, this->numEntities++);
+				if ((app->render->getSpriteInfoRaw(n5) & 0x10000) == 0x0) {
 					this->linkEntity(entity3, n15 >> 6, n16 >> 6);
 				}
 				if (n6 >= 140 && n6 <= 143) {
-					app->render->mapSpriteInfo[n5] |= 0x10000;
+					app->render->setSpriteInfoFlag(n5, 0x10000);
 				}
 				++n4;
-			} else if ((app->render->mapSpriteInfo[n5] & 0x800000) != 0x0) {
+			} else if ((app->render->getSpriteInfoRaw(n5) & 0x800000) != 0x0) {
 				if (this->numEntities == this->maxEntities) {
 					app->Error(35); // ERR_MAX_ENTITIES
 					return;
@@ -230,8 +230,8 @@ void Game::loadMapEntities() {
 				}
 				entity5->name = (short)(entity5->def->name | 0x400);
 
-				app->render->mapSprites[app->render->S_ENT + n5] = this->numEntities++;
-				if ((app->render->mapSpriteInfo[n5] & 0x10000) == 0x0) {
+				app->render->setSpriteEnt(n5, this->numEntities++);
+				if ((app->render->getSpriteInfoRaw(n5) & 0x10000) == 0x0) {
 					this->linkEntity(entity5, n15 >> 6, n16 >> 6);
 				}
 				++n4;
@@ -248,7 +248,7 @@ void Game::loadMapEntities() {
 			return;
 		}
 		this->entities[this->numEntities++].info = (app->render->firstDropSprite + n23 + 1 & 0xFFFF);
-		app->render->mapSpriteInfo[app->render->dropSprites[n23]] |= 0x10000;
+		app->render->setSpriteInfoFlag(app->render->dropSprites[n23], 0x10000);
 		++n4;
 	}
 	for (int n25 = 0; n25 < 1024; ++n25) {
@@ -534,10 +534,10 @@ void Game::givemap(int n, int n2, int n3, int n4) {
 		app->render->lineFlags[i >> 1] |= (uint8_t)(8 << ((i & 0x1) << 2));
 	}
 	for (int numMapSprites = app->render->numMapSprites, j = 0; j < numMapSprites; ++j) {
-		int n6 = app->render->mapSprites[app->render->S_X + j] >> 6;
-		int n7 = app->render->mapSprites[app->render->S_Y + j] >> 6;
+		int n6 = app->render->getSpriteX(j) >> 6;
+		int n7 = app->render->getSpriteY(j) >> 6;
 		if (n6 >= n && n6 < n + n3 && n7 >= n2 && n7 < n2 + n4) {
-			app->render->mapSpriteInfo[j] |= 0x200000;
+			app->render->setSpriteInfoFlag(j, 0x200000);
 		}
 	}
 	for (int k = n2; k < n2 + n4; ++k) {

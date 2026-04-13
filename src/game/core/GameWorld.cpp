@@ -150,7 +150,7 @@ void Game::removeEntity(Entity* entity) {
 
 
 	if ((entity->info & 0xFFFF) != 0x0) {
-		app->render->mapSpriteInfo[entity->getSprite()] |= 0x10000;
+		app->render->setSpriteInfoFlag(entity->getSprite(), 0x10000);
 	}
 	if ((entity->info & 0x100000)) {
 		this->unlinkEntity(entity);
@@ -195,25 +195,25 @@ void Game::trace(int n, int n2, int n3, int traceCollisionX, int traceCollisionY
 								if ((nextOnTile->ai->goalFlags & 0x1) != 0x0) {
 									destX = 32 + (nextOnTile->ai->goalX << 6);
 									destY = 32 + (nextOnTile->ai->goalY << 6);
-									destZ = app->render->mapSprites[app->render->S_Z + sprite];
+									destZ = app->render->getSpriteZ(sprite);
 								} else {
-									destX = app->render->mapSprites[app->render->S_X + sprite];
-									destY = app->render->mapSprites[app->render->S_Y + sprite];
-									destZ = app->render->mapSprites[app->render->S_Z + sprite];
+									destX = app->render->getSpriteX(sprite);
+									destY = app->render->getSpriteY(sprite);
+									destZ = app->render->getSpriteZ(sprite);
 								}
 							} else if (nextOnTile->def->eType == Enums::ET_PLAYER) {
 								destX = app->canvas->destX;
 								destY = app->canvas->destY;
 								destZ = app->canvas->destZ;
 							} else {
-								destX = app->render->mapSprites[app->render->S_X + sprite];
-								destY = app->render->mapSprites[app->render->S_Y + sprite];
-								destZ = app->render->mapSprites[app->render->S_Z + sprite];
+								destX = app->render->getSpriteX(sprite);
+								destY = app->render->getSpriteY(sprite);
+								destZ = app->render->getSpriteZ(sprite);
 							}
-							if (sprite != -1 && 0x0 != (app->render->mapSpriteInfo[sprite] & 0xF000000)) {
+							if (sprite != -1 && 0x0 != (app->render->getSpriteInfoRaw(sprite) & 0xF000000)) {
 								int n6 = destX;
 								int n7 = destY;
-								if (0x0 != (app->render->mapSpriteInfo[sprite] & 0x3000000)) {
+								if (0x0 != (app->render->getSpriteInfoRaw(sprite) & 0x3000000)) {
 									destX -= 32;
 									n6 += 32;
 								} else {
@@ -337,7 +337,7 @@ bool Game::performDoorEvent(int n, ScriptThread* scriptThread, Entity* watchLine
 
 
 	int sprite = watchLine->getSprite();
-	int n3 = app->render->mapSpriteInfo[sprite];
+	int n3 = app->render->getSpriteInfoRaw(sprite);
 	int n4 = n3 & 0xFF;
 	bool b2 = (watchLine->info & 0x100000) == 0x0;
 	if ((n3 & 0x400000) != 0x0) {
@@ -369,20 +369,20 @@ bool Game::performDoorEvent(int n, ScriptThread* scriptThread, Entity* watchLine
 		this->linkEntity(watchLine, watchLine->linkIndex % 32, watchLine->linkIndex / 32);
 	}
 	LerpSprite* allocLerpSprite = this->allocLerpSprite(scriptThread, sprite, true);
-	app->render->mapSpriteInfo[sprite] = (n3 & 0xFFFEFFFF);
+	app->render->setSpriteInfoRaw(sprite, (n3 & 0xFFFEFFFF));
 	if (b) {
 		this->secretActive = true;
 		allocLerpSprite->flags |= Enums::LS_FLAG_SECRET_OPEN;
 	} else {
 		allocLerpSprite->flags |= Enums::LS_FLAG_DOOROPEN;
-		app->render->mapSpriteInfo[sprite] |= 0x80000000;
+		app->render->setSpriteInfoFlag(sprite, 0x80000000);
 	}
 
-	allocLerpSprite->dstX = allocLerpSprite->srcX = app->render->mapSprites[app->render->S_X + sprite];
-	allocLerpSprite->dstY = allocLerpSprite->srcY = app->render->mapSprites[app->render->S_Y + sprite];
-	allocLerpSprite->dstZ = allocLerpSprite->srcZ = app->render->mapSprites[app->render->S_Z + sprite];
+	allocLerpSprite->dstX = allocLerpSprite->srcX = app->render->getSpriteX(sprite);
+	allocLerpSprite->dstY = allocLerpSprite->srcY = app->render->getSpriteY(sprite);
+	allocLerpSprite->dstZ = allocLerpSprite->srcZ = app->render->getSpriteZ(sprite);
 	allocLerpSprite->dstScale = allocLerpSprite->srcScale =
-	    app->render->mapSprites[app->render->S_SCALEFACTOR + sprite];
+	    app->render->getSpriteScaleFactor(sprite);
 
 	int n10 = 32;
 	if (n == 1) {
@@ -427,12 +427,12 @@ bool Game::performDoorEvent(int n, ScriptThread* scriptThread, Entity* watchLine
 		allocLerpSprite->dstScale = 0;
 		app->sound->playSound(Sounds::getResIDByName(SoundName::DOOR_OPEN), 0, 3, 0);
 	}
-	app->render->mapSprites[app->render->S_SCALEFACTOR + sprite] = (uint16_t)((uint8_t)allocLerpSprite->srcScale);
-	app->render->mapSprites[app->render->S_X + sprite] = (short)allocLerpSprite->srcX;
-	app->render->mapSprites[app->render->S_Y + sprite] = (short)allocLerpSprite->srcY;
-	app->render->mapSprites[app->render->S_Z + sprite] = (short)allocLerpSprite->srcZ;
+	app->render->setSpriteScaleFactor(sprite, (uint16_t)((uint8_t)allocLerpSprite->srcScale));
+	app->render->setSpriteX(sprite, (short)allocLerpSprite->srcX);
+	app->render->setSpriteY(sprite, (short)allocLerpSprite->srcY);
+	app->render->setSpriteZ(sprite, (short)allocLerpSprite->srcZ);
 	if (b3 && !(allocLerpSprite->flags & Enums::LS_FLAG_DOORCLOSE)) {
-		app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | 0x100);
+		app->render->setSpriteInfoRaw(sprite, ((app->render->getSpriteInfoRaw(sprite) & 0xFFFF00FF) | 0x100));
 	}
 	if (n2 == 0 || app->canvas->state == Canvas::ST_AUTOMAP ||
 	    (n2 == 2 && app->render->cullBoundingBox(allocLerpSprite->srcX + allocLerpSprite->dstX >> 1,
@@ -448,18 +448,18 @@ void Game::lerpSpriteAsDoor(int n, int n2, ScriptThread* scriptThread) {
 
 	LerpSprite* allocLerpSprite = this->allocLerpSprite(scriptThread, n, false);
 
-	app->render->mapSpriteInfo[n] &= 0xFFFEFFFF;
-	int n3 = app->render->mapSpriteInfo[n];
+	app->render->setSpriteInfoRaw(n, app->render->getSpriteInfoRaw(n) & 0xFFFEFFFF);
+	int n3 = app->render->getSpriteInfoRaw(n);
 	int n4 = 64;
 	if (n2 == 1) {
 		n4 = -n4;
 	}
 	allocLerpSprite->flags |= Enums::LS_FLAG_DOOROPEN;
-	app->render->mapSpriteInfo[n] |= 0x80000000;
-	app->render->mapSprites[app->render->S_SCALEFACTOR + n] = 256;
-	allocLerpSprite->dstX = allocLerpSprite->srcX = app->render->mapSprites[app->render->S_X + n];
-	allocLerpSprite->dstY = allocLerpSprite->srcY = app->render->mapSprites[app->render->S_Y + n];
-	allocLerpSprite->dstZ = allocLerpSprite->srcZ = app->render->mapSprites[app->render->S_Z + n];
+	app->render->setSpriteInfoFlag(n, 0x80000000);
+	app->render->setSpriteScaleFactor(n, 256);
+	allocLerpSprite->dstX = allocLerpSprite->srcX = app->render->getSpriteX(n);
+	allocLerpSprite->dstY = allocLerpSprite->srcY = app->render->getSpriteY(n);
+	allocLerpSprite->dstZ = allocLerpSprite->srcZ = app->render->getSpriteZ(n);
 	allocLerpSprite->dstScale = allocLerpSprite->srcScale = 64;
 	if (0x0 != (n3 & 0x3000000)) {
 
@@ -474,9 +474,9 @@ void Game::lerpSpriteAsDoor(int n, int n2, ScriptThread* scriptThread) {
 		allocLerpSprite->flags &= ~(Enums::LS_FLAG_ENT_NORELINK | Enums::LS_FLAG_DOOROPEN);
 		allocLerpSprite->flags |= Enums::LS_FLAG_DOORCLOSE;
 	}
-	app->render->mapSprites[app->render->S_X + n] = (short)allocLerpSprite->srcX;
-	app->render->mapSprites[app->render->S_Y + n] = (short)allocLerpSprite->srcY;
-	app->render->mapSprites[app->render->S_Z + n] = (short)allocLerpSprite->srcZ;
+	app->render->setSpriteX(n, (short)allocLerpSprite->srcX);
+	app->render->setSpriteY(n, (short)allocLerpSprite->srcY);
+	app->render->setSpriteZ(n, (short)allocLerpSprite->srcZ);
 }
 
 void Game::updatePlayerDoors(Entity* entity, bool b) {
@@ -511,7 +511,7 @@ bool Game::CanCloseDoor(Entity* entity) {
 	}
 	int n3 = 64;
 	int n4 = 64;
-	if ((app->render->mapSpriteInfo[sprite] & 0x3000000) == 0x0) {
+	if ((app->render->getSpriteInfoRaw(sprite) & 0x3000000) == 0x0) {
 		n4 = 0;
 	} else {
 		n3 = 0;
@@ -523,14 +523,14 @@ void Game::setLineLocked(Entity* entity, bool b) {
 
 
 	int sprite = entity->getSprite();
-	int n = app->render->mapSpriteInfo[sprite] & 0xFF;
+	int n = app->render->getSpriteInfoRaw(sprite) & 0xFF;
 	int n2;
 	if (b) {
 		n2 = (n & 0xFFFFFFFE);
 	} else {
 		n2 = (n | 0x1);
 	}
-	app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFFFF00) | n2);
+	app->render->setSpriteInfoRaw(sprite, ((app->render->getSpriteInfoRaw(sprite) & 0xFFFFFF00) | n2));
 	n2 += 257;
 	if (entity->def->name == (entity->name & 0x3FF)) {
 		entity->def = app->entityDefManager->lookup(n2);

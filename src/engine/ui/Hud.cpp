@@ -275,7 +275,7 @@ void Hud::drawTopBar(Graphics* graphics) {
 	else if (app->canvas->state != Canvas::ST_MENU && facingEntity != nullptr && facingEntity->def->eType != Enums::ET_WORLD && (facingEntity->def->eType != Enums::ET_SPRITEWALL || (facingEntity->info & 0x40000) != 0x0)) {
 		smallBuffer->setLength(0);
 		int n6 = (facingEntity->info & 0xFFFF) - 1;
-		int n7 = app->render->mapSpriteInfo[n6] & 0xFF;
+		int n7 = app->render->getSpriteTileNum(n6);
 		uint8_t eType = facingEntity->def->eType;
 		if ((facingEntity->name & 0x3FF) != facingEntity->def->name || facingEntity->def->longName == 159) {
 			app->localization->composeTextField(facingEntity->name, smallBuffer);
@@ -322,7 +322,7 @@ void Hud::drawTopBar(Graphics* graphics) {
 			else if (facingEntity->def->parm == 1) {
 				n2 = 3;
 			}
-			else if (facingEntity->def->parm == 2 && (app->render->mapSpriteInfo[n6] & 0xFF00) >> 8 == 0) {
+			else if (facingEntity->def->parm == 2 && app->render->getSpriteFrame(n6) == 0) {
 				n2 = 3;
 			}
 		}
@@ -354,7 +354,7 @@ void Hud::drawTopBar(Graphics* graphics) {
 	}
 	else if (facingEntity != nullptr && facingEntity->def->eType == Enums::ET_SPRITEWALL) {
 		int n8 = (facingEntity->info & 0xFFFF) - 1;
-		if ((app->render->mapSpriteInfo[n8] & 0xFF) == 0x99 && (app->render->mapSpriteInfo[n8] & 0xFF00) >> 8 == 0) {
+		if (app->render->getSpriteTileNum(n8) == 0x99 && app->render->getSpriteFrame(n8) == 0) {
 			n2 = 3;
 		}
 		else {

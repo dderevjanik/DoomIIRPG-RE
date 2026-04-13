@@ -43,8 +43,8 @@ void Entity::aiMoveToGoal() {
     }
     if (this->def->eSubType == Enums::BOSS_PINKY) {
         int sprite = this->getSprite();
-        app->game->scriptStateVars[9] = app->render->mapSprites[app->render->S_X + sprite];
-        app->game->scriptStateVars[10] = app->render->mapSprites[app->render->S_Y + sprite];
+        app->game->scriptStateVars[9] = app->render->getSpriteX(sprite);
+        app->game->scriptStateVars[10] = app->render->getSpriteY(sprite);
     }
 }
 
@@ -67,13 +67,13 @@ LerpSprite* Entity::aiInitLerp(int travelTime) {
 
     int sprite = this->getSprite();
     LerpSprite* allocLerpSprite = app->game->allocLerpSprite(nullptr, sprite, true);
-    allocLerpSprite->srcX = app->render->mapSprites[app->render->S_X + sprite];
-    allocLerpSprite->srcY = app->render->mapSprites[app->render->S_Y + sprite];
-    allocLerpSprite->srcZ = app->render->mapSprites[app->render->S_Z + sprite];
+    allocLerpSprite->srcX = app->render->getSpriteX(sprite);
+    allocLerpSprite->srcY = app->render->getSpriteY(sprite);
+    allocLerpSprite->srcZ = app->render->getSpriteZ(sprite);
     allocLerpSprite->dstX = 32 + (this->ai->goalX << 6);
     allocLerpSprite->dstY = 32 + (this->ai->goalY << 6);
     allocLerpSprite->dstZ = 32 + app->render->getHeight(allocLerpSprite->dstX, allocLerpSprite->dstY);
-    allocLerpSprite->srcScale = allocLerpSprite->dstScale = app->render->mapSprites[app->render->S_SCALEFACTOR + sprite];
+    allocLerpSprite->srcScale = allocLerpSprite->dstScale = app->render->getSpriteScaleFactor(sprite);
     allocLerpSprite->startTime = app->gameTime;
     allocLerpSprite->travelTime = travelTime;
     allocLerpSprite->flags |= (Enums::LS_FLAG_ENT_NORELINK | Enums::LS_FLAG_ASYNC);
@@ -222,8 +222,8 @@ bool Entity::aiGoal_MOVE() {
     bool b = false;
     int sprite = this->getSprite();
     app->game->snapLerpSprites(sprite);
-    int sX = (int)app->render->mapSprites[app->render->S_X + sprite];
-    int sY = (int)app->render->mapSprites[app->render->S_Y + sprite];
+    int sX = (int)app->render->getSpriteX(sprite);
+    int sY = (int)app->render->getSpriteY(sprite);
     app->game->closestPath = 0LL;
     app->game->closestPathDepth = 0;
     app->game->closestPathDist = 999999999;

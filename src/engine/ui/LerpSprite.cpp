@@ -24,9 +24,9 @@ void LerpSprite::saveState(OutputStream* OS) {
     OS->writeInt(this->travelTime);
     OS->writeInt(app->gameTime - this->startTime);
     OS->writeShort((int16_t)this->hSprite);
-    OS->writeShort((int16_t)app->render->mapSprites[app->render->S_X + this->hSprite - 1]);
-    OS->writeShort((int16_t)app->render->mapSprites[app->render->S_Y + this->hSprite - 1]);
-    OS->writeShort((int16_t)app->render->mapSprites[app->render->S_Z + this->hSprite - 1]);
+    OS->writeShort((int16_t)app->render->getSpriteX(this->hSprite - 1));
+    OS->writeShort((int16_t)app->render->getSpriteY(this->hSprite - 1));
+    OS->writeShort((int16_t)app->render->getSpriteZ(this->hSprite - 1));
     OS->writeShort((int16_t)this->srcX);
     OS->writeShort((int16_t)this->srcY);
     OS->writeShort((int16_t)this->srcZ);
@@ -58,9 +58,9 @@ void LerpSprite::loadState(InputStream* IS) {
     this->startTime = app->gameTime - IS->readInt();
     this->hSprite = IS->readShort();
     int n = this->hSprite - 1;
-    app->render->mapSprites[app->render->S_X + n] = IS->readShort();
-    app->render->mapSprites[app->render->S_Y + n] = IS->readShort();
-    app->render->mapSprites[app->render->S_Z + n] = IS->readShort();
+    app->render->setSpriteX(n, IS->readShort());
+    app->render->setSpriteY(n, IS->readShort());
+    app->render->setSpriteZ(n, IS->readShort());
     app->render->relinkSprite(n);
     this->srcX = IS->readShort();
     this->srcY = IS->readShort();

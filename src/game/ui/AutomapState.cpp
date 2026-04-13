@@ -85,7 +85,7 @@ static void drawAutomap(Canvas* canvas, Graphics* graphics, bool b) {
 					if (nextOnTile != &app->game->entities[0]) {
 						if ((b3 & 0x8) == 0x0) {
 							int sprite = nextOnTile->getSprite();
-							int n16 = app->render->mapSpriteInfo[sprite];
+							int n16 = app->render->getSpriteInfoRaw(sprite);
 							int n17 = (n16 & 0xFF00) >> 8;
 							if (0x0 != (n16 & 0x200000)) {
 								if (0x0 == (n16 & 0x10000)) {
@@ -136,9 +136,9 @@ static void drawAutomap(Canvas* canvas, Graphics* graphics, bool b) {
 										graphics->setColor(color);
 										if ((n16 & 0xF000000) != 0x0) {
 											int n20;
-											int n19 = n20 = app->render->mapSprites[app->render->S_X + sprite];
+											int n19 = n20 = app->render->getSpriteX(sprite);
 											int n22;
-											int n21 = n22 = app->render->mapSprites[app->render->S_Y + sprite];
+											int n21 = n22 = app->render->getSpriteY(sprite);
 											if ((n16 & 0x3000000) != 0x0) {
 												n20 -= 32;
 												n19 += 32;
@@ -185,11 +185,11 @@ static void drawAutomap(Canvas* canvas, Graphics* graphics, bool b) {
 					Entity* mapEntity = app->game->findMapEntity(n31 << 6, n32 << 6, 32);
 					if (nullptr != mapEntity) {
 						int sprite2 = mapEntity->getSprite();
-						int n33 = app->render->mapSpriteInfo[sprite2];
+						int n33 = app->render->getSpriteInfoRaw(sprite2);
 						int n35;
-						int n34 = n35 = app->render->mapSprites[app->render->S_X + sprite2];
+						int n34 = n35 = app->render->getSpriteX(sprite2);
 						int n37;
-						int n36 = n37 = app->render->mapSprites[app->render->S_Y + sprite2];
+						int n36 = n37 = app->render->getSpriteY(sprite2);
 						if ((n33 & 0x3000000) != 0x0) {
 							n35 -= 32;
 							n34 += 32;

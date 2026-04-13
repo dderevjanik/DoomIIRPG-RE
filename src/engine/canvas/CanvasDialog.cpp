@@ -498,7 +498,7 @@ void Canvas::prepareDialog(Text* text, int dialogStyle, int dialogFlags) {
 			app->combat->curTarget = facingEntity;
 			int sprite = facingEntity->getSprite();
 			if (facingEntity->def->eType == Enums::ET_MONSTER) {
-				app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | 96 << 8);
+				app->render->setSpriteFrame(sprite, 96);
 			}
 			app->game->scriptStateVars[4] = 0;
 		}

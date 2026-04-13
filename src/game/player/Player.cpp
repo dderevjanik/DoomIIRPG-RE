@@ -61,7 +61,7 @@ bool Player::startup() {
 bool Player::modifyCollision(Entity* entity) {
 
 	return nullptr != entity && entity->def->eType == Enums::ET_SPRITEWALL &&
-	       (app->render->mapSpriteInfo[(entity->info & 0xFFFF) - 1] & 0xFF) == 131;
+	       app->render->getSpriteTileNum((entity->info & 0xFFFF) - 1) == 131;
 }
 
 void Player::advanceTurn() {
@@ -1196,10 +1196,10 @@ void Player::assessTargetPracticeShot(Entity* entity) {
 
 
 	int sprite = entity->getSprite();
-	int n = app->canvas->zoomCollisionX - app->render->mapSprites[app->render->S_X + sprite];
-	int n2 = app->canvas->zoomCollisionY - app->render->mapSprites[app->render->S_Y + sprite];
-	int n3 = app->canvas->zoomCollisionZ - app->render->mapSprites[app->render->S_Z + sprite];
-	int n4 = app->render->mapSpriteInfo[sprite] >> 8 & 0xF0;
+	int n = app->canvas->zoomCollisionX - app->render->getSpriteX(sprite);
+	int n2 = app->canvas->zoomCollisionY - app->render->getSpriteY(sprite);
+	int n3 = app->canvas->zoomCollisionZ - app->render->getSpriteZ(sprite);
+	int n4 = app->render->getSpriteInfoRaw(sprite) >> 8 & 0xF0;
 	int (*imageFrameBounds)[4] = app->render->getImageFrameBounds(entity->def->tileIndex, 3, 2, 0);
 	int n5 = -1;
 	for (int i = 0; i < 3; ++i) {

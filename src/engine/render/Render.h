@@ -425,6 +425,31 @@ public:
 	void postProcessSprites();
 	void handleMonsterIdleSounds(Entity* entity);
 
+	// --- Sprite accessor API (encapsulates mapSprites[] layout) ---
+	inline short getSpriteX(int sprite) const { return mapSprites[S_X + sprite]; }
+	inline short getSpriteY(int sprite) const { return mapSprites[S_Y + sprite]; }
+	inline short getSpriteZ(int sprite) const { return mapSprites[S_Z + sprite]; }
+	inline short getSpriteRenderMode(int sprite) const { return mapSprites[S_RENDERMODE + sprite]; }
+	inline short getSpriteScaleFactor(int sprite) const { return mapSprites[S_SCALEFACTOR + sprite]; }
+	inline short getSpriteEnt(int sprite) const { return mapSprites[S_ENT + sprite]; }
+
+	inline void setSpriteX(int sprite, short val) { mapSprites[S_X + sprite] = val; }
+	inline void setSpriteY(int sprite, short val) { mapSprites[S_Y + sprite] = val; }
+	inline void setSpriteZ(int sprite, short val) { mapSprites[S_Z + sprite] = val; }
+	inline void setSpriteRenderMode(int sprite, short val) { mapSprites[S_RENDERMODE + sprite] = val; }
+	inline void setSpriteScaleFactor(int sprite, short val) { mapSprites[S_SCALEFACTOR + sprite] = val; }
+	inline void setSpriteEnt(int sprite, short val) { mapSprites[S_ENT + sprite] = val; }
+
+	// --- SpriteInfo accessor API (encapsulates mapSpriteInfo[] bitmask layout) ---
+	inline int getSpriteTileNum(int sprite) const { return mapSpriteInfo[sprite] & 0xFF; }
+	inline int getSpriteFrame(int sprite) const { return (mapSpriteInfo[sprite] >> 8) & 0xFF; }
+	inline void setSpriteTileNum(int sprite, int tileNum) { mapSpriteInfo[sprite] = (mapSpriteInfo[sprite] & ~0xFF) | (tileNum & 0xFF); }
+	inline void setSpriteFrame(int sprite, int frame) { mapSpriteInfo[sprite] = (mapSpriteInfo[sprite] & ~0xFF00) | ((frame & 0xFF) << 8); }
+	inline int getSpriteInfoRaw(int sprite) const { return mapSpriteInfo[sprite]; }
+	inline void setSpriteInfoRaw(int sprite, int val) { mapSpriteInfo[sprite] = val; }
+	inline void clearSpriteInfoFlag(int sprite, int flag) { mapSpriteInfo[sprite] &= ~flag; }
+	inline void setSpriteInfoFlag(int sprite, int flag) { mapSpriteInfo[sprite] |= flag; }
+
 	void Render3dScene(void);
 	void fixTexels(int offset, int i, int mediaID, int* rowHeight); // [GEC] New
 

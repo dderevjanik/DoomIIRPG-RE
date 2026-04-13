@@ -169,10 +169,10 @@ int CombatEntity::calcHit(CombatEntity* ce, CombatEntity* ce2, bool b, int i, bo
     if (app->combat->getWeaponFlags(attackerWeaponId).isScoped) {
         if (eType == Enums::ET_MONSTER) {
             int sprite = curTarget->getSprite();
-            int n2 = app->canvas->zoomCollisionX - app->render->mapSprites[app->render->S_X + sprite];
-            int n3 = app->canvas->zoomCollisionY - app->render->mapSprites[app->render->S_Y + sprite];
-            int n4 = app->canvas->zoomCollisionZ - app->render->mapSprites[app->render->S_Z + sprite];
-            int n5 = app->render->mapSpriteInfo[sprite] >> 8 & 0xF0;
+            int n2 = app->canvas->zoomCollisionX - app->render->getSpriteX(sprite);
+            int n3 = app->canvas->zoomCollisionY - app->render->getSpriteY(sprite);
+            int n4 = app->canvas->zoomCollisionZ - app->render->getSpriteZ(sprite);
+            int n5 = app->render->getSpriteInfoRaw(sprite) >> 8 & 0xF0;
             int(*imageFrameBounds)[4] = app->render->getImageFrameBounds(curTarget->def->tileIndex, 3, 2, 0);
             int v57[3][2], v56[3][2];
 

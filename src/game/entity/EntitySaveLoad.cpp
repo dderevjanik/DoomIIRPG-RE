@@ -50,7 +50,7 @@ bool Entity::isBinaryEntity(int* array) {
             break;
         }
         case Enums::ET_DOOR: {
-            if (app->render->mapSprites[app->render->S_SCALEFACTOR + this->getSprite()] != 64) {
+            if (app->render->getSpriteScaleFactor(this->getSprite()) != 64) {
                 b = true;
             }
             else {
@@ -63,8 +63,8 @@ bool Entity::isBinaryEntity(int* array) {
         }
         case Enums::ET_NONOBSTRUCTING_SPRITEWALL: {
            int sprite = this->getSprite();
-            if ((app->render->mapSpriteInfo[sprite] & 0xFF) == SpriteDefs::getIndex("fence")) {
-                if ((app->render->mapSpriteInfo[sprite] & 0x10000) != 0x0) {
+            if ((app->render->getSpriteInfoRaw(sprite) & 0xFF) == SpriteDefs::getIndex("fence")) {
+                if ((app->render->getSpriteInfoRaw(sprite) & 0x10000) != 0x0) {
                     b = true;
                 }
                 else {
@@ -138,14 +138,14 @@ void Entity::saveState(OutputStream* OS, int n) {
     if ((this->info & 0x10000) == 0x0) {
         OS->writeByte((mapSpriteInfo[sprite] & 0xFF0000) >> 16);
         OS->writeByte((mapSpriteInfo[sprite] & 0xFF00) >> 8);
-        if (this->isDroppedEntity() || (app->render->mapSpriteInfo[sprite] & 0xF000000) == 0x0) {
+        if (this->isDroppedEntity() || (app->render->getSpriteInfoRaw(sprite) & 0xF000000) == 0x0) {
             OS->writeByte(mapSprites[app->render->S_X + sprite] >> 3);
             OS->writeByte(mapSprites[app->render->S_Y + sprite] >> 3);
         }
         if (this->isDroppedEntity()) {
             OS->writeInt(this->param);
         }
-        if (!this->isDroppedEntity() && (app->render->mapSpriteInfo[sprite] & 0xF000000) != 0x0) {
+        if (!this->isDroppedEntity() && (app->render->getSpriteInfoRaw(sprite) & 0xF000000) != 0x0) {
             OS->writeShort(this->linkIndex);
         }
     }
@@ -194,18 +194,18 @@ void Entity::loadState(InputStream* IS, int n) {
         this->name = IS->readShort();
     }
     int sprite = this->getSprite();
-    int n2 = app->render->mapSpriteInfo[sprite] & 0xFF;
-    if ((app->render->mapSpriteInfo[sprite] & 0x400000) != 0x0) {
+    int n2 = app->render->getSpriteInfoRaw(sprite) & 0xFF;
+    if ((app->render->getSpriteInfoRaw(sprite) & 0x400000) != 0x0) {
         n2 += 257;
     }
     if ((n & 0x40000) != 0x0) {
-        app->render->mapSpriteInfo[sprite] &= 0xFFFEFFFF;
+        app->render->setSpriteInfoRaw(sprite, app->render->getSpriteInfoRaw(sprite) & 0xFFFEFFFF);
         if ((n & 0x80000) != 0x0 && (this->info & 0x100000) == 0x0) {
-            app->game->linkEntity(this, app->render->mapSprites[app->render->S_X + sprite] >> 6, app->render->mapSprites[app->render->S_Y + sprite] >> 6);
+            app->game->linkEntity(this, app->render->getSpriteX(sprite) >> 6, app->render->getSpriteY(sprite) >> 6);
         }
     }
     else {
-        app->render->mapSpriteInfo[sprite] |= 0x10000;
+        app->render->setSpriteInfoFlag(sprite, 0x10000);
         if ((this->info & 0x100000) != 0x0 && this->def->eType != Enums::ET_DOOR && (n2 < SpriteDefs::getRange("dummy_start") || n2 > SpriteDefs::getRange("dummy_end"))) {
             app->game->unlinkEntity(this);
         }
@@ -224,8 +224,8 @@ void Entity::loadState(InputStream* IS, int n) {
     }
     if (this->def != nullptr && this->def->eType == Enums::ET_ATTACK_INTERACTIVE && this->def->eSubType == Enums::INTERACT_BARRICADE) {
         short short1 = IS->readShort();
-        if (short1 != app->render->mapSprites[app->render->S_SCALEFACTOR + sprite]) {
-            app->render->mapSprites[app->render->S_SCALEFACTOR + sprite] = short1;
+        if (short1 != app->render->getSpriteScaleFactor(sprite)) {
+            app->render->setSpriteScaleFactor(sprite, short1);
             this->info |= 0x400000;
         }
         return;
@@ -240,7 +240,7 @@ void Entity::loadState(InputStream* IS, int n) {
         else if ((n & 0x80000) != 0x0) {
             app->Error(Enums::ERR_CLEANCORPSE);
         }
-        app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | 0x7000);
+        app->render->setSpriteInfoRaw(sprite, ((app->render->getSpriteInfoRaw(sprite) & 0xFFFF00FF) | 0x7000));
         if (!this->isDroppedEntity()) {
             this->def = app->entityDefManager->find(9, this->def->eSubType, this->def->parm);
         }
@@ -274,10 +274,10 @@ void Entity::loadState(InputStream* IS, int n) {
         short n5 = (short)((IS->readByte() & 0xFF) << 3);
         short n6 = (short)((IS->readByte() & 0xFF) << 3);
         int n7 = (IS->readByte() & 0xFF) << 8;
-        app->render->mapSprites[app->render->S_X + sprite2] = n5;
-        app->render->mapSprites[app->render->S_Y + sprite2] = n6;
-        app->render->mapSprites[app->render->S_Z + sprite2] = (short)(app->render->getHeight(n5, n6) + 32);
-        app->render->mapSpriteInfo[sprite2] = ((app->render->mapSpriteInfo[sprite2] & 0xFFFF00FF) | n7);
+        app->render->setSpriteX(sprite2, n5);
+        app->render->setSpriteY(sprite2, n6);
+        app->render->setSpriteZ(sprite2, (short)(app->render->getHeight(n5, n6) + 32));
+        app->render->setSpriteInfoRaw(sprite2, ((app->render->getSpriteInfoRaw(sprite2) & 0xFFFF00FF) | n7));
         app->render->relinkSprite(sprite2);
         if ((this->info & 0x100000) != 0x0) {
             app->game->unlinkEntity(this);
@@ -298,29 +298,29 @@ void Entity::loadState(InputStream* IS, int n) {
     if ((this->info & 0x10000) == 0x0) {
         int n8 = IS->readByte() & 0xFF;
         int n9 = IS->readByte() & 0xFF;
-        app->render->mapSpriteInfo[sprite2] = ((app->render->mapSpriteInfo[sprite2] & 0xFF0000FF) | n9 << 8 | n8 << 16);
-        if (this->isDroppedEntity() || (app->render->mapSpriteInfo[sprite2] & 0xF000000) == 0x0) {
-            app->render->mapSprites[app->render->S_X + sprite2] = (short)(IS->readUnsignedByte() << 3);
-            app->render->mapSprites[app->render->S_Y + sprite2] = (short)(IS->readUnsignedByte() << 3);
+        app->render->setSpriteInfoRaw(sprite2, ((app->render->getSpriteInfoRaw(sprite2) & 0xFF0000FF) | n9 << 8 | n8 << 16));
+        if (this->isDroppedEntity() || (app->render->getSpriteInfoRaw(sprite2) & 0xF000000) == 0x0) {
+            app->render->setSpriteX(sprite2, (short)(IS->readUnsignedByte() << 3));
+            app->render->setSpriteY(sprite2, (short)(IS->readUnsignedByte() << 3));
             if (this->isMonster() || this->isDroppedEntity()) {
-                app->render->mapSprites[app->render->S_Z + sprite2] = (short)(app->render->getHeight(app->render->mapSprites[app->render->S_X + sprite2], app->render->mapSprites[app->render->S_Y + sprite2]) + 32);
+                app->render->setSpriteZ(sprite2, (short)(app->render->getHeight(app->render->getSpriteX(sprite2), app->render->getSpriteY(sprite2)) + 32));
             }
             app->render->relinkSprite(sprite2);
         }
         if (this->isDroppedEntity()) {
             this->param = IS->readInt();
         }
-        if (!this->isDroppedEntity() && (app->render->mapSpriteInfo[sprite2] & 0xF000000) != 0x0) {
+        if (!this->isDroppedEntity() && (app->render->getSpriteInfoRaw(sprite2) & 0xF000000) != 0x0) {
             this->linkIndex = IS->readShort();
         }
         else {
-            this->linkIndex = (short)((app->render->mapSprites[app->render->S_X + sprite2] >> 6) + (app->render->mapSprites[app->render->S_Y + sprite2] >> 6) * 32);
+            this->linkIndex = (short)((app->render->getSpriteX(sprite2) >> 6) + (app->render->getSpriteY(sprite2) >> 6) * 32);
         }
-        if (((app->render->mapSpriteInfo[sprite2] & 0xF000000) == 0xC000000 || (app->render->mapSpriteInfo[sprite2] & 0xF000000) == 0x3000000) && (this->def->eType == Enums::ET_NONOBSTRUCTING_SPRITEWALL || this->def->eType == Enums::ET_SPRITEWALL)) {
+        if (((app->render->getSpriteInfoRaw(sprite2) & 0xF000000) == 0xC000000 || (app->render->getSpriteInfoRaw(sprite2) & 0xF000000) == 0x3000000) && (this->def->eType == Enums::ET_NONOBSTRUCTING_SPRITEWALL || this->def->eType == Enums::ET_SPRITEWALL)) {
             int n10 = this->linkIndex % 32;
             int n11 = this->linkIndex / 32;
-            app->render->mapSprites[app->render->S_X + sprite2] = (short)((n10 << 6) + 32);
-            app->render->mapSprites[app->render->S_Y + sprite2] = (short)((n11 << 6) + 32);
+            app->render->setSpriteX(sprite2, (short)((n10 << 6) + 32));
+            app->render->setSpriteY(sprite2, (short)((n11 << 6) + 32));
             app->render->relinkSprite(sprite2);
         }
         if (n9 != 0) {
@@ -334,7 +334,7 @@ void Entity::loadState(InputStream* IS, int n) {
         this->monsterFlags = IS->readShort();
         if ((this->info & 0x10000) == 0x0) {
             if ((this->monsterFlags & 0x200) != 0x0) {
-                app->render->mapSprites[app->render->S_SCALEFACTOR + sprite2] = (short)IS->readUnsignedByte();
+                app->render->setSpriteScaleFactor(sprite2, (short)IS->readUnsignedByte());
             }
             if ((n & 0x100000) != 0x0) {
                 this->info |= 0x1000000;
@@ -376,26 +376,26 @@ void Entity::loadState(InputStream* IS, int n) {
             }
             this->info |= 0x1000000;
         }
-        app->render->mapSpriteInfo[sprite2] = ((app->render->mapSpriteInfo[sprite2] & 0xFFFFFF00) | n12);
-        app->render->mapSprites[app->render->S_ENT + sprite2] = this->getIndex();
+        app->render->setSpriteInfoRaw(sprite2, ((app->render->getSpriteInfoRaw(sprite2) & 0xFFFFFF00) | n12));
+        app->render->setSpriteEnt(sprite2, this->getIndex());
         if (this->def->eType == Enums::ET_DECOR_NOCLIP && this->def->eSubType == Enums::DECOR_DYNAMITE) {
             int n13 = (IS->readByte() & 0xFF) << 24;
-            app->render->mapSpriteInfo[sprite2] |= n13;
-            app->render->mapSprites[app->render->S_Z + sprite2] = (short)(app->render->getHeight(app->render->mapSprites[app->render->S_X + sprite2], app->render->mapSprites[app->render->S_Y + sprite2]) + (((app->render->mapSpriteInfo[sprite2] & 0xF000000) != 0x0) ? 32 : 31));
-            app->render->mapSprites[app->render->S_SCALEFACTOR + sprite2] = 32;
+            app->render->setSpriteInfoFlag(sprite2, n13);
+            app->render->setSpriteZ(sprite2, (short)(app->render->getHeight(app->render->getSpriteX(sprite2), app->render->getSpriteY(sprite2)) + (((app->render->getSpriteInfoRaw(sprite2) & 0xF000000) != 0x0) ? 32 : 31)));
+            app->render->setSpriteScaleFactor(sprite2, 32);
             app->render->relinkSprite(sprite2);
         }
     }
     else {
-        app->render->mapSprites[app->render->S_Z + sprite2] = IS->readShort();
+        app->render->setSpriteZ(sprite2, IS->readShort());
         app->render->relinkSprite(sprite2);
     }
     if ((this->info & 0x100000) != 0x0) {
-        if ((app->render->mapSpriteInfo[sprite2] & 0xF000000) != 0x0) {
+        if ((app->render->getSpriteInfoRaw(sprite2) & 0xF000000) != 0x0) {
             app->game->linkEntity(this, this->linkIndex % 32, this->linkIndex / 32);
         }
         else {
-            app->game->linkEntity(this, app->render->mapSprites[app->render->S_X + sprite2] >> 6, app->render->mapSprites[app->render->S_Y + sprite2] >> 6);
+            app->game->linkEntity(this, app->render->getSpriteX(sprite2) >> 6, app->render->getSpriteY(sprite2) >> 6);
         }
     }
 }
@@ -423,7 +423,7 @@ int Entity::getSaveHandle(bool b) {
     if (this->isNamedEntity(this->tempSaveBuf)) {
         n |= 0x20000;
     }
-    if ((app->render->mapSpriteInfo[this->getSprite()] & 0x10000) == 0x0) {
+    if ((app->render->getSpriteInfoRaw(this->getSprite()) & 0x10000) == 0x0) {
         n |= 0x40000;
     }
     if ((this->info & 0x2000000) != 0x0) {
@@ -502,7 +502,7 @@ void Entity::restoreBinaryState(int n) {
                         app->render->relinkSprite(sprite);
                     }
                     else {
-                        app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | ((this->def->eSubType == Enums::INTERACT_CRATE) ? 3 : 1) << 8);
+                        app->render->setSpriteInfoRaw(sprite, ((app->render->getSpriteInfoRaw(sprite) & 0xFFFF00FF) | ((this->def->eSubType == Enums::INTERACT_CRATE) ? 3 : 1) << 8));
                         app->render->relinkSprite(sprite);
                     }
                     break;

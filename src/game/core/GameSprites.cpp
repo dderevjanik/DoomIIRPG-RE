@@ -66,11 +66,11 @@ GameSprite* Game::gsprite_alloc(int n, int n2, int n3) {
 	gameSprite->duration = 0;
 	gameSprite->time = app->time;
 	gameSprite->data = nullptr;
-	app->render->mapSprites[app->render->S_ENT + gameSprite->sprite] = -1;
-	app->render->mapSprites[app->render->S_RENDERMODE + gameSprite->sprite] = 0;
-	app->render->mapSprites[app->render->S_SCALEFACTOR + gameSprite->sprite] = 64;
+	app->render->setSpriteEnt(gameSprite->sprite, -1);
+	app->render->setSpriteRenderMode(gameSprite->sprite, 0);
+	app->render->setSpriteScaleFactor(gameSprite->sprite, 64);
 	gameSprite->flags = (n3 | 0x1);
-	app->render->mapSpriteInfo[gameSprite->sprite] = (n | n2 << 8);
+	app->render->setSpriteInfoRaw(gameSprite->sprite, n | n2 << 8);
 	if ((gameSprite->flags & 0x2)) {
 		this->activePropogators++;
 	}
@@ -86,22 +86,22 @@ GameSprite* Game::gsprite_allocAnim(int n, int n2, int n3, int n4) {
 	gsprite_alloc->numAnimFrames = 4;
 	gsprite_alloc->pos[3] = n2;
 	gsprite_alloc->pos[0] = n2;
-	app->render->mapSprites[app->render->S_X + gsprite_alloc->sprite] = n2;
+	app->render->setSpriteX(gsprite_alloc->sprite, n2);
 	gsprite_alloc->pos[4] = n3;
 	gsprite_alloc->pos[1] = n3;
-	app->render->mapSprites[app->render->S_Y + gsprite_alloc->sprite] = n3;
+	app->render->setSpriteY(gsprite_alloc->sprite, n3);
 	gsprite_alloc->pos[5] = n4;
 	gsprite_alloc->pos[2] = n4;
-	app->render->mapSprites[app->render->S_Z + gsprite_alloc->sprite] = n4;
+	app->render->setSpriteZ(gsprite_alloc->sprite, n4);
 	gsprite_alloc->destScale = 64;
 	gsprite_alloc->startScale = 64;
 	gsprite_alloc->duration = 200 * gsprite_alloc->numAnimFrames;
 	if (auto saIt = gSpriteAnimDefs.find(n); saIt != gSpriteAnimDefs.end()) {
 		const SpriteAnimDef& sa = saIt->second;
 		if (sa.renderMode >= 0)
-			app->render->mapSprites[app->render->S_RENDERMODE + gsprite_alloc->sprite] = sa.renderMode;
+			app->render->setSpriteRenderMode(gsprite_alloc->sprite, sa.renderMode);
 		if (sa.scale >= 0)
-			app->render->mapSprites[app->render->S_SCALEFACTOR + gsprite_alloc->sprite] = sa.scale;
+			app->render->setSpriteScaleFactor(gsprite_alloc->sprite, sa.scale);
 		if (sa.numFrames >= 0)
 			gsprite_alloc->numAnimFrames = sa.numFrames;
 		if (sa.duration >= 0)
@@ -109,14 +109,14 @@ GameSprite* Game::gsprite_allocAnim(int n, int n2, int n3, int n4) {
 		else if (sa.numFrames >= 0)
 			gsprite_alloc->duration = 200 * sa.numFrames;
 		if (sa.zAtGround) {
-			app->render->mapSprites[app->render->S_Z + gsprite_alloc->sprite] =
-			    (short)(app->render->getHeight(n2, n3) + sa.zOffset);
+			app->render->setSpriteZ(gsprite_alloc->sprite,
+			    (short)(app->render->getHeight(n2, n3) + sa.zOffset));
 		}
 		if (sa.randomFlip) {
 			if ((app->nextInt() & 0x1) != 0x0)
-				app->render->mapSpriteInfo[gsprite_alloc->sprite] |= 0x20000;
+				app->render->setSpriteInfoFlag(gsprite_alloc->sprite, 0x20000);
 			else
-				app->render->mapSpriteInfo[gsprite_alloc->sprite] &= 0xFFFDFFFF;
+				app->render->clearSpriteInfoFlag(gsprite_alloc->sprite, 0x20000);
 		}
 		if (sa.facePlayer) {
 			gsprite_alloc->flags |= 0x1002;
@@ -129,14 +129,14 @@ GameSprite* Game::gsprite_allocAnim(int n, int n2, int n3, int n4) {
 			gsprite_alloc->vel[0] = 0;
 			gsprite_alloc->pos[5] -= (short)app->canvas->viewZ;
 			gsprite_alloc->pos[2] = gsprite_alloc->pos[5];
-			app->render->mapSprites[app->render->S_X + gsprite_alloc->sprite] =
+			app->render->setSpriteX(gsprite_alloc->sprite,
 			    (short)(app->canvas->viewX + app->canvas->viewStepX + (this->viewStepX >> 6) * gsprite_alloc->pos[0] +
-			            (this->viewRightStepX >> 6) * gsprite_alloc->pos[1]);
-			app->render->mapSprites[app->render->S_Y + gsprite_alloc->sprite] =
+			            (this->viewRightStepX >> 6) * gsprite_alloc->pos[1]));
+			app->render->setSpriteY(gsprite_alloc->sprite,
 			    (short)(app->canvas->viewY + app->canvas->viewStepY + (this->viewStepY >> 6) * gsprite_alloc->pos[0] +
-			            (this->viewRightStepY >> 6) * gsprite_alloc->pos[1]);
-			app->render->mapSprites[app->render->S_Z + gsprite_alloc->sprite] =
-			    (short)(app->canvas->viewZ + gsprite_alloc->pos[2]);
+			            (this->viewRightStepY >> 6) * gsprite_alloc->pos[1]));
+			app->render->setSpriteZ(gsprite_alloc->sprite,
+			    (short)(app->canvas->viewZ + gsprite_alloc->pos[2]));
 		}
 	}
 	app->render->relinkSprite(gsprite_alloc->sprite);
@@ -147,15 +147,15 @@ void Game::gsprite_destroy(GameSprite* gameSprite) {
 
 
 	if ((gameSprite->flags & 0x2000) == 0x0) {
-		app->render->mapSpriteInfo[gameSprite->sprite] |= 0x10000;
+		app->render->setSpriteInfoFlag(gameSprite->sprite, 0x10000);
 	} else if ((gameSprite->flags & 0x8000) == 0x0) {
-		app->render->mapSpriteInfo[gameSprite->sprite] &= 0xFFFFFEFF;
-		app->render->mapSprites[app->render->S_X + gameSprite->sprite] = gameSprite->pos[3];
-		app->render->mapSprites[app->render->S_Y + gameSprite->sprite] = gameSprite->pos[4];
+		app->render->clearSpriteInfoFlag(gameSprite->sprite, 0x100);
+		app->render->setSpriteX(gameSprite->sprite, gameSprite->pos[3]);
+		app->render->setSpriteY(gameSprite->sprite, gameSprite->pos[4]);
 		if ((gameSprite->flags & 0x4000) == 0x0) {
-			app->render->mapSprites[app->render->S_Z + gameSprite->sprite] = gameSprite->pos[5];
+			app->render->setSpriteZ(gameSprite->sprite, gameSprite->pos[5]);
 		} else {
-			app->render->mapSprites[app->render->S_Z + gameSprite->sprite] = gameSprite->pos[2];
+			app->render->setSpriteZ(gameSprite->sprite, gameSprite->pos[2]);
 		}
 		app->render->relinkSprite(gameSprite->sprite);
 	}
@@ -164,13 +164,13 @@ void Game::gsprite_destroy(GameSprite* gameSprite) {
 		if ((gameSprite->flags & 0x4000) != 0x0) {
 			gameSprite->flags &= 0xFFFF3FFF;
 			gameSprite->flags |= 0x1;
-			app->render->mapSpriteInfo[gameSprite->sprite] &= 0xFFFEFFFF;
-			gameSprite->pos[0] = app->render->mapSprites[app->render->S_X + gameSprite->sprite];
-			gameSprite->pos[1] = app->render->mapSprites[app->render->S_Y + gameSprite->sprite];
-			gameSprite->pos[2] = app->render->mapSprites[app->render->S_Z + gameSprite->sprite];
+			app->render->clearSpriteInfoFlag(gameSprite->sprite, 0x10000);
+			gameSprite->pos[0] = app->render->getSpriteX(gameSprite->sprite);
+			gameSprite->pos[1] = app->render->getSpriteY(gameSprite->sprite);
+			gameSprite->pos[2] = app->render->getSpriteZ(gameSprite->sprite);
 			gameSprite->pos[5] =
-			    (short)(app->render->getHeight(app->render->mapSprites[app->render->S_X + gameSprite->sprite],
-			                                   app->render->mapSprites[app->render->S_Y + gameSprite->sprite]) +
+			    (short)(app->render->getHeight(app->render->getSpriteX(gameSprite->sprite),
+			                                   app->render->getSpriteY(gameSprite->sprite)) +
 			            32);
 			gameSprite->time = app->time;
 			gameSprite->duration = 250;
@@ -230,45 +230,44 @@ void Game::gsprite_update(int n) {
 				this->activeSprites++;
 				b = true;
 				if (0x0 != (gameSprite->flags & 0x40)) {
-					app->render->mapSpriteInfo[gameSprite->sprite] =
-					    ((app->render->mapSpriteInfo[gameSprite->sprite] & 0xFFFF00FF) |
-					     n2 / 200 % gameSprite->numAnimFrames << 8);
+					app->render->setSpriteFrame(gameSprite->sprite,
+					    n2 / 200 % gameSprite->numAnimFrames);
 				}
 				if (0x0 != (gameSprite->flags & 0x1000)) {
-					int n3 = app->render->mapSprites[app->render->S_X + gameSprite->sprite] >> 6;
-					int n4 = app->render->mapSprites[app->render->S_Y + gameSprite->sprite] >> 6;
+					int n3 = app->render->getSpriteX(gameSprite->sprite) >> 6;
+					int n4 = app->render->getSpriteY(gameSprite->sprite) >> 6;
 					short n5 = (short)(app->canvas->viewX + this->viewStepX);
 					short n6 = (short)(app->canvas->viewY + this->viewStepY);
 					if (0x0 != (gameSprite->flags & 0x2)) {
 						if (n2 > gameSprite->duration) {
-							app->render->mapSprites[app->render->S_X + gameSprite->sprite] =
+							app->render->setSpriteX(gameSprite->sprite,
 							    (short)(n5 + (this->viewStepX >> 6) * gameSprite->pos[3] +
-							            (this->viewRightStepX >> 6) * gameSprite->pos[4]);
-							app->render->mapSprites[app->render->S_Y + gameSprite->sprite] =
+							            (this->viewRightStepX >> 6) * gameSprite->pos[4]));
+							app->render->setSpriteY(gameSprite->sprite,
 							    (short)(n6 + (this->viewStepY >> 6) * gameSprite->pos[3] +
-							            (this->viewRightStepY >> 6) * gameSprite->pos[4]);
-							app->render->mapSprites[app->render->S_Z + gameSprite->sprite] =
-							    (short)(app->canvas->viewZ + gameSprite->pos[5]);
+							            (this->viewRightStepY >> 6) * gameSprite->pos[4]));
+							app->render->setSpriteZ(gameSprite->sprite,
+							    (short)(app->canvas->viewZ + gameSprite->pos[5]));
 							gameSprite->flags &= 0xFFFFFFFD;
 						} else {
 							int n7 = gameSprite->pos[0] + gameSprite->vel[0] * n2 / 1000;
 							int n8 = gameSprite->pos[1] + gameSprite->vel[1] * n2 / 1000;
-							app->render->mapSprites[app->render->S_X + gameSprite->sprite] =
-							    (short)(n5 + (this->viewStepX >> 6) * n7 + (this->viewRightStepX >> 6) * n8);
-							app->render->mapSprites[app->render->S_Y + gameSprite->sprite] =
-							    (short)(n6 + (this->viewStepY >> 6) * n7 + (this->viewRightStepY >> 6) * n8);
-							app->render->mapSprites[app->render->S_Z + gameSprite->sprite] =
-							    (short)(app->canvas->viewZ + gameSprite->pos[2] + gameSprite->vel[2] * n2 / 1000);
+							app->render->setSpriteX(gameSprite->sprite,
+							    (short)(n5 + (this->viewStepX >> 6) * n7 + (this->viewRightStepX >> 6) * n8));
+							app->render->setSpriteY(gameSprite->sprite,
+							    (short)(n6 + (this->viewStepY >> 6) * n7 + (this->viewRightStepY >> 6) * n8));
+							app->render->setSpriteZ(gameSprite->sprite,
+							    (short)(app->canvas->viewZ + gameSprite->pos[2] + gameSprite->vel[2] * n2 / 1000));
 						}
 						this->activePropogators++;
 					} else {
-						app->render->mapSprites[app->render->S_X + gameSprite->sprite] = n5;
-						app->render->mapSprites[app->render->S_Y + gameSprite->sprite] = n6;
-						app->render->mapSprites[app->render->S_Z + gameSprite->sprite] = (short)app->canvas->viewZ;
+						app->render->setSpriteX(gameSprite->sprite, n5);
+						app->render->setSpriteY(gameSprite->sprite, n6);
+						app->render->setSpriteZ(gameSprite->sprite, (short)app->canvas->viewZ);
 					}
 					if (0x0 == (gameSprite->flags & 0x4) &&
-					    (n3 != app->render->mapSprites[app->render->S_X + gameSprite->sprite] >> 6 ||
-					     n4 != app->render->mapSprites[app->render->S_Y + gameSprite->sprite] >> 6)) {
+					    (n3 != app->render->getSpriteX(gameSprite->sprite) >> 6 ||
+					     n4 != app->render->getSpriteY(gameSprite->sprite) >> 6)) {
 						if (0x0 != (gameSprite->flags & 0x1000)) {
 							app->render->relinkSprite(gameSprite->sprite, app->canvas->destX << 4,
 							                          app->canvas->destY << 4, app->canvas->destZ << 4);
@@ -279,30 +278,30 @@ void Game::gsprite_update(int n) {
 				} else if (0x0 != (gameSprite->flags & 0x2)) {
 					this->activePropogators++;
 					if (n2 >= gameSprite->duration) {
-						app->render->mapSprites[app->render->S_X + gameSprite->sprite] = gameSprite->pos[3];
-						app->render->mapSprites[app->render->S_Y + gameSprite->sprite] = gameSprite->pos[4];
+						app->render->setSpriteX(gameSprite->sprite, gameSprite->pos[3]);
+						app->render->setSpriteY(gameSprite->sprite, gameSprite->pos[4]);
 						if ((gameSprite->flags & 0x4000) == 0x0) {
-							app->render->mapSprites[app->render->S_Z + gameSprite->sprite] = gameSprite->pos[5];
+							app->render->setSpriteZ(gameSprite->sprite, gameSprite->pos[5]);
 						} else if ((gameSprite->flags & 0x8000) == 0x0) {
-							app->render->mapSprites[app->render->S_Z + gameSprite->sprite] = gameSprite->pos[2];
+							app->render->setSpriteZ(gameSprite->sprite, gameSprite->pos[2]);
 						}
 						gameSprite->flags &= 0xFFFFFFFD;
 					} else {
-						app->render->mapSprites[app->render->S_X + gameSprite->sprite] =
-						    (short)(gameSprite->pos[0] + gameSprite->vel[0] * n2 / 1000);
-						app->render->mapSprites[app->render->S_Y + gameSprite->sprite] =
-						    (short)(gameSprite->pos[1] + gameSprite->vel[1] * n2 / 1000);
+						app->render->setSpriteX(gameSprite->sprite,
+						    (short)(gameSprite->pos[0] + gameSprite->vel[0] * n2 / 1000));
+						app->render->setSpriteY(gameSprite->sprite,
+						    (short)(gameSprite->pos[1] + gameSprite->vel[1] * n2 / 1000));
 						if ((gameSprite->flags & 0x4000) == 0x0) {
-							app->render->mapSprites[app->render->S_Z + gameSprite->sprite] =
-							    (short)(gameSprite->pos[2] + gameSprite->vel[2] * n2 / 1000);
+							app->render->setSpriteZ(gameSprite->sprite,
+							    (short)(gameSprite->pos[2] + gameSprite->vel[2] * n2 / 1000));
 						} else {
-							app->render->mapSprites[app->render->S_Z + gameSprite->sprite] =
+							app->render->setSpriteZ(gameSprite->sprite,
 							    (short)(gameSprite->pos[2] +
 							            ((app->render
 							                  ->sinTable[(n2 << 16) / (gameSprite->duration << 8) << 1 & 0x3FF] >>
 							              8) *
 							                 (gameSprite->pos[5] - gameSprite->pos[2] << 8) >>
-							             16));
+							             16)));
 						}
 						if (0x0 == (gameSprite->flags & 0x4)) {
 							app->render->relinkSprite(gameSprite->sprite);
@@ -311,12 +310,12 @@ void Game::gsprite_update(int n) {
 				}
 				if (0x0 != (gameSprite->flags & 0x400)) {
 					if (n2 > gameSprite->duration) {
-						app->render->mapSprites[app->render->S_SCALEFACTOR + gameSprite->sprite] =
-						    gameSprite->destScale;
+						app->render->setSpriteScaleFactor(gameSprite->sprite,
+						    gameSprite->destScale);
 						gameSprite->flags &= 0xFFFFFBFF;
 					} else {
-						app->render->mapSprites[app->render->S_SCALEFACTOR + gameSprite->sprite] =
-						    (uint8_t)(gameSprite->startScale + gameSprite->scaleStep * n2 / 1000);
+						app->render->setSpriteScaleFactor(gameSprite->sprite,
+						    (uint8_t)(gameSprite->startScale + gameSprite->scaleStep * n2 / 1000));
 					}
 				}
 			}
@@ -336,7 +335,7 @@ int Game::updateLerpSprite(LerpSprite* lerpSprite) {
 	int n3 = app->canvas->viewX >> 6;
 	int n4 = app->canvas->viewY >> 6;
 	int n5 = app->gameTime - lerpSprite->startTime;
-	int n6 = app->render->mapSpriteInfo[n2];
+	int n6 = app->render->getSpriteInfoRaw(n2);
 	int n7 = n6 & 0xFF;
 	if ((n6 & 0x400000) != 0x0) {
 		n7 += 257;
@@ -352,14 +351,14 @@ int Game::updateLerpSprite(LerpSprite* lerpSprite) {
 	if (lerpSprite->travelTime != 0) {
 		n8 = (n5 << 16) / (lerpSprite->travelTime << 8);
 	}
-	app->render->mapSprites[app->render->S_X + n2] =
-	    (short)(lerpSprite->srcX + (n8 * (lerpSprite->dstX - lerpSprite->srcX << 8) >> 16));
-	app->render->mapSprites[app->render->S_Y + n2] =
-	    (short)(lerpSprite->srcY + (n8 * (lerpSprite->dstY - lerpSprite->srcY << 8) >> 16));
-	app->render->mapSprites[app->render->S_SCALEFACTOR + n2] =
-	    (uint8_t)(lerpSprite->srcScale + (n8 * (lerpSprite->dstScale - lerpSprite->srcScale << 8) >> 16));
-	app->render->mapSprites[app->render->S_Z + n2] =
-	    (short)(lerpSprite->srcZ + (n8 * (lerpSprite->dstZ - lerpSprite->srcZ << 8) >> 16));
+	app->render->setSpriteX(n2,
+	    (short)(lerpSprite->srcX + (n8 * (lerpSprite->dstX - lerpSprite->srcX << 8) >> 16)));
+	app->render->setSpriteY(n2,
+	    (short)(lerpSprite->srcY + (n8 * (lerpSprite->dstY - lerpSprite->srcY << 8) >> 16)));
+	app->render->setSpriteScaleFactor(n2,
+	    (uint8_t)(lerpSprite->srcScale + (n8 * (lerpSprite->dstScale - lerpSprite->srcScale << 8) >> 16)));
+	app->render->setSpriteZ(n2,
+	    (short)(lerpSprite->srcZ + (n8 * (lerpSprite->dstZ - lerpSprite->srcZ << 8) >> 16)));
 	if ((lerpSprite->flags & Enums::LS_FLAG_PARABOLA) != 0x0) {
 		int n9 = n8 << 1;
 		if ((lerpSprite->flags & Enums::LS_FLAG_TRUNC) != 0x0) {
@@ -367,22 +366,22 @@ int Game::updateLerpSprite(LerpSprite* lerpSprite) {
 		}
 		int n10 = app->render->sinTable[n9 & 0x3FF] >> 8;
 		if (!(lerpSprite->flags & Enums::LS_FLAG_S_NORELINK)) {
-			app->render->relinkSprite(n2, app->render->mapSprites[app->render->S_X + n2] << 4,
-			                          app->render->mapSprites[app->render->S_Y + n2] << 4,
-			                          app->render->mapSprites[app->render->S_Z + n2] << 4);
+			app->render->relinkSprite(n2, app->render->getSpriteX(n2) << 4,
+			                          app->render->getSpriteY(n2) << 4,
+			                          app->render->getSpriteZ(n2) << 4);
 		}
-		app->render->mapSprites[app->render->S_Z + n2] += (short)(n10 * (lerpSprite->height << 8) >> 16);
+		app->render->setSpriteZ(n2, app->render->getSpriteZ(n2) + (short)(n10 * (lerpSprite->height << 8) >> 16));
 	} else if (!(lerpSprite->flags & Enums::LS_FLAG_S_NORELINK)) {
 		app->render->relinkSprite(n2);
 	}
-	int n12 = app->render->mapSprites[app->render->S_X + n2] >> 6;
-	int n13 = app->render->mapSprites[app->render->S_Y + n2] >> 6;
-	if (app->render->mapSprites[app->render->S_ENT + n2] != -1 && !(app->render->mapSpriteInfo[n2] & 0x10000)) {
-		Entity* entity = &this->entities[app->render->mapSprites[app->render->S_ENT + n2]];
+	int n12 = app->render->getSpriteX(n2) >> 6;
+	int n13 = app->render->getSpriteY(n2) >> 6;
+	if (app->render->getSpriteEnt(n2) != -1 && !(app->render->getSpriteInfoRaw(n2) & 0x10000)) {
+		Entity* entity = &this->entities[app->render->getSpriteEnt(n2)];
 		int n14 = entity->linkIndex % 32;
 		int n15 = entity->linkIndex / 32;
 		if (entity->def->eType == Enums::ET_NPC || entity->isMonster()) {
-			int anim = ((app->render->mapSpriteInfo[n2] & 0xFF00) >> 8) & Enums::MANIM_MASK;
+			int anim = ((app->render->getSpriteInfoRaw(n2) & 0xFF00) >> 8) & Enums::MANIM_MASK;
 			int n17 = lerpSprite->dstX - lerpSprite->srcX;
 			int n18 = lerpSprite->dstY - lerpSprite->srcY;
 
@@ -409,20 +408,20 @@ int Game::updateLerpSprite(LerpSprite* lerpSprite) {
 					int walkSnd = app->combat->monsterBehaviors[entity->def->monsterIdx].walkSoundResId;
 					if (walkSnd >= 0) {
 						if ((1 + (n8 * lerpSprite->dist >> 12) & 0x3) >> 1 !=
-						    ((((app->render->mapSpriteInfo[n2]) & 0xFF00) >> 8) & 3) >> 1) {
+						    ((((app->render->getSpriteInfoRaw(n2)) & 0xFF00) >> 8) & 3) >> 1) {
 							app->sound->playSound(walkSnd, 0, true, 0);
 						}
 					}
 				}
 
-				app->render->mapSpriteInfo[n2] = ((app->render->mapSpriteInfo[n2] & 0xFFFF00FF) |
-				                                  ((1 + (n8 * lerpSprite->dist >> 12) & 0x3) | anim) << 8);
+				app->render->setSpriteFrame(n2,
+				                                  ((1 + (n8 * lerpSprite->dist >> 12) & 0x3) | anim));
 			}
 		}
 		if (!(lerpSprite->flags & Enums::LS_FLAG_ENT_NORELINK) && (n12 != n14 || n13 != n15)) {
 			this->unlinkEntity(entity);
-			this->linkEntity(entity, app->render->mapSprites[app->render->S_X + n2] >> 6,
-			                 app->render->mapSprites[app->render->S_Y + n2] >> 6);
+			this->linkEntity(entity, app->render->getSpriteX(n2) >> 6,
+			                 app->render->getSpriteY(n2) >> 6);
 			n |= 0x2;
 		}
 	}
@@ -526,17 +525,17 @@ LerpSprite* Game::allocLerpSprite(ScriptThread* thread, int n, bool b) {
 		}
 		int n2 = lerpSprite->hSprite - 1;
 		Entity* entity = nullptr;
-		if (-1 != app->render->mapSprites[app->render->S_ENT + n2]) {
-			entity = &this->entities[app->render->mapSprites[app->render->S_ENT + n2]];
+		if (-1 != app->render->getSpriteEnt(n2)) {
+			entity = &this->entities[app->render->getSpriteEnt(n2)];
 		}
 		if (entity != nullptr && entity->isMonster()) {
-			int n3 = (app->render->mapSpriteInfo[n2] & 0xFF00) >> 8 & 0xF0;
+			int n3 = (app->render->getSpriteInfoRaw(n2) & 0xFF00) >> 8 & 0xF0;
 			if (n3 == 32 || (lerpSprite->flags & Enums::LS_FLAG_AUTO_FACE) != 0x0) {
 				n3 = 0;
 			} else if (n3 == 48) {
 				n3 = 16;
 			}
-			app->render->mapSpriteInfo[n2] = ((app->render->mapSpriteInfo[n2] & 0xFFFF00FF) | n3 << 8);
+			app->render->setSpriteInfoRaw(n2, ((app->render->getSpriteInfoRaw(n2) & 0xFFFF00FF) | n3 << 8));
 		}
 	}
 	if (lerpSprite == nullptr) {
@@ -556,34 +555,34 @@ void Game::freeLerpSprite(LerpSprite* lerpSprite) {
 
 	Entity* entity = nullptr;
 	int sprite = lerpSprite->hSprite - 1;
-	int n2 = app->render->mapSpriteInfo[sprite] & 0xFF;
-	if ((app->render->mapSpriteInfo[sprite] & 0x400000) != 0x0) {
+	int n2 = app->render->getSpriteInfoRaw(sprite) & 0xFF;
+	if ((app->render->getSpriteInfoRaw(sprite) & 0x400000) != 0x0) {
 		n2 += 257;
 	}
-	app->render->mapSprites[app->render->S_X + sprite] = (short)lerpSprite->dstX;
-	app->render->mapSprites[app->render->S_Y + sprite] = (short)lerpSprite->dstY;
+	app->render->setSpriteX(sprite, (short)lerpSprite->dstX);
+	app->render->setSpriteY(sprite, (short)lerpSprite->dstY);
 	if (!(lerpSprite->flags & Enums::LS_FLAG_TRUNC)) {
-		app->render->mapSprites[app->render->S_Z + sprite] = (short)lerpSprite->dstZ;
+		app->render->setSpriteZ(sprite, (short)lerpSprite->dstZ);
 	}
-	app->render->mapSprites[app->render->S_SCALEFACTOR + sprite] = (short)lerpSprite->dstScale;
+	app->render->setSpriteScaleFactor(sprite, (short)lerpSprite->dstScale);
 	if (!(lerpSprite->flags & Enums::LS_FLAG_S_NORELINK)) {
 		app->render->relinkSprite(sprite);
 	}
-	if (app->render->mapSprites[app->render->S_ENT + sprite] != -1) {
-		entity = &this->entities[app->render->mapSprites[app->render->S_ENT + sprite]];
+	if (app->render->getSpriteEnt(sprite) != -1) {
+		entity = &this->entities[app->render->getSpriteEnt(sprite)];
 	}
 	int n3 = lerpSprite->dstX >> 6;
 	int n4 = lerpSprite->dstY >> 6;
-	if (nullptr != entity && 0x0 == (app->render->mapSpriteInfo[sprite] & 0x10000)) {
+	if (nullptr != entity && 0x0 == (app->render->getSpriteInfoRaw(sprite) & 0x10000)) {
 		if (entity->def->eType == Enums::ET_NPC || entity->def->eType == Enums::ET_MONSTER) {
 			if (entity->ai != nullptr) {
 				entity->ai->frameTime = 0;
 			}
-			int n5 = (app->render->mapSpriteInfo[sprite] & 0xFF00) >> 8 & 0xF0;
+			int n5 = (app->render->getSpriteInfoRaw(sprite) & 0xFF00) >> 8 & 0xF0;
 			if ((n5 == 16 || n5 == 48) && !(lerpSprite->flags & Enums::LS_FLAG_AUTO_FACE)) {
-				app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | 0x1000);
+				app->render->setSpriteInfoRaw(sprite, ((app->render->getSpriteInfoRaw(sprite) & 0xFFFF00FF) | 0x1000));
 			} else {
-				app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | 0x0);
+				app->render->setSpriteInfoRaw(sprite, ((app->render->getSpriteInfoRaw(sprite) & 0xFFFF00FF) | 0x0));
 			}
 		}
 		int n6 = entity->linkIndex % 32;
@@ -591,31 +590,31 @@ void Game::freeLerpSprite(LerpSprite* lerpSprite) {
 		if (!(lerpSprite->flags & Enums::LS_FLAG_ENT_NORELINK) &&
 		    ((entity->info & 0x100000) == 0x0 || n3 != n6 || n4 != n7)) {
 			this->unlinkEntity(entity);
-			this->linkEntity(entity, app->render->mapSprites[app->render->S_X + sprite] >> 6,
-			                 app->render->mapSprites[app->render->S_Y + sprite] >> 6);
+			this->linkEntity(entity, app->render->getSpriteX(sprite) >> 6,
+			                 app->render->getSpriteY(sprite) >> 6);
 		}
 	}
 	if ((lerpSprite->flags & Enums::LS_FLAG_DOORCLOSE) != 0x0) {
-		app->render->mapSprites[app->render->S_SCALEFACTOR + sprite] = 64;
-		app->render->mapSpriteInfo[sprite] &= 0xFFFF00FF;
+		app->render->setSpriteScaleFactor(sprite, 64);
+		app->render->setSpriteInfoRaw(sprite, app->render->getSpriteInfoRaw(sprite) & 0xFFFF00FF);
 		app->canvas->updateFacingEntity = true;
 		app->canvas->automapDrawn = false;
-		app->render->mapSpriteInfo[sprite] &= 0x7fffffff;
+		app->render->setSpriteInfoRaw(sprite, app->render->getSpriteInfoRaw(sprite) & 0x7fffffff);
 	} else if ((lerpSprite->flags & Enums::LS_FLAG_DOOROPEN) || (lerpSprite->flags & Enums::LS_FLAG_SECRET_HIDE)) {
 		app->canvas->updateFacingEntity = true;
 		this->secretActive = false;
 		app->canvas->automapDrawn = false;
 		this->unlinkEntity(entity);
 		if (entity->def->eType != Enums::ET_DOOR) {
-			app->render->mapSpriteInfo[sprite] |= Enums::SPRITE_FLAG_HIDDEN;
+			app->render->setSpriteInfoFlag(sprite, Enums::SPRITE_FLAG_HIDDEN);
 		}
 	} else {
 		if ((lerpSprite->flags & Enums::LS_MASK_CHICKEN_BOUNCE) == Enums::LS_MASK_CHICKEN_BOUNCE) {
 			int sx = lerpSprite->srcX - lerpSprite->dstX;
 			int sy = lerpSprite->srcY - lerpSprite->dstY;
-			lerpSprite->dstX = lerpSprite->srcX = app->render->mapSprites[app->render->S_X + sprite];
-			lerpSprite->dstY = lerpSprite->srcY = app->render->mapSprites[app->render->S_Y + sprite];
-			lerpSprite->srcZ = app->render->mapSprites[app->render->S_Z + sprite];
+			lerpSprite->dstX = lerpSprite->srcX = app->render->getSpriteX(sprite);
+			lerpSprite->dstY = lerpSprite->srcY = app->render->getSpriteY(sprite);
+			lerpSprite->srcZ = app->render->getSpriteZ(sprite);
 			lerpSprite->flags &= ~Enums::LS_FLAG_TRUNC;
 			if (sx != 0) {
 				sx /= std::abs(sx);
@@ -647,11 +646,11 @@ void Game::freeLerpSprite(LerpSprite* lerpSprite) {
 			lerpSprite->flags |= Enums::LS_FLAG_SECRET_HIDE;
 			lerpSprite->srcX = lerpSprite->dstX;
 			lerpSprite->srcY = lerpSprite->dstY;
-			app->render->mapSpriteInfo[sprite] |= Enums::SPRITE_FLAG_DOORLERP;
-			app->render->mapSprites[app->render->S_SCALEFACTOR + sprite] = (uint8_t)lerpSprite->dstScale;
+			app->render->setSpriteInfoFlag(sprite, Enums::SPRITE_FLAG_DOORLERP);
+			app->render->setSpriteScaleFactor(sprite, (uint8_t)lerpSprite->dstScale);
 			lerpSprite->dstScale = 0;
 			lerpSprite->startTime = app->gameTime;
-			switch (app->render->mapSpriteInfo[sprite] & Enums::SPRITE_FLAGS_ORIENTED) {
+			switch (app->render->getSpriteInfoRaw(sprite) & Enums::SPRITE_FLAGS_ORIENTED) {
 				case Enums::SPRITE_FLAG_EAST: {
 					lerpSprite->dstY += 32;
 					break;
@@ -675,7 +674,7 @@ void Game::freeLerpSprite(LerpSprite* lerpSprite) {
 		}
 	}
 	if ((lerpSprite->flags & Enums::LS_FLAG_CHICKEN_KICK) != 0x0) {
-		app->render->mapSpriteInfo[sprite] &= 0xFFFF00FF;
+		app->render->setSpriteInfoRaw(sprite, app->render->getSpriteInfoRaw(sprite) & 0xFFFF00FF);
 	}
 	if ((lerpSprite->flags & Enums::LS_FLAG_ANIMATING_EFFECT) != 0x0) {
 		lerpSprite->flags &= ~Enums::LS_FLAG_ANIMATING_EFFECT;

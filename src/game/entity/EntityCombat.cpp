@@ -36,7 +36,7 @@ bool Entity::touched() {
             app->game->scriptStateVars[11] = this->def->tileIndex;
             app->game->executeStaticFunc(11);
             if (this->isDroppedEntity()) {
-                app->render->mapSprites[app->render->S_ENT + this->getSprite()] = -1;
+                app->render->setSpriteEnt(this->getSprite(), -1);
                 this->def = nullptr;
             }
             return true;
@@ -261,7 +261,7 @@ bool Entity::pain(int n, Entity* entity) {
             app->sound->playSound(monsterSound, 0, 3, 0);
 
             if (app->combat->punchingMonster == 0 && 0x0 == (this->monsterEffects & 0x2)) {
-                app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | 0x6000);
+                app->render->setSpriteFrame(sprite, 0x60);
                 this->ai->frameTime = app->time + 250;
             }
             if (app->combat->attackerWeaponId != 2) {
@@ -269,7 +269,7 @@ bool Entity::pain(int n, Entity* entity) {
             }
         }
         else if ((this->monsterEffects & 0x2) == 0x0) {
-            app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | 0x6000);
+            app->render->setSpriteFrame(sprite, 0x60);
             if (app->combat->animLoopCount > 0) {
                 this->ai->frameTime = app->time + 250;
             }
@@ -284,7 +284,7 @@ bool Entity::pain(int n, Entity* entity) {
     else if (this->def->eType == Enums::ET_ATTACK_INTERACTIVE) {
         uint8_t eSubType = this->def->eSubType;
         if (eSubType == Enums::INTERACT_BARRICADE) {
-            app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | 0x100);
+            app->render->setSpriteFrame(sprite, 0x01);
             app->particleSystem->spawnParticles(2, -1, sprite);
             app->sound->playSound(Sounds::getResIDByName(SoundName::GLASS), 0, 3, false);
             app->game->unlinkEntity(this);
@@ -300,7 +300,7 @@ bool Entity::pain(int n, Entity* entity) {
             }
             app->game->removeEntity(this);
             this->info |= 0x400000;
-            app->render->mapSpriteInfo[sprite] |= 0x10000;
+            app->render->setSpriteInfoFlag(sprite, 0x10000);
         }
     }
     return b;
@@ -339,9 +339,9 @@ void Entity::died(bool b, Entity* entity) {
 
     LOG_INFO("[entity] died: type={} subType={} sprite={}\n", this->def->eType, this->def->eSubType, this->getSprite());
     int sprite = this->getSprite();
-    short n = app->render->mapSprites[app->render->S_X + sprite];
-    short n2 = app->render->mapSprites[app->render->S_Y + sprite];
-    int n3 = app->render->mapSpriteInfo[sprite];
+    short n = app->render->getSpriteX(sprite);
+    short n2 = app->render->getSpriteY(sprite);
+    int n3 = app->render->getSpriteInfoRaw(sprite);
     if ((this->info & 0x20000) == 0x0 || (this->isMonster() && (this->monsterFlags & 0x4) != 0x0)) {
         return;
     }
@@ -404,7 +404,7 @@ void Entity::died(bool b, Entity* entity) {
             app->game->executeStaticFunc(5);
         }
         else if (app->combat->monsterBehaviors[monsterIdx].floats) {
-            app->game->gsprite_allocAnim(241, n, n2, app->render->mapSprites[app->render->S_Z + sprite]);
+            app->game->gsprite_allocAnim(241, n, n2, app->render->getSpriteZ(sprite));
             n3 |= 0x10000;
             app->game->spawnDropItem(this);
         }
@@ -428,7 +428,7 @@ void Entity::died(bool b, Entity* entity) {
             this->info &= 0xFFF7FFFF;
             app->player->counters[4]++;
             app->game->unlinkEntity(this);
-            GameSprite* gsprite_allocAnim = app->game->gsprite_allocAnim(241, app->render->mapSprites[app->render->S_X + sprite], app->render->mapSprites[app->render->S_Y + sprite], app->render->mapSprites[app->render->S_Z + sprite] - 20);
+            GameSprite* gsprite_allocAnim = app->game->gsprite_allocAnim(241, app->render->getSpriteX(sprite), app->render->getSpriteY(sprite), app->render->getSpriteZ(sprite) - 20);
             gsprite_allocAnim->flags |= 0x400;
             gsprite_allocAnim->startScale = 96;
             gsprite_allocAnim->destScale = 127;
@@ -439,7 +439,7 @@ void Entity::died(bool b, Entity* entity) {
         app->game->executeEntityFunc(this, this->deathByExplosion(entity));
         this->info &= 0xFDFFFFFF;
     }
-    app->render->mapSpriteInfo[sprite] = n3;
+    app->render->setSpriteInfoRaw(sprite, n3);
     app->canvas->updateFacingEntity = true;
 }
 
@@ -569,18 +569,18 @@ int Entity::aiWeaponForTarget(Entity* entity) {
         viewY = app->canvas->viewY;
     }
     else {
-        viewX = app->render->mapSprites[app->render->S_X + sprite];
-        viewY = app->render->mapSprites[app->render->S_Y + sprite];
+        viewX = app->render->getSpriteX(sprite);
+        viewY = app->render->getSpriteY(sprite);
     }
-    int a = viewX - app->render->mapSprites[app->render->S_X + sprite];
-    int a2 = viewY - app->render->mapSprites[app->render->S_Y + sprite];
+    int a = viewX - app->render->getSpriteX(sprite);
+    int a2 = viewY - app->render->getSpriteY(sprite);
     int8_t* weapons = app->combat->weapons;
     if (this->def->eSubType == Enums::BOSS_PINKY) {
         if (a != 0 && a2 != 0) {
             return -1;
         }
         int* calcPosition = entity->calcPosition();
-        app->game->trace(app->render->mapSprites[app->render->S_X + sprite], app->render->mapSprites[app->render->S_Y + sprite], calcPosition[0], calcPosition[1], this, 4131, 2);
+        app->game->trace(app->render->getSpriteX(sprite), app->render->getSpriteY(sprite), calcPosition[0], calcPosition[1], this, 4131, 2);
         if (app->game->traceEntity == entity) {
             return app->combat->getMonsterField(this->def, 0);
         }
@@ -592,8 +592,8 @@ int Entity::aiWeaponForTarget(Entity* entity) {
                 this->param = (int)app->nextInt() % 3 + 3;
                 int n = 30;
                 while (n-- > 0) {
-                    short n2 = app->render->mapSprites[app->render->S_X + sprite];
-                    short n3 = app->render->mapSprites[app->render->S_Y + sprite];
+                    short n2 = app->render->getSpriteX(sprite);
+                    short n3 = app->render->getSpriteY(sprite);
                     int n4 = 0;
                     int n5 = 0;
 
@@ -609,9 +609,9 @@ int Entity::aiWeaponForTarget(Entity* entity) {
                         app->particleSystem->spawnParticles(7, -1, sprite);
                         app->sound->playSound(Sounds::getResIDByName(SoundName::TELEPORT), 0, 1, 0);
                         app->game->unlinkEntity(this);
-                        app->render->mapSprites[app->render->S_X + sprite] = (short)n6;
-                        app->render->mapSprites[app->render->S_Y + sprite] = (short)n7;
-                        app->render->mapSprites[app->render->S_Z + sprite] = (short)(app->render->getHeight(n6, n7) + 32);
+                        app->render->setSpriteX(sprite, (short)n6);
+                        app->render->setSpriteY(sprite, (short)n7);
+                        app->render->setSpriteZ(sprite, (short)(app->render->getHeight(n6, n7) + 32));
                         app->game->linkEntity(this, n6 >> 6, n7 >> 6);
                         app->render->relinkSprite(sprite);
                         app->particleSystem->spawnParticles(7, -1, sprite);
@@ -627,10 +627,10 @@ int Entity::aiWeaponForTarget(Entity* entity) {
             if (this->def->eSubType == Enums::MONSTER_ARCH_VILE || (this->def->eSubType == 15 && this->def->parm != 0)) {
                 int monsterField = app->combat->getMonsterField(this->def, (this->def->eSubType == Enums::BOSS_VIOS) ? 1 : 0);
                 int n8 = monsterField * 9;
-                int worldDistToTileDist = app->combat->WorldDistToTileDist(entity->distFrom(app->render->mapSprites[app->render->S_X + sprite], app->render->mapSprites[app->render->S_Y + sprite]));
+                int worldDistToTileDist = app->combat->WorldDistToTileDist(entity->distFrom(app->render->getSpriteX(sprite), app->render->getSpriteY(sprite)));
                 if (weapons[n8 + 2] <= worldDistToTileDist && weapons[n8 + 3] >= worldDistToTileDist) {
                     int* calcPosition2 = entity->calcPosition();
-                    app->game->trace(app->render->mapSprites[app->render->S_X + sprite], app->render->mapSprites[app->render->S_Y + sprite], calcPosition2[0], calcPosition2[1], this, 4131, 2);
+                    app->game->trace(app->render->getSpriteX(sprite), app->render->getSpriteY(sprite), calcPosition2[0], calcPosition2[1], this, 4131, 2);
                     if (app->game->traceEntity == entity) {
                         return monsterField;
                     }
@@ -640,7 +640,7 @@ int Entity::aiWeaponForTarget(Entity* entity) {
             return -1;
         }
         else {
-            app->game->trace(app->render->mapSprites[app->render->S_X + sprite], app->render->mapSprites[app->render->S_Y + sprite], viewX, viewY, this, 5295, 2);
+            app->game->trace(app->render->getSpriteX(sprite), app->render->getSpriteY(sprite), viewX, viewY, this, 5295, 2);
             if (app->game->traceEntity != entity) {
                 return -1;
             }
@@ -652,7 +652,7 @@ int Entity::aiWeaponForTarget(Entity* entity) {
             if (n10 != 0) {
                 n10 /= std::abs(a2);
             }
-            app->game->trace(app->render->mapSprites[app->render->S_X + sprite] + n9 * 18, app->render->mapSprites[app->render->S_Y + sprite] + n10 * 18, viewX, viewY, this, 15791, 2);
+            app->game->trace(app->render->getSpriteX(sprite) + n9 * 18, app->render->getSpriteY(sprite) + n10 * 18, viewX, viewY, this, 15791, 2);
             bool b = app->game->traceEntity == entity;
             int monsterField2 = app->combat->getMonsterField(this->def, 0);
             int monsterField3 = app->combat->getMonsterField(this->def, 1);
@@ -666,7 +666,7 @@ int Entity::aiWeaponForTarget(Entity* entity) {
             }
             int n12;
             int n11 = n12 = -1;
-            int worldDistToTileDist2 = app->combat->WorldDistToTileDist(entity->distFrom(app->render->mapSprites[app->render->S_X + sprite], app->render->mapSprites[app->render->S_Y + sprite]));
+            int worldDistToTileDist2 = app->combat->WorldDistToTileDist(entity->distFrom(app->render->getSpriteX(sprite), app->render->getSpriteY(sprite)));
             if (monsterField2 == monsterField3) {
                 monsterField3 = 0;
             }
@@ -685,8 +685,8 @@ int Entity::aiWeaponForTarget(Entity* entity) {
 
             if (monsterField2 == 18 || monsterField3 == 18) {
                 bool b2 = true;
-                int n15 = app->render->mapSprites[app->render->S_X + sprite] >> 6;
-                int n16 = app->render->mapSprites[app->render->S_Y + sprite] >> 6;
+                int n15 = app->render->getSpriteX(sprite) >> 6;
+                int n16 = app->render->getSpriteY(sprite) >> 6;
 
                 do {
                     if (app->game->baseVisitedTiles[n16] & 1 << n15){
@@ -764,7 +764,7 @@ void Entity::undoAttack() {
     this->monsterFlags &= ~0x400;
     int sprite = this->getSprite();
     if (app->combat->getWeaponFlags(this->combat->weapon).chargeAttack) {
-        app->render->mapSpriteInfo[sprite] &= 0xFFFF00FF;
+        app->render->setSpriteFrame(sprite, 0);
     }
     this->ai->resetGoal();
     Entity* entity = app->game->combatMonsters;
@@ -788,8 +788,8 @@ void Entity::trimCorpsePile(int n, int n2) {
         int n3 = 0;
         do {
             int sprite = entity->getSprite();
-            if (app->render->mapSprites[app->render->S_X + sprite] == n && app->render->mapSprites[app->render->S_Y + sprite] == n2 && (entity->info & 0x1010000) != 0x0 && (app->render->mapSpriteInfo[sprite] & 0x10000) == 0x0 && ++n3 >= 3) {
-                app->render->mapSpriteInfo[sprite] |= 0x10000;
+            if (app->render->getSpriteX(sprite) == n && app->render->getSpriteY(sprite) == n2 && (entity->info & 0x1010000) != 0x0 && (app->render->getSpriteInfoRaw(sprite) & 0x10000) == 0x0 && ++n3 >= 3) {
+                app->render->setSpriteInfoFlag(sprite, 0x10000);
                 entity->info = ((entity->info & 0xFEFFFFFF) | 0x10000);
                 app->game->unlinkEntity(entity);
             }
@@ -814,8 +814,8 @@ void Entity::knockback(int n, int n2, int n3) {
     }
     else {
         int sprite = this->getSprite();
-        destX = app->render->mapSprites[app->render->S_X + sprite];
-        destY = app->render->mapSprites[app->render->S_Y + sprite];
+        destX = app->render->getSpriteX(sprite);
+        destY = app->render->getSpriteY(sprite);
         n4 = 15535;
     }
     knockbackDelta[0] = destX - n;
@@ -889,7 +889,7 @@ int Entity::findRaiseTarget(int n, int n2, int n3) {
                 (n2 == 0 || (inactiveMonsters->monsterFlags & n2) != 0x0) &&
                 (inactiveMonsters->monsterFlags & n3) == 0x0 &&
                 inactiveMonsters->distFrom(n4, n5) <= n &&
-                app->game->findMapEntity(app->render->mapSprites[app->render->S_X + sprite], app->render->mapSprites[app->render->S_Y + sprite], 15535) == nullptr &&
+                app->game->findMapEntity(app->render->getSpriteX(sprite), app->render->getSpriteY(sprite), 15535) == nullptr &&
                 (app->game->difficulty != Enums::DIFFICULTY_NIGHTMARE || 0x0 == (inactiveMonsters->monsterEffects & 0x4)))
             {
                 this->raiseTargets[n6++] = inactiveMonsters;
@@ -916,12 +916,12 @@ void Entity::raiseTarget(int n) {
     app->localization->composeTextField(this->name, smallBuffer);
     app->localization->addTextArg(smallBuffer);
     smallBuffer->dispose();
-    if (app->game->findMapEntity(app->render->mapSprites[app->render->S_X + sprite], app->render->mapSprites[app->render->S_Y + sprite], 15535) != nullptr) {
+    if (app->game->findMapEntity(app->render->getSpriteX(sprite), app->render->getSpriteY(sprite), 15535) != nullptr) {
         app->hud->addMessage((short)92);
         entity->info &= ~0x8000000;
         return;
     }
-    entity->resurrect(app->render->mapSprites[app->render->S_X + sprite], app->render->mapSprites[app->render->S_Y + sprite], app->render->mapSprites[app->render->S_Z + sprite]);
+    entity->resurrect(app->render->getSpriteX(sprite), app->render->getSpriteY(sprite), app->render->getSpriteZ(sprite));
     app->game->activate(entity, false, false, true, true);
     Text* smallBuffer2 = app->localization->getSmallBuffer();
     app->localization->composeTextField(entity->name, smallBuffer2);
@@ -939,12 +939,12 @@ void Entity::resurrect(int n, int n2, int n3) {
     this->def = app->entityDefManager->find(2, this->def->eSubType, this->def->parm);
     this->name = (short)(this->def->name | 0x400);
     this->clearMonsterEffects();
-    app->render->mapSprites[app->render->S_X + sprite] = (short)n;
-    app->render->mapSprites[app->render->S_Y + sprite] = (short)n2;
-    app->render->mapSprites[app->render->S_Z + sprite] = (short)n3;
-    app->render->mapSpriteInfo[sprite] &= 0xFFFC00FF;
+    app->render->setSpriteX(sprite, (short)n);
+    app->render->setSpriteY(sprite, (short)n2);
+    app->render->setSpriteZ(sprite, (short)n3);
+    app->render->setSpriteInfoRaw(sprite, app->render->getSpriteInfoRaw(sprite) & 0xFFFC00FF);
     if ((app->nextInt() & 0x1) != 0x0) {
-        app->render->mapSpriteInfo[sprite] |= 0x20000;
+        app->render->setSpriteInfoFlag(sprite, 0x20000);
     }
     app->render->relinkSprite(sprite);
     this->info &= 0xF6FEFFFF;

@@ -52,10 +52,10 @@ void Game::prepareMonsters() {
 				if (0x0 != (entity->info & 0x1010000) && 0x0 == (entity->monsterFlags & 0x90) && n4 < n3 / 2 && n2 < 8 &&
 				    app->nextByte() <= 100) {
 					Render* render = app->render.get();
-					if (this->findMapEntity(render->mapSprites[render->S_X + sprite],
-					                        render->mapSprites[render->S_Y + sprite], 15535) == nullptr) {
-						entity->resurrect(render->mapSprites[render->S_X + sprite],
-						                  render->mapSprites[render->S_Y + sprite], 32);
+					if (this->findMapEntity(render->getSpriteX(sprite),
+					                        render->getSpriteY(sprite), 15535) == nullptr) {
+						entity->resurrect(render->getSpriteX(sprite),
+						                  render->getSpriteY(sprite), 32);
 						entity->info &= 0xFFBFFFFF;
 						++n4;
 						++n2;
@@ -74,7 +74,7 @@ void Game::activate(Entity* entity, bool b, bool b2, bool b3, bool b4) {
 
 
 	EntityMonster* monster = entity->monster;
-	if (((app->render->mapSpriteInfo[entity->getSprite()] & 0xFF00) >> 8 & 0xF0) == 16 && !app->render->shotsFired) {
+	if ((app->render->getSpriteFrame(entity->getSprite()) & 0xF0) == 16 && !app->render->shotsFired) {
 		return;
 	}
 	if (b2 && entity->distFrom(app->canvas->viewX, app->canvas->viewY) > app->combat->tileDistances[3]) {
@@ -88,7 +88,7 @@ void Game::activate(Entity* entity, bool b, bool b2, bool b3, bool b4) {
 		return;
 	}
 	int sprite = entity->getSprite();
-	app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | 0x0);
+	app->render->setSpriteFrame(sprite, 0);
 	if (entity->nextOnList != nullptr) {
 		if (entity == this->inactiveMonsters && entity->nextOnList == this->inactiveMonsters) {
 			this->inactiveMonsters = nullptr;
@@ -260,7 +260,7 @@ bool Game::snapMonsters(bool b) {
 			LerpSprite* lerpSprite = &this->lerpSprites[i];
 			if (lerpSprite->hSprite != 0) {
 				if ((lerpSprite->flags & Enums::LS_FLAG_ANIMATING_EFFECT) != 0x0) {
-					short n = app->render->mapSprites[app->render->S_ENT + (lerpSprite->hSprite - 1)];
+					short n = app->render->getSpriteEnt(lerpSprite->hSprite - 1);
 					if (n == -1) {
 						return false;
 					}
@@ -430,12 +430,12 @@ void Game::allocDynamite(int n, int n2, int n3, int n4, int n5, int n6) {
 	this->linkEntity(freeDropEnt, n >> 6, n2 >> 6);
 	freeDropEnt->info |= 0x420000;
 	int sprite = freeDropEnt->getSprite();
-	app->render->mapSprites[app->render->S_X + sprite] = (short)n;
-	app->render->mapSprites[app->render->S_Y + sprite] = (short)n2;
-	app->render->mapSprites[app->render->S_Z + sprite] = (short)n3;
-	app->render->mapSprites[app->render->S_SCALEFACTOR + sprite] = 32;
-	app->render->mapSprites[app->render->S_RENDERMODE + sprite] = 0;
-	app->render->mapSpriteInfo[sprite] = (n4 | freeDropEnt->def->tileIndex);
+	app->render->setSpriteX(sprite, (short)n);
+	app->render->setSpriteY(sprite, (short)n2);
+	app->render->setSpriteZ(sprite, (short)n3);
+	app->render->setSpriteScaleFactor(sprite, 32);
+	app->render->setSpriteRenderMode(sprite, 0);
+	app->render->setSpriteInfoRaw(sprite, n4 | freeDropEnt->def->tileIndex);
 	app->render->relinkSprite(sprite);
 	this->placedBombs[n5] = this->lastDropEntIndex;
 }
@@ -459,12 +459,12 @@ Entity* Game::spawnDropItem(int n, int n2, int n3, EntityDef* def, int param, bo
 	}
 	int sprite = freeDropEnt->getSprite();
 	int height = app->render->getHeight(n, n2);
-	app->render->mapSpriteInfo[sprite] = n3;
-	app->render->mapSprites[app->render->S_X + sprite] = (short)n;
-	app->render->mapSprites[app->render->S_Y + sprite] = (short)n2;
-	app->render->mapSprites[app->render->S_Z + sprite] = (short)(32 + height);
-	app->render->mapSprites[app->render->S_ENT + sprite] = (short)this->lastDropEntIndex;
-	app->render->mapSprites[app->render->S_SCALEFACTOR + sprite] = 64;
+	app->render->setSpriteInfoRaw(sprite, n3);
+	app->render->setSpriteX(sprite, (short)n);
+	app->render->setSpriteY(sprite, (short)n2);
+	app->render->setSpriteZ(sprite, (short)(32 + height));
+	app->render->setSpriteEnt(sprite, (short)this->lastDropEntIndex);
+	app->render->setSpriteScaleFactor(sprite, 64);
 	freeDropEnt->param = param;
 	app->render->relinkSprite(sprite);
 	this->linkEntity(freeDropEnt, n >> 6, n2 >> 6);
@@ -506,8 +506,8 @@ void Game::spawnDropItem(Entity* entity) {
 				if (find != nullptr) {
 					if (find->tileIndex != 0) {
 						int sprite = entity->getSprite();
-						this->spawnDropItem(app->render->mapSprites[app->render->S_X + sprite],
-						                    app->render->mapSprites[app->render->S_Y + sprite], find->tileIndex, find,
+						this->spawnDropItem(app->render->getSpriteX(sprite),
+						                    app->render->getSpriteY(sprite), find->tileIndex, find,
 						                    n4, false);
 					}
 				} else {
@@ -550,13 +550,13 @@ Entity* Game::spawnPlayerEntityCopy(int n, int n2) {
 	freeDropEnt->info |= 0x400000;
 	int sprite = freeDropEnt->getSprite();
 	int height = app->render->getHeight(n, n2);
-	app->render->mapSpriteInfo[sprite] = n3;
-	app->render->mapSprites[app->render->S_X + sprite] = (short)n;
-	app->render->mapSprites[app->render->S_Y + sprite] = (short)n2;
-	app->render->mapSprites[app->render->S_Z + sprite] = (short)(32 + height);
-	app->render->mapSprites[app->render->S_ENT + sprite] = (short)this->lastDropEntIndex;
-	app->render->mapSprites[app->render->S_RENDERMODE + sprite] = 0;
-	app->render->mapSprites[app->render->S_SCALEFACTOR + sprite] = 64;
+	app->render->setSpriteInfoRaw(sprite, n3);
+	app->render->setSpriteX(sprite, (short)n);
+	app->render->setSpriteY(sprite, (short)n2);
+	app->render->setSpriteZ(sprite, (short)(32 + height));
+	app->render->setSpriteEnt(sprite, (short)this->lastDropEntIndex);
+	app->render->setSpriteRenderMode(sprite, 0);
+	app->render->setSpriteScaleFactor(sprite, 64);
 	freeDropEnt->param = 0;
 	app->render->relinkSprite(sprite);
 	this->linkEntity(freeDropEnt, n >> 6, n2 >> 6);
@@ -601,14 +601,14 @@ Entity* Game::spawnSentryBotCorpse(int n, int n2, int n3, int n4, int n5) {
 	freeDropEnt->info |= 0x1420000;
 	int sprite = freeDropEnt->getSprite();
 	int height = app->render->getHeight(n, n2);
-	app->render->mapSpriteInfo[sprite] = n6;
-	app->render->mapSpriteInfo[sprite] |= 0xD00;
-	app->render->mapSprites[app->render->S_X + sprite] = (short)n;
-	app->render->mapSprites[app->render->S_Y + sprite] = (short)n2;
-	app->render->mapSprites[app->render->S_Z + sprite] = (short)(32 + height);
-	app->render->mapSprites[app->render->S_ENT + sprite] = (short)this->lastDropEntIndex;
-	app->render->mapSprites[app->render->S_RENDERMODE + sprite] = 0;
-	app->render->mapSprites[app->render->S_SCALEFACTOR + sprite] = 64;
+	app->render->setSpriteInfoRaw(sprite, n6);
+	app->render->setSpriteInfoFlag(sprite, 0xD00);
+	app->render->setSpriteX(sprite, (short)n);
+	app->render->setSpriteY(sprite, (short)n2);
+	app->render->setSpriteZ(sprite, (short)(32 + height));
+	app->render->setSpriteEnt(sprite, (short)this->lastDropEntIndex);
+	app->render->setSpriteRenderMode(sprite, 0);
+	app->render->setSpriteScaleFactor(sprite, 64);
 	app->render->relinkSprite(sprite);
 	this->linkEntity(freeDropEnt, n >> 6, n2 >> 6);
 	return freeDropEnt;
@@ -628,7 +628,7 @@ void Game::throwDropItem(int dstX, int dstY, int n, Entity* entity) {
 		allocLerpSprite->height = 48;
 		allocLerpSprite->flags |= (Enums::LS_FLAG_ASYNC | Enums::LS_FLAG_PARABOLA);
 		allocLerpSprite->srcScale = allocLerpSprite->dstScale =
-		    app->render->mapSprites[app->render->S_SCALEFACTOR + entity->getSprite()];
+		    app->render->getSpriteScaleFactor(entity->getSprite());
 		allocLerpSprite->startTime = app->gameTime;
 		allocLerpSprite->travelTime = 850;
 		int n3 = app->nextByte() & 0x7;
@@ -762,8 +762,8 @@ void Game::executeEntityFunc(Entity* entity, bool throwAwayLoot) {
 
 void Game::foundLoot(int n, int n2) {
 
-	this->foundLoot(app->render->mapSprites[app->render->S_X + n], app->render->mapSprites[app->render->S_Y + n],
-	                app->render->mapSprites[app->render->S_Z + n], n2);
+	this->foundLoot(app->render->getSpriteX(n), app->render->getSpriteY(n),
+	                app->render->getSpriteZ(n), n2);
 }
 
 void Game::foundLoot(int n, int n2, int n3, int n4) {
@@ -786,8 +786,8 @@ void Game::raiseCorpses() {
 			if ((inactiveMonsters->info & 0x10000) == 0x0 && (inactiveMonsters->info & 0x8000000) == 0x0 &&
 			    (inactiveMonsters->info & 0x1000000) != 0x0 && !inactiveMonsters->isBoss() &&
 			    (inactiveMonsters->monsterFlags & 0x40) == 0x0 &&
-			    this->findMapEntity(app->render->mapSprites[app->render->S_X + sprite],
-			                        app->render->mapSprites[app->render->S_Y + sprite], 15535) == nullptr &&
+			    this->findMapEntity(app->render->getSpriteX(sprite),
+			                        app->render->getSpriteY(sprite), 15535) == nullptr &&
 			    (this->difficulty != Enums::DIFFICULTY_NIGHTMARE || 0x0 == (inactiveMonsters->monsterEffects & 0x4))) {
 				this->gridEntities[n++] = inactiveMonsters;
 				if (n == 9) {
@@ -800,13 +800,13 @@ void Game::raiseCorpses() {
 			Entity* entity = this->gridEntities[i];
 			entity->info |= 0x8000000;
 			int sprite = entity->getSprite();
-			entity->resurrect(app->render->mapSprites[app->render->S_X + sprite],
-			                  app->render->mapSprites[app->render->S_Y + sprite],
-			                  app->render->mapSprites[app->render->S_Z + sprite]);
+			entity->resurrect(app->render->getSpriteX(sprite),
+			                  app->render->getSpriteY(sprite),
+			                  app->render->getSpriteZ(sprite));
 			activate(entity, false, false, true, true);
-			GameSprite* gameSprite = gsprite_allocAnim(241, app->render->mapSprites[app->render->S_X + sprite],
-			                                           app->render->mapSprites[app->render->S_Y + sprite],
-			                                           app->render->mapSprites[app->render->S_Z + sprite] - 20);
+			GameSprite* gameSprite = gsprite_allocAnim(241, app->render->getSpriteX(sprite),
+			                                           app->render->getSpriteY(sprite),
+			                                           app->render->getSpriteZ(sprite) - 20);
 			gameSprite->flags |= 0x400;
 			gameSprite->startScale = 64;
 			gameSprite->destScale = 96;

@@ -66,7 +66,7 @@ void Entity::initspawn() {
     this->name = (short)(this->def->name | 0x400);
     int sprite = this->getSprite();
 
-    int tileNum = app->render->mapSpriteInfo[sprite] & 0xFF;
+    int tileNum = app->render->getSpriteTileNum(sprite);
     if (eType == Enums::ET_MONSTER) {
         app->combat->monsters[this->def->monsterIdx]->clone(this->combat);
 
@@ -78,29 +78,29 @@ void Entity::initspawn() {
         }
         short n3 = 0;
         short n4 = 64;
-        app->render->mapSprites[app->render->S_Z + sprite] = (short)(32 + app->render->getHeight(app->render->mapSprites[app->render->S_X + sprite], app->render->mapSprites[app->render->S_Y + sprite]));
+        app->render->setSpriteZ(sprite, (short)(32 + app->render->getHeight(app->render->getSpriteX(sprite), app->render->getSpriteY(sprite))));
         app->render->relinkSprite(sprite);
         if (app->combat->monsterBehaviors[this->def->monsterIdx].smallParm0Scale >= 0 && this->def->parm == 0) {
             n4 = (short)app->combat->monsterBehaviors[this->def->monsterIdx].smallParm0Scale;
         }
-        app->render->mapSprites[app->render->S_SCALEFACTOR + sprite] = n4;
-        app->render->mapSprites[app->render->S_RENDERMODE + sprite] = n3;
+        app->render->setSpriteScaleFactor(sprite, n4);
+        app->render->setSpriteRenderMode(sprite, n3);
         this->info |= 0x20000;
         if (app->combat->monsterBehaviors[this->def->monsterIdx].isVios) {
             this->param = app->nextInt() % 3 + 3;
         }
     }
     else if (eType == Enums::ET_DECOR && eSubType != Enums::DECOR_STATUE) {
-        app->render->mapSpriteInfo[sprite] &= ~0x10000;
+        app->render->clearSpriteInfoFlag(sprite, 0x10000);
         if (tileNum == SpriteDefs::getIndex("switch")) {
-            app->render->mapSprites[app->render->S_SCALEFACTOR + sprite] = 32;
+            app->render->setSpriteScaleFactor(sprite, 32);
         }
     }
     else if (eType == Enums::ET_ATTACK_INTERACTIVE) {
         this->info |= 0x20000;
 #if 0 // J2ME
         if (eSubType == SpriteDefs::getIndex("obj_crate")) {
-            app->render->mapSprites[app->render->S_Z + sprite] -= 224;
+            app->render->setSpriteZ(sprite, app->render->getSpriteZ(sprite) - 224);
         }
 #endif
     }
@@ -137,13 +137,13 @@ int* Entity::calcPosition() {
     }
     else if (this->def->eType == Enums::ET_MONSTER) {
         int sprite = this->getSprite();
-        x = app->render->mapSprites[app->render->S_X + sprite];
-        y = app->render->mapSprites[app->render->S_Y + sprite];
+        x = app->render->getSpriteX(sprite);
+        y = app->render->getSpriteY(sprite);
     }
     else {
         int sprite = this->getSprite();
-        x = app->render->mapSprites[app->render->S_X + sprite];
-        y = app->render->mapSprites[app->render->S_Y + sprite];
+        x = app->render->getSpriteX(sprite);
+        y = app->render->getSpriteY(sprite);
     }
     this->pos[0] = x;
     this->pos[1] = y;

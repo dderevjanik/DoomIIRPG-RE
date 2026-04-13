@@ -297,7 +297,7 @@ void Game::saveWorldState(OutputStream* OS, bool b) {
 					n5 = 1;
 				}
 			}
-			if (n5 == 0 && 0x0 != (app->render->mapSpriteInfo[n3] & 0x10000)) {
+			if (n5 == 0 && 0x0 != (app->render->getSpriteInfoRaw(n3) & 0x10000)) {
 				n5 = 1;
 			}
 			if (n5 != 0) {
@@ -453,15 +453,15 @@ bool Game::loadWorldState(InputStream* IS) {
 			uint8_t byte3 = IS->readByte();
 			for (int l = 0; l < 8; ++l, ++k) {
 				if ((byte3 & 1 << l) != 0x0) {
-					app->render->mapSpriteInfo[k] |= 0x10000;
+					app->render->setSpriteInfoFlag(k, 0x10000);
 				} else {
-					app->render->mapSpriteInfo[k] &= ~0x10000;
+					app->render->setSpriteInfoRaw(k, app->render->getSpriteInfoRaw(k) & ~0x10000);
 				}
 				++l;
 				if ((byte3 & 1 << l) != 0x0) {
-					app->render->mapSpriteInfo[k] |= 0x200000;
+					app->render->setSpriteInfoFlag(k, 0x200000);
 				} else {
-					app->render->mapSpriteInfo[k] &= ~0x200000;
+					app->render->setSpriteInfoRaw(k, app->render->getSpriteInfoRaw(k) & ~0x200000);
 				}
 			}
 		}

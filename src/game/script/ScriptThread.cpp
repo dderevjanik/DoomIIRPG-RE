@@ -370,7 +370,7 @@ uint32_t ScriptThread::run() {
                 }
                 lerpSprite->dstX = 32 + (dstX << 6);
                 lerpSprite->dstY = 32 + (dstY << 6);
-                short sEnt = this->app->render->mapSprites[this->app->render->S_ENT + sprite];
+                short sEnt = this->app->render->getSpriteEnt(sprite);
                 if (sEnt != -1) {
                     this->app->game->entities[sEnt].info |= 0x400000;
                     if (this->app->game->entities[sEnt].monster != nullptr) {
@@ -378,10 +378,10 @@ uint32_t ScriptThread::run() {
                     }
                 }
                 lerpSprite->dstZ = this->app->render->getHeight(lerpSprite->dstX, lerpSprite->dstY) + dstZ;
-                lerpSprite->srcX = this->app->render->mapSprites[this->app->render->S_X + sprite];
-                lerpSprite->srcY = this->app->render->mapSprites[this->app->render->S_Y + sprite];
-                lerpSprite->srcZ = this->app->render->mapSprites[this->app->render->S_Z + sprite];
-                lerpSprite->srcScale = lerpSprite->dstScale = this->app->render->mapSprites[this->app->render->S_SCALEFACTOR + sprite];
+                lerpSprite->srcX = this->app->render->getSpriteX(sprite);
+                lerpSprite->srcY = this->app->render->getSpriteY(sprite);
+                lerpSprite->srcZ = this->app->render->getSpriteZ(sprite);
+                lerpSprite->srcScale = lerpSprite->dstScale = this->app->render->getSpriteScaleFactor(sprite);
                 lerpSprite->startTime = app->gameTime;
                 lerpSprite->travelTime = time;
                 lerpSprite->flags = (flags & Enums::SCRIPT_LS_FLAG_ASYNC_BLOCK);
@@ -681,8 +681,8 @@ uint32_t ScriptThread::run() {
                 short sprite = this->getUByteArg();
                 short args = this->getUByteArg();
                 int time = this->getUByteArg() * 100;
-                short sEnt = this->app->render->mapSprites[this->app->render->S_ENT + sprite];
-                this->app->render->mapSpriteInfo[sprite] = ((this->app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | (args << 8));
+                short sEnt = this->app->render->getSpriteEnt(sprite);
+                this->app->render->setSpriteInfoRaw(sprite, ((this->app->render->getSpriteInfoRaw(sprite) & 0xFFFF00FF) | (args << 8)));
                 this->app->canvas->staleView = true;
                 if (sEnt != -1) {
                     this->app->game->entities[sEnt].info |= 0x400000;
@@ -715,7 +715,7 @@ uint32_t ScriptThread::run() {
                 //printf("EV_DAMAGEMONSTER -> %d\n", this->IP);
                 short sprite = this->getUByteArg();
                 int8_t dmgVal = this->getByteArg();
-                short sEnt = this->app->render->mapSprites[this->app->render->S_ENT + sprite];
+                short sEnt = this->app->render->getSpriteEnt(sprite);
                 if (sEnt != -1) {
                     Entity* entity = &this->app->game->entities[sEnt];
                     if (entity->isMonster()) {
@@ -760,7 +760,7 @@ uint32_t ScriptThread::run() {
                 int n42 = args >> 10;
                 int n43 = ((n42 & 0x4) == 0x0 && this->app->canvas->state != Canvas::ST_AUTOMAP) ? 1 : 0;
                 int n44 = n42 & 0x3;
-                short sEnt = this->app->render->mapSprites[this->app->render->S_ENT + (args & 0x3FF)];
+                short sEnt = this->app->render->getSpriteEnt((args & 0x3FF));
                 if (sEnt != -1) {
                     Entity* entity = &this->app->game->entities[sEnt];
                     if (n44 == 1 || n44 == 0) {
@@ -795,7 +795,7 @@ uint32_t ScriptThread::run() {
                 short uByteArg15 = this->getUByteArg();
                 int n46 = uByteArg15 >> 6 & 0x3;
                 int n47 = 1 << (uByteArg15 & 0x3F);
-                short n48 = this->app->render->mapSprites[this->app->render->S_ENT + uByteArg14];
+                short n48 = this->app->render->getSpriteEnt(uByteArg14);
                 if (n48 != -1) {
                     Entity* entity12 = &this->app->game->entities[n48];
                     if (entity12->isMonster()) {
@@ -828,8 +828,8 @@ uint32_t ScriptThread::run() {
             case Enums::EV_HIDE: {
                 //printf("EV_HIDE -> %d\n", this->IP);
                 short uByteArg16 = this->getUByteArg();
-                this->app->render->mapSpriteInfo[uByteArg16] |= 0x10000;
-                short n52 = this->app->render->mapSprites[this->app->render->S_ENT + uByteArg16];
+                this->app->render->setSpriteInfoFlag(uByteArg16, 0x10000);
+                short n52 = this->app->render->getSpriteEnt(uByteArg16);
                 if (n52 != -1) {
                     Entity* entity14 = &this->app->game->entities[n52];
                     entity14->info |= 0x400000;
@@ -886,7 +886,7 @@ uint32_t ScriptThread::run() {
             case Enums::EV_WAKEMONSTER: {
                 //printf("EV_WAKEMONSTER -> %d\n", this->IP);
                 int sprite = this->getUByteArg();
-                short n53 = this->app->render->mapSprites[this->app->render->S_ENT + sprite];
+                short n53 = this->app->render->getSpriteEnt(sprite);
                 if (n53 == -1 || this->app->game->entities[n53].monster == nullptr) {
                     this->app->Error(23); //ERR_MISC_SCRIPT
                 }
@@ -894,7 +894,7 @@ uint32_t ScriptThread::run() {
                 if (entity17->def->eType == Enums::ET_MONSTER) {
                     int sprite = entity17->getSprite();
                     entity17->ai->frameTime = 0;
-                    this->app->render->mapSpriteInfo[sprite] = ((this->app->render->mapSpriteInfo[sprite] & 0xFFFF00FF) | 0x0);
+                    this->app->render->setSpriteInfoRaw(sprite, ((this->app->render->getSpriteInfoRaw(sprite) & 0xFFFF00FF) | 0x0));
                     this->app->game->activate(entity17, true, false, false, true);
                     break;
                 }
@@ -921,7 +921,7 @@ uint32_t ScriptThread::run() {
             case Enums::EV_MONSTER_PARTICLES: {
                 //printf("EV_MONSTER_PARTICLES -> %d\n", this->IP);
                 int sprite = this->getUByteArg();
-                int sEnt = this->app->render->mapSprites[this->app->render->S_ENT + sprite];
+                int sEnt = this->app->render->getSpriteEnt(sprite);
                 if (sEnt != -1) {
                     this->app->particleSystem->spawnMonsterBlood(&this->app->game->entities[sEnt], false);
                 }
@@ -979,7 +979,7 @@ uint32_t ScriptThread::run() {
                 }
                 if (byteArg9 == 0) {
                     short i = (short)(uByteArg17 << 8 | uByteArg18);
-                    short n54 = this->app->render->mapSprites[this->app->render->S_ENT + i];
+                    short n54 = this->app->render->getSpriteEnt(i);
                     if (n54 == -1) {
                         app->Error("Sprite index %i error. Err %i", i, 16); //ERR_GIVE_ITEM
                     }
@@ -1021,7 +1021,7 @@ uint32_t ScriptThread::run() {
                 //printf("EV_NAMEENTITY -> %d\n", this->IP);
                 short uByteArg7 = this->getUByteArg();
                 short uByteArg8 = this->getUByteArg();
-                short n37 = this->app->render->mapSprites[this->app->render->S_ENT + uByteArg7];
+                short n37 = this->app->render->getSpriteEnt(uByteArg7);
                 if (n37 != -1) {
                     this->app->game->entities[n37].info |= 0x400000;
                     this->app->game->entities[n37].name = (short)(uByteArg8 | this->app->canvas->loadMapStringID << 10);
@@ -1041,8 +1041,8 @@ uint32_t ScriptThread::run() {
                     b7 = true;
                 }
                 short uByteArg23 = this->getUByteArg();
-                short n65 = this->app->render->mapSprites[this->app->render->S_X + uShortArg14];
-                short n66 = this->app->render->mapSprites[this->app->render->S_Y + uShortArg14];
+                short n65 = this->app->render->getSpriteX(uShortArg14);
+                short n66 = this->app->render->getSpriteY(uShortArg14);
                 if (!b7) {
                     EntityDef* lookup3 = app->entityDefManager->lookup(uByteArg22);
                     if (lookup3 == nullptr) {
@@ -1051,11 +1051,11 @@ uint32_t ScriptThread::run() {
                     this->app->game->spawnDropItem(n65, n66, uByteArg22, lookup3, uByteArg23, true);
                 }
                 else {
-                    Entity* entity18 = &this->app->game->entities[this->app->render->mapSprites[this->app->render->S_ENT + uByteArg22]];
+                    Entity* entity18 = &this->app->game->entities[this->app->render->getSpriteEnt(uByteArg22)];
                     int height = app->render->getHeight(n65, n66);
-                    this->app->render->mapSprites[app->render->S_X + uByteArg22] = n65;
-                    this->app->render->mapSprites[app->render->S_Y + uByteArg22] = n66;
-                    this->app->render->mapSprites[app->render->S_Z + uByteArg22] = (short)(32 + height);
+                    this->app->render->setSpriteX(uByteArg22, n65);
+                    this->app->render->setSpriteY(uByteArg22, n66);
+                    this->app->render->setSpriteZ(uByteArg22, (short)(32 + height));
                     this->app->render->relinkSprite(uByteArg22);
                     this->app->game->unlinkEntity(entity18);
                     this->app->game->linkEntity(entity18, n65 >> 6, n66 >> 6);
@@ -1070,7 +1070,7 @@ uint32_t ScriptThread::run() {
                 //printf("EV_SETDEATHFUNC -> %d\n", this->IP);
                 short uByteArg24 = this->getUByteArg();
                 short shortArg = this->getShortArg();
-                short n67 = this->app->render->mapSprites[this->app->render->S_ENT + uByteArg24];
+                short n67 = this->app->render->getSpriteEnt(uByteArg24);
                 if (n67 != -1) {
                     Entity* entity20 = &this->app->game->entities[n67];
                     if (shortArg != -1) {
@@ -1106,8 +1106,8 @@ uint32_t ScriptThread::run() {
                 int uShortArg15 = this->getUShortArg();
                 int param = uShortArg15 >> 14 & 0x3;
                 int n68 = uShortArg15 & 0x3FFF;
-                if (this->app->render->mapSprites[this->app->render->S_ENT + n68] != -1) {
-                    Entity* entity21 = &this->app->game->entities[this->app->render->mapSprites[this->app->render->S_ENT + n68]];
+                if (this->app->render->getSpriteEnt(n68) != -1) {
+                    Entity* entity21 = &this->app->game->entities[this->app->render->getSpriteEnt(n68)];
                     if (entity21->def->eType == Enums::ET_NPC) {
                         entity21->param = param;
                         break;
@@ -1224,8 +1224,8 @@ uint32_t ScriptThread::run() {
                 int uShortArg21 = this->getUShortArg();
                 short uByteArg30 = this->getUByteArg();
                 short uByteArg31 = this->getUByteArg();
-                if (this->app->render->mapSprites[this->app->render->S_ENT + uShortArg21] != -1) {
-                    Entity* entity23 = &this->app->game->entities[this->app->render->mapSprites[this->app->render->S_ENT + uShortArg21]];
+                if (this->app->render->getSpriteEnt(uShortArg21) != -1) {
+                    Entity* entity23 = &this->app->game->entities[this->app->render->getSpriteEnt(uShortArg21)];
                     if ((entity23->info & 0x1010000) != 0x0 && nullptr == this->app->game->findMapEntity(uByteArg30, uByteArg31, 1030)) {
                         entity23->resurrect((uByteArg30 << 6) + 32, (uByteArg31 << 6) + 32, 32);
                         break;
@@ -1275,8 +1275,8 @@ uint32_t ScriptThread::run() {
                 int n93 = uShortArg23 >> 12 & 0xF;
                 uint8_t byteArg10 = this->getByteArg();
                 int n94 = uShortArg23 & 0xFFF;
-                if (this->app->render->mapSprites[this->app->render->S_ENT + n94] != -1) {
-                    this->setAIGoal(&this->app->game->entities[this->app->render->mapSprites[this->app->render->S_ENT + n94]], n93, byteArg10);
+                if (this->app->render->getSpriteEnt(n94) != -1) {
+                    this->setAIGoal(&this->app->game->entities[this->app->render->getSpriteEnt(n94)], n93, byteArg10);
                     break;
                 }
                 this->app->Error(76); //ERR_EV_AIGOAL
@@ -1373,8 +1373,8 @@ uint32_t ScriptThread::run() {
                 int uShortArg24 = this->getUShortArg();
                 int weapon = uShortArg24 >> 12 & 0xF;
                 int n119 = uShortArg24 & 0xFFF;
-                if (this->app->render->mapSprites[this->app->render->S_ENT + n119] != -1) {
-                    Entity* entity24 = &this->app->game->entities[this->app->render->mapSprites[this->app->render->S_ENT + n119]];
+                if (this->app->render->getSpriteEnt(n119) != -1) {
+                    Entity* entity24 = &this->app->game->entities[this->app->render->getSpriteEnt(n119)];
                     this->app->player->ce->weapon = weapon;
                     this->app->combat->performAttack(nullptr, entity24, 0, 0, true);
                 }
@@ -1410,7 +1410,7 @@ uint32_t ScriptThread::run() {
                 }
                 allocLerpSprite2->dstX = dstX;
                 allocLerpSprite2->dstY = dstY;
-                short n15 = this->app->render->mapSprites[this->app->render->S_ENT + uByteArg3];
+                short n15 = this->app->render->getSpriteEnt(uByteArg3);
                 if (n15 != -1) {
                     this->app->game->entities[n15].info |= 0x400000;
                     if (this->app->game->entities[n15].monster != nullptr) {
@@ -1418,10 +1418,10 @@ uint32_t ScriptThread::run() {
                     }
                 }
                 allocLerpSprite2->dstZ = this->app->render->getHeight(allocLerpSprite2->dstX, allocLerpSprite2->dstY) + n14;
-                allocLerpSprite2->srcX = this->app->render->mapSprites[this->app->render->S_X + uByteArg3];
-                allocLerpSprite2->srcY = this->app->render->mapSprites[this->app->render->S_Y + uByteArg3];
-                allocLerpSprite2->srcZ = this->app->render->mapSprites[this->app->render->S_Z + uByteArg3];
-                allocLerpSprite2->srcScale = allocLerpSprite2->dstScale = this->app->render->mapSprites[this->app->render->S_SCALEFACTOR + uByteArg3];
+                allocLerpSprite2->srcX = this->app->render->getSpriteX(uByteArg3);
+                allocLerpSprite2->srcY = this->app->render->getSpriteY(uByteArg3);
+                allocLerpSprite2->srcZ = this->app->render->getSpriteZ(uByteArg3);
+                allocLerpSprite2->srcScale = allocLerpSprite2->dstScale = this->app->render->getSpriteScaleFactor(uByteArg3);
                 allocLerpSprite2->startTime = app->gameTime;
                 allocLerpSprite2->travelTime = travelTime2;
                 allocLerpSprite2->calcDist();
@@ -1471,12 +1471,12 @@ uint32_t ScriptThread::run() {
                 if (allocLerpSprite3 == nullptr) {
                     return 0;
                 }
-                allocLerpSprite3->srcX = allocLerpSprite3->dstX = this->app->render->mapSprites[this->app->render->S_X + n120];
-                allocLerpSprite3->srcY = allocLerpSprite3->dstY = this->app->render->mapSprites[this->app->render->S_Y + n120];
-                allocLerpSprite3->srcZ = allocLerpSprite3->dstZ = this->app->render->mapSprites[this->app->render->S_Z + n120];
-                allocLerpSprite3->srcScale = this->app->render->mapSprites[this->app->render->S_SCALEFACTOR + n120];
+                allocLerpSprite3->srcX = allocLerpSprite3->dstX = this->app->render->getSpriteX(n120);
+                allocLerpSprite3->srcY = allocLerpSprite3->dstY = this->app->render->getSpriteY(n120);
+                allocLerpSprite3->srcZ = allocLerpSprite3->dstZ = this->app->render->getSpriteZ(n120);
+                allocLerpSprite3->srcScale = this->app->render->getSpriteScaleFactor(n120);
                 allocLerpSprite3->dstScale = uByteArg32 << 1;
-                short n125 = this->app->render->mapSprites[this->app->render->S_ENT + n120];
+                short n125 = this->app->render->getSpriteEnt(n120);
                 if (n125 != -1) {
                     this->app->game->entities[n125].info |= 0x400000;
                 }
@@ -1612,7 +1612,7 @@ uint32_t ScriptThread::run() {
                 int uShortArg27 = this->getUShortArg();
                 short n127 = (short)((this->getUByteArg() << 6) + 32);
                 short n128 = (short)((this->getUByteArg() << 6) + 32);
-                Entity* entity26 = &this->app->game->entities[this->app->render->mapSprites[this->app->render->S_ENT + uShortArg27]];
+                Entity* entity26 = &this->app->game->entities[this->app->render->getSpriteEnt(uShortArg27)];
                 if (entity26->isMonster()) {
                     this->corpsifyMonster(n127, n128, entity26, true);
                     break;
@@ -1661,18 +1661,18 @@ uint32_t ScriptThread::run() {
                 }
                 allocLerpSprite4->dstX = 32 + (n130 << 6);
                 allocLerpSprite4->dstY = 32 + (n131 << 6);
-                short n133 = this->app->render->mapSprites[this->app->render->S_ENT + n129];
+                short n133 = this->app->render->getSpriteEnt(n129);
                 if (n133 != -1) {
                     this->app->game->entities[n133].info |= 0x400000;
                     if (this->app->game->entities[n133].monster != nullptr) {
                         this->app->game->entities[n133].monsterFlags &= 0xFFFFBFFF;
                     }
                 }
-                allocLerpSprite4->srcX = this->app->render->mapSprites[this->app->render->S_X + n129];
-                allocLerpSprite4->srcY = this->app->render->mapSprites[this->app->render->S_Y + n129];
-                allocLerpSprite4->srcZ = this->app->render->mapSprites[this->app->render->S_Z + n129];
+                allocLerpSprite4->srcX = this->app->render->getSpriteX(n129);
+                allocLerpSprite4->srcY = this->app->render->getSpriteY(n129);
+                allocLerpSprite4->srcZ = this->app->render->getSpriteZ(n129);
                 allocLerpSprite4->dstZ = this->app->render->getHeight(allocLerpSprite4->dstX, allocLerpSprite4->dstY) + (allocLerpSprite4->srcZ - this->app->render->getHeight(allocLerpSprite4->srcX, allocLerpSprite4->srcY));
-                allocLerpSprite4->srcScale = allocLerpSprite4->dstScale = this->app->render->mapSprites[this->app->render->S_SCALEFACTOR + n129];
+                allocLerpSprite4->srcScale = allocLerpSprite4->dstScale = this->app->render->getSpriteScaleFactor(n129);
                 allocLerpSprite4->height = height2;
                 allocLerpSprite4->startTime = app->gameTime;
                 allocLerpSprite4->travelTime = uShortArg28;
@@ -1778,8 +1778,8 @@ uint32_t ScriptThread::run() {
             case Enums::EV_ASSIGN_LOOTSET: {
                 //printf("EV_ASSIGN_LOOTSET -> %d\n", this->IP);
                 int n69 = this->getUShortArg() & 0xFFF;
-                if (this->app->render->mapSprites[this->app->render->S_ENT + n69] != -1) {
-                    Entity* entity22 = &this->app->game->entities[this->app->render->mapSprites[this->app->render->S_ENT + n69]];
+                if (this->app->render->getSpriteEnt(n69) != -1) {
+                    Entity* entity22 = &this->app->game->entities[this->app->render->getSpriteEnt(n69)];
                     bool b8 = entity22->loot != nullptr;
                     short uByteArg26 = this->getUByteArg();
                     for (short n70 = 0; n70 < uByteArg26; ++n70) {
@@ -1904,7 +1904,7 @@ uint32_t ScriptThread::run() {
                 //printf("EV_ENTITY_BREATHES -> %d\n", this->IP);
                 short uByteArg9 = this->getUByteArg();
                 short uByteArg10 = this->getUByteArg();
-                short n38 = this->app->render->mapSprites[this->app->render->S_ENT + uByteArg9];
+                short n38 = this->app->render->getSpriteEnt(uByteArg9);
                 if (n38 != -1) {
                     Entity* entity5 = &this->app->game->entities[n38];
                     if (uByteArg10 == 1) {
@@ -1971,18 +1971,18 @@ uint32_t ScriptThread::run() {
                 }
                 allocLerpSprite5->dstX = 32 + (n136 << 6);
                 allocLerpSprite5->dstY = 32 + (n137 << 6);
-                short n139 = this->app->render->mapSprites[this->app->render->S_ENT + n135];
+                short n139 = this->app->render->getSpriteEnt(n135);
                 if (n139 != -1) {
                     this->app->game->entities[n139].info |= 0x400000;
                     if (this->app->game->entities[n139].monster != nullptr) {
                         this->app->game->entities[n139].monsterFlags &= 0xFFFFBFFF;
                     }
                 }
-                allocLerpSprite5->srcX = this->app->render->mapSprites[this->app->render->S_X + n135];
-                allocLerpSprite5->srcY = this->app->render->mapSprites[this->app->render->S_Y + n135];
-                allocLerpSprite5->srcZ = this->app->render->mapSprites[this->app->render->S_Z + n135];
+                allocLerpSprite5->srcX = this->app->render->getSpriteX(n135);
+                allocLerpSprite5->srcY = this->app->render->getSpriteY(n135);
+                allocLerpSprite5->srcZ = this->app->render->getSpriteZ(n135);
                 allocLerpSprite5->dstZ = this->app->render->getHeight(allocLerpSprite5->dstX, allocLerpSprite5->dstY) + (allocLerpSprite5->srcZ - this->app->render->getHeight(allocLerpSprite5->srcX, allocLerpSprite5->srcY));
-                allocLerpSprite5->srcScale = this->app->render->mapSprites[this->app->render->S_SCALEFACTOR + n135];
+                allocLerpSprite5->srcScale = this->app->render->getSpriteScaleFactor(n135);
                 allocLerpSprite5->dstScale = uByteArg34 << 1;
                 allocLerpSprite5->height = height3;
                 allocLerpSprite5->startTime = app->gameTime;
@@ -2258,10 +2258,10 @@ void ScriptThread::corpsifyMonster(int x, int y, Entity* entity, bool b) {
     entity->clearMonsterEffects();
     entity->undoAttack();
     this->app->game->deactivate(entity);
-    this->app->render->mapSpriteInfo[sprite] = ((this->app->render->mapSpriteInfo[sprite] & 0xFFFE00FF) | 0x7000);
-    this->app->render->mapSprites[this->app->render->S_X + sprite] = (short)x;
-    this->app->render->mapSprites[this->app->render->S_Y + sprite] = (short)y;
-    this->app->render->mapSprites[this->app->render->S_Z + sprite] = (short)(this->app->render->getHeight(x, y) + 32);
+    this->app->render->setSpriteInfoRaw(sprite, ((this->app->render->getSpriteInfoRaw(sprite) & 0xFFFE00FF) | 0x7000));
+    this->app->render->setSpriteX(sprite, (short)x);
+    this->app->render->setSpriteY(sprite, (short)y);
+    this->app->render->setSpriteZ(sprite, (short)(this->app->render->getHeight(x, y) + 32));
     this->app->render->relinkSprite(sprite);
     entity->info = ((entity->info & 0xFFFF) | 0x1000000 | 0x20000 | 0x400000);
     entity->def = this->app->entityDefManager->find(9, entity->def->eSubType, entity->def->parm);

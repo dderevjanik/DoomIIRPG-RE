@@ -1881,7 +1881,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 						}
 					}
 					else if (eType == Enums::ET_DECOR) {
-						if ((app->render->mapSpriteInfo[entity3->getSprite()] & 0xFF) == 0x95) {
+						if (app->render->getSpriteTileNum(entity3->getSprite()) == 0x95) {
 							entity = entity3;
 							n4 = n11;
 							break;
@@ -3740,7 +3740,7 @@ void Canvas::turnEntityIntoWaterSpout(Entity* entity) {
 	int sprite = entity->getSprite();
 	entity->def = app->entityDefManager->lookup(SpriteDefs::getIndex("water_spout"));
 	entity->name = (short)(entity->def->name | 0x400);
-	app->render->mapSpriteInfo[sprite] = ((app->render->mapSpriteInfo[sprite] & 0xFFFFFF00) | SpriteDefs::getIndex("water_spout"));
+	app->render->setSpriteTileNum(sprite, SpriteDefs::getIndex("water_spout"));
 	entity->info |= 0x400000;
 }
 
