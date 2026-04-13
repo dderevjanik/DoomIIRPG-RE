@@ -1,16 +1,20 @@
 #pragma once
 #include <string>
+#include "CombatEntity.h"
 
 class Entity;
 class EntityMonster;
 class GameSprite;
 class ScriptThread;
-class CombatEntity;
 class EntityDef;
 class Text;
 class Applet;
 
-struct MonsterBehaviors {
+struct MonsterDef {
+	// --- Template combat stats (cloned to each spawned instance) ---
+	CombatEntity templateStats;
+
+	// --- Behavioral rules ---
 	bool isBoss = false;
 	int bossMinTier = 0;        // Minimum tier (parm) to be considered a boss (0 = all tiers)
 	bool fearImmune = false;
@@ -46,6 +50,9 @@ struct MonsterBehaviors {
 	LootConfig lootTiers[MAX_LOOT_TIERS]; // Per-tier overrides (if modulus != 0)
 	bool hasLootTiers = false;
 };
+
+// Backwards-compatible alias
+using MonsterBehaviors = MonsterDef;
 
 class Combat
 {
@@ -286,8 +293,8 @@ public:
 	int attackY = 0;
 	int8_t* weapons = nullptr;
 	int8_t* monsterWeakness = nullptr;
-	MonsterBehaviors* monsterBehaviors = nullptr;
-	CombatEntity** monsters = nullptr;    // Dynamic array indexed by monsterIdx
+	MonsterDef* monsterDefs = nullptr;    // Unified monster definitions (indexed by monsterIdx)
+	MonsterDef* monsterBehaviors = nullptr; // Alias for monsterDefs (backwards compat)
 	int numMonsterDefs = 0;         // Number of monster entity defs (from EntityDefManager)
 	int worldDist = 0;
 	int tileDist = 0;

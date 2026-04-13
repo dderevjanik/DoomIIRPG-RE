@@ -37,9 +37,10 @@ bool Combat::startup() {
 	Applet* app = this->app;
 	LOG_INFO("[combat] startup\n");
 
-	this->monsters = new CombatEntity*[this->numMonsterDefs];
+	// Populate template stats in unified MonsterDef array
 	for (int n = 0, i = 0; i < this->numMonsterDefs; ++i, n += 6) {
-		this->monsters[i] = new CombatEntity(5 * (this->monsterStats[n + 0] & 0xFF), this->monsterStats[n + 1], this->monsterStats[n + 2], this->monsterStats[n + 3], this->monsterStats[n + 4], this->monsterStats[n + 5]);
+		CombatEntity& tmpl = this->monsterDefs[i].templateStats;
+		tmpl = CombatEntity(5 * (this->monsterStats[n + 0] & 0xFF), this->monsterStats[n + 1], this->monsterStats[n + 2], this->monsterStats[n + 3], this->monsterStats[n + 4], this->monsterStats[n + 5]);
 	}
 
 	for (int j = 0; j < 16; j++) {

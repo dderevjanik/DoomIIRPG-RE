@@ -68,7 +68,7 @@ void Entity::initspawn() {
 
     int tileNum = app->render->getSpriteTileNum(sprite);
     if (eType == Enums::ET_MONSTER) {
-        app->combat->monsters[this->def->monsterIdx]->clone(this->combat);
+        app->combat->monsterDefs[this->def->monsterIdx].templateStats.clone(this->combat);
 
         if (app->game->difficulty == Enums::DIFFICULTY_NIGHTMARE || (app->game->difficulty == Enums::DIFFICULTY_NORMAL && !this->isBoss())) {
             int stat = this->combat->getStat(1);

@@ -930,7 +930,8 @@ bool parseMonsters(Applet* app, const DataNode& config) {
 	app->particleSystem->monsterColors = new uint8_t[numTypes * 3];
 	std::memset(app->particleSystem->monsterColors, 0, numTypes * 3);
 
-	app->combat->monsterBehaviors = new MonsterBehaviors[numTypes]();
+	app->combat->monsterDefs = new MonsterDef[numTypes]();
+	app->combat->monsterBehaviors = app->combat->monsterDefs;
 
 	static const char* soundFields[] = {"alert1", "alert2", "alert3", "attack1",
 	                                    "attack2", "idle", "pain", "death"};
@@ -1180,7 +1181,8 @@ std::expected<void, std::string> parseMonsterCombatFromEntities(Applet* app, con
 	app->particleSystem->monsterColors = new uint8_t[N * 3];
 	std::memset(app->particleSystem->monsterColors, 0, N * 3);
 
-	app->combat->monsterBehaviors = new MonsterBehaviors[N]();
+	app->combat->monsterDefs = new MonsterDef[N]();
+	app->combat->monsterBehaviors = app->combat->monsterDefs;
 
 	static const char* soundFields[] = {"alert1", "alert2", "alert3", "attack1",
 	                                    "attack2", "idle", "pain", "death"};
