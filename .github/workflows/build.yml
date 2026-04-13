@@ -50,6 +50,7 @@ jobs:
           submodules: true
 
       - name: Install dependencies
+        # Apple's CLANG doesn't ship with C++ 23
         run: brew install llvm sdl2 openal-soft ccache
 
       - name: Setup ccache
