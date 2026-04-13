@@ -700,7 +700,7 @@ void Render::postProcessView(Graphics* graphics) {
 				screenVScrollOffset2 = 0;
 				this->vScrollVelocity = 0;
 			} else {
-				this->vScrollVelocity = std::max(this->vScrollVelocity + n, -30);
+				this->vScrollVelocity = std::max(this->vScrollVelocity + n, -gameConfig->renderMaxVScrollVelocity);
 			}
 		} else {
 			this->vScrollVelocity += n;
@@ -713,7 +713,7 @@ void Render::postProcessView(Graphics* graphics) {
 	int max = 32;
 	int max2 = 0;
 	if (this->brightenPostProcess) {
-		if (this->brightenPPMaxReachedTime != 0 && app->time > this->brightenPPMaxReachedTime + 500 + 500) {
+		if (this->brightenPPMaxReachedTime != 0 && app->time > this->brightenPPMaxReachedTime + gameConfig->renderHoldBrightnessTime + gameConfig->renderFadeBrightnessTime) {
 			app->hud->stopBrightenScreen();
 		} else {
 			int n2;
@@ -722,10 +722,10 @@ void Render::postProcessView(Graphics* graphics) {
 				if (n2 >= this->maxLocalBrightness) {
 					this->brightenPPMaxReachedTime = app->time;
 				}
-			} else if (app->time < this->brightenPPMaxReachedTime + 500) {
+			} else if (app->time < this->brightenPPMaxReachedTime + gameConfig->renderHoldBrightnessTime) {
 				n2 = this->maxLocalBrightness;
 			} else {
-				n2 = std::min(this->brightenPPMaxReachedTime + 500 + 500 - app->time >> 4 & 0x7F,
+				n2 = std::min(this->brightenPPMaxReachedTime + gameConfig->renderHoldBrightnessTime + gameConfig->renderFadeBrightnessTime - app->time >> 4 & 0x7F,
 				              this->maxLocalBrightness);
 			}
 			max = std::max((n2 * n2 << 10) / 127 >> 5, 32);

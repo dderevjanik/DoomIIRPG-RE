@@ -514,7 +514,7 @@ uint32_t ScriptThread::run() {
                     if (app->canvas->state == Canvas::ST_AUTOMAP) {
                         app->canvas->setState(Canvas::ST_PLAYING);
                     }
-                    app->render->startFade(1000, fadeFlags);
+                    app->render->startFade(CAppContainer::getInstance()->gameConfig.renderChangemapFadeTime, fadeFlags);
                 }
                 else if (showStats) {
                     app->canvas->saveState(51, (short)3, (short)194);
@@ -740,7 +740,7 @@ uint32_t ScriptThread::run() {
                 int8_t dmgAng = this->getByteArg();
                 if (dmgVal > 0) {
                     this->app->player->painEvent(nullptr, false);
-                    this->app->hud->damageTime = this->app->time + 1000;
+                    this->app->hud->damageTime = this->app->time + CAppContainer::getInstance()->gameConfig.hudDamageOverlayTime;
                     if (dmgAng != -1) {
                         this->app->hud->damageDir = (((uint8_t)dmgAng) + (256 - (this->app->canvas->viewAngle & 0x3FF) >> 7) + 1 & 0x7);
                     }
@@ -1928,7 +1928,7 @@ uint32_t ScriptThread::run() {
                 if (!this->app->player->isFamiliar) {
                     this->app->player->painEvent(nullptr, false);
                 }
-                this->app->hud->damageTime = this->app->time + 1000;
+                this->app->hud->damageTime = this->app->time + CAppContainer::getInstance()->gameConfig.hudDamageOverlayTime;
                 this->app->combat->totalDamage = 1;
                 this->app->player->pain(n96, nullptr, true);
                 if (!this->app->player->isFamiliar) {

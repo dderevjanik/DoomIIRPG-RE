@@ -308,11 +308,63 @@ int main(int argc, char* args[]) {
 			gc.maxEntities = game["max_entities"].asInt(gc.maxEntities);
 			gc.maxWeaponButtons = game["max_weapon_buttons"].asInt(gc.maxWeaponButtons);
 
+			// Combat section
+			DataNode combat = game["combat"];
+			if (combat) {
+				gc.combatMaxActiveMissiles = combat["max_active_missiles"].asInt(gc.combatMaxActiveMissiles);
+				gc.combatPlacingBombTime = combat["placing_bomb_time"].asInt(gc.combatPlacingBombTime);
+				gc.combatBombRecoverTime = combat["bomb_recover_time"].asInt(gc.combatBombRecoverTime);
+				gc.combatWeaponScale = combat["weapon_scale"].asInt(gc.combatWeaponScale);
+				gc.combatLowerWeaponTime = combat["lower_weapon_time"].asInt(gc.combatLowerWeaponTime);
+				gc.combatLoweredWeaponY = combat["lowered_weapon_y"].asInt(gc.combatLoweredWeaponY);
+				gc.combatExplosionOffset = combat["explosion_offset"].asInt(gc.combatExplosionOffset);
+				gc.combatExplosionOffset2 = combat["explosion_offset2"].asInt(gc.combatExplosionOffset2);
+				gc.combatPlacingBombZ = combat["placing_bomb_z"].asInt(gc.combatPlacingBombZ);
+				gc.combatRockTimeDamage = combat["rock_time_damage"].asInt(gc.combatRockTimeDamage);
+				gc.combatRockTimeDodge = combat["rock_time_dodge"].asInt(gc.combatRockTimeDodge);
+				gc.combatRockDistCombat = combat["rock_dist_combat"].asInt(gc.combatRockDistCombat);
+			}
+
+			// HUD section
+			DataNode hud = game["hud"];
+			if (hud) {
+				gc.hudMsgDisplayTime = hud["msg_display_time"].asInt(gc.hudMsgDisplayTime);
+				gc.hudMsgFlashTime = hud["msg_flash_time"].asInt(gc.hudMsgFlashTime);
+				gc.hudScrollStartDelay = hud["scroll_start_delay"].asInt(gc.hudScrollStartDelay);
+				gc.hudMsPerChar = hud["ms_per_char"].asInt(gc.hudMsPerChar);
+				gc.hudBubbleTextTime = hud["bubble_text_time"].asInt(gc.hudBubbleTextTime);
+				gc.hudSentryBotIconsPadding = hud["sentry_bot_icons_padding"].asInt(gc.hudSentryBotIconsPadding);
+				gc.hudDamageOverlayTime = hud["damage_overlay_time"].asInt(gc.hudDamageOverlayTime);
+				gc.hudActionIconSize = hud["action_icon_size"].asInt(gc.hudActionIconSize);
+				gc.hudArrowsSize = hud["arrows_size"].asInt(gc.hudArrowsSize);
+			}
+
+			// Render section
+			DataNode renderCfg = game["render"];
+			if (renderCfg) {
+				gc.renderChangemapFadeTime = renderCfg["changemap_fade_time"].asInt(gc.renderChangemapFadeTime);
+				gc.renderHoldBrightnessTime = renderCfg["hold_brightness_time"].asInt(gc.renderHoldBrightnessTime);
+				gc.renderFadeBrightnessTime = renderCfg["fade_brightness_time"].asInt(gc.renderFadeBrightnessTime);
+				gc.renderMaxVScrollVelocity = renderCfg["max_vscroll_velocity"].asInt(gc.renderMaxVScrollVelocity);
+				gc.renderMaxInitialVScrollVelocity = renderCfg["max_initial_vscroll_velocity"].asInt(gc.renderMaxInitialVScrollVelocity);
+				gc.renderPortalMaxRadius = renderCfg["portal_max_radius"].asInt(gc.renderPortalMaxRadius);
+				gc.renderAnimIdleTime = renderCfg["anim_idle_time"].asInt(gc.renderAnimIdleTime);
+				gc.renderAnimIdleSwitchTime = renderCfg["anim_idle_switch_time"].asInt(gc.renderAnimIdleSwitchTime);
+				gc.renderMaxDizzy = renderCfg["max_dizzy"].asInt(gc.renderMaxDizzy);
+				gc.renderLatencyAdjust = renderCfg["latency_adjust"].asInt(gc.renderLatencyAdjust);
+				gc.renderFearEyeSize = renderCfg["fear_eye_size"].asInt(gc.renderFearEyeSize);
+			}
+
 			// Player section
 			DataNode player = game["player"];
 			if (player) {
 				gc.startingMaxHealth = player["starting_max_health"].asInt(gc.startingMaxHealth);
 				gc.outOfCombatTurns = player["out_of_combat_turns"].asInt(gc.outOfCombatTurns);
+				gc.playerExpireDuration = player["expire_duration"].asInt(gc.playerExpireDuration);
+				gc.playerMaxDisplayBuffs = player["max_display_buffs"].asInt(gc.playerMaxDisplayBuffs);
+				gc.playerIceFogDist = player["ice_fog_dist"].asInt(gc.playerIceFogDist);
+				gc.playerMaxNotebookIndexes = player["max_notebook_indexes"].asInt(gc.playerMaxNotebookIndexes);
+				gc.playerBitsPerVmTry = player["bits_per_vm_try"].asInt(gc.playerBitsPerVmTry);
 
 				DataNode lu = player["level_up"];
 				if (lu) {

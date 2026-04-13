@@ -78,6 +78,13 @@ game:
       accuracy: 1
       agility: 3
 
+    # Buff/status effect constants
+    expire_duration: 5           # buff expiration turns
+    max_display_buffs: 6         # max buffs shown on HUD
+    ice_fog_dist: 1024           # ice fog visibility distance
+    max_notebook_indexes: 8      # notebook capacity
+    bits_per_vm_try: 3           # bits per vending machine attempt
+
     # Out-of-combat cooldown (turns since last combat)
     out_of_combat_turns: 4
 
@@ -92,6 +99,47 @@ game:
       inventory: 999
       ammo: 100
       bot_fuel: 5
+
+  # Combat timing/scale constants
+  combat:
+    max_active_missiles: 8
+    placing_bomb_time: 750       # ms to place a bomb
+    bomb_recover_time: 500       # ms recovery after bomb placement
+    weapon_scale: 131072         # fixed-point weapon rendering scale (17-bit FP)
+    lower_weapon_time: 200       # ms to lower weapon animation
+    lowered_weapon_y: 38         # Y offset for lowered weapon position
+    explosion_offset: 48         # explosion sprite offset
+    explosion_offset2: 38        # secondary explosion offset
+    placing_bomb_z: 18           # Z offset for bomb placement visual
+    rock_time_damage: 200        # screen-shake duration on damage (ms)
+    rock_time_dodge: 800         # screen-shake duration on dodge (ms)
+    rock_dist_combat: 6          # screen-shake distance in combat
+
+  # HUD timing constants
+  hud:
+    msg_display_time: 700        # base message display time (ms)
+    msg_flash_time: 100          # message flash/fade time (ms)
+    scroll_start_delay: 750      # delay before text starts scrolling (ms)
+    ms_per_char: 64              # ms per character for scrolling text
+    bubble_text_time: 1500       # speech bubble display time (ms)
+    sentry_bot_icons_padding: 15 # padding for sentry bot icons
+    damage_overlay_time: 1000    # damage vignette overlay duration (ms)
+    action_icon_size: 18         # action icon pixel size
+    arrows_size: 12              # arrow control pixel size
+
+  # Render timing/visual constants
+  render:
+    changemap_fade_time: 1000    # fade duration for map transitions (ms)
+    hold_brightness_time: 500    # hold at max brightness (ms)
+    fade_brightness_time: 500    # fade from max brightness (ms)
+    max_vscroll_velocity: 30     # max vertical scroll velocity
+    max_initial_vscroll_velocity: 90  # max initial scroll velocity
+    portal_max_radius: 66        # portal visual max radius
+    anim_idle_time: 8192         # idle animation cycle time
+    anim_idle_switch_time: 256   # idle animation switch interval
+    max_dizzy: 30                # max dizzy effect intensity
+    latency_adjust: 50           # latency adjustment for animations (ms)
+    fear_eye_size: 8             # fear-eye sprite size
 
   # Scoring formula constants
   scoring:

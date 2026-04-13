@@ -170,10 +170,10 @@ void Render::renderPortal() {
 		    (float)(pScale + pScale) - scale, -angle, 1);
 	} else { // TnyGL Version restored from J2ME/BREW
 		int n = 10;
-		int max = std::max(Render::portalMaxRadius * this->portalScale >> n, 1);
+		int max = std::max(gameConfig->renderPortalMaxRadius * this->portalScale >> n, 1);
 		int portalCX = this->portalCX;
 		int portalCY = this->portalCY;
-		int n3 = (Render::portalMaxRadius - 14) * this->portalScale >> n;
+		int n3 = (gameConfig->renderPortalMaxRadius - 14) * this->portalScale >> n;
 		int n4 = 11 * this->portalScale >> n;
 		int n5 = 9 * this->portalScale >> n;
 		int n6 = 6 * this->portalScale >> n;

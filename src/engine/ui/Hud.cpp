@@ -35,7 +35,7 @@ bool Hud::startup() {
 	LOG_INFO("[hud] startup\n");
 
 	for (int i = 0; i < Hud::MAX_MESSAGES; i++) {
-		this->messages[i] = new Text(Hud::MS_PER_CHAR);
+		this->messages[i] = new Text(gameConfig->hudMsPerChar);
 	}
 
 	app->beginImageLoading();
@@ -116,12 +116,12 @@ void Hud::calcMsgTime() {
 	this->msgTime = app->time;
 	int length = this->messages[0]->length();
 	if (length <= app->canvas->menuHelpMaxChars) {
-		this->msgDuration = 700;
+		this->msgDuration = gameConfig->hudMsgDisplayTime;
 	}
 	else {
 		this->msgDuration = length * 50;
-		if ((this->messageFlags[0] & 0x2) != 0x0 && this->msgDuration > 1500) {
-			this->msgDuration = 1500;
+		if ((this->messageFlags[0] & 0x2) != 0x0 && this->msgDuration > gameConfig->hudBubbleTextTime) {
+			this->msgDuration = gameConfig->hudBubbleTextTime;
 		}
 	}
 }
@@ -237,7 +237,7 @@ void Hud::drawTopBar(Graphics* graphics) {
 	if (app->canvas->state != Canvas::ST_DYING) {
 		this->drawMonsterHealth(graphics);
 	}
-	if (this->msgCount > 0 && app->time - this->msgTime > this->msgDuration + 100) {
+	if (this->msgCount > 0 && app->time - this->msgTime > this->msgDuration + gameConfig->hudMsgFlashTime) {
 		this->shiftMsgs();
 	}
 	int n2 = -1;
@@ -259,8 +259,8 @@ void Hud::drawTopBar(Graphics* graphics) {
 				int n4 = smallBuffer->length() - app->canvas->menuHelpMaxChars;
 				if (n4 > 0) {
 					int n5 = app->time - this->msgTime;
-					if (n5 > 750) {
-						n3 = (n5 - 750) / 50;
+					if (n5 > gameConfig->hudScrollStartDelay) {
+						n3 = (n5 - gameConfig->hudScrollStartDelay) / 50;
 						if (n3 > n4) {
 							n3 = n4;
 						}
@@ -837,7 +837,7 @@ void Hud::showSpeechBubble(int i, int i2) {
 
 	app->localization->composeText((int16_t)app->canvas->loadMapStringID, (int16_t)i, this->bubbleText);
 	this->bubbleText->dehyphenate();
-	this->bubbleTextTime = app->time + 1500;
+	this->bubbleTextTime = app->time + gameConfig->hudBubbleTextTime;
 
 	switch (i2) {
 		case 0:

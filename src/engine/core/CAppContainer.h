@@ -125,6 +125,51 @@ struct GameConfig {
 	// Per-map joke item tables: mapID → list of item IDs (selected by sprite % count)
 	std::flat_map<int, std::vector<int>> jokeItems;
 
+	// Combat timing/scale constants (from game.yaml combat section)
+	int combatMaxActiveMissiles = 8;
+	int combatPlacingBombTime = 750;       // ms to place a bomb
+	int combatBombRecoverTime = 500;       // ms recovery after bomb placement
+	int combatWeaponScale = 131072;        // fixed-point weapon rendering scale (17-bit FP)
+	int combatLowerWeaponTime = 200;       // ms to lower weapon animation
+	int combatLoweredWeaponY = 38;         // Y offset for lowered weapon position
+	int combatExplosionOffset = 48;        // explosion sprite offset
+	int combatExplosionOffset2 = 38;       // secondary explosion offset
+	int combatPlacingBombZ = 18;           // Z offset for bomb placement visual
+	int combatRockTimeDamage = 200;        // screen-shake duration on damage (ms)
+	int combatRockTimeDodge = 800;         // screen-shake duration on dodge (ms)
+	int combatRockDistCombat = 6;          // screen-shake distance in combat
+
+	// HUD timing constants (from game.yaml hud section)
+	int hudMsgDisplayTime = 700;           // base message display time (ms)
+	int hudMsgFlashTime = 100;             // message flash/fade time (ms)
+	int hudScrollStartDelay = 750;         // delay before text starts scrolling (ms)
+	int hudMsPerChar = 64;                 // ms per character for scrolling text
+	int hudBubbleTextTime = 1500;          // speech bubble display time (ms)
+	int hudSentryBotIconsPadding = 15;     // padding for sentry bot icons
+	int hudDamageOverlayTime = 1000;       // damage vignette overlay duration (ms)
+	int hudActionIconSize = 18;            // action icon pixel size
+	int hudArrowsSize = 12;               // arrow control pixel size
+
+	// Render timing/visual constants (from game.yaml render section)
+	int renderChangemapFadeTime = 1000;    // fade duration for map transitions (ms)
+	int renderHoldBrightnessTime = 500;    // hold at max brightness (ms)
+	int renderFadeBrightnessTime = 500;    // fade from max brightness (ms)
+	int renderMaxVScrollVelocity = 30;     // max vertical scroll velocity
+	int renderMaxInitialVScrollVelocity = 90;  // max initial scroll velocity
+	int renderPortalMaxRadius = 66;        // portal visual max radius
+	int renderAnimIdleTime = 8192;         // idle animation cycle time
+	int renderAnimIdleSwitchTime = 256;    // idle animation switch interval
+	int renderMaxDizzy = 30;               // max dizzy effect intensity
+	int renderLatencyAdjust = 50;          // latency adjustment for animations (ms)
+	int renderFearEyeSize = 8;            // fear-eye sprite size
+
+	// Player gameplay constants (from game.yaml player section)
+	int playerExpireDuration = 5;          // buff expiration turns
+	int playerMaxDisplayBuffs = 6;         // max buffs shown on HUD
+	int playerIceFogDist = 1024;           // ice fog visibility distance
+	int playerMaxNotebookIndexes = 8;      // notebook capacity
+	int playerBitsPerVmTry = 3;            // bits per vending machine attempt
+
 	// Automap color configuration
 	struct AutomapDoorColor {
 		int16_t tileIndex;

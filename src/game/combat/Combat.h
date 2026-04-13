@@ -9,6 +9,7 @@ class ScriptThread;
 class EntityDef;
 class Text;
 class Applet;
+struct GameConfig;
 
 struct MonsterDef {
 	// --- Template combat stats (cloned to each spawned instance) ---
@@ -60,6 +61,7 @@ private:
 
 public:
 	Applet* app = nullptr; // Set in startup(), replaces CAppContainer::getInstance()->app
+	const GameConfig* gameConfig = nullptr; // Set in startup()
 	static constexpr int SEQ_ENDATTACK = 1;
 	static constexpr int OUTOFCOMBAT_TURNS = 4;
 	static constexpr int MAX_TILEDISTANCES = 16;

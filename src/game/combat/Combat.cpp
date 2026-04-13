@@ -34,6 +34,7 @@ short Combat::getWeaponWeakness(int weaponIdx, int monsterIdx) {
 
 bool Combat::startup() {
 	this->app = CAppContainer::getInstance()->app;
+	this->gameConfig = &CAppContainer::getInstance()->gameConfig;
 	Applet* app = this->app;
 	LOG_INFO("[combat] startup\n");
 
@@ -582,7 +583,7 @@ int Combat::monsterSeq() {
 void Combat::drawEffects() {
 
     if (app->player->statusEffects[13] > 0) {
-        int n = 131072;
+        int n = gameConfig->combatWeaponScale;
         int n2 = ((176 * n) / 65536);
         app->render->draw2DSprite(234, app->time / 256 & 0x3, (app->canvas->viewRect[2] / 2) - (n2 / 2), app->canvas->viewRect[3] - ((n2 / 4) + 132), 0, 3, 0, n);
     }
@@ -596,7 +597,7 @@ void Combat::drawWeapon(int sx, int sy) {
     int flags = 0;
     int scrX = (Applet::IOS_WIDTH / 2) - 44;
     int scrY = (Applet::IOS_HEIGHT / 2) - 29;
-    int loweredWeaponY= Combat::LOWEREDWEAPON_Y;
+    int loweredWeaponY= gameConfig->combatLoweredWeaponY;
 
     if (!app->render->_gles->isInit) {  // [GEC] Adjusted like this to match the XY position on the GL version
         scrX = (app->render->screenWidth / 2) - 62;
@@ -768,7 +769,7 @@ void Combat::shiftWeapon(bool lerpWpDown) {
     this->lerpingWeapon = true;
     this->lerpWpDown = lerpWpDown;
     this->lerpWpStartTime = app->gameTime;
-    this->lerpWpDur = Combat::LOWERWEAPON_TIME;
+    this->lerpWpDur = gameConfig->combatLowerWeaponTime;
 }
 
 int Combat::runFrame() {
@@ -882,7 +883,7 @@ void Combat::explodeOnPlayer() {
         app->hud->damageTime = app->time + 150;
     }
     else {
-        app->hud->damageTime = app->time + 1000;
+        app->hud->damageTime = app->time + gameConfig->hudDamageOverlayTime;
     }
     if (app->hud->damageDir != 3) {
         app->canvas->staleTime = app->hud->damageTime + 1;
@@ -934,7 +935,7 @@ void Combat::explodeOnPlayer() {
                         if (a2 != 0) {
                             a2 /= std::abs(a2);
                         }
-                        app->render->rockView(200, app->canvas->viewX + a * 6, app->canvas->viewY + a2 * 6, app->canvas->viewZ);
+                        app->render->rockView(gameConfig->combatRockTimeDamage, app->canvas->viewX + a * gameConfig->combatRockDistCombat, app->canvas->viewY + a2 * gameConfig->combatRockDistCombat, app->canvas->viewZ);
                     }
                     if (app->player->ce->getStat(Enums::STAT_HEALTH) > 0 && app->combat->monsterBehaviors[this->curAttacker->def->monsterIdx].knockbackWeaponId >= 0 && app->combat->monsterBehaviors[this->curAttacker->def->monsterIdx].knockbackWeaponId == this->attackerWeaponId) {
                         entity->knockback(app->render->getSpriteX(sprite), app->render->getSpriteY(sprite), 1);
