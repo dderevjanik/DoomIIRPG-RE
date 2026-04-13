@@ -50,7 +50,7 @@ jobs:
           submodules: true
 
       - name: Install dependencies
-        run: brew install sdl2 openal-soft ccache
+        run: brew install llvm sdl2 openal-soft ccache
 
       - name: Setup ccache
         uses: actions/cache@v4
@@ -60,7 +60,10 @@ jobs:
           restore-keys: ccache-macos-
 
       - name: Configure
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+        run: |
+          export CC=$(brew --prefix llvm)/bin/clang
+          export CXX=$(brew --prefix llvm)/bin/clang++
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Build
         run: cmake --build build --parallel
