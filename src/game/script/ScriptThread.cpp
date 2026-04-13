@@ -273,13 +273,13 @@ uint32_t ScriptThread::run() {
                             case Enums::EVAL_AND: { // and
                                 int a = this->pop();
                                 int b = this->pop();
-                                this->push(a == 1 && b == 1);
+                                this->push(a != 0 && b != 0);
                                 break;
                             }
                             case Enums::EVAL_OR: { // or
                                 int a = this->pop();
                                 int b = this->pop();
-                                this->push(a == 1 || b == 1);
+                                this->push(a != 0 || b != 0);
                                 break;
                             }
                             case Enums::EVAL_LTE: { // less than or equal to

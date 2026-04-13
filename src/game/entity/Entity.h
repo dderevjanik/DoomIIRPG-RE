@@ -14,28 +14,28 @@ class Entity
 private:
 
 public:
-	Applet* app; // Set in startup(), replaces CAppContainer::getInstance()->app
-	int touchMe;
-	EntityDef* def;
-	EntityMonster* monster;
-	CombatEntity* combat;
-	AIComponent* ai;
-	Entity* nextOnTile;
-	Entity* prevOnTile;
-	short linkIndex;
-	short name;
-	int info;
-	int param;
-	LootComponent* loot;
-	short monsterFlags;
-	int monsterEffects;
-	int32_t knockbackDelta[2];
-	Entity* raiseTargets[4];
-	Entity* nextOnList;
-	Entity* prevOnList;
-	Entity* nextAttacker;
-	int pos[2];
-	int tempSaveBuf[2];
+	Applet* app = nullptr; // Set in startup(), replaces CAppContainer::getInstance()->app
+	int touchMe = 0;
+	EntityDef* def = nullptr;
+	EntityMonster* monster = nullptr;
+	CombatEntity* combat = nullptr;
+	AIComponent* ai = nullptr;
+	Entity* nextOnTile = nullptr;
+	Entity* prevOnTile = nullptr;
+	short linkIndex = 0;
+	short name = 0;
+	int info = 0;
+	int param = 0;
+	LootComponent* loot = nullptr;
+	short monsterFlags = 0;
+	int monsterEffects = 0;
+	int32_t knockbackDelta[2] = {};
+	Entity* raiseTargets[4] = {};
+	Entity* nextOnList = nullptr;
+	Entity* prevOnList = nullptr;
+	Entity* nextAttacker = nullptr;
+	int pos[2] = {};
+	int tempSaveBuf[2] = {};
 
 	// Constructor
 	Entity();

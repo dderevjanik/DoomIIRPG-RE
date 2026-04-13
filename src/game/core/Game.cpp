@@ -36,9 +36,7 @@
 #include "EventBus.h"
 #include "GameEvents.h"
 
-Game::Game() {
-	std::memset(this, 0, sizeof(Game));
-}
+Game::Game() = default;
 
 Game::~Game() {}
 

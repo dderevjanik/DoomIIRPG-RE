@@ -11,9 +11,7 @@
 #include "Sounds.h"
 #include "JavaStream.h"
 
-Sound::Sound() {
-	std::memset(this, 0, sizeof(Sound));
-}
+Sound::Sound() = default;
 
 Sound::~Sound() {
 	if (CAppContainer::getInstance()->headless) { return; }

@@ -1,10 +1,6 @@
 #include "AIComponent.h"
 #include "JavaStream.h"
 
-AIComponent::AIComponent() {
-	std::memset(this, 0, sizeof(AIComponent));
-}
-
 void AIComponent::reset() {
 	this->target = nullptr;
 	this->frameTime = 0;

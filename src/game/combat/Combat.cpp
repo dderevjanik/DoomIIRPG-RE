@@ -23,9 +23,7 @@
 #include "SoundNames.h"
 #include "Sounds.h"
 
-Combat::Combat() {
-	std::memset(this, 0, sizeof(Combat));
-}
+Combat::Combat() = default;
 
 Combat::~Combat() {
 }

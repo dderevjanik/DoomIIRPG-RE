@@ -29,36 +29,36 @@ class fmButton
 private:
 
 public:
-	Applet* app;  // Set lazily, replaces CAppContainer::getInstance()->app
-	fmButton* next;
-	int buttonID;
-	int selectedIndex;
-	bool drawButton;
-	bool highlighted;
-	int normalRenderMode;
-	int highlightRenderMode;
-	bool drawTouchArea;
-	Image* imgNormal;
-	Image* imgHighlight;
-	Image** ptrNormalImages;
-	Image** ptrHighlightImages;
-	int normalIndex;
-	int highlightIndex;
-	int centerX;
-	int centerY;
-	int highlightCenterX;
-	int highlightCenterY;
-	float normalRed;
-	float normalGreen;
-	float normalBlue;
-	float normalAlpha;
-	float highlightRed;
-	float highlightGreen;
-	float highlightBlue;
-	float highlightAlpha;
-	short soundResID;
-	GuiRect touchArea;
-	GuiRect touchAreaDrawing; // Port: New
+	Applet* app = nullptr;  // Set lazily, replaces CAppContainer::getInstance()->app
+	fmButton* next = nullptr;
+	int buttonID = 0;
+	int selectedIndex = 0;
+	bool drawButton = false;
+	bool highlighted = false;
+	int normalRenderMode = 0;
+	int highlightRenderMode = 0;
+	bool drawTouchArea = false;
+	Image* imgNormal = nullptr;
+	Image* imgHighlight = nullptr;
+	Image** ptrNormalImages = nullptr;
+	Image** ptrHighlightImages = nullptr;
+	int normalIndex = 0;
+	int highlightIndex = 0;
+	int centerX = 0;
+	int centerY = 0;
+	int highlightCenterX = 0;
+	int highlightCenterY = 0;
+	float normalRed = 0.0f;
+	float normalGreen = 0.0f;
+	float normalBlue = 0.0f;
+	float normalAlpha = 0.0f;
+	float highlightRed = 0.0f;
+	float highlightGreen = 0.0f;
+	float highlightBlue = 0.0f;
+	float highlightAlpha = 0.0f;
+	short soundResID = 0;
+	GuiRect touchArea = {};
+	GuiRect touchAreaDrawing = {}; // Port: New
 
 	// Constructor
 	fmButton(int buttonID, int x, int y, int w, int h, int soundResID);
@@ -95,8 +95,8 @@ class fmButtonContainer
 private:
 
 public:
-	fmButton* next;
-	fmButton* prev;
+	fmButton* next = nullptr;
+	fmButton* prev = nullptr;
 
 	// Constructor
 	fmButtonContainer();
@@ -175,17 +175,17 @@ public:
 	//typedef int SwipeDir;
 	enum SwipeDir {Null = -1, Left, Right, Down, Up};
 
-	bool enable;
-	bool touched;
-	bool drawTouchArea;
-	GuiRect rect;
-	int begX;
-	int begY;
-	int curX;
-	int curY;
-	int field_0x22_;
-	int endX;
-	int endY;
+	bool enable = false;
+	bool touched = false;
+	bool drawTouchArea = false;
+	GuiRect rect = {};
+	int begX = 0;
+	int begY = 0;
+	int curX = 0;
+	int curY = 0;
+	int field_0x22_ = 0;
+	int endX = 0;
+	int endY = 0;
 
 	// Constructor
 	fmSwipeArea(int x, int y, int w, int h, int endX, int endY);

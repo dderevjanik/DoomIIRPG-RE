@@ -30,39 +30,39 @@ public:
 	class SoundStream
 	{
 	public:
-		ALuint bufferId;
-		ALuint sourceId;
-		int16_t resID;
-		int16_t priority;
-		bool fadeInProgress;
-		uint8_t field_0xd;
-		uint8_t field_0xe;
-		uint8_t field_0xf;
-		int volume;
-		int fadeBeg;
-		int fadetime;
-		float fadeVolume;
+		ALuint bufferId = 0;
+		ALuint sourceId = 0;
+		int16_t resID = 0;
+		int16_t priority = 0;
+		bool fadeInProgress = false;
+		uint8_t field_0xd = 0;
+		uint8_t field_0xe = 0;
+		uint8_t field_0xf = 0;
+		int volume = 0;
+		int fadeBeg = 0;
+		int fadetime = 0;
+		float fadeVolume = 0.0f;
 
 		void StartFade(int volume, int fadeBeg, int fadeEnd);
 	};
 
-	Applet* app;
-	bool field_0x4;
-	bool allowSounds;
-	bool allowMusics;
-	int soundFxVolume;
-	int musicVolume;
-	int field_0x10;
-	SoundStream channel[10];
-	short resID;
-	uint8_t flags;
-	int priority;
-	int field_0x15c;
-	short field_0x160;
-	uint8_t field_0x162;
-	bool soundsLoaded;
-	ALCcontext* alContext;
-	ALCdevice* alDevice;
+	Applet* app = nullptr;
+	bool field_0x4 = false;
+	bool allowSounds = false;
+	bool allowMusics = false;
+	int soundFxVolume = 0;
+	int musicVolume = 0;
+	int field_0x10 = 0;
+	SoundStream channel[10] = {};
+	short resID = 0;
+	uint8_t flags = 0;
+	int priority = 0;
+	int field_0x15c = 0;
+	short field_0x160 = 0;
+	uint8_t field_0x162 = 0;
+	bool soundsLoaded = false;
+	ALCcontext* alContext = nullptr;
+	ALCdevice* alDevice = nullptr;
 
 	// Constructor
 	Sound();

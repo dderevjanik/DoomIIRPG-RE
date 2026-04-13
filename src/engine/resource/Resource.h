@@ -30,16 +30,16 @@ class Resource
 private:
 
 public:
-    Applet* app;  // Set in startup(), replaces CAppContainer::getInstance()->app
+    Applet* app = nullptr;  // Set in startup(), replaces CAppContainer::getInstance()->app
 
     static constexpr int IO_SIZE = 20480;
 
-    int touchMe;
-    int cursor;
-    uint8_t* ioBuffer;
-    int tableOffsets[20];
-    int prevOffset;
-    InputStream prevIS;
+    int touchMe = 0;
+    int cursor = 0;
+    uint8_t* ioBuffer = nullptr;
+    int tableOffsets[20] = {};
+    int prevOffset = 0;
+    InputStream prevIS{};
 
 	// Constructor
 	Resource();

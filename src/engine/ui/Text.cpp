@@ -12,9 +12,7 @@
 // Localization Class
 // --------------------
 
-Localization::Localization() {
-	std::memset(this, 0, sizeof(Localization));
-}
+Localization::Localization() = default;
 
 Localization::~Localization() {
 	if (this->yamlData) {

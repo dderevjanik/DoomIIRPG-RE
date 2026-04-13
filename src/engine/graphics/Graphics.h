@@ -31,15 +31,15 @@ public:
 		   0xFF0000FF, 0xFF3180C3, 0xFFFFAFCC, 0xFFFF7F00,
 		   0xFF7F7F7F, 0xFF000000, 0xFF3F3F3F, 0xFFBFBFBF };
 
-	int curColor;
-	int currentCharColor;
-	IDIB* backBuffer;
-	int graphClipRect[4];
-	int transX;
-	int transY;
+	int curColor = 0;
+	int currentCharColor = 0;
+	IDIB* backBuffer = nullptr;
+	int graphClipRect[4] = {};
+	int transX = 0;
+	int transY = 0;
 
 	// Constructor
-	Graphics();
+	Graphics() = default;
 	// Destructor
 	~Graphics();
 

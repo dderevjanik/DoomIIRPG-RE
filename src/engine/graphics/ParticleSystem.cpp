@@ -18,9 +18,7 @@
 // ParticleEmitter Class
 // ----------------------
 
-ParticleEmitter::ParticleEmitter() {
-	std::memset(this, 0, sizeof(ParticleEmitter));
-}
+ParticleEmitter::ParticleEmitter() = default;
 
 ParticleEmitter::~ParticleEmitter() {
 }
@@ -143,9 +141,7 @@ void ParticleEmitter::render(Graphics* graphics, int n) {
 // ParticleSystem Class
 // ---------------------
 
-ParticleSystem::ParticleSystem() {
-	std::memset(this, 0, sizeof(ParticleSystem));
-}
+ParticleSystem::ParticleSystem() = default;
 
 ParticleSystem::~ParticleSystem() {
 }

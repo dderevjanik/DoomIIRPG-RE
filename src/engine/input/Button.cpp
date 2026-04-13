@@ -29,28 +29,11 @@ bool GuiRect::ContainsPoint(int x, int y) {
 // ---------------
 
 fmButton::fmButton(int buttonID, int x, int y, int w, int h, int soundResID) {
-	//printf("fmButton::init\n");
-	std::memset(this, 0, sizeof(fmButton));
-
 	this->buttonID = buttonID;
 	this->normalIndex = -1;
 	this->highlightIndex = -1;
-	this->SetTouchArea(x, y, w, h);
-	this->imgNormal = nullptr;
-	this->ptrNormalImages = nullptr;
-	this->imgHighlight = nullptr;
-	this->ptrHighlightImages = nullptr;
 	this->selectedIndex = -1;
 	this->drawButton = true;
-	this->highlighted = false;
-	this->normalRenderMode = 0;
-	this->highlightRenderMode = 0;
-	this->centerX = 0;
-	this->centerY = 0;
-	this->highlightCenterX = 0;
-	this->highlightCenterY = 0;
-	this->drawTouchArea = false;
-	this->next = nullptr;
 	this->soundResID = (short)soundResID;
 	this->highlightRed = 0.0f;
 	this->highlightGreen = 0.3f;
@@ -60,6 +43,7 @@ fmButton::fmButton(int buttonID, int x, int y, int w, int h, int soundResID) {
 	this->normalGreen = 0.6f;
 	this->normalBlue = 0.3f;
 	this->normalAlpha = 0.2f;
+	this->SetTouchArea(x, y, w, h);
 }
 
 fmButton::~fmButton() {
@@ -237,12 +221,7 @@ void createButtons(fmButtonContainer* container, std::span<const ButtonDef> defs
 	}
 }
 
-fmButtonContainer::fmButtonContainer() {
-	//printf("fmButtonContainer::init\n");
-	std::memset(this, 0, sizeof(fmButtonContainer));
-	this->next = nullptr;
-	this->prev = nullptr;
-}
+fmButtonContainer::fmButtonContainer() = default;
 
 fmButtonContainer::~fmButtonContainer() {
 	fmButton* next;
@@ -603,8 +582,6 @@ void fmScrollButton::Render(Graphics* graphics) {
 // ------------------
 
 fmSwipeArea::fmSwipeArea(int x, int y, int w, int h, int endX, int endY) {
-	//printf("fmSwipeArea::fmSwipeArea, %d, %d, %d, %d\n", x, y, w, h);
-	std::memset(this, 0, sizeof(fmSwipeArea));
 	this->rect.x = x;
 	this->rect.y = y;
 	this->rect.w = w;
@@ -616,8 +593,6 @@ fmSwipeArea::fmSwipeArea(int x, int y, int w, int h, int endX, int endY) {
 	this->curY = -1;
 	this->endX = endX;
 	this->endY = endY;
-	this->touched = false;
-	this->drawTouchArea = false;
 }
 
 fmSwipeArea::~fmSwipeArea() {

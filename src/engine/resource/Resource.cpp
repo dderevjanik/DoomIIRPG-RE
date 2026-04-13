@@ -8,11 +8,7 @@
 #include "Canvas.h"
 
 Resource::Resource() {
-	//printf("Resource::init\n");
-	std::memset(this, 0, sizeof(Resource));
-
-    this->ioBuffer = new uint8_t[Resource::IO_SIZE];
-    std::memset(this->ioBuffer, 0, Resource::IO_SIZE);
+    this->ioBuffer = new uint8_t[Resource::IO_SIZE]();
 }
 
 Resource::~Resource() {

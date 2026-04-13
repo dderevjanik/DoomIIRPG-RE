@@ -8,16 +8,16 @@ class InputStream;
 
 struct AIComponent
 {
-	Entity* target;
-	int frameTime;
-	uint8_t goalType;
-	uint8_t goalFlags;
-	uint8_t goalTurns;
-	int goalX;
-	int goalY;
-	int goalParam;
+	Entity* target = nullptr;
+	int frameTime = 0;
+	uint8_t goalType = 0;
+	uint8_t goalFlags = 0;
+	uint8_t goalTurns = 0;
+	int goalX = 0;
+	int goalY = 0;
+	int goalParam = 0;
 
-	AIComponent();
+	AIComponent() = default;
 	void reset();
 	void resetGoal();
 	void saveGoalState(OutputStream* OS);

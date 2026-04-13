@@ -66,9 +66,7 @@ void Render::initSpriteDefs() {
 	TILE_GLASS = SpriteDefs::getIndex("glass");
 }
 
-Render::Render() {
-	std::memset(this, 0, sizeof(Render));
-}
+Render::Render() = default;
 
 Render::~Render() {}
 

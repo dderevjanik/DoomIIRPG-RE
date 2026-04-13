@@ -37,9 +37,7 @@
 #include "Input.h"
 #include "ICanvasState.h"
 
-Canvas::Canvas() {
-	std::memset(this, 0, sizeof(Canvas));
-}
+Canvas::Canvas() = default;
 
 Canvas::~Canvas() {
 	delete[] this->dialogStyleDefs;

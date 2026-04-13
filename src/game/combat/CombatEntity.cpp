@@ -17,17 +17,7 @@
 #include "Enums.h"
 
 
-CombatEntity::CombatEntity() {
-    //printf("CombatEntity::init\n");
-    this->app = nullptr;
-    this->stats[1] = 0;
-    this->stats[2] = 0;
-    this->stats[3] = 0;
-    this->stats[4] = 0;
-    this->stats[5] = 0;
-    this->stats[6] = 0;
-    this->weapon = -1;
-}
+CombatEntity::CombatEntity() = default;
 
 CombatEntity::CombatEntity(int health, int armor, int defense, int strength, int accuracy, int agility) {
 	//printf("CombatEntity::init2\n");

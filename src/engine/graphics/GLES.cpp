@@ -28,9 +28,7 @@ gles* _glesObj;
 #define YAW_TO_FLOAT(x)			(float)((float)(x) * (1.f / 256))	// (1.f / 256)   -> 0.0039062f
 #define FOG_SCALE(x)			(float)(1.f / (float)(x)) // (1.f / 8000) -> 0.000125f
 
-gles::gles() {
-	std::memset(this, 0, sizeof(gles));
-}
+gles::gles() = default;
 
 gles::~gles() {
 }

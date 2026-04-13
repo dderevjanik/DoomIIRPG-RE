@@ -1,8 +1,8 @@
 #pragma once
 struct LootComponent
 {
-	int lootSet[3];
+	int lootSet[3] = {};
 
-	LootComponent();
+	LootComponent() = default;
 	void reset();
 };

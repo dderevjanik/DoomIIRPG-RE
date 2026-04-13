@@ -13,9 +13,7 @@
 #include "Span.h"
 
 
-TinyGL::TinyGL() {
-	std::memset(this, 0, sizeof(TinyGL));
-}
+TinyGL::TinyGL() = default;
 
 TinyGL::~TinyGL() {
 }

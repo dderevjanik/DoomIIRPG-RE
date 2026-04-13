@@ -52,7 +52,7 @@ class Combat
 private:
 
 public:
-	Applet* app; // Set in startup(), replaces CAppContainer::getInstance()->app
+	Applet* app = nullptr; // Set in startup(), replaces CAppContainer::getInstance()->app
 	static constexpr int SEQ_ENDATTACK = 1;
 	static constexpr int OUTOFCOMBAT_TURNS = 4;
 	static constexpr int MAX_TILEDISTANCES = 16;
@@ -97,22 +97,22 @@ public:
 	static constexpr int FLD_WPFLASHX = 4;
 	static constexpr int FLD_WPFLASHY = 5;
 
-	int touchMe;
-	int tileDistances[Combat::MAX_TILEDISTANCES];
-	int16_t*monsterAttacks;
-	int field_0x50_;
-	int drawLogo;
-	int field_0x58_;
-	int8_t* wpinfo;
-	int8_t* wpDisplayOffsetY;   // Per-weapon general Y offset (all renderers)
-	int8_t* wpSwOffsetX;        // Per-weapon software renderer X offset
-	int8_t* wpSwOffsetY;        // Per-weapon software renderer Y offset
-	int16_t* wpAttackSound;     // Per-weapon attack sound resource ID (-1 = none)
-	int16_t* wpAttackSoundAlt;  // Per-weapon alt attack sound (for character-dependent sounds, -1 = none)
-	int16_t* wpViewTile;        // Per-weapon tile index for first-person view sprite
-	int numWeaponViewTiles;
-	int8_t* wpHudTexRow;        // Per-weapon HUD texture row (-1 = use default 13)
-	bool* wpHudShowAmmo;        // Per-weapon whether to draw ammo numbers on HUD
+	int touchMe = 0;
+	int tileDistances[Combat::MAX_TILEDISTANCES] = {};
+	int16_t* monsterAttacks = nullptr;
+	int field_0x50_ = 0;
+	int drawLogo = 0;
+	int field_0x58_ = 0;
+	int8_t* wpinfo = nullptr;
+	int8_t* wpDisplayOffsetY = nullptr;   // Per-weapon general Y offset (all renderers)
+	int8_t* wpSwOffsetX = nullptr;        // Per-weapon software renderer X offset
+	int8_t* wpSwOffsetY = nullptr;        // Per-weapon software renderer Y offset
+	int16_t* wpAttackSound = nullptr;     // Per-weapon attack sound resource ID (-1 = none)
+	int16_t* wpAttackSoundAlt = nullptr;  // Per-weapon alt attack sound (for character-dependent sounds, -1 = none)
+	int16_t* wpViewTile = nullptr;        // Per-weapon tile index for first-person view sprite
+	int numWeaponViewTiles = 0;
+	int8_t* wpHudTexRow = nullptr;        // Per-weapon HUD texture row (-1 = use default 13)
+	bool* wpHudShowAmmo = nullptr;        // Per-weapon whether to draw ammo numbers on HUD
 
 	// Per-weapon behavior flags (loaded from weapons.yaml)
 	struct WeaponFlags {
@@ -149,14 +149,14 @@ public:
 		int onKillGrantKills;     // Every N kills with this weapon grants a stat bonus (0 = disabled)
 		int onKillGrantStrength;  // Strength bonus granted per on_kill_grant cycle
 	};
-	WeaponFlags* wpFlags;       // Array sized to numWeapons
-	int numWeaponFlags;
-	int throwableItemAmmoType;  // Cached ammo type index for the throwable item weapon (-1 = none)
-	int throwableItemWeaponIdx; // Cached weapon index for the throwable item weapon (-1 = none)
-	int fountainWeaponIdx;      // Cached weapon index for the fountain weapon (-1 = none)
-	int fountainAmmoType;       // Cached ammo type for the fountain weapon (-1 = none)
-	int soulWeaponIdx;          // Cached weapon index for the soul cube weapon (-1 = none)
-	int familiarAmmoType;       // Cached ammo type for familiar weapons (sentry bot fuel, -1 = none)
+	WeaponFlags* wpFlags = nullptr;       // Array sized to numWeapons
+	int numWeaponFlags = 0;
+	int throwableItemAmmoType = 0;  // Cached ammo type index for the throwable item weapon (-1 = none)
+	int throwableItemWeaponIdx = 0; // Cached weapon index for the throwable item weapon (-1 = none)
+	int fountainWeaponIdx = 0;      // Cached weapon index for the fountain weapon (-1 = none)
+	int fountainAmmoType = 0;       // Cached ammo type for the fountain weapon (-1 = none)
+	int soulWeaponIdx = 0;          // Cached weapon index for the soul cube weapon (-1 = none)
+	int familiarAmmoType = 0;       // Cached ammo type for familiar weapons (sentry bot fuel, -1 = none)
 
 	// Safe accessor for weapon flags (returns all-false flags for out-of-range indices)
 	const WeaponFlags& getWeaponFlags(int weaponIdx) const {
@@ -178,9 +178,9 @@ public:
 		bool selfDestructs;     // familiar self-destructs on attack (exploding sentry bots)
 		int8_t hudFaceRow;      // Y offset row in sentry bot face sprite (0 or 17)
 	};
-	FamiliarDef* familiarDefs;  // array, familiarDefCount entries
-	int familiarDefCount;
-	int defaultFamiliarType;    // familiar type for non-sentry weapons (default: 1)
+	FamiliarDef* familiarDefs = nullptr;  // array, familiarDefCount entries
+	int familiarDefCount = 0;
+	int defaultFamiliarType = 0;    // familiar type for non-sentry weapons (default: 1)
 
 	// Lookup FamiliarDef by familiarType; returns nullptr if not found
 	const FamiliarDef* getFamiliarDefByType(int famType) const {
@@ -227,83 +227,83 @@ public:
 		bool monsterDamageBoost;     // Monster fires with 1.5x speed/damage (BFG)
 		bool resetThornParticles;    // Reset thorn particle counter on launch
 	};
-	ProjVisual* projVisuals;
-	int numProjTypes;
+	ProjVisual* projVisuals = nullptr;
+	int numProjTypes = 0;
 
-	int8_t* monsterStats;
-	Entity* curAttacker;
-	Entity* curTarget;
-	Entity* lastTarget;
-	int dodgeDir;
-	EntityMonster* targetMonster;
-	EntityMonster* attackerMonster;
-	int targetSubType;
-	int targetType;
-	int stage;
-	int nextStageTime;
-	int nextStage;
-	GameSprite* activeMissiles[8];
-	int numActiveMissiles;
-	int missileAnim;
-	bool targetKilled;
-	bool exploded;
-	ScriptThread* explodeThread;
-	int damage;
-	int totalDamage;
-	int deathAmt;
-	int accumRoundDamage;
-	int totalArmorDamage;
-	int hitType;
-	int animStartTime;
-	int animTime;
-	int animEndTime;
-	int attackerWeaponId;
-	int attackerWeaponProj;
-	int attackerWeapon;
-	int weaponDistance;
-	bool lerpingWeapon;
-	bool weaponDown;
-	bool lerpWpDown;
-	int lerpWpStartTime;
-	int lerpWpDur;
-	int field_0x110_;
-	bool flashDone;
-	int flashDoneTime;
-	int flashTime;
-	bool settingDynamite;
-	bool dynamitePlaced;
-	int settingDynamiteTime;
-	int currentBombIndex;
-	int placingBombZ;
-	int attackFrame;
-	int animLoopCount;
-	bool gotCrit;
-	bool gotHit;
-	bool isGibbed;
-	int reflectionDmg;
-	int playerMissRepetition;
-	int monsterMissRepetition;
-	int renderTime;
-	int attackX;
-	int attackY;
-	int8_t* weapons;
-	int8_t* monsterWeakness;
-	MonsterBehaviors* monsterBehaviors;
-	CombatEntity** monsters;    // Dynamic array indexed by monsterIdx
-	int numMonsterDefs;         // Number of monster entity defs (from EntityDefManager)
-	int worldDist;
-	int tileDist;
-	int crFlags;
-	int crDamage;
-	int crArmorDamage;
-	int crCritChance;
-	int crHitChance;
-	int punchingMonster;
-	bool punchMissed;
-	bool oneShotCheat;
-	int numThornParticleSystems;
-	int32_t* tableCombatMasks;
-	bool soulCubeIsAttacking;
+	int8_t* monsterStats = nullptr;
+	Entity* curAttacker = nullptr;
+	Entity* curTarget = nullptr;
+	Entity* lastTarget = nullptr;
+	int dodgeDir = 0;
+	EntityMonster* targetMonster = nullptr;
+	EntityMonster* attackerMonster = nullptr;
+	int targetSubType = 0;
+	int targetType = 0;
+	int stage = 0;
+	int nextStageTime = 0;
+	int nextStage = 0;
+	GameSprite* activeMissiles[8] = {};
+	int numActiveMissiles = 0;
+	int missileAnim = 0;
+	bool targetKilled = false;
+	bool exploded = false;
+	ScriptThread* explodeThread = nullptr;
+	int damage = 0;
+	int totalDamage = 0;
+	int deathAmt = 0;
+	int accumRoundDamage = 0;
+	int totalArmorDamage = 0;
+	int hitType = 0;
+	int animStartTime = 0;
+	int animTime = 0;
+	int animEndTime = 0;
+	int attackerWeaponId = 0;
+	int attackerWeaponProj = 0;
+	int attackerWeapon = 0;
+	int weaponDistance = 0;
+	bool lerpingWeapon = false;
+	bool weaponDown = false;
+	bool lerpWpDown = false;
+	int lerpWpStartTime = 0;
+	int lerpWpDur = 0;
+	int field_0x110_ = 0;
+	bool flashDone = false;
+	int flashDoneTime = 0;
+	int flashTime = 0;
+	bool settingDynamite = false;
+	bool dynamitePlaced = false;
+	int settingDynamiteTime = 0;
+	int currentBombIndex = 0;
+	int placingBombZ = 0;
+	int attackFrame = 0;
+	int animLoopCount = 0;
+	bool gotCrit = false;
+	bool gotHit = false;
+	bool isGibbed = false;
+	int reflectionDmg = 0;
+	int playerMissRepetition = 0;
+	int monsterMissRepetition = 0;
+	int renderTime = 0;
+	int attackX = 0;
+	int attackY = 0;
+	int8_t* weapons = nullptr;
+	int8_t* monsterWeakness = nullptr;
+	MonsterBehaviors* monsterBehaviors = nullptr;
+	CombatEntity** monsters = nullptr;    // Dynamic array indexed by monsterIdx
+	int numMonsterDefs = 0;         // Number of monster entity defs (from EntityDefManager)
+	int worldDist = 0;
+	int tileDist = 0;
+	int crFlags = 0;
+	int crDamage = 0;
+	int crArmorDamage = 0;
+	int crCritChance = 0;
+	int crHitChance = 0;
+	int punchingMonster = 0;
+	bool punchMissed = false;
+	bool oneShotCheat = false;
+	int numThornParticleSystems = 0;
+	int32_t* tableCombatMasks = nullptr;
+	bool soulCubeIsAttacking = false;
 
 	// Constructor
 	Combat();

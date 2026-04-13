@@ -1,9 +1,4 @@
 #include "LootComponent.h"
-#include <cstring>
-
-LootComponent::LootComponent() {
-	std::memset(this, 0, sizeof(LootComponent));
-}
 
 void LootComponent::reset() {
 	this->lootSet[0] = 0;

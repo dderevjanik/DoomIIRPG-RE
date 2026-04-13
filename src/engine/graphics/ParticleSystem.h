@@ -13,12 +13,12 @@ class ParticleEmitter
 private:
 
 public:
-	ParticleSystem* systems;
-	short pos[3];
-	int gravity;
-	uint8_t gibType;
-	int color;
-	int startTime;
+	ParticleSystem* systems = nullptr;
+	short pos[3] = {};
+	int gravity = 0;
+	uint8_t gibType = 0;
+	int color = 0;
+	int startTime = 0;
 
 	// Constructor
 	ParticleEmitter();
@@ -46,17 +46,17 @@ public:
 	static constexpr int32_t rotationSequence[] = {0, 4, 2, 6};
 	static constexpr int GIB_BONE_MASK = 0x619;
 
-	int systemIdx;
-	ParticleEmitter particleEmitter[4];
-	Image* imgGibs[3];
-	uint8_t* monsterColors;
-	uint8_t particleNext[64];
-	uint8_t particleStartX[64];
-	uint8_t particleStartY[64];
-	int16_t particleVelX[64];
-	int16_t particleVelY[64];
-	uint8_t particleSize[32];
-	int clipRect[4];
+	int systemIdx = 0;
+	ParticleEmitter particleEmitter[4] = {};
+	Image* imgGibs[3] = {};
+	uint8_t* monsterColors = nullptr;
+	uint8_t particleNext[64] = {};
+	uint8_t particleStartX[64] = {};
+	uint8_t particleStartY[64] = {};
+	int16_t particleVelX[64] = {};
+	int16_t particleVelY[64] = {};
+	uint8_t particleSize[32] = {};
+	int clipRect[4] = {};
 
 	// Constructor
 	ParticleSystem();

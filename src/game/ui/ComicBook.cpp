@@ -19,24 +19,6 @@
 #include "Sounds.h"
 
 ComicBook::ComicBook() {
-	//printf("ComicBook::Constructor %d\n", sizeof(ComicBook));
-	std::memset(this, 0, sizeof(ComicBook));
-
-    this->field_0x10 = 0;
-    this->field_0x0 = 0;
-    this->field_0x4 = 0;
-    this->begPoint = 0;
-    this->curX = 0;
-    this->curY = 0;
-    for (int i = 0; i < 17; i++) {
-        this->imgComicBook[i] = nullptr;
-    }
-    for (int i = 0; i < 39; i++) {
-        this->imgiPhoneComicBook[i] = nullptr;
-    }
-    this->accelerationX = 0.0;
-    this->accelerationY = 0.0;
-    this->accelerationZ = 0.0;
     this->exitBtnRect[0] = 10;
     this->exitBtnRect[1] = 10;
     this->exitBtnRect[2] = 60;

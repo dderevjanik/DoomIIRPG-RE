@@ -15,7 +15,7 @@ class TinyGL
 private:
 
 public:
-    Applet* app;  // Set in startup(), replaces CAppContainer::getInstance()->app
+    Applet* app = nullptr;  // Set in startup(), replaces CAppContainer::getInstance()->app
 
     static constexpr int SHIFT_STRETCH = 12;
     static constexpr int UNIT_SCALE = 65536;
@@ -40,75 +40,75 @@ public:
     static constexpr int COLUMN_SCALE_INIT = INT_MAX;
     static constexpr int COLUMN_SCALE_OCCLUDED = (INT_MAX - 1);
 
-    int faceCull;
-    SpanType* span;
-    uint8_t* textureBase;
-    int imageBounds[4];
-    uint16_t* spanPalette;
-    uint16_t** paletteBase;
-    uint16_t* scratchPalette;
-    int sWidth;
-    int sShift;
-    int sMask;
-    int tHeight;
-    int tShift;
-    int tMask;
-    bool swapXY;
-    int screenWidth;
-    int screenHeight;
-    uint16_t* pixels;
-    int* columnScale;
-    int view[16];
-    int view2D[16];
-    int projection[16];
-    int mvp[16];
-    int mvp2D[16];
-    TGLVert cv[32];
-    TGLVert mv[20];
-    TGLEdge edges[2];
-    int fogMin;
-    int fogRange;
-    int fogColor;
-    int countBackFace;
-    int countDrawn;
-    int spanPixels;
-    int spanCalls;
-    int zeroDT;
-    int zeroDS;
-    int viewportX;
-    int viewportY;
-    int viewportWidth;
-    int viewportHeight;
-    int viewportClampX1;
-    int viewportClampY1;
-    int viewportClampX2;
-    int viewportClampY2;
-    int viewportX2;
-    int viewportY2;
-    int viewportXScale;
-    int viewportXBias;
-    int viewportYScale;
-    int viewportYBias;
-    int viewportZScale;
-    int viewportZBias;
-    int viewX;
-    int viewY;
-    int viewZ;
-    int viewYaw;
-    int viewPitch;
-    int c_backFacedPolys;
-    int c_frontFacedPolys;
-    int c_totalQuad;
-    int c_clippedQuad;
-    int c_unclippedQuad;
-    int c_rejectedQuad;
-    int unk03;
-    int unk04;
-    uint32_t textureBaseSize; // [GEC] new
-    uint32_t paletteBaseSize; // [GEC] new
-    int16_t paletteTransparentMask;// [GEC] new
-    uint32_t mediaID;// [GEC] new
-    int colorBuffer;// [GEC] new
+    int faceCull = 0;
+    SpanType* span = nullptr;
+    uint8_t* textureBase = nullptr;
+    int imageBounds[4] = {};
+    uint16_t* spanPalette = nullptr;
+    uint16_t** paletteBase = nullptr;
+    uint16_t* scratchPalette = nullptr;
+    int sWidth = 0;
+    int sShift = 0;
+    int sMask = 0;
+    int tHeight = 0;
+    int tShift = 0;
+    int tMask = 0;
+    bool swapXY = false;
+    int screenWidth = 0;
+    int screenHeight = 0;
+    uint16_t* pixels = nullptr;
+    int* columnScale = nullptr;
+    int view[16] = {};
+    int view2D[16] = {};
+    int projection[16] = {};
+    int mvp[16] = {};
+    int mvp2D[16] = {};
+    TGLVert cv[32] = {};
+    TGLVert mv[20] = {};
+    TGLEdge edges[2] = {};
+    int fogMin = 0;
+    int fogRange = 0;
+    int fogColor = 0;
+    int countBackFace = 0;
+    int countDrawn = 0;
+    int spanPixels = 0;
+    int spanCalls = 0;
+    int zeroDT = 0;
+    int zeroDS = 0;
+    int viewportX = 0;
+    int viewportY = 0;
+    int viewportWidth = 0;
+    int viewportHeight = 0;
+    int viewportClampX1 = 0;
+    int viewportClampY1 = 0;
+    int viewportClampX2 = 0;
+    int viewportClampY2 = 0;
+    int viewportX2 = 0;
+    int viewportY2 = 0;
+    int viewportXScale = 0;
+    int viewportXBias = 0;
+    int viewportYScale = 0;
+    int viewportYBias = 0;
+    int viewportZScale = 0;
+    int viewportZBias = 0;
+    int viewX = 0;
+    int viewY = 0;
+    int viewZ = 0;
+    int viewYaw = 0;
+    int viewPitch = 0;
+    int c_backFacedPolys = 0;
+    int c_frontFacedPolys = 0;
+    int c_totalQuad = 0;
+    int c_clippedQuad = 0;
+    int c_unclippedQuad = 0;
+    int c_rejectedQuad = 0;
+    int unk03 = 0;
+    int unk04 = 0;
+    uint32_t textureBaseSize = 0; // [GEC] new
+    uint32_t paletteBaseSize = 0; // [GEC] new
+    int16_t paletteTransparentMask = 0;// [GEC] new
+    uint32_t mediaID = 0;// [GEC] new
+    int colorBuffer = 0;// [GEC] new
 
 	// Constructor
 	TinyGL();

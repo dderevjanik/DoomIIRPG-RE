@@ -13,9 +13,9 @@ class EntityMonster
 private:
 
 public:
-	int touchMe;
-	CombatEntity ce;
+	int touchMe = 0;
+	CombatEntity ce{};
 
 	// Constructor
-	EntityMonster();
+	EntityMonster() = default;
 };

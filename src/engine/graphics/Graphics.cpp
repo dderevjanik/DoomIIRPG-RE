@@ -14,10 +14,6 @@
 
 #define COLOR_BYTE_TO_FLOAT(x) (float)((float)(x) * (1.f / 256)) // (1.f / 256) -> 0.0039062f
 
-Graphics::Graphics() {
-	std::memset(this, 0, sizeof(Graphics));
-}
-
 Graphics::~Graphics() {
 }
 

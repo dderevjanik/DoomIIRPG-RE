@@ -10,10 +10,10 @@ class CombatEntity
 private:
 
 public:
-	Applet* app;  // Set lazily, replaces CAppContainer::getInstance()->app
-	int touchMe;
-	int stats[8];
-	int weapon;
+	Applet* app = nullptr;  // Set lazily, replaces CAppContainer::getInstance()->app
+	int touchMe = 0;
+	int stats[8] = {};
+	int weapon = -1;
 
 	// Constructor
 	CombatEntity();

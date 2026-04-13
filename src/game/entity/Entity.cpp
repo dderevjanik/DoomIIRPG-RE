@@ -25,9 +25,7 @@
 #include "LootComponent.h"
 #include "AIComponent.h"
 
-Entity::Entity() {
-    std::memset(this, 0, sizeof(Entity));
-}
+Entity::Entity() = default;
 
 Entity::~Entity() {
 }

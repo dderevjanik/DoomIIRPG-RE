@@ -19,11 +19,11 @@ struct zip_entry_t {
 class ZipFile
 {
 private:
-	FILE* file;
-	int entry_count;
-	zip_entry_t* entry;
-	int page_count;
-	int* page;
+	FILE* file = nullptr;
+	int entry_count = 0;
+	zip_entry_t* entry = nullptr;
+	int page_count = 0;
+	int* page = nullptr;
 public:
 
 	// Constructor

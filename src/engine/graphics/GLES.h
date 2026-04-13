@@ -36,31 +36,31 @@ class Applet;
 class gles
 {
 public:
-	Applet* app;  // Set in startup(), replaces CAppContainer::getInstance()->app
-	bool isInit;
+	Applet* app = nullptr;  // Set in startup(), replaces CAppContainer::getInstance()->app
+	bool isInit = false;
 	static constexpr int scale = 1;
 	static constexpr int MAX_GLVERTS = 16;
 	static constexpr int MAX_MEDIA = 1024;
 
 private:
-	Render* render;
-	TinyGL* tinyGL;
-	int activeTexels;
-	Vertex immediate[MAX_GLVERTS];
-	uint16_t quad_indexes[42];
-	glChain chains[MAX_MEDIA];
-	glChain activeChain;
-	float fogScale;
-	float modelViewMatrix[MAX_GLVERTS];
-	float projectionMatrix[MAX_GLVERTS];
-	int vPortRect[4];
-	int fogMode;
-	int renderMode;
-	int flags;
-	float fogStart;
-	float fogEnd;
-	float fogColor[4];
-	float fogBlack[4];
+	Render* render = nullptr;
+	TinyGL* tinyGL = nullptr;
+	int activeTexels = 0;
+	Vertex immediate[MAX_GLVERTS] = {};
+	uint16_t quad_indexes[42] = {};
+	glChain chains[MAX_MEDIA] = {};
+	glChain activeChain = {};
+	float fogScale = 0.0f;
+	float modelViewMatrix[MAX_GLVERTS] = {};
+	float projectionMatrix[MAX_GLVERTS] = {};
+	int vPortRect[4] = {};
+	int fogMode = 0;
+	int renderMode = 0;
+	int flags = 0;
+	float fogStart = 0.0f;
+	float fogEnd = 0.0f;
+	float fogColor[4] = {};
+	float fogBlack[4] = {};
 public:
 
 	// Constructor

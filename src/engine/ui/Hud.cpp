@@ -23,9 +23,7 @@
 #include "MenuSystem.h"
 #include "Enums.h"
 
-Hud::Hud() {
-	std::memset(this, 0, sizeof(Hud));
-}
+Hud::Hud() = default;
 
 Hud::~Hud() {
 }

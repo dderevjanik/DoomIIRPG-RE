@@ -37,9 +37,7 @@ static int32_t _ReadInt(FILE* fp) {
 	return SDL_SwapLE32(iData);
 }
 
-ZipFile::ZipFile() {
-	std::memset(this, 0, sizeof(ZipFile));
-}
+ZipFile::ZipFile() = default;
 
 ZipFile::~ZipFile() {}
 

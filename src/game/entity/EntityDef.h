@@ -10,14 +10,14 @@ class EntityDef;
 
 class EntityDefManager {
   private:
-	EntityDef* list;
-	int numDefs;
+	EntityDef* list = nullptr;
+	int numDefs = 0;
 	int numMonsterDefs = 0;  // Count of monster entities (each gets a monsterIdx)
 
   public:
 	int getNumMonsterDefs() const { return numMonsterDefs; }
 	// Constructor
-	EntityDefManager();
+	EntityDefManager() = default;
 	// Destructor
 	~EntityDefManager();
 
@@ -161,16 +161,16 @@ class EntityDef {
 		int8_t slapHeadFrame = 15;       // Slap melee head base (alternates +0/+1)
 	};
 
-	int16_t tileIndex;
-	int16_t name;
-	int16_t longName;
-	int16_t description;
-	uint8_t eType;
-	uint8_t eSubType;
-	uint8_t parm;
-	uint8_t touchMe;
+	int16_t tileIndex = 0;
+	int16_t name = 0;
+	int16_t longName = 0;
+	int16_t description = 0;
+	uint8_t eType = 0;
+	uint8_t eSubType = 0;
+	uint8_t parm = 0;
+	uint8_t touchMe = 0;
 	int16_t monsterIdx = -1;    // Sequential index for monster entities (-1 = not a monster)
-	uint32_t renderFlags;       // Bitmask of RFLAG_* constants
+	uint32_t renderFlags = 0;   // Bitmask of RFLAG_* constants
 	FearEyeData fearEyes;       // Fear eye rendering offsets
 	GunFlareData gunFlare;      // Gun flare rendering offsets
 	BodyPartData bodyParts;     // Body part rendering offsets
@@ -179,7 +179,7 @@ class EntityDef {
 	SpriteAnimData spriteAnim;  // Sprite anim overrides (Cyberdemon/ChainsawGoblin)
 
 	// Constructor
-	EntityDef();
+	EntityDef() = default;
 
 	// Render flag helpers
 	bool hasRenderFlag(uint32_t flag) const { return (renderFlags & flag) != 0; }

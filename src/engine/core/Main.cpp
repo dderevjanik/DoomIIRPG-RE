@@ -63,6 +63,7 @@ int main(int argc, char* args[]) {
 	unsigned int seed = 0;      // 0 = don't seed (normal mode)
 	bool hasSeed = false;
 	const char* scriptFile = nullptr;
+	std::vector<std::string> modDirs;  // --mod directories (in order specified)
 
 	for (int i = 1; i < argc; i++) {
 		if (strcmp(args[i], "--help") == 0 || strcmp(args[i], "-h") == 0) {
@@ -80,6 +81,7 @@ int main(int argc, char* args[]) {
 			printf("  --ticks <n>             Quit after n ticks (headless/script mode)\n");
 			printf("  --seed <n>              Set random seed for deterministic runs\n");
 			printf("  --script <file>         Load and replay an input script\n");
+			printf("  --mod <dir>             Load a mod directory (repeatable, last wins)\n");
 			return 0;
 		} else if (strcmp(args[i], "--gamedir") == 0 && i + 1 < argc) {
 			gameDir = args[++i];
@@ -102,6 +104,8 @@ int main(int argc, char* args[]) {
 			hasSeed = true;
 		} else if (strcmp(args[i], "--script") == 0 && i + 1 < argc) {
 			scriptFile = args[++i];
+		} else if (strcmp(args[i], "--mod") == 0 && i + 1 < argc) {
+			modDirs.push_back(args[++i]);
 		}
 	}
 
@@ -211,13 +215,19 @@ int main(int argc, char* args[]) {
 		}
 	}
 
-	// Resolve script path to absolute before chdir
+	// Resolve script and mod paths to absolute before chdir
 	std::string scriptPathStr;
 	if (scriptFile) {
 		char resolved[PATH_MAX];
 		if (realpath(scriptFile, resolved)) {
 			scriptPathStr = resolved;
 			scriptFile = scriptPathStr.c_str();
+		}
+	}
+	for (auto& modDir : modDirs) {
+		char resolved[PATH_MAX];
+		if (realpath(modDir.c_str(), resolved)) {
+			modDir = resolved;
 		}
 	}
 
@@ -469,6 +479,40 @@ int main(int argc, char* args[]) {
 	// Register search subdirectories from game.yaml (e.g. ui/, hud/, fonts/, audio/)
 	for (const auto& dir : gc.searchDirs) {
 		vfs.addSearchDir(dir.c_str());
+	}
+
+	// Mount mod directories (later entries = higher priority, overriding earlier ones)
+	for (size_t i = 0; i < modDirs.size(); i++) {
+		int modPriority = 300 + static_cast<int>(i);
+		vfs.mountDir(modDirs[i].c_str(), modPriority);
+
+		// Try to read mod.yaml for metadata
+		std::string modYamlPath = modDirs[i] + "/mod.yaml";
+		DataNode modConfig = DataNode::loadFile(modYamlPath.c_str());
+		if (modConfig) {
+			DataNode mod = modConfig["mod"];
+			if (mod) {
+				std::string modName = mod["name"].asString("(unnamed)");
+				std::string modVersion = mod["version"].asString("");
+				std::string modAuthor = mod["author"].asString("");
+				printf("[mod] Loaded: %s%s%s (priority %d)\n",
+					modName.c_str(),
+					modVersion.empty() ? "" : (" v" + modVersion).c_str(),
+					modAuthor.empty() ? "" : (" by " + modAuthor).c_str(),
+					modPriority);
+
+				// Register additional search dirs from the mod
+				DataNode modSearchDirs = mod["search_dirs"];
+				if (modSearchDirs) {
+					for (auto it = modSearchDirs.begin(); it != modSearchDirs.end(); ++it) {
+						vfs.addSearchDir(it.value().asString().c_str());
+					}
+				}
+			}
+		} else {
+			printf("[mod] Mounted: %s (priority %d, no mod.yaml)\n",
+				modDirs[i].c_str(), modPriority);
+		}
 	}
 
 	SDLGL sdlGL;

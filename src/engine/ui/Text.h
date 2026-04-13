@@ -12,7 +12,7 @@ class Localization
 private:
 
 public:
-	Applet* app;  // Set in startup(), replaces CAppContainer::getInstance()->app
+	Applet* app = nullptr;  // Set in startup(), replaces CAppContainer::getInstance()->app
 
 	static constexpr int MAXBUFFERS = 7;
 	static constexpr int MAXTEXT = 15;
@@ -34,19 +34,19 @@ public:
 	static constexpr uint8_t NEWLINE = '|';
 	static constexpr uint8_t HARD_SPACE = 0xA0;
 
-	Text* scratchBuffers[Localization::MAXBUFFERS];
-	int bufferFlags;
-	Text* dynamicArgs;
-	int16_t argIndex[Localization::MAX_STRING_ARGS];
-	int numTextArgs;
-	bool selectLanguage;
-	int defaultLanguage;
-	int textSizes[Localization::MAXTEXT];
-	int textCount[Localization::MAXTEXT];
-	char** text;
-	uint16_t** textMap;
-	void* yamlData; // Legacy: single YAML::Node* for old strings.yaml format
-	void* groupYamlData[Localization::MAXTEXT]; // Per-group DataNode* for split files
+	Text* scratchBuffers[Localization::MAXBUFFERS] = {};
+	int bufferFlags = 0;
+	Text* dynamicArgs = nullptr;
+	int16_t argIndex[Localization::MAX_STRING_ARGS] = {};
+	int numTextArgs = 0;
+	bool selectLanguage = false;
+	int defaultLanguage = 0;
+	int textSizes[Localization::MAXTEXT] = {};
+	int textCount[Localization::MAXTEXT] = {};
+	char** text = nullptr;
+	uint16_t** textMap = nullptr;
+	void* yamlData = nullptr; // Legacy: single YAML::Node* for old strings.yaml format
+	void* groupYamlData[Localization::MAXTEXT] = {}; // Per-group DataNode* for split files
 
 	// Constructor
 	Localization();

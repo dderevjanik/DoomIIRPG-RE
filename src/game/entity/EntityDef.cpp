@@ -18,9 +18,7 @@
 // EntityDefManager Class
 // -----------------------
 
-EntityDefManager::EntityDefManager() {
-	std::memset(this, 0, sizeof(EntityDefManager));
-}
+// EntityDefManager default constructor is = default (header)
 
 EntityDefManager::~EntityDefManager() {}
 
@@ -256,6 +254,4 @@ EntityDef* EntityDefManager::lookup(int tileIndex) {
 // EntityDef Class
 // ----------------
 
-EntityDef::EntityDef() {
-	std::memset(this, 0, sizeof(EntityDef));
-}
+// EntityDef default constructor is = default (header)
