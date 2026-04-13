@@ -7,6 +7,8 @@
 #include "SDLGL.h"
 #include "CAppContainer.h"
 #include "App.h"
+#include "Render.h"
+#include "GLES.h"
 #include "ComicBook.h"
 #include "Image.h"
 #include "Graphics.h"
@@ -121,8 +123,7 @@ void ComicBook::Draw(Graphics* graphics) {
 
     this->UpdateMovement();
     this->UpdateTransition();
-    glClearColor(1.0, 1.0, 1.0, 1.0);
-    glClear(GL_COLOR_BUFFER_BIT);
+    app->render->_gles->ClearBuffer(0xFFFFFF);
 
     if (this->field_0x13c)
     {
@@ -207,8 +208,7 @@ void ComicBook::DrawLoading(Graphics* graphics) {
     int y; // r8
     int flags; // r0
     ++this->field_0x1c;
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    app->render->_gles->ClearBuffer(0x000000);
     if (this->is_iPhoneComic) {
         x = 160;
         y = 240;
@@ -475,105 +475,14 @@ void ComicBook::CheckImageExistence(Image* image) {
 
 void ComicBook::DrawImage(Image* image, int a3, int a4, char a5, float alpha, char a7)
 {
-    PFNGLACTIVETEXTUREPROC glActiveTexture = (PFNGLACTIVETEXTUREPROC)SDL_GL_GetProcAddress("glActiveTexture");
-
-    int v10; // r3
-    float width; // s13
-    float height; // s11
-    float v13; // s17
-    float v14; // s16
-    float v15; // s14
-    float v16; // s15
-    float v17; // s12
-    float v18; // s14
-    float v19; // s13
-    float v20; // s15
-    float vp[12]; // [sp+4h] [bp-7Ch] BYREF
-    float st[8]; // [sp+34h] [bp-4Ch] BYREF
-
     this->CheckImageExistence(image);
-    v10 = (uint8_t)a5;
-    width = (float)image->width;
-    height = (float)image->height;
-    if (a5)
-        v10 = a4;
-    if (a5)
-    {
-        a4 = a3;
-        a3 = v10;
+    int posX = a3;
+    int posY = a4;
+    if (a5) {
+        posX = a4;
+        posY = a3;
     }
-    v13 = width * 0.5;
-    v14 = height * 0.5;
-    vp[2] = 0.5;
-    vp[5] = 0.5;
-    vp[0] = width * 0.5;
-    vp[1] = -(float)(height * 0.5);
-    vp[8] = 0.5;
-    vp[11] = 0.5;
-    vp[3] = -(float)(width * 0.5);
-    vp[4] = vp[1];
-    vp[6] = width * 0.5;
-    vp[7] = height * 0.5;
-    vp[9] = vp[3];
-    vp[10] = height * 0.5;
-    memset(st, 0, sizeof(st));
-    v15 = 1.0 / (float)image->texWidth;
-    v16 = 1.0 / (float)image->texHeight;
-    v17 = width * v15;
-    v18 = v15 * 0.0;
-    st[0] = v17;
-    st[2] = v18;
-    st[4] = v17;
-    st[6] = v18;
-    v19 = v16 * 0.0;
-    v20 = height * v16;
-    st[1] = v19;
-    st[3] = v19;
-    st[5] = v20;
-    st[7] = v20;
-    if (a7)
-    {
-        st[0] = v18;
-        st[1] = v20;
-        st[2] = v17;
-        st[3] = v20;
-        st[4] = v18;
-        st[5] = v19;
-        st[6] = v17;
-        st[7] = v19;
-    }
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    glColor4f(1.0, 1.0, 1.0, alpha);
-    glDisable(GL_ALPHA_TEST);
-    glAlphaFunc(GL_GREATER, 0);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_TEXTURE_2D);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, image->texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glVertexPointer(3, GL_FLOAT, 0, &vp);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glTexCoordPointer(2, GL_FLOAT, 0, &st);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY);
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-    if (a5)
-    {
-        glTranslatef((float)(v14 + (float)a3) + (float)(240.0 - v14), v13 + (float)a4, 0.0);
-        glRotatef(-90.0, 0.0, 0.0, 1.0);
-    }
-    else
-    {
-        glTranslatef(v13 + (float)a3, v14 + (float)a4, 0.0);
-    }
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    glPopMatrix();
+    image->DrawTextureAlpha(posX, posY, alpha, (bool)a5, (bool)a7);
 }
 
 

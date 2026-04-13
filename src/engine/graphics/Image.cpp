@@ -162,6 +162,73 @@ void Image::DrawTexture(int texX, int texY, int texW, int texH, int posX, int po
     glPopMatrix();
 }
 
+void Image::DrawTextureAlpha(int posX, int posY, float alpha, bool rotated, bool flipUV) {
+    if (this->headless) return;
+
+    PFNGLACTIVETEXTUREPROC glActiveTexture = (PFNGLACTIVETEXTUREPROC)SDL_GL_GetProcAddress("glActiveTexture");
+
+    float w = (float)this->width;
+    float h = (float)this->height;
+    float hw = w * 0.5f;
+    float hh = h * 0.5f;
+
+    float vp[12];
+    vp[0] =  hw; vp[1] = -hh; vp[2]  = 0.5f;
+    vp[3] = -hw; vp[4] = -hh; vp[5]  = 0.5f;
+    vp[6] =  hw; vp[7] =  hh; vp[8]  = 0.5f;
+    vp[9] = -hw; vp[10] = hh; vp[11] = 0.5f;
+
+    float scaleTexW = 1.0f / (float)this->texWidth;
+    float scaleTexH = 1.0f / (float)this->texHeight;
+    float u1 = w * scaleTexW;
+    float u0 = 0.0f;
+    float v0 = 0.0f;
+    float v1 = h * scaleTexH;
+
+    float st[8];
+    if (flipUV) {
+        st[0] = u0; st[1] = v1;
+        st[2] = u1; st[3] = v1;
+        st[4] = u0; st[5] = v0;
+        st[6] = u1; st[7] = v0;
+    } else {
+        st[0] = u1; st[1] = v0;
+        st[2] = u0; st[3] = v0;
+        st[4] = u1; st[5] = v1;
+        st[6] = u0; st[7] = v1;
+    }
+
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    glColor4f(1.0f, 1.0f, 1.0f, alpha);
+    glDisable(GL_ALPHA_TEST);
+    glAlphaFunc(GL_GREATER, 0);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_TEXTURE_2D);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, this->texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glVertexPointer(3, GL_FLOAT, 0, vp);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glTexCoordPointer(2, GL_FLOAT, 0, st);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    if (rotated) {
+        glTranslatef((float)(hh + (float)posX) + (240.0f - hh), hw + (float)posY, 0.0f);
+        glRotatef(-90.0f, 0.0f, 0.0f, 1.0f);
+    } else {
+        glTranslatef(hw + (float)posX, hh + (float)posY, 0.0f);
+    }
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glPopMatrix();
+}
+
 void Image::setRenderMode(int renderMode) {
     if (!this->app) {
         this->app = CAppContainer::getInstance()->app;

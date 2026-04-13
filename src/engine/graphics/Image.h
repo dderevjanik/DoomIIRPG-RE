@@ -28,5 +28,6 @@ public:
 
 	void CreateTexture(uint16_t* data, uint32_t width, uint32_t height);
 	void DrawTexture(int texX, int texY, int texW, int texH, int posX, int posY, int rotateMode, int renderMode);
+	void DrawTextureAlpha(int posX, int posY, float alpha, bool rotated, bool flipUV);
 	void setRenderMode(int renderMode);
 };
