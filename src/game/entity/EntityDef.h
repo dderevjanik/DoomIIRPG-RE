@@ -197,6 +197,7 @@ class EntityDef {
 	SpriteAnimData spriteAnim;  // Sprite anim overrides (Cyberdemon/ChainsawGoblin)
 	DestroyData destroy;        // Destruction effects (ET_ATTACK_INTERACTIVE)
 	EnvDamageData envDamage;    // Environmental damage (ET_ENV_DAMAGE)
+	int16_t healAmount = 0;     // Food heal amount (0 = use legacy parm-based: parm 0/2 → 40, parm 1 → 20)
 
 	// Constructor
 	EntityDef() = default;

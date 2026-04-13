@@ -229,6 +229,9 @@ std::expected<void, std::string> EntityDefManager::parse(EntityDefManager* mgr, 
 			list[i].destroy.convertToWaterSpout = destroy["convert_to_water_spout"].asBool(false);
 		}
 
+		// Food/item heal amount (for IT_FOOD items)
+		list[i].healAmount = (int16_t)e["heal_amount"].asInt(0);
+
 		// Environmental damage (for ET_ENV_DAMAGE entities)
 		DataNode envDmg = e["env_damage"];
 		if (envDmg) {

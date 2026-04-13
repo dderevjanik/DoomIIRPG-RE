@@ -268,6 +268,7 @@ entities:
     type: item
     subtype: food
     parm: 0
+    heal_amount: 40
     text: {name: 149, long_name: 159, description: 159}
   inventory_12:
     sprite: armor_shard

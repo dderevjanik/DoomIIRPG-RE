@@ -109,11 +109,12 @@ bool Entity::touchedItem() {
     }
     else if (this->def->eSubType == Enums::IT_FOOD) {
         int n;
-        if (this->def->parm == 0 || this->def->parm == 2) {
-            n = 40;
-        }
-        else {
-            n = 20;
+        if (this->def->healAmount > 0) {
+            n = this->def->healAmount;
+        } else if (this->def->parm == 0 || this->def->parm == 2) {
+            n = 40;  // legacy fallback: large food
+        } else {
+            n = 20;  // legacy fallback: small food
         }
         if (!app->player->addHealth(n)) {
             app->hud->addMessage((short)46, 2);
