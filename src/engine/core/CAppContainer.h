@@ -8,6 +8,8 @@
 #include "OpcodeRegistry.h"
 #include "MinigameRegistry.h"
 
+class DevConsole;
+
 class VFS;
 class SDLGL;
 class Applet;
@@ -163,6 +165,7 @@ class CAppContainer {
 	GameConfig gameConfig;         // Loaded from game.yaml
 	OpcodeRegistry opcodeRegistry; // Extension script opcodes (128-254)
 	MinigameRegistry minigameRegistry; // Minigame dispatch registry
+	DevConsole* devConsole = nullptr;  // ImGui developer console overlay (set by Main)
 	const char* customMapFile;     // --map override (raw file path, used when no level ID match)
 	int customMapID;               // --map override resolved to a level ID (0 = not set)
 	const char* minigameName;     // --minigame override

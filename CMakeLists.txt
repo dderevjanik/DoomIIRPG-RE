@@ -55,6 +55,31 @@ set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
 set(YAML_CPP_BUILD_CONTRIB OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(yaml-cpp)
 
+# Dear ImGui (developer console overlay)
+FetchContent_Declare(
+	imgui
+	GIT_REPOSITORY https://github.com/ocornut/imgui.git
+	GIT_TAG v1.91.8
+	GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(imgui)
+
+# Build ImGui as a static library with SDL2 + OpenGL2 backends
+add_library(imgui STATIC
+	${imgui_SOURCE_DIR}/imgui.cpp
+	${imgui_SOURCE_DIR}/imgui_demo.cpp
+	${imgui_SOURCE_DIR}/imgui_draw.cpp
+	${imgui_SOURCE_DIR}/imgui_tables.cpp
+	${imgui_SOURCE_DIR}/imgui_widgets.cpp
+	${imgui_SOURCE_DIR}/backends/imgui_impl_sdl2.cpp
+	${imgui_SOURCE_DIR}/backends/imgui_impl_opengl2.cpp
+)
+target_include_directories(imgui PUBLIC
+	${imgui_SOURCE_DIR}
+	${imgui_SOURCE_DIR}/backends
+)
+target_link_libraries(imgui PUBLIC SDL2::SDL2 OpenGL::GL)
+
 # Global identifiers for each project/target
 set(HASH_LIBRARY_TGT_NAME           Hash-Library)
 add_subdirectory("${PROJECT_SOURCE_DIR}/src")

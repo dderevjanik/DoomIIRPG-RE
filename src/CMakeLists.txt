@@ -64,7 +64,8 @@ target_link_libraries(drpg-engine-lib PUBLIC
 	OpenAL::OpenAL
 	OpenGL::GL
 	${HASH_LIBRARY_TGT_NAME}
-	yaml-cpp::yaml-cpp)
+	yaml-cpp::yaml-cpp
+	imgui)
 
 # Main game executable
 if(APPLE)

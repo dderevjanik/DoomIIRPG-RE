@@ -7,6 +7,7 @@
 #include "CAppContainer.h"
 #include "App.h"
 #include "Canvas.h"
+#include "DevConsole.h"
 #include "Input.h"
 #include "SDLGL.h"
 #include "GLES.h"
@@ -719,6 +720,11 @@ void Input::handleEvents() noexcept {
     int i, j;
 
     while (SDL_PollEvent(&sdlEvent) != 0) {
+        // Let DevConsole process events first; skip game input if it consumes them
+        if (auto* dc = CAppContainer::getInstance()->devConsole) {
+            if (dc->processEvent(sdlEvent)) continue;
+        }
+
         switch (sdlEvent.type) {
             case SDL_QUIT: {
                 LOG_INFO("handleEvents::SDL_QUIT\n");

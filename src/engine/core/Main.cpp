@@ -35,8 +35,12 @@
 #include "GameScript.h"
 #include "CrashHandler.h"
 
+#include "DevConsole.h"
+
 #include <dirent.h>
 #include <signal.h>
+
+static DevConsole g_devConsole;
 
 static void handleSIGTERM(int) {
 	// Gracefully request shutdown instead of letting the signal kill the process
@@ -529,6 +533,12 @@ int main(int argc, char* args[]) {
 
 	CAppContainer::getInstance()->Construct(&sdlGL, &vfs, &doom2rpgModule);
 
+	// Initialize ImGui developer console (F12 to toggle)
+	if (!headless && sdlGL.window) {
+		g_devConsole.init(sdlGL.window, SDL_GL_GetCurrentContext());
+		CAppContainer::getInstance()->devConsole = &g_devConsole;
+	}
+
 	input.init(); // [GEC] Port: set default Binds — must be after Construct() so app pointer exists
 
 	if (customMap) {
@@ -643,6 +653,8 @@ int main(int argc, char* args[]) {
 	}
 
 	printf("[main] APP_QUIT\n");
+	g_devConsole.shutdown();
+	CAppContainer::getInstance()->devConsole = nullptr;
 	CAppContainer::getInstance()->~CAppContainer();
 	_exit(0);
 }
@@ -688,6 +700,10 @@ void drawView(SDLGL* sdlGL) {
 	// printf("passedTime %d\n", passedTime);
 
 	CAppContainer::getInstance()->DoLoop(passedTime);
+
+	// Render ImGui overlay on top of the game frame
+	g_devConsole.newFrame();
+	g_devConsole.render();
 
 	SDL_GL_SwapWindow(sdlGL->window); // Swap the window/pBmp to display the result.
 }
