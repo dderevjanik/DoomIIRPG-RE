@@ -165,9 +165,9 @@ LABEL_29:
         v14 = this->is_iPhoneComic;
         v15 = iPhonePage + 1;
         if (v14)
-            v16 = -320;
+            v16 = -Applet::IOS_HEIGHT;
         else
-            v16 = 480;
+            v16 = Applet::IOS_WIDTH;
         v23 = v16;
         if (this->is_iPhoneComic)
             v17 = 17;
@@ -652,9 +652,9 @@ void ComicBook::UpdateMovement() {
         this->endPoint = v10;
     LABEL_28:
         if (is_iPhoneComic)
-            v13 = 320;
+            v13 = Applet::IOS_HEIGHT;
         else
-            v13 = 480;
+            v13 = Applet::IOS_WIDTH;
         if (v13 <= v10 || v10 <= -v13)
         {
             if (is_iPhoneComic)
@@ -896,7 +896,7 @@ bool ComicBook::ButtonTouch(int x, int y)
     {
         v9 = v5 + v7;
         v5 = this->exitBtnRect[1];
-        v6 = 320 - v9;
+        v6 = Applet::IOS_HEIGHT - v9;
         v8 = this->exitBtnRect[2];
         v7 = this->exitBtnRect[3];
     }
@@ -978,7 +978,7 @@ void ComicBook::DrawExitButton(Graphics* graphics) {
     {
         v7 = v3 + v5;
         v3 = this->exitBtnRect[1];
-        v4 = 320 - v7;
+        v4 = Applet::IOS_HEIGHT - v7;
         v6 = this->exitBtnRect[2];
         v5 = this->exitBtnRect[3];
     }

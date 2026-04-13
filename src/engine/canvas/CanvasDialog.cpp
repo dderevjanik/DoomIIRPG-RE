@@ -56,7 +56,7 @@ void Canvas::dialogState(Graphics* graphics) {
 	dialogRect[0] = -this->screenRect[0];
 	dialogRect[2] = this->hudRect[2];
 	dialogRect[3] = this->dialogViewLines * 16 + 8;
-	dialogRect[1] = 320 - dialogRect[3] - 1;//Canvas.screenRect[3] - dialogRect[3] - 1;
+	dialogRect[1] = Applet::IOS_HEIGHT - dialogRect[3] - 1;//Canvas.screenRect[3] - dialogRect[3] - 1;
 	this->dialogTypeLineIdx = this->numDialogLines;
 	int n = dialogRect[0] + 1;
 	int n2 = 0xFF000000;
@@ -65,7 +65,7 @@ void Canvas::dialogState(Graphics* graphics) {
 	if (this->dialogStyle == 3) {
 		// Scroll style: custom drawing
 		n = -this->screenRect[0] + 1;
-		dialogRect[1] = 320 - dialogRect[3] - 10;
+		dialogRect[1] = Applet::IOS_HEIGHT - dialogRect[3] - 10;
 		graphics->fillRect(dialogRect[0], dialogRect[1] - 10, this->hudRect[2], this->dialogRect[3] + 20, 12800);
 		graphics->setColor(color);
 		graphics->drawRect(dialogRect[0], dialogRect[1] - 10, dialogRect[2] - 1, dialogRect[3] + 19);

@@ -312,8 +312,8 @@ void fmButtonContainer::SetGraphic(int index) {
 
 void fmButtonContainer::FlipButtons() {
 	for (fmButton* next = this->next; next != nullptr; next = next->next) {
-		next->touchArea.x = -next->touchArea.x - next->touchArea.w + 480;
-		next->touchAreaDrawing.x = -next->touchAreaDrawing.x - next->touchAreaDrawing.w + 480; // New
+		next->touchArea.x = -next->touchArea.x - next->touchArea.w + Applet::IOS_WIDTH;
+		next->touchAreaDrawing.x = -next->touchAreaDrawing.x - next->touchAreaDrawing.w + Applet::IOS_WIDTH; // New
 	}
 }
 

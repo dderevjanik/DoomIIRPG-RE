@@ -3283,7 +3283,7 @@ void Canvas::initZoom() {
 	this->zoomStateTime = app->time;
 	this->isZoomedIn = true;
 	app->StartAccelerometer();
-	this->m_sniperScopeDialScrollButton->Update(0, 320);
+	this->m_sniperScopeDialScrollButton->Update(0, Applet::IOS_HEIGHT);
 	this->zoomAccuracy = 2560 * std::max(0, std::min((256 - app->player->ce->getStatPercent(Enums::STAT_ACCURACY) << 8) / 26, 256)) >> 8;
 	this->zoomMinFOVPercent = 256;
 	this->zoomMaxAngle = 64 - (this->zoomAccuracy >> 8);
@@ -3941,10 +3941,10 @@ void Canvas::drawTouchSoftkeyBar(Graphics* graphics, bool highlighted_Left, bool
 	Text* SmallBuffer = app->localization->getSmallBuffer();
 
 	graphics->drawImage(app->menuSystem->imgGameMenuPanelbottom,
-		0, 320 - app->menuSystem->imgGameMenuPanelbottom->height, 0, 0, 0);
+		0, Applet::IOS_HEIGHT - app->menuSystem->imgGameMenuPanelbottom->height, 0, 0, 0);
 	if (app->player->isFamiliar) {
 		graphics->drawImage(app->menuSystem->imgGameMenuPanelBottomSentrybot,
-			0, 320 - app->menuSystem->imgGameMenuPanelBottomSentrybot->height, 0, 0, 0);
+			0, Applet::IOS_HEIGHT - app->menuSystem->imgGameMenuPanelBottomSentrybot->height, 0, 0, 0);
 	}
 
 	if (!highlighted_Left || (highlighted_Left && this->softKeyLeftID == -1)) {
@@ -3958,7 +3958,7 @@ void Canvas::drawTouchSoftkeyBar(Graphics* graphics, bool highlighted_Left, bool
 		SmallBuffer->setLength(0);
 		app->localization->composeText(this->softKeyLeftID, SmallBuffer);
 		SmallBuffer->dehyphenate();
-		graphics->drawString(SmallBuffer, 2, 320, 36);
+		graphics->drawString(SmallBuffer, 2, Applet::IOS_HEIGHT, 36);
 	}
 
 	if (!highlighted_Right || (highlighted_Right && this->softKeyRightID == -1)) {
@@ -3972,7 +3972,7 @@ void Canvas::drawTouchSoftkeyBar(Graphics* graphics, bool highlighted_Left, bool
 		SmallBuffer->setLength(0);
 		app->localization->composeText(this->softKeyRightID, SmallBuffer);
 		SmallBuffer->dehyphenate();
-		graphics->drawString(SmallBuffer, 478, 320, 40);
+		graphics->drawString(SmallBuffer, Applet::IOS_WIDTH - 2, Applet::IOS_HEIGHT, 40);
 	}
 	SmallBuffer->dispose();
 }

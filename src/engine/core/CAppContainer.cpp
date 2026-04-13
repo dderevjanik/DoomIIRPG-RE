@@ -180,8 +180,8 @@ void CAppContainer::UpdateAccelerometer(float x, float y, float z, bool useMouse
 		if (useMouse) {
 			int aX = (int)(x * Applet::IOS_WIDTH);
 			int aY = (int)(y * Applet::IOS_HEIGHT);
-			float axisX = -AxisHit(aX, aY, 0, 0, 480, 320, true, 1.0f);
-			float axisY = -AxisHit(aX, aY, 0, 0, 480, 320, false, 1.0f);
+			float axisX = -AxisHit(aX, aY, 0, 0, Applet::IOS_WIDTH, Applet::IOS_HEIGHT, true, 1.0f);
+			float axisY = -AxisHit(aX, aY, 0, 0, Applet::IOS_WIDTH, Applet::IOS_HEIGHT, false, 1.0f);
 			this->app->AccelerometerUpdated(axisX, axisY, z);
 		}
 		else {

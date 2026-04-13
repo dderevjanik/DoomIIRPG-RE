@@ -538,7 +538,7 @@ void Render::renderStreamSprite(int n) {
 				n12 = 224;
 			} else {
 				n11 = 176;
-				n12 = 320;
+				n12 = Applet::IOS_HEIGHT;
 			}
 		} else {
 			n11 = 224;
@@ -559,7 +559,7 @@ void Render::renderStreamSprite(int n) {
 		n11 = 0;
 		n12 = 0;
 		n13 = 0;
-		n14 = -320;
+		n14 = -Applet::IOS_HEIGHT;
 	}
 	app->tinyGL->faceCull = TinyGL::CULL_NONE;
 	this->setupTexture(n4, n5, n6, 0);

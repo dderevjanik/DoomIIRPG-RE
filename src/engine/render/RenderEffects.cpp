@@ -643,7 +643,7 @@ void Render::endFade() {
 
 bool Render::fadeScene(Graphics* graphics) {
 
-	int fadeRect[4] = {0, 0, 480, 320};
+	int fadeRect[4] = {0, 0, Applet::IOS_WIDTH, Applet::IOS_HEIGHT};
 
 	int fadeDuration = app->upTimeMs - this->fadeTime;
 	if (fadeDuration >= this->fadeDuration - 50) {
@@ -734,18 +734,18 @@ void Render::postProcessView(Graphics* graphics) {
 
 	if (app->player->isFamiliar) {
 		if (this->brightenPostProcess) {
-			graphics->FMGL_fillRect(0, 0, 480, 320, 1.0, 1.0, 1.0, (float)max / 2226.0);
+			graphics->FMGL_fillRect(0, 0, Applet::IOS_WIDTH, Applet::IOS_HEIGHT, 1.0, 1.0, 1.0, (float)max / 2226.0);
 		}
 		update += 0.05f;
 		y = (y + 1) % 30;
 		float alpha = sin(update) * 0.0500000007 + 0.349999994;
 		if ((uint16_t)(app->player->familiarType - 1) > 1u) {
-			graphics->FMGL_fillRect(0, 0, 480, 256 /*320*/, 1.0, 0.0, 0.0, alpha);
+			graphics->FMGL_fillRect(0, 0, Applet::IOS_WIDTH, 256 /*320*/, 1.0, 0.0, 0.0, alpha);
 		} else {
-			graphics->FMGL_fillRect(0, 0, 480, 256 /*320*/, 0.0, 1.0, 0.0, alpha);
+			graphics->FMGL_fillRect(0, 0, Applet::IOS_WIDTH, 256 /*320*/, 0.0, 1.0, 0.0, alpha);
 		}
 		for (int i = 0; i < 256 /*300*/; i += 10) {
-			graphics->FMGL_fillRect(0, i + (y / 3), 480, 5, 0.0, 0.0, 0.0, 0.15);
+			graphics->FMGL_fillRect(0, i + (y / 3), Applet::IOS_WIDTH, 5, 0.0, 0.0, 0.0, 0.15);
 		}
 	}
 
@@ -821,7 +821,7 @@ void Render::drawRGB(Graphics* graphics) {
 
 	if (!app->render->_gles->isInit) { // [GEC] Adjusted like this to match the Y position on the GL version
 		viewportY = 0;
-		viewportHeight = 320;
+		viewportHeight = Applet::IOS_HEIGHT;
 	}
 
 	graphics->setColor(0x00000000);
@@ -935,7 +935,7 @@ void Render::Render3dScene(void) {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	// DrawBitmap(backBuffer, 480, 320, 0, 21, 480, 320); // <- Old
-	DrawBitmap(backBuffer, 480, 320, 0, 0, 480, 320);
+	DrawBitmap(backBuffer, Applet::IOS_WIDTH, Applet::IOS_HEIGHT, 0, 0, Applet::IOS_WIDTH, Applet::IOS_HEIGHT);
 }
 
 void Render::fixTexels(int offset, int i, int mediaID, int* rowHeight) { // [GEC] New

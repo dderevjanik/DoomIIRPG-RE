@@ -1519,7 +1519,7 @@ bool MenuSystem::updateVolumeSlider(int buttonId, int x)
 		}
 		if (this->menu == Menus::MENU_MAIN_OPTIONS || this->menu == Menus::MENU_MAIN_OPTIONS_SOUND || this->menu == Menus::MENU_MAIN_CONTROLS || this->menu == Menus::MENU_MAIN_CONTROLLER) {
 			v9 = 245 - this->imgMenuOptionSliderON->width;
-			v10 = 100 * (x - ((this->imgMenuOptionSliderON->width >> 1) + ((480 - this->imgMenuOptionBOX3->width) >> 1) + 4));
+			v10 = 100 * (x - ((this->imgMenuOptionSliderON->width >> 1) + ((Applet::IOS_WIDTH - this->imgMenuOptionBOX3->width) >> 1) + 4));
 		}
 		else
 		{

@@ -598,7 +598,7 @@ void Canvas::initTravelMap() {
 
 	// Unused
 	this->imgStarField = app->loadImage("cockpit.bmp", true);
-	this->_field_0xf24 = 480;
+	this->_field_0xf24 = Applet::IOS_WIDTH;
 	this->_field_0xf20 = this->imgStarField->height;
 	this->_field_0xf28 = 0;
 	this->_field_0xf2c = 1;

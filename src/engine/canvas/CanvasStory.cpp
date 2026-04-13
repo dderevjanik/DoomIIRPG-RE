@@ -187,7 +187,7 @@ void Canvas::drawScrollingText(Graphics* graphics) {
 		rect[2] = this->displayRect[2] - rect[0];
 		rect[3] = this->displayRect[3]; // missing line code?
 		graphics->clipRect(0, (this->displayRect[3] - 220) / 2, this->displayRect[2], 220);
-		graphics->drawRegion(this->imgProlog, 0, 65, 480, 307, 0, 0, 0, 0, 0);
+		graphics->drawRegion(this->imgProlog, 0, 65, Applet::IOS_WIDTH, 307, 0, 0, 0, 0, 0);
 		graphics->fade(rect, 192, 0);
 		graphics->setScreenSpace(0, (this->displayRect[3] - 220) / 2, this->displayRect[2], 220);
 	}

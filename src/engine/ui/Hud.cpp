@@ -78,7 +78,7 @@ bool Hud::startup() {
 	
 	this->m_weaponsButtons = new fmButtonContainer;
 	for (int i = 0; i < this->gameConfig->maxWeaponButtons; i++) {
-		fmButton* btnWpn = new fmButton(i, 480, 320, this->imgWeaponNormal->width, 44, 1027);
+		fmButton* btnWpn = new fmButton(i, Applet::IOS_WIDTH, Applet::IOS_HEIGHT, this->imgWeaponNormal->width, 44, 1027);
 		this->m_weaponsButtons->AddButton(btnWpn);
 	}
 
@@ -689,7 +689,7 @@ void Hud::drawBottomBar(Graphics* graphics) {
 		texBuff->setLength(0);
 		texBuff->append("Wait");
 		texBuff->dehyphenate();
-		graphics->drawString(texBuff, 240, 320, 33);
+		graphics->drawString(texBuff, Applet::IOS_WIDTH / 2, Applet::IOS_HEIGHT, 33);
 		texBuff->dispose();
 	}
 }
@@ -784,7 +784,7 @@ void Hud::draw(Graphics* graphics) {
 			if (app->canvas->m_softKeyButtons->GetButton(20)->highlighted != false) { // [GEC] New
 				app->setFontRenderMode(0); // [GEC] New
 			}
-			graphics->drawString(texBuff, 478, 320, 40);
+			graphics->drawString(texBuff, Applet::IOS_WIDTH - 2, Applet::IOS_HEIGHT, 40);
 
 			app->setFontRenderMode(0); // [GEC] New
 			texBuff->dispose();
@@ -1090,7 +1090,7 @@ void Hud::drawWeaponSelection(Graphics* graphics) {
 	int weapons = ~app->player->disabledWeapons & app->player->weapons;
 	int x = (app->canvas->screenRect[2] - 16 - 4 * this->imgWeaponNormal->width) / 2;
 	int y = app->canvas->screenRect[3] - 108;
-	graphics->FMGL_fillRect(0, this->imgPanelTop->height, 480, 320, 0.0f, 0.0f, 0.0f, 0.5f);
+	graphics->FMGL_fillRect(0, this->imgPanelTop->height, Applet::IOS_WIDTH, Applet::IOS_HEIGHT, 0.0f, 0.0f, 0.0f, 0.5f);
 
 	for (int i = 0; i < 15; i++) {
 		this->m_weaponsButtons->GetButton(i)->drawButton = false;

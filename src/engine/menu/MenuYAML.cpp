@@ -931,7 +931,7 @@ int MenuSystem::resolveLayoutValue(LayoutValueMode mode, int literal, int w) con
 		case LVM_BTN_H_X5:
 			return this->imgMenuBtnBackground ? this->imgMenuBtnBackground->height * 5 : 230;
 		case LVM_PANEL_H:
-			return 320 - (this->imgGameMenuPanelbottom ? this->imgGameMenuPanelbottom->height : 0);
+			return Applet::IOS_HEIGHT - (this->imgGameMenuPanelbottom ? this->imgGameMenuPanelbottom->height : 0);
 		case LVM_YESNO_H:
 			return this->imgMenuYesNoBOX ? this->imgMenuYesNoBOX->height : 100;
 		case LVM_LANG_H:

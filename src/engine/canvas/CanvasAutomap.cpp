@@ -69,7 +69,7 @@ void Canvas::uncoverAutomap() {
 void Canvas::drawAutomap(Graphics* graphics, bool b) {
 
 
-	graphics->drawRegion(this->imgGameHelpBG, 0, 0, 480, 320, 0, 0, 0, 0, 0);
+	graphics->drawRegion(this->imgGameHelpBG, 0, 0, Applet::IOS_WIDTH, Applet::IOS_HEIGHT, 0, 0, 0, 0, 0);
 
 	
 	int n3 = 8;

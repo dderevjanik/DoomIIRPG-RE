@@ -389,7 +389,7 @@ void MenuSystem::paint(Graphics* graphics) {
 
 
 				if (isScrollBarTwo) { // [GEC]
-					v81 -= (v81 - ((480 - this->imgMenuOptionBOX3->width) >> 1)) - 15;
+					v81 -= (v81 - ((Applet::IOS_WIDTH - this->imgMenuOptionBOX3->width) >> 1)) - 15;
 				}
 
 				if (this->type != 5 && this->type != 7 && this->menu != Menus::MENU_VENDING_MACHINE_CANT_BUY && this->menu != Menus::MENU_VENDING_MACHINE_DETAILS && this->menu != Menus::MENU_VENDING_MACHINE_CONFIRM && v79 == this->selectedIndex) {
@@ -460,14 +460,14 @@ void MenuSystem::paint(Graphics* graphics) {
 		++v79;
 	}
 	if (this->drawLogo) {
-		graphics->setClipRect(0, 0, 480, 320);
-		graphics->drawImage(this->imgLogo, (480 - this->imgLogo->width) >> 1, 0, 0, 0, 0);
+		graphics->setClipRect(0, 0, Applet::IOS_WIDTH, Applet::IOS_HEIGHT);
+		graphics->drawImage(this->imgLogo, (Applet::IOS_WIDTH - this->imgLogo->width) >> 1, 0, 0, 0, 0);
 	}
 	if (this->drawHelpText)
 	{
 		imgGameMenuTornPage = this->imgGameMenuTornPage;
-		graphics->setClipRect(0, 0, 480, 320);
-		graphics->FMGL_fillRect(0, 0, 480, 320, 0.0, 0.0, 0.0, 0.5);
+		graphics->setClipRect(0, 0, Applet::IOS_WIDTH, Applet::IOS_HEIGHT);
+		graphics->FMGL_fillRect(0, 0, Applet::IOS_WIDTH, Applet::IOS_HEIGHT, 0.0, 0.0, 0.0, 0.5);
 		v60 = this->menu;
 		v61 = 230 - (imgGameMenuTornPage->width >> 1);
 		if (v60 <= Menus::MENU_ITEMS_HOLY_WATER_MAX)
@@ -767,7 +767,7 @@ void MenuSystem::drawSoftkeyButtons(Graphics* graphics)
 			button->SetTouchArea(438, 268, app->hud->imgSwitchRightActive->width, app->hud->imgSwitchRightActive->height);
 			graphics->drawImage(button->highlighted ? app->hud->imgSwitchRightActive : app->hud->imgSwitchRightNormal, 438, 268, 0, 0, 0);
 			strX = 478;
-			strY = 320;
+			strY = Applet::IOS_HEIGHT;
 		}
 		else {
 			button->SetTouchArea(362, 277, app->hud->imgVendingSoftkeyNormal->width, app->hud->imgVendingSoftkeyNormal->height);
@@ -909,8 +909,8 @@ int MenuSystem::drawCustomScrollbar(Graphics* graphics, MenuItem* item, Text* te
 		return 0;
 	}
 	else if (item->flags & Menus::ITEM_SCROLLBARTWO) {
-		int v6 = ((480 - this->imgMenuOptionBOX3->width) >> 1) + 1;
-		int v59 = (480 - this->imgMenuOptionBOX3->width) >> 1;
+		int v6 = ((Applet::IOS_WIDTH - this->imgMenuOptionBOX3->width) >> 1) + 1;
+		int v59 = (Applet::IOS_WIDTH - this->imgMenuOptionBOX3->width) >> 1;
 		int v27 = yPos + Applet::FONT_HEIGHT[app->fontType];
 
 		int width = this->imgMenuOptionSliderON->width;
@@ -1034,8 +1034,8 @@ void MenuSystem::drawOptionsScreen(Graphics* graphics)
 	v64 = LargeBuffer;
 	if (menu == Menus::MENU_MAIN_OPTIONS)
 	{
-		v6 = ((480 - this->imgMenuOptionBOX3->width) >> 1) + 1;
-		v59 = (480 - this->imgMenuOptionBOX3->width) >> 1;
+		v6 = ((Applet::IOS_WIDTH - this->imgMenuOptionBOX3->width) >> 1) + 1;
+		v59 = (Applet::IOS_WIDTH - this->imgMenuOptionBOX3->width) >> 1;
 
 		LargeBuffer->setLength(0);
 		app->localization->composeText(MenuSystem::INDEX_OTHER, MenuStrings::OPTIONS_ITEM, v64);

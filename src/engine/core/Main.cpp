@@ -616,8 +616,8 @@ int main(int argc, char* args[]) {
 		sdlGL.updateVideo(); // [GEC]
 
 		float x = 0.0f, y = 30.0f;
-		int vp_cx = 480;
-		int vp_cy = 320;
+		int vp_cx = Applet::IOS_WIDTH;
+		int vp_cy = Applet::IOS_HEIGHT;
 
 		Uint8 state;
 		int mX, mY;                                 /* mouse location*/
