@@ -524,7 +524,7 @@ public:
 	void logoState();
 	void drawScrollBar(Graphics* graphics, int i, int i2, int i3, int i4, int i5, int i6, int i7);
 	void uncoverAutomap();
-	void drawAutomap(Graphics* graphics, bool b);
+	// drawAutomap moved to AutomapState
 	void closeDialog(bool skipDialog);
 	void prepareDialog(Text* text, int dialogStyle, int dialogFlags);
 	void startDialog(ScriptThread* scriptThread, short n, int n2, int n3);
@@ -569,11 +569,9 @@ public:
 	bool handleZoomEvents(int key, int action, bool b);
 	void handleCharacterSelectionInput(int key, int action);
 	void handleStoryInput(int key, int action);
-	void lootingState();
-	void handleLootingEvents(int action);
-	void drawLootingMenu(Graphics* graphics);
+	// lootingState, handleLootingEvents, drawLootingMenu moved to LootingState
 	void poolLoot(int* array);
-	void giveLootPool();
+	// giveLootPool moved to LootingState
 	bool handleTreadmillEvents(int action);
 	void treadmillState();
 	bool treadmillFall();
