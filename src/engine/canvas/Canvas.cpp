@@ -480,6 +480,7 @@ void Canvas::backPaint(Graphics* graphics) {
 
 	if (((this->repaintFlags & Canvas::REPAINT_HUD) != 0) && (this->state != Canvas::ST_MENU)) { // REPAINT_HUD
 		//this->repaintFlags &= ~Canvas::REPAINT_HUD; java, brew only
+		app->hud->update();
 		app->hud->draw(graphics);
 	}
 

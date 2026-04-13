@@ -518,11 +518,6 @@ void Hud::drawEffects(Graphics* graphics) {
 			graphics->drawRegion(this->imgAttArrow, 0, n5, 12, 12, n6, n4, 3, 0, 0);
 		}
 	}
-	else if (this->damageTime != 0) {
-		this->damageTime = 0;
-		this->stopBrightenScreen();
-		this->stopScreenSmack();
-	}
 	this->drawDamageVignette(graphics);
 }
 
@@ -708,10 +703,6 @@ void Hud::draw(Graphics* graphics) {
 	}
 	if ((this->repaintFlags & 0x2) != 0x0) {
 		//this->repaintFlags &= 0xFFFFFFFD;
-		if (app->canvas->state == Canvas::ST_PLAYING) {
-			app->canvas->updateFacingEntity = true;
-			app->canvas->checkFacingEntity();
-		}
 		this->drawTopBar(graphics);
 	}
 	//if ((this->repaintFlags & 0x20) != 0x0) {
@@ -758,18 +749,6 @@ void Hud::draw(Graphics* graphics) {
 	if ((this->repaintFlags & 0x8) != 0x0) {
 		this->drawBubbleText(graphics);
 	}
-	if (this->cinTitleID != -1 && this->cinTitleTime < app->gameTime) {
-		this->cinTitleID = -1;
-		if (app->canvas->state == Canvas::ST_CAMERA) {
-			this->repaintFlags |= 0x10;
-		}
-	}
-	if (this->subTitleID != -1 && this->subTitleTime < app->gameTime) {
-		this->subTitleID = -1;
-		if (app->canvas->state == Canvas::ST_CAMERA) {
-			this->repaintFlags |= 0x10;
-		}
-	}
 	if ((this->repaintFlags & 0x10) != 0x0) {
 		//this->repaintFlags &= 0xFFFFFFEF;
 		this->drawCinematicText(graphics);
@@ -797,11 +776,7 @@ void Hud::drawMonsterHealth(Graphics* graphics) {
 
 
 	Entity* facingEntity = app->player->facingEntity;
-	if (facingEntity == nullptr || facingEntity->combat == nullptr) {
-		if (this->lastTarget != nullptr) {
-			app->canvas->invalidateRect();
-		}
-		this->lastTarget = nullptr;
+	if (facingEntity == nullptr || facingEntity->combat == nullptr || this->lastTarget == nullptr) {
 		return;
 	}
 	if (facingEntity->def->eType == Enums::ET_NPC || (facingEntity->def->eType == Enums::ET_MONSTER && (facingEntity->info & 0x20000) == 0x0)) {
@@ -809,26 +784,7 @@ void Hud::drawMonsterHealth(Graphics* graphics) {
 	}
 	int stat = facingEntity->combat->getStat(1);
 	int stat2 = facingEntity->combat->getStat(0);
-	if (facingEntity != this->lastTarget) {
-		if (this->lastTarget != nullptr) {
-			app->canvas->invalidateRect();
-		}
-		this->lastTarget = facingEntity;
-		this->monsterDestHealth = (this->monsterStartHealth = stat2);
-		this->monsterHealthChangeTime = 0;
-	}
-	else if (stat2 != this->monsterDestHealth) {
-		this->monsterStartHealth = this->monsterDestHealth;
-		this->monsterDestHealth = stat2;
-		this->monsterHealthChangeTime = app->time;
-	}
-	if (this->monsterStartHealth > stat) {
-		this->monsterStartHealth = stat;
-	}
-	if (app->time - this->monsterHealthChangeTime > 250) {
-		this->monsterStartHealth = stat2;
-	}
-	else {
+	if (app->time - this->monsterHealthChangeTime <= 250) {
 		stat2 = this->monsterStartHealth - (this->monsterStartHealth - this->monsterDestHealth) * (app->time - this->monsterHealthChangeTime) / 250;
 	}
 	int n = 25;
@@ -1270,7 +1226,7 @@ void Hud::handleUserTouch(int pressX, int pressY, bool highlighted) {
 
 void Hud::update() {
 
-
+	// Weapon long-press detection
 	if (this->m_hudButtons->GetButton(2)->drawButton && this->m_hudButtons->GetButton(2)->highlighted) {
 		if (this->weaponPressTime) {
 			if ((uint32_t)(app->upTimeMs - this->weaponPressTime) >= 300) {
@@ -1279,6 +1235,69 @@ void Hud::update() {
 				}
 				this->weaponPressTime = 0;
 			}
+		}
+	}
+
+	// Facing entity check (moved from draw)
+	if ((this->repaintFlags & 0x2) != 0x0) {
+		if (app->canvas->state == Canvas::ST_PLAYING) {
+			app->canvas->updateFacingEntity = true;
+			app->canvas->checkFacingEntity();
+		}
+	}
+
+	// Monster health bar tracking (moved from drawMonsterHealth)
+	Entity* facingEntity = app->player->facingEntity;
+	if (facingEntity == nullptr || facingEntity->combat == nullptr) {
+		if (this->lastTarget != nullptr) {
+			app->canvas->invalidateRect();
+		}
+		this->lastTarget = nullptr;
+	}
+	else if (facingEntity->def->eType != Enums::ET_NPC && !(facingEntity->def->eType == Enums::ET_MONSTER && (facingEntity->info & 0x20000) == 0x0)) {
+		int stat2 = facingEntity->combat->getStat(0);
+		int stat = facingEntity->combat->getStat(1);
+		if (facingEntity != this->lastTarget) {
+			if (this->lastTarget != nullptr) {
+				app->canvas->invalidateRect();
+			}
+			this->lastTarget = facingEntity;
+			this->monsterDestHealth = (this->monsterStartHealth = stat2);
+			this->monsterHealthChangeTime = 0;
+		}
+		else if (stat2 != this->monsterDestHealth) {
+			this->monsterStartHealth = this->monsterDestHealth;
+			this->monsterDestHealth = stat2;
+			this->monsterHealthChangeTime = app->time;
+		}
+		if (this->monsterStartHealth > stat) {
+			this->monsterStartHealth = stat;
+		}
+		if (app->time - this->monsterHealthChangeTime > 250) {
+			this->monsterStartHealth = stat2;
+		}
+	}
+
+	// Damage effect expiry (moved from drawEffects)
+	if (!(app->time < this->damageTime && this->damageCount > 0 && app->combat->totalDamage > 0)) {
+		if (this->damageTime != 0) {
+			this->damageTime = 0;
+			this->stopBrightenScreen();
+			this->stopScreenSmack();
+		}
+	}
+
+	// Cinematic/subtitle timer expiry (moved from draw)
+	if (this->cinTitleID != -1 && this->cinTitleTime < app->gameTime) {
+		this->cinTitleID = -1;
+		if (app->canvas->state == Canvas::ST_CAMERA) {
+			this->repaintFlags |= 0x10;
+		}
+	}
+	if (this->subTitleID != -1 && this->subTitleTime < app->gameTime) {
+		this->subTitleID = -1;
+		if (app->canvas->state == Canvas::ST_CAMERA) {
+			this->repaintFlags |= 0x10;
 		}
 	}
 }
