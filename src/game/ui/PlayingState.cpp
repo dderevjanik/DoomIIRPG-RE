@@ -6,6 +6,7 @@
 #include "Player.h"
 #include "Combat.h"
 #include "Hud.h"
+#include "Render.h"
 #include "Button.h"
 #include "EntityDef.h"
 #include "Enums.h"
@@ -44,7 +45,42 @@ void PlayingState::update(Canvas* canvas) {
 		app->game->snapMonsters(true);
 		app->game->advanceTurn();
 	}
-	canvas->playingState();
+	// playingState() inlined
+	if (canvas->pushedWall && canvas->pushedTime <= app->gameTime) {
+		app->combat->shiftWeapon(false);
+		canvas->pushedWall = false;
+	}
+	if (app->player->ce->getStat(0) <= 0) {
+		app->player->died();
+		return;
+	}
+	if (app->player->isFamiliar && app->player->ammo[app->combat->familiarAmmoType] <= 0) {
+		app->player->ammo[app->combat->familiarAmmoType] = 0;
+		app->player->familiarDying(false);
+	}
+	if (app->hud->isShiftingCenterMsg()) {
+		canvas->staleView = true;
+	}
+	if (canvas->knockbackDist == 0 && app->game->activePropogators == 0 && app->game->animatingEffects == 0 && app->game->monstersTurn != 0 && canvas->numHelpMessages == 0) {
+		app->game->updateMonsters();
+	}
+	app->game->updateLerpSprites();
+	canvas->updateView();
+	if (canvas->state == Canvas::ST_LOADING || canvas->state == Canvas::ST_SAVING) {
+		return;
+	}
+	if (canvas->state != Canvas::ST_PLAYING && canvas->state != Canvas::ST_INTER_CAMERA) {
+		return;
+	}
+	canvas->repaintFlags |= Canvas::REPAINT_PARTICLES;
+	if (!app->game->isCameraActive() || canvas->state == Canvas::ST_INTER_CAMERA) {
+		canvas->repaintFlags |= Canvas::REPAINT_HUD;
+		app->hud->repaintFlags |= 0x2B;
+		app->hud->update();
+	}
+	if (canvas->state == Canvas::ST_INTER_CAMERA || (!app->game->isCameraActive() && canvas->state == Canvas::ST_PLAYING) || canvas->state == Canvas::ST_AUTOMAP) {
+		canvas->dequeueHelpDialog();
+	}
 	if (canvas->state == Canvas::ST_PLAYING) {
 		canvas->repaintFlags |= Canvas::REPAINT_HUD;
 		app->hud->repaintFlags |= 0x2f;

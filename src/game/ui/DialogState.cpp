@@ -5,6 +5,7 @@
 #include "Game.h"
 #include "Hud.h"
 #include "TinyGL.h"
+#include "Enums.h"
 
 void DialogState::onEnter(Canvas* canvas) {
 	Applet* app = canvas->app;
@@ -41,6 +42,78 @@ void DialogState::render(Canvas* canvas, Graphics* graphics) {
 }
 
 bool DialogState::handleInput(Canvas* canvas, int key, int action) {
-	canvas->handleDialogEvents(key);
+	Applet* app = canvas->app;
+	int keyAction = canvas->getKeyAction(key);
+
+	if (keyAction == Enums::ACTION_FIRE) {
+		if (canvas->dialogTypeLineIdx < canvas->dialogViewLines && canvas->dialogTypeLineIdx < canvas->numDialogLines - canvas->currentDialogLine) {
+			canvas->dialogTypeLineIdx = canvas->dialogViewLines;
+		}
+		else if (canvas->currentDialogLine < canvas->numDialogLines - canvas->dialogViewLines) {
+			canvas->dialogLineStartTime = app->time;
+			canvas->dialogTypeLineIdx = 0;
+			canvas->currentDialogLine += canvas->dialogViewLines;
+			if (((canvas->dialogFlags & 0x4) != 0x0 || (canvas->dialogFlags & 0x1) != 0x0) && canvas->currentDialogLine + canvas->dialogViewLines > canvas->numDialogLines) {
+				canvas->currentDialogLine = canvas->numDialogLines - canvas->dialogViewLines;
+			}
+		}
+		else {
+			canvas->closeDialog(false);
+		}
+	}
+	else if (keyAction == Enums::ACTION_UP) {
+		if (canvas->currentDialogLine >= canvas->numDialogLines - canvas->dialogViewLines && 0x0 != (canvas->dialogFlags & 0x2)) {
+			if (app->game->scriptStateVars[4] == 0) {
+				canvas->currentDialogLine--;
+				if (canvas->currentDialogLine < 0) canvas->currentDialogLine = 0;
+			}
+			else {
+				app->game->scriptStateVars[4]--;
+			}
+		}
+		else {
+			canvas->currentDialogLine--;
+			if (canvas->currentDialogLine < 0) canvas->currentDialogLine = 0;
+		}
+	}
+	else if (keyAction == Enums::ACTION_DOWN) {
+		if (canvas->currentDialogLine >= canvas->numDialogLines - canvas->dialogViewLines && 0x0 != (canvas->dialogFlags & 0x2)) {
+			if (app->game->scriptStateVars[4] < 1) {
+				app->game->scriptStateVars[4]++;
+			}
+		}
+		else {
+			canvas->currentDialogLine++;
+			if (canvas->currentDialogLine > canvas->numDialogLines - canvas->dialogViewLines) {
+				canvas->currentDialogLine = canvas->numDialogLines - canvas->dialogViewLines;
+				if (0x0 == (canvas->dialogFlags & 0x2)) {
+					if (canvas->currentDialogLine < 0) canvas->currentDialogLine = 0;
+				}
+			}
+			else {
+				canvas->dialogLineStartTime = app->time;
+				canvas->dialogTypeLineIdx = canvas->dialogViewLines - 1;
+			}
+		}
+	}
+	else if ((keyAction == Enums::ACTION_LEFT || keyAction == Enums::ACTION_RIGHT) && (canvas->dialogFlags & 0x5) != 0x0 && canvas->currentDialogLine >= canvas->numDialogLines - canvas->dialogViewLines) {
+		app->game->scriptStateVars[4] ^= 0x1;
+	}
+	else if (keyAction == Enums::ACTION_PASSTURN || keyAction == Enums::ACTION_AUTOMAP) {
+		canvas->closeDialog(true);
+	}
+	else if (keyAction == Enums::ACTION_MENU || keyAction == Enums::ACTION_LEFT) {
+		canvas->currentDialogLine -= canvas->dialogViewLines;
+		if (canvas->currentDialogLine < 0) canvas->currentDialogLine = 0;
+	}
+	else if (keyAction == Enums::ACTION_RIGHT) {
+		canvas->currentDialogLine += canvas->dialogViewLines;
+		if (canvas->currentDialogLine > canvas->numDialogLines - canvas->dialogViewLines) {
+			canvas->currentDialogLine = std::max(canvas->numDialogLines - canvas->dialogViewLines, 0);
+		}
+	}
+	if (canvas->state == Canvas::ST_PLAYING && app->game->monstersTurn == 0) {
+		canvas->dequeueHelpDialog();
+	}
 	return true;
 }

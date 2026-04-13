@@ -505,7 +505,7 @@ public:
 	void initScrollingText(short i, short i2, bool dehyphenate, int spacingHeight, int numLines, int textMSLine);
 	void drawCredits(Graphics* graphics);
 	void drawScrollingText(Graphics* graphics);
-	void handleDialogEvents(int key);
+	// handleDialogEvents moved to DialogState::handleInput()
 	bool handlePlayingEvents(int key, int action);
 	bool handleCinematicInput(int action);
 	bool shouldFakeCombat(int n, int n2, int n3);
@@ -513,14 +513,14 @@ public:
 	bool handleEvent(int state);
 	void runInputEvents();
 	bool loadMedia();
-	void combatState();
+	// combatState moved to CombatState::update()
 	void dialogState(Graphics* graphics);
 	void automapState();
 	void renderOnlyState();
-	void playingState();
-	void menuState();
-	void dyingState();
-	void familiarDyingState();
+	// playingState moved to PlayingState::update()
+	// menuState moved to MenuState::update()
+	// dyingState moved to DyingState::update()
+	// familiarDyingState moved to BotDyingState::update()
 	void logoState();
 	void drawScrollBar(Graphics* graphics, int i, int i2, int i3, int i4, int i5, int i6, int i7);
 	void uncoverAutomap();

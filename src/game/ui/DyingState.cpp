@@ -3,6 +3,7 @@
 #include "App.h"
 #include "Canvas.h"
 #include "Hud.h"
+#include "Render.h"
 #include "TinyGL.h"
 #include "MenuSystem.h"
 #include "Enums.h"
@@ -31,7 +32,28 @@ void DyingState::onExit(Canvas* canvas) {
 }
 
 void DyingState::update(Canvas* canvas) {
-	canvas->dyingState();
+	Applet* app = canvas->app;
+	app->hud->repaintFlags = 32;
+	if (app->time < canvas->deathTime + 750) {
+		int n = (750 - (app->time - canvas->deathTime) << 16) / 750;
+		canvas->viewZ = app->render->getHeight(canvas->destX, canvas->destY) + 18 + (20 * n >> 16);
+		canvas->viewPitch = 96 + (-96 * n >> 16);
+		int n2 = 16 + (-16 * n >> 16);
+		canvas->updateView();
+		canvas->renderScene(canvas->viewX, canvas->viewY, canvas->viewZ, canvas->viewAngle, canvas->viewPitch, n2, 290);
+		canvas->repaintFlags |= (Canvas::REPAINT_HUD | Canvas::REPAINT_PARTICLES);
+	}
+	else if (app->time < canvas->deathTime + 2750) {
+		if (!app->render->isFading()) {
+			app->render->startFade(2000, 1);
+		}
+		canvas->renderScene(canvas->viewX, canvas->viewY, canvas->viewZ, canvas->viewAngle, canvas->viewPitch, 16, 290);
+		canvas->repaintFlags |= (Canvas::REPAINT_HUD | Canvas::REPAINT_PARTICLES);
+	}
+	else {
+		app->render->baseDizzy = (app->render->destDizzy = 0);
+		app->menuSystem->setMenu(Menus::MENU_INGAME_DEAD);
+	}
 }
 
 void DyingState::render(Canvas* canvas, Graphics* graphics) {

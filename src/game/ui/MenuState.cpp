@@ -30,7 +30,56 @@ void MenuState::onExit(Canvas* canvas) {
 }
 
 void MenuState::update(Canvas* canvas) {
-	canvas->menuState();
+	Applet* app = canvas->app;
+
+	// menuState() inlined
+	short n = -1;
+	int menu = app->menuSystem->menu;
+	if ((app->menuSystem->items[app->menuSystem->selectedIndex].flags & 0x20)) {
+		n = 49;
+	}
+	else {
+		if (menu == Menus::MENU_END_RANKING || menu == Menus::MENU_LEVEL_STATS) {
+			n = 43;
+		}
+		else if (app->menuSystem->type != 5) {
+			if (menu != Menus::MENU_SHOWDETAILS) {
+				if (menu == Menus::MENU_VENDING_MACHINE_DETAILS || menu == Menus::MENU_VENDING_MACHINE_CONFIRM) {
+					n = 202;
+				}
+				else if (menu != Menus::MENU_VENDING_MACHINE_CANT_BUY) {
+					if (app->menuSystem->items[app->menuSystem->selectedIndex].action != 0) {
+						n = 121;
+					}
+				}
+			}
+		}
+	}
+
+	if (menu != Menus::MENU_MAIN_MORE_GAMES) {
+		canvas->clearSoftKeys();
+		if (app->menuSystem->getStackCount() != 0 || menu == Menus::MENU_MAIN_MINIGAME) {
+			if (app->menuSystem->peekMenu() != 25) {
+				canvas->setLeftSoftKey((short)3, (short)80);
+			}
+		}
+		else if (menu == Menus::MENU_INGAME || menu == Menus::MENU_INGAME_KICKING || menu == Menus::MENU_INGAME_SNIPER) {
+			canvas->setLeftSoftKey((short)0, (short)30);
+		}
+		else if (menu == Menus::MENU_VENDING_MACHINE) {
+			canvas->setLeftSoftKey((short)3, (short)80);
+		}
+		if (n != -1) {
+			if (!app->menuSystem->isChangingValues()) {
+				canvas->setRightSoftKey((short)0, n);
+			}
+		}
+		else if (app->menuSystem->menu == Menus::MENU_SHOWDETAILS) {
+			canvas->setRightSoftKey((short)0, (short)40);
+		}
+	}
+
+	canvas->repaintFlags |= Canvas::REPAINT_MENU;
 }
 
 void MenuState::render(Canvas* canvas, Graphics* graphics) {
