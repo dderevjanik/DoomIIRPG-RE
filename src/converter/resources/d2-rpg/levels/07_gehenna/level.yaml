@@ -2,6 +2,9 @@
 
 name: gehenna
 map_id: 7
+intro:
+  type: travel_map
+  file: travel_map.yaml
 joke_items: [24, 25, 26, 27, 28]
 starting_loadout:
   weapons: [rocket_launcher, plasma_gun, assault_rifle_with_scope, chaingun, super_shotgun, holy_water_pistol, chainsaw, assault_rifle]

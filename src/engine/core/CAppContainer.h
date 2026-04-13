@@ -23,6 +23,9 @@ struct LevelInfo {
 	std::string modelFile;   // e.g. "levels/01_tycho/model.bin"
 	std::string configFile;  // e.g. "levels/01_tycho/level.yaml"
 	std::string skyBox;      // Named sky from game.yaml skies section; empty = legacy formula
+	// Level intro config (from level.yaml intro section)
+	std::string introType;   // e.g. "travel_map"
+	std::string introFile;   // e.g. "travel_map.yaml" (relative to level dir)
 };
 
 // Game-level configuration loaded from game.yaml

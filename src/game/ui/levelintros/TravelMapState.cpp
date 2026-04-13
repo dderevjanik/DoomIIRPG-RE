@@ -15,11 +15,74 @@
 #include "SoundNames.h"
 #include "Enums.h"
 #include "Menus.h"
+#include "DataNode.h"
+#include "SpriteDefs.h"
+
+#include <array>
+#include <map>
+
+// --- Travel map data structures (local to this file) ---
+
+struct TravelMapPlanet {
+	std::string name;
+	int origin[2] = {0, 0};
+	std::string closeupImage;
+	int nameStringId = 0;
+	std::vector<std::array<int, 2>> nameLabels;
+	std::string arrivalCloseupImage;
+	int arrivalOrigin[2] = {0, 0};
+	bool hasArrivalCloseup = false;
+	int specialMarker[2] = {0, 0};
+	bool hasSpecialMarker = false;
+};
+
+struct TravelMapPath {
+	std::string from, to, image;
+	int position[2] = {0, 0};
+	float nameRevealFraction = 0.5f;
+};
+
+struct TravelMapTiming {
+	int samePlanetCloseupDelay = 1500;
+	int crossPlanetCloseupDelay = 700;
+	int dottedLineDivisor = 22;
+	int locatorSpeedSamePlanet = 15;
+	int locatorSpeedCrossPlanet = 7;
+	int finalHold = 800;
+	int dottedLinePause = 500;
+	int gridScrollPeriod = 200;
+	int gridCellSize = 44;
+};
+
+struct TravelMapImages {
+	std::string background = "TravelMap.bmp";
+	std::string horzGrid = "travelMapHorzGrid.bmp";
+	std::string vertGrid = "travelMapVertGrid.bmp";
+	std::string highlight = "highlight.bmp";
+	std::string magnifyingGlass = "magnifyingGlass.bmp";
+	std::string spaceship = "spaceShip.bmp";
+};
+
+struct TravelMapLevelData {
+	std::string planet;
+	int crosshair[2] = {0, 0};
+	int locatorBox[2] = {0, 0};
+};
+
+struct TravelMapConfig {
+	TravelMapImages images;
+	TravelMapTiming timing;
+	std::map<std::string, TravelMapPlanet> planets;
+	std::vector<TravelMapPath> paths;
+	TravelMapLevelData loadLevel;
+	TravelMapLevelData lastLevel;
+	bool loaded = false;
+};
+
+// --- Module-local config loaded at runtime from travel_map.yaml ---
+static TravelMapConfig s_tmConfig;
 
 // Forward declarations for static helpers
-static bool onMoon(int n) { return n >= 1 && n <= 3; }
-static bool onEarth(int n) { return n >= 4 && n <= 6; }
-static bool inHell(int n) { return n >= 7; }
 static void drawStarFieldPage(Canvas* canvas, Graphics* graphics);
 static void drawStarField(Canvas* canvas, Graphics* graphics, int x, int y);
 static void runStarFieldFrame(Canvas* canvas);
@@ -28,10 +91,9 @@ static void drawAppropriateCloseup(Canvas* canvas, Graphics* graphics, int n, bo
 static void drawLocatorBoxAndName(Canvas* canvas, Graphics* graphics, bool b, int n, Text* text);
 static bool drawDottedLine(Canvas* canvas, Graphics* graphics, int n);
 static bool drawDottedLine(Canvas* canvas, Graphics* graphics);
-static bool drawMarsToMoonLinePlusSpaceShip(Canvas* canvas, Graphics* graphics, int n);
+static bool drawStartPathLine(Canvas* canvas, Graphics* graphics, int n, const TravelMapPath* path);
 static int yCoordOfSpaceShip(Canvas* canvas, int n);
-static bool drawMoonToEarthLine(Canvas* canvas, Graphics* graphics, int n, bool b);
-static bool drawEarthToHellLine(Canvas* canvas, Graphics* graphics, int n, bool b);
+static bool drawPlanetPathLine(Canvas* canvas, Graphics* graphics, int n, const TravelMapPath* path, bool reversed);
 static bool drawLocatorLines(Canvas* canvas, Graphics* graphics, int n, bool b, bool b2);
 static bool newLevelSamePlanet(Canvas* canvas);
 static void finishTravelMapAndLoadLevel(Canvas* canvas);
@@ -39,6 +101,198 @@ static void disposeTravelMap(Canvas* canvas);
 static void initTravelMap(Canvas* canvas);
 static void handleTravelMapInput(Canvas* canvas, int key, int action);
 static void drawTravelMap(Canvas* canvas, Graphics* graphics);
+
+// --- Parse a travel_map.yaml node into per-level data ---
+static TravelMapLevelData parseLevelData(const DataNode& node) {
+	TravelMapLevelData ld;
+	ld.planet = node["planet"].asString("");
+	DataNode ch = node["crosshair"];
+	if (ch && ch.isSequence() && ch.size() >= 2) {
+		ld.crosshair[0] = ch[0].asInt(0);
+		ld.crosshair[1] = ch[1].asInt(0);
+	}
+	DataNode lb = node["locator_box"];
+	if (lb && lb.isSequence() && lb.size() >= 2) {
+		ld.locatorBox[0] = lb[0].asInt(0);
+		ld.locatorBox[1] = lb[1].asInt(0);
+	}
+	return ld;
+}
+
+// --- Parse a travel_map.yaml into TravelMapConfig ---
+static void parseTravelMapYaml(const DataNode& node, TravelMapConfig& cfg) {
+	cfg.loaded = true;
+
+	DataNode imgs = node["images"];
+	if (imgs) {
+		cfg.images.background = imgs["background"].asString(cfg.images.background);
+		cfg.images.horzGrid = imgs["horz_grid"].asString(cfg.images.horzGrid);
+		cfg.images.vertGrid = imgs["vert_grid"].asString(cfg.images.vertGrid);
+		cfg.images.highlight = imgs["highlight"].asString(cfg.images.highlight);
+		cfg.images.magnifyingGlass = imgs["magnifying_glass"].asString(cfg.images.magnifyingGlass);
+		cfg.images.spaceship = imgs["spaceship"].asString(cfg.images.spaceship);
+	}
+
+	DataNode timing = node["timing"];
+	if (timing) {
+		auto& t = cfg.timing;
+		t.samePlanetCloseupDelay = timing["same_planet_closeup_delay"].asInt(t.samePlanetCloseupDelay);
+		t.crossPlanetCloseupDelay = timing["cross_planet_closeup_delay"].asInt(t.crossPlanetCloseupDelay);
+		t.dottedLineDivisor = timing["dotted_line_divisor"].asInt(t.dottedLineDivisor);
+		t.locatorSpeedSamePlanet = timing["locator_speed_same_planet"].asInt(t.locatorSpeedSamePlanet);
+		t.locatorSpeedCrossPlanet = timing["locator_speed_cross_planet"].asInt(t.locatorSpeedCrossPlanet);
+		t.finalHold = timing["final_hold"].asInt(t.finalHold);
+		t.dottedLinePause = timing["dotted_line_pause"].asInt(t.dottedLinePause);
+		t.gridScrollPeriod = timing["grid_scroll_period"].asInt(t.gridScrollPeriod);
+		t.gridCellSize = timing["grid_cell_size"].asInt(t.gridCellSize);
+	}
+
+	DataNode planets = node["planets"];
+	if (planets && planets.isMap()) {
+		for (auto it = planets.begin(); it != planets.end(); ++it) {
+			std::string pName = it.key().asString();
+			DataNode pNode = it.value();
+			TravelMapPlanet planet;
+			planet.name = pName;
+			DataNode orig = pNode["origin"];
+			if (orig && orig.isSequence() && orig.size() >= 2) {
+				planet.origin[0] = orig[0].asInt(0);
+				planet.origin[1] = orig[1].asInt(0);
+			}
+			planet.closeupImage = pNode["closeup_image"].asString("");
+			planet.nameStringId = pNode["name_string_id"].asInt(0);
+			DataNode nls = pNode["name_labels"];
+			if (nls && nls.isSequence()) {
+				for (auto it2 = nls.begin(); it2 != nls.end(); ++it2) {
+					DataNode lbl = it2.value();
+					if (lbl.isSequence() && lbl.size() >= 2) {
+						planet.nameLabels.push_back({lbl[0].asInt(0), lbl[1].asInt(0)});
+					}
+				}
+			}
+			DataNode ac = pNode["arrival_closeup"];
+			if (ac) {
+				planet.hasArrivalCloseup = true;
+				planet.arrivalCloseupImage = ac["image"].asString("");
+				DataNode ao = ac["origin"];
+				if (ao && ao.isSequence() && ao.size() >= 2) {
+					planet.arrivalOrigin[0] = ao[0].asInt(0);
+					planet.arrivalOrigin[1] = ao[1].asInt(0);
+				}
+			}
+			DataNode sm = pNode["special_marker"];
+			if (sm && sm.isSequence() && sm.size() >= 2) {
+				planet.hasSpecialMarker = true;
+				planet.specialMarker[0] = sm[0].asInt(0);
+				planet.specialMarker[1] = sm[1].asInt(0);
+			}
+			cfg.planets[pName] = std::move(planet);
+		}
+	}
+
+	DataNode paths = node["paths"];
+	if (paths && paths.isSequence()) {
+		for (auto it = paths.begin(); it != paths.end(); ++it) {
+			DataNode pNode = it.value();
+			TravelMapPath path;
+			path.from = pNode["from"].asString("");
+			path.to = pNode["to"].asString("");
+			path.image = pNode["image"].asString("");
+			DataNode pos = pNode["position"];
+			if (pos && pos.isSequence() && pos.size() >= 2) {
+				path.position[0] = pos[0].asInt(0);
+				path.position[1] = pos[1].asInt(0);
+			}
+			path.nameRevealFraction = pNode["name_reveal_fraction"].asFloat(path.nameRevealFraction);
+			cfg.paths.push_back(std::move(path));
+		}
+	}
+}
+
+// --- Load travel map config from per-level YAML files ---
+static void loadTravelMapConfig(Canvas* canvas) {
+	const auto& gc = CAppContainer::getInstance()->gameConfig;
+	s_tmConfig = TravelMapConfig{}; // reset
+
+	// Load the destination level's travel_map.yaml
+	auto it = gc.levelInfos.find((int)canvas->TM_LoadLevelId);
+	if (it == gc.levelInfos.end() || it->second.introFile.empty()) {
+		printf("[travel_map] No intro config for load level %d (introFile='%s')\n",
+			canvas->TM_LoadLevelId,
+			(it != gc.levelInfos.end()) ? it->second.introFile.c_str() : "N/A");
+		return;
+	}
+
+	std::string yamlPath = it->second.dir + "/" + it->second.introFile;
+	DataNode node = DataNode::loadFile(yamlPath.c_str());
+	if (!node) {
+		printf("[travel_map] Failed to load: %s\n", yamlPath.c_str());
+		return;
+	}
+
+	parseTravelMapYaml(node, s_tmConfig);
+	s_tmConfig.loadLevel = parseLevelData(node);
+	printf("[travel_map] Loaded %s: planet=%s, %zu planets, %zu paths\n",
+		yamlPath.c_str(), s_tmConfig.loadLevel.planet.c_str(),
+		s_tmConfig.planets.size(), s_tmConfig.paths.size());
+
+	// Also load the previous level's travel_map.yaml for its planet/crosshair
+	if (canvas->TM_LastLevelId > 0) {
+		auto it2 = gc.levelInfos.find((int)canvas->TM_LastLevelId);
+		if (it2 != gc.levelInfos.end() && !it2->second.introFile.empty()) {
+			std::string lastPath = it2->second.dir + "/" + it2->second.introFile;
+			DataNode lastNode = DataNode::loadFile(lastPath.c_str());
+			if (lastNode) {
+				s_tmConfig.lastLevel = parseLevelData(lastNode);
+				printf("[travel_map] Last level %d: planet=%s\n",
+					canvas->TM_LastLevelId, s_tmConfig.lastLevel.planet.c_str());
+			} else {
+				printf("[travel_map] Failed to load last level: %s\n", lastPath.c_str());
+			}
+		} else {
+			printf("[travel_map] No intro config for last level %d\n", canvas->TM_LastLevelId);
+		}
+	}
+}
+
+// --- Data-driven travel map helpers ---
+
+static const std::string& getPlanetForLevel(int levelId) {
+	static const std::string empty;
+	static const std::string start = "start";
+	if (levelId == 0) return start;
+	// Check if it's the load or last level (the two we have data for)
+	const auto& gc = CAppContainer::getInstance()->gameConfig;
+	auto it = gc.levelInfos.find(levelId);
+	if (it == gc.levelInfos.end()) return empty;
+	// Determine which level data to use
+	if (levelId == CAppContainer::getInstance()->app->canvas->TM_LoadLevelId) {
+		return s_tmConfig.loadLevel.planet;
+	}
+	return s_tmConfig.lastLevel.planet;
+}
+
+static const TravelMapLevelData& getLevelData(int levelId) {
+	Canvas* canvas = CAppContainer::getInstance()->app->canvas.get();
+	if (levelId == canvas->TM_LoadLevelId) return s_tmConfig.loadLevel;
+	return s_tmConfig.lastLevel;
+}
+
+static const TravelMapPlanet* getPlanetConfig(const std::string& name) {
+	auto it = s_tmConfig.planets.find(name);
+	if (it != s_tmConfig.planets.end()) return &it->second;
+	return nullptr;
+}
+
+static const TravelMapPath* findPath(const std::string& fromPlanet, const std::string& toPlanet) {
+	for (const auto& path : s_tmConfig.paths) {
+		if ((path.from == fromPlanet && path.to == toPlanet) ||
+			(path.from == toPlanet && path.to == fromPlanet)) {
+			return &path;
+		}
+	}
+	return nullptr;
+}
 
 
 static void drawTravelMap(Canvas* canvas, Graphics* graphics) {
@@ -61,12 +315,13 @@ static void drawTravelMap(Canvas* canvas, Graphics* graphics) {
 		graphics->clipRect(canvas->xDiff, canvas->yDiff, canvas->imgTravelBG->width, canvas->imgTravelBG->height);
 	}
 
+	const auto& t = s_tmConfig.timing;
 	int time = canvas->app->upTimeMs - canvas->stateVars[0];
 	drawGridLines(canvas, graphics, time + canvas->totalTMTimeInPastAnimations);
 
 	bool levelSamePlanet = newLevelSamePlanet(canvas);
 	if (canvas->stateVars[1] != 1) {
-		if (time > (levelSamePlanet ? 1500 : 700)) {
+		if (time > (levelSamePlanet ? t.samePlanetCloseupDelay : t.crossPlanetCloseupDelay)) {
 			canvas->totalTMTimeInPastAnimations += time;
 			canvas->stateVars[0] += time;
 			canvas->stateVars[1] = 1;
@@ -98,7 +353,7 @@ static void drawTravelMap(Canvas* canvas, Graphics* graphics) {
 		else if (canvas->stateVars[2] == 1) {
 			if (canvas->stateVars[3] != 1) {
 				drawDottedLine(canvas, graphics);
-				if (time > 500 || levelSamePlanet) {
+				if (time > t.dottedLinePause || levelSamePlanet) {
 					canvas->totalTMTimeInPastAnimations += time;
 					canvas->stateVars[0] += time;
 					canvas->stateVars[3] = 1;
@@ -129,7 +384,7 @@ static void drawTravelMap(Canvas* canvas, Graphics* graphics) {
 				}
 				else {
 					drawLocatorLines(canvas, graphics, -1, levelSamePlanet, canvas->stateVars[8] == 1);
-					if (time > 800) {
+					if (time > t.finalHold) {
 						canvas->totalTMTimeInPastAnimations += time;
 						canvas->stateVars[0] += time;
 						if (canvas->stateVars[8] == 0) {
@@ -138,11 +393,12 @@ static void drawTravelMap(Canvas* canvas, Graphics* graphics) {
 						else {
 							canvas->stateVars[4] = 0;
 							canvas->stateVars[8] = 0;
-							int n7 = 123;
-							int n8 = 150;
-							short n9 = (short)(2 * (canvas->TM_LoadLevelId - 1));
-							canvas->targetX = Canvas::CROSS_HAIR_CORDS[n9] + canvas->xDiff + n7;
-							canvas->targetY = Canvas::CROSS_HAIR_CORDS[n9 + 1] + canvas->yDiff + n8;
+							const auto* planet = getPlanetConfig(getPlanetForLevel(canvas->TM_LoadLevelId));
+							const auto& ld = getLevelData(canvas->TM_LoadLevelId);
+							if (planet) {
+								canvas->targetX = ld.crosshair[0] + canvas->xDiff + planet->origin[0];
+								canvas->targetY = ld.crosshair[1] + canvas->yDiff + planet->origin[1];
+							}
 						}
 					}
 				}
@@ -155,57 +411,56 @@ static void drawTravelMap(Canvas* canvas, Graphics* graphics) {
 
 
 static bool newLevelSamePlanet(Canvas* canvas) {
-	return canvas->TM_LastLevelId != canvas->TM_LoadLevelId && ((onMoon(canvas->TM_LastLevelId) && onMoon(canvas->TM_LoadLevelId)) || (onEarth(canvas->TM_LastLevelId) && onEarth(canvas->TM_LoadLevelId)) || (inHell(canvas->TM_LastLevelId) && inHell(canvas->TM_LoadLevelId)));
+	if (canvas->TM_LastLevelId == canvas->TM_LoadLevelId) return false;
+	const auto& pa = getPlanetForLevel(canvas->TM_LastLevelId);
+	const auto& pb = getPlanetForLevel(canvas->TM_LoadLevelId);
+	return !pa.empty() && !pb.empty() && pa == pb;
 }
 
 
 static void drawAppropriateCloseup(Canvas* canvas, Graphics* graphics, int n, bool b) {
-	if (onMoon(n)) {
-		graphics->drawImage(canvas->imgTierCloseUp, Canvas::moonCoords[0], Canvas::moonCoords[1], 0, 0, 0);
-	}
-	else if (onEarth(n)) {
-		if (b) {
-			graphics->drawImage(canvas->imgEarthCloseUp, Canvas::earthCoords[0], Canvas::earthCoords[1], 0, 0, 0);
-		}
-		else {
-			graphics->drawImage(canvas->imgTierCloseUp, Canvas::earthCoords[2], Canvas::earthCoords[3], 0, 0, 0);
-		}
-	}
-	else {
-		graphics->drawImage(canvas->imgTierCloseUp, Canvas::hellCoords[0], Canvas::hellCoords[1], 0, 0, 0);
+	const auto* planet = getPlanetConfig(getPlanetForLevel(n));
+	if (!planet) return;
+
+	if (planet->hasArrivalCloseup && b) {
+		graphics->drawImage(canvas->imgEarthCloseUp, planet->origin[0], planet->origin[1], 0, 0, 0);
+	} else if (planet->hasArrivalCloseup && !b) {
+		graphics->drawImage(canvas->imgTierCloseUp, planet->arrivalOrigin[0], planet->arrivalOrigin[1], 0, 0, 0);
+	} else {
+		graphics->drawImage(canvas->imgTierCloseUp, planet->origin[0], planet->origin[1], 0, 0, 0);
 	}
 }
 
 
 static bool drawDottedLine(Canvas* canvas, Graphics* graphics, int n) {
-	int n2 = n / 22;
-	bool b;
-	if (canvas->TM_LastLevelId == 0 && onMoon(canvas->TM_LoadLevelId)) {
-		b = drawMarsToMoonLinePlusSpaceShip(canvas, graphics, n2);
+	const auto& t = s_tmConfig.timing;
+	int n2 = n / t.dottedLineDivisor;
+
+	const auto& fromPlanet = getPlanetForLevel(canvas->TM_LastLevelId);
+	const auto& toPlanet = getPlanetForLevel(canvas->TM_LoadLevelId);
+
+	const auto* path = findPath(fromPlanet, toPlanet);
+	if (!path) return true;
+
+	bool reversed = (path->from != fromPlanet);
+
+	if (path->from == "start") {
+		return drawStartPathLine(canvas, graphics, n2, path);
 	}
-	else if (onMoon(canvas->TM_LastLevelId) && onEarth(canvas->TM_LoadLevelId)) {
-		b = drawMoonToEarthLine(canvas, graphics, n2, false);
-	}
-	else if (onEarth(canvas->TM_LastLevelId) && onMoon(canvas->TM_LoadLevelId)) {
-		b = drawMoonToEarthLine(canvas, graphics, n2, true);
-	}
-	else if (onEarth(canvas->TM_LastLevelId) && inHell(canvas->TM_LoadLevelId)) {
-		b = drawEarthToHellLine(canvas, graphics, n2, false);
-	}
-	else {
-		b = (!inHell(canvas->TM_LastLevelId) || !onEarth(canvas->TM_LoadLevelId) || drawEarthToHellLine(canvas, graphics, n2, true));
-	}
-	return b;
+
+	return drawPlanetPathLine(canvas, graphics, n2, path, reversed);
 }
 
 
 static bool drawDottedLine(Canvas* canvas, Graphics* graphics) {
-	return drawDottedLine(canvas, graphics, 22 * std::max(canvas->screenRect[2], canvas->screenRect[3]));
+	const auto& t = s_tmConfig.timing;
+	return drawDottedLine(canvas, graphics, t.dottedLineDivisor * std::max(canvas->screenRect[2], canvas->screenRect[3]));
 }
 
 
-static bool drawMarsToMoonLinePlusSpaceShip(Canvas* canvas, Graphics* graphics, int n) {
-
+static bool drawStartPathLine(Canvas* canvas, Graphics* graphics, int n, const TravelMapPath* path) {
+	const auto* destPlanet = getPlanetConfig(path->to);
+	if (!destPlanet) return true;
 
 	bool b = false;
 	int width = canvas->imgTravelPath->width;
@@ -214,17 +469,19 @@ static bool drawMarsToMoonLinePlusSpaceShip(Canvas* canvas, Graphics* graphics, 
 		b = true;
 		n2 = width;
 	}
-	if (n > width / 3) {
+	if (n > (int)(width * path->nameRevealFraction)) {
 		Text* smallBuffer = canvas->app->localization->getSmallBuffer();
 		smallBuffer->setLength(0);
-		canvas->app->localization->composeText((short)3, (short)165, smallBuffer);
+		canvas->app->localization->composeText((short)3, (short)destPlanet->nameStringId, smallBuffer);
 		smallBuffer->dehyphenate();
-		graphics->drawString(smallBuffer, Canvas::moonNameCoords[0], Canvas::moonNameCoords[1], 4);
+		if (!destPlanet->nameLabels.empty()) {
+			graphics->drawString(smallBuffer, destPlanet->nameLabels[0][0], destPlanet->nameLabels[0][1], 4);
+		}
 		smallBuffer->dispose();
 	}
-	graphics->drawRegion(canvas->imgTravelPath, width - n2, 0, n2, canvas->imgTravelPath->height, Canvas::moonPathCoords[0] + width - n2, Canvas::moonPathCoords[1], 0, 0, 0);
+	graphics->drawRegion(canvas->imgTravelPath, width - n2, 0, n2, canvas->imgTravelPath->height, path->position[0] + width - n2, path->position[1], 0, 0, 0);
 	int n3 = width - n2;
-	graphics->drawImage(canvas->imgSpaceShip, Canvas::moonPathCoords[0] + n3 - canvas->imgSpaceShip->width, yCoordOfSpaceShip(canvas, n3) + Canvas::moonPathCoords[1] - (canvas->imgSpaceShip->height >> 1), 0, 0, 0);
+	graphics->drawImage(canvas->imgSpaceShip, path->position[0] + n3 - canvas->imgSpaceShip->width, yCoordOfSpaceShip(canvas, n3) + path->position[1] - (canvas->imgSpaceShip->height >> 1), 0, 0, 0);
 	return b;
 }
 
@@ -236,40 +493,10 @@ static int yCoordOfSpaceShip(Canvas* canvas, int n) {
 }
 
 
-static bool drawMoonToEarthLine(Canvas* canvas, Graphics* graphics, int n, bool b) {
-
-
-	bool b2 = false;
-	int height = canvas->imgTravelPath->height;
-	int n2 = n;
-	if (n2 > height) {
-		b2 = true;
-		n2 = height;
-	}
-	int n3 = b ? 0 : (height - n2);
-	int width = canvas->imgTravelPath->width;
-	if (n > height / 2) {
-		Text* smallBuffer = canvas->app->localization->getSmallBuffer();
-		smallBuffer->setLength(0);
-		if (!b) {
-			canvas->app->localization->composeText((short)3, (short)164, smallBuffer);
-			smallBuffer->dehyphenate();
-			graphics->drawString(smallBuffer, Canvas::earthNameCoords[0], Canvas::earthNameCoords[1], 4);
-		}
-		else {
-			canvas->app->localization->composeText((short)3, (short)165, smallBuffer);
-			smallBuffer->dehyphenate();
-			graphics->drawString(smallBuffer, Canvas::moonNameCoords[2], Canvas::moonNameCoords[3], 4);
-		}
-		smallBuffer->dispose();
-	}
-	graphics->drawRegion(canvas->imgTravelPath, 0, n3, width, n2, Canvas::earthPathCoords[0], Canvas::earthPathCoords[1] + n3, 0, 0, 0);
-	return b2;
-}
-
-
-static bool drawEarthToHellLine(Canvas* canvas, Graphics* graphics, int n, bool b) {
-
+static bool drawPlanetPathLine(Canvas* canvas, Graphics* graphics, int n, const TravelMapPath* path, bool reversed) {
+	// Destination is the planet we're traveling TO
+	const std::string& destPlanetName = reversed ? path->from : path->to;
+	const auto* destPlanet = getPlanetConfig(destPlanetName);
 
 	bool b2 = false;
 	int height = canvas->imgTravelPath->height;
@@ -278,52 +505,42 @@ static bool drawEarthToHellLine(Canvas* canvas, Graphics* graphics, int n, bool 
 		b2 = true;
 		n2 = height;
 	}
-	int n3 = b ? 0 : (height - n2);
+	int n3 = reversed ? 0 : (height - n2);
 	int width = canvas->imgTravelPath->width;
-	if (n > 2 * height / 3) {
-		Text* smallBuffer = canvas->app->localization->getSmallBuffer();
-		smallBuffer->setLength(0);
-		if (!b) {
-			canvas->app->localization->composeText((short)3, (short)166, smallBuffer);
+
+	if (n > (int)(height * path->nameRevealFraction)) {
+		if (destPlanet) {
+			Text* smallBuffer = canvas->app->localization->getSmallBuffer();
+			smallBuffer->setLength(0);
+			canvas->app->localization->composeText((short)3, (short)destPlanet->nameStringId, smallBuffer);
 			smallBuffer->dehyphenate();
-			graphics->drawString(smallBuffer, Canvas::hellNameCoords[0], Canvas::hellNameCoords[1], 4);
+			int nameLabelIdx = reversed ? 1 : 0;
+			if (nameLabelIdx < (int)destPlanet->nameLabels.size()) {
+				graphics->drawString(smallBuffer, destPlanet->nameLabels[nameLabelIdx][0], destPlanet->nameLabels[nameLabelIdx][1], 4);
+			}
+			smallBuffer->dispose();
 		}
-		else {
-			canvas->app->localization->composeText((short)3, (short)164, smallBuffer);
-			smallBuffer->dehyphenate();
-			graphics->drawString(smallBuffer, Canvas::earthNameCoords[2], Canvas::earthNameCoords[3], 4);
-		}
-		smallBuffer->dispose();
 	}
-	graphics->drawRegion(canvas->imgTravelPath, 0, n3, width, n2, Canvas::hellPathCoords[0], Canvas::hellPathCoords[1] + n3, 0, 0, 0);
+	graphics->drawRegion(canvas->imgTravelPath, 0, n3, width, n2, path->position[0], path->position[1] + n3, 0, 0, 0);
 	return b2;
 }
 
 
 static void drawLocatorBoxAndName(Canvas* canvas, Graphics* graphics, bool b, int n, Text* text) {
-	int n2;
-	int n3;
-	if (onMoon(n)) {
-		n2 = Canvas::moonCoords[0];
-		n3 = Canvas::moonCoords[1];
-	}
-	else if (onEarth(n)) {
-		n2 = Canvas::earthCoords[0];
-		n3 = Canvas::earthCoords[1];
-	}
-	else {
-		n2 = Canvas::hellCoords[0];
-		n3 = Canvas::hellCoords[1];
-	}
-	short n4 = (short)(2 * (n - 1));
-	int n5 = Canvas::CROSS_HAIR_CORDS[n4] + canvas->xDiff + n2;
-	int n6 = Canvas::CROSS_HAIR_CORDS[n4 + 1] + canvas->yDiff + n3;
+	const auto* planet = getPlanetConfig(getPlanetForLevel(n));
+	if (!planet) return;
+	const auto& ld = getLevelData(n);
+
+	int n2 = planet->origin[0];
+	int n3 = planet->origin[1];
+	int n5 = ld.crosshair[0] + canvas->xDiff + n2;
+	int n6 = ld.crosshair[1] + canvas->yDiff + n3;
 	if (b) {
 		graphics->drawImage(canvas->imgMagGlass, n5, n6, 3, 0, 0);
 	}
 
-	int x = Canvas::LOCATOR_BOX_CORDS[n4] + canvas->xDiff + n2;
-	int y = Canvas::LOCATOR_BOX_CORDS[n4 + 1] + canvas->yDiff + n3 + (canvas->imgNameHighlight->height >> 1);
+	int x = ld.locatorBox[0] + canvas->xDiff + n2;
+	int y = ld.locatorBox[1] + canvas->yDiff + n3 + (canvas->imgNameHighlight->height >> 1);
 	graphics->drawImage(canvas->imgNameHighlight, x, y, 6, 0, 0);
 	canvas->graphics.currentCharColor = 3;
 	graphics->drawString(text, x + (canvas->imgNameHighlight->width >> 1), y, 3);
@@ -331,12 +548,13 @@ static void drawLocatorBoxAndName(Canvas* canvas, Graphics* graphics, bool b, in
 
 
 static void drawGridLines(Canvas* canvas, Graphics* graphics, int i) {
+	const auto& t = s_tmConfig.timing;
 	int iVar1;
 
-	for (iVar1 = (i / 200) % 44 + canvas->displayRect[0]; iVar1 < canvas->displayRect[2]; iVar1 += 44) {
+	for (iVar1 = (i / t.gridScrollPeriod) % t.gridCellSize + canvas->displayRect[0]; iVar1 < canvas->displayRect[2]; iVar1 += t.gridCellSize) {
 		graphics->drawImage(canvas->imgMapVertGridLines, iVar1, canvas->displayRect[1], 0x14, 0, 2);
 	}
-	for (iVar1 = canvas->displayRect[1] + 5; iVar1 < canvas->displayRect[3]; iVar1 += 44) {
+	for (iVar1 = canvas->displayRect[1] + 5; iVar1 < canvas->displayRect[3]; iVar1 += t.gridCellSize) {
 		graphics->drawImage(canvas->imgMapHorzGridLines, canvas->displayRect[0], iVar1, 20, 0, 2);
 		graphics->drawImage(canvas->imgMapHorzGridLines, 240, iVar1, 20, 0, 2);
 	}
@@ -393,11 +611,12 @@ static void handleTravelMapInput(Canvas* canvas, int key, int action) {
 					if (canvas->stateVars[4] == 1) {
 						canvas->stateVars[4] = 0;
 						canvas->stateVars[8] = 0;
-						int n5 = canvas->earthCoords[0];
-						int n6 = canvas->earthCoords[1];
-						short n7 = (short)(2 * (canvas->TM_LoadLevelId - 1));
-						canvas->targetX = canvas->CROSS_HAIR_CORDS[n7] + canvas->xDiff + n5;
-						canvas->targetY = canvas->CROSS_HAIR_CORDS[n7 + 1] + canvas->yDiff + n6;
+						const auto* planet = getPlanetConfig(getPlanetForLevel(canvas->TM_LoadLevelId));
+						const auto& ld = getLevelData(canvas->TM_LoadLevelId);
+						if (planet) {
+							canvas->targetX = ld.crosshair[0] + canvas->xDiff + planet->origin[0];
+							canvas->targetY = ld.crosshair[1] + canvas->yDiff + planet->origin[1];
+						}
 					}
 					else {
 						canvas->stateVars[3] = 1;
@@ -431,36 +650,27 @@ static void finishTravelMapAndLoadLevel(Canvas* canvas) {
 
 
 static bool drawLocatorLines(Canvas* canvas, Graphics* graphics, int n, bool b, bool b2) {
+	const auto& t = s_tmConfig.timing;
 	int targetX;
 	int targetY;
 	int targetX2;
 	int targetY2;
 	if (n >= 0) {
-		int n2 = n / (b ? 15 : 7);
+		int n2 = n / (b ? t.locatorSpeedSamePlanet : t.locatorSpeedCrossPlanet);
 		if (b) {
-			int n3;
-			int n4;
-			if (onMoon(canvas->TM_LastLevelId)) {
-				n3 = Canvas::moonCoords[0];
-				n4 = Canvas::moonCoords[1];
+			const auto* planet = getPlanetConfig(getPlanetForLevel(canvas->TM_LastLevelId));
+			if (!planet) return true;
+			int n3, n4;
+			if (planet->hasArrivalCloseup && b2) {
+				n3 = planet->arrivalOrigin[0];
+				n4 = planet->arrivalOrigin[1];
+			} else {
+				n3 = planet->origin[0];
+				n4 = planet->origin[1];
 			}
-			else if (onEarth(canvas->TM_LastLevelId)) {
-				if (b2) {
-					n3 = Canvas::earthCoords[2];
-					n4 = Canvas::earthCoords[3];
-				}
-				else {
-					n3 = Canvas::earthCoords[0];
-					n4 = Canvas::earthCoords[1];
-				}
-			}
-			else {
-				n3 = Canvas::hellCoords[0];
-				n4 = Canvas::hellCoords[1];
-			}
-			short n5 = (short)(2 * (canvas->TM_LastLevelId - 1));
-			targetX = Canvas::CROSS_HAIR_CORDS[n5] + canvas->xDiff + n3;
-			targetY = Canvas::CROSS_HAIR_CORDS[n5 + 1] + canvas->yDiff + n4;
+			const auto& ld = getLevelData(canvas->TM_LastLevelId);
+			targetX = ld.crosshair[0] + canvas->xDiff + n3;
+			targetY = ld.crosshair[1] + canvas->yDiff + n4;
 		}
 		else {
 			targetX = canvas->displayRect[2] - canvas->xDiff;
@@ -514,39 +724,47 @@ static void initTravelMap(Canvas* canvas) {
 	}
 	canvas->app->game->scriptStateVars[15] = n;
 
+	// Load travel map config from per-level YAML
+	loadTravelMapConfig(canvas);
+
+	const auto& imgs = s_tmConfig.images;
+
+	// Resolve sprite name → filename via SpriteDefs, then load image
+	auto loadImg = [&](const std::string& name) -> Image* {
+		const SpriteSource* src = SpriteDefs::getSource(name);
+		const std::string& file = src ? src->file : name; // fallback to raw name
+		return canvas->app->loadImage(const_cast<char*>(file.c_str()), true);
+	};
+
 	canvas->app->beginImageLoading();
-	canvas->imgNameHighlight = canvas->app->loadImage("highlight.bmp", true);
-	canvas->imgMagGlass = canvas->app->loadImage("magnifyingGlass.bmp", true);
-	canvas->imgSpaceShip = canvas->app->loadImage("spaceShip.bmp", true);
+	canvas->imgNameHighlight = loadImg(imgs.highlight);
+	canvas->imgMagGlass = loadImg(imgs.magnifyingGlass);
+	canvas->imgSpaceShip = loadImg(imgs.spaceship);
+
+	const auto& loadPlanetName = getPlanetForLevel(canvas->TM_LoadLevelId);
+	const auto& lastPlanetName = getPlanetForLevel(canvas->TM_LastLevelId);
+	const auto* loadPlanet = getPlanetConfig(loadPlanetName);
 
 	bool b = false;
-	if (onMoon(canvas->TM_LoadLevelId)) {
-		canvas->imgTierCloseUp = canvas->app->loadImage("TM_Levels1.bmp", true);
-	}
-	else if (onEarth(canvas->TM_LoadLevelId)) {
-		if (onMoon(canvas->TM_LastLevelId) || inHell(canvas->TM_LastLevelId)) {
-			canvas->imgEarthCloseUp = canvas->app->loadImage("TM_Levels2.bmp", true);
+	if (loadPlanet) {
+		canvas->imgTierCloseUp = loadImg(loadPlanet->closeupImage);
+
+		// Load arrival closeup if arriving from a different planet
+		if (loadPlanet->hasArrivalCloseup && loadPlanetName != lastPlanetName) {
+			canvas->imgEarthCloseUp = loadImg(loadPlanet->arrivalCloseupImage);
 			b = true;
 		}
-		canvas->imgTierCloseUp = canvas->app->loadImage("TM_Levels4.bmp", true);
-	}
-	else {
-		canvas->imgTierCloseUp = canvas->app->loadImage("TM_Levels3.bmp", true);
 	}
 
-	if (onMoon(canvas->TM_LoadLevelId) && canvas->TM_LastLevelId == 0) {
-		canvas->imgTravelPath = canvas->app->loadImage("toMoon.bmp", true);
-	}
-	else if ((onEarth(canvas->TM_LoadLevelId) && onMoon(canvas->TM_LastLevelId)) || (onMoon(canvas->TM_LoadLevelId) && onEarth(canvas->TM_LastLevelId))) {
-		canvas->imgTravelPath = canvas->app->loadImage("toEarth.bmp", true);
-	}
-	else if ((inHell(canvas->TM_LoadLevelId) && onEarth(canvas->TM_LastLevelId)) || (onEarth(canvas->TM_LoadLevelId) && inHell(canvas->TM_LastLevelId))) {
-		canvas->imgTravelPath = canvas->app->loadImage("toHell.bmp", true);
+	// Load travel path image from matching path config
+	const auto* path = findPath(lastPlanetName, loadPlanetName);
+	if (path) {
+		canvas->imgTravelPath = loadImg(path->image);
 	}
 
-	canvas->imgTravelBG = canvas->app->loadImage("TravelMap.bmp", true);
-	canvas->imgMapHorzGridLines = canvas->app->loadImage("travelMapHorzGrid.bmp", true);
-	canvas->imgMapVertGridLines = canvas->app->loadImage("travelMapVertGrid.bmp", true);
+	canvas->imgTravelBG = loadImg(imgs.background);
+	canvas->imgMapHorzGridLines = loadImg(imgs.horzGrid);
+	canvas->imgMapVertGridLines = loadImg(imgs.vertGrid);
 	canvas->app->endImageLoading();
 
 	canvas->totalTMTimeInPastAnimations = 0;
@@ -555,35 +773,23 @@ static void initTravelMap(Canvas* canvas) {
 	canvas->xDiff = std::max(0, (canvas->displayRect[2] - canvas->imgTravelBG->width) / 2);
 	canvas->yDiff = std::max(0, (canvas->displayRect[3] - canvas->imgTravelBG->height) / 2);
 
-	int n2;
-	int n3;
-	if (onMoon(canvas->TM_LoadLevelId)) {
-		n2 = 137;
-		n3 = 216;
-	}
-	else if (onEarth(canvas->TM_LoadLevelId)) {
-		if (b) {
-			n2 = 123;
-			n3 = 150;
-		}
-		else {
-			n2 = 123;
-			n3 = 150;
-		}
-	}
-	else {
-		n2 = 150;
-		n3 = 11;
+	int n2 = 0;
+	int n3 = 0;
+	if (loadPlanet) {
+		n2 = loadPlanet->origin[0];
+		n3 = loadPlanet->origin[1];
 	}
 
 	if (!b) {
-		short n4 = (short)(2 * (canvas->TM_LoadLevelId - 1));
-		canvas->targetX = Canvas::CROSS_HAIR_CORDS[n4] + canvas->xDiff + n2;
-		canvas->targetY = Canvas::CROSS_HAIR_CORDS[n4 + 1] + canvas->yDiff + n3;
+		const auto& ld = s_tmConfig.loadLevel;
+		canvas->targetX = ld.crosshair[0] + canvas->xDiff + n2;
+		canvas->targetY = ld.crosshair[1] + canvas->yDiff + n3;
 	}
 	else {
-		canvas->targetX = Canvas::UAC_BUILDING_LOCATION_ON_EARTH[0] + canvas->xDiff + n2;
-		canvas->targetY = Canvas::UAC_BUILDING_LOCATION_ON_EARTH[1] + canvas->yDiff + n3;
+		if (loadPlanet && loadPlanet->hasSpecialMarker) {
+			canvas->targetX = loadPlanet->specialMarker[0] + canvas->xDiff + n2;
+			canvas->targetY = loadPlanet->specialMarker[1] + canvas->yDiff + n3;
+		}
 	}
 
 	canvas->stateVars[0] = canvas->app->upTimeMs;;

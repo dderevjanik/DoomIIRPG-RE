@@ -2,6 +2,9 @@
 
 name: cichus
 map_id: 2
+intro:
+  type: travel_map
+  file: travel_map.yaml
 fog: false
 joke_items: [149, 150, 151, 152, 153]
 starting_loadout:

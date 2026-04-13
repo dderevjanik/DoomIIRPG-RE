@@ -237,6 +237,21 @@ sprites:
   vending_scroll_btn_bottom: {file: vending_scroll_button_bottom.bmp}
   logo: {file: logo2.bmp}
 
+  # Travel map images
+  tm_background: {file: TravelMap.bmp}
+  tm_horz_grid: {file: travelMapHorzGrid.bmp}
+  tm_vert_grid: {file: travelMapVertGrid.bmp}
+  tm_highlight: {file: highlight.bmp}
+  tm_magnifying_glass: {file: magnifyingGlass.bmp}
+  tm_spaceship: {file: spaceShip.bmp}
+  tm_closeup_moon: {file: TM_Levels1.bmp}
+  tm_closeup_earth_arrival: {file: TM_Levels2.bmp}
+  tm_closeup_hell: {file: TM_Levels3.bmp}
+  tm_closeup_earth: {file: TM_Levels4.bmp}
+  tm_path_to_moon: {file: toMoon.bmp}
+  tm_path_to_earth: {file: toEarth.bmp}
+  tm_path_to_hell: {file: toHell.bmp}
+
   # Wall/floor textures (auto-generated from map media indices)
   texture_105: {file: tables.bin, id: 105}
   texture_120: {file: tables.bin, id: 120}

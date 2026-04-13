@@ -1,0 +1,66 @@
+# Travel map intro configuration
+# Per-level position
+planet: moon
+crosshair: [64, 33]
+locator_box: [86, -15]
+
+# Map images (sprite names from sprites.yaml)
+images:
+  background: tm_background
+  horz_grid: tm_horz_grid
+  vert_grid: tm_vert_grid
+  highlight: tm_highlight
+  magnifying_glass: tm_magnifying_glass
+  spaceship: tm_spaceship
+
+# Animation timing
+timing:
+  same_planet_closeup_delay: 1500
+  cross_planet_closeup_delay: 700
+  dotted_line_divisor: 22
+  locator_speed_same_planet: 15
+  locator_speed_cross_planet: 7
+  final_hold: 800
+  dotted_line_pause: 500
+  grid_scroll_period: 200
+  grid_cell_size: 44
+
+# Planet definitions
+planets:
+  moon:
+    origin: [137, 216]
+    closeup_image: tm_closeup_moon
+    name_string_id: 165
+    name_labels: [[124, 255], [165, 64]]
+  earth:
+    origin: [123, 150]
+    closeup_image: tm_closeup_earth
+    name_string_id: 164
+    name_labels: [[126, 160], [40, 226]]
+    arrival_closeup:
+      image: tm_closeup_earth_arrival
+      origin: [113, 140]
+    special_marker: [82, 48]
+  hell:
+    origin: [150, 11]
+    closeup_image: tm_closeup_hell
+    name_string_id: 166
+    name_labels: [[184, 23]]
+
+# Travel paths between planets
+paths:
+  - from: start
+    to: moon
+    image: tm_path_to_moon
+    position: [200, 202]
+    name_reveal_fraction: 0.333
+  - from: moon
+    to: earth
+    image: tm_path_to_earth
+    position: [167, 206]
+    name_reveal_fraction: 0.5
+  - from: earth
+    to: hell
+    image: tm_path_to_hell
+    position: [137, 52]
+    name_reveal_fraction: 0.666

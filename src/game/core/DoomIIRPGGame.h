@@ -7,7 +7,7 @@
 #include "IntroState.h"
 #include "EpilogueState.h"
 #include "CharacterSelectionState.h"
-#include "TravelMapState.h"
+#include "levelintros/TravelMapState.h"
 #include "DyingState.h"
 #include "BotDyingState.h"
 #include "ErrorState.h"

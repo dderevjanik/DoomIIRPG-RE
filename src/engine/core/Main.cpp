@@ -457,6 +457,13 @@ int main(int argc, char* args[]) {
 				if (skyNode) {
 					gc2.levelInfos[mapId].skyBox = skyNode.asString("");
 				}
+
+				DataNode introNode = levelNode["intro"];
+				if (introNode) {
+					auto& li = gc2.levelInfos[mapId];
+					li.introType = introNode["type"].asString("");
+					li.introFile = introNode["file"].asString("");
+				}
 			}
 		}
 	}

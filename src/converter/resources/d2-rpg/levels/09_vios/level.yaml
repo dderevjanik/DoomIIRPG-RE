@@ -2,6 +2,9 @@
 
 name: vios
 map_id: 9
+intro:
+  type: travel_map
+  file: travel_map.yaml
 joke_items: [15, 16, 17, 18, 19]
 starting_loadout:
   weapons: [soul_cube, bfg, rocket_launcher, plasma_gun, assault_rifle_with_scope, chaingun, super_shotgun, holy_water_pistol, chainsaw, assault_rifle]

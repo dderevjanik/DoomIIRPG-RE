@@ -2,6 +2,9 @@
 
 name: abaddon
 map_id: 8
+intro:
+  type: travel_map
+  file: travel_map.yaml
 joke_items: [34, 35, 36, 37, 38]
 starting_loadout:
   weapons: [bfg, rocket_launcher, plasma_gun, assault_rifle_with_scope, chaingun, super_shotgun, holy_water_pistol, chainsaw, assault_rifle]

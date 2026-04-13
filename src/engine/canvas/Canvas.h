@@ -103,19 +103,6 @@ public:
 	static constexpr int ST_BOT_DYING = 25;
 	static constexpr int ST_LOGO = 26;
 
-	static constexpr int CROSS_HAIR_CORDS[] = { 64, 33, 60, 45, 60, 56, 110, 52, 38, 85, 83, 125, 61, 45, 72, 44, 67, 49 };
-	static constexpr int UAC_BUILDING_LOCATION_ON_EARTH[] = { 82, 48 };
-	static constexpr int moonCoords[] = { 137, 216 };
-	static constexpr int earthCoords[] = { 123, 150, 113, 140};
-	static constexpr int hellCoords[] = { 150, 11 };
-	static constexpr int LOCATOR_BOX_CORDS[] = { 86, -15, 106, 16, 106, 48, 136, 22, 136, 65, 136, 109, 90, 8, 100, 33, 92, 57 };
-	static constexpr int moonNameCoords[] = { 124, 255, 165, 64};
-	static constexpr int moonPathCoords[] = { 200, 202 };
-	static constexpr int earthNameCoords[] = { 126, 160, 40, 226};
-	static constexpr int earthPathCoords[] = { 167, 206 };
-	static constexpr int hellNameCoords[] = { 184, 23 };
-	static constexpr int hellPathCoords[] = { 137, 52 };
-
 	static constexpr int viewStepValues[] = { 64, 0, 64, -64, 0, -64, -64, -64, -64, 0, -64, 64, 0, 64, 64, 64 };
 
 	// Text layout constants

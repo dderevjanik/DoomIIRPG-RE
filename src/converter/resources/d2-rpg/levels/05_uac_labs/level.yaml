@@ -2,6 +2,9 @@
 
 name: uac_labs
 map_id: 5
+intro:
+  type: travel_map
+  file: travel_map.yaml
 joke_items: [131, 132, 133, 134, 135]
 starting_loadout:
   weapons: [assault_rifle_with_scope, chaingun, super_shotgun, holy_water_pistol, chainsaw, assault_rifle]
