@@ -6,55 +6,68 @@ buffs:
     max_stacks: 3
     has_amount: false
     draw_amount: false
+    duration: 30
   purify:
     max_stacks: 3
     has_amount: false
     draw_amount: false
+    duration: 10
   haste:
     max_stacks: 3
     has_amount: false
     draw_amount: false
+    duration: 20
   regen:
     max_stacks: 3
     has_amount: true
     draw_amount: true
     per_turn: heal_by_amount
+    duration: 30
   defense:
     max_stacks: 3
     has_amount: true
     draw_amount: true
+    duration: 30
   strength:
     max_stacks: 3
     has_amount: true
     draw_amount: true
+    duration: 30
   agility:
     max_stacks: 3
     has_amount: true
     draw_amount: true
+    duration: 30
   focus:
     max_stacks: 3
     has_amount: true
     draw_amount: true
+    duration: 30
   anger:
     max_stacks: 3
     has_amount: true
     draw_amount: true
+    duration: 30
   antifire:
     max_stacks: 1
     has_amount: false
     draw_amount: false
+    duration: 10
   fortitude:
     max_stacks: 3
     has_amount: true
     draw_amount: true
+    duration: 30
   fear:
     max_stacks: 3
     has_amount: false
     draw_amount: false
+    duration: 6
   wp_poison:
     max_stacks: 1
     has_amount: false
     draw_amount: false
+    duration: 30
   fire:
     max_stacks: 3
     has_amount: true
@@ -62,7 +75,9 @@ buffs:
     blocked_by: antifire
     on_apply_sound: fireball_impact
     per_turn_damage: 3
+    duration: 30
   disease:
     max_stacks: 3
     has_amount: true
     draw_amount: true
+    duration: 30

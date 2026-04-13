@@ -1591,22 +1591,8 @@ uint32_t ScriptThread::run() {
                     break;
                 }
                 uint8_t byteArg12 = this->getByteArg();
-                int n126 = 30;
-                if (uByteArg33 == 2) {
-                    n126 = 20;
-                }
-                else if (uByteArg33 == 9) {
-                    n126 = 10;
-                }
-                else if (uByteArg33 == 1) {
-                    n126 = 10;
-                }
-                else if (uByteArg33 == 11) {
-                    n126 = 6;
-                }
-                else if (uByteArg33 == 17) {
-                    n126 = 5;
-                }
+                int n126 = (uByteArg33 < Player::MAX_BUFF_IDS)
+                    ? app->player->buffDuration[uByteArg33] : 30;
                 app->player->addStatusEffect(uByteArg33, byteArg12, n126);
                 app->player->translateStatusEffects();
                 break;

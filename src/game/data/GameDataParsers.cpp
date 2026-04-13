@@ -519,6 +519,15 @@ std::expected<void, std::string> parseEffects(Applet* app, const DataNode& confi
 		p->buffPerTurnDamage[i] = 0;
 		p->buffPerTurnHealByAmount[i] = false;
 	}
+	// Default buff durations (matching original hardcoded values)
+	for (int i = 0; i < Player::MAX_BUFF_IDS; i++) {
+		p->buffDuration[i] = 30; // DEF_STATUS_TURNS
+	}
+	p->buffDuration[Enums::BUFF_HASTE] = 20;
+	p->buffDuration[Enums::BUFF_ANTIFIRE] = 10;
+	p->buffDuration[Enums::BUFF_PURIFY] = 10;
+	p->buffDuration[Enums::BUFF_FEAR] = 6;
+	p->buffDuration[17] = 5; // cold/frost fog effect (buff ID 17, beyond enum range)
 	// Original hardcoded: wp_poison and antifire have max 1 stack
 	p->buffMaxStacks[Enums::BUFF_WP_POISON] = 1;
 	p->buffMaxStacks[Enums::BUFF_ANTIFIRE] = 1;
@@ -567,6 +576,12 @@ std::expected<void, std::string> parseEffects(Applet* app, const DataNode& confi
 		DataNode b = bit.value();
 
 		p->buffMaxStacks[i] = (int8_t)b["max_stacks"].asInt(3);
+
+		// duration: override default if specified in YAML
+		DataNode durNode = b["duration"];
+		if (durNode) {
+			p->buffDuration[i] = (int8_t)durNode.asInt(30);
+		}
 
 		bool hasAmount = b["has_amount"].asBool(true);
 		bool drawAmount = b["draw_amount"].asBool(true);

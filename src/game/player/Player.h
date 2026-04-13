@@ -58,13 +58,7 @@ public:
 	static constexpr int LEG_SHOT_POINTS = 10;
 	static constexpr int NUMBER_OF_BITS_PER_VM_TRY = 3;
 	static constexpr int BUFF_TURNS = 0;
-	static constexpr int BUFF_AMOUNT = 15;
-	static constexpr int DEF_STATUS_TURNS = 30;
-	static constexpr int ANTI_FIRE_TURNS = 10;
-	static constexpr int AGILITY_TURNS = 20;
-	static constexpr int PURIFY_TURNS = 10;
-	static constexpr int FEAR_TURNS = 6;
-	static constexpr int COLD_TURNS = 5;
+	static constexpr int MAX_BUFF_IDS = 18; // statusEffects supports buff IDs 0-17
 
 	// Buff data loaded from effects.yaml
 	int8_t buffMaxStacks[15] = {};
@@ -72,6 +66,7 @@ public:
 	int16_t buffApplySound[15] = {};   // -1 = none
 	int8_t buffPerTurnDamage[15] = {}; // 0 = none, >0 = flat damage per turn
 	bool buffPerTurnHealByAmount[15] = {}; // true = heals by buff amount per turn
+	int8_t buffDuration[MAX_BUFF_IDS] = {}; // default duration in turns, loaded from effects.yaml
 	int buffNoAmountMask = 0;
 	int buffAmtNotDrawnMask = 0;
 	int buffWarningTime = 0;

@@ -76,8 +76,6 @@ public:
 	static constexpr int MONSTER_FIELD_ATTACK1 = 0;
 	static constexpr int MONSTER_FIELD_ATTACK2 = 1;
 	static constexpr int MONSTER_FIELD_CHANCE = 2;
-	static constexpr int MAX_WRAITH_DRAIN = 45;
-	static constexpr int MAP_03_BOOST = 9;
 	static constexpr int PUNCH_PREP = 1;
 	static constexpr int PUNCH_RIGHTHAND = 2;
 	static constexpr int PUNCH_LEFTHAND = 3;
