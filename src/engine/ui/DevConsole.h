@@ -33,9 +33,18 @@ private:
 	bool visible = false;
 	bool showDemo = false;
 
+	// Frame time history for graph
+	static constexpr int FRAME_HISTORY_SIZE = 120;
+	float frameTimeHistory[FRAME_HISTORY_SIZE] = {};
+	int frameTimeOffset = 0;
+
 	// Sub-windows
 	void drawEntityInspector();
 	void drawScriptState();
 	void drawGameState();
 	void drawPerformance();
+	void drawRenderStats();
+
+	// Helpers
+	static const char* stateName(int state);
 };

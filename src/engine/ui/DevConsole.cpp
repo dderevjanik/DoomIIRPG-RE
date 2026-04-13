@@ -16,6 +16,8 @@
 #include "Player.h"
 #include "Combat.h"
 #include "Render.h"
+#include "TinyGL.h"
+#include "Sound.h"
 #include "Hud.h"
 
 DevConsole::DevConsole() = default;
@@ -95,23 +97,29 @@ void DevConsole::render() {
 	auto* container = CAppContainer::getInstance();
 	if (!container || !container->app) return;
 
+	int canvasState = container->app->canvas ? container->app->canvas->state : -1;
+
 	// Main menu bar
 	if (ImGui::BeginMainMenuBar()) {
 		if (ImGui::BeginMenu("View")) {
-			ImGui::MenuItem("Game State", nullptr, &showDemo);
+			ImGui::MenuItem("ImGui Demo", nullptr, &showDemo);
 			ImGui::EndMenu();
 		}
 		ImGui::Separator();
-		ImGui::Text("State: %d", container->app->canvas->state);
+		ImGui::Text("%s", stateName(canvasState));
 		ImGui::Separator();
-		ImGui::Text("F12 to close");
+		ImGuiIO& io = ImGui::GetIO();
+		ImGui::Text("%.0f FPS", io.Framerate);
+		ImGui::Separator();
+		ImGui::TextDisabled("F12 to close");
 		ImGui::EndMainMenuBar();
 	}
 
+	drawPerformance();
+	drawRenderStats();
 	drawGameState();
 	drawEntityInspector();
 	drawScriptState();
-	drawPerformance();
 
 	if (showDemo) {
 		ImGui::ShowDemoWindow(&showDemo);
@@ -121,11 +129,115 @@ void DevConsole::render() {
 	ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
 }
 
+void DevConsole::drawPerformance() {
+	auto* app = CAppContainer::getInstance()->app;
+	if (!app) return;
+
+	ImGuiIO& io = ImGui::GetIO();
+
+	// Update frame time history
+	float frameMs = 1000.0f / (io.Framerate > 0 ? io.Framerate : 1.0f);
+	frameTimeHistory[frameTimeOffset] = frameMs;
+	frameTimeOffset = (frameTimeOffset + 1) % FRAME_HISTORY_SIZE;
+
+	ImGui::SetNextWindowSize(ImVec2(340, 220), ImGuiCond_FirstUseEver);
+	if (!ImGui::Begin("Performance")) {
+		ImGui::End();
+		return;
+	}
+
+	// FPS and frame time
+	ImGui::Text("FPS: %.1f  (%.2f ms/frame)", io.Framerate, frameMs);
+
+	// Frame time graph
+	float maxTime = 0;
+	for (int i = 0; i < FRAME_HISTORY_SIZE; i++)
+		if (frameTimeHistory[i] > maxTime) maxTime = frameTimeHistory[i];
+	if (maxTime < 16.7f) maxTime = 16.7f; // minimum scale = 60fps line
+
+	char overlay[32];
+	snprintf(overlay, sizeof(overlay), "max %.1f ms", maxTime);
+	ImGui::PlotLines("##frametime", frameTimeHistory, FRAME_HISTORY_SIZE, frameTimeOffset,
+	                  overlay, 0.0f, maxTime * 1.2f, ImVec2(0, 60));
+
+	// Render subsystem timing
+	Render* render = app->render.get();
+	if (render && ImGui::CollapsingHeader("Frame Breakdown")) {
+		ImGui::Text("Frame:   %3d ms", render->frameTime);
+		ImGui::Text("BSP:     %3d ms", render->bspTime);
+		ImGui::Text("Sprites: %3d ms", render->spriteTime);
+		ImGui::Text("Lines:   %3d ms", render->lineTime);
+	}
+
+	// Memory
+	if (ImGui::CollapsingHeader("Memory")) {
+		ImGui::Text("Startup:  %d KB", app->startupMemory / 1024);
+		ImGui::Text("Images:   %d KB", app->imageMemory / 1024);
+		ImGui::Text("Peak:     %d KB", app->peakMemoryUsage / 1024);
+		if (render) {
+			ImGui::Text("Map:      %d KB", render->mapMemoryUsage / 1024);
+			ImGui::Text("Texels:   %d KB", render->texelMemoryUsage / 1024);
+			ImGui::Text("Palettes: %d KB", render->paletteMemoryUsage / 1024);
+		}
+	}
+
+	ImGui::End();
+}
+
+void DevConsole::drawRenderStats() {
+	auto* app = CAppContainer::getInstance()->app;
+	if (!app) return;
+
+	Render* render = app->render.get();
+	TinyGL* tinyGL = app->tinyGL.get();
+	if (!render) return;
+
+	ImGui::SetNextWindowSize(ImVec2(280, 240), ImGuiCond_FirstUseEver);
+	if (!ImGui::Begin("Render Stats")) {
+		ImGui::End();
+		return;
+	}
+
+	if (ImGui::CollapsingHeader("Geometry", ImGuiTreeNodeFlags_DefaultOpen)) {
+		ImGui::Text("BSP Nodes:  %d", render->nodeCount);
+		ImGui::Text("Sprites:    %d rendered / %d total", render->spriteRasterCount, render->spriteCount);
+		ImGui::Text("Lines:      %d rendered / %d total", render->lineRasterCount, render->lineCount);
+		if (tinyGL) {
+			ImGui::Text("Quads:      %d total (%d clipped, %d culled)",
+				tinyGL->c_totalQuad, tinyGL->c_clippedQuad, tinyGL->c_backFacedPolys);
+			ImGui::Text("Drawn:      %d polys, %d span px", tinyGL->countDrawn, tinyGL->spanPixels);
+		}
+	}
+
+	if (ImGui::CollapsingHeader("Sprites")) {
+		ImGui::Text("Map sprites:  %d", render->numMapSprites);
+		ImGui::Text("Visible:      %d", render->viewSprites);
+		ImGui::Text("Normal:       %d", render->numNormalSprites);
+		ImGui::Text("Z-sorted:     %d", render->numZSprites);
+	}
+
+	if (ImGui::CollapsingHeader("Audio")) {
+		Sound* sound = app->sound.get();
+		if (sound) {
+			int active = 0;
+			for (int i = 0; i < 10; i++) {
+				if (sound->channel[i].sourceId != 0) active++;
+			}
+			ImGui::Text("Channels: %d / 10 active", active);
+			ImGui::Text("Sounds: %s  Music: %s",
+				sound->allowSounds ? "ON" : "off",
+				sound->allowMusics ? "ON" : "off");
+		}
+	}
+
+	ImGui::End();
+}
+
 void DevConsole::drawGameState() {
 	auto* app = CAppContainer::getInstance()->app;
 	if (!app) return;
 
-	ImGui::SetNextWindowSize(ImVec2(320, 280), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(320, 300), ImGuiCond_FirstUseEver);
 	if (!ImGui::Begin("Game State")) {
 		ImGui::End();
 		return;
@@ -135,17 +247,9 @@ void DevConsole::drawGameState() {
 		Player* player = app->player.get();
 		if (player && player->ce) {
 			CombatEntity* ce = player->ce;
-			int hp = ce->getStat(0);     // current health
-			int maxHp = ce->getStat(1);  // max health
-			int armor = ce->getStat(2);
-			int def = ce->getStat(3);
-			int str = ce->getStat(4);
-			int acc = ce->getStat(5);
-			int agi = ce->getStat(6);
-
-			ImGui::Text("HP: %d / %d", hp, maxHp);
-			ImGui::Text("Armor: %d  Def: %d  Str: %d", armor, def, str);
-			ImGui::Text("Acc: %d  Agi: %d", acc, agi);
+			ImGui::Text("HP: %d / %d", ce->getStat(0), ce->getStat(1));
+			ImGui::Text("Armor: %d  Def: %d  Str: %d", ce->getStat(2), ce->getStat(3), ce->getStat(4));
+			ImGui::Text("Acc: %d  Agi: %d", ce->getStat(5), ce->getStat(6));
 			ImGui::Text("Level: %d  XP: %d / %d", player->level, player->currentXP, player->nextLevelXP);
 			ImGui::Text("Weapons: 0x%X  Gold: %d", player->weapons, player->goldCopy);
 			ImGui::Text("Moves: %d  Deaths: %d", player->totalMoves, player->totalDeaths);
@@ -155,12 +259,15 @@ void DevConsole::drawGameState() {
 		}
 	}
 
-	if (ImGui::CollapsingHeader("Map")) {
+	if (ImGui::CollapsingHeader("World", ImGuiTreeNodeFlags_DefaultOpen)) {
 		Game* game = app->game.get();
 		if (game) {
-			ImGui::Text("Entities: %d", game->numEntities);
-			ImGui::Text("Monsters: %d (active list)", game->numMonsters);
-			ImGui::Text("Secrets: %d / %d", game->mapSecretsFound, game->totalSecrets);
+			ImGui::Text("Entities:  %d / %d", game->numEntities, CAppContainer::getInstance()->gameConfig.maxEntities);
+			ImGui::Text("Monsters:  %d  AI: %d  Loot: %d", game->numMonsters, game->numAIComponents, game->numLootComponents);
+			ImGui::Text("Secrets:   %d / %d", game->mapSecretsFound, game->totalSecrets);
+			ImGui::Text("Sprites:   %d active, %d lerp", game->activeSprites, game->numLerpSprites);
+			ImGui::Text("Scripts:   %d threads", game->numScriptThreads);
+			ImGui::Text("Effects:   %d propagators, %d animating", game->activePropogators, game->animatingEffects);
 		}
 	}
 
@@ -181,6 +288,8 @@ void DevConsole::drawEntityInspector() {
 	}
 
 	static int selectedEntity = 0;
+	if (selectedEntity >= game->numEntities) selectedEntity = game->numEntities - 1;
+	if (selectedEntity < 0) selectedEntity = 0;
 	ImGui::SliderInt("Entity #", &selectedEntity, 0, game->numEntities - 1);
 
 	Entity& ent = game->entities[selectedEntity];
@@ -189,26 +298,30 @@ void DevConsole::drawEntityInspector() {
 	if (def) {
 		ImGui::Text("Tile: %d  Type: %d  SubType: %d  Parm: %d",
 			def->tileIndex, def->eType, def->eSubType, def->parm);
-		ImGui::Text("RenderFlags: 0x%X", def->renderFlags);
-		ImGui::Text("MonsterIdx: %d", def->monsterIdx);
+		ImGui::Text("RenderFlags: 0x%X  MonsterIdx: %d", def->renderFlags, def->monsterIdx);
 	} else {
 		ImGui::TextDisabled("(no EntityDef)");
 	}
 
 	ImGui::Separator();
-	ImGui::Text("Pos: [%d, %d]", ent.pos[0], ent.pos[1]);
+	ImGui::Text("Pos: [%d, %d]  Link: %d", ent.pos[0], ent.pos[1], ent.linkIndex);
 	ImGui::Text("Info: 0x%X  Param: %d", ent.info, ent.param);
-	ImGui::Text("MonsterFlags: 0x%X  Effects: 0x%X", ent.monsterFlags, ent.monsterEffects);
+	ImGui::Text("Flags: 0x%X  Effects: 0x%X", ent.monsterFlags, ent.monsterEffects);
 
 	if (ent.combat) {
 		ImGui::Separator();
 		ImGui::Text("Combat - HP: %d/%d  Weapon: %d",
 			ent.combat->getStat(0), ent.combat->getStat(1), ent.combat->weapon);
+		ImGui::Text("Combat - Def: %d  Str: %d  Acc: %d  Agi: %d",
+			ent.combat->getStat(3), ent.combat->getStat(4), ent.combat->getStat(5), ent.combat->getStat(6));
 	}
 	if (ent.ai) {
-		ImGui::Text("AI - GoalType: %d  GoalTurns: %d",
-			ent.ai->goalType, ent.ai->goalTurns);
-		ImGui::Text("AI - Goal: [%d, %d]", ent.ai->goalX, ent.ai->goalY);
+		ImGui::Text("AI - Goal: type=%d turns=%d  pos=[%d,%d]",
+			ent.ai->goalType, ent.ai->goalTurns, ent.ai->goalX, ent.ai->goalY);
+	}
+	if (ent.loot) {
+		ImGui::Text("Loot: [0x%X, 0x%X, 0x%X]",
+			ent.loot->lootSet[0], ent.loot->lootSet[1], ent.loot->lootSet[2]);
 	}
 
 	ImGui::End();
@@ -228,7 +341,6 @@ void DevConsole::drawScriptState() {
 	}
 
 	if (ImGui::CollapsingHeader("State Variables", ImGuiTreeNodeFlags_DefaultOpen)) {
-		// Show non-zero state vars (compact view)
 		bool anyNonZero = false;
 		for (int i = 0; i < 128; i++) {
 			if (game->scriptStateVars[i] != 0) {
@@ -255,15 +367,31 @@ void DevConsole::drawScriptState() {
 	ImGui::End();
 }
 
-void DevConsole::drawPerformance() {
-	ImGui::SetNextWindowSize(ImVec2(250, 100), ImGuiCond_FirstUseEver);
-	if (!ImGui::Begin("Performance")) {
-		ImGui::End();
-		return;
+const char* DevConsole::stateName(int state) {
+	switch (state) {
+		case 1:  return "Menu";
+		case 2:  return "Intro Movie";
+		case 3:  return "Playing";
+		case 4:  return "Inter Camera";
+		case 5:  return "Combat";
+		case 6:  return "Automap";
+		case 7:  return "Loading";
+		case 8:  return "Dialog";
+		case 9:  return "Intro";
+		case 10: return "Benchmark";
+		case 12: return "Minigame";
+		case 13: return "Dying";
+		case 14: return "Epilogue";
+		case 15: return "Credits";
+		case 16: return "Saving";
+		case 17: return "Error";
+		case 18: return "Camera";
+		case 21: return "Travel Map";
+		case 22: return "Char Select";
+		case 23: return "Looting";
+		case 24: return "Treadmill";
+		case 25: return "Bot Dying";
+		case 26: return "Logo";
+		default: return "Unknown";
 	}
-
-	ImGuiIO& io = ImGui::GetIO();
-	ImGui::Text("FPS: %.1f (%.3f ms/frame)", io.Framerate, 1000.0f / io.Framerate);
-
-	ImGui::End();
 }
