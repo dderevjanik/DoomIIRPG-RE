@@ -498,7 +498,7 @@ public:
 	void loadMap(int loadMapID, bool b, bool tm_NewGame);
 	void loadPrologueText();
 	void loadEpilogueText();
-	void setupCharacterSelection();
+	// setupCharacterSelection moved to CharacterSelectionState
 	void disposeIntro();
 	void disposeEpilogue();
 	void drawScroll(Graphics* graphics, int n, int n2, int n3, int n4);
@@ -537,10 +537,8 @@ public:
 	void drawPlayingSoftKeys();
 	void changeStoryPage(int i);
 	void drawStory(Graphics* graphics);
-	int getCharacterConstantByOrder(int i);
-	void drawCharacterSelection(Graphics* graphics);
-	void drawCharacterSelectionAvatar(int i, int x, int y, Graphics* graphics);
-	void drawCharacterSelectionStats(int i, Text* text, int x, int y, Graphics* graphics);
+	// getCharacterConstantByOrder moved to CharacterSelectionState
+	// drawCharacterSelection, drawCharacterSelectionAvatar, drawCharacterSelectionStats moved to CharacterSelectionState
 	void dequeueHelpDialog();
 	void dequeueHelpDialog(bool b);
 	void enqueueHelpDialog(short n);
@@ -567,7 +565,7 @@ public:
 	void zoomOut();
 	bool handleZoomEvents(int key, int action);
 	bool handleZoomEvents(int key, int action, bool b);
-	void handleCharacterSelectionInput(int key, int action);
+	// handleCharacterSelectionInput moved to CharacterSelectionState
 	void handleStoryInput(int key, int action);
 	// lootingState, handleLootingEvents, drawLootingMenu moved to LootingState
 	void poolLoot(int* array);
@@ -620,7 +618,7 @@ public:
 
 	
 	
-	void disposeCharacterSelection();
+	// disposeCharacterSelection moved to CharacterSelectionState
 
 	bool pitchIsControlled(int n, int n2, int n3);
 	int touchToKey_Play(int pressX, int pressY);
