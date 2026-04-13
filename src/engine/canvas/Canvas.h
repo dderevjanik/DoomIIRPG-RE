@@ -570,9 +570,7 @@ public:
 	// lootingState, handleLootingEvents, drawLootingMenu moved to LootingState
 	void poolLoot(int* array);
 	// giveLootPool moved to LootingState
-	bool handleTreadmillEvents(int action);
-	void treadmillState();
-	bool treadmillFall();
+	// handleTreadmillEvents, treadmillState, treadmillFall moved to TreadmillState
 	void drawTreadmillReadout(Graphics* graphics);
 	void drawTargetPracticeScore(Graphics* graphics);
 	// drawTravelMap and all travel map helpers moved to TravelMapState
