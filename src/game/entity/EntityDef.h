@@ -161,6 +161,24 @@ class EntityDef {
 		int8_t slapHeadFrame = 15;       // Slap melee head base (alternates +0/+1)
 	};
 
+	// Destruction effects (for ET_ATTACK_INTERACTIVE entities: barricades, crates, furniture, pickups)
+	struct DestroyData {
+		int8_t particleId = -1;         // particle effect on destroy (-1 = none, 1 = small, 2 = wood)
+		int32_t particleColor = -1;     // particle color override (-1 = default)
+		bool unlinkOnly = false;        // true = unlink (barricade), false = remove from world
+		int8_t destroyFrame = -1;       // sprite frame to set on destroy (-1 = don't change, 1 = broken)
+		bool convertToWaterSpout = false; // convert entity to water spout on destroy (pickup)
+	};
+
+	// Environmental damage (for ET_ENV_DAMAGE entities: fire, spikes)
+	struct EnvDamageData {
+		int16_t damage = 0;             // damage amount (0 = no env damage)
+		int8_t statusEffectId = -1;     // status effect to apply (-1 = none, 13 = burn)
+		int8_t statusDuration = 0;      // status effect duration in turns
+		int8_t statusPower = 0;         // status effect power/amount
+		int8_t resistBuffIdx = -1;      // buff index that grants resistance (-1 = none, 9 = antifire)
+	};
+
 	int16_t tileIndex = 0;
 	int16_t name = 0;
 	int16_t longName = 0;
@@ -177,6 +195,8 @@ class EntityDef {
 	FloaterData floater;        // Floater rendering offsets
 	SpecialBossData specialBoss; // Special boss rendering offsets
 	SpriteAnimData spriteAnim;  // Sprite anim overrides (Cyberdemon/ChainsawGoblin)
+	DestroyData destroy;        // Destruction effects (ET_ATTACK_INTERACTIVE)
+	EnvDamageData envDamage;    // Environmental damage (ET_ENV_DAMAGE)
 
 	// Constructor
 	EntityDef() = default;

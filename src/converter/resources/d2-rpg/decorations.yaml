@@ -307,15 +307,17 @@ entities:
   attack_interactive_0:
     sprite: obj_table
     type: attack_interactive
-    subtype: 0
+    subtype: 0  # INTERACT_FURNITURE
     parm: 1
     text: {name: 128, long_name: 159, description: 159}
+    destroy: {particle_id: 2, particle_color: -8421505}
   attack_interactive_3:
     sprite: toilet
     type: attack_interactive
-    subtype: 3
+    subtype: 3  # INTERACT_PICKUP
     parm: 3
     text: {name: 131, long_name: 131, description: 144}
+    destroy: {particle_id: 1, convert_to_water_spout: true}
   decor_0:
     sprite: ladder
     type: decor
@@ -325,15 +327,17 @@ entities:
   attack_interactive_3_2:
     sprite: sink
     type: attack_interactive
-    subtype: 3
+    subtype: 3  # INTERACT_PICKUP
     parm: 3
     text: {name: 132, long_name: 132, description: 144}
+    destroy: {particle_id: 1, convert_to_water_spout: true}
   env_damage_1:
     sprite: obj_fire
     type: env_damage
-    subtype: 1
+    subtype: 1  # ENV_DAMAGE_FIRE
     parm: 0
     text: {name: 130, long_name: 159, description: 159}
+    env_damage: {damage: 20, status_effect_id: 13, status_duration: 5, status_power: 3, resist_buff_idx: 9}
   decor_noclip_8:
     sprite: treadmill_monitor
     type: decor_noclip
@@ -355,9 +359,10 @@ entities:
   attack_interactive_0_2:
     sprite: obj_chair
     type: attack_interactive
-    subtype: 0
+    subtype: 0  # INTERACT_FURNITURE
     parm: 1
     text: {name: 134, long_name: 159, description: 159}
+    destroy: {particle_id: 2, particle_color: -8421505}
   decor_0_3:
     sprite: obj_torchiere
     type: decor
@@ -385,9 +390,10 @@ entities:
   env_damage_0:
     sprite: dummy_pain
     type: env_damage
-    subtype: 0
+    subtype: 0  # ENV_DAMAGE_SPIKES
     parm: 0
     text: {name: 27, long_name: 27, description: 159}
+    env_damage: {damage: 20}
   decor_noclip_0:
     sprite: attack_dummy
     type: decor_noclip
@@ -427,9 +433,10 @@ entities:
   attack_interactive_2:
     sprite: obj_crate
     type: attack_interactive
-    subtype: 2
+    subtype: 2  # INTERACT_CRATE
     parm: 0
     text: {name: 136, long_name: 159, description: 159}
+    destroy: {particle_id: 2, particle_color: -8421505}
   decor_0_7:
     sprite: vending_machine
     type: decor
@@ -469,9 +476,10 @@ entities:
   attack_interactive_1:
     sprite: glass
     type: attack_interactive
-    subtype: 1
+    subtype: 1  # INTERACT_BARRICADE
     parm: 2
     text: {name: 137, long_name: 159, description: 159}
+    destroy: {particle_id: 2, destroy_frame: 1, unlink_only: true}
   decor_0_10:
     sprite: terminal_target
     type: decor

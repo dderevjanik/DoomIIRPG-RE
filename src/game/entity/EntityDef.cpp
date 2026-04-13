@@ -218,6 +218,26 @@ std::expected<void, std::string> EntityDefManager::parse(EntityDefManager* mgr, 
 
 		#undef R_INT
 		#undef R_BOOL
+
+		// Destruction effects (for ET_ATTACK_INTERACTIVE entities)
+		DataNode destroy = e["destroy"];
+		if (destroy) {
+			list[i].destroy.particleId = (int8_t)destroy["particle_id"].asInt(-1);
+			list[i].destroy.particleColor = (int32_t)destroy["particle_color"].asInt(-1);
+			list[i].destroy.unlinkOnly = destroy["unlink_only"].asBool(false);
+			list[i].destroy.destroyFrame = (int8_t)destroy["destroy_frame"].asInt(-1);
+			list[i].destroy.convertToWaterSpout = destroy["convert_to_water_spout"].asBool(false);
+		}
+
+		// Environmental damage (for ET_ENV_DAMAGE entities)
+		DataNode envDmg = e["env_damage"];
+		if (envDmg) {
+			list[i].envDamage.damage = (int16_t)envDmg["damage"].asInt(0);
+			list[i].envDamage.statusEffectId = (int8_t)envDmg["status_effect_id"].asInt(-1);
+			list[i].envDamage.statusDuration = (int8_t)envDmg["status_duration"].asInt(0);
+			list[i].envDamage.statusPower = (int8_t)envDmg["status_power"].asInt(0);
+			list[i].envDamage.resistBuffIdx = (int8_t)envDmg["resist_buff_idx"].asInt(-1);
+		}
 	}
 
 	mgr->numMonsterDefs = monsterCount;

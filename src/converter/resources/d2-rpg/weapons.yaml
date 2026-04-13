@@ -473,6 +473,8 @@ weapons:
     projectile: melee
     shots: 1
     shot_hold: 20
+    behavior:
+      requires_los_path: true
   m_flesh_throw:
     index: 19
     damage:

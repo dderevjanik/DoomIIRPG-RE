@@ -500,6 +500,9 @@ entities:
       body_parts: {idle_torso_z: -36, idle_head_z: 109, walk_torso_z: -36, walk_head_z: 109, attack_torso_z_f0: 288, flip_torso_walk: true,
         no_head_on_attack: true}
     combat:
+      behavior:
+        can_resurrect: true
+        diagonal_attack: true
       stats: {health: 30, armor: 0, defense: 35, strength: 44, accuracy: 95, agility: 15}
       attacks: {attack1: m_fire, attack2: assault_rifle, chance: 0}
       weakness: {holy_water_pistol: 200, rocket_launcher: 150}
@@ -516,6 +519,9 @@ entities:
       body_parts: {idle_torso_z: -36, idle_head_z: 109, walk_torso_z: -36, walk_head_z: 109, attack_torso_z_f0: 288, flip_torso_walk: true,
         no_head_on_attack: true}
     combat:
+      behavior:
+        can_resurrect: true
+        diagonal_attack: true
       stats: {health: 35, armor: 0, defense: 35, strength: 50, accuracy: 95, agility: 20}
       attacks: {attack1: m_fire, attack2: assault_rifle, chance: 0}
       weakness: {holy_water_pistol: 200, rocket_launcher: 150}
@@ -532,6 +538,9 @@ entities:
       body_parts: {idle_torso_z: -36, idle_head_z: 109, walk_torso_z: -36, walk_head_z: 109, attack_torso_z_f0: 288, flip_torso_walk: true,
         no_head_on_attack: true}
     combat:
+      behavior:
+        can_resurrect: true
+        diagonal_attack: true
       stats: {health: 40, armor: 0, defense: 35, strength: 56, accuracy: 95, agility: 25}
       attacks: {attack1: m_fire, attack2: assault_rifle, chance: 0}
       weakness: {holy_water_pistol: 200, rocket_launcher: 150}
@@ -566,6 +575,10 @@ entities:
       - special_boss
       special_boss: {type: multipart, torso_z: 384, idle_sprite_idx: 3, attack_sprite_idx: 8, pain_sprite_idx: 12}
     combat:
+      behavior:
+        is_boss: true
+        orthogonal_attack_only: true
+        movement_time_ms: 500
       stats: {health: 60, armor: 0, defense: 30, strength: 38, accuracy: 97, agility: 5}
       attacks: {attack1: m_acid_spit, attack2: assault_rifle, chance: 0}
       weakness: {holy_water_pistol: 200}
@@ -582,6 +595,14 @@ entities:
       - special_boss
       special_boss: {type: ethereal, render_mode_override: 3, pain_render_mode: 5}
     combat:
+      behavior:
+        is_boss: true
+        is_vios: true
+        fear_immune: true
+        can_teleport: true
+        teleport_range: 4
+        teleport_cooldown_min: 3
+        teleport_cooldown_max: 5
       stats: {health: 80, armor: 0, defense: 15, strength: 38, accuracy: 100, agility: 65}
       attacks: {attack1: m_vios_plasma, attack2: assault_rifle, chance: 0}
       weakness: {}
@@ -598,6 +619,16 @@ entities:
       - special_boss
       special_boss: {type: ethereal, render_mode_override: 3, pain_render_mode: 5}
     combat:
+      behavior:
+        is_boss: true
+        is_vios: true
+        fear_immune: true
+        can_teleport: true
+        diagonal_attack: true
+        diagonal_attack_field: 1
+        teleport_range: 4
+        teleport_cooldown_min: 3
+        teleport_cooldown_max: 5
       stats: {health: 80, armor: 0, defense: 15, strength: 50, accuracy: 100, agility: 65}
       attacks: {attack1: m_vios_plasma, attack2: m_vios_lightning, chance: 152}
       weakness: {}
@@ -614,6 +645,16 @@ entities:
       - special_boss
       special_boss: {type: ethereal, render_mode_override: 3, pain_render_mode: 5}
     combat:
+      behavior:
+        is_boss: true
+        is_vios: true
+        fear_immune: true
+        can_teleport: true
+        diagonal_attack: true
+        diagonal_attack_field: 1
+        teleport_range: 4
+        teleport_cooldown_min: 3
+        teleport_cooldown_max: 5
       stats: {health: 80, armor: 0, defense: 15, strength: 62, accuracy: 100, agility: 65}
       attacks: {attack1: m_vios_plasma, attack2: m_vios_lightning, chance: 152}
       weakness: {}
@@ -630,6 +671,16 @@ entities:
       - special_boss
       special_boss: {type: ethereal, render_mode_override: 3, pain_render_mode: 5}
     combat:
+      behavior:
+        is_boss: true
+        is_vios: true
+        fear_immune: true
+        can_teleport: true
+        diagonal_attack: true
+        diagonal_attack_field: 1
+        teleport_range: 4
+        teleport_cooldown_min: 3
+        teleport_cooldown_max: 5
       stats: {health: 80, armor: 0, defense: 15, strength: 62, accuracy: 100, agility: 65}
       attacks: {attack1: m_vios_plasma, attack2: m_vios_lightning, chance: 152}
       weakness: {}
@@ -646,6 +697,16 @@ entities:
       - special_boss
       special_boss: {type: ethereal, render_mode_override: 3, pain_render_mode: 5}
     combat:
+      behavior:
+        is_boss: true
+        is_vios: true
+        fear_immune: true
+        can_teleport: true
+        diagonal_attack: true
+        diagonal_attack_field: 1
+        teleport_range: 4
+        teleport_cooldown_min: 3
+        teleport_cooldown_max: 5
       stats: {health: 80, armor: 0, defense: 15, strength: 62, accuracy: 100, agility: 65}
       attacks: {attack1: m_vios_plasma, attack2: m_vios_lightning, chance: 152}
       weakness: {}

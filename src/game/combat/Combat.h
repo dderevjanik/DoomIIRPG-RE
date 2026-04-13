@@ -43,6 +43,16 @@ struct MonsterDef {
 	int goalMaxTurns = 16;          // max turns before a goal expires
 	int resurrectSearchRadius = 0x19000; // world-unit radius to search for raise targets (default ~1600 tiles)
 	bool diagonalAttack = false;    // can attack diagonally (default false, archvile-like)
+	int8_t diagonalAttackField = 0; // which attack to use for diagonal (0=attack1, 1=attack2)
+	bool orthogonalAttackOnly = false; // only attack along cardinal axes, fail on diagonal (boss pinky)
+
+	// Teleport behavior (boss vios-like): teleport to random nearby tile before attacking
+	bool canTeleport = false;           // enable teleport mechanic
+	int teleportRange = 4;              // max tile range for teleport destination (±N tiles)
+	int teleportMaxAttempts = 30;       // max random positions to try
+	int teleportCooldownMin = 3;        // min turns between teleports
+	int teleportCooldownMax = 5;        // max turns between teleports (randomized)
+	int teleportParticleId = 7;         // particle effect on teleport (-1 = none)
 
 	// Per-weapon weakness modifiers (indexed by weapon index, -1=immune, 0=normal, >0=left shift)
 	static constexpr int MAX_WEAKNESS_MODS = 16;
@@ -162,6 +172,7 @@ public:
 		bool requiresLineOfSight; // Weapon requires clear line of sight to target (melee weapons)
 		bool blockableByShield; // Attack is blocked when player has shield buff active (fireball, archvile fire)
 		bool outOfRangeStillFires; // Still fires when out of range (super shotgun, holy water — no early miss)
+		bool requiresLosPath;     // Requires unobstructed tile path to target (soul cube — fails if visited tiles block)
 		int onKillGrantKills;     // Every N kills with this weapon grants a stat bonus (0 = disabled)
 		int onKillGrantStrength;  // Strength bonus granted per on_kill_grant cycle
 	};

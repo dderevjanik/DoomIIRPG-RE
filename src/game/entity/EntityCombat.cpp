@@ -44,15 +44,18 @@ bool Entity::touched() {
     }
     else if (eType == Enums::ET_ENV_DAMAGE) {
         if (!app->player->isFamiliar) {
-            if (this->def->eSubType == Enums::ENV_DAMAGE_FIRE && app->player->buffs[9] == 0) {
-                app->player->painEvent(nullptr, false);
-                app->player->pain(20, this, true);
-                app->player->addStatusEffect(13, 5, 3);
-                app->player->translateStatusEffects();
-            }
-            else if (this->def->eSubType == Enums::ENV_DAMAGE_SPIKES) {
-                app->player->painEvent(nullptr, false);
-                app->player->pain(20, this, true);
+            const auto& ed = this->def->envDamage;
+            if (ed.damage > 0) {
+                // Check resistance buff if configured
+                bool resisted = (ed.resistBuffIdx >= 0 && app->player->buffs[ed.resistBuffIdx] > 0);
+                if (!resisted) {
+                    app->player->painEvent(nullptr, false);
+                    app->player->pain(ed.damage, this, true);
+                    if (ed.statusEffectId >= 0) {
+                        app->player->addStatusEffect(ed.statusEffectId, ed.statusDuration, ed.statusPower);
+                        app->player->translateStatusEffects();
+                    }
+                }
             }
         }
         return true;
@@ -282,22 +285,25 @@ bool Entity::pain(int n, Entity* entity) {
         }
     }
     else if (this->def->eType == Enums::ET_ATTACK_INTERACTIVE) {
-        uint8_t eSubType = this->def->eSubType;
-        if (eSubType == Enums::INTERACT_BARRICADE) {
-            app->render->setSpriteFrame(sprite, 0x01);
-            app->particleSystem->spawnParticles(2, -1, sprite);
+        const auto& dd = this->def->destroy;
+        // Spawn destruction particles if configured
+        if (dd.particleId >= 0) {
+            app->particleSystem->spawnParticles(dd.particleId, dd.particleColor, sprite);
+        }
+        // Set destruction sprite frame if configured
+        if (dd.destroyFrame >= 0) {
+            app->render->setSpriteFrame(sprite, dd.destroyFrame);
+        }
+        // Convert to water spout (pickup-like behavior)
+        if (dd.convertToWaterSpout) {
+            app->canvas->turnEntityIntoWaterSpout(this);
+            return b;
+        }
+        // Unlink-only (barricade-like) vs full removal
+        if (dd.unlinkOnly) {
             app->sound->playSound(Sounds::getResIDByName(SoundName::GLASS), 0, 3, false);
             app->game->unlinkEntity(this);
-        }
-        else {
-            if (eSubType == Enums::INTERACT_CRATE || eSubType == Enums::INTERACT_FURNITURE) {
-                app->particleSystem->spawnParticles(2, -8421505, sprite);
-            }
-            else if (eSubType == Enums::INTERACT_PICKUP) {
-                app->particleSystem->spawnParticles(1, -1, sprite);
-                app->canvas->turnEntityIntoWaterSpout(this);
-                return b;
-            }
+        } else {
             app->game->removeEntity(this);
             this->info |= 0x400000;
             app->render->setSpriteInfoFlag(sprite, 0x10000);
@@ -575,7 +581,7 @@ int Entity::aiWeaponForTarget(Entity* entity) {
     int a = viewX - app->render->getSpriteX(sprite);
     int a2 = viewY - app->render->getSpriteY(sprite);
     int8_t* weapons = app->combat->weapons;
-    if (this->def->eSubType == Enums::BOSS_PINKY) {
+    if (app->combat->monsterBehaviors[this->def->monsterIdx].orthogonalAttackOnly) {
         if (a != 0 && a2 != 0) {
             return -1;
         }
@@ -587,10 +593,14 @@ int Entity::aiWeaponForTarget(Entity* entity) {
         return -1;
     }
     else {
-        if (this->def->eSubType == Enums::BOSS_VIOS) {
+        const MonsterDef& mb = app->combat->monsterBehaviors[this->def->monsterIdx];
+        if (mb.canTeleport) {
             if (this->param <= 0) {
-                this->param = (int)app->nextInt() % 3 + 3;
-                int n = 30;
+                int cdRange = mb.teleportCooldownMax - mb.teleportCooldownMin;
+                this->param = (cdRange > 0) ? ((int)app->nextInt() % (cdRange + 1) + mb.teleportCooldownMin) : mb.teleportCooldownMin;
+                int tpRange = mb.teleportRange;
+                int tpDiam = tpRange * 2 + 1;
+                int n = mb.teleportMaxAttempts;
                 while (n-- > 0) {
                     short n2 = app->render->getSpriteX(sprite);
                     short n3 = app->render->getSpriteY(sprite);
@@ -598,15 +608,16 @@ int Entity::aiWeaponForTarget(Entity* entity) {
                     int n5 = 0;
 
                     while (n-- > 0 && n4 == 0 && n5 == 0){
-                        n4 = (int)app->nextInt() % 9 - 4;
-                        n5 = (int)app->nextInt() % 9 - 4;
+                        n4 = (int)app->nextInt() % tpDiam - tpRange;
+                        n5 = (int)app->nextInt() % tpDiam - tpRange;
                     }
 
                     int n6 = n2 + (n4 << 6);
                     int n7 = n3 + (n5 << 6);
                     app->game->trace(n2, n3, n6, n7, this, 15535, 2);
                     if (app->game->numTraceEntities == 0) {
-                        app->particleSystem->spawnParticles(7, -1, sprite);
+                        if (mb.teleportParticleId >= 0)
+                            app->particleSystem->spawnParticles(mb.teleportParticleId, -1, sprite);
                         app->sound->playSound(Sounds::getResIDByName(SoundName::TELEPORT), 0, 1, 0);
                         app->game->unlinkEntity(this);
                         app->render->setSpriteX(sprite, (short)n6);
@@ -614,7 +625,8 @@ int Entity::aiWeaponForTarget(Entity* entity) {
                         app->render->setSpriteZ(sprite, (short)(app->render->getHeight(n6, n7) + 32));
                         app->game->linkEntity(this, n6 >> 6, n7 >> 6);
                         app->render->relinkSprite(sprite);
-                        app->particleSystem->spawnParticles(7, -1, sprite);
+                        if (mb.teleportParticleId >= 0)
+                            app->particleSystem->spawnParticles(mb.teleportParticleId, -1, sprite);
                         break;
                     }
                 }
@@ -624,8 +636,8 @@ int Entity::aiWeaponForTarget(Entity* entity) {
             }
         }
         if (a != 0 && a2 != 0) {
-            if (app->combat->monsterBehaviors[this->def->monsterIdx].diagonalAttack || this->def->eSubType == Enums::MONSTER_ARCH_VILE || (this->def->eSubType == 15 && this->def->parm != 0)) {
-                int monsterField = app->combat->getMonsterField(this->def, (this->def->eSubType == Enums::BOSS_VIOS) ? 1 : 0);
+            if (app->combat->monsterBehaviors[this->def->monsterIdx].diagonalAttack) {
+                int monsterField = app->combat->getMonsterField(this->def, app->combat->monsterBehaviors[this->def->monsterIdx].diagonalAttackField);
                 int n8 = monsterField * 9;
                 int worldDistToTileDist = app->combat->WorldDistToTileDist(entity->distFrom(app->render->getSpriteX(sprite), app->render->getSpriteY(sprite)));
                 if (weapons[n8 + 2] <= worldDistToTileDist && weapons[n8 + 3] >= worldDistToTileDist) {
@@ -683,7 +695,9 @@ int Entity::aiWeaponForTarget(Entity* entity) {
                 }
             }
 
-            if (monsterField2 == 18 || monsterField3 == 18) {
+            bool atk1NeedsLos = (monsterField2 >= 0 && app->combat->getWeaponFlags(monsterField2).requiresLosPath);
+            bool atk2NeedsLos = (monsterField3 >= 0 && app->combat->getWeaponFlags(monsterField3).requiresLosPath);
+            if (atk1NeedsLos || atk2NeedsLos) {
                 bool b2 = true;
                 int n15 = app->render->getSpriteX(sprite) >> 6;
                 int n16 = app->render->getSpriteY(sprite) >> 6;
@@ -697,10 +711,10 @@ int Entity::aiWeaponForTarget(Entity* entity) {
                     n16 += n10;
                 } while (--worldDistToTileDist2 > 0);
 
-                if (monsterField2 == 18 && !b2) {
+                if (atk1NeedsLos && !b2) {
                     n12 = -1;
                 }
-                if (monsterField3 == 18 && !b2) {
+                if (atk2NeedsLos && !b2) {
                     n11 = -1;
                 }
             }

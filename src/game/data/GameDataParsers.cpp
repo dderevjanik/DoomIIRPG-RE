@@ -316,6 +316,7 @@ std::expected<void, std::string> parseWeapons(Applet* app, const DataNode& confi
 			f.requiresLineOfSight = beh["requires_line_of_sight"].asBool(false);
 			f.blockableByShield = beh["blockable_by_shield"].asBool(false);
 			f.outOfRangeStillFires = beh["out_of_range_still_fires"].asBool(false);
+			f.requiresLosPath = beh["requires_los_path"].asBool(false);
 		}
 
 		// On-kill stat grant (e.g. chainsaw: every 30 kills grants +2 strength)
@@ -1012,6 +1013,15 @@ bool parseMonsters(Applet* app, const DataNode& config) {
 			mb.goalMaxTurns = beh["goal_max_turns"].asInt(16);
 			mb.resurrectSearchRadius = beh["resurrect_search_radius"].asInt(0x19000);
 			mb.diagonalAttack = beh["diagonal_attack"].asBool(false);
+			mb.diagonalAttackField = (int8_t)beh["diagonal_attack_field"].asInt(0);
+			mb.orthogonalAttackOnly = beh["orthogonal_attack_only"].asBool(false);
+			// Teleport behavior
+			mb.canTeleport = beh["can_teleport"].asBool(false);
+			mb.teleportRange = beh["teleport_range"].asInt(4);
+			mb.teleportMaxAttempts = beh["teleport_max_attempts"].asInt(30);
+			mb.teleportCooldownMin = beh["teleport_cooldown_min"].asInt(3);
+			mb.teleportCooldownMax = beh["teleport_cooldown_max"].asInt(5);
+			mb.teleportParticleId = beh["teleport_particle_id"].asInt(7);
 			DataNode poison = beh["on_hit_poison_params"];
 			if (poison) {
 				mb.onHitPoisonId = poison["id"].asInt(13);
@@ -1318,6 +1328,15 @@ std::expected<void, std::string> parseMonsterCombatFromEntities(Applet* app, con
 			mb.goalMaxTurns = beh["goal_max_turns"].asInt(16);
 			mb.resurrectSearchRadius = beh["resurrect_search_radius"].asInt(0x19000);
 			mb.diagonalAttack = beh["diagonal_attack"].asBool(false);
+			mb.diagonalAttackField = (int8_t)beh["diagonal_attack_field"].asInt(0);
+			mb.orthogonalAttackOnly = beh["orthogonal_attack_only"].asBool(false);
+			// Teleport behavior
+			mb.canTeleport = beh["can_teleport"].asBool(false);
+			mb.teleportRange = beh["teleport_range"].asInt(4);
+			mb.teleportMaxAttempts = beh["teleport_max_attempts"].asInt(30);
+			mb.teleportCooldownMin = beh["teleport_cooldown_min"].asInt(3);
+			mb.teleportCooldownMax = beh["teleport_cooldown_max"].asInt(5);
+			mb.teleportParticleId = beh["teleport_particle_id"].asInt(7);
 			DataNode poison = beh["on_hit_poison_params"];
 			if (poison) {
 				mb.onHitPoisonId = poison["id"].asInt(13);
