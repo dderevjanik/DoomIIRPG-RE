@@ -32,7 +32,6 @@ bool EntityDefManager::startup() {
 std::expected<void, std::string> EntityDefManager::parse(EntityDefManager* mgr, const DataNode& config) {
 	EntityDef*& list = mgr->list;
 	int& numDefs = mgr->numDefs;
-	Applet* app = CAppContainer::getInstance()->app;
 
 	DataNode entities = config["entities"];
 	if (!entities || !entities.isMap() || entities.size() == 0) {

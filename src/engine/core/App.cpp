@@ -399,7 +399,7 @@ void Applet::endImageLoading() {}
 void Applet::loadTables() {
 	ResourceManager* rm = CAppContainer::getInstance()->resourceManager;
 	if (rm && this->gameModule) {
-		this->gameModule->registerLoaders(rm);
+		this->gameModule->registerLoaders(this, rm);
 		if (auto result = rm->loadAllDefinitions(); !result) {
 			this->Error("ResourceManager: failed to load definitions: %s", result.error().c_str());
 		}

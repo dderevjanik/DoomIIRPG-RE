@@ -60,7 +60,7 @@ public:
 	bool startup(Applet* app) override;
 	void loadConfig(Applet* app) override;
 	void shutdown(Applet* app) override;
-	void registerLoaders(class ResourceManager* rm) override;
+	void registerLoaders(Applet* app, class ResourceManager* rm) override;
 	void registerOpcodes(Applet* app) override;
 	void registerEventListeners(Applet* app) override;
 	const char* getName() const override { return "D2RPG"; }

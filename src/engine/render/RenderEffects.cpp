@@ -916,7 +916,7 @@ void DrawBitmap(short* buffer, int buffW, int buffH, int x, int y, int w, int h)
 }
 
 void Render::Render3dScene(void) {
-	short* backBuffer = CAppContainer::getInstance()->GetBackBuffer();
+	short* backBuffer = (short*)this->app->backBuffer->pBmp;
 
 	int cx, cy;
 	int w = this->sdlGL->vidWidth;

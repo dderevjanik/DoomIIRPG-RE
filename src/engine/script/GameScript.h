@@ -29,7 +29,7 @@ public:
 	GameScript();
 
 	bool loadFromFile(const char* path);
-	void injectForTick(int currentTick);
+	void injectForTick(class Applet* app, int currentTick);
 	bool isFinished(int currentTick) const;
 	int lastTick() const;
 	int commandCount() const { return (int)commands.size(); }

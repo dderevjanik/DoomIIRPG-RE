@@ -491,7 +491,7 @@ void MenuSystem::paint(Graphics* graphics) {
 		v64 = v62;
 		menuHelpMaxChars = v63->menuHelpMaxChars;
 		v63->menuHelpMaxChars = this->imgGameMenuTornPage->width / Applet::FONT_WIDTH[app->fontType];
-		this->items[this->selectedHelpIndex].WrapHelpText(v62);
+		this->items[this->selectedHelpIndex].WrapHelpText(app, v62);
 		app->canvas->menuHelpMaxChars = menuHelpMaxChars;
 		graphics->drawString(
 			v64,

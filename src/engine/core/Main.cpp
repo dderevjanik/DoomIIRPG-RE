@@ -596,7 +596,7 @@ int main(int argc, char* args[]) {
 			CAppContainer::getInstance()->headlessTimeMs += fixedTimestepMs;
 
 			if (hasScript) {
-				script.injectForTick(ticksRun);
+				script.injectForTick(CAppContainer::getInstance()->app, ticksRun);
 			}
 
 			CAppContainer::getInstance()->DoLoop(fixedTimestepMs);
@@ -634,7 +634,7 @@ int main(int argc, char* args[]) {
 				input.handleEvents();
 
 				if (hasScript) {
-					script.injectForTick(ticksRun);
+					script.injectForTick(CAppContainer::getInstance()->app, ticksRun);
 				}
 
 				UpTime = currentTimeMillis + 15;

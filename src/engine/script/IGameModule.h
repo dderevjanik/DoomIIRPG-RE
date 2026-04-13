@@ -46,7 +46,7 @@ public:
 	// --- Extension points ---
 	// Register resource loaders with the ResourceManager. Called after
 	// ResourceManager is initialized, before loadAllDefinitions().
-	virtual void registerLoaders(class ResourceManager* rm) {}
+	virtual void registerLoaders(Applet* app, class ResourceManager* rm) {}
 
 	// Register custom script opcodes. Called after OpcodeRegistry is available.
 	virtual void registerOpcodes(Applet* app) {}

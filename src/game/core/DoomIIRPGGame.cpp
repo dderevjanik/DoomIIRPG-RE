@@ -89,8 +89,7 @@ void DoomIIRPGGame::shutdown(Applet* app) {
 	LOG_INFO("[game] DoomIIRPGGame::shutdown\n");
 }
 
-void DoomIIRPGGame::registerLoaders(ResourceManager* rm) {
-	Applet* app = CAppContainer::getInstance()->app;
+void DoomIIRPGGame::registerLoaders(Applet* app, ResourceManager* rm) {
 
 	// tables.yaml — game data tables (must be first)
 	rm->registerParser("tables", "tables.yaml",
@@ -111,7 +110,7 @@ void DoomIIRPGGame::registerLoaders(ResourceManager* rm) {
 
 	// Entity definition files — load all files listed in game.yaml entities:, merge, then parse
 	rm->registerLoader("entity_names", [app](ResourceManager* rm) -> ResourceManager::ParseResult {
-		const auto& files = CAppContainer::getInstance()->gameConfig.entityFiles;
+		const auto& files = app->canvas->gameConfig->entityFiles;
 		DataNode merged;
 		for (const auto& path : files) {
 			DataNode data = rm->loadData(path.c_str());
@@ -169,7 +168,7 @@ void DoomIIRPGGame::registerLoaders(ResourceManager* rm) {
 
 	// Monster combat data from entity files (after weapons and sounds)
 	rm->registerLoader("monster_combat", [app](ResourceManager* rm) -> ResourceManager::ParseResult {
-		const auto& files = CAppContainer::getInstance()->gameConfig.entityFiles;
+		const auto& files = app->canvas->gameConfig->entityFiles;
 		DataNode merged;
 		for (const auto& path : files) {
 			DataNode data = rm->loadData(path.c_str());

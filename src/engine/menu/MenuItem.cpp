@@ -26,9 +26,7 @@ void MenuItem::Set(int textField, int textField2, int flags, int action, int par
 	this->action = action;
 }
 
-void MenuItem::WrapHelpText(Text* text) {
-	Applet* app = CAppContainer::getInstance()->app;
-
+void MenuItem::WrapHelpText(Applet* app, Text* text) {
 	app->localization->composeTextField(this->helpField, text);
 	text->wrapText(app->canvas->menuHelpMaxChars, 0xc, '\n');
 }

@@ -80,13 +80,13 @@ bool GameScript::loadFromFile(const char* path) {
 	return true;
 }
 
-void GameScript::injectForTick(int currentTick) {
-	Canvas* canvas = CAppContainer::getInstance()->app->canvas.get();
+void GameScript::injectForTick(Applet* app, int currentTick) {
+	Canvas* canvas = app->canvas.get();
 	while (nextIndex < commands.size() && commands[nextIndex].tick <= currentTick) {
 		int avk = commands[nextIndex].avkAction;
 		if (canvas->numEvents < Canvas::MAX_EVENTS) {
 			canvas->events[canvas->numEvents++] = avk;
-			canvas->keyPressedTime = CAppContainer::getInstance()->app->upTimeMs;
+			canvas->keyPressedTime = app->upTimeMs;
 		}
 		nextIndex++;
 	}

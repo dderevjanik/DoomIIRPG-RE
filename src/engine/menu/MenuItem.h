@@ -21,5 +21,5 @@ public:
 
 	void Set(int textField, int textField2, int flags);
 	void Set(int textField, int textField2, int flags, int action, int param, int helpField);
-	void WrapHelpText(Text* text);
+	void WrapHelpText(class Applet* app, Text* text);
 };
