@@ -1,4 +1,9 @@
 #pragma once
+#include <memory>
+#include <typeindex>
+#include <unordered_map>
+#include "Component.h"
+
 class Applet;
 struct AIComponent;
 class CombatEntity;
@@ -14,6 +19,8 @@ struct GameConfig;
 class Entity
 {
 private:
+	// Generic component storage for mod-defined components
+	std::unordered_map<std::type_index, std::unique_ptr<Component>> components;
 
 public:
 	Applet* app = nullptr; // Set in startup(), replaces CAppContainer::getInstance()->app
@@ -47,6 +54,39 @@ public:
 
 	bool isMonster() const { return combat != nullptr && ai != nullptr; }
 	void clearMonsterEffects() { monsterEffects = 0; }
+
+	// Generic component system — for mod-defined components
+	template<typename T, typename... Args>
+	T* addComponent(Args&&... args) {
+		auto ptr = std::make_unique<T>(std::forward<Args>(args)...);
+		T* raw = ptr.get();
+		components[componentTypeId<T>()] = std::move(ptr);
+		return raw;
+	}
+
+	template<typename T>
+	T* getComponent() {
+		auto it = components.find(componentTypeId<T>());
+		return it != components.end() ? static_cast<T*>(it->second.get()) : nullptr;
+	}
+
+	template<typename T>
+	const T* getComponent() const {
+		auto it = components.find(componentTypeId<T>());
+		return it != components.end() ? static_cast<const T*>(it->second.get()) : nullptr;
+	}
+
+	template<typename T>
+	bool hasComponent() const {
+		return components.count(componentTypeId<T>()) > 0;
+	}
+
+	template<typename T>
+	void removeComponent() {
+		components.erase(componentTypeId<T>());
+	}
+
+	void clearComponents() { components.clear(); }
 
 	bool startup();
 	void reset();

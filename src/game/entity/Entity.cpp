@@ -55,6 +55,7 @@ void Entity::reset() {
 	this->nextAttacker = nullptr;
 	this->name = -1;
 	this->loot = nullptr;
+	this->clearComponents();
 }
 
 void Entity::initspawn() {
