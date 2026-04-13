@@ -1004,6 +1004,14 @@ bool parseMonsters(Applet* app, const DataNode& config) {
 			mb.isVios = beh["is_vios"].asBool(false);
 			mb.boneGibs = beh["bone_gibs"].asBool(false);
 			mb.smallParm0Scale = beh["small_parm0_scale"].asInt(-1);
+			// AI behavior parameters
+			mb.pathSearchDepth = beh["path_search_depth"].asInt(8);
+			mb.movementTimeMs = beh["movement_time_ms"].asInt(275);
+			mb.chaseLosWeight = beh["chase_los_weight"].asInt(-4);
+			mb.retreatLosWeight = beh["retreat_los_weight"].asInt(0);
+			mb.goalMaxTurns = beh["goal_max_turns"].asInt(16);
+			mb.resurrectSearchRadius = beh["resurrect_search_radius"].asInt(0x19000);
+			mb.diagonalAttack = beh["diagonal_attack"].asBool(false);
 			DataNode poison = beh["on_hit_poison_params"];
 			if (poison) {
 				mb.onHitPoisonId = poison["id"].asInt(13);
@@ -1302,6 +1310,14 @@ std::expected<void, std::string> parseMonsterCombatFromEntities(Applet* app, con
 			mb.isVios = beh["is_vios"].asBool(false);
 			mb.boneGibs = beh["bone_gibs"].asBool(false);
 			mb.smallParm0Scale = beh["small_parm0_scale"].asInt(-1);
+			// AI behavior parameters
+			mb.pathSearchDepth = beh["path_search_depth"].asInt(8);
+			mb.movementTimeMs = beh["movement_time_ms"].asInt(275);
+			mb.chaseLosWeight = beh["chase_los_weight"].asInt(-4);
+			mb.retreatLosWeight = beh["retreat_los_weight"].asInt(0);
+			mb.goalMaxTurns = beh["goal_max_turns"].asInt(16);
+			mb.resurrectSearchRadius = beh["resurrect_search_radius"].asInt(0x19000);
+			mb.diagonalAttack = beh["diagonal_attack"].asBool(false);
 			DataNode poison = beh["on_hit_poison_params"];
 			if (poison) {
 				mb.onHitPoisonId = poison["id"].asInt(13);

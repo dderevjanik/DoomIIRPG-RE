@@ -451,7 +451,7 @@ bool Entity::deathByExplosion(Entity* entity) {
 void Entity::aiCalcSimpleGoal(bool b) {
 
 
-    if (app->combat->monsterBehaviors[this->def->monsterIdx].canResurrect && this->findRaiseTarget(0x19000, 0, 0) != -1) {
+    if (app->combat->monsterBehaviors[this->def->monsterIdx].canResurrect && this->findRaiseTarget(app->combat->monsterBehaviors[this->def->monsterIdx].resurrectSearchRadius, 0, 0) != -1) {
         return;
     }
     if (app->player->buffs[11] > 0 && !app->combat->monsterBehaviors[this->def->monsterIdx].fearImmune) {
@@ -494,7 +494,7 @@ bool Entity::aiIsValidGoal() {
 
 
     uint8_t goalType = this->ai->goalType;
-    if (this->ai->goalTurns >= 16 || goalType == 3 || goalType == 0) {
+    if (this->ai->goalTurns >= app->combat->monsterBehaviors[this->def->monsterIdx].goalMaxTurns || goalType == 3 || goalType == 0) {
         return false;
     }
     if (goalType == 2) {
@@ -624,7 +624,7 @@ int Entity::aiWeaponForTarget(Entity* entity) {
             }
         }
         if (a != 0 && a2 != 0) {
-            if (this->def->eSubType == Enums::MONSTER_ARCH_VILE || (this->def->eSubType == 15 && this->def->parm != 0)) {
+            if (app->combat->monsterBehaviors[this->def->monsterIdx].diagonalAttack || this->def->eSubType == Enums::MONSTER_ARCH_VILE || (this->def->eSubType == 15 && this->def->parm != 0)) {
                 int monsterField = app->combat->getMonsterField(this->def, (this->def->eSubType == Enums::BOSS_VIOS) ? 1 : 0);
                 int n8 = monsterField * 9;
                 int worldDistToTileDist = app->combat->WorldDistToTileDist(entity->distFrom(app->render->getSpriteX(sprite), app->render->getSpriteY(sprite)));

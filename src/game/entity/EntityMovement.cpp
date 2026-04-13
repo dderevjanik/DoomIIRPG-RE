@@ -229,18 +229,18 @@ bool Entity::aiGoal_MOVE() {
     app->game->closestPathDist = 999999999;
     app->game->curPath = 0LL;
     app->game->pathDepth = 0;
-    app->game->pathSearchDepth = 8;
+    app->game->pathSearchDepth = app->combat->monsterBehaviors[this->def->monsterIdx].pathSearchDepth;
     app->game->findEnt = nullptr;
     app->game->skipEnt = this;
     app->game->lineOfSight = 2;
-    app->game->lineOfSightWeight = 0;
+    app->game->lineOfSightWeight = app->combat->monsterBehaviors[this->def->monsterIdx].retreatLosWeight;
     app->game->interactClipMask = 32;
     std::memcpy(app->game->visitedTiles, app->game->baseVisitedTiles, sizeof(app->game->visitedTiles));
     if (this->ai->goalType == 2 && this->ai->goalParam == 1) {
         app->game->findEnt = &app->game->entities[1];
         this->ai->goalX = app->game->destX >> 6;
         this->ai->goalY = app->game->destY >> 6;
-        app->game->lineOfSightWeight = -4;
+        app->game->lineOfSightWeight = app->combat->monsterBehaviors[this->def->monsterIdx].chaseLosWeight;
     }
     else if (this->ai->goalType == 5) {
         this->ai->goalX = app->game->destX >> 6;
@@ -285,12 +285,7 @@ bool Entity::aiGoal_MOVE() {
                 this->info |= 0x10000000;
             }
             app->game->interpolatingMonsters = true;
-            if ((this->def->eSubType == Enums::BOSS_MASTERMIND && this->def->parm != 0) || this->def->eSubType == Enums::BOSS_PINKY) {
-                this->aiInitLerp(500);
-            }
-            else {
-                this->aiInitLerp(275);
-            }
+            this->aiInitLerp(app->combat->monsterBehaviors[this->def->monsterIdx].movementTimeMs);
         }
         else {
             this->ai->goalX = sX >> 6;

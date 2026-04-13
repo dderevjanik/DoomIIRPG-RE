@@ -35,6 +35,15 @@ struct MonsterDef {
 	int8_t numRandomDeathSounds = 0;                   // 0 = use normal death sound
 	bool boneGibs = false;         // Produce bone gib particles on death (skeleton-type monsters)
 
+	// AI behavior parameters (loaded from monsters.yaml, configurable per-monster)
+	int pathSearchDepth = 8;        // max tiles to search when pathfinding (default 8)
+	int movementTimeMs = 275;       // movement interpolation duration in ms (default 275, bosses use 500)
+	int chaseLosWeight = -4;        // line-of-sight weight when chasing player (-4 = prefer direct path)
+	int retreatLosWeight = 0;       // line-of-sight weight when retreating
+	int goalMaxTurns = 16;          // max turns before a goal expires
+	int resurrectSearchRadius = 0x19000; // world-unit radius to search for raise targets (default ~1600 tiles)
+	bool diagonalAttack = false;    // can attack diagonally (default false, archvile-like)
+
 	// Per-weapon weakness modifiers (indexed by weapon index, -1=immune, 0=normal, >0=left shift)
 	static constexpr int MAX_WEAKNESS_MODS = 16;
 	int8_t weaknessMods[MAX_WEAKNESS_MODS] = {};  // 0 = no modifier for all weapons
