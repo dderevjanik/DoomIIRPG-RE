@@ -16,8 +16,12 @@ jobs:
 
       - name: Install dependencies
         run: |
+          # TODO: Remove LLVM/Clang once ubuntu-latest ships GCC 15+ with full C++23 library support (<print>, <flat_map>)
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          sudo add-apt-repository -y "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-19 main"
           sudo apt-get update
-          sudo apt-get install -y cmake build-essential libsdl2-dev zlib1g-dev libopenal-dev libgl-dev ccache
+          sudo apt-get install -y cmake build-essential libsdl2-dev zlib1g-dev libopenal-dev libgl-dev ccache \
+            clang-19 libc++-19-dev libc++abi-19-dev
 
       - name: Setup ccache
         uses: actions/cache@v4
@@ -27,7 +31,13 @@ jobs:
           restore-keys: ccache-linux-
 
       - name: Configure
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+        run: |
+          export CC=clang-19
+          export CXX=clang++-19
+          cmake -B build -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_FLAGS="-stdlib=libc++"
 
       - name: Build
         run: cmake --build build --parallel
@@ -50,7 +60,7 @@ jobs:
           submodules: true
 
       - name: Install dependencies
-        # Apple's CLANG doesn't ship with C++ 23
+        # TODO: Remove Homebrew LLVM once Apple Clang ships full C++23 library support
         run: brew install llvm sdl2 openal-soft ccache
 
       - name: Setup ccache
