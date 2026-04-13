@@ -134,13 +134,6 @@ struct GameConfig {
 	uint32_t automapDoorDefault = 0xFF3D68E3;         // default door color
 	std::vector<int16_t> automapHiddenDecors = {173, 180}; // decor tiles invisible on automap
 
-	// Render mode name → ID lookup (loaded from game.yaml render_modes section)
-	std::unordered_map<std::string, int> renderModes = {
-		{"normal", 0}, {"blend25", 1}, {"blend50", 2}, {"add", 3},
-		{"add75", 4}, {"add50", 5}, {"add25", 6}, {"sub", 7},
-		{"perf", 9}, {"none", 10}, {"blend75", 12}, {"blend_special_alpha", 13},
-	};
-
 	bool isFogDisabled(int mapID) const {
 		for (int id : noFogMaps) {
 			if (id == mapID) return true;

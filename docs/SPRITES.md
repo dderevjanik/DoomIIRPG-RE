@@ -102,7 +102,7 @@ sprites:
 | `multiply_shift` | bool | Applies multiplicative color shift rendering |
 | `path` | string | Routes to a named render path (e.g. `stream` for water stream wireframe) |
 | `tex_anim` | object | Texture coordinate scrolling: `s_div` (S-axis time divisor), `t_div` (T-axis), `mask` (bitwise AND mask) |
-| `glow` | object | Overlay glow sprite: `sprite` (name), `z_mult` (height multiplier), `mode` (render mode name from `game.yaml render_modes`) |
+| `glow` | object | Overlay glow sprite: `sprite` (name), `z_mult` (height multiplier), `mode` (render mode name, e.g. `add`, `blend50`, `normal`) |
 | `composite` | list | Multi-layer sprite: each entry has `sprite` (name) and `z_mult` (height multiplier). Layers render bottom to top |
 | `auto_anim` | object | Time-based frame cycling: `period` (time divisor), `frames` (frame count) |
 | `position_at_view` | object | Nudge to player position: `offset_mult` (lateral nudge), `z_offset` (vertical offset) |

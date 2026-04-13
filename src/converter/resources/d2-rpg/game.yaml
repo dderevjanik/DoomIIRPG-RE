@@ -109,21 +109,6 @@ game:
     per_secret: 1000
     all_secrets_bonus: 1000
 
-  # Render mode name -> ID lookup
-  render_modes:
-    normal: 0
-    blend25: 1
-    blend50: 2
-    add: 3
-    add75: 4
-    add50: 5
-    add25: 6
-    sub: 7
-    perf: 9
-    none: 10
-    blend75: 12
-    blend_special_alpha: 13
-
 # Config enum name/value mappings (used by settings UI)
 config_enums:
   difficulty:

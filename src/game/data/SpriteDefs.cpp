@@ -1,6 +1,7 @@
 #include <string_view>
 #include "SpriteDefs.h"
 #include "CAppContainer.h"
+#include "Render.h"
 #include "DataNode.h"
 #include "Log.h"
 
@@ -141,11 +142,9 @@ std::expected<void, std::string> SpriteDefs::parse(const DataNode& config) {
 		if (glow) {
 			props.glow.sprite = SpriteDefs::getIndex(glow["sprite"].asString(""));
 			props.glow.zMult = glow["z_mult"].asInt(0);
-			// Parse render mode name
 			std::string modeStr = glow["mode"].asString("");
-			auto& renderModes = CAppContainer::getInstance()->gameConfig.renderModes;
-			if (auto mit = renderModes.find(modeStr); mit != renderModes.end()) {
-				props.glow.renderMode = mit->second;
+			if (!modeStr.empty()) {
+				props.glow.renderMode = Render::renderModeFromName(modeStr);
 			}
 		}
 

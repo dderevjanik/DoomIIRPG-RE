@@ -1,5 +1,7 @@
 #pragma once
 #include "Span.h"
+#include <string>
+#include <unordered_map>
 
 class Image;
 class gles;
@@ -34,6 +36,24 @@ public:
 	static constexpr int RENDER_BLEND75 = 12; // New from IOS
 	static constexpr int RENDER_BLENDSPECIALALPHA = 13; // New from IOS
 	static constexpr int RENDER_MAX = 14;
+
+	// Resolve a render mode name (e.g. "add", "blend50") to its integer constant.
+	// Falls back to parsing as integer, then defaults to RENDER_NORMAL.
+	static inline int renderModeFromName(const std::string& name) {
+		static const std::unordered_map<std::string, int> modes = {
+			{"normal", RENDER_NORMAL}, {"blend25", RENDER_BLEND25},
+			{"blend50", RENDER_BLEND50}, {"add", RENDER_ADD},
+			{"add75", RENDER_ADD75}, {"add50", RENDER_ADD50},
+			{"add25", RENDER_ADD25}, {"sub", RENDER_SUB},
+			{"perf", RENDER_PERF}, {"none", RENDER_NONE},
+			{"blend75", RENDER_BLEND75},
+			{"blend_special_alpha", RENDER_BLENDSPECIALALPHA},
+		};
+		auto it = modes.find(name);
+		if (it != modes.end()) return it->second;
+		try { return std::stoi(name); } catch (...) { return 0; }
+	}
+
 	static constexpr int CHAT_ZOOM_SCALE = 32768;
 	static constexpr int CHAT_ZOOM_ZOFS = 15;
 	static constexpr int RENDER_FLAG_GREYSHIFT = 4;

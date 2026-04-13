@@ -87,9 +87,7 @@ static int tileFromName(const std::string& name) {
 }
 
 static int renderModeFromName(const std::string& name) {
-	auto& modes = CAppContainer::getInstance()->gameConfig.renderModes;
-	if (auto it = modes.find(name); it != modes.end()) return it->second;
-	try { return std::stoi(name); } catch (...) { return 0; }
+	return Render::renderModeFromName(name);
 }
 
 static std::vector<int> parseIntList(const std::string& str) {

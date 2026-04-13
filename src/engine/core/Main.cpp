@@ -428,14 +428,6 @@ int main(int argc, char* args[]) {
 				}
 			}
 
-			DataNode rm = game["render_modes"];
-			if (rm) {
-				gc.renderModes.clear();
-				for (auto it = rm.begin(); it != rm.end(); ++it) {
-					gc.renderModes[it.key().asString()] = it.value().asInt(0);
-				}
-			}
-
 			printf("[main] Game: %s (save: %s)\n", gc.name.c_str(), gc.saveDir.c_str());
 		}
 
