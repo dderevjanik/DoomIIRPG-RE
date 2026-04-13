@@ -575,28 +575,11 @@ public:
 	bool treadmillFall();
 	void drawTreadmillReadout(Graphics* graphics);
 	void drawTargetPracticeScore(Graphics* graphics);
-	void drawTravelMap(Graphics* graphics);
-	bool newLevelSamePlanet();
-	void drawAppropriateCloseup(Graphics* graphics, int n, bool b);
-	bool drawDottedLine(Graphics* graphics, int n);
-	bool drawDottedLine(Graphics* graphics);
-	bool drawMarsToMoonLinePlusSpaceShip(Graphics* graphics, int n);
-	int yCoordOfSpaceShip(int n);
-	bool drawMoonToEarthLine(Graphics* graphics, int n, bool b);
-	bool drawEarthToHellLine(Graphics* graphics, int n, bool b);
-	void drawLocatorBoxAndName(Graphics* graphics, bool b, int n, Text* text);
-	void drawGridLines(Graphics* graphics, int i);
-	bool onMoon(int n);
-	bool onEarth(int n);
+	// drawTravelMap and all travel map helpers moved to TravelMapState
 	bool inHell(int n);
-	void handleTravelMapInput(int key, int action);
-	void finishTravelMapAndLoadLevel();
-	bool drawLocatorLines(Graphics* graphics, int n, bool b, bool b2);
-	void initTravelMap();
-	void disposeTravelMap();
-	void drawStarFieldPage(Graphics* graphics);
-	void drawStarField(Graphics* graphics, int x, int y);
-	void runStarFieldFrame();
+	// handleTravelMapInput, finishTravelMapAndLoadLevel, drawLocatorLines,
+	// initTravelMap, disposeTravelMap, drawStarFieldPage, drawStarField,
+	// runStarFieldFrame moved to TravelMapState
 	
 
 	void loadMiniGameImages();
