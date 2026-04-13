@@ -10,6 +10,7 @@ class Applet;
 class SDLGL;
 class Entity;
 class TGLVert;
+class DataNode;
 struct GameConfig;
 
 class Render
@@ -424,6 +425,13 @@ public:
 	
 	void postProcessSprites();
 	void handleMonsterIdleSounds(Entity* entity);
+
+	// Map loading helpers (extracted from beginLoadMap)
+	void loadMapMedia();
+	void loadSpritesFromYaml(const DataNode& sprites);
+	void loadCamerasFromYaml(const DataNode& cameras);
+	void loadScriptsYaml(int mapNameID);
+	void loadMapLevelOverrides(int mapNameID, DataNode& levelYaml, bool& spritesFromYaml, DataNode& yamlSpritesNode);
 
 	// --- Sprite accessor API (encapsulates mapSprites[] layout) ---
 	inline short getSpriteX(int sprite) const { return mapSprites[S_X + sprite]; }

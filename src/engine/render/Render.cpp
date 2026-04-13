@@ -711,47 +711,7 @@ bool Render::beginLoadMap(int mapNameID) {
 	bool spritesFromYaml = false;
 	DataNode yamlSpritesNode;
 	DataNode levelYaml;
-	{
-		const auto& gc = *this->gameConfig;
-		if (auto lit = gc.levelInfos.find(mapNameID); lit != gc.levelInfos.end()) {
-			levelYaml = DataNode::loadFile(lit->second.configFile.c_str());
-			DataNode& lvl = levelYaml;
-
-			// Player spawn point override
-			DataNode spawn = lvl ? lvl["player_spawn"] : DataNode();
-			if (spawn) {
-				int sx = spawn["x"].asInt(0);
-				int sy = spawn["y"].asInt(0);
-				this->mapSpawnIndex = sy * 32 + sx;
-
-				std::string dir = spawn["dir"].asString("east");
-				if (dir == "east")       this->mapSpawnDir = 0;
-				else if (dir == "south") this->mapSpawnDir = 2;
-				else if (dir == "west")  this->mapSpawnDir = 4;
-				else if (dir == "north") this->mapSpawnDir = 6;
-				else this->mapSpawnDir = spawn["dir"].asInt(0);
-			}
-
-			// Header value overrides
-			if (lvl) {
-				if (lvl["total_secrets"]) app->game->totalSecrets = lvl["total_secrets"].asInt(app->game->totalSecrets);
-				if (lvl["total_loot"]) app->game->totalLoot = lvl["total_loot"].asInt(app->game->totalLoot);
-				if (lvl["flags_bitmask"]) this->mapFlagsBitmask = lvl["flags_bitmask"].asInt(this->mapFlagsBitmask);
-			}
-
-			DataNode sprites = lvl ? lvl["sprites"] : DataNode();
-			if (sprites && sprites.isSequence() && sprites.size() > 0) {
-				spritesFromYaml = true;
-				yamlSpritesNode = sprites;
-				int normalCount = 0, zCount = 0;
-				for (int i = 0; i < (int)sprites.size(); i++) {
-					if (sprites[i]["z"]) zCount++; else normalCount++;
-				}
-				this->numNormalSprites = normalCount;
-				this->numZSprites = zCount;
-			}
-		}
-	}
+	this->loadMapLevelOverrides(mapNameID, levelYaml, spritesFromYaml, yamlSpritesNode);
 
 	this->numMapSprites = this->numNormalSprites + this->numZSprites;
 	this->numSprites = this->numMapSprites + Render::MAX_CUSTOM_SPRITES + Render::MAX_DROP_SPRITES;
@@ -940,66 +900,7 @@ bool Render::beginLoadMap(int mapNameID) {
 
 	// Populate sprite arrays from YAML if sprites were extracted from binary
 	if (spritesFromYaml) {
-		int normalIdx = 0, zIdx = this->numNormalSprites;
-		for (int i = 0; i < (int)yamlSpritesNode.size(); i++) {
-			DataNode s = yamlSpritesNode[i];
-			bool isZ = (bool)s["z"];
-			int idx = isZ ? zIdx++ : normalIdx++;
-
-			this->mapSprites[this->S_X + idx] = (short)s["x"].asInt(0);
-			this->mapSprites[this->S_Y + idx] = (short)s["y"].asInt(0);
-			if (isZ) {
-				this->mapSprites[this->S_Z + idx] = (short)s["z"].asInt(32);
-			}
-
-			// Parse tile: accepts sprite name (e.g. "monster_zombie") or numeric ID
-			int tile = 0;
-			DataNode tileNode = s["tile"];
-			if (tileNode) {
-				std::string tileStr = tileNode.asString("");
-				if (!tileStr.empty() && (tileStr[0] < '0' || tileStr[0] > '9')) {
-					tile = SpriteDefs::getIndex(tileStr);
-				} else {
-					tile = tileNode.asInt(0);
-				}
-			}
-			uint32_t info = 0;
-			if (tile >= 257) {
-				info |= ((tile - 257) & 0xFF);
-				info |= 0x400000;
-			} else {
-				info |= (tile & 0xFF);
-			}
-
-			// Parse flags: supports named list [invisible, flip_h, ...] or hex value
-			uint32_t flags = 0;
-			DataNode flagsNode = s["flags"];
-			if (flagsNode) {
-				if (flagsNode.isSequence()) {
-					for (int fi = 0; fi < (int)flagsNode.size(); fi++) {
-						std::string fname = flagsNode[fi].asString("");
-						if (fname == "invisible")   flags |= 0x0001;
-						else if (fname == "flip_h")  flags |= 0x0002;
-						else if (fname == "animation") flags |= 0x0010;
-						else if (fname == "non_entity") flags |= 0x0020;
-						else if (fname == "sprite_wall") flags |= 0x0080;
-						else if (fname == "south")   flags |= 0x0100;
-						else if (fname == "north")   flags |= 0x0200;
-						else if (fname == "east")    flags |= 0x0400;
-						else if (fname == "west")    flags |= 0x0800;
-						else flags |= (uint32_t)flagsNode[fi].asULong(0); // hex fallback
-					}
-				} else {
-					flags = (uint32_t)flagsNode.asULong(0); // raw hex value
-				}
-			}
-			info |= (flags << 16);
-			if (isZ) {
-				info |= ((s["z_anim"].asInt(0) & 0xFF) << 8);
-			}
-
-			this->mapSpriteInfo[idx] = (int)info;
-		}
+		this->loadSpritesFromYaml(yamlSpritesNode);
 	}
 	app->resource->readUShortArray(&IS, std::span(this->staticFuncs, 12));
 	app->resource->readMarker(&IS);
@@ -1020,106 +921,7 @@ bool Render::beginLoadMap(int mapNameID) {
 	// Override cameras from YAML if present
 	DataNode yamlCameras = levelYaml ? levelYaml["cameras"] : DataNode();
 	if (yamlCameras && yamlCameras.isSequence() && yamlCameras.size() > 0) {
-		int numCams = (int)yamlCameras.size();
-		app->game->totalMayaCameras = numCams;
-
-		// Count total keys and tween data across all cameras
-		int totalKeys = 0;
-		int totalTweens = 0;
-		for (int c = 0; c < numCams; c++) {
-			DataNode cam = yamlCameras[c];
-			DataNode keys = cam["keys"];
-			int nk = (keys && keys.isSequence()) ? (int)keys.size() : 0;
-			totalKeys += nk;
-			DataNode tc = cam["tween_counts"];
-			if (tc && tc.isSequence()) {
-				for (int ch = 0; ch < (int)tc.size() && ch < 6; ch++)
-					totalTweens += tc[ch].asInt(0);
-			}
-		}
-		app->game->totalMayaCameraKeys = totalKeys;
-
-		// Reallocate arrays
-		delete[] app->game->mayaCameras;
-		delete[] app->game->mayaCameraKeys;
-		delete[] app->game->mayaTweenIndices;
-		delete[] app->game->mayaCameraTweens;
-		app->game->mayaCameras = new MayaCamera[numCams];
-		app->game->mayaCameraKeys = new short[totalKeys * 7];
-		app->game->mayaTweenIndices = new short[totalKeys * 6];
-		app->game->mayaCameraTweens = new int8_t[totalTweens > 0 ? totalTweens : 1];
-		app->game->setKeyOffsets();
-
-		// Compute tween offsets
-		int tweenOffset = 0;
-		for (int ch = 0; ch < 6; ch++) {
-			app->game->ofsMayaTween[ch] = tweenOffset;
-			// Sum this channel's tween counts across all cameras
-			for (int c = 0; c < numCams; c++) {
-				DataNode tc = yamlCameras[c]["tween_counts"];
-				if (tc && tc.isSequence() && ch < (int)tc.size())
-					tweenOffset += tc[ch].asInt(0);
-			}
-		}
-		app->game->totalMayaTweens = tweenOffset;
-
-		// Populate per-camera data
-		int keyOffset = 0;
-		int tweenIdxOffset = 0;
-		int tweenDataOffset[6] = {};
-		for (int ch = 0; ch < 6; ch++) tweenDataOffset[ch] = app->game->ofsMayaTween[ch];
-
-		for (int c = 0; c < numCams; c++) {
-			DataNode cam = yamlCameras[c];
-			MayaCamera& mc = app->game->mayaCameras[c];
-			mc.sampleRate = cam["sample_rate"].asInt(30);
-			DataNode keys = cam["keys"];
-			int nk = (keys && keys.isSequence()) ? (int)keys.size() : 0;
-			mc.numKeys = nk;
-			mc.keyOffset = keyOffset;
-			mc.complete = false;
-			mc.keyThreadResumeCount = nk;
-
-			// Key data: per-keyframe {x,y,z,pitch,yaw,roll,ms} → transposed to 7 channels
-			for (int k = 0; k < nk; k++) {
-				DataNode key = keys[k];
-				app->game->mayaCameraKeys[app->game->OFS_MAYAKEY_X + keyOffset + k] = (short)key["x"].asInt(0);
-				app->game->mayaCameraKeys[app->game->OFS_MAYAKEY_Y + keyOffset + k] = (short)key["y"].asInt(0);
-				app->game->mayaCameraKeys[app->game->OFS_MAYAKEY_Z + keyOffset + k] = (short)key["z"].asInt(0);
-				app->game->mayaCameraKeys[app->game->OFS_MAYAKEY_PITCH + keyOffset + k] = (short)key["pitch"].asInt(0);
-				app->game->mayaCameraKeys[app->game->OFS_MAYAKEY_YAW + keyOffset + k] = (short)key["yaw"].asInt(0);
-				app->game->mayaCameraKeys[app->game->OFS_MAYAKEY_ROLL + keyOffset + k] = (short)key["roll"].asInt(0);
-				app->game->mayaCameraKeys[app->game->OFS_MAYAKEY_MS + keyOffset + k] = (short)key["ms"].asInt(0);
-			}
-
-			// Tween indices: per-key, 6 values each
-			DataNode ti = cam["tween_indices"];
-			if (ti && ti.isSequence()) {
-				for (int k = 0; k < nk && k < (int)ti.size(); k++) {
-					DataNode row = ti[k];
-					for (int ch = 0; ch < 6; ch++) {
-						app->game->mayaTweenIndices[tweenIdxOffset + k * 6 + ch] =
-							(row && row.isSequence() && ch < (int)row.size()) ? (short)row[ch].asInt(-1) : -1;
-					}
-				}
-			}
-			tweenIdxOffset += nk * 6;
-
-			// Tween data
-			DataNode td = cam["tween_data"];
-			DataNode tc = cam["tween_counts"];
-			if (td && td.isSequence() && tc && tc.isSequence()) {
-				int tdIdx = 0;
-				for (int ch = 0; ch < 6; ch++) {
-					int count = (ch < (int)tc.size()) ? tc[ch].asInt(0) : 0;
-					for (int j = 0; j < count && tdIdx < (int)td.size(); j++, tdIdx++) {
-						app->game->mayaCameraTweens[tweenDataOffset[ch]++] = (int8_t)td[tdIdx].asInt(0);
-					}
-				}
-			}
-
-			keyOffset += nk;
-		}
+		this->loadCamerasFromYaml(yamlCameras);
 	}
 	app->resource->read(&IS, 512);
 
@@ -1138,142 +940,14 @@ bool Render::beginLoadMap(int mapNameID) {
 		if (hm && hm.isSequence()) {
 			for (int row = 0; row < 32 && row < (int)hm.size(); row++) {
 				DataNode rowNode = hm[row];
-				if (rowNode && rowNode.isSequence()) {
-					for (int col = 0; col < 32 && col < (int)rowNode.size(); col++) {
-						this->heightMap[row * 32 + col] = (uint8_t)rowNode[col].asInt(0);
-					}
-				}
+				if (!rowNode || !rowNode.isSequence()) continue;
+				for (int col = 0; col < 32 && col < (int)rowNode.size(); col++)
+					this->heightMap[row * 32 + col] = (uint8_t)rowNode[col].asInt(0);
 			}
 		}
 	}
 
-	// Load scripts.yaml (tileEvents, staticFuncs, byteCode)
-	if (levelYaml) {
-		const auto& gc = *this->gameConfig;
-		if (auto lit = gc.levelInfos.find(mapNameID); lit != gc.levelInfos.end()) {
-			std::string scriptsPath = lit->second.dir + "/scripts.yaml";
-			DataNode scripts = DataNode::loadFile(scriptsPath.c_str());
-			if (scripts) {
-				// Static functions
-				DataNode sf = scripts["static_funcs"];
-				if (sf) {
-					struct { const char* name; int idx; } sfMap[] = {
-						{"init_map",0}, {"end_game",1}, {"boss_75",2}, {"boss_50",3},
-						{"boss_25",4}, {"boss_dead",5}, {"per_turn",6}, {"attack_npc",7},
-						{"monster_death",8}, {"monster_activate",9}, {"chicken_kicked",10}, {"item_pickup",11}
-					};
-					// Default all to undefined
-					for (int i = 0; i < 12; i++) this->staticFuncs[i] = 0xFFFF;
-					for (const auto& m : sfMap) {
-						DataNode v = sf[m.name];
-						if (v) this->staticFuncs[m.idx] = (uint16_t)v.asInt(0xFFFF);
-					}
-				}
-
-				// Tile events
-				DataNode te = scripts["tile_events"];
-				if (te && te.isSequence() && te.size() > 0) {
-					int numEvts = (int)te.size();
-					// Reallocate if YAML has different count
-					if (numEvts != this->numTileEvents) {
-						delete[] this->tileEvents;
-						this->numTileEvents = numEvts;
-						this->tileEvents = new int[numEvts * 2];
-					}
-					// Clear tile event flags first
-					for (int i = 0; i < 1024; i++) this->mapFlags[i] &= ~0x40;
-
-					for (int i = 0; i < numEvts; i++) {
-						DataNode ev = te[i];
-						DataNode tile = ev["tile"];
-						int col = tile ? tile["x"].asInt(0) : 0;
-						int row = tile ? tile["y"].asInt(0) : 0;
-						int tileIdx = row * 32 + col;
-						int ip = ev["ip"].asInt(0);
-						this->tileEvents[i * 2] = (tileIdx & 0x3FF) | ((ip & 0xFFFF) << 16);
-
-						// Reconstruct event param
-						int param = 0;
-						DataNode on = ev["on"];
-						if (on && on.isSequence()) {
-							for (int j = 0; j < (int)on.size(); j++) {
-								std::string s = on[j].asString("");
-								if (s == "enter") param |= 0x1;
-								else if (s == "exit") param |= 0x2;
-								else if (s == "trigger") param |= 0x4;
-								else if (s == "face") param |= 0x8;
-							}
-						}
-						DataNode dir = ev["dir"];
-						if (dir && dir.isSequence()) {
-							for (int j = 0; j < (int)dir.size(); j++) {
-								std::string s = dir[j].asString("");
-								if (s == "east") param |= 0x010;
-								else if (s == "northeast") param |= 0x020;
-								else if (s == "north") param |= 0x040;
-								else if (s == "northwest") param |= 0x080;
-								else if (s == "west") param |= 0x100;
-								else if (s == "southwest") param |= 0x200;
-								else if (s == "south") param |= 0x400;
-								else if (s == "southeast") param |= 0x800;
-							}
-						}
-						DataNode atk = ev["attack"];
-						if (atk && atk.isSequence()) {
-							for (int j = 0; j < (int)atk.size(); j++) {
-								std::string s = atk[j].asString("");
-								if (s == "melee") param |= 0x1000;
-								else if (s == "ranged") param |= 0x2000;
-								else if (s == "explosion") param |= 0x4000;
-							}
-						}
-						DataNode fl = ev["flags"];
-						if (fl && fl.isSequence()) {
-							for (int j = 0; j < (int)fl.size(); j++) {
-								std::string s = fl[j].asString("");
-								if (s == "block_input") param |= 0x10000;
-								else if (s == "exit_goto") param |= 0x20000;
-								else if (s == "skip_turn") param |= 0x40000;
-								else if (s == "disable") param |= 0x80000;
-							}
-						}
-						this->tileEvents[i * 2 + 1] = param;
-
-						// Set tile event flag
-						if (tileIdx < 1024) this->mapFlags[tileIdx] |= 0x40;
-					}
-				}
-
-				// Bytecode (hex string)
-				DataNode bc = scripts["bytecode"];
-				if (bc) {
-					std::string hexStr = bc.asString("");
-					// Strip whitespace/newlines
-					std::string clean;
-					for (char c : hexStr) {
-						if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'))
-							clean += c;
-					}
-					int bcSize = (int)clean.size() / 2;
-					if (bcSize > 0) {
-						delete[] this->mapByteCode;
-						this->mapByteCodeSize = bcSize;
-						this->mapByteCode = new uint8_t[bcSize];
-						for (int i = 0; i < bcSize; i++) {
-							char hi = clean[i * 2], lo = clean[i * 2 + 1];
-							auto hexVal = [](char c) -> uint8_t {
-								if (c >= '0' && c <= '9') return c - '0';
-								if (c >= 'A' && c <= 'F') return 10 + c - 'A';
-								if (c >= 'a' && c <= 'f') return 10 + c - 'a';
-								return 0;
-							};
-							this->mapByteCode[i] = (hexVal(hi) << 4) | hexVal(lo);
-						}
-					}
-				}
-			}
-		}
-	}
+	this->loadScriptsYaml(mapNameID);
 
 	app->canvas->updateLoadingBar(false);
 	this->postProcessSprites();
@@ -1511,4 +1185,334 @@ void Render::render(int viewX, int viewY, int viewZ, int viewAngle, int viewPitc
 	this->shotsFired = false;
 
 	this->_gles->ResetGLState();
+}
+
+// ------------------------------------------------------------------
+// Map loading helpers (extracted from beginLoadMap for readability)
+// ------------------------------------------------------------------
+
+void Render::loadMapLevelOverrides(int mapNameID, DataNode& levelYaml, bool& spritesFromYaml, DataNode& yamlSpritesNode) {
+	const auto& gc = *this->gameConfig;
+	auto lit = gc.levelInfos.find(mapNameID);
+	if (lit == gc.levelInfos.end()) return;
+
+	levelYaml = DataNode::loadFile(lit->second.configFile.c_str());
+	DataNode& lvl = levelYaml;
+
+	// Player spawn point override
+	DataNode spawn = lvl ? lvl["player_spawn"] : DataNode();
+	if (spawn) {
+		int sx = spawn["x"].asInt(0);
+		int sy = spawn["y"].asInt(0);
+		this->mapSpawnIndex = sy * 32 + sx;
+
+		std::string dir = spawn["dir"].asString("east");
+		if (dir == "east")       this->mapSpawnDir = 0;
+		else if (dir == "south") this->mapSpawnDir = 2;
+		else if (dir == "west")  this->mapSpawnDir = 4;
+		else if (dir == "north") this->mapSpawnDir = 6;
+		else this->mapSpawnDir = spawn["dir"].asInt(0);
+	}
+
+	// Header value overrides
+	if (lvl) {
+		if (lvl["total_secrets"]) app->game->totalSecrets = lvl["total_secrets"].asInt(app->game->totalSecrets);
+		if (lvl["total_loot"]) app->game->totalLoot = lvl["total_loot"].asInt(app->game->totalLoot);
+		if (lvl["flags_bitmask"]) this->mapFlagsBitmask = lvl["flags_bitmask"].asInt(this->mapFlagsBitmask);
+	}
+
+	DataNode sprites = lvl ? lvl["sprites"] : DataNode();
+	if (sprites && sprites.isSequence() && sprites.size() > 0) {
+		spritesFromYaml = true;
+		yamlSpritesNode = sprites;
+		int normalCount = 0, zCount = 0;
+		for (int i = 0; i < (int)sprites.size(); i++) {
+			if (sprites[i]["z"]) zCount++; else normalCount++;
+		}
+		this->numNormalSprites = normalCount;
+		this->numZSprites = zCount;
+	}
+}
+
+void Render::loadSpritesFromYaml(const DataNode& sprites) {
+	int normalIdx = 0, zIdx = this->numNormalSprites;
+	for (int i = 0; i < (int)sprites.size(); i++) {
+		DataNode s = sprites[i];
+		bool isZ = (bool)s["z"];
+		int idx = isZ ? zIdx++ : normalIdx++;
+
+		this->mapSprites[this->S_X + idx] = (short)s["x"].asInt(0);
+		this->mapSprites[this->S_Y + idx] = (short)s["y"].asInt(0);
+		if (isZ) {
+			this->mapSprites[this->S_Z + idx] = (short)s["z"].asInt(32);
+		}
+
+		// Parse tile: accepts sprite name (e.g. "monster_zombie") or numeric ID
+		int tile = 0;
+		DataNode tileNode = s["tile"];
+		if (tileNode) {
+			std::string tileStr = tileNode.asString("");
+			if (!tileStr.empty() && (tileStr[0] < '0' || tileStr[0] > '9')) {
+				tile = SpriteDefs::getIndex(tileStr);
+			} else {
+				tile = tileNode.asInt(0);
+			}
+		}
+		uint32_t info = 0;
+		if (tile >= 257) {
+			info |= ((tile - 257) & 0xFF);
+			info |= 0x400000;
+		} else {
+			info |= (tile & 0xFF);
+		}
+
+		// Parse flags: supports named list [invisible, flip_h, ...] or hex value
+		uint32_t flags = 0;
+		DataNode flagsNode = s["flags"];
+		if (flagsNode) {
+			if (flagsNode.isSequence()) {
+				for (int fi = 0; fi < (int)flagsNode.size(); fi++) {
+					std::string fname = flagsNode[fi].asString("");
+					if (fname == "invisible")   flags |= 0x0001;
+					else if (fname == "flip_h")  flags |= 0x0002;
+					else if (fname == "animation") flags |= 0x0010;
+					else if (fname == "non_entity") flags |= 0x0020;
+					else if (fname == "sprite_wall") flags |= 0x0080;
+					else if (fname == "south")   flags |= 0x0100;
+					else if (fname == "north")   flags |= 0x0200;
+					else if (fname == "east")    flags |= 0x0400;
+					else if (fname == "west")    flags |= 0x0800;
+					else flags |= (uint32_t)flagsNode[fi].asULong(0);
+				}
+			} else {
+				flags = (uint32_t)flagsNode.asULong(0);
+			}
+		}
+		info |= (flags << 16);
+		if (isZ) {
+			info |= ((s["z_anim"].asInt(0) & 0xFF) << 8);
+		}
+
+		this->mapSpriteInfo[idx] = (int)info;
+	}
+}
+
+void Render::loadCamerasFromYaml(const DataNode& cameras) {
+	int numCams = (int)cameras.size();
+	app->game->totalMayaCameras = numCams;
+
+	// Count total keys and tween data across all cameras
+	int totalKeys = 0;
+	int totalTweens = 0;
+	for (int c = 0; c < numCams; c++) {
+		DataNode cam = cameras[c];
+		DataNode keys = cam["keys"];
+		int nk = (keys && keys.isSequence()) ? (int)keys.size() : 0;
+		totalKeys += nk;
+		DataNode tc = cam["tween_counts"];
+		if (tc && tc.isSequence()) {
+			for (int ch = 0; ch < (int)tc.size() && ch < 6; ch++)
+				totalTweens += tc[ch].asInt(0);
+		}
+	}
+	app->game->totalMayaCameraKeys = totalKeys;
+
+	// Reallocate arrays
+	delete[] app->game->mayaCameras;
+	delete[] app->game->mayaCameraKeys;
+	delete[] app->game->mayaTweenIndices;
+	delete[] app->game->mayaCameraTweens;
+	app->game->mayaCameras = new MayaCamera[numCams];
+	app->game->mayaCameraKeys = new short[totalKeys * 7];
+	app->game->mayaTweenIndices = new short[totalKeys * 6];
+	app->game->mayaCameraTweens = new int8_t[totalTweens > 0 ? totalTweens : 1];
+	app->game->setKeyOffsets();
+
+	// Compute tween offsets
+	int tweenOffset = 0;
+	for (int ch = 0; ch < 6; ch++) {
+		app->game->ofsMayaTween[ch] = tweenOffset;
+		for (int c = 0; c < numCams; c++) {
+			DataNode tc = cameras[c]["tween_counts"];
+			if (tc && tc.isSequence() && ch < (int)tc.size())
+				tweenOffset += tc[ch].asInt(0);
+		}
+	}
+	app->game->totalMayaTweens = tweenOffset;
+
+	// Populate per-camera data
+	int keyOffset = 0;
+	int tweenIdxOffset = 0;
+	int tweenDataOffset[6] = {};
+	for (int ch = 0; ch < 6; ch++) tweenDataOffset[ch] = app->game->ofsMayaTween[ch];
+
+	for (int c = 0; c < numCams; c++) {
+		DataNode cam = cameras[c];
+		MayaCamera& mc = app->game->mayaCameras[c];
+		mc.sampleRate = cam["sample_rate"].asInt(30);
+		DataNode keys = cam["keys"];
+		int nk = (keys && keys.isSequence()) ? (int)keys.size() : 0;
+		mc.numKeys = nk;
+		mc.keyOffset = keyOffset;
+		mc.complete = false;
+		mc.keyThreadResumeCount = nk;
+
+		for (int k = 0; k < nk; k++) {
+			DataNode key = keys[k];
+			app->game->mayaCameraKeys[app->game->OFS_MAYAKEY_X + keyOffset + k] = (short)key["x"].asInt(0);
+			app->game->mayaCameraKeys[app->game->OFS_MAYAKEY_Y + keyOffset + k] = (short)key["y"].asInt(0);
+			app->game->mayaCameraKeys[app->game->OFS_MAYAKEY_Z + keyOffset + k] = (short)key["z"].asInt(0);
+			app->game->mayaCameraKeys[app->game->OFS_MAYAKEY_PITCH + keyOffset + k] = (short)key["pitch"].asInt(0);
+			app->game->mayaCameraKeys[app->game->OFS_MAYAKEY_YAW + keyOffset + k] = (short)key["yaw"].asInt(0);
+			app->game->mayaCameraKeys[app->game->OFS_MAYAKEY_ROLL + keyOffset + k] = (short)key["roll"].asInt(0);
+			app->game->mayaCameraKeys[app->game->OFS_MAYAKEY_MS + keyOffset + k] = (short)key["ms"].asInt(0);
+		}
+
+		DataNode ti = cam["tween_indices"];
+		if (ti && ti.isSequence()) {
+			for (int k = 0; k < nk && k < (int)ti.size(); k++) {
+				DataNode row = ti[k];
+				for (int ch = 0; ch < 6; ch++) {
+					app->game->mayaTweenIndices[tweenIdxOffset + k * 6 + ch] =
+						(row && row.isSequence() && ch < (int)row.size()) ? (short)row[ch].asInt(-1) : -1;
+				}
+			}
+		}
+		tweenIdxOffset += nk * 6;
+
+		DataNode td = cam["tween_data"];
+		DataNode tc = cam["tween_counts"];
+		if (td && td.isSequence() && tc && tc.isSequence()) {
+			int tdIdx = 0;
+			for (int ch = 0; ch < 6; ch++) {
+				int count = (ch < (int)tc.size()) ? tc[ch].asInt(0) : 0;
+				for (int j = 0; j < count && tdIdx < (int)td.size(); j++, tdIdx++) {
+					app->game->mayaCameraTweens[tweenDataOffset[ch]++] = (int8_t)td[tdIdx].asInt(0);
+				}
+			}
+		}
+
+		keyOffset += nk;
+	}
+}
+
+void Render::loadScriptsYaml(int mapNameID) {
+	const auto& gc = *this->gameConfig;
+	auto lit = gc.levelInfos.find(mapNameID);
+	if (lit == gc.levelInfos.end()) return;
+
+	std::string scriptsPath = lit->second.dir + "/scripts.yaml";
+	DataNode scripts = DataNode::loadFile(scriptsPath.c_str());
+	if (!scripts) return;
+
+	// Static functions
+	DataNode sf = scripts["static_funcs"];
+	if (sf) {
+		struct { const char* name; int idx; } sfMap[] = {
+			{"init_map",0}, {"end_game",1}, {"boss_75",2}, {"boss_50",3},
+			{"boss_25",4}, {"boss_dead",5}, {"per_turn",6}, {"attack_npc",7},
+			{"monster_death",8}, {"monster_activate",9}, {"chicken_kicked",10}, {"item_pickup",11}
+		};
+		for (int i = 0; i < 12; i++) this->staticFuncs[i] = 0xFFFF;
+		for (const auto& m : sfMap) {
+			DataNode v = sf[m.name];
+			if (v) this->staticFuncs[m.idx] = (uint16_t)v.asInt(0xFFFF);
+		}
+	}
+
+	// Tile events
+	DataNode te = scripts["tile_events"];
+	if (te && te.isSequence() && te.size() > 0) {
+		int numEvts = (int)te.size();
+		if (numEvts != this->numTileEvents) {
+			delete[] this->tileEvents;
+			this->numTileEvents = numEvts;
+			this->tileEvents = new int[numEvts * 2];
+		}
+		for (int i = 0; i < 1024; i++) this->mapFlags[i] &= ~0x40;
+
+		for (int i = 0; i < numEvts; i++) {
+			DataNode ev = te[i];
+			DataNode tile = ev["tile"];
+			int col = tile ? tile["x"].asInt(0) : 0;
+			int row = tile ? tile["y"].asInt(0) : 0;
+			int tileIdx = row * 32 + col;
+			int ip = ev["ip"].asInt(0);
+			this->tileEvents[i * 2] = (tileIdx & 0x3FF) | ((ip & 0xFFFF) << 16);
+
+			int param = 0;
+			DataNode on = ev["on"];
+			if (on && on.isSequence()) {
+				for (int j = 0; j < (int)on.size(); j++) {
+					std::string s = on[j].asString("");
+					if (s == "enter") param |= 0x1;
+					else if (s == "exit") param |= 0x2;
+					else if (s == "trigger") param |= 0x4;
+					else if (s == "face") param |= 0x8;
+				}
+			}
+			DataNode dir = ev["dir"];
+			if (dir && dir.isSequence()) {
+				for (int j = 0; j < (int)dir.size(); j++) {
+					std::string s = dir[j].asString("");
+					if (s == "east") param |= 0x010;
+					else if (s == "northeast") param |= 0x020;
+					else if (s == "north") param |= 0x040;
+					else if (s == "northwest") param |= 0x080;
+					else if (s == "west") param |= 0x100;
+					else if (s == "southwest") param |= 0x200;
+					else if (s == "south") param |= 0x400;
+					else if (s == "southeast") param |= 0x800;
+				}
+			}
+			DataNode atk = ev["attack"];
+			if (atk && atk.isSequence()) {
+				for (int j = 0; j < (int)atk.size(); j++) {
+					std::string s = atk[j].asString("");
+					if (s == "melee") param |= 0x1000;
+					else if (s == "ranged") param |= 0x2000;
+					else if (s == "explosion") param |= 0x4000;
+				}
+			}
+			DataNode fl = ev["flags"];
+			if (fl && fl.isSequence()) {
+				for (int j = 0; j < (int)fl.size(); j++) {
+					std::string s = fl[j].asString("");
+					if (s == "block_input") param |= 0x10000;
+					else if (s == "exit_goto") param |= 0x20000;
+					else if (s == "skip_turn") param |= 0x40000;
+					else if (s == "disable") param |= 0x80000;
+				}
+			}
+			this->tileEvents[i * 2 + 1] = param;
+			if (tileIdx < 1024) this->mapFlags[tileIdx] |= 0x40;
+		}
+	}
+
+	// Bytecode (hex string)
+	DataNode bc = scripts["bytecode"];
+	if (bc) {
+		std::string hexStr = bc.asString("");
+		std::string clean;
+		for (char c : hexStr) {
+			if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'))
+				clean += c;
+		}
+		int bcSize = (int)clean.size() / 2;
+		if (bcSize > 0) {
+			delete[] this->mapByteCode;
+			this->mapByteCodeSize = bcSize;
+			this->mapByteCode = new uint8_t[bcSize];
+			for (int i = 0; i < bcSize; i++) {
+				char hi = clean[i * 2], lo = clean[i * 2 + 1];
+				auto hexVal = [](char c) -> uint8_t {
+					if (c >= '0' && c <= '9') return c - '0';
+					if (c >= 'A' && c <= 'F') return 10 + c - 'A';
+					if (c >= 'a' && c <= 'f') return 10 + c - 'a';
+					return 0;
+				};
+				this->mapByteCode[i] = (hexVal(hi) << 4) | hexVal(lo);
+			}
+		}
+	}
 }
