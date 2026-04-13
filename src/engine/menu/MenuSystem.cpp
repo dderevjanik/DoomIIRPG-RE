@@ -45,6 +45,7 @@ MenuSystem::~MenuSystem() = default;
 
 bool MenuSystem::startup() {
 	this->app = CAppContainer::getInstance()->app;
+	this->sdlGL = this->sdlGL;
 	Applet* app = this->app;
 	LOG_INFO("[menu] startup\n");
 
@@ -436,7 +437,7 @@ void MenuSystem::back() {
 	}
 
 	if ((this->menu == Menus::MENU_MAIN_OPTIONS_VIDEO) || (this->menu == Menus::MENU_INGAME_OPTIONS_VIDEO)) { // [GEC]
-		CAppContainer::getInstance()->sdlGL->restore();
+		this->sdlGL->restore();
 	}
 
 	if (this->stackCount != 0) {

@@ -6,6 +6,7 @@ class Text;
 // -------------------
 
 class Applet;
+struct GameConfig;
 
 class Localization
 {
@@ -13,6 +14,7 @@ private:
 
 public:
 	Applet* app = nullptr;  // Set in startup(), replaces CAppContainer::getInstance()->app
+	const GameConfig* gameConfig = nullptr; // Set in startup(), replaces CAppContainer::getInstance()->gameConfig
 
 	static constexpr int MAXBUFFERS = 7;
 	static constexpr int MAXTEXT = 15;

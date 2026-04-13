@@ -630,6 +630,8 @@ Input::~Input() {
 // Port: set default Binds
 void Input::init() {
     this->app = CAppContainer::getInstance()->app;
+    this->headless = CAppContainer::getInstance()->headless;
+    this->sdlGL = CAppContainer::getInstance()->sdlGL;
     std::memcpy(keyMapping, keyMappingDefault, sizeof(keyMapping));
     std::memcpy(keyMappingTemp, keyMappingDefault, sizeof(keyMapping));
 
@@ -707,10 +709,10 @@ void Input::setInputBind(int scancode) {
 }
 
 void Input::handleEvents() noexcept {
-	if (CAppContainer::getInstance()->headless) { return; }
+	if (this->headless) { return; }
 
 	SDL_Event sdlEvent;
-    SDLGL* sdlGL = CAppContainer::getInstance()->sdlGL;
+    SDLGL* sdlGL = this->sdlGL;
     Canvas* canvas = this->app->canvas.get();
 
     int winVidWidth = sdlGL->winVidWidth;

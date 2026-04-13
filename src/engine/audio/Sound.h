@@ -47,6 +47,7 @@ public:
 	};
 
 	Applet* app = nullptr;
+	bool headless = false;
 	bool field_0x4 = false;
 	bool allowSounds = false;
 	bool allowMusics = false;

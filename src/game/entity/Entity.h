@@ -9,12 +9,15 @@ class OutputStream;
 class InputStream;
 struct LootComponent;
 
+struct GameConfig;
+
 class Entity
 {
 private:
 
 public:
 	Applet* app = nullptr; // Set in startup(), replaces CAppContainer::getInstance()->app
+	const GameConfig* gameConfig = nullptr; // Set in startup(), replaces CAppContainer::getInstance()->gameConfig
 	int touchMe = 0;
 	EntityDef* def = nullptr;
 	EntityMonster* monster = nullptr;

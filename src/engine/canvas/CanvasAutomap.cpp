@@ -149,7 +149,7 @@ void Canvas::drawAutomap(Graphics* graphics, bool b) {
 									bool b5 = false;
 									int n18 = 2;
 									if (nextOnTile->def->eType == Enums::ET_DOOR) {
-										const auto& gc = CAppContainer::getInstance()->gameConfig;
+										const auto& gc = *this->gameConfig;
 										short tileIndex = nextOnTile->def->tileIndex;
 										color = gc.automapDoorDefault;
 										for (const auto& dc : gc.automapDoorColors) {
@@ -179,7 +179,7 @@ void Canvas::drawAutomap(Graphics* graphics, bool b) {
 									}
 									else if (nextOnTile->def->eType == Enums::ET_DECOR) {
 										color = 0xFF8D8068;
-										const auto& hiddenDecors = CAppContainer::getInstance()->gameConfig.automapHiddenDecors;
+										const auto& hiddenDecors = this->gameConfig->automapHiddenDecors;
 										for (int16_t hd : hiddenDecors) {
 											if (nextOnTile->def->tileIndex == hd) { color = 0; break; }
 										}

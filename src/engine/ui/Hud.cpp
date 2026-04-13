@@ -30,6 +30,7 @@ Hud::~Hud() {
 
 bool Hud::startup() {
 	this->app = CAppContainer::getInstance()->app;
+	this->gameConfig = &CAppContainer::getInstance()->gameConfig;
 	Applet* app = this->app;
 	LOG_INFO("[hud] startup\n");
 
@@ -76,7 +77,7 @@ bool Hud::startup() {
 	createButtons(this->m_hudButtons, hudButtons);
 	
 	this->m_weaponsButtons = new fmButtonContainer;
-	for (int i = 0; i < CAppContainer::getInstance()->gameConfig.maxWeaponButtons; i++) {
+	for (int i = 0; i < this->gameConfig->maxWeaponButtons; i++) {
 		fmButton* btnWpn = new fmButton(i, 480, 320, this->imgWeaponNormal->width, 44, 1027);
 		this->m_weaponsButtons->AddButton(btnWpn);
 	}
@@ -529,7 +530,7 @@ void Hud::drawDamageVignette(Graphics* graphics) {
 
 
 	if (app->time < this->damageTime && this->damageCount >= 0 && app->combat->totalDamage > 0) {
-		const auto& dirs = CAppContainer::getInstance()->gameConfig.damageVignetteDirs;
+		const auto& dirs = this->gameConfig->damageVignetteDirs;
 		int n = 0;
 		if (this->damageDir >= 0 && this->damageDir < (int)dirs.size()) {
 			n = dirs[this->damageDir];
@@ -924,7 +925,7 @@ void Hud::drawBubbleText(Graphics* graphics) {
 	int n3 = 0;
 	int n4 = 6;
 	{
-		const auto& bubbleColors = CAppContainer::getInstance()->gameConfig.bubbleColors;
+		const auto& bubbleColors = this->gameConfig->bubbleColors;
 		for (const auto& bc : bubbleColors) {
 			if ((unsigned int)this->bubbleColor == bc.color) {
 				n3 = bc.offset;

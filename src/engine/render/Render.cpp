@@ -72,6 +72,8 @@ Render::~Render() {}
 
 bool Render::startup() {
 	this->app = CAppContainer::getInstance()->app;
+	this->gameConfig = &CAppContainer::getInstance()->gameConfig;
+	this->sdlGL = CAppContainer::getInstance()->sdlGL;
 
 	LOG_INFO("Render::startup\n");
 
@@ -676,7 +678,7 @@ bool Render::beginLoadMap(int mapNameID) {
 
 	app->canvas->updateLoadingBar(false);
 
-	std::string mapFilePath = CAppContainer::getInstance()->gameConfig.getMapFile(mapNameID);
+	std::string mapFilePath = this->gameConfig->getMapFile(mapNameID);
 	const char* mapFile = CAppContainer::getInstance()->customMapFile
 	    ? CAppContainer::getInstance()->customMapFile
 	    : mapFilePath.c_str();
@@ -710,7 +712,7 @@ bool Render::beginLoadMap(int mapNameID) {
 	DataNode yamlSpritesNode;
 	DataNode levelYaml;
 	{
-		const auto& gc = CAppContainer::getInstance()->gameConfig;
+		const auto& gc = *this->gameConfig;
 		if (auto lit = gc.levelInfos.find(mapNameID); lit != gc.levelInfos.end()) {
 			levelYaml = DataNode::loadFile(lit->second.configFile.c_str());
 			DataNode& lvl = levelYaml;
@@ -1147,7 +1149,7 @@ bool Render::beginLoadMap(int mapNameID) {
 
 	// Load scripts.yaml (tileEvents, staticFuncs, byteCode)
 	if (levelYaml) {
-		const auto& gc = CAppContainer::getInstance()->gameConfig;
+		const auto& gc = *this->gameConfig;
 		if (auto lit = gc.levelInfos.find(mapNameID); lit != gc.levelInfos.end()) {
 			std::string scriptsPath = lit->second.dir + "/scripts.yaml";
 			DataNode scripts = DataNode::loadFile(scriptsPath.c_str());
@@ -1278,7 +1280,7 @@ bool Render::beginLoadMap(int mapNameID) {
 
 	int skyTableBase;
 	{
-		const auto& gc = CAppContainer::getInstance()->gameConfig;
+		const auto& gc = *this->gameConfig;
 		if (auto lit = gc.levelInfos.find(this->mapNameID); lit != gc.levelInfos.end() && !lit->second.skyBox.empty()) {
 			int idx = SpriteDefs::getIndex(lit->second.skyBox);
 			if (idx > 0) {

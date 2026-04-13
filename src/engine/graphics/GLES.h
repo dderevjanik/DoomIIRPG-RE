@@ -37,6 +37,8 @@ class gles
 {
 public:
 	Applet* app = nullptr;  // Set in startup(), replaces CAppContainer::getInstance()->app
+	bool headless = false;
+	SDLGL* sdlGL = nullptr;
 	bool isInit = false;
 	static constexpr int scale = 1;
 	static constexpr int MAX_GLVERTS = 16;

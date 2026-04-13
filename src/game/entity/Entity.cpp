@@ -33,6 +33,7 @@ Entity::~Entity() {
 bool Entity::startup() {
 	//printf("Entity::startup\n");
 	this->app = CAppContainer::getInstance()->app;
+	this->gameConfig = &CAppContainer::getInstance()->gameConfig;
 
 	return false;
 }
@@ -253,7 +254,7 @@ void Entity::populateDefaultLootSet() {
 
 int Entity::findRandomJokeItem() {
     int sprite = this->getSprite();
-    const auto& jokeItems = CAppContainer::getInstance()->gameConfig.jokeItems;
+    const auto& jokeItems = this->gameConfig->jokeItems;
     if (auto it = jokeItems.find(app->canvas->loadMapID); it != jokeItems.end() && !it->second.empty()) {
         return it->second[sprite % it->second.size()];
     }

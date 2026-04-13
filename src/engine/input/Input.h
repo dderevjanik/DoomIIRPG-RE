@@ -163,6 +163,7 @@ enum _AVKType {
 extern void controllerVibrate(int duration_ms) noexcept;
 
 class Applet;
+class SDLGL;
 
 class Input
 {
@@ -171,6 +172,8 @@ private:
 public:
 
 	Applet* app; // Set in init(), replaces CAppContainer::getInstance()->app
+	bool headless = false;
+	SDLGL* sdlGL = nullptr;
 
 	// Constructor
 	Input();

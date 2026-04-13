@@ -18,7 +18,7 @@ Image::~Image() {
             std::free(this->piDIB);
         }
         this->piDIB = nullptr;
-        if (!CAppContainer::getInstance()->headless) {
+        if (!this->headless) {
             glDeleteTextures(1, &this->texture);
         }
         this->texture = -1;
@@ -27,7 +27,7 @@ Image::~Image() {
 }
 
 void Image::CreateTexture(uint16_t* data, uint32_t width, uint32_t height) {
-    if (CAppContainer::getInstance()->headless) { return; }
+    if (this->headless) { return; }
     glEnable(GL_TEXTURE_2D);
     glGenTextures(1, &this->texture);
     glBindTexture(GL_TEXTURE_2D, this->texture);
@@ -163,7 +163,10 @@ void Image::DrawTexture(int texX, int texY, int texW, int texH, int posX, int po
 }
 
 void Image::setRenderMode(int renderMode) {
-    if (!this->app) this->app = CAppContainer::getInstance()->app;
+    if (!this->app) {
+        this->app = CAppContainer::getInstance()->app;
+        this->headless = this->headless;
+    }
     Applet* app = this->app;
     int color;
 

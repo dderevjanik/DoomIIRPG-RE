@@ -53,6 +53,9 @@ bool Canvas::isLoaded;
 
 bool Canvas::startup() {
 	this->app = CAppContainer::getInstance()->app;
+	this->gameConfig = &CAppContainer::getInstance()->gameConfig;
+	this->headless = this->headless;
+	this->sdlGL = this->sdlGL;
 	this->graphics.app = this->app;
 	Applet* app = this->app;
 	int viewWidth, viewHeight;
@@ -437,7 +440,7 @@ bool Canvas::startup() {
 }
 
 void Canvas::flushGraphics() {
-	if (CAppContainer::getInstance()->headless) { return; }
+	if (this->headless) { return; }
 	this->graphics.resetScreenSpace();
 	this->backPaint(&this->graphics);
 }
@@ -796,7 +799,7 @@ void Canvas::run() {
 	this->runInputEvents();
 
 	// [GEC]
-	if (!CAppContainer::getInstance()->headless && (this->repaintFlags & Canvas::REPAINT_VIEW3D)) { // REPAINT_VIEW3D
+	if (!this->headless && (this->repaintFlags & Canvas::REPAINT_VIEW3D)) { // REPAINT_VIEW3D
 		if (!app->render->_gles->isInit) {
 			app->render->Render3dScene();
 			app->tinyGL->applyClearColorBuffer();
@@ -893,7 +896,7 @@ void Canvas::run() {
 	this->st_fields[12] = app->upTimeMs - time;
 
 	this->flushTime = app->upTimeMs;
-	if (!CAppContainer::getInstance()->headless) {
+	if (!this->headless) {
 		this->graphics.resetScreenSpace();
 		this->backPaint(&this->graphics);
 	}
@@ -932,7 +935,7 @@ void Canvas::freeRuntimeData() {
 
 void Canvas::startShake(int i, int i2, int i3) {
 
-	SDLGL* sdlGL = CAppContainer::getInstance()->sdlGL;
+	SDLGL* sdlGL = this->sdlGL;
 
 	if (app->game->skippingCinematic) {
 		return;
@@ -2022,7 +2025,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 		else if (entity != nullptr && entity->def->eType == Enums::ET_ATTACK_INTERACTIVE && entity->def->eSubType == Enums::INTERACT_PICKUP && dist2 <= app->combat->tileDistances[0] && (app->combat->throwableItemAmmoType < 0 || app->player->ammo[app->combat->throwableItemAmmoType] == 0)) {
 			if (!app->player->isFamiliar) {
 				int fountainAmmoType = app->combat->weapons[app->player->ce->weapon * Combat::WEAPON_MAX_FIELDS + Combat::WEAPON_FIELD_AMMOTYPE];
-				int fountainAmmoMax = CAppContainer::getInstance()->gameConfig.capAmmo;
+				int fountainAmmoMax = this->gameConfig->capAmmo;
 				if (app->combat->getWeaponFlags(app->player->ce->weapon).fountainWeapon && app->player->ammo[fountainAmmoType] < fountainAmmoMax) {
 					app->hud->addMessage((short)248);
 					app->player->ammo[fountainAmmoType] = fountainAmmoMax;
@@ -2051,7 +2054,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 		else {
 			if (entity != nullptr && entity->def->eType == Enums::ET_DECOR_NOCLIP && entity->def->eSubType == Enums::DECOR_WATER_SPOUT && dist2 <= app->combat->tileDistances[0] && dist2 > 0 && app->combat->getWeaponFlags(app->player->ce->weapon).fountainWeapon) {
 				int fAmmoType = app->combat->weapons[app->player->ce->weapon * Combat::WEAPON_MAX_FIELDS + Combat::WEAPON_FIELD_AMMOTYPE];
-				int fAmmoMax = CAppContainer::getInstance()->gameConfig.capAmmo;
+				int fAmmoMax = this->gameConfig->capAmmo;
 				if (app->player->ammo[fAmmoType] < fAmmoMax) {
 					app->hud->addMessage((short)248);
 					app->player->showHelp((short)14, false);
@@ -2144,7 +2147,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 							}
 							app->player->fireWeapon(entity, calcPosition2[0], calcPosition2[1]);
 							if (app->player->inTargetPractice) {
-								if (app->player->ammo[CAppContainer::getInstance()->gameConfig.tpAmmoType] == 0) {
+								if (app->player->ammo[this->gameConfig->tpAmmoType] == 0) {
 									app->player->exitTargetPractice();
 								}
 								else {
@@ -2157,7 +2160,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 						this->shouldFakeCombat(app->game->traceCollisionX >> 6, app->game->traceCollisionY >> 6, flagForFacingDir);
 						app->player->fireWeapon(&app->game->entities[0], app->game->traceCollisionX, app->game->traceCollisionY);
 						if (app->player->inTargetPractice) {
-							if (app->player->ammo[CAppContainer::getInstance()->gameConfig.tpAmmoType] == 0) {
+							if (app->player->ammo[this->gameConfig->tpAmmoType] == 0) {
 								app->player->exitTargetPractice();
 							}
 							else {
@@ -3287,7 +3290,7 @@ void Canvas::initZoom() {
 	app->render->startFade(500, 2);
 	this->drawPlayingSoftKeys();
 
-	CAppContainer::getInstance()->sdlGL->centerMouse(0, -22); // [GEC]
+	this->sdlGL->centerMouse(0, -22); // [GEC]
 }
 
 void Canvas::zoomOut() {
@@ -3327,26 +3330,26 @@ bool Canvas::handleZoomEvents(int key, int action, bool b) {
 		this->zoomAngle -= n3;
 		this->updateFacingEntity = true;
 		++this->zoomTurn;
-		CAppContainer::getInstance()->sdlGL->centerMouse(0, -22); // [GEC]
+		this->sdlGL->centerMouse(0, -22); // [GEC]
 		this->app->StopAccelerometer(); // [GEC]
 	}
 	else if (action == Enums::ACTION_LEFT) {
 		this->zoomAngle += n3;
 		this->updateFacingEntity = true;
 		++this->zoomTurn;
-		CAppContainer::getInstance()->sdlGL->centerMouse(0, -22); // [GEC]
+		this->sdlGL->centerMouse(0, -22); // [GEC]
 		this->app->StopAccelerometer(); // [GEC]
 	}
 	else if (action == Enums::ACTION_DOWN) {
 		this->zoomPitch -= n3;
 		++this->zoomTurn;
-		CAppContainer::getInstance()->sdlGL->centerMouse(0, -22); // [GEC]
+		this->sdlGL->centerMouse(0, -22); // [GEC]
 		this->app->StopAccelerometer(); // [GEC]
 	}
 	else if (action == Enums::ACTION_UP) {
 		this->zoomPitch += n3;
 		++this->zoomTurn;
-		CAppContainer::getInstance()->sdlGL->centerMouse(0, -22); // [GEC]
+		this->sdlGL->centerMouse(0, -22); // [GEC]
 		this->app->StopAccelerometer(); // [GEC]
 	}
 	else if (action == Enums::ACTION_PASSTURN) {

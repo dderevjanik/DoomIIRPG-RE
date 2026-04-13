@@ -919,9 +919,9 @@ void Render::Render3dScene(void) {
 	short* backBuffer = CAppContainer::getInstance()->GetBackBuffer();
 
 	int cx, cy;
-	int w = CAppContainer::getInstance()->sdlGL->vidWidth;
-	int h = CAppContainer::getInstance()->sdlGL->vidHeight;
-	SDL_GL_GetDrawableSize(CAppContainer::getInstance()->sdlGL->window, &cx, &cy);
+	int w = this->sdlGL->vidWidth;
+	int h = this->sdlGL->vidHeight;
+	SDL_GL_GetDrawableSize(this->sdlGL->window, &cx, &cy);
 	if (w != cx || h != cy) {
 		w = cx;
 		h = cy;

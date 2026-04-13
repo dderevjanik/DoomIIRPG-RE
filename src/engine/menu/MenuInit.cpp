@@ -878,7 +878,7 @@ void MenuSystem::initMenu(int menu) {
 			// Dynamic runtime value updates for text2 fields
 			{
 				int argIdx = app->localization->numTextArgs;
-				int windowMode = CAppContainer::getInstance()->sdlGL->windowMode;
+				int windowMode = this->sdlGL->windowMode;
 				textbuff->setLength(0);
 				if (windowMode == 0) textbuff->append("Windowed");
 				else if (windowMode == 1) textbuff->append("Borderless");
@@ -887,9 +887,9 @@ void MenuSystem::initMenu(int menu) {
 				this->items[1].textField2 = Localization::STRINGID(Strings::FILE_MENUSTRINGS, MenuStrings::ARGUMENT1 + argIdx);
 				argIdx++;
 
-				this->items[2].textField2 = this->onOffValue(CAppContainer::getInstance()->sdlGL->vSync);
+				this->items[2].textField2 = this->onOffValue(this->sdlGL->vSync);
 
-				int resolutionIndex = CAppContainer::getInstance()->sdlGL->resolutionIndex;
+				int resolutionIndex = this->sdlGL->resolutionIndex;
 				textbuff->setLength(0);
 				textbuff->append("(")->append(sdlResVideoModes[resolutionIndex].width)->append("x")->append(sdlResVideoModes[resolutionIndex].height)->append(")");
 				app->localization->addTextArg(textbuff);

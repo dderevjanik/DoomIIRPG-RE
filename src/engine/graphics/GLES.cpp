@@ -41,6 +41,8 @@ void gles::SwapBuffers() {
 
 void gles::GLInit(Render* render) {
 	this->app = CAppContainer::getInstance()->app;
+	this->headless = this->headless;
+	this->sdlGL = this->sdlGL;
 
 	_glesObj = this;
 	this->render = render;
@@ -63,7 +65,7 @@ void gles::GLInit(Render* render) {
 }
 
 bool gles::ClearBuffer(int color) {
-	if (CAppContainer::getInstance()->headless) { return false; }
+	if (this->headless) { return false; }
 	if (this->isInit)
 	{
 		float r = COLOR_BYTE_TO_FLOAT(color >> 16 & 0xff);
@@ -80,7 +82,7 @@ bool gles::ClearBuffer(int color) {
 }
 
 void gles::SetGLState() {
-	if (CAppContainer::getInstance()->headless) { return; }
+	if (this->headless) { return; }
 
 	PFNGLACTIVETEXTUREPROC glActiveTexture = (PFNGLACTIVETEXTUREPROC)SDL_GL_GetProcAddress("glActiveTexture");
 	PFNGLCLIENTACTIVETEXTUREPROC glClientActiveTexture = (PFNGLCLIENTACTIVETEXTUREPROC)SDL_GL_GetProcAddress("glClientActiveTexture");
@@ -115,7 +117,7 @@ void gles::SetGLState() {
 }
 
 void gles::BeginFrame(int x, int y, int w, int h, int* mtxView, int* mtxProjection) {
-	if (CAppContainer::getInstance()->headless) { return; }
+	if (this->headless) { return; }
 
 	Canvas* canvas = app->canvas.get();
 	int posX, posY;
@@ -144,8 +146,8 @@ void gles::BeginFrame(int x, int y, int w, int h, int* mtxView, int* mtxProjecti
 	this->vPortRect[2] = gles::scale * w;
 	this->vPortRect[3] = gles::scale * h;
 
-	CAppContainer::getInstance()->sdlGL->transformCoord2f((float*)&this->vPortRect[0], (float*)&this->vPortRect[1]);
-	CAppContainer::getInstance()->sdlGL->transformCoord2f((float*)&this->vPortRect[2], (float*)&this->vPortRect[3]);
+	this->sdlGL->transformCoord2f((float*)&this->vPortRect[0], (float*)&this->vPortRect[1]);
+	this->sdlGL->transformCoord2f((float*)&this->vPortRect[2], (float*)&this->vPortRect[3]);
 #endif
 	
 	//printf("this->vPortRect[0] %d\n", this->vPortRect[0]);
@@ -209,8 +211,8 @@ void gles::BeginFrame(int x, int y, int w, int h, int* mtxView, int* mtxProjecti
 }
 
 void gles::ResetGLState() {
-	if (CAppContainer::getInstance()->headless) { return; }
-	SDLGL* sdlGL = CAppContainer::getInstance()->sdlGL;
+	if (this->headless) { return; }
+	SDLGL* sdlGL = this->sdlGL;
 	int width = sdlGL->vidWidth;
 	int height = sdlGL->vidHeight;
 
@@ -307,7 +309,7 @@ void gles::CreateAllActiveTextures() {
 bool gles::RasterizeConvexPolygon(std::span<TGLVert> vertsSpan) {
 	int numVerts = static_cast<int>(vertsSpan.size());
 	TGLVert* verts = vertsSpan.data();
-	if (CAppContainer::getInstance()->headless) { return false; }
+	if (this->headless) { return false; }
 
 	Vertex* immediate;
 	GLfloat projectionMatrix[MAX_GLVERTS];
@@ -507,7 +509,7 @@ void gles::ResetTextureChains() {
 }
 
 bool gles::DrawWorldSpaceSpriteLine(TGLVert* vert1, TGLVert* vert2, TGLVert* vert3, int flags) {
-	if (CAppContainer::getInstance()->headless) { return false; }
+	if (this->headless) { return false; }
 	TGLVert verts[4];
 
 	if (this->isInit) {

@@ -60,6 +60,7 @@ public:
 	static constexpr int CHAR_SPACING[4] = { 11, 11, 12, 22 };
 
 	//------------------
+	SDLGL* sdlGL = nullptr;
 	IDIB* backBuffer = nullptr;
 	int upTimeMs = 0;
 	int lastTime = 0;

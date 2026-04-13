@@ -16,6 +16,7 @@ class OutputStream;
 class Graphics;
 class Applet;
 class ScriptThread;
+struct GameConfig;
 
 struct ItemEffect {
 	enum Type { HEALTH, ARMOR, STATUS_EFFECT };
@@ -45,6 +46,7 @@ private:
 
 public:
 	Applet* app = nullptr; // Set in startup(), replaces CAppContainer::getInstance()->app
+	const GameConfig* gameConfig = nullptr; // Set in startup(), replaces CAppContainer::getInstance()->gameConfig
 
 	static constexpr int EXPIRE_DURATION = 5;
 	static constexpr int MAX_DISPLAY_BUFFS = 6;

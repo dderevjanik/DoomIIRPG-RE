@@ -46,6 +46,7 @@ void Applet::setGameModule(IGameModule* module) {
 bool Applet::startup() {
 	LOG_INFO("[app] Applet::startup\n");
 
+	this->sdlGL = this->sdlGL;
 	this->closeApplet = false;
 	this->fontType = 0;
 	this->accelerationIndex = 0;
@@ -73,9 +74,9 @@ bool Applet::startup() {
 	std::memset(this->backBuffer->pBmp, 0, 480 * 320 * 2);
 	this->backBuffer->pRGB888 = nullptr;
 	this->backBuffer->pRGB565 = nullptr;
-	this->backBuffer->width = CAppContainer::getInstance()->sdlGL->vidWidth;
-	this->backBuffer->height = CAppContainer::getInstance()->sdlGL->vidHeight;
-	this->backBuffer->pitch = CAppContainer::getInstance()->sdlGL->vidWidth;
+	this->backBuffer->width = this->sdlGL->vidWidth;
+	this->backBuffer->height = this->sdlGL->vidHeight;
+	this->backBuffer->pitch = this->sdlGL->vidWidth;
 
 	LOG_INFO("[app] w: {} || h: {}\n", backBuffer->width, backBuffer->height);
 
@@ -351,7 +352,7 @@ void Applet::Error(const char* fmt, ...) {
 #endif
 	va_end(ap);
 
-	SDL_SetWindowFullscreen(CAppContainer::getInstance()->sdlGL->window, 0);
+	SDL_SetWindowFullscreen(this->sdlGL->window, 0);
 
 	printf("%s", errMsg);
 

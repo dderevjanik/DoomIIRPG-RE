@@ -29,6 +29,7 @@ Localization::~Localization() {
 
 bool Localization::startup() {
 	this->app = CAppContainer::getInstance()->app;
+	this->gameConfig = &CAppContainer::getInstance()->gameConfig;
 	LOG_INFO("Localization::startup\n");
 
 	this->text = new char* [Localization::MAXTEXT]();
@@ -98,7 +99,7 @@ bool Localization::loadFromYAML(const char* path) {
 	this->defaultLanguage = 0;
 
 	// Try loading from game.yaml strings: section first
-	const auto& stringFiles = CAppContainer::getInstance()->gameConfig.stringFiles;
+	const auto& stringFiles = this->gameConfig->stringFiles;
 	if (!stringFiles.empty()) {
 		int loaded = 0;
 		for (const auto& [groupId, filePath] : stringFiles) {

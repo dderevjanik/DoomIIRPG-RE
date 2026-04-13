@@ -8,6 +8,7 @@
 #include <unordered_map>
 
 class Applet;
+class SDLGL;
 class EntityDef;
 class Image;
 class MenuItem;
@@ -23,6 +24,7 @@ private:
 
 public:
 	Applet* app; // Set in startup(), replaces CAppContainer::getInstance()->app
+	SDLGL* sdlGL = nullptr;
 
 	static constexpr int NO = 0;
 	static constexpr int YES = 1;

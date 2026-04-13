@@ -4,6 +4,7 @@ class ScriptThread;
 class Image;
 class fmButtonContainer;
 class Graphics;
+struct GameConfig;
 
 #include "IMinigame.h"
 
@@ -13,6 +14,7 @@ private:
 
 public:
 	Applet* app; // Set in startup(), replaces CAppContainer::getInstance()->app
+	const GameConfig* gameConfig = nullptr; // Set in startup(), replaces CAppContainer::getInstance()->gameConfig
 	int touchMe;
 	ScriptThread* callingThread;
 	int16_t* energyDrinkData;

@@ -274,7 +274,7 @@ void Player::reset() {
 	this->foundSecretsLevels = 0;
 	this->killedMonstersLevels = 0;
 	{
-		const GameConfig& gc = CAppContainer::getInstance()->gameConfig;
+		const GameConfig& gc = *this->gameConfig;
 		this->baseCe->setStat(Enums::STAT_MAX_HEALTH, gc.startingMaxHealth);
 		this->setStatsAccordingToCharacterChoice();
 		if (app->game->difficulty == Enums::DIFFICULTY_NORMAL) {
@@ -348,7 +348,7 @@ void Player::stripInventoryForTargetPractice() {
 		this->ammo[i] = 0;
 	}
 	this->weapons = 0;
-	const auto& gc = CAppContainer::getInstance()->gameConfig;
+	const auto& gc = *this->gameConfig;
 	this->give(1, gc.tpWeaponIdx, 1, true);
 	this->give(2, gc.tpAmmoType, gc.tpAmmoCount, true);
 }
@@ -386,7 +386,7 @@ void Player::restoreInventory() {
 		this->selectWeapon(this->currentWeaponCopy);
 		app->game->angryVIOS = false;
 	} else {
-		int tpWpn = CAppContainer::getInstance()->gameConfig.tpWeaponIdx;
+		int tpWpn = this->gameConfig->tpWeaponIdx;
 		bool b = (this->weaponsCopy & (1 << tpWpn)) != 0x0;
 		for (int i = 0; i < Enums::MAX_AMMO; ++i) {
 			this->ammo[i] = 0;

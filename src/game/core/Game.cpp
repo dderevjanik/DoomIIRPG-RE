@@ -42,10 +42,12 @@ Game::~Game() {}
 
 bool Game::startup() {
 	this->app = CAppContainer::getInstance()->app;
+	this->gameConfig = &CAppContainer::getInstance()->gameConfig;
+	this->sdlGL = CAppContainer::getInstance()->sdlGL;
 	Applet* app = this->app;
 	LOG_INFO("[game] startup\n");
 
-	this->maxEntities = CAppContainer::getInstance()->gameConfig.maxEntities;
+	this->maxEntities = this->gameConfig->maxEntities;
 	this->entities = new Entity[this->maxEntities];
 	this->ofsMayaTween = new short[6];
 

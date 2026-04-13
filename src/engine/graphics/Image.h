@@ -11,6 +11,7 @@ private:
 
 public:
 	Applet* app;  // Set lazily, replaces CAppContainer::getInstance()->app
+	bool headless = false;
 	IDIB* piDIB;
 	int width;
 	int height;

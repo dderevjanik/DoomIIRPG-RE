@@ -2,6 +2,7 @@
 #include "Graphics.h"
 
 class Applet;
+class SDLGL;
 class ICanvasState;
 class Image;
 class Text;
@@ -9,6 +10,7 @@ class Entity;
 class EntityDef;
 class ScriptThread;
 class Graphics;
+struct GameConfig;
 
 class fmButtonContainer;
 class fmScrollButton;
@@ -41,6 +43,9 @@ private:
 
 public:
 	Applet* app = nullptr;  // Set in startup(), replaces CAppContainer::getInstance()->app
+	const GameConfig* gameConfig = nullptr; // Set in startup(), replaces CAppContainer::getInstance()->gameConfig
+	bool headless = false;
+	SDLGL* sdlGL = nullptr;
 
 	static constexpr int KNOCKBACK_HEIGHT = 10;
 	static constexpr int FALLDOWNDEATHTIME = 750;

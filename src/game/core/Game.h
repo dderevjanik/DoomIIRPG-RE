@@ -17,6 +17,8 @@ class InputStream;
 class EntityDef;
 
 class Applet;
+class SDLGL;
+struct GameConfig;
 
 class Game
 {
@@ -24,6 +26,8 @@ private:
 
 public:
     Applet* app = nullptr;  // Set in startup(), replaces CAppContainer::getInstance()->app
+    const GameConfig* gameConfig = nullptr; // Set in startup(), replaces CAppContainer::getInstance()->gameConfig
+    SDLGL* sdlGL = nullptr;
 
     static constexpr int32_t dropDirs[] { 64, 0, 64, 64, 0, 64, -64, 64, -64, 0, -64, -64, 0, -64, 64, -64 };
     static constexpr int MAX_GRID_ENTITIES = 9;

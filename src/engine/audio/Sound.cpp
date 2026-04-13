@@ -14,7 +14,7 @@
 Sound::Sound() = default;
 
 Sound::~Sound() {
-	if (CAppContainer::getInstance()->headless) { return; }
+	if (this->headless) { return; }
 	this->soundStop();
 	this->openAL_Close();
 }
@@ -28,6 +28,7 @@ Sound::~Sound() {
 
 bool Sound::startup() {
 	this->app = CAppContainer::getInstance()->app;
+	this->headless = this->headless;
 	LOG_INFO("[sound] startup\n");
 
 	this->field_0x162 = 0;
@@ -49,7 +50,7 @@ bool Sound::startup() {
 		this->channel[i].priority = 1;
 	}
 
-	if (!CAppContainer::getInstance()->headless) {
+	if (!this->headless) {
 		this->openAL_Init();
 	}
 
@@ -305,7 +306,7 @@ bool Sound::openAL_LoadAllSounds() {
 }
 
 bool Sound::cacheSounds() {
-	if (CAppContainer::getInstance()->headless) { return true; }
+	if (this->headless) { return true; }
 	if (this->openAL_LoadAllSounds()) {
 		this->updateVolume();
 		return true;
@@ -314,7 +315,7 @@ bool Sound::cacheSounds() {
 }
 
 void Sound::playSound(int16_t resID, uint8_t flags, int priority, bool a5) {
-	if (CAppContainer::getInstance()->headless) { return; }
+	if (this->headless) { return; }
 	ALenum error;
 
 	int v5;               // r5
@@ -462,7 +463,7 @@ int Sound::getFreeSlot(int a2) {
 }
 
 void Sound::soundStop() {
-	if (CAppContainer::getInstance()->headless) { return; }
+	if (this->headless) { return; }
 	for (int i = 0; i < 10; i++) {
 		alSourceStop(this->channel[i].sourceId);
 		this->channel[i].priority = 1;
@@ -471,7 +472,7 @@ void Sound::soundStop() {
 }
 
 void Sound::stopSound(int resID, bool fadeOut) {
-	if (CAppContainer::getInstance()->headless) { return; }
+	if (this->headless) { return; }
 	int volume;
 	for (int i = 0; i < 10; i++) {
 		if (this->channel[i].resID == resID) {
@@ -494,7 +495,7 @@ void Sound::stopSound(int resID, bool fadeOut) {
 }
 
 bool Sound::isSoundPlaying(int16_t resID) {
-	if (CAppContainer::getInstance()->headless) { return false; }
+	if (this->headless) { return false; }
 	for (int i = 0; i < 10; i++) {
 		if (this->channel[i].resID == resID) {
 			return this->openAL_IsPlaying(this->channel[i].sourceId);
@@ -504,7 +505,7 @@ bool Sound::isSoundPlaying(int16_t resID) {
 }
 
 void Sound::updateVolume() {
-	if (CAppContainer::getInstance()->headless) { return; }
+	if (this->headless) { return; }
 	int volume;
 	if (this->soundsLoaded) {
 		for (int i = 0; i < 10; i++) {

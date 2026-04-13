@@ -626,20 +626,20 @@ void MenuSystem::selectVideoSettings(int i) {
 	int action = this->items[i].action;
 	switch (action) {
 		case Menus::ACTION_CHANGE_VID_MODE:
-			if (++CAppContainer::getInstance()->sdlGL->windowMode > 2) {
-				CAppContainer::getInstance()->sdlGL->windowMode = 0;
+			if (++this->sdlGL->windowMode > 2) {
+				this->sdlGL->windowMode = 0;
 			}
 			break;
 		case Menus::ACTION_TOG_VSYNC:
-			CAppContainer::getInstance()->sdlGL->vSync = !CAppContainer::getInstance()->sdlGL->vSync;
+			this->sdlGL->vSync = !this->sdlGL->vSync;
 			break;
 		case Menus::ACTION_CHANGE_RESOLUTION:
-			if (++CAppContainer::getInstance()->sdlGL->resolutionIndex >= 18) {
-				CAppContainer::getInstance()->sdlGL->resolutionIndex = 0;
+			if (++this->sdlGL->resolutionIndex >= 18) {
+				this->sdlGL->resolutionIndex = 0;
 			}
 			break;
 		case Menus::ACTION_APPLY_CHANGES:
-			CAppContainer::getInstance()->sdlGL->updateVideo();
+			this->sdlGL->updateVideo();
 			app->game->saveConfig();
 			break;
 		case Menus::ACTION_TOG_TINYGL: {

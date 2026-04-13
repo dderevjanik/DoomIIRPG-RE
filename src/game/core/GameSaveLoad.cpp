@@ -554,7 +554,7 @@ bool Game::loadWorldState(InputStream* IS) {
 
 void Game::saveConfig() {
 
-	SDLGL* sdlGL = CAppContainer::getInstance()->sdlGL;
+	SDLGL* sdlGL = this->sdlGL;
 	YAML::Emitter out;
 	out << YAML::BeginMap;
 
@@ -640,7 +640,7 @@ void Game::saveConfig() {
 
 void Game::loadConfig() {
 
-	SDLGL* sdlGL = CAppContainer::getInstance()->sdlGL;
+	SDLGL* sdlGL = this->sdlGL;
 
 	const char* name = this->getProfileSaveFileName("config.yaml");
 	YAML::Node cfg;
@@ -994,7 +994,7 @@ void Game::removeState(bool b) {
 
 void Game::saveEmptyConfig() {
 
-	SDLGL* sdlGL = CAppContainer::getInstance()->sdlGL;
+	SDLGL* sdlGL = this->sdlGL;
 	YAML::Emitter out;
 	out << YAML::BeginMap;
 

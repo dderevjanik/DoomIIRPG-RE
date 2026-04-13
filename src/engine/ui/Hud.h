@@ -5,6 +5,7 @@ class Entity;
 class fmButtonContainer;
 class Graphics;
 class Applet;
+struct GameConfig;
 
 class Hud
 {
@@ -12,6 +13,7 @@ private:
 
 public:
     Applet* app = nullptr; // Set in startup(), replaces CAppContainer::getInstance()->app
+    const GameConfig* gameConfig = nullptr; // Set in startup(), replaces CAppContainer::getInstance()->gameConfig
     static constexpr int MSG_DISPLAY_TIME = 700;
     static constexpr int MSG_FLASH_TIME = 100;
     static constexpr int SCROLL_START_DELAY = 750;

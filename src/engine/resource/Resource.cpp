@@ -118,7 +118,7 @@ void Resource::read(InputStream* IS, int i) {
 void Resource::bufSkip(InputStream* IS, int offset, bool updateLB) {
     IS->offsetCursor(offset);
     if (updateLB) {
-        CAppContainer::getInstance()->app->canvas->updateLoadingBar(false);
+        this->app->canvas->updateLoadingBar(false);
     }
 }
 

@@ -24,7 +24,9 @@
 #include "EventBus.h"
 #include "GameEvents.h"
 
-Player::Player() = default;
+Player::Player() {
+	this->gameConfig = &CAppContainer::getInstance()->gameConfig;
+}
 
 Player::~Player() {
 	delete this->itemDefs;
@@ -33,6 +35,7 @@ Player::~Player() {
 bool Player::startup() {
 	LOG_INFO("[player] startup\n");
 	this->app = CAppContainer::getInstance()->app;
+	this->gameConfig = &CAppContainer::getInstance()->gameConfig;
 	Applet* app = this->app;
 	this->ammo.resize(Enums::MAX_AMMO, 0);
 	this->ammoCopy.resize(Enums::MAX_AMMO, 0);
@@ -91,7 +94,7 @@ void Player::advanceTurn() {
 		b = true;
 	}
 
-	if (this->inCombat && this->totalMoves - this->lastCombatTurn >= CAppContainer::getInstance()->gameConfig.outOfCombatTurns) {
+	if (this->inCombat && this->totalMoves - this->lastCombatTurn >= this->gameConfig->outOfCombatTurns) {
 		this->inCombat = false;
 	}
 
@@ -313,7 +316,7 @@ void Player::addLevel() {
 	app->localization->addTextArg(this->level);
 	app->localization->composeText((short)0, (short)104, textBuff);
 
-	const GameConfig& gc = CAppContainer::getInstance()->gameConfig;
+	const GameConfig& gc = *this->gameConfig;
 	int n = gc.levelUpHealth;
 	stat = this->baseCe->getStat(1);
 	if (stat + n > 999) {
@@ -378,12 +381,12 @@ void Player::addLevel() {
 }
 
 int Player::calcLevelXP(int n) {
-	const GameConfig& gc = CAppContainer::getInstance()->gameConfig;
+	const GameConfig& gc = *this->gameConfig;
 	return gc.xpLinear * n + gc.xpCubic * ((n - 1) * (n - 1) * (n - 1) + (n - 1));
 }
 
 int Player::calcScore() {
-	const GameConfig& gc = CAppContainer::getInstance()->gameConfig;
+	const GameConfig& gc = *this->gameConfig;
 
 	int n = 0;
 	bool b = true;
@@ -609,7 +612,7 @@ bool Player::give(int n, int n2, int n3, bool b, bool b2) {
 		}
 		case 0: {
 			short* array = (this->isFamiliar && !b2) ? this->inventoryCopy : this->inventory;
-			const GameConfig& gc = CAppContainer::getInstance()->gameConfig;
+			const GameConfig& gc = *this->gameConfig;
 			int n5 = n3 + array[n2 - 0];
 			if (n2 == 24) {
 				if (n5 > gc.capCredits) {
@@ -634,7 +637,7 @@ bool Player::give(int n, int n2, int n3, bool b, bool b2) {
 		}
 		case 2: {
 			short* array2 = (this->isFamiliar && !b2 && n2 != 6) ? this->ammoCopy.data() : this->ammo.data();
-			const GameConfig& gc2 = CAppContainer::getInstance()->gameConfig;
+			const GameConfig& gc2 = *this->gameConfig;
 			int n6 = n3 + array2[n2];
 			if (n6 > gc2.capAmmo) {
 				n6 = gc2.capAmmo;
@@ -871,7 +874,7 @@ void Player::giveAll() {
 		this->selectPrevWeapon();
 		this->selectNextWeapon();
 	}
-	const GameConfig& gc = CAppContainer::getInstance()->gameConfig;
+	const GameConfig& gc = *this->gameConfig;
 	for (int j = 0; j < Enums::MAX_AMMO; ++j) {
 		if (j != Enums::AMMO_ITEM) {
 			this->give(2, j, gc.capAmmo, true);
@@ -932,7 +935,7 @@ void Player::equipForLevel(int highestMap) {
 
 		// Map 10 uses map 9 loadout
 		int lookupMap = (highestMap == 10) ? 9 : highestMap;
-		const GameConfig& gc = CAppContainer::getInstance()->gameConfig;
+		const GameConfig& gc = *this->gameConfig;
 		DataNode config2;
 		if (auto lit = gc.levelInfos.find(lookupMap); lit != gc.levelInfos.end()) {
 			config2 = DataNode::loadFile(lit->second.configFile.c_str());
@@ -1207,7 +1210,7 @@ void Player::assessTargetPracticeShot(Entity* entity) {
 		}
 	}
 	if (n5 != -1) {
-		const GameConfig& gc = CAppContainer::getInstance()->gameConfig;
+		const GameConfig& gc = *this->gameConfig;
 		if (n5 == 0 || n4 == 16) {
 			app->hud->addMessage((short)230, 4);
 			this->targetPracticeScore += gc.tpHeadPoints;

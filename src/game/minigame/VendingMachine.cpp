@@ -33,6 +33,7 @@ bool VendingMachine::startup() {
 	LOG_INFO("[vending] startup\n");
 
 	this->app = CAppContainer::getInstance()->app;
+	this->gameConfig = &CAppContainer::getInstance()->gameConfig;
 
 	return false;
 }
@@ -143,7 +144,7 @@ bool VendingMachine::machineCanBeHacked() {
 
 void VendingMachine::randomizeGame() {
     Applet* app = this->app;
-    const GameConfig& gc = CAppContainer::getInstance()->gameConfig;
+    const GameConfig& gc = *this->gameConfig;
     int sliderRange = gc.vendSliderMax - gc.vendSliderMin + 1;
 
     this->correctSum = 0;

@@ -5,8 +5,10 @@ class Image;
 class gles;
 class Graphics;
 class Applet;
+class SDLGL;
 class Entity;
 class TGLVert;
+struct GameConfig;
 
 class Render
 {
@@ -14,6 +16,8 @@ private:
 
 public:
 	Applet* app = nullptr; // Set in startup(), replaces CAppContainer::getInstance()->app
+	const GameConfig* gameConfig = nullptr; // Set in startup(), replaces CAppContainer::getInstance()->gameConfig
+	SDLGL* sdlGL = nullptr;
 
 	static constexpr int TEXELS_PER_FILE = 32768;
 	static constexpr int RENDER_NORMAL = 0;
