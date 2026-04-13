@@ -3,6 +3,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <vector>
 #include "StringHash.h"
 
 // Bin   = legacy binary sprite from tables.bin (has id)
@@ -17,6 +18,45 @@ struct SpriteSource {
 	int frameWidth = 0;  // frame dimensions (Sheet type only)
 	int frameHeight = 0;
 	int frameCount = 0;  // number of animation frames (Sheet type only)
+};
+
+// Render properties for sprites with special rendering behavior (parsed from sprites.yaml render: blocks)
+struct SpriteTexAnim {
+	int sDivisor = 0;   // time/sDivisor for S scroll (0 = none)
+	int tDivisor = 0;   // time/tDivisor for T scroll (0 = none)
+	int mask = 0x3FF;
+	bool hasAnim() const { return sDivisor != 0 || tDivisor != 0; }
+};
+
+struct SpriteGlow {
+	int sprite = 0;      // tile index of glow sprite
+	int zMult = 0;       // height multiplier (scaled by scaleFactor)
+	int renderMode = 0;  // e.g. Render::RENDER_ADD50
+	bool hasGlow() const { return sprite != 0; }
+};
+
+struct SpriteCompositeLayer {
+	int sprite = 0;      // tile index
+	int zMult = 0;       // height multiplier
+};
+
+struct SpriteRenderProps {
+	int zOffsetFloor = 0;        // Z offset in floor rendering path
+	int zOffsetWall = 0;         // Z offset in wall rendering path
+	bool skip = false;           // skip rendering entirely
+	bool multiplyShift = false;  // RENDER_FLAG_MULTYPLYSHIFT
+	std::string renderPath;      // "stream" etc., empty = default
+	SpriteTexAnim texAnim;
+	SpriteGlow glow;
+	std::vector<SpriteCompositeLayer> composite;
+	int autoAnimPeriod = 0;      // time divisor for auto-animation (0 = none)
+	int autoAnimFrames = 0;      // frame count for auto-animation
+	bool positionAtView = false; // nudge sprite to player viewpoint
+	int viewOffsetMult = 0;
+	int viewZOffset = 0;
+	bool lootAura = false;       // render loot glow aura
+	int lootAuraScale = 0;
+	int lootAuraFlags = 0;
 };
 
 class SpriteDefs {
@@ -39,6 +79,9 @@ class SpriteDefs {
 	// Range boundaries (populated from sprites.yaml "ranges" section)
 	static std::unordered_map<std::string, int, StringHash, std::equal_to<>> ranges;
 
+	// Per-tile render properties (populated from sprites.yaml render: blocks)
+	static std::unordered_map<int, SpriteRenderProps> renderProps;
+
 	// Parse sprite definitions from a DataNode (called by ResourceManager)
 	[[nodiscard]] static std::expected<void, std::string> parse(const class DataNode& config);
 
@@ -59,6 +102,9 @@ class SpriteDefs {
 
 	// Get PNG override path for a tile index, returns empty string if none
 	[[nodiscard]] static const std::string& getPngOverride(int tileIndex);
+
+	// Get render properties for a tile index, returns nullptr if none
+	[[nodiscard]] static const SpriteRenderProps* getRenderProps(int tileIndex);
 
 	// Get range value by name, returns 0 if not found
 	[[nodiscard]] static int getRange(std::string_view name);

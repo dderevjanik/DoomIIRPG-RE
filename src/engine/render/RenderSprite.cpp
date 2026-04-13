@@ -129,8 +129,8 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 		return;
 	}
 
-	// [GEC] Exclusivo para el VIOS ya que se ve mejor en su color multiplicado
-	if ((tileNum >= TILE_BOSS_VIOS) && (tileNum <= TILE_BOSS_VIOS5)) {
+	const SpriteRenderProps* spriteProps = SpriteDefs::getRenderProps(tileNum);
+	if (spriteProps && spriteProps->multiplyShift) {
 		renderFlags |= Render::RENDER_FLAG_MULTYPLYSHIFT;
 	}
 
@@ -166,8 +166,8 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 		n17 += 10;
 		x -= n17 * this->viewCos >> 16;
 		y += n17 * this->viewSin >> 16;
-		if (tileNum == TILE_OBJ_CRATE) {
-			z -= 224;
+		if (spriteProps && spriteProps->zOffsetFloor) {
+			z += spriteProps->zOffsetFloor;
 		}
 		for (int i = 0; i < n18; ++i) {
 			int n21 = (i & 0x2) >> 1;
@@ -208,12 +208,8 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 		}
 	} else {
 
-		if (tileNum >= TILE_TERMINAL_TARGET && tileNum <= TILE_TERMINAL_HACKING) {
-			z -= 256;
-		}
-
-		if (tileNum >= TILE_CLOSED_PORTAL_EYE && tileNum <= TILE_EYE_PORTAL) {
-			z -= 128;
+		if (spriteProps && spriteProps->zOffsetWall) {
+			z += spriteProps->zOffsetWall;
 		}
 
 		int n23 = 0;
@@ -336,11 +332,11 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 					tglVert5->z = z;
 					tglVert5->s = n13 + n47 * n14;
 					tglVert5->t = n15 + n46 * n16;
-					if (tileNum == TILE_FLAT_LAVA) {
-						tglVert5->s += (app->time / 8 & 0x3FF);
-						tglVert5->t += (app->time / 16 & 0x3FF);
-					} else if (tileNum == TILE_FLAT_LAVA2) {
-						tglVert5->t += (app->time / 2 & 0x3FF);
+					if (spriteProps && spriteProps->texAnim.hasAnim()) {
+						if (spriteProps->texAnim.sDivisor)
+							tglVert5->s += (app->time / spriteProps->texAnim.sDivisor & spriteProps->texAnim.mask);
+						if (spriteProps->texAnim.tDivisor)
+							tglVert5->t += (app->time / spriteProps->texAnim.tDivisor & spriteProps->texAnim.mask);
 					}
 				}
 				app->tinyGL->swapXY = false;
@@ -618,6 +614,12 @@ void Render::renderSpriteObject(int n) {
 		n3 += 257;
 	}
 
+	const SpriteRenderProps* spriteProps = SpriteDefs::getRenderProps(n3);
+
+	if (spriteProps && spriteProps->skip) {
+		return;
+	}
+
 	if (this->useMastermindHack) {
 		if (n3 == 57) {
 			if (this->delayedSpriteBuffer[0] == -1) {
@@ -646,15 +648,15 @@ void Render::renderSpriteObject(int n) {
 		n7 = (n + app->time / 100) % n7;
 	}
 
-	if (n3 == TILE_WATER_STREAM) { // 240
+	if (spriteProps && spriteProps->renderPath == "stream") {
 		this->renderStreamSprite(n);
 		return;
 	}
 
-	if (n3 == TILE_OBJ_FIRE && x == app->canvas->viewX && y == app->canvas->viewY) {
-		x += (app->canvas->viewStepX >> 6) * 18;
-		y += (app->canvas->viewStepY >> 6) * 18;
-		z -= 512;
+	if (spriteProps && spriteProps->positionAtView && x == app->canvas->viewX && y == app->canvas->viewY) {
+		x += (app->canvas->viewStepX >> 6) * spriteProps->viewOffsetMult;
+		y += (app->canvas->viewStepY >> 6) * spriteProps->viewOffsetMult;
+		z += spriteProps->viewZOffset;
 		if (this->mapSprites[this->S_SCALEFACTOR + n] != 64) {
 			scaleFactor = 65536;
 		}
@@ -738,21 +740,22 @@ void Render::renderSpriteObject(int n) {
 			if ((n2 & 0xF000000) == 0x0) {
 				z += 288;
 			}
-		} else if (n3 == TILE_OBJ_TORCHIERE) {
-			int zheight = ((10 * scaleFactor) / 65536) << 4;
+		} else if (spriteProps && spriteProps->glow.hasGlow()) {
+			int zheight = ((spriteProps->glow.zMult * scaleFactor) / 65536) << 4;
 			n2 ^= (n7 & 0x1) << 17;
-			this->renderSprite(x, y, z + zheight, TILE_SFX_LIGHTGLOW1, 0, n2, Render::RENDER_ADD50,
+			this->renderSprite(x, y, z + zheight, spriteProps->glow.sprite, 0, n2, spriteProps->glow.renderMode,
 			                   scaleFactor, n10);
 		} else {
-			if (n3 == TILE_WATER_SPOUT) {
-				int n15 = app->time / 128;
-				this->renderSprite(x, y, z, n3, (n15 & 0x1), n2, renderMode, scaleFactor, n10);
+			if (spriteProps && spriteProps->autoAnimPeriod > 0) {
+				int animFrame = app->time / spriteProps->autoAnimPeriod;
+				this->renderSprite(x, y, z, n3, (animFrame % spriteProps->autoAnimFrames), n2, renderMode, scaleFactor, n10);
 				return;
 			}
-			if (n3 == TILE_TREE_TOP) {
-				int zheight = ((36 * scaleFactor) / 65536) << 4;
-				this->renderSprite(x, y, z, TILE_TREE_TRUNK, n7, n2, renderMode, scaleFactor, n10);
-				this->renderSprite(x, y, z + zheight, n3, n7, n2, renderMode, scaleFactor, n10);
+			if (spriteProps && !spriteProps->composite.empty()) {
+				for (const auto& layer : spriteProps->composite) {
+					int zheight = ((layer.zMult * scaleFactor) / 65536) << 4;
+					this->renderSprite(x, y, z + zheight, layer.sprite, n7, n2, renderMode, scaleFactor, n10);
+				}
 				return;
 			}
 			if (def != nullptr && def->eType == Enums::ET_NPC) {
@@ -803,18 +806,17 @@ void Render::renderSpriteObject(int n) {
 				this->renderSprite(x, y, z, n3, app->canvas->isZoomedIn ? 1 : 4, n19, renderMode, scaleFactor, n10);
 				return;
 			}
-			if (n3 == TILE_OBJ_CORPSE || n3 == TILE_OBJ_OTHER_CORPSE ||
-			    n3 == TILE_OBJ_SCIENTIST_CORPSE) {
-				if (entity->param == 0 && app->canvas->state != Canvas::ST_CAMERA && !entity->hasEmptyLootSet()) {
-					this->renderSprite(x, y, z, n3, n7, n2, 0, 18 * scaleFactor >> 4, 512);
+			if (spriteProps && spriteProps->lootAura && entity != nullptr) {
+				bool showAura = false;
+				if (entity->loot != nullptr && entity->param == 0 && !entity->hasEmptyLootSet()) {
+					showAura = true;
+				} else if (entity->isDroppedEntity() && entity->param == 0) {
+					showAura = true;
 				}
-			} else if ((n3 == TILE_MONSTER_SENTRY_BOT || n3 == TILE_MONSTER_RED_SENTRY_BOT) &&
-			           entity != nullptr && entity->isDroppedEntity()) {
-				if (entity->param == 0 && app->canvas->state != Canvas::ST_CAMERA) {
-					this->renderSprite(x, y, z, n3, n7, n2, 0, (18 * scaleFactor) >> 4, 512);
+				if (showAura && app->canvas->state != Canvas::ST_CAMERA) {
+					this->renderSprite(x, y, z, n3, n7, n2, 0,
+						(spriteProps->lootAuraScale * scaleFactor) >> 4, spriteProps->lootAuraFlags);
 				}
-			} else if (n3 == TILE_TREADMILL_SIDE || n3 == TILE_SENTINEL_SPIKES_DUMMY) {
-				return;
 			}
 		}
 		this->renderSprite(x, y, z, n3, n7, n2, renderMode, scaleFactor, n10);

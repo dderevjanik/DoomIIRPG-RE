@@ -16,8 +16,8 @@ sprites:
   sentry_bot_red_shooting: {file: tables.bin, id: 13}
   sentry_bot_red_exploding: {file: tables.bin, id: 14}
   world_weapon: {file: tables.bin, id: 15}
-  monster_red_sentry_bot: {file: tables.bin, id: 18}
-  monster_sentry_bot: {file: tables.bin, id: 19}
+  monster_red_sentry_bot: {file: tables.bin, id: 18, render: {loot_aura: {scale: 18, flags: 512}}}
+  monster_sentry_bot: {file: tables.bin, id: 19, render: {loot_aura: {scale: 18, flags: 512}}}
   monster_zombie: {file: tables.bin, id: 20}
   monster_zombie2: {file: tables.bin, id: 21}
   monster_zombie3: {file: tables.bin, id: 22}
@@ -52,11 +52,11 @@ sprites:
   boss_cyberdemon: {file: tables.bin, id: 54}
   boss_pinky: {file: tables.bin, id: 56}
   boss_mastermind: {file: tables.bin, id: 57}
-  boss_vios: {file: tables.bin, id: 58}
-  boss_vios2: {file: tables.bin, id: 59}
-  boss_vios3: {file: tables.bin, id: 60}
-  boss_vios4: {file: tables.bin, id: 61}
-  boss_vios5: {file: tables.bin, id: 62}
+  boss_vios: {file: tables.bin, id: 58, render: {multiply_shift: true}}
+  boss_vios2: {file: tables.bin, id: 59, render: {multiply_shift: true}}
+  boss_vios3: {file: tables.bin, id: 60, render: {multiply_shift: true}}
+  boss_vios4: {file: tables.bin, id: 61, render: {multiply_shift: true}}
+  boss_vios5: {file: tables.bin, id: 62, render: {multiply_shift: true}}
   npc_riley_oconnor: {file: tables.bin, id: 66}
   npc_major: {file: tables.bin, id: 68}
   npc_bob: {file: tables.bin, id: 69}
@@ -91,15 +91,15 @@ sprites:
   sink: {file: tables.bin, id: 127}
   barred_window: {file: tables.bin, id: 128}
   hazard_bar: {file: tables.bin, id: 129}
-  obj_fire: {file: tables.bin, id: 130}
+  obj_fire: {file: tables.bin, id: 130, render: {position_at_view: {offset_mult: 18, z_offset: -512}}}
   treadmill_monitor: {file: tables.bin, id: 131}
   tech_station: {file: tables.bin, id: 133}
-  water_spout: {file: tables.bin, id: 134}
+  water_spout: {file: tables.bin, id: 134, render: {auto_anim: {period: 128, frames: 2}}}
   obj_chair: {file: tables.bin, id: 135}
-  obj_torchiere: {file: tables.bin, id: 136}
-  obj_scientist_corpse: {file: tables.bin, id: 137}
-  obj_corpse: {file: tables.bin, id: 138}
-  obj_other_corpse: {file: tables.bin, id: 139}
+  obj_torchiere: {file: tables.bin, id: 136, render: {glow: {sprite: sfx_lightglow1, z_mult: 10, mode: add50}}}
+  obj_scientist_corpse: {file: tables.bin, id: 137, render: {loot_aura: {scale: 18, flags: 512}}}
+  obj_corpse: {file: tables.bin, id: 138, render: {loot_aura: {scale: 18, flags: 512}}}
+  obj_other_corpse: {file: tables.bin, id: 139, render: {loot_aura: {scale: 18, flags: 512}}}
   dummy_pain: {file: tables.bin, id: 140}
   attack_dummy: {file: tables.bin, id: 141}
   exit_dummy: {file: tables.bin, id: 142}
@@ -107,13 +107,13 @@ sprites:
   septic_station: {file: tables.bin, id: 147}
   practice_target: {file: tables.bin, id: 149}
   obj_printer: {file: tables.bin, id: 150}
-  obj_crate: {file: tables.bin, id: 152}
+  obj_crate: {file: tables.bin, id: 152, render: {z_offset_floor: -224}}
   vending_machine: {file: tables.bin, id: 153}
   armor_repair: {file: tables.bin, id: 154}
-  closed_portal_eye: {file: tables.bin, id: 155}
-  eye_portal: {file: tables.bin, id: 156}
+  closed_portal_eye: {file: tables.bin, id: 155, render: {z_offset_wall: -128}}
+  eye_portal: {file: tables.bin, id: 156, render: {z_offset_wall: -128}}
   portal_socket: {file: tables.bin, id: 157}
-  treadmill_side: {file: tables.bin, id: 158}
+  treadmill_side: {file: tables.bin, id: 158, render: {skip: true}}
   treadmill_front: {file: tables.bin, id: 159}
   hell_hands: {file: tables.bin, id: 161}
   doorjamb_decal: {file: tables.bin, id: 162}
@@ -121,19 +121,19 @@ sprites:
   nonobstructing_spritewall: {file: tables.bin, id: 166}
   fence: {file: tables.bin, id: 168}
   sentinel_spikes: {file: tables.bin, id: 170}
-  sentinel_spikes_dummy: {file: tables.bin, id: 171}
+  sentinel_spikes_dummy: {file: tables.bin, id: 171, render: {skip: true}}
   switch: {file: tables.bin, id: 173}
   tech_detail: {file: tables.bin, id: 175}
   hell_skulls: {file: tables.bin, id: 177}
   glass: {file: tables.bin, id: 178}
-  terminal_target: {file: tables.bin, id: 179}
+  terminal_target: {file: tables.bin, id: 179, render: {z_offset_wall: -256}}
   terminal_general: {file: tables.bin, id: 180}
   terminal_vios: {file: tables.bin, id: 181}
   terminal_bot: {file: tables.bin, id: 182}
-  terminal_hacking: {file: tables.bin, id: 183}
+  terminal_hacking: {file: tables.bin, id: 183, render: {z_offset_wall: -256}}
   elevator_nums: {file: tables.bin, id: 184}
   bush: {file: tables.bin, id: 187}
-  tree_top: {file: tables.bin, id: 188}
+  tree_top: {file: tables.bin, id: 188, render: {composite: [{sprite: tree_trunk, z_mult: 0}, {sprite: tree_top, z_mult: 36}]}}
   tree_trunk: {file: tables.bin, id: 189}
   sfx_lightglow1: {file: tables.bin, id: 193}
   window3: {file: tables.bin, id: 197}
@@ -149,7 +149,7 @@ sprites:
   anim_water: {file: tables.bin, id: 235}
   air_vent: {file: tables.bin, id: 236}
   soul_cube_attack: {file: tables.bin, id: 239}
-  water_stream: {file: tables.bin, id: 240}
+  water_stream: {file: tables.bin, id: 240, render: {path: stream}}
   caco_plasma: {file: tables.bin, id: 241}
   fire_ball: {file: tables.bin, id: 242}
   plasma_ball: {file: tables.bin, id: 243}
@@ -173,8 +173,8 @@ sprites:
   level_door_unlocked: {file: tables.bin, id: 278}
   sky_box: {file: tables.bin, id: 301}
   fade: {file: tables.bin, id: 302}
-  flat_lava: {file: tables.bin, id: 479}
-  flat_lava2: {file: tables.bin, id: 480}
+  flat_lava: {file: tables.bin, id: 479, render: {tex_anim: {s_div: 8, t_div: 16, mask: 0x3FF}}}
+  flat_lava2: {file: tables.bin, id: 480, render: {tex_anim: {t_div: 2, mask: 0x3FF}}}
   wp_view_assault_rifle: {file: tables.bin, id: 1}
   wp_view_chainsaw: {file: tables.bin, id: 2}
   wp_view_holy_water_pistol: {file: tables.bin, id: 3}
