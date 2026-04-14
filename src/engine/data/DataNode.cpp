@@ -70,7 +70,7 @@ std::string DataNode::asString(const std::string& def) const {
 }
 
 DataNode DataNode::operator[](const char* key) const {
-	if (!impl || !impl->node.IsDefined()) return DataNode();
+	if (!impl || !impl->node.IsDefined() || !impl->node.IsMap()) return DataNode();
 	DataNode dn;
 	dn.impl = std::make_shared<Impl>(impl->node[key]);
 	return dn;

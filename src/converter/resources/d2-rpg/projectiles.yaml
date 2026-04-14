@@ -1,10 +1,6 @@
-# Projectile visual definitions  # Controls missile animation, render mode, and impact effects
-
 projectiles:
-  bullet:
-    {}
-  melee:
-    {}
+  bullet: {}
+  melee: {}
   water:
     launch:
       render_mode: add
@@ -18,7 +14,10 @@ projectiles:
       render_mode: add
       sprite: plasma_ball
       speed: 512
-      offset: {x_right: 4, y_right: 4, z: 15}
+      offset:
+        x_right: 4
+        y_right: 4
+        z: 15
     impact:
       sprite: plasma_ball
       render_mode: add75
@@ -28,12 +27,18 @@ projectiles:
       sprite_player: missile_player_rocket
       sprite_monster: missile_rocket
       speed_add: 64
-      offset: {x_right: 4, y_right: 4, z: 10}
+      offset:
+        x_right: 4
+        y_right: 4
+        z: 10
     impact:
       sprite: fire_ball
       render_mode: add75
       impact_sound: explosion
-      screen_shake: {duration: 500, intensity: 4, fade: 500}
+      screen_shake:
+        duration: 500
+        intensity: 4
+        fade: 500
   bfg:
     launch:
       render_mode: add75
@@ -76,8 +81,7 @@ projectiles:
     launch:
       render_mode: add
       sprite: electric_slide
-  soul_cube:
-    {}
+  soul_cube: {}
   item:
     launch:
       render_mode: normal

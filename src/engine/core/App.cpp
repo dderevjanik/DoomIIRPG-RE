@@ -113,6 +113,7 @@ bool Applet::startup() {
 	this->startupMemory = Applet::MAXMEMORY;
 
 	// Engine subsystem startup
+	this->resource->startup();
 	if (!this->canvas->startup()) { LOG_ERROR("[app] error fatal: canvas\n"); return false; }
 	this->testImg = Applet::loadImage("cockpit.bmp", true);
 	this->canvas->loadMiniGameImages();

@@ -4,275 +4,413 @@ entities:
     type: item
     subtype: inventory
     parm: 13
-    text: {name: 76, long_name: 76, description: 77}
+    text:
+      name: 76
+      long_name: 76
+      description: 77
   soul_cube:
     sprite: 0
     type: item
     subtype: ammo
     parm: soul_cube
-    text: {name: 88, long_name: 88, description: 89}
+    text:
+      name: 88
+      long_name: 88
+      description: 89
   inventory_8:
     sprite: 0
     type: item
     subtype: inventory
     parm: 8
-    text: {name: 93, long_name: 94, description: 95}
+    text:
+      name: 93
+      long_name: 94
+      description: 95
   inventory_6:
     sprite: 0
     type: item
     subtype: inventory
     parm: 6
-    text: {name: 96, long_name: 97, description: 98}
+    text:
+      name: 96
+      long_name: 97
+      description: 98
   inventory_1:
     sprite: 0
     type: item
     subtype: inventory
     parm: 1
-    text: {name: 99, long_name: 100, description: 101}
+    text:
+      name: 99
+      long_name: 100
+      description: 101
   inventory_3:
     sprite: 0
     type: item
     subtype: inventory
     parm: 3
-    text: {name: 119, long_name: 120, description: 121}
+    text:
+      name: 119
+      long_name: 120
+      description: 121
   inventory_2:
     sprite: 0
     type: item
     subtype: inventory
     parm: 2
-    text: {name: 102, long_name: 103, description: 104}
+    text:
+      name: 102
+      long_name: 103
+      description: 104
   inventory_9:
     sprite: 0
     type: item
     subtype: inventory
     parm: 9
-    text: {name: 105, long_name: 106, description: 107}
+    text:
+      name: 105
+      long_name: 106
+      description: 107
   inventory_7:
     sprite: 0
     type: item
     subtype: inventory
     parm: 7
-    text: {name: 108, long_name: 109, description: 110}
+    text:
+      name: 108
+      long_name: 109
+      description: 110
   inventory_0:
     sprite: 0
     type: item
     subtype: inventory
     parm: 0
-    text: {name: 111, long_name: 112, description: 113}
+    text:
+      name: 111
+      long_name: 112
+      description: 113
   inventory_5:
     sprite: 0
     type: item
     subtype: inventory
     parm: 5
-    text: {name: 114, long_name: 115, description: 116}
+    text:
+      name: 114
+      long_name: 115
+      description: 116
   inventory_10:
     sprite: 0
     type: item
     subtype: inventory
     parm: 10
-    text: {name: 117, long_name: 117, description: 118}
+    text:
+      name: 117
+      long_name: 117
+      description: 118
   inventory_4:
     sprite: 0
     type: item
     subtype: inventory
     parm: 4
-    text: {name: 122, long_name: 123, description: 124}
+    text:
+      name: 122
+      long_name: 123
+      description: 124
   inventory_16:
     sprite: 0
     type: item
     subtype: inventory
     parm: 16
-    text: {name: 145, long_name: 145, description: 146}
+    text:
+      name: 145
+      long_name: 145
+      description: 146
   inventory_22:
     sprite: 0
     type: item
     subtype: inventory
     parm: 22
-    text: {name: 86, long_name: 86, description: 87}
+    text:
+      name: 86
+      long_name: 86
+      description: 87
   inventory_25:
     sprite: 0
     type: item
     subtype: inventory
     parm: 25
-    text: {name: 157, long_name: 157, description: 158}
+    text:
+      name: 157
+      long_name: 157
+      description: 158
   assault_rifle:
     sprite: assault_rifle
     type: item
     subtype: weapon
     parm: assault_rifle
-    text: {name: 0, long_name: 0, description: 1}
+    text:
+      name: 0
+      long_name: 0
+      description: 1
   chainsaw:
     sprite: chainsaw
     type: item
     subtype: weapon
     parm: chainsaw
-    text: {name: 2, long_name: 2, description: 3}
+    text:
+      name: 2
+      long_name: 2
+      description: 3
   holy_water_pistol:
     sprite: holy_water_pistol
     type: item
     subtype: weapon
     parm: holy_water_pistol
-    text: {name: 4, long_name: 4, description: 5}
+    text:
+      name: 4
+      long_name: 4
+      description: 5
   shooting_sentry_bot:
     sprite: sentry_bot_shooting
     type: item
     subtype: weapon
     parm: shooting_sentry_bot
-    text: {name: 6, long_name: 7, description: 8}
+    text:
+      name: 6
+      long_name: 7
+      description: 8
   exploding_sentry_bot:
     sprite: sentry_bot_exploding
     type: item
     subtype: weapon
     parm: exploding_sentry_bot
-    text: {name: 9, long_name: 10, description: 11}
+    text:
+      name: 9
+      long_name: 10
+      description: 11
   super_shotgun:
     sprite: super_shotgun
     type: item
     subtype: weapon
     parm: super_shotgun
-    text: {name: 12, long_name: 12, description: 13}
+    text:
+      name: 12
+      long_name: 12
+      description: 13
   chaingun:
     sprite: chaingun
     type: item
     subtype: weapon
     parm: chaingun
-    text: {name: 14, long_name: 14, description: 15}
+    text:
+      name: 14
+      long_name: 14
+      description: 15
   assault_rifle_with_scope:
     sprite: assault_rifle_with_scope
     type: item
     subtype: weapon
     parm: assault_rifle_with_scope
-    text: {name: 16, long_name: 17, description: 18}
+    text:
+      name: 16
+      long_name: 17
+      description: 18
   plasma_gun:
     sprite: plasma_gun
     type: item
     subtype: weapon
     parm: plasma_gun
-    text: {name: 19, long_name: 19, description: 20}
+    text:
+      name: 19
+      long_name: 19
+      description: 20
   rocket_launcher:
     sprite: rocket_launcher
     type: item
     subtype: weapon
     parm: rocket_launcher
-    text: {name: 21, long_name: 21, description: 22}
+    text:
+      name: 21
+      long_name: 21
+      description: 22
   bfg:
     sprite: bfg
     type: item
     subtype: weapon
     parm: bfg
-    text: {name: 23, long_name: 23, description: 24}
+    text:
+      name: 23
+      long_name: 23
+      description: 24
   soul_cube_2:
     sprite: soul_cube
     type: item
     subtype: weapon
     parm: soul_cube
-    text: {name: 25, long_name: 25, description: 26}
+    text:
+      name: 25
+      long_name: 25
+      description: 26
   red_shooting_sentry_bot:
     sprite: sentry_bot_red_shooting
     type: item
     subtype: weapon
     parm: red_shooting_sentry_bot
-    text: {name: 6, long_name: 7, description: 8}
+    text:
+      name: 6
+      long_name: 7
+      description: 8
   red_exploding_sentry_bot:
     sprite: sentry_bot_red_exploding
     type: item
     subtype: weapon
     parm: red_exploding_sentry_bot
-    text: {name: 9, long_name: 10, description: 11}
+    text:
+      name: 9
+      long_name: 10
+      description: 11
   item:
     sprite: world_weapon
     type: item
     subtype: weapon
     parm: item
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   bullets:
     sprite: ammo_bullets
     type: item
     subtype: ammo
     parm: bullets
-    text: {name: 78, long_name: 78, description: 79}
+    text:
+      name: 78
+      long_name: 78
+      description: 79
   shells:
     sprite: ammo_shells
     type: item
     subtype: ammo
     parm: shells
-    text: {name: 80, long_name: 80, description: 81}
+    text:
+      name: 80
+      long_name: 80
+      description: 81
   rockets:
     sprite: ammo_rockets
     type: item
     subtype: ammo
     parm: rockets
-    text: {name: 82, long_name: 82, description: 83}
+    text:
+      name: 82
+      long_name: 82
+      description: 83
   cells:
     sprite: ammo_cells
     type: item
     subtype: ammo
     parm: cells
-    text: {name: 84, long_name: 84, description: 85}
+    text:
+      name: 84
+      long_name: 84
+      description: 85
   holy_water:
     sprite: ammo_holy_water
     type: item
     subtype: ammo
     parm: holy_water
-    text: {name: 86, long_name: 86, description: 87}
+    text:
+      name: 86
+      long_name: 86
+      description: 87
   inventory_24:
     sprite: one_uac_credit
     type: item
     subtype: inventory
     parm: 24
-    text: {name: 157, long_name: 157, description: 158}
+    text:
+      name: 157
+      long_name: 157
+      description: 158
   inventory_19:
     sprite: key_red
     type: item
     subtype: inventory
     parm: 19
-    text: {name: 68, long_name: 68, description: 69}
+    text:
+      name: 68
+      long_name: 68
+      description: 69
   inventory_20:
     sprite: key_blue
     type: item
     subtype: inventory
     parm: 20
-    text: {name: 70, long_name: 70, description: 71}
+    text:
+      name: 70
+      long_name: 70
+      description: 71
   inventory_11:
     sprite: armor_jacket
     type: item
     subtype: inventory
     parm: 11
-    text: {name: 72, long_name: 72, description: 73}
+    text:
+      name: 72
+      long_name: 72
+      description: 73
   inventory_23:
     sprite: satchel
     type: item
     subtype: inventory
     parm: 23
-    text: {name: 90, long_name: 90, description: 159}
+    text:
+      name: 90
+      long_name: 90
+      description: 159
   inventory_23_2:
     sprite: pack_item
     type: item
     subtype: inventory
     parm: 23
-    text: {name: 90, long_name: 90, description: 159}
+    text:
+      name: 90
+      long_name: 90
+      description: 159
   inventory_23_3:
     sprite: worker_pack
     type: item
     subtype: inventory
     parm: 23
-    text: {name: 91, long_name: 91, description: 92}
+    text:
+      name: 91
+      long_name: 91
+      description: 92
   inventory_17:
     sprite: health_pack
     type: item
     subtype: inventory
     parm: 17
-    text: {name: 147, long_name: 147, description: 148}
+    text:
+      name: 147
+      long_name: 147
+      description: 148
   food_0:
     sprite: food_plate
     type: item
     subtype: food
     parm: 0
     heal_amount: 40
-    text: {name: 149, long_name: 159, description: 159}
+    text:
+      name: 149
+      long_name: 159
+      description: 159
   inventory_12:
     sprite: armor_shard
     type: item
     subtype: inventory
     parm: 12
-    text: {name: 74, long_name: 74, description: 75}
+    text:
+      name: 74
+      long_name: 74
+      description: 75

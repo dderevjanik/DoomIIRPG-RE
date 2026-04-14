@@ -4,256 +4,380 @@ entities:
     type: corpse
     subtype: boss_vios
     parm: 0
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_boss_vios_parm1:
     sprite: 0
     type: corpse
     subtype: boss_vios
     parm: 1
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_boss_vios_parm2:
     sprite: 0
     type: corpse
     subtype: boss_vios
     parm: 2
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_boss_vios_parm3:
     sprite: 0
     type: corpse
     subtype: boss_vios
     parm: 3
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_boss_vios_parm4:
     sprite: 0
     type: corpse
     subtype: boss_vios
     parm: 4
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_sentry_bot_parm0:
     sprite: 0
     type: corpse
     subtype: sentry_bot
     parm: 0
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_sentry_bot_parm1:
     sprite: 0
     type: corpse
     subtype: sentry_bot
     parm: 1
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_zombie_parm0:
     sprite: 0
     type: corpse
     subtype: zombie
     parm: 0
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_zombie_parm1:
     sprite: 0
     type: corpse
     subtype: zombie
     parm: 1
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_zombie_parm2:
     sprite: 0
     type: corpse
     subtype: zombie
     parm: 2
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_imp_parm0:
     sprite: 0
     type: corpse
     subtype: imp
     parm: 0
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_imp_parm1:
     sprite: 0
     type: corpse
     subtype: imp
     parm: 1
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_imp_parm2:
     sprite: 0
     type: corpse
     subtype: imp
     parm: 2
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_sawcubus_parm0:
     sprite: 0
     type: corpse
     subtype: sawcubus
     parm: 0
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_sawcubus_parm1:
     sprite: 0
     type: corpse
     subtype: sawcubus
     parm: 1
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_sawcubus_parm2:
     sprite: 0
     type: corpse
     subtype: sawcubus
     parm: 2
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_pinky_parm0:
     sprite: 0
     type: corpse
     subtype: pinky
     parm: 0
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_pinky_parm1:
     sprite: 0
     type: corpse
     subtype: pinky
     parm: 1
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_pinky_parm2:
     sprite: 0
     type: corpse
     subtype: pinky
     parm: 2
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_mancubus_parm0:
     sprite: 0
     type: corpse
     subtype: mancubus
     parm: 0
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_mancubus_parm1:
     sprite: 0
     type: corpse
     subtype: mancubus
     parm: 1
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_mancubus_parm2:
     sprite: 0
     type: corpse
     subtype: mancubus
     parm: 2
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_cacodemon_parm0:
     sprite: 0
     type: corpse
     subtype: cacodemon
     parm: 0
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_cacodemon_parm1:
     sprite: 0
     type: corpse
     subtype: cacodemon
     parm: 1
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_cacodemon_parm2:
     sprite: 0
     type: corpse
     subtype: cacodemon
     parm: 2
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_sentinel_parm0:
     sprite: 0
     type: corpse
     subtype: sentinel
     parm: 0
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_sentinel_parm1:
     sprite: 0
     type: corpse
     subtype: sentinel
     parm: 1
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_sentinel_parm2:
     sprite: 0
     type: corpse
     subtype: sentinel
     parm: 2
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_lost_soul_parm0:
     sprite: 0
     type: corpse
     subtype: lost_soul
     parm: 0
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_lost_soul_parm1:
     sprite: 0
     type: corpse
     subtype: lost_soul
     parm: 1
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_lost_soul_parm2:
     sprite: 0
     type: corpse
     subtype: lost_soul
     parm: 2
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_arch_vile_parm0:
     sprite: 0
     type: corpse
     subtype: arch_vile
     parm: 0
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_arch_vile_parm1:
     sprite: 0
     type: corpse
     subtype: arch_vile
     parm: 1
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_arch_vile_parm2:
     sprite: 0
     type: corpse
     subtype: arch_vile
     parm: 2
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_revenant_parm0:
     sprite: 0
     type: corpse
     subtype: revenant
     parm: 0
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_revenant_parm1:
     sprite: 0
     type: corpse
     subtype: revenant
     parm: 1
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_revenant_parm2:
     sprite: 0
     type: corpse
     subtype: revenant
     parm: 2
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_phantom_parm0:
     sprite: 0
     type: corpse
     subtype: phantom
     parm: 0
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_cyberdemon_parm0:
     sprite: 0
     type: corpse
     subtype: cyberdemon
     parm: 0
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_mastermind_parm0:
     sprite: 0
     type: corpse
     subtype: mastermind
     parm: 0
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_phantom_parm1:
     sprite: 0
     type: corpse
     subtype: phantom
     parm: 1
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   phantom_parm0:
     sprite: monster_arachnotron
     type: monster
     subtype: phantom
     parm: 0
-    text: {name: 63, long_name: 63, description: 159}
+    text:
+      name: 63
+      long_name: 63
+      description: 159
     rendering:
-      flags:
-      - special_boss
       special_boss:
         type: spider
         leg_lateral: -29
@@ -267,21 +391,38 @@ entities:
         pain_legs_z: 70
         pain_leg_pos: 1
     combat:
-      stats: {health: 30, armor: 0, defense: 20, strength: 25, accuracy: 95, agility: 60}
-      attacks: {attack1: m_plasma_gun, attack2: assault_rifle, chance: 0}
+      stats:
+        health: 30
+        armor: 0
+        defense: 20
+        strength: 25
+        accuracy: 95
+        agility: 60
+      attacks:
+        attack1: m_plasma_gun
+        attack2: assault_rifle
+        chance: 0
       weakness: {}
-      sounds: {alert1: arachnotron_sight, alert2: arachnotron_sight, alert3: arachnotron_sight, attack1: chaingun, attack2: none,
-        idle: arachnotron_active, pain: demon_pain, death: arachnotron_death}
+      sounds:
+        alert1: arachnotron_sight
+        alert2: arachnotron_sight
+        alert3: arachnotron_sight
+        attack1: chaingun
+        attack2: none
+        idle: arachnotron_active
+        pain: demon_pain
+        death: arachnotron_death
   phantom_parm1:
     sprite: boss_mastermind
     type: monster
     subtype: phantom
     parm: 1
-    text: {name: 66, long_name: 66, description: 159}
+    text:
+      name: 66
+      long_name: 66
+      description: 159
     rendering:
-      flags:
-      - gun_flare
-      - special_boss
+      gun_flare: true
       special_boss:
         type: spider
         leg_lateral: -44
@@ -299,328 +440,519 @@ entities:
         flare_lateral_pos: 0
         flare_torso_z_extra: 10
     combat:
-      stats: {health: 70, armor: 0, defense: 30, strength: 38, accuracy: 100, agility: 35}
-      attacks: {attack1: m_chain_gun, attack2: assault_rifle, chance: 0}
+      stats:
+        health: 70
+        armor: 0
+        defense: 30
+        strength: 38
+        accuracy: 100
+        agility: 35
+      attacks:
+        attack1: m_chain_gun
+        attack2: assault_rifle
+        chance: 0
       weakness: {}
-      sounds: {alert1: arachnotron_sight, alert2: arachnotron_sight, alert3: arachnotron_sight, attack1: chaingun, attack2: none,
-        idle: arachnotron_active, pain: demon_pain, death: arachnotron_death}
+      sounds:
+        alert1: arachnotron_sight
+        alert2: arachnotron_sight
+        alert3: arachnotron_sight
+        attack1: chaingun
+        attack2: none
+        idle: arachnotron_active
+        pain: demon_pain
+        death: arachnotron_death
   attack_interactive_0:
     sprite: obj_table
     type: attack_interactive
-    subtype: 0  # INTERACT_FURNITURE
+    subtype: 0
     parm: 1
-    text: {name: 128, long_name: 159, description: 159}
-    destroy: {particle_id: 2, particle_color: -8421505}
+    text:
+      name: 128
+      long_name: 159
+      description: 159
+    destroy:
+      particle_id: 2
+      particle_color: -8421505
   attack_interactive_3:
     sprite: toilet
     type: attack_interactive
-    subtype: 3  # INTERACT_PICKUP
+    subtype: 3
     parm: 3
-    text: {name: 131, long_name: 131, description: 144}
-    destroy: {particle_id: 1, convert_to_water_spout: true}
+    text:
+      name: 131
+      long_name: 131
+      description: 144
+    destroy:
+      particle_id: 1
+      convert_to_water_spout: true
   decor_0:
     sprite: ladder
     type: decor
     subtype: misc
     parm: 1
-    text: {name: 165, long_name: 165, description: 159}
+    text:
+      name: 165
+      long_name: 165
+      description: 159
   attack_interactive_3_2:
     sprite: sink
     type: attack_interactive
-    subtype: 3  # INTERACT_PICKUP
+    subtype: 3
     parm: 3
-    text: {name: 132, long_name: 132, description: 144}
-    destroy: {particle_id: 1, convert_to_water_spout: true}
+    text:
+      name: 132
+      long_name: 132
+      description: 144
+    destroy:
+      particle_id: 1
+      convert_to_water_spout: true
   env_damage_1:
     sprite: obj_fire
     type: env_damage
-    subtype: 1  # ENV_DAMAGE_FIRE
+    subtype: 1
     parm: 0
-    text: {name: 130, long_name: 159, description: 159}
-    env_damage: {damage: 20, status_effect_id: 13, status_duration: 5, status_power: 3, resist_buff_idx: 9}
+    text:
+      name: 130
+      long_name: 159
+      description: 159
+    env_damage:
+      damage: 20
+      status_effect_id: 13
+      status_duration: 5
+      status_power: 3
+      resist_buff_idx: 9
   decor_noclip_8:
     sprite: treadmill_monitor
     type: decor_noclip
     subtype: treadmill
     parm: 1
-    text: {name: 166, long_name: 166, description: 159}
+    text:
+      name: 166
+      long_name: 166
+      description: 159
   decor_0_2:
     sprite: tech_station
     type: decor
     subtype: misc
     parm: 1
-    text: {name: 170, long_name: 170, description: 159}
+    text:
+      name: 170
+      long_name: 170
+      description: 159
   decor_noclip_7:
     sprite: water_spout
     type: decor_noclip
     subtype: water_spout
     parm: 1
-    text: {name: 133, long_name: 133, description: 159}
+    text:
+      name: 133
+      long_name: 133
+      description: 159
   attack_interactive_0_2:
     sprite: obj_chair
     type: attack_interactive
-    subtype: 0  # INTERACT_FURNITURE
+    subtype: 0
     parm: 1
-    text: {name: 134, long_name: 159, description: 159}
-    destroy: {particle_id: 2, particle_color: -8421505}
+    text:
+      name: 134
+      long_name: 159
+      description: 159
+    destroy:
+      particle_id: 2
+      particle_color: -8421505
   decor_0_3:
     sprite: obj_torchiere
     type: decor
     subtype: misc
     parm: 0
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   corpse_17_parm2:
     sprite: obj_scientist_corpse
     type: corpse
     subtype: 17
     parm: 2
-    text: {name: 135, long_name: 135, description: 159}
+    text:
+      name: 135
+      long_name: 135
+      description: 159
   corpse_17_parm0:
     sprite: obj_corpse
     type: corpse
     subtype: 17
     parm: 0
-    text: {name: 135, long_name: 135, description: 159}
+    text:
+      name: 135
+      long_name: 135
+      description: 159
   corpse_17_parm1:
     sprite: obj_other_corpse
     type: corpse
     subtype: 17
     parm: 1
-    text: {name: 135, long_name: 135, description: 159}
+    text:
+      name: 135
+      long_name: 135
+      description: 159
   env_damage_0:
     sprite: dummy_pain
     type: env_damage
-    subtype: 0  # ENV_DAMAGE_SPIKES
+    subtype: 0
     parm: 0
-    text: {name: 27, long_name: 27, description: 159}
-    env_damage: {damage: 20}
+    text:
+      name: 27
+      long_name: 27
+      description: 159
+    env_damage:
+      damage: 20
   decor_noclip_0:
     sprite: attack_dummy
     type: decor_noclip
     subtype: misc
     parm: 0
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   decor_noclip_0_2:
     sprite: exit_dummy
     type: decor_noclip
     subtype: misc
     parm: 0
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   decor_noclip_0_3:
     sprite: use_dummy
     type: decor_noclip
     subtype: misc
     parm: 0
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   decor_0_4:
     sprite: septic_station
     type: decor
     subtype: misc
     parm: 1
-    text: {name: 172, long_name: 172, description: 159}
+    text:
+      name: 172
+      long_name: 172
+      description: 159
   decor_0_5:
     sprite: practice_target
     type: decor
     subtype: misc
     parm: 0
-    text: {name: 167, long_name: 159, description: 159}
+    text:
+      name: 167
+      long_name: 159
+      description: 159
   decor_0_6:
     sprite: obj_printer
     type: decor
     subtype: misc
     parm: 1
-    text: {name: 160, long_name: 160, description: 159}
+    text:
+      name: 160
+      long_name: 160
+      description: 159
   attack_interactive_2:
     sprite: obj_crate
     type: attack_interactive
-    subtype: 2  # INTERACT_CRATE
+    subtype: 2
     parm: 0
-    text: {name: 136, long_name: 159, description: 159}
-    destroy: {particle_id: 2, particle_color: -8421505}
+    text:
+      name: 136
+      long_name: 159
+      description: 159
+    destroy:
+      particle_id: 2
+      particle_color: -8421505
   decor_0_7:
     sprite: vending_machine
     type: decor
     subtype: misc
     parm: 1
-    text: {name: 126, long_name: 126, description: 159}
+    text:
+      name: 126
+      long_name: 126
+      description: 159
   decor_0_8:
     sprite: armor_repair
     type: decor
     subtype: misc
     parm: 1
-    text: {name: 127, long_name: 127, description: 159}
+    text:
+      name: 127
+      long_name: 127
+      description: 159
   decor_1:
     sprite: eye_portal
     type: decor
     subtype: exithall
     parm: 0
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   decor_noclip_8_2:
     sprite: treadmill_side
     type: decor_noclip
     subtype: treadmill
     parm: 1
-    text: {name: 166, long_name: 166, description: 159}
+    text:
+      name: 166
+      long_name: 166
+      description: 159
   decor_noclip_8_3:
     sprite: treadmill_front
     type: decor_noclip
     subtype: treadmill
     parm: 1
-    text: {name: 166, long_name: 166, description: 159}
+    text:
+      name: 166
+      long_name: 166
+      description: 159
   decor_0_9:
     sprite: switch
     type: decor
     subtype: misc
     parm: 1
-    text: {name: 125, long_name: 159, description: 159}
+    text:
+      name: 125
+      long_name: 159
+      description: 159
   attack_interactive_1:
     sprite: glass
     type: attack_interactive
-    subtype: 1  # INTERACT_BARRICADE
+    subtype: 1
     parm: 2
-    text: {name: 137, long_name: 159, description: 159}
-    destroy: {particle_id: 2, destroy_frame: 1, unlink_only: true}
+    text:
+      name: 137
+      long_name: 159
+      description: 159
+    destroy:
+      particle_id: 2
+      destroy_frame: 1
+      unlink_only: true
   decor_0_10:
     sprite: terminal_target
     type: decor
     subtype: misc
     parm: 1
-    text: {name: 161, long_name: 161, description: 159}
+    text:
+      name: 161
+      long_name: 161
+      description: 159
   decor_0_11:
     sprite: terminal_general
     type: decor
     subtype: misc
     parm: 1
-    text: {name: 129, long_name: 129, description: 159}
+    text:
+      name: 129
+      long_name: 129
+      description: 159
   decor_0_12:
     sprite: terminal_vios
     type: decor
     subtype: misc
     parm: 1
-    text: {name: 162, long_name: 162, description: 159}
+    text:
+      name: 162
+      long_name: 162
+      description: 159
   decor_0_13:
     sprite: terminal_bot
     type: decor
     subtype: misc
     parm: 1
-    text: {name: 163, long_name: 163, description: 159}
+    text:
+      name: 163
+      long_name: 163
+      description: 159
   decor_0_14:
     sprite: terminal_hacking
     type: decor
     subtype: misc
     parm: 1
-    text: {name: 164, long_name: 164, description: 159}
+    text:
+      name: 164
+      long_name: 164
+      description: 159
   decor_0_15:
     sprite: bush
     type: decor
     subtype: misc
     parm: 0
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   decor_0_16:
     sprite: tree_top
     type: decor
     subtype: misc
     parm: 0
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   decor_0_17:
     sprite: tree_trunk
     type: decor
     subtype: misc
     parm: 0
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   decor_0_18:
     sprite: glaevenscope
     type: decor
     subtype: misc
     parm: 1
-    text: {name: 171, long_name: 171, description: 159}
+    text:
+      name: 171
+      long_name: 171
+      description: 159
   door_locked:
     sprite: red_door_locked
     type: door
     subtype: locked
     parm: 1
-    text: {name: 139, long_name: 159, description: 159}
+    text:
+      name: 139
+      long_name: 159
+      description: 159
   door_unlocked:
     sprite: red_door_unlocked
     type: door
     subtype: unlocked
     parm: 1
-    text: {name: 138, long_name: 159, description: 159}
+    text:
+      name: 138
+      long_name: 159
+      description: 159
   door_locked_2:
     sprite: blue_door_locked
     type: door
     subtype: locked
     parm: 1
-    text: {name: 141, long_name: 159, description: 159}
+    text:
+      name: 141
+      long_name: 159
+      description: 159
   door_unlocked_2:
     sprite: blue_door_unlocked
     type: door
     subtype: unlocked
     parm: 1
-    text: {name: 140, long_name: 159, description: 159}
+    text:
+      name: 140
+      long_name: 159
+      description: 159
   door_locked_3:
     sprite: door_locked
     type: door
     subtype: locked
     parm: 0
-    text: {name: 142, long_name: 159, description: 159}
+    text:
+      name: 142
+      long_name: 159
+      description: 159
   door_unlocked_3:
     sprite: door_unlocked
     type: door
     subtype: unlocked
     parm: 0
-    text: {name: 143, long_name: 159, description: 159}
+    text:
+      name: 143
+      long_name: 159
+      description: 159
   door_locked_4:
     sprite: level_door_locked
     type: door
     subtype: locked
     parm: 2
-    text: {name: 168, long_name: 168, description: 159}
+    text:
+      name: 168
+      long_name: 168
+      description: 159
   door_unlocked_4:
     sprite: level_door_unlocked
     type: door
     subtype: unlocked
     parm: 2
-    text: {name: 169, long_name: 169, description: 159}
+    text:
+      name: 169
+      long_name: 169
+      description: 159
   decor_noclip_0_4:
     sprite: flat_lava
     type: decor_noclip
     subtype: misc
     parm: 0
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   decor_noclip_0_5:
     sprite: flat_lava2
     type: decor_noclip
     subtype: misc
     parm: 0
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   nonobstructing_spritewall_0:
     sprite: 507
     type: nonobstructing_spritewall
     subtype: 0
     parm: 0
-    text: {name: 151, long_name: 159, description: 159}
+    text:
+      name: 151
+      long_name: 159
+      description: 159
   spritewall_0:
     sprite: 508
     type: spritewall
     subtype: 0
     parm: 0
-    text: {name: 152, long_name: 159, description: 159}
+    text:
+      name: 152
+      long_name: 159
+      description: 159
   spritewall_1:
     sprite: 509
     type: spritewall
     subtype: 1
     parm: 0
-    text: {name: 153, long_name: 159, description: 159}
+    text:
+      name: 153
+      long_name: 159
+      description: 159
   player_0:
     sprite: 510
     type: player
     subtype: 0
     parm: 0
-    text: {name: 159, long_name: 159, description: 159}
+    text:
+      name: 159
+      long_name: 159
+      description: 159
   world_0:
     sprite: 511
     type: world
     subtype: 0
     parm: 0
-    text: {name: 154, long_name: 159, description: 159}
+    text:
+      name: 154
+      long_name: 159
+      description: 159

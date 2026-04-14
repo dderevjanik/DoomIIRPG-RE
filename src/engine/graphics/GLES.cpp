@@ -41,8 +41,8 @@ void gles::SwapBuffers() {
 
 void gles::GLInit(Render* render) {
 	this->app = CAppContainer::getInstance()->app;
-	this->headless = this->headless;
-	this->sdlGL = this->sdlGL;
+	this->headless = CAppContainer::getInstance()->headless;
+	this->sdlGL = CAppContainer::getInstance()->sdlGL;
 
 	_glesObj = this;
 	this->render = render;

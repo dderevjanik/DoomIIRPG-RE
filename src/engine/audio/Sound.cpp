@@ -28,7 +28,7 @@ Sound::~Sound() {
 
 bool Sound::startup() {
 	this->app = CAppContainer::getInstance()->app;
-	this->headless = this->headless;
+	this->headless = CAppContainer::getInstance()->headless;
 	LOG_INFO("[sound] startup\n");
 
 	this->field_0x162 = 0;

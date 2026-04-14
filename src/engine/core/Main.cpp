@@ -189,6 +189,7 @@ int main(int argc, char* args[]) {
 				std::string candidates[] = {
 					selfDir + "drpg-convert",
 					selfDir + "converter/drpg-convert",
+					selfDir + "../../../converter/drpg-convert",  // macOS .app bundle: MacOS/ -> Contents/ -> .app/ -> src/
 				};
 				for (const auto& c : candidates) {
 					if (access(c.c_str(), X_OK) == 0) {

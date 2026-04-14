@@ -56,6 +56,7 @@ bool Game::startup() {
 
 	for (int i = 0; i < this->maxEntities; i++) {
 		this->entities[i].app = app;
+		this->entities[i].gameConfig = this->gameConfig;
 	}
 
 	for (int i = 0; i < 20; i++) {

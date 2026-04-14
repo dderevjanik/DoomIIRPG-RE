@@ -1,339 +1,1012 @@
-# Tile/sprite name-to-index mapping  # Used by projectiles.yaml, entities.yaml, and other configs  # Modders can remap sprite sheet layouts by changing the indices here.
-
 sprites:
-  assault_rifle: {file: tables.bin, id: 1}
-  chainsaw: {file: tables.bin, id: 2}
-  holy_water_pistol: {file: tables.bin, id: 3}
-  sentry_bot_shooting: {file: tables.bin, id: 4}
-  sentry_bot_exploding: {file: tables.bin, id: 5}
-  super_shotgun: {file: tables.bin, id: 6}
-  chaingun: {file: tables.bin, id: 7}
-  assault_rifle_with_scope: {file: tables.bin, id: 8}
-  plasma_gun: {file: tables.bin, id: 9}
-  rocket_launcher: {file: tables.bin, id: 10}
-  bfg: {file: tables.bin, id: 11}
-  soul_cube: {file: tables.bin, id: 12}
-  sentry_bot_red_shooting: {file: tables.bin, id: 13}
-  sentry_bot_red_exploding: {file: tables.bin, id: 14}
-  world_weapon: {file: tables.bin, id: 15}
-  monster_red_sentry_bot: {file: tables.bin, id: 18, render: {loot_aura: {scale: 18, flags: 512}}}
-  monster_sentry_bot: {file: tables.bin, id: 19, render: {loot_aura: {scale: 18, flags: 512}}}
-  monster_zombie: {file: tables.bin, id: 20}
-  monster_zombie2: {file: tables.bin, id: 21}
-  monster_zombie3: {file: tables.bin, id: 22}
-  monster_imp: {file: tables.bin, id: 23}
-  monster_imp2: {file: tables.bin, id: 24}
-  monster_imp3: {file: tables.bin, id: 25}
-  monster_saw_goblin: {file: tables.bin, id: 26}
-  monster_saw_goblin2: {file: tables.bin, id: 27}
-  monster_saw_goblin3: {file: tables.bin, id: 28}
-  monster_lost_soul: {file: tables.bin, id: 29}
-  monster_lost_soul2: {file: tables.bin, id: 30}
-  monster_lost_soul3: {file: tables.bin, id: 31}
-  monster_pinky: {file: tables.bin, id: 32}
-  monster_pinky2: {file: tables.bin, id: 33}
-  monster_pinky3: {file: tables.bin, id: 34}
-  monster_revenant: {file: tables.bin, id: 35}
-  monster_revenant2: {file: tables.bin, id: 36}
-  monster_revenant3: {file: tables.bin, id: 37}
-  monster_mancubus: {file: tables.bin, id: 38}
-  monster_mancubus2: {file: tables.bin, id: 39}
-  monster_mancubus3: {file: tables.bin, id: 40}
-  monster_cacodemon: {file: tables.bin, id: 41}
-  monster_cacodemon2: {file: tables.bin, id: 42}
-  monster_cacodemon3: {file: tables.bin, id: 43}
-  monster_sentinel: {file: tables.bin, id: 44}
-  monster_sentinel2: {file: tables.bin, id: 45}
-  monster_sentinel3: {file: tables.bin, id: 46}
-  monster_arch_vile: {file: tables.bin, id: 50}
-  monster_arch_vile2: {file: tables.bin, id: 51}
-  monster_arch_vile3: {file: tables.bin, id: 52}
-  monster_arachnotron: {file: tables.bin, id: 53}
-  boss_cyberdemon: {file: tables.bin, id: 54}
-  boss_pinky: {file: tables.bin, id: 56}
-  boss_mastermind: {file: tables.bin, id: 57}
-  boss_vios: {file: tables.bin, id: 58, render: {multiply_shift: true}}
-  boss_vios2: {file: tables.bin, id: 59, render: {multiply_shift: true}}
-  boss_vios3: {file: tables.bin, id: 60, render: {multiply_shift: true}}
-  boss_vios4: {file: tables.bin, id: 61, render: {multiply_shift: true}}
-  boss_vios5: {file: tables.bin, id: 62, render: {multiply_shift: true}}
-  npc_riley_oconnor: {file: tables.bin, id: 66}
-  npc_major: {file: tables.bin, id: 68}
-  npc_bob: {file: tables.bin, id: 69}
-  npc_civilian: {file: tables.bin, id: 71}
-  npc_sarge: {file: tables.bin, id: 72}
-  npc_female: {file: tables.bin, id: 73}
-  npc_evil_scientist: {file: tables.bin, id: 74}
-  npc_scientist: {file: tables.bin, id: 75}
-  npc_researcher: {file: tables.bin, id: 76}
-  npc_civilian2: {file: tables.bin, id: 77}
-  ammo_bullets: {file: tables.bin, id: 85}
-  ammo_shells: {file: tables.bin, id: 86}
-  ammo_rockets: {file: tables.bin, id: 88}
-  ammo_cells: {file: tables.bin, id: 89}
-  ammo_holy_water: {file: tables.bin, id: 90}
-  one_uac_credit: {file: tables.bin, id: 107}
-  key_red: {file: tables.bin, id: 110}
-  key_blue: {file: tables.bin, id: 111}
-  armor_jacket: {file: tables.bin, id: 112}
-  satchel: {file: tables.bin, id: 113}
-  pack_item: {file: tables.bin, id: 114}
-  worker_pack: {file: tables.bin, id: 115}
-  health_pack: {file: tables.bin, id: 116}
-  food_plate: {file: tables.bin, id: 117}
-  armor_shard: {file: tables.bin, id: 119}
-  obj_table: {file: tables.bin, id: 121}
-  hell_seal: {file: tables.bin, id: 122}
-  toilet: {file: tables.bin, id: 123}
-  dirt_decal: {file: tables.bin, id: 124}
-  ladder: {file: tables.bin, id: 125}
-  blood_splatter: {file: tables.bin, id: 126}
-  sink: {file: tables.bin, id: 127}
-  barred_window: {file: tables.bin, id: 128}
-  hazard_bar: {file: tables.bin, id: 129}
-  obj_fire: {file: tables.bin, id: 130, render: {position_at_view: {offset_mult: 18, z_offset: -512}}}
-  treadmill_monitor: {file: tables.bin, id: 131}
-  tech_station: {file: tables.bin, id: 133}
-  water_spout: {file: tables.bin, id: 134, render: {auto_anim: {period: 128, frames: 2}}}
-  obj_chair: {file: tables.bin, id: 135}
-  obj_torchiere: {file: tables.bin, id: 136, render: {glow: {sprite: sfx_lightglow1, z_mult: 10, mode: add50}}}
-  obj_scientist_corpse: {file: tables.bin, id: 137, render: {loot_aura: {scale: 18, flags: 512}}}
-  obj_corpse: {file: tables.bin, id: 138, render: {loot_aura: {scale: 18, flags: 512}}}
-  obj_other_corpse: {file: tables.bin, id: 139, render: {loot_aura: {scale: 18, flags: 512}}}
-  dummy_pain: {file: tables.bin, id: 140}
-  attack_dummy: {file: tables.bin, id: 141}
-  exit_dummy: {file: tables.bin, id: 142}
-  use_dummy: {file: tables.bin, id: 143}
-  septic_station: {file: tables.bin, id: 147}
-  practice_target: {file: tables.bin, id: 149}
-  obj_printer: {file: tables.bin, id: 150}
-  obj_crate: {file: tables.bin, id: 152, render: {z_offset_floor: -224}}
-  vending_machine: {file: tables.bin, id: 153}
-  armor_repair: {file: tables.bin, id: 154}
-  closed_portal_eye: {file: tables.bin, id: 155, render: {z_offset_wall: -128}}
-  eye_portal: {file: tables.bin, id: 156, render: {z_offset_wall: -128}}
-  portal_socket: {file: tables.bin, id: 157}
-  treadmill_side: {file: tables.bin, id: 158, render: {skip: true}}
-  treadmill_front: {file: tables.bin, id: 159}
-  hell_hands: {file: tables.bin, id: 161}
-  doorjamb_decal: {file: tables.bin, id: 162}
-  stones_and_skulls: {file: tables.bin, id: 164}
-  nonobstructing_spritewall: {file: tables.bin, id: 166}
-  fence: {file: tables.bin, id: 168}
-  sentinel_spikes: {file: tables.bin, id: 170}
-  sentinel_spikes_dummy: {file: tables.bin, id: 171, render: {skip: true}}
-  switch: {file: tables.bin, id: 173}
-  tech_detail: {file: tables.bin, id: 175}
-  hell_skulls: {file: tables.bin, id: 177}
-  glass: {file: tables.bin, id: 178}
-  terminal_target: {file: tables.bin, id: 179, render: {z_offset_wall: -256}}
-  terminal_general: {file: tables.bin, id: 180}
-  terminal_vios: {file: tables.bin, id: 181}
-  terminal_bot: {file: tables.bin, id: 182}
-  terminal_hacking: {file: tables.bin, id: 183, render: {z_offset_wall: -256}}
-  elevator_nums: {file: tables.bin, id: 184}
-  bush: {file: tables.bin, id: 187}
-  tree_top: {file: tables.bin, id: 188, render: {composite: [{sprite: tree_trunk, z_mult: 0}, {sprite: tree_top, z_mult: 36}]}}
-  tree_trunk: {file: tables.bin, id: 189}
-  sfx_lightglow1: {file: tables.bin, id: 193}
-  window3: {file: tables.bin, id: 197}
-  glaevenscope: {file: tables.bin, id: 201}
-  fog_gray: {file: tables.bin, id: 208}
-  scorch_mark: {file: tables.bin, id: 212}
-  static_flame: {file: tables.bin, id: 223}
-  missile_player_rocket: {file: tables.bin, id: 225}
-  missile_rocket: {file: tables.bin, id: 226}
-  flesh: {file: tables.bin, id: 227}
-  shadow: {file: tables.bin, id: 232}
-  anim_fire: {file: tables.bin, id: 234}
-  anim_water: {file: tables.bin, id: 235}
-  air_vent: {file: tables.bin, id: 236}
-  soul_cube_attack: {file: tables.bin, id: 239}
-  water_stream: {file: tables.bin, id: 240, render: {path: stream}}
-  caco_plasma: {file: tables.bin, id: 241}
-  fire_ball: {file: tables.bin, id: 242}
-  plasma_ball: {file: tables.bin, id: 243}
-  bfg_ball: {file: tables.bin, id: 244}
-  monster_claw: {file: tables.bin, id: 245}
-  monster_bite: {file: tables.bin, id: 246}
-  monster_blunt_trauma: {file: tables.bin, id: 247}
-  electric_slide: {file: tables.bin, id: 248}
-  fear_eye: {file: tables.bin, id: 251}
-  acid_spit: {file: tables.bin, id: 252}
-  npc_chat: {file: tables.bin, id: 254}
-  alert: {file: tables.bin, id: 255}
-  doorjamb: {file: tables.bin, id: 257}
-  red_door_locked: {file: tables.bin, id: 271}
-  red_door_unlocked: {file: tables.bin, id: 272}
-  blue_door_locked: {file: tables.bin, id: 273}
-  blue_door_unlocked: {file: tables.bin, id: 274}
-  door_locked: {file: tables.bin, id: 275}
-  door_unlocked: {file: tables.bin, id: 276}
-  level_door_locked: {file: tables.bin, id: 277}
-  level_door_unlocked: {file: tables.bin, id: 278}
-  sky_box: {file: tables.bin, id: 301}
-  fade: {file: tables.bin, id: 302}
-  flat_lava: {file: tables.bin, id: 479, render: {tex_anim: {s_div: 8, t_div: 16, mask: 0x3FF}}}
-  flat_lava2: {file: tables.bin, id: 480, render: {tex_anim: {t_div: 2, mask: 0x3FF}}}
-  wp_view_assault_rifle: {file: tables.bin, id: 1}
-  wp_view_chainsaw: {file: tables.bin, id: 2}
-  wp_view_holy_water_pistol: {file: tables.bin, id: 3}
-  wp_view_shooting_sentry_bot: {file: tables.bin, id: 4}
-  wp_view_exploding_sentry_bot: {file: tables.bin, id: 5}
-  wp_view_super_shotgun: {file: tables.bin, id: 8}
-  wp_view_chaingun: {file: tables.bin, id: 9}
-  wp_view_assault_rifle_with_scope: {file: tables.bin, id: 10}
-  wp_view_plasma_gun: {file: tables.bin, id: 11}
-  wp_view_rocket_launcher: {file: tables.bin, id: 12}
-  wp_view_bfg: {file: tables.bin, id: 13}
-  wp_view_soul_cube: {file: tables.bin, id: 14}
-  wp_view_red_shooting_sentry_bot: {file: tables.bin, id: 13}
-  wp_view_red_exploding_sentry_bot: {file: tables.bin, id: 14}
-  wp_view_item: {file: tables.bin, id: 15}
-  menu_btn_bg: {file: menu_button_background.bmp}
-  menu_btn_bg_on: {file: menu_button_background_on.bmp}
-  menu_arrow_down: {file: menu_arrow_down.bmp}
-  menu_arrow_up: {file: menu_arrow_up.bmp}
-  switch_left_normal: {file: Switch_Left_Normal.bmp}
-  switch_left_active: {file: Switch_Left_Active.bmp}
-  slider_bar: {file: Menu_Option_SliderBar.bmp}
-  slider_on: {file: Menu_Option_SliderON.bmp}
-  slider_off: {file: Menu_Option_SliderOFF.bmp}
-  info_btn_normal: {file: gameMenu_infoButton_Normal.bmp}
-  info_btn_pressed: {file: gameMenu_infoButton_Pressed.bmp}
-  vending_arrow_up_glow: {file: vending_arrow_up_glow.bmp}
-  vending_arrow_down_glow: {file: vending_arrow_down_glow.bmp}
-  vending_btn_large: {file: vending_button_large.bmp}
-  vending_btn_help: {file: vending_button_help.bmp}
-  ingame_option_btn: {file: inGame_menu_option_button.bmp}
-  menu_dial: {file: Menu_Dial.bmp}
-  menu_dial_knob: {file: Menu_Dial_Knob.bmp}
-  menu_main_box: {file: Menu_Main_BOX.bmp}
-  main_menu_overlay: {file: Main_Menu_OverLay.bmp}
-  main_help_overlay: {file: Main_Help_OverLay.bmp}
-  main_about_overlay: {file: Main_About_OverLay.bmp}
-  menu_yesno_box: {file: Menu_YesNo_BOX.bmp}
-  menu_choose_diff_box: {file: Menu_ChooseDIFF_BOX.bmp}
-  menu_language_box: {file: Menu_Language_BOX.bmp}
-  menu_option_box3: {file: Menu_Option_BOX3.bmp}
-  menu_option_box4: {file: Menu_Option_BOX4.bmp}
-  hud_numbers: {file: Hud_Numbers.bmp}
-  game_menu_panel_bottom: {file: gameMenu_Panel_bottom.bmp}
-  game_menu_panel_bottom_sentry: {file: gameMenu_Panel_bottom_sentrybot.bmp}
-  game_menu_health: {file: gameMenu_Health.bmp}
-  game_menu_shield: {file: gameMenu_Shield.bmp}
-  game_menu_torn_page: {file: gameMenu_TornPage.bmp}
-  game_menu_background: {file: gameMenu_Background.bmp}
-  main_menu_dial_a_anim: {file: Main_Menu_DialA_anim.bmp}
-  main_menu_dial_c_anim: {file: Main_Menu_DialC_anim.bmp}
-  main_menu_slide_anim: {file: Main_Menu_Slide_anim.bmp}
-  game_menu_scrollbar: {file: gameMenu_ScrollBar.bmp}
-  game_menu_top_slider: {file: gameMenu_topSlider.bmp}
-  game_menu_mid_slider: {file: gameMenu_midSlider.bmp}
-  game_menu_bottom_slider: {file: gameMenu_bottomSlider.bmp}
-  vending_scrollbar: {file: vending_scroll_bar.bmp}
-  vending_scroll_btn_top: {file: vending_scroll_button_top.bmp}
-  vending_scroll_btn_mid: {file: vending_scroll_button_middle.bmp}
-  vending_scroll_btn_bottom: {file: vending_scroll_button_bottom.bmp}
-  logo: {file: logo2.bmp}
-
-  # Travel map images
-  tm_background: {file: TravelMap.bmp}
-  tm_horz_grid: {file: travelMapHorzGrid.bmp}
-  tm_vert_grid: {file: travelMapVertGrid.bmp}
-  tm_highlight: {file: highlight.bmp}
-  tm_magnifying_glass: {file: magnifyingGlass.bmp}
-  tm_spaceship: {file: spaceShip.bmp}
-  tm_closeup_moon: {file: TM_Levels1.bmp}
-  tm_closeup_earth_arrival: {file: TM_Levels2.bmp}
-  tm_closeup_hell: {file: TM_Levels3.bmp}
-  tm_closeup_earth: {file: TM_Levels4.bmp}
-  tm_path_to_moon: {file: toMoon.bmp}
-  tm_path_to_earth: {file: toEarth.bmp}
-  tm_path_to_hell: {file: toHell.bmp}
-
-  # Wall/floor textures (auto-generated from map media indices)
-  texture_105: {file: tables.bin, id: 105}
-  texture_120: {file: tables.bin, id: 120}
-  texture_132: {file: tables.bin, id: 132}
-  texture_144: {file: tables.bin, id: 144}
-  texture_145: {file: tables.bin, id: 145}
-  texture_146: {file: tables.bin, id: 146}
-  texture_160: {file: tables.bin, id: 160}
-  texture_163: {file: tables.bin, id: 163}
-  texture_167: {file: tables.bin, id: 167}
-  texture_202: {file: tables.bin, id: 202}
-  texture_258: {file: tables.bin, id: 258}
-  texture_259: {file: tables.bin, id: 259}
-  texture_261: {file: tables.bin, id: 261}
-  texture_262: {file: tables.bin, id: 262}
-  texture_263: {file: tables.bin, id: 263}
-  texture_264: {file: tables.bin, id: 264}
-  texture_265: {file: tables.bin, id: 265}
-  texture_266: {file: tables.bin, id: 266}
-  texture_267: {file: tables.bin, id: 267}
-  texture_279: {file: tables.bin, id: 279}
-  texture_280: {file: tables.bin, id: 280}
-  texture_286: {file: tables.bin, id: 286}
-  texture_297: {file: tables.bin, id: 297}
-  texture_298: {file: tables.bin, id: 298}
-  texture_299: {file: tables.bin, id: 299}
-  texture_300: {file: tables.bin, id: 300}
-  texture_303: {file: tables.bin, id: 303}
-  texture_304: {file: tables.bin, id: 304}
-  texture_305: {file: tables.bin, id: 305}
-  texture_307: {file: tables.bin, id: 307}
-  texture_309: {file: tables.bin, id: 309}
-  texture_310: {file: tables.bin, id: 310}
-  texture_311: {file: tables.bin, id: 311}
-  texture_312: {file: tables.bin, id: 312}
-  texture_314: {file: tables.bin, id: 314}
-  texture_316: {file: tables.bin, id: 316}
-  texture_318: {file: tables.bin, id: 318}
-  texture_319: {file: tables.bin, id: 319}
-  texture_320: {file: tables.bin, id: 320}
-  texture_323: {file: tables.bin, id: 323}
-  texture_326: {file: tables.bin, id: 326}
-  texture_327: {file: tables.bin, id: 327}
-  texture_331: {file: tables.bin, id: 331}
-  texture_332: {file: tables.bin, id: 332}
-  texture_336: {file: tables.bin, id: 336}
-  texture_337: {file: tables.bin, id: 337}
-  texture_338: {file: tables.bin, id: 338}
-  texture_339: {file: tables.bin, id: 339}
-  texture_340: {file: tables.bin, id: 340}
-  texture_341: {file: tables.bin, id: 341}
-  texture_342: {file: tables.bin, id: 342}
-  texture_343: {file: tables.bin, id: 343}
-  texture_346: {file: tables.bin, id: 346}
-  texture_351: {file: tables.bin, id: 351}
-  texture_357: {file: tables.bin, id: 357}
-  texture_361: {file: tables.bin, id: 361}
-  texture_363: {file: tables.bin, id: 363}
-  texture_364: {file: tables.bin, id: 364}
-  texture_365: {file: tables.bin, id: 365}
-  texture_451: {file: tables.bin, id: 451}
-  texture_452: {file: tables.bin, id: 452}
-  texture_453: {file: tables.bin, id: 453}
-  texture_454: {file: tables.bin, id: 454}
-  texture_455: {file: tables.bin, id: 455}
-  texture_456: {file: tables.bin, id: 456}
-  texture_457: {file: tables.bin, id: 457}
-  texture_459: {file: tables.bin, id: 459}
-  texture_460: {file: tables.bin, id: 460}
-  texture_462: {file: tables.bin, id: 462}
-  texture_463: {file: tables.bin, id: 463}
-  texture_464: {file: tables.bin, id: 464}
-  texture_465: {file: tables.bin, id: 465}
-  texture_466: {file: tables.bin, id: 466}
-  texture_467: {file: tables.bin, id: 467}
-  texture_468: {file: tables.bin, id: 468}
-  texture_469: {file: tables.bin, id: 469}
-  texture_472: {file: tables.bin, id: 472}
-  texture_474: {file: tables.bin, id: 474}
-  texture_475: {file: tables.bin, id: 475}
-  texture_476: {file: tables.bin, id: 476}
-  texture_478: {file: tables.bin, id: 478}
-  texture_485: {file: tables.bin, id: 485}
-  texture_487: {file: tables.bin, id: 487}
-  texture_488: {file: tables.bin, id: 488}
+  assault_rifle:
+    file: tables.bin
+    id: 1
+  chainsaw:
+    file: tables.bin
+    id: 2
+  holy_water_pistol:
+    file: tables.bin
+    id: 3
+  sentry_bot_shooting:
+    file: tables.bin
+    id: 4
+  sentry_bot_exploding:
+    file: tables.bin
+    id: 5
+  super_shotgun:
+    file: tables.bin
+    id: 6
+  chaingun:
+    file: tables.bin
+    id: 7
+  assault_rifle_with_scope:
+    file: tables.bin
+    id: 8
+  plasma_gun:
+    file: tables.bin
+    id: 9
+  rocket_launcher:
+    file: tables.bin
+    id: 10
+  bfg:
+    file: tables.bin
+    id: 11
+  soul_cube:
+    file: tables.bin
+    id: 12
+  sentry_bot_red_shooting:
+    file: tables.bin
+    id: 13
+  sentry_bot_red_exploding:
+    file: tables.bin
+    id: 14
+  world_weapon:
+    file: tables.bin
+    id: 15
+  monster_red_sentry_bot:
+    file: tables.bin
+    id: 18
+    render:
+      loot_aura:
+        scale: 18
+        flags: 512
+  monster_sentry_bot:
+    file: tables.bin
+    id: 19
+    render:
+      loot_aura:
+        scale: 18
+        flags: 512
+  monster_zombie:
+    file: tables.bin
+    id: 20
+  monster_zombie2:
+    file: tables.bin
+    id: 21
+  monster_zombie3:
+    file: tables.bin
+    id: 22
+  monster_imp:
+    file: tables.bin
+    id: 23
+  monster_imp2:
+    file: tables.bin
+    id: 24
+  monster_imp3:
+    file: tables.bin
+    id: 25
+  monster_saw_goblin:
+    file: tables.bin
+    id: 26
+  monster_saw_goblin2:
+    file: tables.bin
+    id: 27
+  monster_saw_goblin3:
+    file: tables.bin
+    id: 28
+  monster_lost_soul:
+    file: tables.bin
+    id: 29
+  monster_lost_soul2:
+    file: tables.bin
+    id: 30
+  monster_lost_soul3:
+    file: tables.bin
+    id: 31
+  monster_pinky:
+    file: tables.bin
+    id: 32
+  monster_pinky2:
+    file: tables.bin
+    id: 33
+  monster_pinky3:
+    file: tables.bin
+    id: 34
+  monster_revenant:
+    file: tables.bin
+    id: 35
+  monster_revenant2:
+    file: tables.bin
+    id: 36
+  monster_revenant3:
+    file: tables.bin
+    id: 37
+  monster_mancubus:
+    file: tables.bin
+    id: 38
+  monster_mancubus2:
+    file: tables.bin
+    id: 39
+  monster_mancubus3:
+    file: tables.bin
+    id: 40
+  monster_cacodemon:
+    file: tables.bin
+    id: 41
+  monster_cacodemon2:
+    file: tables.bin
+    id: 42
+  monster_cacodemon3:
+    file: tables.bin
+    id: 43
+  monster_sentinel:
+    file: tables.bin
+    id: 44
+  monster_sentinel2:
+    file: tables.bin
+    id: 45
+  monster_sentinel3:
+    file: tables.bin
+    id: 46
+  monster_arch_vile:
+    file: tables.bin
+    id: 50
+  monster_arch_vile2:
+    file: tables.bin
+    id: 51
+  monster_arch_vile3:
+    file: tables.bin
+    id: 52
+  monster_arachnotron:
+    file: tables.bin
+    id: 53
+  boss_cyberdemon:
+    file: tables.bin
+    id: 54
+  boss_pinky:
+    file: tables.bin
+    id: 56
+  boss_mastermind:
+    file: tables.bin
+    id: 57
+  boss_vios:
+    file: tables.bin
+    id: 58
+    render:
+      multiply_shift: true
+  boss_vios2:
+    file: tables.bin
+    id: 59
+    render:
+      multiply_shift: true
+  boss_vios3:
+    file: tables.bin
+    id: 60
+    render:
+      multiply_shift: true
+  boss_vios4:
+    file: tables.bin
+    id: 61
+    render:
+      multiply_shift: true
+  boss_vios5:
+    file: tables.bin
+    id: 62
+    render:
+      multiply_shift: true
+  npc_riley_oconnor:
+    file: tables.bin
+    id: 66
+  npc_major:
+    file: tables.bin
+    id: 68
+  npc_bob:
+    file: tables.bin
+    id: 69
+  npc_civilian:
+    file: tables.bin
+    id: 71
+  npc_sarge:
+    file: tables.bin
+    id: 72
+  npc_female:
+    file: tables.bin
+    id: 73
+  npc_evil_scientist:
+    file: tables.bin
+    id: 74
+  npc_scientist:
+    file: tables.bin
+    id: 75
+  npc_researcher:
+    file: tables.bin
+    id: 76
+  npc_civilian2:
+    file: tables.bin
+    id: 77
+  ammo_bullets:
+    file: tables.bin
+    id: 85
+  ammo_shells:
+    file: tables.bin
+    id: 86
+  ammo_rockets:
+    file: tables.bin
+    id: 88
+  ammo_cells:
+    file: tables.bin
+    id: 89
+  ammo_holy_water:
+    file: tables.bin
+    id: 90
+  one_uac_credit:
+    file: tables.bin
+    id: 107
+  key_red:
+    file: tables.bin
+    id: 110
+  key_blue:
+    file: tables.bin
+    id: 111
+  armor_jacket:
+    file: tables.bin
+    id: 112
+  satchel:
+    file: tables.bin
+    id: 113
+  pack_item:
+    file: tables.bin
+    id: 114
+  worker_pack:
+    file: tables.bin
+    id: 115
+  health_pack:
+    file: tables.bin
+    id: 116
+  food_plate:
+    file: tables.bin
+    id: 117
+  armor_shard:
+    file: tables.bin
+    id: 119
+  obj_table:
+    file: tables.bin
+    id: 121
+  hell_seal:
+    file: tables.bin
+    id: 122
+  toilet:
+    file: tables.bin
+    id: 123
+  dirt_decal:
+    file: tables.bin
+    id: 124
+  ladder:
+    file: tables.bin
+    id: 125
+  blood_splatter:
+    file: tables.bin
+    id: 126
+  sink:
+    file: tables.bin
+    id: 127
+  barred_window:
+    file: tables.bin
+    id: 128
+  hazard_bar:
+    file: tables.bin
+    id: 129
+  obj_fire:
+    file: tables.bin
+    id: 130
+    render:
+      position_at_view:
+        offset_mult: 18
+        z_offset: -512
+  treadmill_monitor:
+    file: tables.bin
+    id: 131
+  tech_station:
+    file: tables.bin
+    id: 133
+  water_spout:
+    file: tables.bin
+    id: 134
+    render:
+      auto_anim:
+        period: 128
+        frames: 2
+  obj_chair:
+    file: tables.bin
+    id: 135
+  obj_torchiere:
+    file: tables.bin
+    id: 136
+    render:
+      glow:
+        sprite: sfx_lightglow1
+        z_mult: 10
+        mode: add50
+  obj_scientist_corpse:
+    file: tables.bin
+    id: 137
+    render:
+      loot_aura:
+        scale: 18
+        flags: 512
+  obj_corpse:
+    file: tables.bin
+    id: 138
+    render:
+      loot_aura:
+        scale: 18
+        flags: 512
+  obj_other_corpse:
+    file: tables.bin
+    id: 139
+    render:
+      loot_aura:
+        scale: 18
+        flags: 512
+  dummy_pain:
+    file: tables.bin
+    id: 140
+  attack_dummy:
+    file: tables.bin
+    id: 141
+  exit_dummy:
+    file: tables.bin
+    id: 142
+  use_dummy:
+    file: tables.bin
+    id: 143
+  septic_station:
+    file: tables.bin
+    id: 147
+  practice_target:
+    file: tables.bin
+    id: 149
+  obj_printer:
+    file: tables.bin
+    id: 150
+  obj_crate:
+    file: tables.bin
+    id: 152
+    render:
+      z_offset_floor: -224
+  vending_machine:
+    file: tables.bin
+    id: 153
+  armor_repair:
+    file: tables.bin
+    id: 154
+  closed_portal_eye:
+    file: tables.bin
+    id: 155
+    render:
+      z_offset_wall: -128
+  eye_portal:
+    file: tables.bin
+    id: 156
+    render:
+      z_offset_wall: -128
+  portal_socket:
+    file: tables.bin
+    id: 157
+  treadmill_side:
+    file: tables.bin
+    id: 158
+    render:
+      skip: true
+  treadmill_front:
+    file: tables.bin
+    id: 159
+  hell_hands:
+    file: tables.bin
+    id: 161
+  doorjamb_decal:
+    file: tables.bin
+    id: 162
+  stones_and_skulls:
+    file: tables.bin
+    id: 164
+  nonobstructing_spritewall:
+    file: tables.bin
+    id: 166
+  fence:
+    file: tables.bin
+    id: 168
+  sentinel_spikes:
+    file: tables.bin
+    id: 170
+  sentinel_spikes_dummy:
+    file: tables.bin
+    id: 171
+    render:
+      skip: true
+  switch:
+    file: tables.bin
+    id: 173
+  tech_detail:
+    file: tables.bin
+    id: 175
+  hell_skulls:
+    file: tables.bin
+    id: 177
+  glass:
+    file: tables.bin
+    id: 178
+  terminal_target:
+    file: tables.bin
+    id: 179
+    render:
+      z_offset_wall: -256
+  terminal_general:
+    file: tables.bin
+    id: 180
+  terminal_vios:
+    file: tables.bin
+    id: 181
+  terminal_bot:
+    file: tables.bin
+    id: 182
+  terminal_hacking:
+    file: tables.bin
+    id: 183
+    render:
+      z_offset_wall: -256
+  elevator_nums:
+    file: tables.bin
+    id: 184
+  bush:
+    file: tables.bin
+    id: 187
+  tree_top:
+    file: tables.bin
+    id: 188
+    render:
+      composite:
+      - sprite: tree_trunk
+        z_mult: 0
+      - sprite: tree_top
+        z_mult: 36
+  tree_trunk:
+    file: tables.bin
+    id: 189
+  sfx_lightglow1:
+    file: tables.bin
+    id: 193
+  window3:
+    file: tables.bin
+    id: 197
+  glaevenscope:
+    file: tables.bin
+    id: 201
+  fog_gray:
+    file: tables.bin
+    id: 208
+  scorch_mark:
+    file: tables.bin
+    id: 212
+  static_flame:
+    file: tables.bin
+    id: 223
+  missile_player_rocket:
+    file: tables.bin
+    id: 225
+  missile_rocket:
+    file: tables.bin
+    id: 226
+  flesh:
+    file: tables.bin
+    id: 227
+  shadow:
+    file: tables.bin
+    id: 232
+  anim_fire:
+    file: tables.bin
+    id: 234
+  anim_water:
+    file: tables.bin
+    id: 235
+  air_vent:
+    file: tables.bin
+    id: 236
+  soul_cube_attack:
+    file: tables.bin
+    id: 239
+  water_stream:
+    file: tables.bin
+    id: 240
+    render:
+      path: stream
+  caco_plasma:
+    file: tables.bin
+    id: 241
+  fire_ball:
+    file: tables.bin
+    id: 242
+  plasma_ball:
+    file: tables.bin
+    id: 243
+  bfg_ball:
+    file: tables.bin
+    id: 244
+  monster_claw:
+    file: tables.bin
+    id: 245
+  monster_bite:
+    file: tables.bin
+    id: 246
+  monster_blunt_trauma:
+    file: tables.bin
+    id: 247
+  electric_slide:
+    file: tables.bin
+    id: 248
+  fear_eye:
+    file: tables.bin
+    id: 251
+  acid_spit:
+    file: tables.bin
+    id: 252
+  npc_chat:
+    file: tables.bin
+    id: 254
+  alert:
+    file: tables.bin
+    id: 255
+  doorjamb:
+    file: tables.bin
+    id: 257
+  red_door_locked:
+    file: tables.bin
+    id: 271
+  red_door_unlocked:
+    file: tables.bin
+    id: 272
+  blue_door_locked:
+    file: tables.bin
+    id: 273
+  blue_door_unlocked:
+    file: tables.bin
+    id: 274
+  door_locked:
+    file: tables.bin
+    id: 275
+  door_unlocked:
+    file: tables.bin
+    id: 276
+  level_door_locked:
+    file: tables.bin
+    id: 277
+  level_door_unlocked:
+    file: tables.bin
+    id: 278
+  sky_box:
+    file: tables.bin
+    id: 301
+  fade:
+    file: tables.bin
+    id: 302
+  flat_lava:
+    file: tables.bin
+    id: 479
+    render:
+      tex_anim:
+        s_div: 8
+        t_div: 16
+        mask: 1023
+  flat_lava2:
+    file: tables.bin
+    id: 480
+    render:
+      tex_anim:
+        t_div: 2
+        mask: 1023
+  wp_view_assault_rifle:
+    file: tables.bin
+    id: 1
+  wp_view_chainsaw:
+    file: tables.bin
+    id: 2
+  wp_view_holy_water_pistol:
+    file: tables.bin
+    id: 3
+  wp_view_shooting_sentry_bot:
+    file: tables.bin
+    id: 4
+  wp_view_exploding_sentry_bot:
+    file: tables.bin
+    id: 5
+  wp_view_super_shotgun:
+    file: tables.bin
+    id: 8
+  wp_view_chaingun:
+    file: tables.bin
+    id: 9
+  wp_view_assault_rifle_with_scope:
+    file: tables.bin
+    id: 10
+  wp_view_plasma_gun:
+    file: tables.bin
+    id: 11
+  wp_view_rocket_launcher:
+    file: tables.bin
+    id: 12
+  wp_view_bfg:
+    file: tables.bin
+    id: 13
+  wp_view_soul_cube:
+    file: tables.bin
+    id: 14
+  wp_view_red_shooting_sentry_bot:
+    file: tables.bin
+    id: 13
+  wp_view_red_exploding_sentry_bot:
+    file: tables.bin
+    id: 14
+  wp_view_item:
+    file: tables.bin
+    id: 15
+  menu_btn_bg:
+    file: menu_button_background.bmp
+  menu_btn_bg_on:
+    file: menu_button_background_on.bmp
+  menu_arrow_down:
+    file: menu_arrow_down.bmp
+  menu_arrow_up:
+    file: menu_arrow_up.bmp
+  switch_left_normal:
+    file: Switch_Left_Normal.bmp
+  switch_left_active:
+    file: Switch_Left_Active.bmp
+  slider_bar:
+    file: Menu_Option_SliderBar.bmp
+  slider_on:
+    file: Menu_Option_SliderON.bmp
+  slider_off:
+    file: Menu_Option_SliderOFF.bmp
+  info_btn_normal:
+    file: gameMenu_infoButton_Normal.bmp
+  info_btn_pressed:
+    file: gameMenu_infoButton_Pressed.bmp
+  vending_arrow_up_glow:
+    file: vending_arrow_up_glow.bmp
+  vending_arrow_down_glow:
+    file: vending_arrow_down_glow.bmp
+  vending_btn_large:
+    file: vending_button_large.bmp
+  vending_btn_help:
+    file: vending_button_help.bmp
+  ingame_option_btn:
+    file: inGame_menu_option_button.bmp
+  menu_dial:
+    file: Menu_Dial.bmp
+  menu_dial_knob:
+    file: Menu_Dial_Knob.bmp
+  menu_main_box:
+    file: Menu_Main_BOX.bmp
+  main_menu_overlay:
+    file: Main_Menu_OverLay.bmp
+  main_help_overlay:
+    file: Main_Help_OverLay.bmp
+  main_about_overlay:
+    file: Main_About_OverLay.bmp
+  menu_yesno_box:
+    file: Menu_YesNo_BOX.bmp
+  menu_choose_diff_box:
+    file: Menu_ChooseDIFF_BOX.bmp
+  menu_language_box:
+    file: Menu_Language_BOX.bmp
+  menu_option_box3:
+    file: Menu_Option_BOX3.bmp
+  menu_option_box4:
+    file: Menu_Option_BOX4.bmp
+  hud_numbers:
+    file: Hud_Numbers.bmp
+  game_menu_panel_bottom:
+    file: gameMenu_Panel_bottom.bmp
+  game_menu_panel_bottom_sentry:
+    file: gameMenu_Panel_bottom_sentrybot.bmp
+  game_menu_health:
+    file: gameMenu_Health.bmp
+  game_menu_shield:
+    file: gameMenu_Shield.bmp
+  game_menu_torn_page:
+    file: gameMenu_TornPage.bmp
+  game_menu_background:
+    file: gameMenu_Background.bmp
+  main_menu_dial_a_anim:
+    file: Main_Menu_DialA_anim.bmp
+  main_menu_dial_c_anim:
+    file: Main_Menu_DialC_anim.bmp
+  main_menu_slide_anim:
+    file: Main_Menu_Slide_anim.bmp
+  game_menu_scrollbar:
+    file: gameMenu_ScrollBar.bmp
+  game_menu_top_slider:
+    file: gameMenu_topSlider.bmp
+  game_menu_mid_slider:
+    file: gameMenu_midSlider.bmp
+  game_menu_bottom_slider:
+    file: gameMenu_bottomSlider.bmp
+  vending_scrollbar:
+    file: vending_scroll_bar.bmp
+  vending_scroll_btn_top:
+    file: vending_scroll_button_top.bmp
+  vending_scroll_btn_mid:
+    file: vending_scroll_button_middle.bmp
+  vending_scroll_btn_bottom:
+    file: vending_scroll_button_bottom.bmp
+  logo:
+    file: logo2.bmp
+  tm_background:
+    file: TravelMap.bmp
+  tm_horz_grid:
+    file: travelMapHorzGrid.bmp
+  tm_vert_grid:
+    file: travelMapVertGrid.bmp
+  tm_highlight:
+    file: highlight.bmp
+  tm_magnifying_glass:
+    file: magnifyingGlass.bmp
+  tm_spaceship:
+    file: spaceShip.bmp
+  tm_closeup_moon:
+    file: TM_Levels1.bmp
+  tm_closeup_earth_arrival:
+    file: TM_Levels2.bmp
+  tm_closeup_hell:
+    file: TM_Levels3.bmp
+  tm_closeup_earth:
+    file: TM_Levels4.bmp
+  tm_path_to_moon:
+    file: toMoon.bmp
+  tm_path_to_earth:
+    file: toEarth.bmp
+  tm_path_to_hell:
+    file: toHell.bmp
+  texture_105:
+    file: tables.bin
+    id: 105
+  texture_120:
+    file: tables.bin
+    id: 120
+  texture_132:
+    file: tables.bin
+    id: 132
+  texture_144:
+    file: tables.bin
+    id: 144
+  texture_145:
+    file: tables.bin
+    id: 145
+  texture_146:
+    file: tables.bin
+    id: 146
+  texture_160:
+    file: tables.bin
+    id: 160
+  texture_163:
+    file: tables.bin
+    id: 163
+  texture_167:
+    file: tables.bin
+    id: 167
+  texture_202:
+    file: tables.bin
+    id: 202
+  texture_258:
+    file: tables.bin
+    id: 258
+  texture_259:
+    file: tables.bin
+    id: 259
+  texture_261:
+    file: tables.bin
+    id: 261
+  texture_262:
+    file: tables.bin
+    id: 262
+  texture_263:
+    file: tables.bin
+    id: 263
+  texture_264:
+    file: tables.bin
+    id: 264
+  texture_265:
+    file: tables.bin
+    id: 265
+  texture_266:
+    file: tables.bin
+    id: 266
+  texture_267:
+    file: tables.bin
+    id: 267
+  texture_279:
+    file: tables.bin
+    id: 279
+  texture_280:
+    file: tables.bin
+    id: 280
+  texture_286:
+    file: tables.bin
+    id: 286
+  texture_297:
+    file: tables.bin
+    id: 297
+  texture_298:
+    file: tables.bin
+    id: 298
+  texture_299:
+    file: tables.bin
+    id: 299
+  texture_300:
+    file: tables.bin
+    id: 300
+  texture_303:
+    file: tables.bin
+    id: 303
+  texture_304:
+    file: tables.bin
+    id: 304
+  texture_305:
+    file: tables.bin
+    id: 305
+  texture_307:
+    file: tables.bin
+    id: 307
+  texture_309:
+    file: tables.bin
+    id: 309
+  texture_310:
+    file: tables.bin
+    id: 310
+  texture_311:
+    file: tables.bin
+    id: 311
+  texture_312:
+    file: tables.bin
+    id: 312
+  texture_314:
+    file: tables.bin
+    id: 314
+  texture_316:
+    file: tables.bin
+    id: 316
+  texture_318:
+    file: tables.bin
+    id: 318
+  texture_319:
+    file: tables.bin
+    id: 319
+  texture_320:
+    file: tables.bin
+    id: 320
+  texture_323:
+    file: tables.bin
+    id: 323
+  texture_326:
+    file: tables.bin
+    id: 326
+  texture_327:
+    file: tables.bin
+    id: 327
+  texture_331:
+    file: tables.bin
+    id: 331
+  texture_332:
+    file: tables.bin
+    id: 332
+  texture_336:
+    file: tables.bin
+    id: 336
+  texture_337:
+    file: tables.bin
+    id: 337
+  texture_338:
+    file: tables.bin
+    id: 338
+  texture_339:
+    file: tables.bin
+    id: 339
+  texture_340:
+    file: tables.bin
+    id: 340
+  texture_341:
+    file: tables.bin
+    id: 341
+  texture_342:
+    file: tables.bin
+    id: 342
+  texture_343:
+    file: tables.bin
+    id: 343
+  texture_346:
+    file: tables.bin
+    id: 346
+  texture_351:
+    file: tables.bin
+    id: 351
+  texture_357:
+    file: tables.bin
+    id: 357
+  texture_361:
+    file: tables.bin
+    id: 361
+  texture_363:
+    file: tables.bin
+    id: 363
+  texture_364:
+    file: tables.bin
+    id: 364
+  texture_365:
+    file: tables.bin
+    id: 365
+  texture_451:
+    file: tables.bin
+    id: 451
+  texture_452:
+    file: tables.bin
+    id: 452
+  texture_453:
+    file: tables.bin
+    id: 453
+  texture_454:
+    file: tables.bin
+    id: 454
+  texture_455:
+    file: tables.bin
+    id: 455
+  texture_456:
+    file: tables.bin
+    id: 456
+  texture_457:
+    file: tables.bin
+    id: 457
+  texture_459:
+    file: tables.bin
+    id: 459
+  texture_460:
+    file: tables.bin
+    id: 460
+  texture_462:
+    file: tables.bin
+    id: 462
+  texture_463:
+    file: tables.bin
+    id: 463
+  texture_464:
+    file: tables.bin
+    id: 464
+  texture_465:
+    file: tables.bin
+    id: 465
+  texture_466:
+    file: tables.bin
+    id: 466
+  texture_467:
+    file: tables.bin
+    id: 467
+  texture_468:
+    file: tables.bin
+    id: 468
+  texture_469:
+    file: tables.bin
+    id: 469
+  texture_472:
+    file: tables.bin
+    id: 472
+  texture_474:
+    file: tables.bin
+    id: 474
+  texture_475:
+    file: tables.bin
+    id: 475
+  texture_476:
+    file: tables.bin
+    id: 476
+  texture_478:
+    file: tables.bin
+    id: 478
+  texture_485:
+    file: tables.bin
+    id: 485
+  texture_487:
+    file: tables.bin
+    id: 487
+  texture_488:
+    file: tables.bin
+    id: 488

@@ -84,25 +84,14 @@ std::expected<void, std::string> EntityDefManager::parse(EntityDefManager* mgr, 
 		// Rendering data: all values come from YAML, zero-initialized defaults
 		DataNode r = e["rendering"];
 
-		// Render flags from rendering.flags array
 		list[i].renderFlags = EntityDef::RFLAG_NONE;
-		if (r && r["flags"]) {
-			for (int fi = 0; fi < (int)r["flags"].size(); fi++) {
-				std::string flag = r["flags"][fi].asString("");
-				if (flag == "floater") list[i].renderFlags |= EntityDef::RFLAG_FLOATER;
-				else if (flag == "gun_flare") list[i].renderFlags |= EntityDef::RFLAG_GUN_FLARE;
-				else if (flag == "special_boss") list[i].renderFlags |= EntityDef::RFLAG_SPECIAL_BOSS;
-				else if (flag == "npc") list[i].renderFlags |= EntityDef::RFLAG_NPC;
-				else if (flag == "no_flare_alt_attack") list[i].renderFlags |= EntityDef::RFLAG_NO_FLARE_ALT_ATTACK;
-				else if (flag == "tall_hitbox") list[i].renderFlags |= EntityDef::RFLAG_TALL_HITBOX;
-			}
-		}
 
-		// Helper: read from rendering.section.key, then flat key, then default
+		// Helper: read from rendering.section.key, then flat key, then default.
+		// Sections can be maps ({data}) or scalars (true) — only subscript maps.
 		#define R_INT(section, key, flat, def) \
-			((r && r[section] && r[section][key]) ? r[section][key].asInt(def) : e[flat].asInt(def))
+			((r && r[section] && r[section].isMap() && r[section][key]) ? r[section][key].asInt(def) : e[flat].asInt(def))
 		#define R_BOOL(section, key, flat, def) \
-			((r && r[section] && r[section][key]) ? r[section][key].asBool(def) : e[flat].asBool(def))
+			((r && r[section] && r[section].isMap() && r[section][key]) ? r[section][key].asBool(def) : e[flat].asBool(def))
 
 		// Fear eye offsets
 		EntityDef::FearEyeData defEyes;
@@ -218,6 +207,18 @@ std::expected<void, std::string> EntityDefManager::parse(EntityDefManager* mgr, 
 
 		#undef R_INT
 		#undef R_BOOL
+
+		// Auto-infer render flags from top-level keys under rendering:
+		// Presence of a key (with or without data) sets the flag.
+		// This makes the flags: array optional — all flags can be top-level keys.
+		if (r) {
+			if (r["gun_flare"])            list[i].renderFlags |= EntityDef::RFLAG_GUN_FLARE;
+			if (r["floater"])              list[i].renderFlags |= EntityDef::RFLAG_FLOATER;
+			if (r["special_boss"])         list[i].renderFlags |= EntityDef::RFLAG_SPECIAL_BOSS;
+			if (r["npc"])                  list[i].renderFlags |= EntityDef::RFLAG_NPC;
+			if (r["no_flare_alt_attack"])  list[i].renderFlags |= EntityDef::RFLAG_NO_FLARE_ALT_ATTACK;
+			if (r["tall_hitbox"])          list[i].renderFlags |= EntityDef::RFLAG_TALL_HITBOX;
+		}
 
 		// Destruction effects (for ET_ATTACK_INTERACTIVE entities)
 		DataNode destroy = e["destroy"];
