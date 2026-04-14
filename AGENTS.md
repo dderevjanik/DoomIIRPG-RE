@@ -1,4 +1,4 @@
-\_# Agents
+# Agents
 
 Guidelines for AI agents working on this codebase.
 
@@ -8,9 +8,12 @@ This project is based on the Doom II RPG reverse engineering effort and aims to 
 
 ## Project Structure
 
-- **`src/converter/`** — CLI tool that extracts and converts assets from the original `.ipa` into `games/doom2rpg/`. Parses zip/binary formats and emits YAML + raw assets.
+- **`src/converter/`** — CLI tool that extracts and converts assets from the original `.ipa` into `games/doom2rpg/`. Parses zip/binary formats and emits YAML + raw assets. Source YAML templates live in `src/converter/resources/`.
 - **`src/engine/`** — Platform/rendering layer: SDL/GL backend, TinyGL software renderer, input, sound, resource/VFS, text, HUD, menus, scripting, and particle system.
 - **`src/game/`** — Game logic: entities, combat, player, maps, minigames (hacking, sentry bot, vending), and game states (logo, credits, automap).
+- **`test/`** — Unit tests (CMake/CTest).
+- **`tools/`** — Python extraction scripts (`extract_*.py`, `convert_doom1rpg.py`, `generate_*.py`) and HTML viewers (`map-viewer.html`, `model-viewer.html`, `menu-editor.html`).
+- **`games/doom2rpg/`** — Generated game assets (YAML + binaries). **Do not hand-edit** — see Asset Pipeline below.
 
 ## Build
 
@@ -26,6 +29,8 @@ macOS shortcut: `./build-macos.sh`
 **Targets:**
 - `DRPGEngine` — main game executable
 - `drpg-convert` — asset converter CLI
+
+CI runs via `.github/workflows/build.yml`.
 
 ## Testing
 
@@ -45,9 +50,9 @@ Test scripts in `Testing/` can be run via `--script` flag:
 ./build/src/DRPGEngine --game doom2rpg --map levels/maps/map09.bin --script Testing/test_map09.script --seed 1337
 ```
 
-After any change to engine, core, or converter code, it's a good idea to verify the game still runs by launching in headless mode:
+After any change to engine, core, or converter code, verify the game still runs:
 ```bash
-./build/src/DoomIIRPG --map levels/maps/map00.bin --headless --skip-travel-map
+./build/src/DRPGEngine --game doom2rpg --headless --map levels/maps/map00.bin
 ```
 
 After bigger refactors (engine, asset pipeline, entity system, rendering, level loading), always run `scripts/test_map_loading.sh` before committing.
@@ -56,25 +61,21 @@ After bigger refactors (engine, asset pipeline, entity system, rendering, level 
 
 `*.ipa` → `drpg-convert` (or `tools/*.py`) → YAML + binary assets in `games/doom2rpg/`
 
-- **YAML files** in `games/doom2rpg/` (entities, weapons, monsters, strings, etc.) are the modding/editing surface.
+- **Do NOT edit `.yaml` files in `games/`** — they are generated output from the converter. To change game data, edit the source YAML templates in `src/converter/resources/` and re-run the converter.
 - **Binary `.bin` map files** should not be hand-edited — use the converter.
-- Don't directly edit `games/doom2rpg/` assets that are converted from original game files. Instead edit `src/converter` to modify how assets are processed.
-- `tools/` contains Python extraction scripts (`extract_*.py`) and HTML viewers (`map-viewer.html`, `model-viewer.html`, `menu-editor.html`).
 
 ## Documentation
 
-Project documentation lives in `docs/`. Game-specific documentation is split by title:
+Project documentation lives in `docs/`:
 
-- **`docs/`** — general project documentation (engine guides, modding guides).
+- **`docs/`** — `LEVELS.md`, `SPRITES.md` and general project docs.
 - **`docs/d1-rpg/`** — Doom 1 RPG format specs and reference material.
-- **`docs/d2-rpg/`** — Doom 2 RPG binary format specs (entities, levels, media, menus, scripting, strings, tables). Read these before modifying format-related code.
-- `docs/adding-entities.md` — guide for adding new entity types via YAML.
-- `docs/modding/adding-weapons.md` — guide for adding weapons.
+- **`docs/d2-rpg/`** — Doom 2 RPG binary format specs (entities, levels, media, menus, BSP, scripting, strings, tables). Read these before modifying format-related code.
 
 ## Code Style
 
-- `.clang-format` enforced: LLVM base, tab indentation, 120 column limit.
-- C++17.
+- `.clang-format` enforced: LLVM base, tabs for indentation (width 4), 120 column limit.
+- C++23.
 
 ## Codebase Quirks
 
