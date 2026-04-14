@@ -911,6 +911,107 @@ static bool extractIntroCamera(const std::string& outDir) {
 }
 
 // ========================================================================
+// Extract newMappings.bin as YAML (media_mappings.yaml)
+// ========================================================================
+static bool extractMediaMappings(const std::string& outDir) {
+	std::string binPath = outDir + "/levels/textures/newMappings.bin";
+	auto data = readBinFile(binPath);
+	if (data.empty()) {
+		fprintf(stderr, "  Failed to read newMappings.bin\n");
+		return false;
+	}
+
+	// Parse the 5 sequential arrays (same layout as TextureDecoder::load)
+	int pos = 0;
+
+	// 1. mediaMappings: 512 int16 (tile → media ID)
+	int16_t mediaMappings[MAX_MAPPINGS];
+	for (int i = 0; i < MAX_MAPPINGS; i++) {
+		mediaMappings[i] = readLE16s(&data[pos + i * 2]);
+	}
+	pos += MAX_MAPPINGS * 2;
+
+	// 2. mediaDimensions: 1024 uint8 (packed width/height)
+	const uint8_t* mediaDimensions = &data[pos];
+	pos += MAX_MEDIA;
+
+	// 3. mediaBounds: 1024*4 int16 (bounds per media)
+	int16_t mediaBounds[MAX_MEDIA * 4];
+	for (int i = 0; i < MAX_MEDIA * 4; i++) {
+		mediaBounds[i] = readLE16s(&data[pos + i * 2]);
+	}
+	pos += MAX_MEDIA * 4 * 2;
+
+	// 4. mediaPalColors: 1024 int32 (palette color counts + flags)
+	int32_t mediaPalColors[MAX_MEDIA];
+	for (int i = 0; i < MAX_MEDIA; i++) {
+		mediaPalColors[i] = readLE32(&data[pos + i * 4]);
+	}
+	pos += MAX_MEDIA * 4;
+
+	// 5. mediaTexelSizes: 1024 int32 (texel sizes + flags)
+	int32_t mediaTexelSizes[MAX_MEDIA];
+	for (int i = 0; i < MAX_MEDIA; i++) {
+		mediaTexelSizes[i] = readLE32(&data[pos + i * 4]);
+	}
+
+	// Write as YAML with flow-style arrays for compactness
+	std::string yaml;
+	yaml += "# Media mappings (extracted from newMappings.bin)\n";
+	yaml += "# Used by the engine to map tile IDs to texture media\n\n";
+
+	// mappings: 512 shorts
+	yaml += "mappings: [";
+	for (int i = 0; i < MAX_MAPPINGS; i++) {
+		if (i > 0) yaml += ", ";
+		yaml += std::to_string(mediaMappings[i]);
+	}
+	yaml += "]\n\n";
+
+	// dimensions: 1024 bytes
+	yaml += "dimensions: [";
+	for (int i = 0; i < MAX_MEDIA; i++) {
+		if (i > 0) yaml += ", ";
+		yaml += std::to_string(mediaDimensions[i]);
+	}
+	yaml += "]\n\n";
+
+	// bounds: 1024 entries of 4 shorts each
+	yaml += "bounds:\n";
+	for (int i = 0; i < MAX_MEDIA; i++) {
+		int base = i * 4;
+		yaml += std::format("  - [{}, {}, {}, {}]\n",
+			mediaBounds[base], mediaBounds[base + 1],
+			mediaBounds[base + 2], mediaBounds[base + 3]);
+	}
+	yaml += "\n";
+
+	// pal_colors: 1024 ints
+	yaml += "pal_colors: [";
+	for (int i = 0; i < MAX_MEDIA; i++) {
+		if (i > 0) yaml += ", ";
+		yaml += std::to_string(mediaPalColors[i]);
+	}
+	yaml += "]\n\n";
+
+	// texel_sizes: 1024 ints
+	yaml += "texel_sizes: [";
+	for (int i = 0; i < MAX_MEDIA; i++) {
+		if (i > 0) yaml += ", ";
+		yaml += std::to_string(mediaTexelSizes[i]);
+	}
+	yaml += "]\n";
+
+	std::string yamlPath = outDir + "/levels/textures/media_mappings.yaml";
+	if (!writeString(yamlPath, yaml)) {
+		fprintf(stderr, "  Failed to write media_mappings.yaml\n");
+		return false;
+	}
+	printf("  Extracted media mappings (%d mappings, %d media entries)\n", MAX_MAPPINGS, MAX_MEDIA);
+	return true;
+}
+
+// ========================================================================
 // Copy binary assets (maps, textures, models)
 // ========================================================================
 static void copyBinaryAssets(ZipFile& zip, const std::string& outDir) {
@@ -1209,6 +1310,9 @@ bool convertD2RPG(ZipFile& zip, const GameDef& game, const std::string& outputDi
 
 	printf("\nExtracting intro camera from tables.bin...\n");
 	ok &= extractIntroCamera(outputDir);
+
+	printf("\nExtracting media mappings from newMappings.bin...\n");
+	ok &= extractMediaMappings(outputDir);
 
 	printf("\nCopying audio assets...\n");
 	copyAudioAssets(zip, outputDir);

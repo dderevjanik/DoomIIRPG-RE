@@ -728,13 +728,47 @@ bool Render::beginLoadMap(int mapNameID) {
 	}
 
 	app->canvas->updateLoadingBar(false);
-	IS.loadResource(Resources::RES_NEWMAPPINGS_BIN_GZ);
-	app->resource->readShortArray(&IS, std::span(this->mediaMappings, Render::MEDIA_MAX_MAPPINGS));
-	app->resource->readByteArray(&IS, std::span((uint8_t*)this->mediaDimensions, Render::MEDIA_MAX_IMAGES));
-	app->resource->readShortArray(&IS, std::span(this->mediaBounds, (Render::MEDIA_MAX_IMAGES * 4)));
-	app->resource->readIntArray(&IS, std::span(this->mediaPalColors, Render::MEDIA_MAX_IMAGES));
-	app->resource->readIntArray(&IS, std::span(this->mediaTexelSizes, Render::MEDIA_MAX_IMAGES));
-	IS.close();
+
+	// Try loading media mappings from YAML, fall back to binary
+	DataNode mediaMappingsYaml = DataNode::loadFile("levels/textures/media_mappings.yaml");
+	if (mediaMappingsYaml) {
+		DataNode mNode = mediaMappingsYaml["mappings"];
+		DataNode dNode = mediaMappingsYaml["dimensions"];
+		DataNode bNode = mediaMappingsYaml["bounds"];
+		DataNode pNode = mediaMappingsYaml["pal_colors"];
+		DataNode tNode = mediaMappingsYaml["texel_sizes"];
+
+		for (int i = 0; i < Render::MEDIA_MAX_MAPPINGS && i < mNode.size(); i++) {
+			this->mediaMappings[i] = (short)mNode[i].asInt(0);
+		}
+		for (int i = 0; i < Render::MEDIA_MAX_IMAGES && i < dNode.size(); i++) {
+			this->mediaDimensions[i] = (uint8_t)dNode[i].asInt(0);
+		}
+		for (int i = 0; i < Render::MEDIA_MAX_IMAGES && i < bNode.size(); i++) {
+			DataNode row = bNode[i];
+			int base = i * 4;
+			this->mediaBounds[base + 0] = (short)row[0].asInt(0);
+			this->mediaBounds[base + 1] = (short)row[1].asInt(0);
+			this->mediaBounds[base + 2] = (short)row[2].asInt(0);
+			this->mediaBounds[base + 3] = (short)row[3].asInt(0);
+		}
+		for (int i = 0; i < Render::MEDIA_MAX_IMAGES && i < pNode.size(); i++) {
+			this->mediaPalColors[i] = pNode[i].asInt(0);
+		}
+		for (int i = 0; i < Render::MEDIA_MAX_IMAGES && i < tNode.size(); i++) {
+			this->mediaTexelSizes[i] = tNode[i].asInt(0);
+		}
+		LOG_INFO("[render] Loaded media mappings from YAML\n");
+	} else {
+		// Legacy fallback: load from newMappings.bin
+		IS.loadResource(Resources::RES_NEWMAPPINGS_BIN_GZ);
+		app->resource->readShortArray(&IS, std::span(this->mediaMappings, Render::MEDIA_MAX_MAPPINGS));
+		app->resource->readByteArray(&IS, std::span((uint8_t*)this->mediaDimensions, Render::MEDIA_MAX_IMAGES));
+		app->resource->readShortArray(&IS, std::span(this->mediaBounds, (Render::MEDIA_MAX_IMAGES * 4)));
+		app->resource->readIntArray(&IS, std::span(this->mediaPalColors, Render::MEDIA_MAX_IMAGES));
+		app->resource->readIntArray(&IS, std::span(this->mediaTexelSizes, Render::MEDIA_MAX_IMAGES));
+		IS.close();
+	}
 
 	this->mediaMappings[TILE_SKY_BOX] =
 	    (gles::MAX_MEDIA - 1); // Readjust the index so it doesn't interfere with the fade texture.
