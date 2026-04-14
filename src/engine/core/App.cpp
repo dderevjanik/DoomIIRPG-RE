@@ -119,7 +119,6 @@ bool Applet::startup() {
 	this->canvas->loadMiniGameImages();
 	if (!this->localization->startup()) { LOG_ERROR("[app] error fatal: localization\n"); return false; }
 	if (!this->render->startup()) { LOG_ERROR("[app] error fatal: render\n"); return false; }
-	this->resource->initTableLoading();
 	this->loadTables();
 	if (!this->tinyGL->startup(this->render->screenWidth, this->render->screenHeight)) {
 		LOG_ERROR("[app] error fatal: tinyGL\n"); return false;

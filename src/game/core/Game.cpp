@@ -343,58 +343,7 @@ void Game::loadTableCamera(int i, int i2) {
 		return;
 	}
 
-	// Legacy fallback: load from tables.bin
-	int cnt = app->resource->getNumTableBytes(i2);
-	int16_t* array = new int16_t[app->resource->getNumTableShorts(i)];
-	int8_t* array2 = new int8_t[cnt];
-
-	app->resource->beginTableLoading();
-	app->resource->loadShortTable(array, i);
-	app->resource->loadByteTable(array2, i2);
-	app->resource->finishTableLoading();
-
-	this->mayaCameras = new MayaCamera[1];
-	this->mayaCameras[0].isTableCam = true;
-	this->totalMayaCameras = 1;
-
-	int buffPos = 0;
-	this->totalMayaCameraKeys = (int)array[buffPos++];
-	mayaCameras[0].sampleRate = (int)array[buffPos++];
-	this->posShift = 4 - (int)array[buffPos++];
-	this->angleShift = 10 - (int)array[buffPos++];
-
-	int size = this->totalMayaCameraKeys * 7;
-	this->mayaCameraKeys = new int16_t[size];
-	std::memcpy(this->mayaCameraKeys, &array[buffPos], size << 1);
-	buffPos += size;
-
-	int size2 = this->totalMayaCameraKeys * 6;
-	this->mayaTweenIndices = new int16_t[size2];
-	std::memcpy(this->mayaTweenIndices, &array[buffPos], size2 << 1);
-	buffPos += size2;
-
-	this->ofsMayaTween[0] = 0;
-	short n8 = array[buffPos++];
-	this->ofsMayaTween[1] = n8;
-	short n9 = (short)(n8 + array[buffPos++]);
-	this->ofsMayaTween[2] = n9;
-	short n10 = (short)(n9 + array[buffPos++]);
-	this->ofsMayaTween[3] = n10;
-	short n11 = (short)(n10 + array[buffPos++]);
-	this->ofsMayaTween[4] = n11;
-	this->ofsMayaTween[5] = (short)(n11 + array[buffPos++]);
-
-	this->mayaCameraTweens = new int8_t[cnt];
-	std::memcpy(this->mayaCameraTweens, array2, cnt);
-
-	this->mayaCameras[0].keyOffset = 0;
-	this->mayaCameras[0].numKeys = this->totalMayaCameraKeys;
-	this->mayaCameras[0].complete = false;
-	this->mayaCameras[0].keyThreadResumeCount = this->totalMayaCameraKeys;
-	this->setKeyOffsets();
-
-	delete[] array;
-	delete[] array2;
+	app->Error("data/intro_camera.yaml not found\n");
 }
 
 void Game::setKeyOffsets() {

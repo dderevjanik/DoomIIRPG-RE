@@ -360,7 +360,6 @@ public:
 	void RegisterMedia(int n);
 	void FinalizeMedia();
 	void FinalizeMediaFromYaml(DataNode& palYaml, DataNode& texYaml);
-	void FinalizeMediaLegacy();
 	bool loadSkyFromPng(const std::string& path);
 	bool beginLoadMap(int mapNameID);
 	void draw2DSprite(int tileNum, int frame, int x, int y, int flags, int renderMode, int renderFlags, int scaleFactor);

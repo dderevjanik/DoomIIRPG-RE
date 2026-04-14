@@ -727,9 +727,7 @@ static int16_t readLE16s(const uint8_t* p) {
 // ========================================================================
 // Extract sky textures from tables.bin (tables 16-19) as PNG
 // ========================================================================
-static bool extractSkyTextures(const std::string& outDir) {
-	std::string tablesPath = outDir + "/data/tables.bin";
-	auto data = readBinFile(tablesPath);
+static bool extractSkyTextures(const std::string& outDir, const std::vector<uint8_t>& data) {
 	if (data.size() < 80) {
 		fprintf(stderr, "  Failed to read tables.bin or file too small\n");
 		return false;
@@ -813,11 +811,9 @@ static bool extractSkyTextures(const std::string& outDir) {
 // ========================================================================
 // Extract intro camera data from tables.bin (tables 14-15) as YAML
 // ========================================================================
-static bool extractIntroCamera(const std::string& outDir) {
-	std::string tablesPath = outDir + "/data/tables.bin";
-	auto data = readBinFile(tablesPath);
+static bool extractIntroCamera(const std::string& outDir, const std::vector<uint8_t>& data) {
 	if (data.size() < 80) {
-		fprintf(stderr, "  Failed to read tables.bin\n");
+		fprintf(stderr, "  tables.bin too small for intro camera\n");
 		return false;
 	}
 
@@ -1126,8 +1122,6 @@ static void copyBinaryAssets(ZipFile& zip, const std::string& outDir) {
 	for (int i = 0; i < g_game->numTextures; i++) {
 		binaryFiles.push_back(std::format("Packages/newTexels{:03d}.bin", i));
 	}
-	binaryFiles.push_back("Packages/tables.bin");
-
 	int copied = 0;
 	for (const auto& relPath : binaryFiles) {
 		std::string ipaPath = std::string(g_game->ipaPrefix) + relPath;
@@ -1155,8 +1149,6 @@ static void copyBinaryAssets(ZipFile& zip, const std::string& outDir) {
 				}
 			} else if (outFile.starts_with("new")) {
 				outFile = "levels/textures/" + outFile;
-			} else if (outFile == "tables.bin") {
-				outFile = "data/" + outFile;
 			}
 
 			std::string outPath = outDir + "/" + outFile;
@@ -1406,11 +1398,23 @@ bool convertD2RPG(ZipFile& zip, const GameDef& game, const std::string& outputDi
 	printf("\nUpdating sprites.yaml with PNG references...\n");
 	ok &= rewriteSpritesYaml(outputDir, tileExports);
 
+	// Read tables.bin from IPA into memory (not copied to output)
+	std::vector<uint8_t> tablesData;
+	{
+		std::string tablesIpaPath = std::string(g_game->pkgPrefix) + "tables.bin";
+		int tablesSize = 0;
+		uint8_t* raw = zip.readZipFileEntry(tablesIpaPath.c_str(), &tablesSize);
+		if (raw && tablesSize > 0) {
+			tablesData.assign(raw, raw + tablesSize);
+			free(raw);
+		}
+	}
+
 	printf("\nExtracting sky textures from tables.bin...\n");
-	ok &= extractSkyTextures(outputDir);
+	ok &= extractSkyTextures(outputDir, tablesData);
 
 	printf("\nExtracting intro camera from tables.bin...\n");
-	ok &= extractIntroCamera(outputDir);
+	ok &= extractIntroCamera(outputDir, tablesData);
 
 	printf("\nExtracting media mappings from newMappings.bin...\n");
 	ok &= extractMediaMappings(outputDir);
