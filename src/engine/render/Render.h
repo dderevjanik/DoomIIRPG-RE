@@ -359,6 +359,7 @@ public:
 	inline static int RGB888ToRGB565(int r, int g, int b) { return ((r >> 3 & 0x1f) << 11) | ((g >> 2 & 0x3f) << 5) | (b >> 3 & 0x1f); }; // rgb888 to rgb565
 	void RegisterMedia(int n);
 	void FinalizeMedia();
+	bool loadSkyFromPng(const std::string& path);
 	bool beginLoadMap(int mapNameID);
 	void draw2DSprite(int tileNum, int frame, int x, int y, int flags, int renderMode, int renderFlags, int scaleFactor);
 	void renderSprite(int x, int y, int z, int tileNum, int frame, int flags, int renderMode, int scaleFactor, int renderFlags);

@@ -31,6 +31,9 @@ class TextureDecoder {
 	// Get the media mappings array (tile -> media ID)
 	const int16_t* getMappings() const { return mediaMappings; }
 
+	// Convert RGB565 to RGBA (public for use by extraction code)
+	static void rgb565ToRGBA(uint16_t c, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t& a);
+
   private:
 	// Raw binary data
 	int16_t mediaMappings[MAX_MAPPINGS] = {};
@@ -51,5 +54,4 @@ class TextureDecoder {
 	                const std::vector<uint16_t>& palette, std::vector<uint8_t>& rgba);
 	void decodeRLE(int mid, int w, int h, const uint8_t* texelData, int texelSize,
 	               const std::vector<uint16_t>& palette, std::vector<uint8_t>& rgba);
-	static void rgb565ToRGBA(uint16_t c, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t& a);
 };

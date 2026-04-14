@@ -513,6 +513,11 @@ int main(int argc, char* args[]) {
 					gc2.levelInfos[mapId].skyBox = skyNode.asString("");
 				}
 
+				DataNode skyTexNode = levelNode["sky_texture"];
+				if (skyTexNode) {
+					gc2.levelInfos[mapId].skyTexture = skyTexNode.asString("");
+				}
+
 				DataNode introNode = levelNode["intro"];
 				if (introNode) {
 					auto& li = gc2.levelInfos[mapId];

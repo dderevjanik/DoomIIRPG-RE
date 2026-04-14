@@ -1,5 +1,6 @@
 #include <span>
 #include <stdexcept>
+#include <unordered_map>
 #include "Log.h"
 
 #include "CAppContainer.h"
@@ -29,6 +30,7 @@
 #include "Span.h"
 #include "EntityDef.h"
 #include "SpriteDefs.h"
+#include "stb_image.h"
 
 void Render::initSpriteDefs() {
 	TILE_SKY_BOX = SpriteDefs::getIndex("sky_box");
@@ -620,6 +622,67 @@ void Render::FinalizeMedia() {
 	IS.~InputStream();
 }
 
+bool Render::loadSkyFromPng(const std::string& path) {
+	InputStream pngIs;
+	if (!pngIs.loadFile(path.c_str(), InputStream::LOADTYPE_RESOURCE)) {
+		LOG_WARN("[render] Sky texture not found: {}\n", path.c_str());
+		return false;
+	}
+
+	int w = 0, h = 0, channels = 0;
+	uint8_t* rgba = stbi_load_from_memory(pngIs.getData(), pngIs.getFileSize(), &w, &h, &channels, 4);
+	pngIs.close();
+
+	if (!rgba) {
+		LOG_WARN("[render] Failed to decode sky PNG: {}\n", path.c_str());
+		return false;
+	}
+
+	// Convert RGBA pixels to indexed texels + RGB565 palette
+	// Build palette from unique RGB565 colors
+	std::vector<uint16_t> palette;
+	std::unordered_map<uint16_t, uint8_t> colorToIndex;
+
+	int totalPixels = w * h;
+	this->skyMapTexels = new uint8_t[totalPixels];
+
+	for (int i = 0; i < totalPixels; i++) {
+		uint8_t r = rgba[i * 4 + 0];
+		uint8_t g = rgba[i * 4 + 1];
+		uint8_t b = rgba[i * 4 + 2];
+		// Convert to RGB565
+		uint16_t c565 = ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3);
+
+		auto it = colorToIndex.find(c565);
+		if (it != colorToIndex.end()) {
+			this->skyMapTexels[i] = it->second;
+		} else {
+			uint8_t idx = (uint8_t)palette.size();
+			if (palette.size() >= 256) {
+				// More than 256 unique colors - clamp to last
+				idx = 255;
+			} else {
+				colorToIndex[c565] = idx;
+				palette.push_back(c565);
+			}
+			this->skyMapTexels[i] = idx;
+		}
+	}
+
+	stbi_image_free(rgba);
+
+	// Allocate palette with 16 fog levels
+	int palSize = (int)palette.size();
+	this->skyMapPalette = new uint16_t*[16];
+	for (int i = 0; i < 16; i++) {
+		this->skyMapPalette[i] = new uint16_t[palSize];
+	}
+	memcpy(this->skyMapPalette[0], palette.data(), palSize * sizeof(uint16_t));
+
+	LOG_INFO("[render] Loaded sky from PNG: {} ({}x{}, {} colors)\n", path.c_str(), w, h, palSize);
+	return true;
+}
+
 bool Render::beginLoadMap(int mapNameID) {
 
 	InputStream IS;
@@ -952,35 +1015,47 @@ bool Render::beginLoadMap(int mapNameID) {
 	app->canvas->updateLoadingBar(false);
 	this->postProcessSprites();
 
-	int skyTableBase;
+	// Load sky texture from PNG (new path) or tables.bin (legacy fallback)
 	{
 		const auto& gc = *this->gameConfig;
-		if (auto lit = gc.levelInfos.find(this->mapNameID); lit != gc.levelInfos.end() && !lit->second.skyBox.empty()) {
-			int idx = SpriteDefs::getIndex(lit->second.skyBox);
-			if (idx > 0) {
-				skyTableBase = idx;
+		std::string skyTexPath;
+		if (auto lit = gc.levelInfos.find(this->mapNameID); lit != gc.levelInfos.end()) {
+			skyTexPath = lit->second.skyTexture;
+		}
+
+		bool skyLoaded = false;
+		if (!skyTexPath.empty()) {
+			skyLoaded = this->loadSkyFromPng(skyTexPath);
+		}
+
+		if (!skyLoaded) {
+			// Legacy fallback: load from tables.bin
+			int skyTableBase;
+			if (auto lit = gc.levelInfos.find(this->mapNameID); lit != gc.levelInfos.end() && !lit->second.skyBox.empty()) {
+				int idx = SpriteDefs::getIndex(lit->second.skyBox);
+				if (idx > 0) {
+					skyTableBase = idx;
+				} else {
+					skyTableBase = 16 + ((this->mapNameID - 1) / 5 % 2) * 2;
+				}
 			} else {
-				LOG_WARN("[render] Unknown sky_box '{}' for map {}, using fallback\n",
-					lit->second.skyBox.c_str(), this->mapNameID);
 				skyTableBase = 16 + ((this->mapNameID - 1) / 5 % 2) * 2;
 			}
-		} else {
-			skyTableBase = 16 + ((this->mapNameID - 1) / 5 % 2) * 2;
+			int skyPal = app->resource->getNumTableShorts(skyTableBase);
+			int skyTexel = app->resource->getNumTableBytes(skyTableBase + 1);
+
+			this->skyMapPalette = new uint16_t*[16];
+			for (int i = 0; i < 16; i++) {
+				this->skyMapPalette[i] = new uint16_t[skyPal];
+			}
+			this->skyMapTexels = new uint8_t[skyTexel];
+
+			app->resource->beginTableLoading();
+			app->resource->loadUShortTable(this->skyMapPalette[0], skyTableBase);
+			app->resource->loadUByteTable(this->skyMapTexels, skyTableBase + 1);
+			app->resource->finishTableLoading();
 		}
 	}
-	int skyPal = app->resource->getNumTableShorts(skyTableBase);
-	int skyTexel = app->resource->getNumTableBytes(skyTableBase + 1);
-
-	this->skyMapPalette = new uint16_t*[16];
-	for (int i = 0; i < 16; i++) {
-		this->skyMapPalette[i] = new uint16_t[skyPal];
-	}
-	this->skyMapTexels = new uint8_t[skyTexel];
-
-	app->resource->beginTableLoading();
-	app->resource->loadUShortTable(this->skyMapPalette[0], skyTableBase);
-	app->resource->loadUByteTable(this->skyMapTexels, skyTableBase + 1);
-	app->resource->finishTableLoading();
 	app->canvas->updateLoadingBar(false);
 
 	for (int n19 = 0; n19 < 1024; n19++) {

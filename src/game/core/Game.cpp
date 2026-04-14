@@ -4,6 +4,7 @@
 #include <memory>
 #include <sys/stat.h>
 #include "Log.h"
+#include "DataNode.h"
 
 #include "CAppContainer.h"
 #include "App.h"
@@ -269,9 +270,80 @@ void Game::loadMapEntities() {
 
 void Game::loadTableCamera(int i, int i2) {
 
-
 	this->cleanUpCamMemory();
 
+	// Try loading from YAML first (data/intro_camera.yaml)
+	DataNode camYaml = DataNode::loadFile("data/intro_camera.yaml");
+	if (camYaml) {
+		this->mayaCameras = new MayaCamera[1];
+		this->mayaCameras[0].isTableCam = true;
+		this->totalMayaCameras = 1;
+
+		this->totalMayaCameraKeys = camYaml["total_keys"].asInt(0);
+		this->mayaCameras[0].sampleRate = camYaml["sample_rate"].asInt(0);
+		this->posShift = 4 - camYaml["pos_shift"].asInt(0);
+		this->angleShift = 10 - camYaml["angle_shift"].asInt(0);
+
+		// Keyframes: totalKeys * 7 values
+		DataNode kfNode = camYaml["keyframes"];
+		int keySize = this->totalMayaCameraKeys * 7;
+		this->mayaCameraKeys = new int16_t[keySize];
+		if (kfNode && kfNode.isSequence()) {
+			int idx = 0;
+			for (int k = 0; k < (int)kfNode.size() && k < this->totalMayaCameraKeys; k++) {
+				DataNode row = kfNode[k];
+				for (int c = 0; c < 7 && c < (int)row.size(); c++) {
+					this->mayaCameraKeys[idx++] = (int16_t)row[c].asInt(0);
+				}
+			}
+		}
+
+		// Tween indices: totalKeys * 6 values
+		DataNode tiNode = camYaml["tween_indices"];
+		int tweenIdxSize = this->totalMayaCameraKeys * 6;
+		this->mayaTweenIndices = new int16_t[tweenIdxSize];
+		if (tiNode && tiNode.isSequence()) {
+			int idx = 0;
+			for (int k = 0; k < (int)tiNode.size() && k < this->totalMayaCameraKeys; k++) {
+				DataNode row = tiNode[k];
+				for (int c = 0; c < 6 && c < (int)row.size(); c++) {
+					this->mayaTweenIndices[idx++] = (int16_t)row[c].asInt(0);
+				}
+			}
+		}
+
+		// Tween counts → cumulative offsets
+		DataNode tcNode = camYaml["tween_counts"];
+		this->ofsMayaTween[0] = 0;
+		if (tcNode && tcNode.isSequence()) {
+			short cumulative = 0;
+			for (int c = 0; c < 5 && c < (int)tcNode.size(); c++) {
+				cumulative += (short)tcNode[c].asInt(0);
+				this->ofsMayaTween[c + 1] = cumulative;
+			}
+		}
+
+		// Tween data (signed bytes)
+		DataNode twNode = camYaml["tweens"];
+		if (twNode && twNode.isSequence()) {
+			int cnt = (int)twNode.size();
+			this->mayaCameraTweens = new int8_t[cnt];
+			for (int t = 0; t < cnt; t++) {
+				this->mayaCameraTweens[t] = (int8_t)twNode[t].asInt(0);
+			}
+		}
+
+		this->mayaCameras[0].keyOffset = 0;
+		this->mayaCameras[0].numKeys = this->totalMayaCameraKeys;
+		this->mayaCameras[0].complete = false;
+		this->mayaCameras[0].keyThreadResumeCount = this->totalMayaCameraKeys;
+		this->setKeyOffsets();
+
+		LOG_INFO("[game] Loaded intro camera from YAML ({} keys)\n", this->totalMayaCameraKeys);
+		return;
+	}
+
+	// Legacy fallback: load from tables.bin
 	int cnt = app->resource->getNumTableBytes(i2);
 	int16_t* array = new int16_t[app->resource->getNumTableShorts(i)];
 	int8_t* array2 = new int8_t[cnt];
@@ -321,15 +393,8 @@ void Game::loadTableCamera(int i, int i2) {
 	this->mayaCameras[0].keyThreadResumeCount = this->totalMayaCameraKeys;
 	this->setKeyOffsets();
 
-	if (array) {
-		delete[] array;
-	}
-	array = nullptr;
-
-	if (array2) {
-		delete[] array2;
-	}
-	array2 = nullptr;
+	delete[] array;
+	delete[] array2;
 }
 
 void Game::setKeyOffsets() {

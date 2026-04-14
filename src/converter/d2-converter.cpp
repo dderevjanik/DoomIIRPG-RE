@@ -439,9 +439,9 @@ static bool extractSpritesToYaml(const std::string& outDir) {
 			yaml += "flags_bitmask: " + std::to_string(mapData.flagsBitmask) + "\n";
 		}
 
-		// Sky box sprite name (derived from original engine formula)
+		// Sky box PNG texture (extracted from tables.bin)
 		const char* skyName = (((mapId - 1) / 5 % 2) == 0) ? "sky_earth" : "sky_hell";
-		yaml += "sky_box: " + std::string(skyName) + "\n";
+		yaml += "sky_texture: textures/" + std::string(skyName) + ".png\n";
 
 		// Media indices
 		if (!mapData.mediaIndices.empty()) {
@@ -691,6 +691,222 @@ static bool extractSpritesToYaml(const std::string& outDir) {
 
 		printf("  levels/%s: %d sprites extracted\n", dirName.c_str(), totalSprites);
 	}
+	return true;
+}
+
+// ========================================================================
+// Helper: read a binary file into a vector
+// ========================================================================
+static std::vector<uint8_t> readBinFile(const std::string& path) {
+	FILE* f = fopen(path.c_str(), "rb");
+	if (!f) return {};
+	fseek(f, 0, SEEK_END);
+	long sz = ftell(f);
+	fseek(f, 0, SEEK_SET);
+	std::vector<uint8_t> buf(sz);
+	fread(buf.data(), 1, sz, f);
+	fclose(f);
+	return buf;
+}
+
+// Helper: read a little-endian int32 from a byte buffer
+static int32_t readLE32(const uint8_t* p) {
+	return (int32_t)p[0] | ((int32_t)p[1] << 8) | ((int32_t)p[2] << 16) | ((int32_t)p[3] << 24);
+}
+
+// Helper: read a little-endian uint16 from a byte buffer
+static uint16_t readLE16(const uint8_t* p) {
+	return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
+}
+
+// Helper: read a little-endian int16 from a byte buffer
+static int16_t readLE16s(const uint8_t* p) {
+	return (int16_t)readLE16(p);
+}
+
+// ========================================================================
+// Extract sky textures from tables.bin (tables 16-19) as PNG
+// ========================================================================
+static bool extractSkyTextures(const std::string& outDir) {
+	std::string tablesPath = outDir + "/data/tables.bin";
+	auto data = readBinFile(tablesPath);
+	if (data.size() < 80) {
+		fprintf(stderr, "  Failed to read tables.bin or file too small\n");
+		return false;
+	}
+
+	// Read 20 table offsets from 80-byte header
+	int32_t tableOffsets[20];
+	for (int i = 0; i < 20; i++) {
+		tableOffsets[i] = readLE32(&data[i * 4]);
+	}
+
+	const uint8_t* tableData = data.data() + 80; // data starts after header
+	size_t tableDataSize = data.size() - 80;
+
+	// Extract sky textures: table pairs (16,17) and (18,19)
+	struct SkyDef {
+		int palTable;
+		int texTable;
+		const char* name;
+	};
+	SkyDef skies[] = {
+		{16, 17, "sky_earth"},
+		{18, 19, "sky_hell"},
+	};
+
+	mkdirRecursive(outDir + "/textures");
+
+	for (auto& sky : skies) {
+		// Locate palette table
+		int palStart = (sky.palTable > 0) ? tableOffsets[sky.palTable - 1] : 0;
+		int palEnd = tableOffsets[sky.palTable];
+		// First 4 bytes of each table are the element count
+		if (palStart + 4 > (int)tableDataSize) continue;
+		int palCount = readLE32(&tableData[palStart]);
+		const uint8_t* palBytes = &tableData[palStart + 4];
+
+		// Locate texel table
+		int texStart = tableOffsets[sky.texTable - 1]; // texTable > 0 always
+		int texEnd = tableOffsets[sky.texTable];
+		if (texStart + 4 > (int)tableDataSize) continue;
+		int texCount = readLE32(&tableData[texStart]);
+		const uint8_t* texBytes = &tableData[texStart + 4];
+
+		// Read palette (RGB565 uint16 array)
+		std::vector<uint16_t> palette(palCount);
+		for (int i = 0; i < palCount; i++) {
+			palette[i] = readLE16(&palBytes[i * 2]);
+		}
+
+		// Sky texture is 256x256 (indexed, stride=256)
+		int width = 256;
+		int height = texCount / width;
+		if (height == 0) height = 1;
+		if (height * width > texCount) height = texCount / width;
+
+		// Convert to RGBA
+		std::vector<uint8_t> rgba(width * height * 4);
+		for (int i = 0; i < width * height; i++) {
+			uint8_t idx = texBytes[i];
+			if (idx < palCount) {
+				uint8_t r, g, b, a;
+				TextureDecoder::rgb565ToRGBA(palette[idx], r, g, b, a);
+				rgba[i * 4 + 0] = r;
+				rgba[i * 4 + 1] = g;
+				rgba[i * 4 + 2] = b;
+				rgba[i * 4 + 3] = a;
+			}
+		}
+
+		std::string pngPath = outDir + "/textures/" + sky.name + ".png";
+		if (!stbi_write_png(pngPath.c_str(), width, height, 4, rgba.data(), width * 4)) {
+			fprintf(stderr, "  Failed to write sky PNG: %s\n", pngPath.c_str());
+			return false;
+		}
+		printf("  Extracted %s (%dx%d, %d palette colors)\n", sky.name, width, height, palCount);
+	}
+
+	return true;
+}
+
+// ========================================================================
+// Extract intro camera data from tables.bin (tables 14-15) as YAML
+// ========================================================================
+static bool extractIntroCamera(const std::string& outDir) {
+	std::string tablesPath = outDir + "/data/tables.bin";
+	auto data = readBinFile(tablesPath);
+	if (data.size() < 80) {
+		fprintf(stderr, "  Failed to read tables.bin\n");
+		return false;
+	}
+
+	int32_t tableOffsets[20];
+	for (int i = 0; i < 20; i++) {
+		tableOffsets[i] = readLE32(&data[i * 4]);
+	}
+
+	const uint8_t* tableData = data.data() + 80;
+	size_t tableDataSize = data.size() - 80;
+
+	// Table 14: camera keys (short array)
+	int keysStart = tableOffsets[13]; // table 14 starts after table 13's end
+	if (keysStart + 4 > (int)tableDataSize) return false;
+	int keysCount = readLE32(&tableData[keysStart]); // element count (shorts)
+	const uint8_t* keysBytes = &tableData[keysStart + 4];
+
+	// Table 15: camera tweens (byte array)
+	int tweensStart = tableOffsets[14];
+	if (tweensStart + 4 > (int)tableDataSize) return false;
+	int tweensCount = readLE32(&tableData[tweensStart]); // byte count
+	const uint8_t* tweensBytes = &tableData[tweensStart + 4];
+
+	// Parse camera header from keys
+	int pos = 0;
+	auto readShort = [&]() -> int16_t {
+		int16_t v = readLE16s(&keysBytes[pos * 2]);
+		pos++;
+		return v;
+	};
+
+	int totalKeys = readShort();
+	int sampleRate = readShort();
+	int posShiftRaw = readShort();   // stored as raw value; engine does 4 - posShiftRaw
+	int angleShiftRaw = readShort(); // stored as raw value; engine does 10 - angleShiftRaw
+
+	// Build YAML
+	std::string yaml;
+	yaml += "# Intro camera data (extracted from tables.bin tables 14-15)\n";
+	yaml += "total_keys: " + std::to_string(totalKeys) + "\n";
+	yaml += "sample_rate: " + std::to_string(sampleRate) + "\n";
+	yaml += "pos_shift: " + std::to_string(posShiftRaw) + "\n";
+	yaml += "angle_shift: " + std::to_string(angleShiftRaw) + "\n";
+
+	// Camera keyframes: totalKeys * 7 shorts
+	yaml += "\nkeyframes:\n";
+	for (int k = 0; k < totalKeys; k++) {
+		yaml += "  - [";
+		for (int c = 0; c < 7; c++) {
+			if (c > 0) yaml += ", ";
+			yaml += std::to_string(readShort());
+		}
+		yaml += "]\n";
+	}
+
+	// Tween indices: totalKeys * 6 shorts
+	yaml += "\ntween_indices:\n";
+	for (int k = 0; k < totalKeys; k++) {
+		yaml += "  - [";
+		for (int c = 0; c < 6; c++) {
+			if (c > 0) yaml += ", ";
+			yaml += std::to_string(readShort());
+		}
+		yaml += "]\n";
+	}
+
+	// 5 tween counts (which produce 6 cumulative offsets in the engine)
+	yaml += "\ntween_counts: [";
+	for (int i = 0; i < 5; i++) {
+		if (i > 0) yaml += ", ";
+		yaml += std::to_string(readShort());
+	}
+	yaml += "]\n";
+
+	// Tween data (signed bytes)
+	yaml += "\ntweens: [";
+	for (int i = 0; i < tweensCount; i++) {
+		if (i > 0) yaml += ", ";
+		yaml += std::to_string((int8_t)tweensBytes[i]);
+	}
+	yaml += "]\n";
+
+	mkdirRecursive(outDir + "/data");
+	std::string yamlPath = outDir + "/data/intro_camera.yaml";
+	if (!writeString(yamlPath, yaml)) {
+		fprintf(stderr, "  Failed to write intro camera YAML\n");
+		return false;
+	}
+	printf("  Extracted intro camera: %d keys, %d tween bytes\n", totalKeys, tweensCount);
 	return true;
 }
 
@@ -987,6 +1203,12 @@ bool convertD2RPG(ZipFile& zip, const GameDef& game, const std::string& outputDi
 
 	printf("\nUpdating sprites.yaml with PNG references...\n");
 	ok &= rewriteSpritesYaml(outputDir, tileExports);
+
+	printf("\nExtracting sky textures from tables.bin...\n");
+	ok &= extractSkyTextures(outputDir);
+
+	printf("\nExtracting intro camera from tables.bin...\n");
+	ok &= extractIntroCamera(outputDir);
 
 	printf("\nCopying audio assets...\n");
 	copyAudioAssets(zip, outputDir);
