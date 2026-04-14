@@ -210,11 +210,14 @@ std::expected<void, std::string> EntityDefManager::parse(EntityDefManager* mgr, 
 
 		// Auto-infer render flags from top-level keys under rendering:
 		// Presence of a key (with or without data) sets the flag.
-		// This makes the flags: array optional — all flags can be top-level keys.
+		// Monster-specific flags (floater, gun_flare, special_boss) are only set for
+		// monster entities — NPCs can have the same data sections for positioning
+		// without being rendered through the monster rendering paths.
 		if (r) {
-			if (r["gun_flare"])            list[i].renderFlags |= EntityDef::RFLAG_GUN_FLARE;
-			if (r["floater"])              list[i].renderFlags |= EntityDef::RFLAG_FLOATER;
-			if (r["special_boss"])         list[i].renderFlags |= EntityDef::RFLAG_SPECIAL_BOSS;
+			bool isMonster = (list[i].eType == Enums::ET_MONSTER);
+			if (isMonster && r["gun_flare"])            list[i].renderFlags |= EntityDef::RFLAG_GUN_FLARE;
+			if (isMonster && r["floater"])              list[i].renderFlags |= EntityDef::RFLAG_FLOATER;
+			if (isMonster && r["special_boss"])         list[i].renderFlags |= EntityDef::RFLAG_SPECIAL_BOSS;
 			if (r["npc"])                  list[i].renderFlags |= EntityDef::RFLAG_NPC;
 			if (r["no_flare_alt_attack"])  list[i].renderFlags |= EntityDef::RFLAG_NO_FLARE_ALT_ATTACK;
 			if (r["tall_hitbox"])          list[i].renderFlags |= EntityDef::RFLAG_TALL_HITBOX;
