@@ -239,7 +239,7 @@ static std::string generateLevelYaml(const BspToBin::Result& r, const D1LevelMap
 
 	yaml += "no_fog: true\n\n";
 
-	yaml += "media_indices:\n";
+	yaml += "textures:\n";
 	yaml += "  - texture_258\n";
 	yaml += "  - texture_451\n";
 	yaml += "  - texture_462\n";

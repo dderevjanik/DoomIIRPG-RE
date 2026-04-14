@@ -445,7 +445,7 @@ static bool extractSpritesToYaml(const std::string& outDir) {
 
 		// Media indices
 		if (!mapData.mediaIndices.empty()) {
-			yaml += "\nmedia_indices:\n";
+			yaml += "\ntextures:\n";
 			for (auto idx : mapData.mediaIndices) {
 				if (auto nameIt = tileIdToName.find((int)idx); nameIt != tileIdToName.end()) {
 					yaml += "  - " + nameIt->second + "\n";

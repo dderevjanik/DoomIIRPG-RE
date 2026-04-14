@@ -133,7 +133,7 @@ player_spawn:
 total_secrets: 2
 total_loot: 60
 
-media_indices:        # Textures/sprites this level needs loaded
+textures:        # Textures/sprites this level needs loaded
   - assault_rifle
   - monster_zombie
   - door_unlocked
@@ -168,7 +168,7 @@ sprites:              # All sprites placed in the level
 
 **player_spawn** — Overrides the spawn point from the binary header. Coordinates are tile grid positions (0-31).
 
-**media_indices** — The texture/sprite manifest. Lists every tile that must be loaded into texture memory for this map. Entries can be sprite names (from `sprites.yaml`) or numeric tile IDs. The engine's `RegisterMedia()` function marks each tile's palette and texel data for loading; `FinalizeMedia()` then loads only the marked data. This keeps memory usage within the original game's budget.
+**textures** — The texture/sprite manifest. Lists every tile that must be loaded into texture memory for this map. Entries can be sprite names (from `sprites.yaml`) or numeric tile IDs. The engine's `RegisterMedia()` function marks each tile's palette and texel data for loading; `FinalizeMedia()` then loads only the marked data. This keeps memory usage within the original game's budget.
 
 **height_map** — 32x32 grid of tile heights (0-255). Each value represents the floor height at that tile position. Zero means no floor (void/wall). The world height is `value << 3`.
 
@@ -292,7 +292,7 @@ Textures are loaded from the shared `levels/textures/` directory:
 ### Loading sequence
 
 1. **Startup**: Engine loads `newMappings.bin` to build the tile ID -> palette/texel mapping table
-2. **Map load**: Engine reads `media_indices` from `level.yaml` (or from the binary)
+2. **Map load**: Engine reads `textures` from `level.yaml` (or from the binary)
 3. **RegisterMedia**: For each media index, marks the tile's palette and texel entries as "needed"
 4. **FinalizeMedia**: Loads only the marked palettes from `newPalettes.bin` and texels from the corresponding `newTexelsNNN.bin` files
 
@@ -308,7 +308,7 @@ When the player enters a new level (map ID N):
 2. **Load map.bin** — Parse BSP geometry, sprites, tile events, bytecodes, cameras from binary
 3. **Load level.yaml** — Override spawn point, secrets, loot count, sprites, media indices
 4. **Load scripts.yaml** — Override tile events and static functions (if present)
-5. **Register media** — Mark needed textures from `media_indices`, then load them
+5. **Register media** — Mark needed textures from `textures`, then load them
 6. **Load strings** — Load the level's string group for dialog text
 7. **Load levels.yaml** — Apply fog settings and joke items for this map ID
 8. **Initialize scripts** — Run `init_map` static function if defined
@@ -324,7 +324,7 @@ To add or modify a level:
 2. **Add required files**: `map.bin`, `level.yaml`, `scripts.yaml`, `strings.yaml`
 3. **Register in game.yaml**: Add entry under `levels:` and `strings:`
 4. **Add to levels.yaml**: Configure `map_id`, `file`, and optional loadout/fog settings
-5. **Update media**: Ensure `media_indices` in `level.yaml` lists all textures the map uses
+5. **Update media**: Ensure `textures` in `level.yaml` lists all textures the map uses
 
 The `level.yaml` and `scripts.yaml` files can override most binary data, so modders can adjust spawn points, sprites, events, and media without recompiling the `.bin` file.
 

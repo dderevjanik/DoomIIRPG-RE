@@ -139,7 +139,7 @@ Place `my_door.png` in `games/doom2rpg/sprites/`. The `id: 274` is kept so the e
 ### Requirements for PNG files
 
 - **Format**: PNG with RGBA (recommended) or RGB. Alpha channel is used for transparency
-- **Dimensions**: Should match the original texture's power-of-two size (e.g. 64x64, 128x128, 256x256). Check `media_indices` or `sprites.yaml` for the original dimensions
+- **Dimensions**: Should match the original texture's power-of-two size (e.g. 64x64, 128x128, 256x256). Check `textures` or `sprites.yaml` for the original dimensions
 - **Location**: Place in the game directory (e.g. `games/doom2rpg/sprites/`). The VFS resolves paths relative to the game root
 
 ### What can be replaced
@@ -197,11 +197,11 @@ A PNG override replaces frame 0 (the base media ID). Animated sprites with multi
 Levels reference sprites by name in `level.yaml`:
 
 ```yaml
-media_indices:
+textures:
   - assault_rifle
   - blue_door_unlocked    # If this has a PNG override, it loads the PNG
   - texture_303
   - monster_zombie
 ```
 
-No changes to `level.yaml` are needed when overriding textures. The `media_indices` list just names which sprites the level uses; the actual texture source (binary or PNG) is determined by `sprites.yaml`.
+No changes to `level.yaml` are needed when overriding textures. The `textures` list just names which sprites the level uses; the actual texture source (binary or PNG) is determined by `sprites.yaml`.

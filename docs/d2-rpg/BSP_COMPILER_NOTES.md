@@ -119,9 +119,9 @@ sprites:
 
 **`scripts.yaml`:** Must be empty (`static_funcs: {}`, `tile_events: []`) to prevent D2 tile event scripts from executing on D1 map data.
 
-**`level.yaml` media_indices:** Must include `door_unlocked` and `sky_box`:
+**`level.yaml` textures:** Must include `door_unlocked` and `sky_box`:
 ```yaml
-media_indices:
+textures:
   - texture_258
   - texture_451
   - texture_462

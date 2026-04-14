@@ -818,8 +818,8 @@ bool Render::beginLoadMap(int mapNameID) {
 	app->resource->readMarker(&IS, 0xDEADBEEF);
 	IS.close();
 
-	// Override media indices from YAML if present
-	DataNode yamlMedia = levelYaml ? levelYaml["media_indices"] : DataNode();
+	// Override textures from YAML if present
+	DataNode yamlMedia = levelYaml ? levelYaml["textures"] : DataNode();
 	if (yamlMedia && yamlMedia.isSequence() && yamlMedia.size() > 0) {
 		// Re-register media from YAML (clears previous registrations)
 		for (int i = 0; i < Render::MEDIA_MAX_IMAGES; i++) {
