@@ -96,13 +96,13 @@ def count_crossings_y(row, c0, c1):
 
 ### Doors
 
-Doors are handled via **`level.yaml` sprites** + **passable collision lines**:
+Doors are handled via **`level.yaml` entities** + **passable collision lines**:
 
 **Door detection:** D1 lines with texture 0-10 are doors. For each door line, find the midpoint tile `(mx//64, my//64)` and the direction (horizontal = N/S, vertical = E/W).
 
-**Door sprites in `level.yaml`:**
+**Door entities in `level.yaml`:**
 ```yaml
-sprites:
+entities:
   - x: 1632         # D1 world coord (midpoint of door line)
     y: 1504
     tile: door_unlocked

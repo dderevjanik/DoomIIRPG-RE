@@ -172,7 +172,7 @@ sprites:              # All sprites placed in the level
 
 **height_map** — 32x32 grid of tile heights (0-255). Each value represents the floor height at that tile position. Zero means no floor (void/wall). The world height is `value << 3`.
 
-**sprites** — All sprite placements in the level. Each entry has:
+**entities** — All entity placements in the level. Each entry has:
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -181,7 +181,7 @@ sprites:              # All sprites placed in the level
 | `z` | int | Height offset (only for Z-sprites) |
 | `flags` | string[] | Optional flags: `invisible`, `flip_h`, `animation`, `non_entity`, `sprite_wall`, `south`, `north`, `east`, `west` |
 
-Sprite indices in bytecode scripts refer to the position in this array (0-based, normal sprites first, then Z-sprites).
+Entity indices in bytecode scripts refer to the position in this array (0-based, normal sprites first, then Z-sprites).
 
 **cameras** — Maya camera animations used for cutscenes. Each camera defines keyframes with position, rotation, and timing, plus tween data for smooth interpolation.
 

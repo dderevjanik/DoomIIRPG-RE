@@ -614,7 +614,7 @@ static bool extractSpritesToYaml(const std::string& outDir) {
 
 		// Sprites section
 		if (totalSprites > 0) {
-		yaml += "\nsprites:\n";
+		yaml += "\nentities:\n";
 
 		auto emitSprite = [&](const SpriteData& s, bool isZ) {
 			int tile = (s.info & 0xFF);

@@ -1279,7 +1279,7 @@ void Render::loadMapLevelOverrides(int mapNameID, DataNode& levelYaml, bool& spr
 		if (lvl["flags_bitmask"]) this->mapFlagsBitmask = lvl["flags_bitmask"].asInt(this->mapFlagsBitmask);
 	}
 
-	DataNode sprites = lvl ? lvl["sprites"] : DataNode();
+	DataNode sprites = lvl ? lvl["entities"] : DataNode();
 	if (sprites && sprites.isSequence() && sprites.size() > 0) {
 		spritesFromYaml = true;
 		yamlSpritesNode = sprites;

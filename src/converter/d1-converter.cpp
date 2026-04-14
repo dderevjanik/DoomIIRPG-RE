@@ -249,7 +249,7 @@ static std::string generateLevelYaml(const BspToBin::Result& r, const D1LevelMap
 
 	// Door sprites
 	if (!r.doors.empty()) {
-		yaml += "sprites:\n";
+		yaml += "entities:\n";
 		for (auto& d : r.doors) {
 			yaml += "  - x: " + std::to_string(d.midX) + "\n";
 			yaml += "    y: " + std::to_string(d.midY) + "\n";
@@ -259,7 +259,7 @@ static std::string generateLevelYaml(const BspToBin::Result& r, const D1LevelMap
 			yaml += "]\n";
 		}
 	} else {
-		yaml += "sprites: []\n";
+		yaml += "entities: []\n";
 	}
 
 	return yaml;
