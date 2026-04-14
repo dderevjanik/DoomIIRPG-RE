@@ -599,10 +599,10 @@ entities:
         is_boss: true
         is_vios: true
         fear_immune: true
-        can_teleport: true
-        teleport_range: 4
-        teleport_cooldown_min: 3
-        teleport_cooldown_max: 5
+        teleport:
+          range: 4
+          cooldown_min: 3
+          cooldown_max: 5
       stats: {health: 80, armor: 0, defense: 15, strength: 38, accuracy: 100, agility: 65}
       attacks: {attack1: m_vios_plasma, attack2: assault_rifle, chance: 0}
       weakness: {}

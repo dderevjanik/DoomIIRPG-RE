@@ -1016,12 +1016,15 @@ bool parseMonsters(Applet* app, const DataNode& config) {
 			mb.diagonalAttackField = (int8_t)beh["diagonal_attack_field"].asInt(0);
 			mb.orthogonalAttackOnly = beh["orthogonal_attack_only"].asBool(false);
 			// Teleport behavior
-			mb.canTeleport = beh["can_teleport"].asBool(false);
-			mb.teleportRange = beh["teleport_range"].asInt(4);
-			mb.teleportMaxAttempts = beh["teleport_max_attempts"].asInt(30);
-			mb.teleportCooldownMin = beh["teleport_cooldown_min"].asInt(3);
-			mb.teleportCooldownMax = beh["teleport_cooldown_max"].asInt(5);
-			mb.teleportParticleId = beh["teleport_particle_id"].asInt(7);
+			DataNode tp = beh["teleport"];
+			if (tp) {
+				mb.teleport.enabled = true;
+				mb.teleport.range = tp["range"].asInt(4);
+				mb.teleport.maxAttempts = tp["max_attempts"].asInt(30);
+				mb.teleport.cooldownMin = tp["cooldown_min"].asInt(3);
+				mb.teleport.cooldownMax = tp["cooldown_max"].asInt(5);
+				mb.teleport.particleId = tp["particle_id"].asInt(7);
+			}
 			DataNode poison = beh["on_hit_poison_params"];
 			if (poison) {
 				mb.onHitPoisonId = poison["id"].asInt(13);
@@ -1331,12 +1334,15 @@ std::expected<void, std::string> parseMonsterCombatFromEntities(Applet* app, con
 			mb.diagonalAttackField = (int8_t)beh["diagonal_attack_field"].asInt(0);
 			mb.orthogonalAttackOnly = beh["orthogonal_attack_only"].asBool(false);
 			// Teleport behavior
-			mb.canTeleport = beh["can_teleport"].asBool(false);
-			mb.teleportRange = beh["teleport_range"].asInt(4);
-			mb.teleportMaxAttempts = beh["teleport_max_attempts"].asInt(30);
-			mb.teleportCooldownMin = beh["teleport_cooldown_min"].asInt(3);
-			mb.teleportCooldownMax = beh["teleport_cooldown_max"].asInt(5);
-			mb.teleportParticleId = beh["teleport_particle_id"].asInt(7);
+			DataNode tp = beh["teleport"];
+			if (tp) {
+				mb.teleport.enabled = true;
+				mb.teleport.range = tp["range"].asInt(4);
+				mb.teleport.maxAttempts = tp["max_attempts"].asInt(30);
+				mb.teleport.cooldownMin = tp["cooldown_min"].asInt(3);
+				mb.teleport.cooldownMax = tp["cooldown_max"].asInt(5);
+				mb.teleport.particleId = tp["particle_id"].asInt(7);
+			}
 			DataNode poison = beh["on_hit_poison_params"];
 			if (poison) {
 				mb.onHitPoisonId = poison["id"].asInt(13);

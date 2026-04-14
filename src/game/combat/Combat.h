@@ -47,12 +47,15 @@ struct MonsterDef {
 	bool orthogonalAttackOnly = false; // only attack along cardinal axes, fail on diagonal (boss pinky)
 
 	// Teleport behavior (boss vios-like): teleport to random nearby tile before attacking
-	bool canTeleport = false;           // enable teleport mechanic
-	int teleportRange = 4;              // max tile range for teleport destination (±N tiles)
-	int teleportMaxAttempts = 30;       // max random positions to try
-	int teleportCooldownMin = 3;        // min turns between teleports
-	int teleportCooldownMax = 5;        // max turns between teleports (randomized)
-	int teleportParticleId = 7;         // particle effect on teleport (-1 = none)
+	struct TeleportDef {
+		bool enabled = false;           // enable teleport mechanic
+		int range = 4;                  // max tile range for destination (±N tiles)
+		int maxAttempts = 30;           // max random positions to try
+		int cooldownMin = 3;            // min turns between teleports
+		int cooldownMax = 5;            // max turns between teleports (randomized)
+		int particleId = 7;             // particle effect on teleport (-1 = none)
+	};
+	TeleportDef teleport;
 
 	// Per-weapon weakness modifiers (indexed by weapon index, -1=immune, 0=normal, >0=left shift)
 	static constexpr int MAX_WEAKNESS_MODS = 16;

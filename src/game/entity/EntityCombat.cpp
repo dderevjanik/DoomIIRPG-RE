@@ -595,13 +595,13 @@ int Entity::aiWeaponForTarget(Entity* entity) {
     }
     else {
         const MonsterDef& mb = app->combat->monsterBehaviors[this->def->monsterIdx];
-        if (mb.canTeleport) {
+        if (mb.teleport.enabled) {
             if (this->param <= 0) {
-                int cdRange = mb.teleportCooldownMax - mb.teleportCooldownMin;
-                this->param = (cdRange > 0) ? ((int)app->nextInt() % (cdRange + 1) + mb.teleportCooldownMin) : mb.teleportCooldownMin;
-                int tpRange = mb.teleportRange;
-                int tpDiam = tpRange * 2 + 1;
-                int n = mb.teleportMaxAttempts;
+                const auto& tp = mb.teleport;
+                int cdRange = tp.cooldownMax - tp.cooldownMin;
+                this->param = (cdRange > 0) ? ((int)app->nextInt() % (cdRange + 1) + tp.cooldownMin) : tp.cooldownMin;
+                int tpDiam = tp.range * 2 + 1;
+                int n = tp.maxAttempts;
                 while (n-- > 0) {
                     short n2 = app->render->getSpriteX(sprite);
                     short n3 = app->render->getSpriteY(sprite);
@@ -609,16 +609,16 @@ int Entity::aiWeaponForTarget(Entity* entity) {
                     int n5 = 0;
 
                     while (n-- > 0 && n4 == 0 && n5 == 0){
-                        n4 = (int)app->nextInt() % tpDiam - tpRange;
-                        n5 = (int)app->nextInt() % tpDiam - tpRange;
+                        n4 = (int)app->nextInt() % tpDiam - tp.range;
+                        n5 = (int)app->nextInt() % tpDiam - tp.range;
                     }
 
                     int n6 = n2 + (n4 << 6);
                     int n7 = n3 + (n5 << 6);
                     app->game->trace(n2, n3, n6, n7, this, 15535, 2);
                     if (app->game->numTraceEntities == 0) {
-                        if (mb.teleportParticleId >= 0)
-                            app->particleSystem->spawnParticles(mb.teleportParticleId, -1, sprite);
+                        if (tp.particleId >= 0)
+                            app->particleSystem->spawnParticles(tp.particleId, -1, sprite);
                         app->sound->playSound(Sounds::getResIDByName(SoundName::TELEPORT), 0, 1, 0);
                         app->game->unlinkEntity(this);
                         app->render->setSpriteX(sprite, (short)n6);
@@ -626,8 +626,8 @@ int Entity::aiWeaponForTarget(Entity* entity) {
                         app->render->setSpriteZ(sprite, (short)(app->render->getHeight(n6, n7) + 32));
                         app->game->linkEntity(this, n6 >> 6, n7 >> 6);
                         app->render->relinkSprite(sprite);
-                        if (mb.teleportParticleId >= 0)
-                            app->particleSystem->spawnParticles(mb.teleportParticleId, -1, sprite);
+                        if (tp.particleId >= 0)
+                            app->particleSystem->spawnParticles(tp.particleId, -1, sprite);
                         break;
                     }
                 }
