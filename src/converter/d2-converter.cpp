@@ -13,8 +13,10 @@
 
 #include "ZipFile.h"
 #include "MapDataIO.h"
+#include "TextureDecoder.h"
 #include <yaml-cpp/yaml.h>
 #include "resources_embedded.h"
+#include "stb_image_write.h"
 
 // ========================================================================
 // D2RPG game definition
@@ -774,6 +776,190 @@ static bool writeResourceFiles(const std::string& outDir) {
 }
 
 // ========================================================================
+// Extract textures/sprites as individual PNG files
+// ========================================================================
+// Per-tile extraction result: PNG path, frame dimensions, and frame count
+struct TileExportInfo {
+	std::string pngPath;
+	int frameWidth = 0;
+	int frameHeight = 0;
+	int frameCount = 1;
+};
+
+static bool extractTexturePngs(
+	const std::string& outDir,
+	std::map<int, TileExportInfo>& tileExports) {
+
+	TextureDecoder decoder;
+	std::string texDir = outDir + "/levels/textures";
+	if (!decoder.load(texDir, g_game->numTextures)) {
+		fprintf(stderr, "  Failed to load texture data\n");
+		return false;
+	}
+	if (!decoder.decode()) {
+		fprintf(stderr, "  Failed to decode textures\n");
+		return false;
+	}
+
+	// Build tile ID -> sprite name map from sprites.yaml
+	std::map<int, std::string> tileIdToName;
+	{
+		YAML::Node root = YAML::LoadFile(outDir + "/sprites.yaml");
+		YAML::Node sprites = root["sprites"];
+		if (sprites) {
+			for (auto it = sprites.begin(); it != sprites.end(); ++it) {
+				std::string name = it->first.as<std::string>();
+				auto& val = it->second;
+				if (val["file"] && val["file"].as<std::string>() == "tables.bin" && val["id"]) {
+					int id = val["id"].as<int>();
+					if (tileIdToName.find(id) == tileIdToName.end()) {
+						tileIdToName[id] = name;
+					}
+				}
+			}
+		}
+	}
+
+	const int16_t* mappings = decoder.getMappings();
+
+	// Create output directories
+	mkdirRecursive(outDir + "/sprites");
+	mkdirRecursive(outDir + "/textures");
+
+	int spriteCount = 0, textureCount = 0;
+
+	for (auto& [tileId, name] : tileIdToName) {
+		if (tileId < 0 || tileId >= MAX_MAPPINGS - 1) continue;
+
+		int startMid = mappings[tileId];
+		int endMid = mappings[tileId + 1];
+		if (startMid < 0 || endMid <= startMid) continue;
+
+		bool isTexture = name.starts_with("texture_");
+		std::string subDir = isTexture ? "textures" : "sprites";
+
+		// Collect valid decoded frames
+		int numFrames = endMid - startMid;
+		std::vector<const DecodedMedia*> frames;
+		for (int f = 0; f < numFrames; f++) {
+			const DecodedMedia* dm = decoder.getMedia(startMid + f);
+			if (dm) frames.push_back(dm);
+		}
+		if (frames.empty()) continue;
+
+		int frameW = frames[0]->width;
+		int frameH = frames[0]->height;
+		std::string fileName = std::format("{}/{}.png", subDir, name);
+		std::string fullPath = outDir + "/" + fileName;
+
+		if (frames.size() == 1) {
+			// Single frame: write directly
+			if (!stbi_write_png(fullPath.c_str(), frameW, frameH, 4,
+			                    frames[0]->rgba.data(), frameW * 4)) {
+				fprintf(stderr, "  Failed to write PNG: %s\n", fullPath.c_str());
+				continue;
+			}
+		} else {
+			// Multiple frames: stitch horizontally into a single strip
+			int totalW = frameW * (int)frames.size();
+			std::vector<uint8_t> strip(totalW * frameH * 4, 0);
+			for (int f = 0; f < (int)frames.size(); f++) {
+				const auto& src = frames[f]->rgba;
+				int fw = frames[f]->width;
+				int fh = frames[f]->height;
+				for (int y = 0; y < fh && y < frameH; y++) {
+					memcpy(&strip[(y * totalW + f * frameW) * 4],
+					       &src[y * fw * 4],
+					       std::min(fw, frameW) * 4);
+				}
+			}
+			if (!stbi_write_png(fullPath.c_str(), totalW, frameH, 4,
+			                    strip.data(), totalW * 4)) {
+				fprintf(stderr, "  Failed to write PNG: %s\n", fullPath.c_str());
+				continue;
+			}
+		}
+
+		TileExportInfo info;
+		info.pngPath = fileName;
+		info.frameWidth = frameW;
+		info.frameHeight = frameH;
+		info.frameCount = (int)frames.size();
+		tileExports[tileId] = std::move(info);
+
+		if (isTexture) textureCount++; else spriteCount++;
+	}
+
+	printf("  Extracted %d sprite PNGs, %d texture PNGs\n", spriteCount, textureCount);
+	return true;
+}
+
+// ========================================================================
+// Rewrite sprites.yaml with PNG file references and size info
+// ========================================================================
+static bool rewriteSpritesYaml(
+	const std::string& outDir,
+	const std::map<int, TileExportInfo>& tileExports) {
+
+	std::string spritesPath = outDir + "/sprites.yaml";
+	YAML::Node root = YAML::LoadFile(spritesPath);
+	YAML::Node sprites = root["sprites"];
+	if (!sprites) {
+		fprintf(stderr, "  rewriteSpritesYaml: no sprites section found\n");
+		return false;
+	}
+
+	int updated = 0;
+	for (auto it = sprites.begin(); it != sprites.end(); ++it) {
+		auto& val = it->second;
+		if (!val.IsMap()) continue;
+		if (!val["file"] || !val["id"]) continue;
+		if (val["file"].as<std::string>() != "tables.bin") continue;
+
+		int id = val["id"].as<int>();
+		auto expIt = tileExports.find(id);
+		if (expIt == tileExports.end()) continue;
+
+		const auto& info = expIt->second;
+		val["file"] = info.pngPath;
+
+		// Size: [width, height] of a single frame
+		YAML::Node sizeNode(YAML::NodeType::Sequence);
+		sizeNode.push_back(info.frameWidth);
+		sizeNode.push_back(info.frameHeight);
+		sizeNode.SetStyle(YAML::EmitterStyle::Flow);
+		val["size"] = sizeNode;
+
+		// Multi-frame sprites: add frame_size and frames count
+		if (info.frameCount > 1) {
+			YAML::Node frameSizeNode(YAML::NodeType::Sequence);
+			frameSizeNode.push_back(info.frameWidth);
+			frameSizeNode.push_back(info.frameHeight);
+			frameSizeNode.SetStyle(YAML::EmitterStyle::Flow);
+			val["frame_size"] = frameSizeNode;
+			val["frames"] = info.frameCount;
+		}
+
+		updated++;
+	}
+
+	// Write back with clean formatting
+	YAML::Emitter emitter;
+	emitter.SetIndent(2);
+	emitter.SetMapFormat(YAML::Block);
+	emitter.SetSeqFormat(YAML::Block);
+	emitter << root;
+
+	if (!writeString(spritesPath, emitter.c_str())) {
+		fprintf(stderr, "  Failed to write updated sprites.yaml\n");
+		return false;
+	}
+
+	printf("  Updated %d sprite entries with PNG paths and sizes\n", updated);
+	return true;
+}
+
+// ========================================================================
 // Public entry point: convert a Doom II RPG IPA
 // ========================================================================
 bool convertD2RPG(ZipFile& zip, const GameDef& game, const std::string& outputDir) {
@@ -792,8 +978,15 @@ bool convertD2RPG(ZipFile& zip, const GameDef& game, const std::string& outputDi
 	printf("\nCopying binary assets (maps, textures, models)...\n");
 	copyBinaryAssets(zip, outputDir);
 
+	printf("\nExtracting textures as PNGs...\n");
+	std::map<int, TileExportInfo> tileExports;
+	ok &= extractTexturePngs(outputDir, tileExports);
+
 	printf("\nExtracting sprites to YAML...\n");
 	ok &= extractSpritesToYaml(outputDir);
+
+	printf("\nUpdating sprites.yaml with PNG references...\n");
+	ok &= rewriteSpritesYaml(outputDir, tileExports);
 
 	printf("\nCopying audio assets...\n");
 	copyAudioAssets(zip, outputDir);

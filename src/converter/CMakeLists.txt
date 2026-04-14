@@ -23,6 +23,7 @@ add_executable(${CONVERTER_TGT_NAME}
 	d2-converter.cpp
 	d1-converter.cpp
 	BspToBin.cpp
+	TextureDecoder.cpp
 	stb_image_write_impl.cpp
 	Error.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/../engine/resource/ZipFile.cpp

@@ -865,10 +865,37 @@ void gles::CreateTextureForMediaID(int n, int mediaID, bool b) {
 			InputStream pngIs;
 			if (pngIs.loadFile(pngPath.c_str(), LT_RESOURCE)) {
 				int pw = 0, ph = 0, channels = 0;
-				uint8_t* rgba = stbi_load_from_memory(
+				uint8_t* rgbaData = stbi_load_from_memory(
 					pngIs.getData(), pngIs.getFileSize(), &pw, &ph, &channels, 4);
 				pngIs.close();
-				if (rgba) {
+				if (rgbaData) {
+					int texW = pw, texH = ph;
+					uint8_t* texPixels = rgbaData;
+					std::vector<uint8_t> frameBuf;
+
+					// Sprite sheet support: if the sprite has frame_size metadata,
+					// extract just the current frame from the horizontal strip
+					const SpriteSource* src = SpriteDefs::getSource(n);
+					if (src && src->frameWidth > 0 && src->frameHeight > 0 && src->frameCount > 1) {
+						int frame = mediaID - render->mediaMappings[n];
+						if (frame < 0) frame = 0;
+						if (frame >= src->frameCount) frame = src->frameCount - 1;
+						int fw = src->frameWidth;
+						int fh = src->frameHeight;
+						int srcX = frame * fw;
+						if (srcX + fw <= pw && fh <= ph) {
+							frameBuf.resize(fw * fh * 4);
+							for (int y = 0; y < fh; y++) {
+								memcpy(&frameBuf[y * fw * 4],
+								       &rgbaData[(y * pw + srcX) * 4],
+								       fw * 4);
+							}
+							texW = fw;
+							texH = fh;
+							texPixels = frameBuf.data();
+						}
+					}
+
 					ct = &this->chains[mediaID];
 					glGenTextures(1, &ct->texnum);
 					// Insert into active chain linked list
@@ -877,19 +904,20 @@ void gles::CreateTextureForMediaID(int n, int mediaID, bool b) {
 					ct->prev = &this->activeChain;
 					if (next) next->prev = ct;
 					this->activeChain.next = ct;
-					ct->width = pw;
-					ct->height = ph;
+					ct->width = texW;
+					ct->height = texH;
 
 					glBindTexture(GL_TEXTURE_2D, ct->texnum);
-					glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, pw, ph, 0,
-					             GL_RGBA, GL_UNSIGNED_BYTE, rgba);
+					glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texW, texH, 0,
+					             GL_RGBA, GL_UNSIGNED_BYTE, texPixels);
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-					stbi_image_free(rgba);
-					LOG_INFO("[gles] Loaded PNG texture: {} ({}x{}) for tile {} media {}\n",
-					       pngPath.c_str(), pw, ph, n, mediaID);
+					stbi_image_free(rgbaData);
+					LOG_INFO("[gles] Loaded PNG texture: {} ({}x{}) for tile {} media {} frame {}\n",
+					       pngPath.c_str(), texW, texH, n, mediaID,
+					       mediaID - render->mediaMappings[n]);
 					return;
 				}
 			}

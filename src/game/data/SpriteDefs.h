@@ -13,8 +13,10 @@ enum class SpriteSourceType { Bin, Image, Sheet };
 
 struct SpriteSource {
 	SpriteSourceType type = SpriteSourceType::Bin;
-	std::string file;   // e.g. "tables.bin", "sprites/door.png"
+	std::string file;   // e.g. "sprites/assault_rifle.png", "sprites/door.png"
 	int id = 0;         // tile index (Bin type only)
+	int width = 0;      // sprite width in pixels (from size: field, 0 if unset)
+	int height = 0;     // sprite height in pixels (from size: field, 0 if unset)
 	int frameWidth = 0;  // frame dimensions (Sheet type only)
 	int frameHeight = 0;
 	int frameCount = 0;  // number of animation frames (Sheet type only)
@@ -90,6 +92,9 @@ class SpriteDefs {
 
 	// Get full source info by name, returns nullptr if not found
 	[[nodiscard]] static const SpriteSource* getSource(std::string_view name);
+
+	// Get full source info by tile index, returns nullptr if not found
+	[[nodiscard]] static const SpriteSource* getSource(int tileIndex);
 
 	// Check if a sprite is a single image (not from bin, no frames)
 	[[nodiscard]] static bool isImage(std::string_view name);

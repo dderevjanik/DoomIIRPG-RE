@@ -86,6 +86,17 @@ std::expected<void, std::string> SpriteDefs::parse(const DataNode& config) {
 						LOG_INFO("[sprites] PNG override (png: field): tile {} ({}) -> {}\n", src.id, name.c_str(), pngPath.c_str());
 					}
 				}
+				// Bin sprites can also have frame_size (horizontal strip PNGs)
+				if (frameSizeNode) {
+					if (frameSizeNode.isSequence() && frameSizeNode.size() >= 2) {
+						src.frameWidth = frameSizeNode[0].asInt(0);
+						src.frameHeight = frameSizeNode[1].asInt(0);
+					} else if (frameSizeNode.isMap()) {
+						src.frameWidth = frameSizeNode["w"].asInt(0);
+						src.frameHeight = frameSizeNode["h"].asInt(0);
+					}
+					src.frameCount = entry["frames"].asInt(1);
+				}
 			} else if (frameSizeNode) {
 				// Sprite sheet with frame metadata
 				src.type = SpriteSourceType::Sheet;
@@ -107,6 +118,13 @@ std::expected<void, std::string> SpriteDefs::parse(const DataNode& config) {
 				// Single image file (png, bmp, etc.)
 				src.type = SpriteSourceType::Image;
 				SpriteDefs::tileNameToIndex[name] = SpriteDefs::SPRITE_INDEX_EXTERNAL;
+			}
+
+			// Parse optional size: [width, height]
+			DataNode sizeNode = entry["size"];
+			if (sizeNode && sizeNode.isSequence() && sizeNode.size() >= 2) {
+				src.width = sizeNode[0].asInt(0);
+				src.height = sizeNode[1].asInt(0);
 			}
 		}
 
@@ -217,6 +235,13 @@ int SpriteDefs::getIndex(std::string_view name) {
 const SpriteSource* SpriteDefs::getSource(std::string_view name) {
 	if (auto it = tileNameToSource.find(name); it != tileNameToSource.end()) {
 		return &it->second;
+	}
+	return nullptr;
+}
+
+const SpriteSource* SpriteDefs::getSource(int tileIndex) {
+	if (auto nameIt = tileIndexToName.find(tileIndex); nameIt != tileIndexToName.end()) {
+		return getSource(std::string_view(nameIt->second));
 	}
 	return nullptr;
 }
