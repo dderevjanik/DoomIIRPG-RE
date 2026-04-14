@@ -21,6 +21,7 @@
 #include "SoundNames.h"
 #include "Sounds.h"
 #include "ItemDefs.h"
+#include "EntityNames.h"
 #include "EventBus.h"
 #include "GameEvents.h"
 
@@ -973,7 +974,13 @@ void Player::equipForLevel(int highestMap) {
 				DataNode ammo = r["ammo"];
 				if (ammo) {
 					for (auto it = ammo.begin(); it != ammo.end(); ++it) {
-						int idx = ItemDefs::getAmmoIndex(it.key().asString());
+						std::string ammoName = it.key().asString();
+						int idx = ItemDefs::getAmmoIndex(ammoName);
+						if (idx < 0) {
+							// Fall back to EntityNames::ammoParms (from weapons.yaml)
+							if (auto ait = EntityNames::ammoParms.find(ammoName); ait != EntityNames::ammoParms.end())
+								idx = ait->second;
+						}
 						if (idx >= 0) this->give(2, idx, it.value().asInt());
 					}
 				}

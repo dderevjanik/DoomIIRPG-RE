@@ -1012,6 +1012,107 @@ static bool extractMediaMappings(const std::string& outDir) {
 }
 
 // ========================================================================
+// Extract palette + texel data from newPalettes.bin / newTexels*.bin
+// Writes: media_palettes.yaml  (palette data per media ID)
+//         media_texels/<id>.dat (raw texel bytes per unique media ID)
+//         media_texels.yaml     (index: media ID → file, size, refs)
+// ========================================================================
+static bool extractMediaTextures(const std::string& outDir) {
+	TextureDecoder decoder;
+	std::string texDir = outDir + "/levels/textures";
+	if (!decoder.load(texDir, g_game->numTextures)) {
+		fprintf(stderr, "  Failed to load texture data for media extraction\n");
+		return false;
+	}
+
+	const int32_t* palColors = decoder.getPalColors();
+	const int32_t* texelSizes = decoder.getTexelSizes();
+	const auto& palettes = decoder.getPalettes();
+	const auto& texels = decoder.getTexels();
+
+	// --- media_palettes.yaml ---
+	// Stores palette RGB565 data per media ID.
+	// Non-reference entries have "colors: [...]", reference entries have "ref: <target_id>"
+	std::string palYaml;
+	palYaml += "# Media palette data (extracted from newPalettes.bin)\n";
+	palYaml += "# Each entry is a media ID with either palette colors or a reference\n\n";
+
+	int palOwners = 0, palRefs = 0;
+	for (int i = 0; i < MAX_MEDIA; i++) {
+		bool isRef = (palColors[i] & FLAG_REFERENCE) != 0;
+		int numColors = palColors[i] & 0x3FFFFFFF;
+		if (numColors == 0 && !isRef) continue;
+
+		if (isRef) {
+			int refTarget = palColors[i] & 0x3FF;
+			palYaml += std::format("{}: {{ref: {}}}\n", i, refTarget);
+			palRefs++;
+		} else {
+			auto pit = palettes.find(i);
+			if (pit == palettes.end()) continue;
+			const auto& pal = pit->second;
+			palYaml += std::to_string(i) + ": {colors: [";
+			for (int c = 0; c < (int)pal.size(); c++) {
+				if (c > 0) palYaml += ", ";
+				palYaml += std::to_string(pal[c]);
+			}
+			palYaml += "]}\n";
+			palOwners++;
+		}
+	}
+
+	if (!writeString(texDir + "/media_palettes.yaml", palYaml)) {
+		fprintf(stderr, "  Failed to write media_palettes.yaml\n");
+		return false;
+	}
+
+	// --- media_texels/ directory with raw .dat files ---
+	std::string texelDir = texDir + "/media_texels";
+	mkdirRecursive(texelDir);
+
+	// --- media_texels.yaml ---
+	std::string texYaml;
+	texYaml += "# Media texel index (extracted from newTexels*.bin)\n";
+	texYaml += "# Each entry maps a media ID to its texel data file or a reference\n\n";
+
+	int texOwners = 0, texRefs = 0;
+	for (int i = 0; i < MAX_MEDIA; i++) {
+		bool isRef = (texelSizes[i] & FLAG_REFERENCE) != 0;
+		int size = (texelSizes[i] & 0x3FFFFFFF) + 1;
+		if (size <= 1 && !isRef) continue;
+
+		if (isRef) {
+			int refTarget = texelSizes[i] & 0x3FF;
+			texYaml += std::format("{}: {{ref: {}}}\n", i, refTarget);
+			texRefs++;
+		} else {
+			auto tit = texels.find(i);
+			if (tit == texels.end()) continue;
+			const auto& data = tit->second;
+
+			std::string fileName = std::format("{:04d}.dat", i);
+			std::string filePath = texelDir + "/" + fileName;
+			if (!writeFile(filePath, {data.data(), data.size()})) {
+				fprintf(stderr, "  Failed to write texel file: %s\n", filePath.c_str());
+				continue;
+			}
+
+			texYaml += std::format("{}: {{file: \"{}\", size: {}}}\n", i, fileName, (int)data.size());
+			texOwners++;
+		}
+	}
+
+	if (!writeString(texDir + "/media_texels.yaml", texYaml)) {
+		fprintf(stderr, "  Failed to write media_texels.yaml\n");
+		return false;
+	}
+
+	printf("  Extracted %d palettes (%d refs), %d texel files (%d refs)\n",
+	       palOwners, palRefs, texOwners, texRefs);
+	return true;
+}
+
+// ========================================================================
 // Copy binary assets (maps, textures, models)
 // ========================================================================
 static void copyBinaryAssets(ZipFile& zip, const std::string& outDir) {
@@ -1313,6 +1414,9 @@ bool convertD2RPG(ZipFile& zip, const GameDef& game, const std::string& outputDi
 
 	printf("\nExtracting media mappings from newMappings.bin...\n");
 	ok &= extractMediaMappings(outputDir);
+
+	printf("\nExtracting media palettes and texels...\n");
+	ok &= extractMediaTextures(outputDir);
 
 	printf("\nCopying audio assets...\n");
 	copyAudioAssets(zip, outputDir);

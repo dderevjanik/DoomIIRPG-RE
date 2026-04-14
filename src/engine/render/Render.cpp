@@ -457,12 +457,157 @@ void Render::RegisterMedia(int n) {
 
 void Render::FinalizeMedia() {
 
-	InputStream IS;
-
 	app->canvas->updateLoadingBar(false);
 	this->texelMemoryUsage = 0;
 	this->paletteMemoryUsage = 0;
 
+	// Try YAML-based loading (converter output)
+	DataNode palYaml = DataNode::loadFile("levels/textures/media_palettes.yaml");
+	DataNode texYaml = DataNode::loadFile("levels/textures/media_texels.yaml");
+
+	if (palYaml && texYaml) {
+		this->FinalizeMediaFromYaml(palYaml, texYaml);
+	} else {
+		this->FinalizeMediaLegacy();
+	}
+
+	this->_gles->CreateAllActiveTextures();
+	app->canvas->updateLoadingBar(false);
+}
+
+void Render::FinalizeMediaFromYaml(DataNode& palYaml, DataNode& texYaml) {
+
+	// Phase 1: Allocate arrays for registered entries (same as legacy)
+	int palIdx = 0;
+	int texIdx = 0;
+	for (int i = 0; i < 1024; ++i) {
+		bool texReg = (this->mediaTexelSizes[i] & Render::MEDIA_TEXELS_REGISTERED) != 0;
+		bool palReg = (this->mediaPalColors[i] & Render::MEDIA_PALETTE_REGISTERED) != 0;
+
+		if (texReg) {
+			int size = (this->mediaTexelSizes[i] & 0x3FFFFFFF) + 1;
+			this->texelMemoryUsage += size;
+			this->mediaTexelSizes2[texIdx] = size;
+			this->mediaTexels[texIdx] = new uint8_t[size];
+			texIdx++;
+		}
+		if (palReg) {
+			int numColors = this->mediaPalColors[i] & 0x3FFFFFFF;
+			this->paletteMemoryUsage += 4 * numColors;
+			this->mediaPalettesSizes[palIdx] = numColors;
+			this->mediaPalettes[palIdx][0] = new uint16_t[numColors];
+			palIdx++;
+		}
+	}
+	app->canvas->updateLoadingBar(false);
+
+	// Phase 2: Load palettes from YAML
+	// Build a map from media ID → resolved palette data (handling references)
+	std::unordered_map<int, DataNode> palDataMap;
+	for (auto it = palYaml.begin(); it != palYaml.end(); ++it) {
+		int mid = it.key().asInt(-1);
+		if (mid >= 0) palDataMap[mid] = it.value();
+	}
+
+	int n5 = 0;
+	for (int j = 0; j < 1024; ++j) {
+		bool registered = (this->mediaPalColors[j] & Render::MEDIA_PALETTE_REGISTERED) != 0;
+		bool isRef = (this->mediaPalColors[j] & Render::MEDIA_FLAG_REFERENCE) != 0;
+
+		if (registered && !isRef) {
+			// Load palette colors from YAML
+			int numColors = this->mediaPalColors[j] & 0x3FFFFFFF;
+			auto pit = palDataMap.find(j);
+			if (pit != palDataMap.end()) {
+				DataNode colors = pit->second["colors"];
+				if (colors && colors.isSequence()) {
+					for (int k = 0; k < numColors && k < colors.size(); k++) {
+						this->mediaPalettes[n5][0][k] = (uint16_t)colors[k].asInt(0);
+					}
+				}
+			}
+
+			// Resolve references (same logic as legacy)
+			int refMarker = (j | Render::MEDIA_FLAG_REFERENCE);
+			for (int l = j + 1; l < 1024; ++l) {
+				if (this->mediaPalColors[l] == refMarker) {
+					this->mediaPalColors[l] = (0xC0000000 | n5);
+				}
+			}
+			this->mediaPalColors[j] = (0x40000000 | n5);
+			++n5;
+		}
+		if ((j & 0x1E) == 0x1E) {
+			app->canvas->updateLoadingBar(false);
+		}
+	}
+
+	// Phase 3: Load texels from .dat files
+	std::unordered_map<int, DataNode> texDataMap;
+	for (auto it = texYaml.begin(); it != texYaml.end(); ++it) {
+		int mid = it.key().asInt(-1);
+		if (mid >= 0) texDataMap[mid] = it.value();
+	}
+
+	int n9 = 0;
+	for (int j = 0; j < 1024; ++j) {
+		bool registered = (this->mediaTexelSizes[j] & Render::MEDIA_TEXELS_REGISTERED) != 0;
+		bool isRef = (this->mediaTexelSizes[j] & Render::MEDIA_FLAG_REFERENCE) != 0;
+		int texelSize = (this->mediaTexelSizes[j] & 0x3FFFFFFF) + 1;
+
+		if (registered && !isRef) {
+			auto tit = texDataMap.find(j);
+			if (tit != texDataMap.end()) {
+				DataNode fileNode = tit->second["file"];
+				if (fileNode) {
+					std::string filePath = "levels/textures/media_texels/" + fileNode.asString("");
+					InputStream texIs;
+					if (texIs.loadFile(filePath.c_str(), InputStream::LOADTYPE_RESOURCE)) {
+						int readSize = std::min(texelSize, texIs.getFileSize());
+						memcpy(this->mediaTexels[n9], texIs.getData(), readSize);
+						texIs.close();
+					}
+				}
+			}
+
+			// Water animation fixups (same MD5 checks as legacy)
+			if (j == 814) {
+				if (checkFileMD5Hash(this->mediaTexels[n9], texelSize, 0x2AFCC8EDC9EA8610, 0xEA5458CBEBF345EC))
+					this->fixWaterAnim1 = true;
+			} else if (j == 815) {
+				if (checkFileMD5Hash(this->mediaTexels[n9], texelSize, 0x14F8BC466131E9AB, 0xFBEC94B21422E569))
+					this->fixWaterAnim2 = true;
+			} else if (j == 816) {
+				if (checkFileMD5Hash(this->mediaTexels[n9], texelSize, 0xB784065E177D596E, 0x23729441F971FEE7))
+					this->fixWaterAnim3 = true;
+			} else if (j == 817) {
+				if (checkFileMD5Hash(this->mediaTexels[n9], texelSize, 0x8A53E5E7CD062F73, 0xFAA5B42239006DC8))
+					this->fixWaterAnim4 = true;
+			}
+
+			// Resolve references (same logic as legacy)
+			int refMarker = (j | Render::MEDIA_FLAG_REFERENCE);
+			for (int l = j + 1; l < 1024; ++l) {
+				if (this->mediaTexelSizes[l] == refMarker) {
+					this->mediaTexelSizes[l] = (0xC0000000 | n9);
+				}
+			}
+			this->mediaTexelSizes[j] = (0x40000000 | n9);
+			++n9;
+		}
+		if ((j & 0xF) == 0xF) {
+			app->canvas->updateLoadingBar(false);
+		}
+	}
+
+	LOG_INFO("[render] Loaded media from YAML: {} palettes, {} texels\n", n5, n9);
+}
+
+void Render::FinalizeMediaLegacy() {
+
+	InputStream IS;
+
+	// Phase 1: Allocate arrays for registered entries
 	int n = 0;
 	int n2 = 0;
 	for (int i = 0; i < 1024; ++i) {
@@ -550,24 +695,17 @@ void Render::FinalizeMedia() {
 		if (b5 && !b6) {
 			if (m != n10) {
 				IS.close();
-				/*String str = "/tex0";
-				if (m >= 10) {
-				    str = "/tex";
-				}
-				resourceAsStream2 = App.getResourceAsStream(str + m + ".bin");*/
 				if (!IS.loadFile(Resources::RES_NEWTEXEL_FILE_ARRAY[m], InputStream::LOADTYPE_RESOURCE)) {
 					app->Error("getResource(%s) failed\n", Resources::RES_NEWTEXEL_FILE_ARRAY[m]);
 				}
 
 				n10 = m;
 				n11 = 0;
-				// Canvas.updateLoadingBar(false);
 			}
 
 			if (n11 != n12) {
 				app->resource->bufSkip(&IS, n12 - n11, true);
 			}
-			// printf("n14 %d\n", n14);
 			app->resource->readByteArray(&IS, std::span(this->mediaTexels[n9], n14));
 
 			// [GEC]: Verifica los datos del sprite de agua animada
@@ -598,8 +736,6 @@ void Render::FinalizeMedia() {
 				}
 			}
 			this->mediaTexelSizes[n13] = (0x40000000 | n9);
-			// printf("n9 %d\n", n9);
-			// printf("this->mediaTexelSizes[%d] %d\n", n13, this->mediaTexelSizes[n13]);
 			++n9;
 			app->resource->readMarker(&IS, n12);
 			n12 = (n11 = n12 + (n14 + sizeof(uint32_t)));
@@ -617,9 +753,6 @@ void Render::FinalizeMedia() {
 	}
 
 	IS.close();
-	this->_gles->CreateAllActiveTextures();
-	app->canvas->updateLoadingBar(false);
-	IS.~InputStream();
 }
 
 bool Render::loadSkyFromPng(const std::string& path) {

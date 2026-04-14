@@ -71,6 +71,9 @@ static int projTypeFromName(const std::string& name) {
 static int ammoTypeFromName(const std::string& name) {
 	int idx = ItemDefs::getAmmoIndex(name);
 	if (idx >= 0) return idx;
+	// Fall back to EntityNames::ammoParms (loaded from weapons.yaml ammo_parms:)
+	if (auto it = EntityNames::ammoParms.find(name); it != EntityNames::ammoParms.end())
+		return it->second;
 	try { return std::stoi(name); } catch (...) { return 0; }
 }
 
