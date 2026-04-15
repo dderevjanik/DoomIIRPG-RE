@@ -1,4 +1,5 @@
 #include "DataNode.h"
+#include "Log.h"
 #include <yaml-cpp/yaml.h>
 
 // --- DataNode::Impl ---
@@ -28,7 +29,8 @@ DataNode DataNode::loadFile(const char* path) {
 	try {
 		YAML::Node node = YAML::LoadFile(path);
 		return fromYAML(node);
-	} catch (const YAML::Exception&) {
+	} catch (const YAML::Exception& e) {
+		LOG_ERROR("DataNode: failed to load '{}': {}\n", path, e.what());
 		return DataNode();
 	}
 }

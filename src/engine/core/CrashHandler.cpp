@@ -12,6 +12,7 @@
 #endif
 
 #include "CrashHandler.h"
+#include "Log.h"
 
 static const char* signalName(int sig) {
 	switch (sig) {
@@ -83,11 +84,18 @@ static void crashHandler(int sig) {
 #endif
 
 	snprintf(buf + pos, sizeof(buf) - pos,
-		"\nThis trace was saved to crash.log\n"
-		"For better traces, build with: cmake -DCMAKE_BUILD_TYPE=Debug\n");
+		"\nFor better traces, build with: cmake -DCMAKE_BUILD_TYPE=Debug\n");
 
 	fprintf(stderr, "%s", buf);
-	writeCrashLog(buf);
+
+	// Write crash.log with stack trace + recent log entries for context
+	FILE* crashFile = fopen("crash.log", "w");
+	if (crashFile) {
+		fputs(buf, crashFile);
+		logDumpRecentToFile(crashFile, 64);
+		fputs("\nThis trace was saved to crash.log\n", crashFile);
+		fclose(crashFile);
+	}
 
 	// Re-raise so the OS can generate a core dump if configured
 	raise(sig);

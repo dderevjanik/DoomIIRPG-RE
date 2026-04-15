@@ -39,6 +39,8 @@ void VFS::mountDir(const char* dirPath, int priority) {
 
 	sortMounts();
 
+	LOG_INFO("VFS: mounted dir '{}' at priority {}\n", mount.basePath, priority);
+
 	// Invalidate file index when mounts change
 	fileIndexBuilt = false;
 	fileIndex.clear();

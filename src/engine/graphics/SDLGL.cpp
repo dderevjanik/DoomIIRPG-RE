@@ -1,6 +1,7 @@
 
 #include <stdexcept>
 #include "Log.h"
+#include "Error.h"
 
 #include "SDLGL.h"
 #include "App.h"
@@ -51,7 +52,8 @@ bool SDLGL::Initialize() {
 
 		SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
 		if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
-			LOG_ERROR("Could not initialize SDL: {}", SDL_GetError());
+			LOG_ERROR("SDL_Init failed: {}\n", SDL_GetError());
+			return false;
 		}
 
 		flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN /* | SDL_WINDOW_RESIZABLE*/;
@@ -71,7 +73,8 @@ bool SDLGL::Initialize() {
 		    SDL_CreateWindow(CAppContainer::getInstance()->gameConfig.windowTitle.c_str(), SDL_WINDOWPOS_UNDEFINED,
 		                     SDL_WINDOWPOS_UNDEFINED, winVidWidth, winVidHeight, flags);
 		if (!this->window) {
-			LOG_ERROR("Could not set {}x{} video mode: {}", winVidWidth, winVidHeight, SDL_GetError());
+			LOG_ERROR("SDL_CreateWindow failed ({}x{}): {}\n", winVidWidth, winVidHeight, SDL_GetError());
+			return false;
 		}
 
 		this->vidWidth = Applet::IOS_WIDTH;
@@ -87,6 +90,10 @@ bool SDLGL::Initialize() {
 		this->updateVideo();
 
 		this->glcontext = SDL_GL_CreateContext(window);
+		if (!this->glcontext) {
+			LOG_ERROR("SDL_GL_CreateContext failed: {}\n", SDL_GetError());
+			return false;
+		}
 
 		// now you can make GL calls.
 		glClearColor(0, 0, 0, 1);
@@ -115,39 +122,8 @@ void SDLGL::Error(const char* fmt, ...) {
 #endif
 	va_end(ap);
 
-	LOG_ERROR("{}", errMsg);
-
-	const SDL_MessageBoxButtonData buttons[] = {
-	    {/* .flags, .buttonid, .text */ 0, 0, "Ok"},
-	};
-	const SDL_MessageBoxColorScheme colorScheme = {{/* .colors (.r, .g, .b) */
-	                                                /* [SDL_MESSAGEBOX_COLOR_BACKGROUND] */
-	                                                {255, 0, 0},
-	                                                /* [SDL_MESSAGEBOX_COLOR_TEXT] */
-	                                                {0, 255, 0},
-	                                                /* [SDL_MESSAGEBOX_COLOR_BUTTON_BORDER] */
-	                                                {255, 255, 0},
-	                                                /* [SDL_MESSAGEBOX_COLOR_BUTTON_BACKGROUND] */
-	                                                {0, 0, 255},
-	                                                /* [SDL_MESSAGEBOX_COLOR_BUTTON_SELECTED] */
-	                                                {255, 0, 255}}};
-	const SDL_MessageBoxData messageboxdata = {
-	    SDL_MESSAGEBOX_ERROR,                                               /* .flags */
-	    nullptr,                                                               /* .window */
-	    (CAppContainer::getInstance()->gameConfig.name + " Error").c_str(), /* .title */
-	    errMsg,                                                             /* .message */
-	    SDL_arraysize(buttons),                                             /* .numbuttons */
-	    buttons,                                                            /* .buttons */
-	    &colorScheme                                                        /* .colorScheme */
-	};
-
-	SDL_ShowMessageBox(&messageboxdata, nullptr);
-	// closeZipFile(&zipFile);
-	// DoomRPG_FreeAppData(doomRpg);
-	// SDL_CloseAudio();
-	// SDL_Close();
-	SDLGL::~SDLGL();
-	exit(0);
+	// Route through the global Error() which handles logging, crash.log, and MessageBox
+	::Error("%s", errMsg);
 }
 
 void SDLGL::transformCoord2f(float* x, float* y) {

@@ -34,6 +34,7 @@
 #include "Input.h"
 #include "GameScript.h"
 #include "CrashHandler.h"
+#include "Log.h"
 
 #include "DevConsole.h"
 #include "ModManager.h"
@@ -57,7 +58,32 @@ void drawView(SDLGL* sdlGL);
 
 int main(int argc, char* args[]) {
 	CrashHandler_Init();
+	logInit("engine.log");
 	signal(SIGTERM, handleSIGTERM);
+
+	// Startup diagnostics
+	LOG_INFO("DRPGEngine {} ({})\n", PROJECT_VERSION,
+#ifdef NDEBUG
+		"Release"
+#else
+		"Debug"
+#endif
+	);
+#if defined(__APPLE__)
+	LOG_INFO("Platform: macOS (arm64: {})\n",
+#if defined(__aarch64__)
+		"yes"
+#else
+		"no"
+#endif
+	);
+#elif defined(_WIN32)
+	LOG_INFO("Platform: Windows\n");
+#elif defined(__linux__)
+	LOG_INFO("Platform: Linux\n");
+#else
+	LOG_INFO("Platform: Unknown\n");
+#endif
 
 	int UpTime = 0;
 
@@ -120,7 +146,7 @@ int main(int argc, char* args[]) {
 	}
 	if (hasSeed) {
 		std::srand(seed);
-		printf("[main] Seed: %u\n", seed);
+		LOG_INFO("[main] Seed: {}\n", seed);
 	}
 
 	// --game <name> is sugar for --gamedir games/<name>
@@ -129,7 +155,7 @@ int main(int argc, char* args[]) {
 	if (gameName) {
 		gameDirStr = std::string("games/") + gameName;
 		gameDir = gameDirStr.c_str();
-		printf("[main] Game: %s (directory: %s)\n", gameName, gameDir);
+		LOG_INFO("[main] Game: {} (directory: {})\n", gameName, gameDir);
 	} else if (strcmp(gameDir, ".") == 0) {
 		// Auto-detect: scan games/ for directories containing game.yaml
 		std::vector<std::string> detectedGames;
@@ -149,17 +175,17 @@ int main(int argc, char* args[]) {
 		if (detectedGames.size() == 1) {
 			gameDirStr = "games/" + detectedGames[0];
 			gameDir = gameDirStr.c_str();
-			printf("[main] Auto-detected game: %s\n", detectedGames[0].c_str());
+			LOG_INFO("[main] Auto-detected game: {}\n", detectedGames[0]);
 		} else if (detectedGames.size() > 1) {
-			printf("[main] Multiple games found. Use --game <name> to select one:\n");
+			LOG_ERROR("[main] Multiple games found. Use --game <name> to select one:\n");
 			for (const auto& g : detectedGames) {
-				printf("  --game %s\n", g.c_str());
+				LOG_ERROR("  --game {}\n", g);
 			}
 			return 1;
 		} else if (access("Doom 2 RPG.ipa", F_OK) == 0) {
 			// IPA found but not yet converted — run converter automatically
-			printf("[main] Found 'Doom 2 RPG.ipa' but no converted assets.\n");
-			printf("[main] Running drpg-convert to extract game assets...\n");
+			LOG_INFO("[main] Found 'Doom 2 RPG.ipa' but no converted assets.\n");
+			LOG_INFO("[main] Running drpg-convert to extract game assets...\n");
 
 			std::string converterCmd;
 			std::string selfDir;
@@ -203,20 +229,20 @@ int main(int argc, char* args[]) {
 			}
 
 			std::string cmd = converterCmd + " --ipa \"Doom 2 RPG.ipa\" --output games/doom2rpg";
-			printf("[main]   %s\n", cmd.c_str());
+			LOG_INFO("[main]   {}\n", cmd);
 			int ret = system(cmd.c_str());
 			if (ret != 0) {
-				printf("[main] Error: converter failed (exit code %d).\n", ret);
-				printf("[main] You can also run it manually:\n  %s\n", cmd.c_str());
+				LOG_ERROR("[main] Converter failed (exit code {})\n", ret);
+				LOG_ERROR("[main] You can also run it manually:\n  {}\n", cmd);
 				return 1;
 			}
 
 			if (access("games/doom2rpg/game.yaml", F_OK) == 0) {
 				gameDirStr = "games/doom2rpg";
 				gameDir = gameDirStr.c_str();
-				printf("[main] Auto-conversion complete. Game directory: %s\n", gameDir);
+				LOG_INFO("[main] Auto-conversion complete. Game directory: {}\n", gameDir);
 			} else {
-				printf("[main] Error: conversion ran but game.yaml not found.\n");
+				LOG_ERROR("[main] Conversion ran but game.yaml not found in games/doom2rpg/\n");
 				return 1;
 			}
 		}
@@ -241,18 +267,18 @@ int main(int argc, char* args[]) {
 	// Change working directory to gamedir so config files are found there
 	if (strcmp(gameDir, ".") != 0) {
 		if (chdir(gameDir) != 0) {
-			printf("[main] Error: cannot change to gamedir '%s'\n", gameDir);
+			LOG_ERROR("[main] Cannot change to gamedir '{}'\n", gameDir);
 			return 1;
 		}
-		printf("[main] Working directory: %s\n", gameDir);
+		LOG_INFO("[main] Working directory: {}\n", gameDir);
 	}
 
 	// Load game.yaml early (before VFS) for game name, save dir, etc.
 	{
 		DataNode config = DataNode::loadFile("game.yaml");
 		if (!config) {
-			printf("[main] Error: could not load game.yaml in '%s'\n", gameDir);
-			printf("[main] Use --game <name> to select a game from games/ directory.\n");
+			LOG_ERROR("[main] Could not load game.yaml in '{}'\n", gameDir);
+			LOG_ERROR("[main] Use --game <name> to select a game from games/ directory.\n");
 			return 1;
 		}
 		DataNode game = config["game"];
@@ -483,7 +509,7 @@ int main(int argc, char* args[]) {
 				}
 			}
 
-			printf("[main] Game: %s (save: %s)\n", gc.name.c_str(), gc.saveDir.c_str());
+			LOG_INFO("[main] Game: {} (module: {}, save: {})\n", gc.name, gc.module, gc.saveDir);
 		}
 
 		// Load per-level data from level.yaml files in each level directory
@@ -589,13 +615,13 @@ int main(int argc, char* args[]) {
 		if (resolvedID > 0) {
 			CAppContainer::getInstance()->customMapID = resolvedID;
 			CAppContainer::getInstance()->skipTravelMap = true;
-			printf("[main] Custom map: level %d (%s)\n", resolvedID,
-			       gc.levelInfos.at(resolvedID).dir.c_str());
+			LOG_INFO("[main] Custom map: level {} ({})\n", resolvedID,
+			       gc.levelInfos.at(resolvedID).dir);
 		} else {
 			// Fall back to raw file path for standalone .bin files
 			CAppContainer::getInstance()->customMapFile = customMap;
 			CAppContainer::getInstance()->skipTravelMap = true;
-			printf("[main] Custom map file: %s\n", customMap);
+			LOG_INFO("[main] Custom map file: {}\n", customMap);
 		}
 	}
 
@@ -605,7 +631,7 @@ int main(int argc, char* args[]) {
 	if (scriptFile) {
 		hasScript = script.loadFromFile(scriptFile);
 		if (!hasScript) {
-			printf("[main] Error: failed to load script '%s'\n", scriptFile);
+			LOG_ERROR("[main] Failed to load script '{}'\n", scriptFile);
 			return 1;
 		}
 		// Auto-set ticks from script if not explicitly given
@@ -619,8 +645,8 @@ int main(int argc, char* args[]) {
 		const int fixedTimestepMs = 15;
 		int ticksRun = 0;
 
-		printf("[headless] Running%s%s...\n",
-			maxTicks > 0 ? (" " + std::to_string(maxTicks) + " ticks").c_str() : "",
+		LOG_INFO("[headless] Running{}{}\n",
+			maxTicks > 0 ? " " + std::to_string(maxTicks) + " ticks" : "",
 			hasScript ? " with script" : "");
 
 		while (!CAppContainer::getInstance()->app->closeApplet && (maxTicks == 0 || ticksRun < maxTicks)) {
@@ -634,12 +660,12 @@ int main(int argc, char* args[]) {
 			ticksRun++;
 
 			if (ticksRun % 100 == 0) {
-				printf("[headless] tick %d/%d, state=%d\n",
+				LOG_DEBUG("[headless] tick {}/{}, state={}\n",
 					ticksRun, maxTicks, CAppContainer::getInstance()->app->canvas->state);
 			}
 		}
 
-		printf("[headless] Completed %d ticks. Final state=%d\n",
+		LOG_INFO("[headless] Completed {} ticks. Final state={}\n",
 			ticksRun, CAppContainer::getInstance()->app->canvas->state);
 	} else {
 		// Normal windowed game loop
@@ -675,17 +701,18 @@ int main(int argc, char* args[]) {
 
 				// Auto-quit when script + ticks are done
 				if (maxTicks > 0 && ticksRun >= maxTicks) {
-					printf("[script] Completed %d ticks. Exiting.\n", ticksRun);
+					LOG_INFO("[script] Completed {} ticks. Exiting.\n", ticksRun);
 					break;
 				}
 			}
 		}
 	}
 
-	printf("[main] APP_QUIT\n");
+	LOG_INFO("[main] APP_QUIT\n");
 	g_devConsole.shutdown();
 	CAppContainer::getInstance()->devConsole = nullptr;
 	CAppContainer::getInstance()->~CAppContainer();
+	logShutdown();
 	_exit(0);
 }
 

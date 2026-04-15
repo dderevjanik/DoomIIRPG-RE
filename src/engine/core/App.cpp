@@ -114,23 +114,23 @@ bool Applet::startup() {
 
 	// Engine subsystem startup
 	this->resource->startup();
-	if (!this->canvas->startup()) { LOG_ERROR("[app] error fatal: canvas\n"); return false; }
+	if (!this->canvas->startup()) { LOG_ERROR("[app] Canvas::startup() failed — check above for font/image loading errors\n"); return false; }
 	this->testImg = Applet::loadImage("cockpit.bmp", true);
 	this->canvas->loadMiniGameImages();
-	if (!this->localization->startup()) { LOG_ERROR("[app] error fatal: localization\n"); return false; }
-	if (!this->render->startup()) { LOG_ERROR("[app] error fatal: render\n"); return false; }
+	if (!this->localization->startup()) { LOG_ERROR("[app] Localization::startup() failed — check string files in game.yaml\n"); return false; }
+	if (!this->render->startup()) { LOG_ERROR("[app] Render::startup() failed — check texture/level assets\n"); return false; }
 	this->loadTables();
 	if (!this->tinyGL->startup(this->render->screenWidth, this->render->screenHeight)) {
-		LOG_ERROR("[app] error fatal: tinyGL\n"); return false;
+		LOG_ERROR("[app] TinyGL::startup() failed ({}x{}) — software renderer init error\n", this->render->screenWidth, this->render->screenHeight); return false;
 	}
 
 	// Game module startup (EntityDefManager -> Player -> Game -> Combat)
-	if (!this->gameModule->startup(this)) { LOG_ERROR("[app] error fatal: game module\n"); return false; }
+	if (!this->gameModule->startup(this)) { LOG_ERROR("[app] GameModule::startup() failed — check entity definitions and game data\n"); return false; }
 
 	// Remaining engine subsystems that depend on game objects
-	if (!this->menuSystem->startup()) { LOG_ERROR("[app] error fatal: menuSystem\n"); return false; }
-	if (!this->sound->startup()) { LOG_ERROR("[app] error fatal: sound\n"); return false; }
-	if (!this->particleSystem->startup()) { LOG_ERROR("[app] error fatal: particleSystem\n"); return false; }
+	if (!this->menuSystem->startup()) { LOG_ERROR("[app] MenuSystem::startup() failed — check menus.yaml\n"); return false; }
+	if (!this->sound->startup()) { LOG_ERROR("[app] Sound::startup() failed — check OpenAL and audio config\n"); return false; }
+	if (!this->particleSystem->startup()) { LOG_ERROR("[app] ParticleSystem::startup() failed\n"); return false; }
 
 	// Game module post-startup
 	this->gameModule->loadConfig(this);

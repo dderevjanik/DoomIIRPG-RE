@@ -61,6 +61,9 @@ void ZipFile::findAndReadZipDir(int startoffset) {
 	offset = _ReadInt(this->file);  // offset to central directory
 
 	this->entry = (zip_entry_t*)calloc(count, sizeof(zip_entry_t));
+	if (!this->entry) {
+		Error("ZipFile: calloc failed for %d entries (%zu bytes)", count, (size_t)count * sizeof(zip_entry_t));
+	}
 	this->entry_count = count;
 
 	fseek(this->file, offset, SEEK_SET);
@@ -91,7 +94,12 @@ void ZipFile::findAndReadZipDir(int startoffset) {
 		entry->offset = _ReadInt(this->file); // offset
 
 		entry->name = (char*)malloc(namesize + 1);
-		fread(entry->name, sizeof(char), namesize, this->file);
+		if (!entry->name) {
+			Error("ZipFile: malloc failed for entry name (%d bytes)", namesize + 1);
+		}
+		if (fread(entry->name, sizeof(char), namesize, this->file) != (size_t)namesize) {
+			Error("ZipFile: short read on entry name (expected %d bytes)", namesize);
+		}
 		entry->name[namesize] = 0;
 
 		fseek(this->file, metasize, SEEK_CUR);
@@ -190,13 +198,22 @@ uint8_t* ZipFile::readZipFileEntry(const char* name, int* sizep) {
 	fseek(this->file, namelength + extralength, SEEK_CUR);
 
 	cdata = (uint8_t*)malloc(entry->csize);
-	fread(cdata, sizeof(uint8_t), entry->csize, this->file);
+	if (!cdata) {
+		Error("ZipFile: malloc failed for compressed data '%s' (%d bytes)", name, entry->csize);
+	}
+	if (fread(cdata, sizeof(uint8_t), entry->csize, this->file) != (size_t)entry->csize) {
+		Error("ZipFile: short read on '%s' (expected %d compressed bytes)", name, entry->csize);
+	}
 
 	if (method == 0) {
 		*sizep = entry->usize;
 		return cdata;
 	} else if (method == 8) {
 		uint8_t* udata = (uint8_t*)malloc(entry->usize);
+		if (!udata) {
+			std::free(cdata);
+			Error("ZipFile: malloc failed for decompressed data '%s' (%d bytes)", name, entry->usize);
+		}
 		z_stream stream;
 
 		std::memset(&stream, 0, sizeof stream);
