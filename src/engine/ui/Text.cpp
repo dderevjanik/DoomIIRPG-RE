@@ -630,7 +630,7 @@ void Text::setLength(int i) {
 }
 
 Text* Text::deleteAt(int i, int i2) {
-	std::memcpy(this->chars + i, this->chars + i + i2, this->_length - (i + i2));
+	std::memmove(this->chars + i, this->chars + i + i2, this->_length - (i + i2));
 	this->_length -= i2;
 	this->chars[this->_length] = '\0';
 	return this;
@@ -688,14 +688,14 @@ Text* Text::append(Text* t, int i, int i2) {
 }
 
 Text* Text::insert(char c, int i) {
-	std::memcpy(this->chars + i + 1, this->chars + i, this->_length - i);
+	std::memmove(this->chars + i + 1, this->chars + i, this->_length - i);
 	this->chars[i] = c;
 	this->chars[++this->_length] = '\0';
 	return this;
 }
 
 Text* Text::insert(uint8_t c, int i) {
-	std::memcpy(this->chars + i + 1, this->chars + i, this->_length - i);
+	std::memmove(this->chars + i + 1, this->chars + i, this->_length - i);
 	this->chars[i] = c;
 	this->chars[++this->_length] = '\0';
 	return this;
@@ -719,7 +719,7 @@ Text* Text::insert(char* c, int i) {
 }
 
 Text* Text::insert(char* c, int i, int i2, int i3) {
-	std::memcpy(this->chars + i3 + i2, this->chars + i3, this->_length - i3);
+	std::memmove(this->chars + i3 + i2, this->chars + i3, this->_length - i3);
 	this->_length += i2;
 	while (--i2 >= 0) {
 		this->chars[i3++] = c[i++];

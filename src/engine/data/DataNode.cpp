@@ -176,7 +176,8 @@ DataNode DataNode::Iterator::value() const {
 		// yaml-cpp iterator_value inherits from both Node and pair<Node,Node>.
 		// For maps, ->second holds the value. For sequences, ->second is a
 		// zombie (IsDefined()==false) and the Node base (*it) is the element.
-		const YAML::Node& second = impl->it->second;
+		// Copy (not reference) because ->second may return a temporary for sequences.
+		YAML::Node second(impl->it->second);
 		if (second.IsDefined()) {
 			return DataNode::fromYAML(second);
 		}

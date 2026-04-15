@@ -927,18 +927,70 @@ void gles::CreateTextureForMediaID(int n, int mediaID, bool b) {
 	assert(mediaID >= 0 && mediaID < MAX_MEDIA);
 	//__assert_rtn("CreateTextureForMediaID","/Users/greghodges/doom2rpg/trunk/Doom2rpg_iphone/xcode/Classes/GLES.cpp", 471,"mediaID >= 0 && mediaID < MAX_MEDIA");
 
-	int Size = 0;
-	if (v5 == mediaID)
-	{
-		if (!render->skyMapTexels)
+	// Sky texture: create directly from palette+texels as RGBA8
+	// The legacy RGB5551 path doesn't work reliably on modern OpenGL/Metal drivers
+	if (v5 == mediaID) {
+		if (!render->skyMapTexels || !render->skyMapPalette)
 			return;
-		v7 = 0;
-		__src = render->skyMapTexels;
-		v9 = render->skyMapPalette[0];
-		v8 = 8;
-		v10 = 8;
+
+		int skyW = 256, skyH = 256;
+		uint8_t* texels = render->skyMapTexels;
+		uint16_t* pal = render->skyMapPalette[0];
+
+		uint8_t* rgbaData = (uint8_t*)std::malloc(skyW * skyH * 4);
+		for (int i = 0; i < skyW * skyH; i++) {
+			uint16_t c = pal[texels[i]];
+			uint8_t r5 = (c >> 11) & 0x1F;
+			uint8_t g6 = (c >> 5) & 0x3F;
+			uint8_t b5 = c & 0x1F;
+			rgbaData[i * 4 + 0] = (r5 << 3) | (r5 >> 2);
+			rgbaData[i * 4 + 1] = (g6 << 2) | (g6 >> 4);
+			rgbaData[i * 4 + 2] = (b5 << 3) | (b5 >> 2);
+			rgbaData[i * 4 + 3] = 0xFF;
+		}
+
+		ct = &this->chains[mediaID];
+		this->activeTexels += skyW * skyH;
+
+		// Evict LRU textures if needed
+		while (this->activeTexels > 0x800000) {
+			glChain* lru = this->activeChain.prev;
+			assert(lru != &activeChain);
+			lru->next->prev = lru->prev;
+			lru->prev->next = lru->next;
+			lru->prev = nullptr;
+			lru->next = nullptr;
+			glDeleteTextures(1, &lru->texnum);
+			lru->texnum = 0;
+			this->activeTexels -= lru->width * lru->height;
+		}
+
+		assert(ct->texnum == 0);
+		assert(ct->next == nullptr);
+		assert(ct->prev == nullptr);
+
+		next = this->activeChain.next;
+		ct->next = next;
+		ct->prev = &this->activeChain;
+		next->prev = ct;
+		ct->prev->next = ct;
+		ct->width = skyW;
+		ct->height = skyH;
+		LOG_INFO("Allocating sky media ID {}, {}x{}, activeTexels = {:3.1f} meg\n",
+		         mediaID, skyW, skyH, BYTES_TO_MEGABYTES(this->activeTexels));
+
+		glGenTextures(1, &ct->texnum);
+		glBindTexture(GL_TEXTURE_2D, ct->texnum);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, skyW, skyH, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgbaData);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		std::free(rgbaData);
+		return;
 	}
-	else
+
+	int Size = 0;
 	{
 		v7 = render->mediaTexelSizes[mediaID] & 0x3FFF;
 		__src = render->mediaTexels[v7];
@@ -994,7 +1046,7 @@ void gles::CreateTextureForMediaID(int n, int mediaID, bool b) {
 	v23 = this->render;
 	v79 = render->mediaTexels[v7];
 	bool sprite = false;
-	if ((v5 == mediaID) || (Size == __len))
+	if (Size == __len)
 	{
 		v48 = v23->mediaMappings;
 		if (v48[257] <= mediaID) {
@@ -1202,17 +1254,25 @@ void gles::CreateTextureForMediaID(int n, int mediaID, bool b) {
 
 	//glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_PALETTE8_RGB5_A1_OES, width, height, 0, height * width + 512, data);
 
-	uint16_t* texData = (uint16_t*)std::malloc(width * height * 2);
+	// Convert palettized texels to RGBA8 for modern OpenGL compatibility
+	// (GL_UNSIGNED_SHORT_5_5_5_1 is unreliable on macOS Metal-backed OpenGL)
 	uint16_t* texPal = (uint16_t*)data;
 	uint8_t* texData8 = (uint8_t*)data + 512;
-	for (int i = 0; i < height; i++) {
-		for (int j = 0; j < width; j++) {
-			texData[(i * width) + j] = texPal[texData8[(i * width) + j]];
-		}
+	uint8_t* texRGBA = (uint8_t*)std::malloc(width * height * 4);
+	for (int i = 0; i < height * width; i++) {
+		uint16_t c = texPal[texData8[i]];
+		uint8_t r5 = (c >> 11) & 0x1F;
+		uint8_t g5 = (c >> 6) & 0x1F;
+		uint8_t b5 = (c >> 1) & 0x1F;
+		uint8_t a1 = c & 1;
+		texRGBA[i * 4 + 0] = (r5 << 3) | (r5 >> 2);
+		texRGBA[i * 4 + 1] = (g5 << 3) | (g5 >> 2);
+		texRGBA[i * 4 + 2] = (b5 << 3) | (b5 >> 2);
+		texRGBA[i * 4 + 3] = a1 ? 0xFF : 0x00;
 	}
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, texData);
-	std::free(texData);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, texRGBA);
+	std::free(texRGBA);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, v70 ? GL_LINEAR : GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, v70 ? GL_LINEAR : GL_NEAREST);

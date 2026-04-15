@@ -1196,9 +1196,17 @@ struct TileExportInfo {
 	int frameCount = 1;
 };
 
+struct TextureStripEntry {
+	int tileId;
+	std::string name;
+	int width, height;
+	std::vector<uint8_t> rgba;
+};
+
 static bool extractTexturePngs(
 	const std::string& outDir,
-	std::map<int, TileExportInfo>& tileExports) {
+	std::map<int, TileExportInfo>& tileExports,
+	std::vector<TextureStripEntry>* stripEntries = nullptr) {
 
 	TextureDecoder decoder;
 	std::string texDir = outDir + "/levels/textures";
@@ -1288,6 +1296,28 @@ static bool extractTexturePngs(
 				fprintf(stderr, "  Failed to write PNG: %s\n", fullPath.c_str());
 				continue;
 			}
+
+			// Collect multi-frame texture for the combined strip
+			if (isTexture && stripEntries) {
+				TextureStripEntry entry;
+				entry.tileId = tileId;
+				entry.name = name;
+				entry.width = totalW;
+				entry.height = frameH;
+				entry.rgba = std::move(strip);
+				stripEntries->push_back(std::move(entry));
+			}
+		}
+
+		// Collect single-frame texture for the combined strip
+		if (frames.size() == 1 && isTexture && stripEntries) {
+			TextureStripEntry entry;
+			entry.tileId = tileId;
+			entry.name = name;
+			entry.width = frameW;
+			entry.height = frameH;
+			entry.rgba = frames[0]->rgba;
+			stripEntries->push_back(std::move(entry));
 		}
 
 		TileExportInfo info;
@@ -1305,11 +1335,60 @@ static bool extractTexturePngs(
 }
 
 // ========================================================================
+// Export all wall textures as a single horizontal PNG strip
+// ========================================================================
+static bool exportTextureStrip(
+	const std::string& outDir,
+	std::vector<TextureStripEntry>& entries) {
+
+	if (entries.empty()) return true;
+
+	// Sort by tileId for deterministic layout
+	std::sort(entries.begin(), entries.end(),
+	          [](const auto& a, const auto& b) { return a.tileId < b.tileId; });
+
+	// Compute strip dimensions
+	int maxH = 0;
+	int totalW = 0;
+	for (const auto& e : entries) {
+		totalW += e.width;
+		if (e.height > maxH) maxH = e.height;
+	}
+
+	// Allocate RGBA strip (zeroed = transparent)
+	std::vector<uint8_t> strip(totalW * maxH * 4, 0);
+
+	// Composite each texture into the strip
+	int xOffset = 0;
+	for (const auto& e : entries) {
+		for (int y = 0; y < e.height; y++) {
+			memcpy(&strip[(y * totalW + xOffset) * 4],
+			       &e.rgba[y * e.width * 4],
+			       e.width * 4);
+		}
+		xOffset += e.width;
+	}
+
+	// Write strip PNG
+	std::string stripPath = outDir + "/textures/all_textures.png";
+	if (!stbi_write_png(stripPath.c_str(), totalW, maxH, 4,
+	                    strip.data(), totalW * 4)) {
+		fprintf(stderr, "  Failed to write texture strip: %s\n", stripPath.c_str());
+		return false;
+	}
+
+	printf("  Texture strip: %d textures, %dx%d: %s\n",
+	       (int)entries.size(), totalW, maxH, stripPath.c_str());
+	return true;
+}
+
+// ========================================================================
 // Rewrite sprites.yaml with PNG file references and size info
 // ========================================================================
 static bool rewriteSpritesYaml(
 	const std::string& outDir,
-	const std::map<int, TileExportInfo>& tileExports) {
+	const std::map<int, TileExportInfo>& tileExports,
+	const std::vector<TextureStripEntry>* stripEntries = nullptr) {
 
 	std::string spritesPath = outDir + "/sprites.yaml";
 	YAML::Node root = YAML::LoadFile(spritesPath);
@@ -1353,6 +1432,36 @@ static bool rewriteSpritesYaml(
 		updated++;
 	}
 
+	// Add texture_strip metadata if strip entries were provided
+	if (stripEntries && !stripEntries->empty()) {
+		YAML::Node stripNode;
+		stripNode["file"] = "textures/all_textures.png";
+
+		// Compute total dimensions (entries are already sorted by tileId)
+		int totalW = 0, maxH = 0;
+		for (const auto& e : *stripEntries) {
+			totalW += e.width;
+			if (e.height > maxH) maxH = e.height;
+		}
+		stripNode["width"] = totalW;
+		stripNode["height"] = maxH;
+
+		YAML::Node entriesNode;
+		int xOffset = 0;
+		for (const auto& e : *stripEntries) {
+			YAML::Node entry;
+			entry["name"] = e.name;
+			entry["x"] = xOffset;
+			entry["width"] = e.width;
+			entry["height"] = e.height;
+			entry.SetStyle(YAML::EmitterStyle::Flow);
+			entriesNode.push_back(entry);
+			xOffset += e.width;
+		}
+		stripNode["entries"] = entriesNode;
+		root["texture_strip"] = stripNode;
+	}
+
 	// Write back with clean formatting
 	YAML::Emitter emitter;
 	emitter.SetIndent(2);
@@ -1390,13 +1499,17 @@ bool convertD2RPG(ZipFile& zip, const GameDef& game, const std::string& outputDi
 
 	printf("\nExtracting textures as PNGs...\n");
 	std::map<int, TileExportInfo> tileExports;
-	ok &= extractTexturePngs(outputDir, tileExports);
+	std::vector<TextureStripEntry> stripEntries;
+	ok &= extractTexturePngs(outputDir, tileExports, &stripEntries);
+
+	printf("\nExporting texture strip...\n");
+	ok &= exportTextureStrip(outputDir, stripEntries);
 
 	printf("\nExtracting sprites to YAML...\n");
 	ok &= extractSpritesToYaml(outputDir);
 
 	printf("\nUpdating sprites.yaml with PNG references...\n");
-	ok &= rewriteSpritesYaml(outputDir, tileExports);
+	ok &= rewriteSpritesYaml(outputDir, tileExports, &stripEntries);
 
 	// Read tables.bin from IPA into memory (not copied to output)
 	std::vector<uint8_t> tablesData;
