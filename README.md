@@ -1,8 +1,11 @@
 # DRPG Engine
 
+[![Build](https://github.com/dderevjanik/DoomIIRPG-RE/actions/workflows/build.yml/badge.svg)](https://github.com/dderevjanik/DoomIIRPG-RE/actions/workflows/build.yml)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+
 ![logo](./logo.png)
 
-A custom RPG turn-based engine based on the [Doom II RPG](https://doomwiki.org/wiki/Doom_II_RPG) reverse engineering project. The goal is to rebuild the original game into a moddable, open engine with YAML-driven data, a flexible asset pipeline, and an integrated map editor.
+A custom RPG turn-based engine based on the [Doom II RPG reverse engineering project by [GEC]](https://github.com/Erick194/DoomIIRPG-RE). The goal is to rebuild the original game into a moddable, open engine with YAML-driven data, a flexible asset pipeline, and an integrated map editor.
 
 This is an early-stage project (v0.1.0). Many reverse-engineered field names still use placeholder names (e.g., `field_0x7c`). Contributions to improve naming, fix bugs, and document behavior are welcome.
 
@@ -11,6 +14,7 @@ This is an early-stage project (v0.1.0). Many reverse-engineered field names sti
 ### Dependencies
 
 - CMake 3.22+
+- C++23 compiler (Clang 19+ with libc++, or GCC 15+)
 - SDL2
 - Zlib
 - OpenAL
@@ -206,3 +210,15 @@ Test scripts in `Testing/` can exercise specific maps with deterministic seeds:
 ```bash
 ./build/src/DRPGEngine --game doom2rpg --map levels/09_vios --script Testing/test_map09.script --seed 1337
 ```
+
+## Acknowledgments
+
+- **[GEC] (Erick194)** — Original [Doom II RPG reverse engineering project](https://github.com/Erick194/DoomIIRPG-RE) that this engine is based on
+- **[TinyGL](http://www.integratedsets.com/)** — Software OpenGL rasterizer
+- **[Dear ImGui](https://github.com/ocornut/imgui)** — Debug UI
+- **[yaml-cpp](https://github.com/jbeder/yaml-cpp)** — YAML parsing for moddable data files
+- **[hash-library](https://github.com/stbrumme/hash-library)** — Hash functions
+
+## License
+
+This project is licensed under the [GNU General Public License v3.0](LICENSE).
