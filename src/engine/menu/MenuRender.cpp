@@ -529,9 +529,9 @@ void MenuSystem::drawScrollbar(Graphics* graphics) {
 		y = this->m_scrollBar->barRect.y;
 		graphics->drawImage(this->imgMenuDial, x, y, 0, 0, 0);
 		pfVar1 = this->m_scrollBar;
-		uVar2 = pfVar1->field_0x0_;
+		uVar2 = pfVar1->enabled;
 		if (uVar2 != 0) {
-			uVar2 = pfVar1->field_0x48_ + (pfVar1->field_0x4c_ >> 1);
+			uVar2 = pfVar1->thumbPosition + (pfVar1->thumbSize >> 1);
 		}
 		graphics->drawImage(this->imgMenuDialKnob, x + 12, y + ((uVar2 * 4) / 5 - (this->imgMenuDialKnob->height >> 1)) + 16, 0, 0, 0);
 	}

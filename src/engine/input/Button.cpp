@@ -333,26 +333,26 @@ fmScrollButton::fmScrollButton(int x, int y, int w, int h, bool b, int soundResI
 	this->imgBarTop = nullptr;
 	this->imgBarMiddle = nullptr;
 	this->imgBarBottom = nullptr;
-	this->field_0x14_ = 0;
-	this->field_0x15_ = b;
+	this->barTouched = 0;
+	this->isVertical = b;
 	this->barRect.x = x;
 	this->barRect.y = y;
 	this->barRect.w = w;
 	this->barRect.h = h;
-	this->field_0x0_ = 0;
+	this->enabled = 0;
 	this->boxRect.x = 0;
 	this->boxRect.y = 0;
 	this->boxRect.w = 0;
 	this->boxRect.h = 0;
-	this->field_0x38_ = 0;
-	this->field_0x3c_ = 0;
-	this->field_0x40_ = 0;
-	this->field_0x44_ = 0;
-	this->field_0x48_ = 0;
-	this->field_0x4c_ = 0;
-	this->field_0x50_ = 0;
-	this->field_0x54_ = 0;
-	this->field_0x58_ = 0;
+	this->contentDragging = 0;
+	this->visibleSize = 0;
+	this->contentSize = 0;
+	this->scrollOffset = 0;
+	this->thumbPosition = 0;
+	this->thumbSize = 0;
+	this->scrollRatio = 0;
+	this->thumbDragOffset = 0;
+	this->touchStartPos = 0;
 	this->soundResID = (short)soundResID;
 }
 
@@ -366,146 +366,146 @@ void fmScrollButton::SetScrollBarImages(Image* imgBar, Image* imgBarTop, Image* 
 	this->imgBarBottom = imgBarBottom;
 }
 
-void fmScrollButton::SetScrollBox(int x, int y, int w, int h, int i) {
-	int iVar1;
-	int iVar2;
-	int iVar3;
-	float fVar4;
-	float fVar5;
+void fmScrollButton::SetScrollBox(int x, int y, int w, int h, int totalContentSize) {
+	int computedThumbSize;
+	int barSize;
+	int visSize;
+	float contentRange;
+	float thumbRange;
 
-	this->field_0x3c_ = w;
+	this->visibleSize = w;
 	(this->boxRect).w = w;
-	iVar2 = (this->barRect).w;
-	if (this->field_0x15_ != false) {
-		this->field_0x3c_ = h;
-		iVar2 = (this->barRect).h;
+	barSize = (this->barRect).w;
+	if (this->isVertical != false) {
+		this->visibleSize = h;
+		barSize = (this->barRect).h;
 	}
-	iVar3 = this->field_0x3c_;
+	visSize = this->visibleSize;
 	(this->boxRect).y = y;
 	(this->boxRect).x = x;
 	(this->boxRect).h = h;
-	this->field_0x40_ = i;
-	this->field_0x44_ = 0;
-	iVar1 = (iVar3 * iVar2/ this->field_0x40_);
-	this->field_0x48_ = 0;
-	fVar4 = (float)(this->field_0x40_ - iVar3);
-	this->field_0x4c_ = iVar1;
-	fVar5 = (float)(iVar2 - iVar1);
-	this->field_0x50_ = (fVar4 / fVar5);
+	this->contentSize = totalContentSize;
+	this->scrollOffset = 0;
+	computedThumbSize = (visSize * barSize/ this->contentSize);
+	this->thumbPosition = 0;
+	contentRange = (float)(this->contentSize - visSize);
+	this->thumbSize = computedThumbSize;
+	thumbRange = (float)(barSize - computedThumbSize);
+	this->scrollRatio = (contentRange / thumbRange);
 }
 
-void fmScrollButton::SetScrollBox(int x, int y, int w, int h, int i, int i2)
+void fmScrollButton::SetScrollBox(int x, int y, int w, int h, int totalContentSize, int thumbSizeOverride)
 {
-	int iVar1;
-	int iVar2;
-	int iVar3;
-	bool bVar4;
-	float fVar5;
-	float fVar6;
+	int contentTotal;
+	int visSize;
+	int barSize;
+	bool vertical;
+	float contentRange;
+	float thumbRange;
 
-	this->field_0x3c_ = w;
+	this->visibleSize = w;
 	(this->boxRect).w = w;
-	bVar4 = this->field_0x15_;
+	vertical = this->isVertical;
 	(this->boxRect).x = x;
 	(this->boxRect).y = y;
-	bVar4 = bVar4 != false;
-	this->field_0x40_ = i;
-	this->field_0x44_ = 0;
-	if (bVar4) {
-		this->field_0x3c_ = h;
+	vertical = vertical != false;
+	this->contentSize = totalContentSize;
+	this->scrollOffset = 0;
+	if (vertical) {
+		this->visibleSize = h;
 	}
-	this->field_0x48_ = 0;
-	iVar3 = this->field_0x40_;
-	iVar1 = this->field_0x3c_;
-	iVar2 = (this->barRect).w;
-	if (bVar4) {
-		iVar2 = (this->barRect).h;
+	this->thumbPosition = 0;
+	contentTotal = this->contentSize;
+	visSize = this->visibleSize;
+	barSize = (this->barRect).w;
+	if (vertical) {
+		barSize = (this->barRect).h;
 	}
 	(this->boxRect).h = h;
-	fVar5 = (float)(iVar3 - iVar1);
-	this->field_0x4c_ = i2;
-	fVar6 = (float)(iVar2 - i2);
-	this->field_0x50_ = fVar5 / fVar6;
+	contentRange = (float)(contentTotal - visSize);
+	this->thumbSize = thumbSizeOverride;
+	thumbRange = (float)(barSize - thumbSizeOverride);
+	this->scrollRatio = contentRange / thumbRange;
 	return;
 }
 
 void fmScrollButton::SetContentTouchOffset(int x, int y)
 {
-	if (this->field_0x0_ == 0) {
+	if (this->enabled == 0) {
 		return;
 	}
-	if (this->field_0x15_ != false) {
+	if (this->isVertical != false) {
 		x = y;
 	}
-	this->field_0x58_ = x;
-	this->field_0x5c_ = this->field_0x44_;
+	this->touchStartPos = x;
+	this->touchStartScrollOffset = this->scrollOffset;
 	return;
 }
 
 void fmScrollButton::UpdateContent(int x, int y)
 {
-	int iVar1;
-	int iVar2;
-	float fVar3;
+	int newOffset;
+	int maxOffset;
+	float offsetFloat;
 
-	if (this->field_0x0_ != 0) {
-		if (this->field_0x15_ == false) {
-			iVar1 = (this->field_0x5c_ - x) + this->field_0x58_;
+	if (this->enabled != 0) {
+		if (this->isVertical == false) {
+			newOffset = (this->touchStartScrollOffset - x) + this->touchStartPos;
 		}
 		else {
-			iVar1 = (this->field_0x5c_ - y) + this->field_0x58_;
+			newOffset = (this->touchStartScrollOffset - y) + this->touchStartPos;
 		}
-		this->field_0x44_ = iVar1;
-		iVar1 = this->field_0x44_;
-		iVar2 = this->field_0x40_ - this->field_0x3c_;
-		if (iVar1 < 0) {
-			iVar1 = 0;
-			this->field_0x44_ = 0;
+		this->scrollOffset = newOffset;
+		newOffset = this->scrollOffset;
+		maxOffset = this->contentSize - this->visibleSize;
+		if (newOffset < 0) {
+			newOffset = 0;
+			this->scrollOffset = 0;
 		}
-		if (iVar2 < iVar1) {
-			this->field_0x44_ = iVar2;
-			iVar1 = iVar2;
+		if (maxOffset < newOffset) {
+			this->scrollOffset = maxOffset;
+			newOffset = maxOffset;
 		}
-		fVar3 = (float)iVar1;
-		this->field_0x48_ = (int)(fVar3 / this->field_0x50_);
+		offsetFloat = (float)newOffset;
+		this->thumbPosition = (int)(offsetFloat / this->scrollRatio);
 	}
 }
 
 void fmScrollButton::SetTouchOffset(int x, int y)
 {
-	if (this->field_0x0_ != 0) {
-		if (this->field_0x15_ == false) {
-			this->field_0x54_ = (x - (this->barRect).x) - this->field_0x48_;
+	if (this->enabled != 0) {
+		if (this->isVertical == false) {
+			this->thumbDragOffset = (x - (this->barRect).x) - this->thumbPosition;
 		}
 		else {
-			this->field_0x54_ = (y - (this->barRect).y) - this->field_0x48_;
+			this->thumbDragOffset = (y - (this->barRect).y) - this->thumbPosition;
 		}
 	}
 }
 
 void fmScrollButton::Update(int x, int y) {
 	Applet* app = CAppContainer::getInstance()->app;
-	int iVar1;
-	int iVar3;
-	int iVar4;
+	int barHeight;
+	int newThumbPos;
+	int dragOffset;
 	int in_cr7;
-	int uVar5;
+	int clampedOffset;
 
-	if (this->field_0x0_ != 0) {
-		iVar4 = this->field_0x54_;
-		iVar1 = (this->barRect).h;
-		iVar3 = ((y - (this->barRect).y) - (this->field_0x4c_ >> 1)) - iVar4;
-		if (iVar3 < 0) {
-			iVar4 = 0;
+	if (this->enabled != 0) {
+		dragOffset = this->thumbDragOffset;
+		barHeight = (this->barRect).h;
+		newThumbPos = ((y - (this->barRect).y) - (this->thumbSize >> 1)) - dragOffset;
+		if (newThumbPos < 0) {
+			clampedOffset = 0;
 		}
-		this->field_0x48_ = iVar3;
-		if (iVar3 < 0) {
-			this->field_0x48_ = iVar4;
+		this->thumbPosition = newThumbPos;
+		if (newThumbPos < 0) {
+			this->thumbPosition = clampedOffset;
 		}
 		else {
-			iVar1 = iVar1 - this->field_0x4c_;
-			if (iVar3 <= iVar1) {
-				this->field_0x44_ = (int)((float)(iVar3) * this->field_0x50_);
+			barHeight = barHeight - this->thumbSize;
+			if (newThumbPos <= barHeight) {
+				this->scrollOffset = (int)((float)(newThumbPos) * this->scrollRatio);
 				if (this->soundResID == -1) {
 					return;
 				}
@@ -514,10 +514,10 @@ void fmScrollButton::Update(int x, int y) {
 				}
 				return;
 			}
-			this->field_0x48_ = iVar1;
-			iVar4 = this->field_0x40_ - this->field_0x3c_;
+			this->thumbPosition = barHeight;
+			clampedOffset = this->contentSize - this->visibleSize;
 		}
-		this->field_0x44_ = iVar4;
+		this->scrollOffset = clampedOffset;
 	}
 	return;
 }
@@ -526,52 +526,52 @@ void fmScrollButton::Render(Graphics* graphics) {
 	//printf("fmScrollButton::Render\n");
 
 	Image* img;
-	int iVar1;
-	int iVar2;
-	int iVar3;
-	int iVar4;
-	int x;
+	int thumbColor;
+	int drawX;
+	int drawY;
+	int drawW;
+	int centeredX;
 
-	if (this->field_0x0_) {
+	if (this->enabled) {
 		img = this->imgBar;
 		if (img == (Image*)0x0) {
 			graphics->setColor(0x7f303030);
 			graphics->fillRect(this->barRect.x, this->barRect.y, this->barRect.w, this->barRect.h);
-			if (this->field_0x14_ == 0) {
-				iVar1 = -0x555556;
+			if (this->barTouched == 0) {
+				thumbColor = -0x555556;
 			}
 			else {
-				iVar1 = -0x111156;
+				thumbColor = -0x111156;
 			}
-			graphics->setColor(iVar1);
-			if (this->field_0x15_ == false) {
-				iVar1 = (this->barRect).h;
-				iVar3 = (this->barRect).y;
-				iVar4 = this->field_0x4c_;
-				iVar2 = this->field_0x48_ + (this->barRect).x;
+			graphics->setColor(thumbColor);
+			if (this->isVertical == false) {
+				drawW = (this->barRect).h;
+				drawY = (this->barRect).y;
+				drawX = this->thumbPosition + (this->barRect).x;
+				thumbColor = this->thumbSize;
 			}
 			else {
-				iVar1 = this->field_0x4c_;
-				iVar2 = (this->barRect).x;
-				iVar4 = (this->barRect).w;
-				iVar3 = this->field_0x48_ + (this->barRect).y;
+				drawW = this->thumbSize;
+				drawX = (this->barRect).x;
+				thumbColor = (this->barRect).w;
+				drawY = this->thumbPosition + (this->barRect).y;
 			}
-			graphics->fillRect(iVar2, iVar3, iVar4, iVar1);
+			graphics->fillRect(drawX, drawY, thumbColor, drawW);
 		}
 		else {
-			iVar1 = this->barRect.w;
-			iVar2 = this->barRect.x;
-			x = iVar2 + (iVar1 - this->imgBarTop->width >> 1);
-			graphics->drawImage(img, iVar2 + (iVar1 - img->width >> 1), (this->barRect).y, 0, 0, 0);
-			graphics->drawImage(this->imgBarTop, x, (this->barRect).y + this->field_0x48_, 0, 0, 0);
-			iVar1 = (this->barRect).y + this->field_0x48_;
-			iVar2 = this->field_0x4c_;
-			iVar3 = this->imgBarBottom->height;
-			for (iVar4 = iVar1 + this->imgBarTop->height; iVar4 < (iVar1 + iVar2) - iVar3;
-				iVar4 = iVar4 + this->imgBarMiddle->height) {
-				graphics->drawImage(this->imgBarMiddle, x, iVar4, 0, 0, 0);
+			thumbColor = this->barRect.w;
+			drawX = this->barRect.x;
+			centeredX = drawX + (thumbColor - this->imgBarTop->width >> 1);
+			graphics->drawImage(img, drawX + (thumbColor - img->width >> 1), (this->barRect).y, 0, 0, 0);
+			graphics->drawImage(this->imgBarTop, centeredX, (this->barRect).y + this->thumbPosition, 0, 0, 0);
+			thumbColor = (this->barRect).y + this->thumbPosition;
+			drawX = this->thumbSize;
+			drawY = this->imgBarBottom->height;
+			for (drawW = thumbColor + this->imgBarTop->height; drawW < (thumbColor + drawX) - drawY;
+				drawW = drawW + this->imgBarMiddle->height) {
+				graphics->drawImage(this->imgBarMiddle, centeredX, drawW, 0, 0, 0);
 			}
-			graphics->drawImage(this->imgBarBottom, x, (this->barRect.y + this->field_0x48_ + this->field_0x4c_) -
+			graphics->drawImage(this->imgBarBottom, centeredX, (this->barRect.y + this->thumbPosition + this->thumbSize) -
 				this->imgBarBottom->height, 0, 0, 0);
 		}
 	}

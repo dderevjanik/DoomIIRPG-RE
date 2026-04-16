@@ -230,8 +230,8 @@ public:
     int animTime = 0;
 
     // [GEC]
-    int old_0x44 = 0;
-    int old_0x48 = 0;
+    int oldScrollOffset = 0;
+    int oldThumbPosition = 0;
     int scrollY1Stack[10] = {};
     int scrollY2Stack[10] = {};
     int scrollI2Stack[10] = {};

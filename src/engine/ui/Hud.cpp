@@ -722,8 +722,8 @@ void Hud::draw(Graphics* graphics) {
 				int y = m_sniperScopeDialScrollButton->barRect.y;
 				graphics->drawImage(app->canvas->imgSniperScope_Dial, x, y, 0, 0, 0);
 				int knobY = 0;
-				if (m_sniperScopeDialScrollButton->field_0x0_) {
-					knobY = m_sniperScopeDialScrollButton->field_0x48_ + (m_sniperScopeDialScrollButton->field_0x4c_ >> 1);
+				if (m_sniperScopeDialScrollButton->enabled) {
+					knobY = m_sniperScopeDialScrollButton->thumbPosition + (m_sniperScopeDialScrollButton->thumbSize >> 1);
 				}
 				graphics->drawImage(
 					app->canvas->imgSniperScope_Knob,

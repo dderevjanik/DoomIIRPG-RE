@@ -331,10 +331,10 @@ void MenuSystem::moveDir(int n) { // J2ME
 	//printf("this->selectedIndex %d\n", this->selectedIndex);
 
 	// [GEC] Actualiza la posicion del scroll touch
-	if (this->m_scrollBar->field_0x0_ && this->menu != Menus::MENU_COMIC_BOOK) {
+	if (this->m_scrollBar->enabled && this->menu != Menus::MENU_COMIC_BOOK) {
 		int numItems = this->numItems;
-		int maxScroll = (this->m_scrollBar->field_0x40_ - this->m_scrollBar->field_0x3c_);
-		int maxScroll2 = ((this->m_scrollBar->barRect).h - this->m_scrollBar->field_0x4c_);
+		int maxScroll = (this->m_scrollBar->contentSize - this->m_scrollBar->visibleSize);
+		int maxScroll2 = ((this->m_scrollBar->barRect).h - this->m_scrollBar->thumbSize);
 		int iVar4 = (maxScroll / numItems) * 2;
 		int iVar2 = (maxScroll2 / numItems) * 2;
 
@@ -367,14 +367,14 @@ void MenuSystem::moveDir(int n) { // J2ME
 			}
 		}
 
-		this->m_scrollBar->field_0x44_ = 0;
-		this->m_scrollBar->field_0x48_ = 0;
+		this->m_scrollBar->scrollOffset = 0;
+		this->m_scrollBar->thumbPosition = 0;
 
 		if (this->type == 5 || this->type == 7) {
-			this->m_scrollBar->field_0x44_ = this->selectedIndex * iVar4;
-			this->m_scrollBar->field_0x48_ = this->selectedIndex * iVar2;
-			this->m_scrollBar->field_0x44_ = std::min(this->m_scrollBar->field_0x44_, maxScroll);
-			this->m_scrollBar->field_0x48_ = std::min(this->m_scrollBar->field_0x48_, maxScroll2);
+			this->m_scrollBar->scrollOffset = this->selectedIndex * iVar4;
+			this->m_scrollBar->thumbPosition = this->selectedIndex * iVar2;
+			this->m_scrollBar->scrollOffset = std::min(this->m_scrollBar->scrollOffset, maxScroll);
+			this->m_scrollBar->thumbPosition = std::min(this->m_scrollBar->thumbPosition, maxScroll2);
 		}
 		else {
 			int y1 = 0;
@@ -390,28 +390,28 @@ void MenuSystem::moveDir(int n) { // J2ME
 			}
 
 			for (int j = 0; j < this->scrollIndex; j++) {
-				if (y1 == 0) { this->m_scrollBar->field_0x44_ += this->getMenuItemHeight2(this->selectedIndex) - y1; }
-				else { this->m_scrollBar->field_0x44_ = y1; }
-				if (y2 == 0) { this->m_scrollBar->field_0x48_ += iVar2; }
-				else { this->m_scrollBar->field_0x48_ = y2; }
-				this->m_scrollBar->field_0x44_ = std::min(this->m_scrollBar->field_0x44_, maxScroll);
-				this->m_scrollBar->field_0x48_ = std::min(this->m_scrollBar->field_0x48_, maxScroll2);
+				if (y1 == 0) { this->m_scrollBar->scrollOffset += this->getMenuItemHeight2(this->selectedIndex) - y1; }
+				else { this->m_scrollBar->scrollOffset = y1; }
+				if (y2 == 0) { this->m_scrollBar->thumbPosition += iVar2; }
+				else { this->m_scrollBar->thumbPosition = y2; }
+				this->m_scrollBar->scrollOffset = std::min(this->m_scrollBar->scrollOffset, maxScroll);
+				this->m_scrollBar->thumbPosition = std::min(this->m_scrollBar->thumbPosition, maxScroll2);
 			}
 
 			if (this->selectedIndex == begItem) {  // Ajusta la posici�n si es necesario
 				this->scrollIndex = 0;
-				this->m_scrollBar->field_0x44_ -= begY1;
-				this->m_scrollBar->field_0x48_ -= begY2;
-				this->m_scrollBar->field_0x44_ = std::max(this->m_scrollBar->field_0x44_, 0);
-				this->m_scrollBar->field_0x48_ = std::max(this->m_scrollBar->field_0x48_, 0);
+				this->m_scrollBar->scrollOffset -= begY1;
+				this->m_scrollBar->thumbPosition -= begY2;
+				this->m_scrollBar->scrollOffset = std::max(this->m_scrollBar->scrollOffset, 0);
+				this->m_scrollBar->thumbPosition = std::max(this->m_scrollBar->thumbPosition, 0);
 			}
 
-			if (this->old_0x48 != this->m_scrollBar->field_0x48_) {
+			if (this->oldThumbPosition != this->m_scrollBar->thumbPosition) {
 				app->sound->playSound(Sounds::getResIDByName(SoundName::MENU_SCROLL), 0, 5, false); // [GEC]
 			}
 
-			this->old_0x44 = this->m_scrollBar->field_0x44_;
-			this->old_0x48 = this->m_scrollBar->field_0x48_;
+			this->oldScrollOffset = this->m_scrollBar->scrollOffset;
+			this->oldThumbPosition = this->m_scrollBar->thumbPosition;
 		}
 	}
 }
@@ -449,8 +449,8 @@ void MenuSystem::back() {
 		int index;
 		this->setMenu(this->popMenu(this->poppedIdx, &y1, &y2, &index));
 		this->selectedIndex = this->poppedIdx[0];
-		this->m_scrollBar->field_0x44_ = y1; // [GEC]
-		this->m_scrollBar->field_0x48_ = y2; // [GEC]
+		this->m_scrollBar->scrollOffset = y1; // [GEC]
+		this->m_scrollBar->thumbPosition = y2; // [GEC]
 		this->scrollIndex = index; // [GEC]
 	}
 	else if (this->menu == Menus::MENU_INGAME || this->menu == Menus::MENU_ITEMS || this->menu == Menus::MENU_ITEMS_DRINKS ||
@@ -477,18 +477,18 @@ void MenuSystem::setMenu(int menu) {
 
 	// Restaura
 	if (this->menu == Menus::MENU_DEBUG || this->menu == Menus::MENU_MAIN_BINDINGS || this->menu == Menus::MENU_INGAME_BINDINGS || this->menu == Menus::MENU_INGAME_OPTIONS_VIDEO) { // [GEC]
-		this->old_0x44 = this->m_scrollBar->field_0x44_;
-		this->old_0x48 = this->m_scrollBar->field_0x48_;
+		this->oldScrollOffset = this->m_scrollBar->scrollOffset;
+		this->oldThumbPosition = this->m_scrollBar->thumbPosition;
 	}
 	else {
-		this->old_0x44 = 0; // [GEC]
-		this->old_0x48 = 0; // [GEC]
+		this->oldScrollOffset = 0; // [GEC]
+		this->oldThumbPosition = 0; // [GEC]
 	}
-	/*this->old_0x44 = this->btnScroll->field_0x44_;
-	this->old_0x48 = this->btnScroll->field_0x48_;
+	/*this->oldScrollOffset = this->btnScroll->scrollOffset;
+	this->oldThumbPosition = this->btnScroll->thumbPosition;
 	if (this->oldMenu != menu) {
-		this->old_0x44 = 0; // [GEC]
-		this->old_0x48 = 0; // [GEC]
+		this->oldScrollOffset = 0; // [GEC]
+		this->oldThumbPosition = 0; // [GEC]
 	}*/
 
 	this->oldMenu = this->menu;
@@ -510,8 +510,8 @@ void MenuSystem::setMenu(int menu) {
 	}
 
 	if (this->oldMenu == Menus::MENU_DEBUG || this->oldMenu == Menus::MENU_MAIN_BINDINGS || this->oldMenu == Menus::MENU_INGAME_BINDINGS || this->oldMenu == Menus::MENU_INGAME_OPTIONS_VIDEO) { // [GEC]
-		this->m_scrollBar->field_0x44_ = this->old_0x44;
-		this->m_scrollBar->field_0x48_ = this->old_0x48;
+		this->m_scrollBar->scrollOffset = this->oldScrollOffset;
+		this->m_scrollBar->thumbPosition = this->oldThumbPosition;
 	}
 }
 
@@ -550,7 +550,7 @@ void MenuSystem::returnToGame() {
 
 void MenuSystem::gotoMenu(int menu) {
 	if (menu != this->menu) {
-		this->pushMenu(this->menu, this->selectedIndex, this->m_scrollBar->field_0x44_, this->m_scrollBar->field_0x48_, this->scrollIndex); // [GEC]
+		this->pushMenu(this->menu, this->selectedIndex, this->m_scrollBar->scrollOffset, this->m_scrollBar->thumbPosition, this->scrollIndex); // [GEC]
 	}
 
 	this->setMenu(menu);
@@ -1388,9 +1388,9 @@ int MenuSystem::getScrollPos() {
 	int posY;
 	int pos;
 
-	pos = this->m_scrollBar->field_0x0_;
+	pos = this->m_scrollBar->enabled;
 	if (pos != 0) {
-		pos = this->m_scrollBar->field_0x44_;
+		pos = this->m_scrollBar->scrollOffset;
 	}
 
 	if (this->isMainMenu != false) {

@@ -126,25 +126,25 @@ class fmScrollButton
 private:
 
 public:
-	uint8_t field_0x0_;
+	uint8_t enabled;
 	Image* imgBar;
 	Image* imgBarTop;
 	Image* imgBarMiddle;
 	Image* imgBarBottom;
-	uint8_t field_0x14_;
-	bool field_0x15_;
+	uint8_t barTouched;
+	bool isVertical;
 	GuiRect barRect;
 	GuiRect boxRect;
-	uint8_t field_0x38_;
-	int field_0x3c_;
-	int field_0x40_;
-	int field_0x44_;
-	int field_0x48_;
-	int field_0x4c_;
-	float field_0x50_;
-	int field_0x54_;
-	int field_0x58_;
-	int field_0x5c_;
+	uint8_t contentDragging;
+	int visibleSize; // guessed
+	int contentSize; // guessed
+	int scrollOffset; // guessed
+	int thumbPosition; // guessed
+	int thumbSize; // guessed
+	float scrollRatio; // guessed
+	int thumbDragOffset; // guessed
+	int touchStartPos; // guessed
+	int touchStartScrollOffset; // guessed
 	short soundResID;
 
 	// Constructor
@@ -154,8 +154,8 @@ public:
 
 	//bool startup();
 	void SetScrollBarImages(Image* imgBar, Image* imgBarTop, Image* imgBarMiddle, Image* imgBarBottom);
-	void SetScrollBox(int x, int y, int w, int h, int i);
-	void SetScrollBox(int x, int y, int w, int h, int i, int i2);
+	void SetScrollBox(int x, int y, int w, int h, int totalContentSize);
+	void SetScrollBox(int x, int y, int w, int h, int totalContentSize, int thumbSizeOverride);
 	void SetContentTouchOffset(int x, int y);
 	void UpdateContent(int x, int y);
 	void SetTouchOffset(int x, int y);

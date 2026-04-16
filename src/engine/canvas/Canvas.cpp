@@ -258,7 +258,7 @@ bool Canvas::startup() {
 		{
 			this->m_sniperScopeDialScrollButton = new fmScrollButton(400, 67, this->imgSniperScope_Dial->width, this->imgSniperScope_Dial->height, true, 1113);
 			this->m_sniperScopeDialScrollButton->SetScrollBox(0, 0, 1, 1, 16);
-			this->m_sniperScopeDialScrollButton->field_0x0_ = 1;
+			this->m_sniperScopeDialScrollButton->enabled = 1;
 		}
 
 		// Setup Sniper Scope Buttons
@@ -3070,9 +3070,9 @@ bool Canvas::handleZoomEvents(int key, int action, bool b) {
 
 			// [GEC] update scroll bar
 			{
-				float maxScroll = (float)((this->m_sniperScopeDialScrollButton->barRect).h - this->m_sniperScopeDialScrollButton->field_0x4c_);
+				float maxScroll = (float)((this->m_sniperScopeDialScrollButton->barRect).h - this->m_sniperScopeDialScrollButton->thumbSize);
 				float curFOV = (float)((float)this->zoomCurFOVPercent / (float)this->zoomMinFOVPercent);
-				this->m_sniperScopeDialScrollButton->field_0x48_ = (int)(maxScroll - (maxScroll * curFOV));
+				this->m_sniperScopeDialScrollButton->thumbPosition = (int)(maxScroll - (maxScroll * curFOV));
 				app->sound->playSound(Sounds::getResIDByName(SoundName::SLIDER), 0, 5, false);
 			}
 
@@ -3088,9 +3088,9 @@ bool Canvas::handleZoomEvents(int key, int action, bool b) {
 
 			// [GEC] update scroll bar
 			{
-				float maxScroll = (float)((this->m_sniperScopeDialScrollButton->barRect).h - this->m_sniperScopeDialScrollButton->field_0x4c_);
+				float maxScroll = (float)((this->m_sniperScopeDialScrollButton->barRect).h - this->m_sniperScopeDialScrollButton->thumbSize);
 				float curFOV = (float)((float)this->zoomCurFOVPercent / (float)this->zoomMinFOVPercent);
-				this->m_sniperScopeDialScrollButton->field_0x48_ = (int)(maxScroll - (maxScroll * curFOV));
+				this->m_sniperScopeDialScrollButton->thumbPosition = (int)(maxScroll - (maxScroll * curFOV));
 				app->sound->playSound(Sounds::getResIDByName(SoundName::SLIDER), 0, 5, false);
 			}
 		}
@@ -3175,10 +3175,10 @@ void Canvas::touchStart(int pressX, int pressY) {
 			}
 		}
 		else {
-			if (this->m_sniperScopeDialScrollButton->field_0x0_ &&
+			if (this->m_sniperScopeDialScrollButton->enabled &&
 				this->m_sniperScopeDialScrollButton->barRect.ContainsPoint(pressX, pressY)) {
 				this->m_sniperScopeDialScrollButton->SetTouchOffset(pressX, pressY);
-				this->m_sniperScopeDialScrollButton->field_0x14_ = 1;
+				this->m_sniperScopeDialScrollButton->barTouched = 1;
 			}
 			else {
 				app->hud->handleUserTouch(pressX, pressY, true);
@@ -3245,27 +3245,27 @@ void Canvas::touchMove(int pressX, int pressY) {
 	else if ((this->state == Canvas::ST_PLAYING) || (this->state == Canvas::ST_COMBAT)) {
 
 		if (this->isZoomedIn) {
-			if (this->m_sniperScopeDialScrollButton->field_0x14_) {
+			if (this->m_sniperScopeDialScrollButton->barTouched) {
 				this->m_sniperScopeDialScrollButton->Update(pressX, pressY);
-				int field_0x44 = this->m_sniperScopeDialScrollButton->field_0x44_;
-				if (!this->m_sniperScopeDialScrollButton->field_0x0_ || (field_0x44 <= 2)) {
-					field_0x44 = 3;
+				int curScrollOffset = this->m_sniperScopeDialScrollButton->scrollOffset;
+				if (!this->m_sniperScopeDialScrollButton->enabled || (curScrollOffset <= 2)) {
+					curScrollOffset = 3;
 				}
-				this->zoomDestFOV = 110 * field_0x44 / 15 + 80;
+				this->zoomDestFOV = 110 * curScrollOffset / 15 + 80;
 
 				// [GEC] update zoomCurFOVPercent
 				{
-					float maxScroll = (float)((this->m_sniperScopeDialScrollButton->barRect).h - this->m_sniperScopeDialScrollButton->field_0x4c_);
-					float yScroll = (float)((float)this->m_sniperScopeDialScrollButton->field_0x48_ / maxScroll);
+					float maxScroll = (float)((this->m_sniperScopeDialScrollButton->barRect).h - this->m_sniperScopeDialScrollButton->thumbSize);
+					float yScroll = (float)((float)this->m_sniperScopeDialScrollButton->thumbPosition / maxScroll);
 					this->zoomCurFOVPercent = this->zoomMinFOVPercent - (int)((float)this->zoomMinFOVPercent * yScroll);
 				}
 			}
 			else {
-				if (this->m_sniperScopeDialScrollButton->field_0x0_
+				if (this->m_sniperScopeDialScrollButton->enabled
 					&& this->m_sniperScopeDialScrollButton->barRect.ContainsPoint(pressX, pressY))
 				{
 					this->m_sniperScopeDialScrollButton->SetTouchOffset(pressX, pressY);
-					this->m_sniperScopeDialScrollButton->field_0x14_ = 1;
+					this->m_sniperScopeDialScrollButton->barTouched = 1;
 					return;
 				}
 
@@ -3599,9 +3599,9 @@ int Canvas::touchToKey_Play(int pressX, int pressY) {
 	int result;
 
 	this->m_controlButton = 0;
-	if (this->m_sniperScopeDialScrollButton->field_0x14_)
+	if (this->m_sniperScopeDialScrollButton->barTouched)
 	{
-		this->m_sniperScopeDialScrollButton->field_0x14_ = 0;
+		this->m_sniperScopeDialScrollButton->barTouched = 0;
 		return -1;
 	}
 	this->m_swipeArea[this->m_controlMode]->touched = false;

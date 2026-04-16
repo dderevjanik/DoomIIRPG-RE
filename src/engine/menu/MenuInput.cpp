@@ -427,7 +427,7 @@ void MenuSystem::select(int i) {
 			break;
 		}
 		case 26: { // ACTION_BACKTWO
-			this->popMenu(this->poppedIdx, &this->m_scrollBar->field_0x44_, &this->m_scrollBar->field_0x48_, &this->scrollIndex);
+			this->popMenu(this->poppedIdx, &this->m_scrollBar->scrollOffset, &this->m_scrollBar->thumbPosition, &this->scrollIndex);
 			this->back();
 			break;
 		}
@@ -754,28 +754,28 @@ void MenuSystem::handleUserTouch(int x, int y, bool b) {
 	else if (!b)
 	{
 		btnScroll = this->m_scrollBar;
-		if (btnScroll->field_0x14_)
+		if (btnScroll->barTouched)
 		{
-			btnScroll->field_0x14_ = 0;
+			btnScroll->barTouched = 0;
 			return;
 		}
-		if (btnScroll->field_0x38_)
+		if (btnScroll->contentDragging)
 		{
-			btnScroll->field_0x38_ = 0;
+			btnScroll->contentDragging = 0;
 			return;
 		}
 		goto LABEL_17;
 	}
-	if (this->m_scrollBar->field_0x0_ && this->m_scrollBar->barRect.ContainsPoint(x, y))
+	if (this->m_scrollBar->enabled && this->m_scrollBar->barRect.ContainsPoint(x, y))
 	{
 		if (this->isMainMenuScrollBar){
 			this->m_scrollBar->SetTouchOffset(v5, v8);
 		}
 		else {
-			this->m_scrollBar->field_0x54_ = 0;
+			this->m_scrollBar->thumbDragOffset = 0;
 			this->m_scrollBar->Update(v5, v8);
 		}
-		this->m_scrollBar->field_0x14_ = 1;
+		this->m_scrollBar->barTouched = 1;
 		return;
 	}
 LABEL_17:
@@ -925,8 +925,8 @@ void MenuSystem::handleUserMoved(int x, int y) {
 		}
 
 		pfVar1 = this->m_scrollBar;
-		if (pfVar1->field_0x14_ == 0) {
-			if ((pfVar1->field_0x0_ == 0) ||
+		if (pfVar1->barTouched == 0) {
+			if ((pfVar1->enabled == 0) ||
 				(iVar2 = pfVar1->barRect.ContainsPoint(_x, _y), iVar2 == 0)) {
 				if (this->drawHelpText == false) {
 					iVar2 = 0;
@@ -945,8 +945,8 @@ void MenuSystem::handleUserMoved(int x, int y) {
 					} while (iVar4 != 9);
 
 					pfVar1 = this->m_scrollBar;
-					if (pfVar1->field_0x38_ == 0) {
-						if ((pfVar1->field_0x0_ == 0) ||
+					if (pfVar1->contentDragging == 0) {
+						if ((pfVar1->enabled == 0) ||
 							(iVar2 = pfVar1->boxRect.ContainsPoint(_x, _y), iVar2 == 0)) {
 							iVar2 = this->m_menuButtons->GetTouchedButtonID(_x, _y);
 							_y = this->m_infoButtons->GetTouchedButtonID(_x, _y);
@@ -972,7 +972,7 @@ void MenuSystem::handleUserMoved(int x, int y) {
 						}
 						else {
 							this->m_scrollBar->SetContentTouchOffset(_x, _y);
-							this->m_scrollBar->field_0x38_ = 1;
+							this->m_scrollBar->contentDragging = 1;
 						}
 					}
 					else {
@@ -982,13 +982,13 @@ void MenuSystem::handleUserMoved(int x, int y) {
 			}
 			else {
 				if (this->isMainMenuScrollBar == false) {
-					this->m_scrollBar->field_0x54_ = 0;
+					this->m_scrollBar->thumbDragOffset = 0;
 					this->m_scrollBar->Update(_x, _y);
 				}
 				else {
 					this->m_scrollBar->SetTouchOffset(_x, _y);
 				}
-				this->m_scrollBar->field_0x14_ = 1;
+				this->m_scrollBar->barTouched = 1;
 			}
 		}
 		else {

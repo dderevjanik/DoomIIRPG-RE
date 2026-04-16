@@ -1127,7 +1127,7 @@ void MenuSystem::initMenu(int menu) {
 			this->isMainMenuScrollBar = true;
 		}
 
-		this->m_scrollBar->field_0x0_ = 1;
+		this->m_scrollBar->enabled = 1;
 		this->m_scrollBar->barRect.Set(iVar16, y, iVar14, h);
 		if (oldMenu == 0) {
 			this->m_scrollBar->SetScrollBox
@@ -1146,7 +1146,7 @@ void MenuSystem::initMenu(int menu) {
 
 	}
 	else {
-		this->m_scrollBar->field_0x0_ = 0;
+		this->m_scrollBar->enabled = 0;
 	}
 	if (((menu < Menus::MENU_INGAME) && (this->type != 5 && menu != Menus::MENU_LEVEL_STATS)) && (menu != Menus::MENU_END_RANKING)) {
 		this->isMainMenu = true;
