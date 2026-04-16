@@ -37,25 +37,28 @@ void Image::CreateTexture(uint16_t* data, uint32_t width, uint32_t height) {
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-    if (this->isTransparentMask == false) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, data);
-    }
-    else {
-        uint32_t i = 0;
-        uint16_t* dat = data;
-        while (i < height * width) {
-            uint32_t pix = *dat;
-            if (pix == 0xf81f) {
-                pix = 0x0000;
-            }
-            else {
-                pix = pix & 0xffc0 | (uint16_t)((pix & 0x1f) << 1) | 1;
-            }
-            *dat++ = pix;
-            i++;
+    // Convert RGB565 to RGBA8 for modern OpenGL compatibility
+    // (GL_UNSIGNED_SHORT_5_6_5 / GL_UNSIGNED_SHORT_5_5_5_1 are unreliable on macOS Metal-backed OpenGL)
+    uint8_t* rgba = (uint8_t*)std::malloc(width * height * 4);
+    for (uint32_t i = 0; i < width * height; i++) {
+        uint16_t rgb = data[i];
+        uint8_t r5 = (rgb >> 11) & 0x1F;
+        uint8_t g6 = (rgb >> 5) & 0x3F;
+        uint8_t b5 = rgb & 0x1F;
+        rgba[i * 4 + 0] = (r5 << 3) | (r5 >> 2);
+        rgba[i * 4 + 1] = (g6 << 2) | (g6 >> 4);
+        rgba[i * 4 + 2] = (b5 << 3) | (b5 >> 2);
+        if (this->isTransparentMask && rgb == 0xF81F) {
+            rgba[i * 4 + 0] = 0;
+            rgba[i * 4 + 1] = 0;
+            rgba[i * 4 + 2] = 0;
+            rgba[i * 4 + 3] = 0;
+        } else {
+            rgba[i * 4 + 3] = 0xFF;
         }
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, data);
     }
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgba);
+    std::free(rgba);
 }
 
 void Image::DrawTexture(int texX, int texY, int texW, int texH, int posX, int posY, int rotateMode, int renderMode) {
