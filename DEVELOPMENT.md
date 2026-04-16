@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - CMake 3.22+
-- C++17 compiler (GCC 9+, Clang 10+, MSVC 2019+)
+- C++23 compiler (Clang 19+ with libc++, or GCC 15+)
 - SDL2
 - Zlib
 - OpenAL
