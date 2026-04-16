@@ -32,6 +32,7 @@ bool WidgetLoader::loadScreen(WidgetScreen* screen, Applet* app, const char* yam
     screen->backgroundColor = screenNode["background_color"].asInt(0xFF000000);
 
     screen->backgroundImageName = screenNode["background_image"].asString("");
+    screen->backAction = screenNode["back_action"].asString("back");
 
     DataNode widgetsNode = screenNode["widgets"];
     for (int i = 0; i < widgetsNode.size(); i++) {
@@ -78,7 +79,7 @@ std::unique_ptr<Widget> WidgetLoader::parseWidget(const DataNode& node, Applet* 
     if (type == "image") {
         auto w = std::make_unique<WImage>();
         w->id = node["id"].asString();
-        w->image = resolveImage(app, node["image"].asString(""));
+        w->imageName = node["image"].asString("");
         w->anchor = parseAnchor(node["anchor"].asString("none"));
         w->renderMode = node["render_mode"].asInt(0);
         w->setBounds(node["x"].asInt(), node["y"].asInt(),

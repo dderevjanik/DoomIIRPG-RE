@@ -27,6 +27,7 @@
 #include "Image.h"
 #include "Sounds.h"
 #include "Render.h"
+#include "WidgetScreen.h"
 #include "Combat.h"
 #include "ComicBook.h"
 #include "Enums.h"
@@ -484,6 +485,15 @@ void MenuSystem::select(int i) {
 		case 117: case 118: case 119: case 120: case 121: case 122: case 123:
 		case 124: case 125: case 126: case 127: case 128: {
 			this->selectDebugAction(i);
+			break;
+		}
+		case 129: { // ACTION_WIDGET_OPTIONS
+			auto* ws = static_cast<WidgetScreen*>(app->canvas->stateHandlers[Canvas::ST_WIDGET_SCREEN]);
+			if (ws) {
+				ws->loadFromYAML(app, "screens/options.yaml");
+				this->returnToGame();
+				app->canvas->setState(Canvas::ST_WIDGET_SCREEN);
+			}
 			break;
 		}
 		default:

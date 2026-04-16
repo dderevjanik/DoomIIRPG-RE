@@ -1,0 +1,57 @@
+screen:
+  id: test_settings
+  background_color: 0xFF1A1A2E
+  background_image: main_bg
+
+  widgets:
+    - type: label
+      id: title
+      x: 240
+      y: 16
+      text: "Widget Test Screen"
+      anchor: hcenter
+      color: 0xFFFF7F00
+
+    - type: vertical_menu
+      id: options_list
+      x: 80
+      y: 50
+      w: 320
+      h: 180
+      item_height: 36
+      visible_count: 5
+      highlight_color: 0xFF3366FF
+      items:
+        - id: options
+          text: "Options"
+          action: goto:options
+        - id: option_a
+          text: "Option A"
+          action: test_action_a
+        - id: option_b
+          text: "Option B"
+          action: test_action_b
+        - id: option_c
+          text: "Option C"
+          action: test_action_c
+        - id: back_item
+          text: "Back"
+          action: back
+
+    - type: checkbox
+      id: test_toggle
+      x: 80
+      y: 240
+      w: 200
+      h: 24
+      text: "Test Toggle"
+
+    - type: button
+      id: done_btn
+      x: 300
+      y: 240
+      w: 100
+      h: 28
+      text: "Done"
+      action: back
+      highlight_color: 0xFF00AA00

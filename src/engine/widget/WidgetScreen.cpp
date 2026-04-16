@@ -9,6 +9,9 @@
 #include "Graphics.h"
 #include "Image.h"
 #include "Input.h"
+#include "Sound.h"
+#include "Sounds.h"
+#include "SoundNames.h"
 #include "Log.h"
 
 void WidgetScreen::onAction(const std::string& actionName, std::function<void()> handler) {
@@ -110,9 +113,10 @@ bool WidgetScreen::handleInput(Canvas* canvas, int key, int action) {
     WidgetInput input = translateInput(key, action);
     if (input.action == WidgetAction::None) return false;
 
-    // Back action: pop screen stack or exit to previous canvas state
+    // Back action: use per-screen back action (may save config, etc.)
     if (input.action == WidgetAction::Back) {
-        dispatchAction("back");
+        app->sound->playSound(Sounds::getResIDByName(SoundName::SWITCH_EXIT), 0, 5, false);
+        dispatchAction(backAction);
         return true;
     }
 
@@ -122,6 +126,12 @@ bool WidgetScreen::handleInput(Canvas* canvas, int key, int action) {
                       ? focusOrder[focusIndex] : nullptr;
 
     if (focused && focused->handleInput(input)) {
+        // Play confirm/adjust sound for consumed inputs
+        if (input.action == WidgetAction::Confirm) {
+            app->sound->playSound(Sounds::getResIDByName(SoundName::SWITCH_EXIT), 0, 5, false);
+        } else if (input.action == WidgetAction::Left || input.action == WidgetAction::Right) {
+            app->sound->playSound(Sounds::getResIDByName(SoundName::MENU_SCROLL), 0, 5, false);
+        }
         return true;
     }
 
@@ -129,12 +139,14 @@ bool WidgetScreen::handleInput(Canvas* canvas, int key, int action) {
     if (input.action == WidgetAction::Up && !focusOrder.empty()) {
         if (focusIndex > 0) {
             focusIndex--;
+            app->sound->playSound(Sounds::getResIDByName(SoundName::MENU_SCROLL), 0, 5, false);
             return true;
         }
     }
     if (input.action == WidgetAction::Down && !focusOrder.empty()) {
         if (focusIndex < static_cast<int>(focusOrder.size()) - 1) {
             focusIndex++;
+            app->sound->playSound(Sounds::getResIDByName(SoundName::MENU_SCROLL), 0, 5, false);
             return true;
         }
     }

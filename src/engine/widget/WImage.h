@@ -1,9 +1,10 @@
 #pragma once
 #include "Widget.h"
+#include <string>
 
 class WImage : public Widget {
 public:
-    Image* image = nullptr;
+    std::string imageName;  // resolved at render time
     int anchor = 0;         // Graphics::ANCHORS_* flags
     int renderMode = 0;
 
