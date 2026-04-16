@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <vector>
 #include "Log.h"
 
@@ -42,10 +43,18 @@ std::expected<void, std::string> EntityDefManager::parse(EntityDefManager* mgr, 
 	numDefs = count;
 	list = new EntityDef[count];
 
+	std::unordered_map<std::string, int> nameToIndex;
+	std::unordered_map<int, std::string> corpseRefs;
+
 	int monsterCount = 0;
 	int i = 0;
 	for (auto eit = entities.begin(); eit != entities.end(); ++eit, ++i) {
 		DataNode e = eit.value();
+		nameToIndex[eit.key().asString()] = i;
+		std::string corpseRef = e["corpse"].asString("");
+		if (!corpseRef.empty()) {
+			corpseRefs[i] = corpseRef;
+		}
 
 		// Sprite reference: accepts name from sprites.yaml or numeric tile index
 		std::string spriteRef = e["sprite"].asString("");
@@ -248,6 +257,18 @@ std::expected<void, std::string> EntityDefManager::parse(EntityDefManager* mgr, 
 	}
 
 	mgr->numMonsterDefs = monsterCount;
+
+	// Resolve corpse <-> monster cross-references
+	for (auto& [idx, corpseName] : corpseRefs) {
+		auto cit = nameToIndex.find(corpseName);
+		if (cit == nameToIndex.end()) {
+			LOG_WARN("[entitydef] '{}' references unknown corpse '{}'\n", idx, corpseName);
+			continue;
+		}
+		list[idx].corpseDef = &list[cit->second];
+		list[cit->second].monsterDef = &list[idx];
+	}
+
 	LOG_INFO("[entitydef] loaded {} entities ({} monsters)\n", numDefs, monsterCount);
 
 	return {};

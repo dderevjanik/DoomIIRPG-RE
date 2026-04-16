@@ -188,6 +188,8 @@ class EntityDef {
 	uint8_t parm = 0;
 	uint8_t touchMe = 0;
 	int16_t monsterIdx = -1;    // Sequential index for monster entities (-1 = not a monster)
+	EntityDef* corpseDef = nullptr;   // ET_MONSTER -> corresponding ET_CORPSE def
+	EntityDef* monsterDef = nullptr;  // ET_CORPSE -> corresponding ET_MONSTER def
 	uint32_t renderFlags = 0;   // Bitmask of RFLAG_* constants
 	FearEyeData fearEyes;       // Fear eye rendering offsets
 	GunFlareData gunFlare;      // Gun flare rendering offsets

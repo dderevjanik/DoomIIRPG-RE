@@ -583,7 +583,7 @@ Entity* Game::spawnSentryBotCorpse(int n, int n2, int n3, int n4, int n5) {
 		}
 	}
 	Entity* freeDropEnt = this->getFreeDropEnt();
-	freeDropEnt->def = app->entityDefManager->find(9, 11, n7);
+	freeDropEnt->def = app->entityDefManager->find(Enums::ET_MONSTER, 11, n7)->corpseDef;
 	freeDropEnt->name = (short)(freeDropEnt->def->name | 0x400);
 	freeDropEnt->populateDefaultLootSet();
 	freeDropEnt->param = 0;

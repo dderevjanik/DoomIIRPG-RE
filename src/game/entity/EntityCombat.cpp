@@ -421,7 +421,7 @@ void Entity::died(bool b, Entity* entity) {
             this->info = ((this->info & 0xFEFDFFFF) | 0x10000);
             app->game->unlinkEntity(this);
         }
-        this->def = app->entityDefManager->find(9, eSubType, this->def->parm);
+        this->def = this->def->corpseDef;
         this->name = (short)(this->def->name | 0x400);
         app->canvas->invalidateRect();
         if (app->game->difficulty == Enums::DIFFICULTY_NIGHTMARE && (this->monsterFlags & 0x40) == 0x0 && (this->info & 0x80000) == 0x0) {
@@ -951,7 +951,7 @@ void Entity::resurrect(int n, int n2, int n3) {
 
     LOG_INFO("[entity] resurrect: type={} subType={} at ({},{})\n", this->def->eType, this->def->eSubType, n, n2);
     int sprite = this->getSprite();
-    this->def = app->entityDefManager->find(2, this->def->eSubType, this->def->parm);
+    this->def = this->def->monsterDef;
     this->name = (short)(this->def->name | 0x400);
     this->clearMonsterEffects();
     app->render->setSpriteX(sprite, (short)n);

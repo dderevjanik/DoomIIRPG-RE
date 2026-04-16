@@ -1,6 +1,7 @@
 entities:
   sentry_bot_parm1:
     sprite: monster_red_sentry_bot
+    corpse: corpse_sentry_bot_parm1
     type: monster
     subtype: sentry_bot
     parm: 1
@@ -38,6 +39,7 @@ entities:
         death: sentrybot_death
   sentry_bot_parm0:
     sprite: monster_sentry_bot
+    corpse: corpse_sentry_bot_parm0
     type: monster
     subtype: sentry_bot
     parm: 0
@@ -75,6 +77,7 @@ entities:
         death: sentrybot_death
   zombie_parm0:
     sprite: monster_zombie
+    corpse: corpse_zombie_parm0
     type: monster
     subtype: zombie
     parm: 0
@@ -112,6 +115,7 @@ entities:
       blood_color: '#E901A6'
   zombie_parm1:
     sprite: monster_zombie2
+    corpse: corpse_zombie_parm1
     type: monster
     subtype: zombie
     parm: 1
@@ -149,6 +153,7 @@ entities:
       blood_color: '#E901A6'
   zombie_parm2:
     sprite: monster_zombie3
+    corpse: corpse_zombie_parm2
     type: monster
     subtype: zombie
     parm: 2
@@ -186,6 +191,7 @@ entities:
       blood_color: '#E901A6'
   imp_parm0:
     sprite: monster_imp
+    corpse: corpse_imp_parm0
     type: monster
     subtype: imp
     parm: 0
@@ -227,6 +233,7 @@ entities:
       blood_color: '#92F59A'
   imp_parm1:
     sprite: monster_imp2
+    corpse: corpse_imp_parm1
     type: monster
     subtype: imp
     parm: 1
@@ -268,6 +275,7 @@ entities:
       blood_color: '#92F59A'
   imp_parm2:
     sprite: monster_imp3
+    corpse: corpse_imp_parm2
     type: monster
     subtype: imp
     parm: 2
@@ -309,6 +317,7 @@ entities:
       blood_color: '#92F59A'
   sawcubus_parm0:
     sprite: monster_saw_goblin
+    corpse: corpse_sawcubus_parm0
     type: monster
     subtype: sawcubus
     parm: 0
@@ -358,6 +367,7 @@ entities:
       blood_color: '#27565A'
   sawcubus_parm1:
     sprite: monster_saw_goblin2
+    corpse: corpse_sawcubus_parm1
     type: monster
     subtype: sawcubus
     parm: 1
@@ -407,6 +417,7 @@ entities:
       blood_color: '#27565A'
   sawcubus_parm2:
     sprite: monster_saw_goblin3
+    corpse: corpse_sawcubus_parm2
     type: monster
     subtype: sawcubus
     parm: 2
@@ -456,6 +467,7 @@ entities:
       blood_color: '#27565A'
   lost_soul_parm0:
     sprite: monster_lost_soul
+    corpse: corpse_lost_soul_parm0
     type: monster
     subtype: lost_soul
     parm: 0
@@ -498,6 +510,7 @@ entities:
       blood_color: '#BC77AF'
   lost_soul_parm1:
     sprite: monster_lost_soul2
+    corpse: corpse_lost_soul_parm1
     type: monster
     subtype: lost_soul
     parm: 1
@@ -540,6 +553,7 @@ entities:
       blood_color: '#BC77AF'
   lost_soul_parm2:
     sprite: monster_lost_soul3
+    corpse: corpse_lost_soul_parm2
     type: monster
     subtype: lost_soul
     parm: 2
@@ -582,6 +596,7 @@ entities:
       blood_color: '#BC77AF'
   pinky_parm0:
     sprite: monster_pinky
+    corpse: corpse_pinky_parm0
     type: monster
     subtype: pinky
     parm: 0
@@ -622,6 +637,7 @@ entities:
       blood_color: '#7A7A3A'
   pinky_parm1:
     sprite: monster_pinky2
+    corpse: corpse_pinky_parm1
     type: monster
     subtype: pinky
     parm: 1
@@ -662,6 +678,7 @@ entities:
       blood_color: '#7A7A3A'
   pinky_parm2:
     sprite: monster_pinky3
+    corpse: corpse_pinky_parm2
     type: monster
     subtype: pinky
     parm: 2
@@ -702,6 +719,7 @@ entities:
       blood_color: '#7A7A3A'
   revenant_parm0:
     sprite: monster_revenant
+    corpse: corpse_revenant_parm0
     type: monster
     subtype: revenant
     parm: 0
@@ -759,6 +777,7 @@ entities:
         death: revenant_death
   revenant_parm1:
     sprite: monster_revenant2
+    corpse: corpse_revenant_parm1
     type: monster
     subtype: revenant
     parm: 1
@@ -816,6 +835,7 @@ entities:
         death: revenant_death
   revenant_parm2:
     sprite: monster_revenant3
+    corpse: corpse_revenant_parm2
     type: monster
     subtype: revenant
     parm: 2
@@ -873,6 +893,7 @@ entities:
         death: revenant_death
   mancubus_parm0:
     sprite: monster_mancubus
+    corpse: corpse_mancubus_parm0
     type: monster
     subtype: mancubus
     parm: 0
@@ -921,6 +942,7 @@ entities:
         death: mancubus_death
   mancubus_parm1:
     sprite: monster_mancubus2
+    corpse: corpse_mancubus_parm1
     type: monster
     subtype: mancubus
     parm: 1
@@ -969,6 +991,7 @@ entities:
         death: mancubus_death
   mancubus_parm2:
     sprite: monster_mancubus3
+    corpse: corpse_mancubus_parm2
     type: monster
     subtype: mancubus
     parm: 2
@@ -1017,6 +1040,7 @@ entities:
         death: mancubus_death
   cacodemon_parm0:
     sprite: monster_cacodemon
+    corpse: corpse_cacodemon_parm0
     type: monster
     subtype: cacodemon
     parm: 0
@@ -1059,6 +1083,7 @@ entities:
         death: cacodemon_death
   cacodemon_parm1:
     sprite: monster_cacodemon2
+    corpse: corpse_cacodemon_parm1
     type: monster
     subtype: cacodemon
     parm: 1
@@ -1101,6 +1126,7 @@ entities:
         death: cacodemon_death
   cacodemon_parm2:
     sprite: monster_cacodemon3
+    corpse: corpse_cacodemon_parm2
     type: monster
     subtype: cacodemon
     parm: 2
@@ -1143,6 +1169,7 @@ entities:
         death: cacodemon_death
   sentinel_parm0:
     sprite: monster_sentinel
+    corpse: corpse_sentinel_parm0
     type: monster
     subtype: sentinel
     parm: 0
@@ -1186,6 +1213,7 @@ entities:
         death: sentinel_death
   sentinel_parm1:
     sprite: monster_sentinel2
+    corpse: corpse_sentinel_parm1
     type: monster
     subtype: sentinel
     parm: 1
@@ -1229,6 +1257,7 @@ entities:
         death: sentinel_death
   sentinel_parm2:
     sprite: monster_sentinel3
+    corpse: corpse_sentinel_parm2
     type: monster
     subtype: sentinel
     parm: 2
@@ -1272,6 +1301,7 @@ entities:
         death: sentinel_death
   arch_vile_parm0:
     sprite: monster_arch_vile
+    corpse: corpse_arch_vile_parm0
     type: monster
     subtype: arch_vile
     parm: 0
@@ -1322,6 +1352,7 @@ entities:
         death: archvile_death
   arch_vile_parm1:
     sprite: monster_arch_vile2
+    corpse: corpse_arch_vile_parm1
     type: monster
     subtype: arch_vile
     parm: 1
@@ -1372,6 +1403,7 @@ entities:
         death: archvile_death
   arch_vile_parm2:
     sprite: monster_arch_vile3
+    corpse: corpse_arch_vile_parm2
     type: monster
     subtype: arch_vile
     parm: 2
@@ -1422,6 +1454,7 @@ entities:
         death: archvile_death
   cyberdemon_parm0:
     sprite: boss_cyberdemon
+    corpse: corpse_cyberdemon_parm0
     type: monster
     subtype: cyberdemon
     parm: 0
@@ -1465,6 +1498,7 @@ entities:
         death: cyberdemon_death
   mastermind_parm0:
     sprite: boss_pinky
+    corpse: corpse_mastermind_parm0
     type: monster
     subtype: mastermind
     parm: 0
@@ -1508,6 +1542,7 @@ entities:
         death: pinkinator_death
   boss_vios_parm0:
     sprite: boss_vios
+    corpse: corpse_boss_vios_parm0
     type: monster
     subtype: boss_vios
     parm: 0
@@ -1552,6 +1587,7 @@ entities:
         death: vios_death
   boss_vios_parm1:
     sprite: boss_vios2
+    corpse: corpse_boss_vios_parm1
     type: monster
     subtype: boss_vios
     parm: 1
@@ -1598,6 +1634,7 @@ entities:
         death: vios_death
   boss_vios_parm2:
     sprite: boss_vios3
+    corpse: corpse_boss_vios_parm2
     type: monster
     subtype: boss_vios
     parm: 2
@@ -1644,6 +1681,7 @@ entities:
         death: vios_death
   boss_vios_parm3:
     sprite: boss_vios4
+    corpse: corpse_boss_vios_parm3
     type: monster
     subtype: boss_vios
     parm: 3
@@ -1690,6 +1728,7 @@ entities:
         death: vios_death
   boss_vios_parm4:
     sprite: boss_vios5
+    corpse: corpse_boss_vios_parm4
     type: monster
     subtype: boss_vios
     parm: 4

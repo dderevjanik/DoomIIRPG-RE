@@ -2264,7 +2264,7 @@ void ScriptThread::corpsifyMonster(int x, int y, Entity* entity, bool b) {
     this->app->render->setSpriteZ(sprite, (short)(this->app->render->getHeight(x, y) + 32));
     this->app->render->relinkSprite(sprite);
     entity->info = ((entity->info & 0xFFFF) | 0x1000000 | 0x20000 | 0x400000);
-    entity->def = this->app->entityDefManager->find(9, entity->def->eSubType, entity->def->parm);
+    entity->def = entity->def->corpseDef;
     this->app->game->unlinkEntity(entity);
     this->app->game->linkEntity(entity, x >> 6, y >> 6);
     entity->checkMonsterDeath(false, b);

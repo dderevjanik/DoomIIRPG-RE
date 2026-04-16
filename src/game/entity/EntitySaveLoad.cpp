@@ -242,7 +242,7 @@ void Entity::loadState(InputStream* IS, int n) {
         }
         app->render->setSpriteInfoRaw(sprite, ((app->render->getSpriteInfoRaw(sprite) & 0xFFFF00FF) | 0x7000));
         if (!this->isDroppedEntity()) {
-            this->def = app->entityDefManager->find(9, this->def->eSubType, this->def->parm);
+            this->def = this->def->corpseDef;
         }
     }
     if (this->def != nullptr && this->def->eType == Enums::ET_NPC) {
@@ -350,7 +350,7 @@ void Entity::loadState(InputStream* IS, int n) {
             app->game->activate(this, false, false, false, true);
         }
         if ((this->info & 0x1000000) != 0x0) {
-            this->def = app->entityDefManager->find(9, this->def->eSubType, this->def->parm);
+            this->def = this->def->corpseDef;
         }
     }
     else if (this->isDroppedEntity()) {
@@ -364,7 +364,7 @@ void Entity::loadState(InputStream* IS, int n) {
         }
         short n12 = this->def->tileIndex;
         if ((n & 0x100000) != 0x0) {
-            n12 = app->entityDefManager->find(2, b2, byte2)->tileIndex;
+            n12 = this->def->monsterDef->tileIndex;
             int int1 = IS->readInt();
             int int2 = IS->readInt();
             int int3 = IS->readInt();
