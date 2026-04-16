@@ -69,23 +69,23 @@ void TinyGL::buildViewMatrix(int x, int y, int z, int yaw, int pitch, int roll, 
 
 	int *sinTable = app->render->sinTable;
 
-	int iVar7 = sinTable[yaw + 512 & 0x3ff] >> 2;
-	int iVar6 = sinTable[yaw + 256 & 0x3ff] >> 2;
-	int iVar1 = sinTable[pitch + 512 & 0x3ff] >> 2;
-	int iVar2 = sinTable[pitch + 256 & 0x3ff] >> 2;
-	int iVar3 = sinTable[roll & 0x3ff] >> 2;
-	int iVar5 = sinTable[roll + 256 & 0x3ff] >> 2;
-	int n13 = iVar3 * iVar1 >> 14;
-	int n14 = iVar5 * iVar1 >> 14;
-	matrix[0] = n13 * iVar6 + iVar5 * -iVar7 >> 14;
-	matrix[4] = n13 * iVar7 + iVar5 * iVar6 >> 14;
-	matrix[8] = iVar3 * iVar2 >> 14;
-	matrix[1] = -(n14 * iVar6 + -iVar3 * -iVar7) >> 14;
-	matrix[5] = -(n14 * iVar7 + -iVar3 * iVar6) >> 14;
-	matrix[9] = -(iVar5 * iVar2) >> 14;
-	matrix[2] = -(iVar2 * iVar6) >> 14;
-	matrix[6] = -(iVar2 * iVar7) >> 14;
-	matrix[10] = -(-iVar1);
+	int cosYaw = sinTable[yaw + 512 & 0x3ff] >> 2;
+	int sinYaw = sinTable[yaw + 256 & 0x3ff] >> 2;
+	int cosPitch = sinTable[pitch + 512 & 0x3ff] >> 2;
+	int sinPitch = sinTable[pitch + 256 & 0x3ff] >> 2;
+	int sinRoll = sinTable[roll & 0x3ff] >> 2;
+	int cosRoll = sinTable[roll + 256 & 0x3ff] >> 2;
+	int n13 = sinRoll * cosPitch >> 14;
+	int n14 = cosRoll * cosPitch >> 14;
+	matrix[0] = n13 * sinYaw + cosRoll * -cosYaw >> 14;
+	matrix[4] = n13 * cosYaw + cosRoll * sinYaw >> 14;
+	matrix[8] = sinRoll * sinPitch >> 14;
+	matrix[1] = -(n14 * sinYaw + -sinRoll * -cosYaw) >> 14;
+	matrix[5] = -(n14 * cosYaw + -sinRoll * sinYaw) >> 14;
+	matrix[9] = -(cosRoll * sinPitch) >> 14;
+	matrix[2] = -(sinPitch * sinYaw) >> 14;
+	matrix[6] = -(sinPitch * cosYaw) >> 14;
+	matrix[10] = -(-cosPitch);
 
 	for (int i = 0; i < 3; ++i) {
 		matrix[12 + i] = -(x * matrix[0 + i] + y * matrix[4 + i] + z * matrix[8 + i]) >> 14;

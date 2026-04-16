@@ -255,59 +255,59 @@ Image* Applet::createImage(InputStream* inputStream, bool isTransparentMask) {
 		if ((int)pitch < 0) {
 			ColorsUsed = pitch + 7;
 		}
-		int iVar8 = (int)ColorsUsed >> 3;
+		int pitchBytes = (int)ColorsUsed >> 3;
 		ColorsUsed = pitch + 7;
 		if ((int)_pitch < 0) {
 			ColorsUsed = _pitch + 7;
 		}
-		int sVar6 = Height * Width;
+		int pixelCount = Height * Width;
 		if ((int)_pitch >= 0) {
 			ColorsUsed = _pitch;
 		}
 
-		// printf("sVar6 %d\n", sVar6);
-		img->piDIB->pBmp = (uint8_t*)std::malloc(sVar6 * sizeof(int16_t));
+		// printf("pixelCount %d\n", pixelCount);
+		img->piDIB->pBmp = (uint8_t*)std::malloc(pixelCount * sizeof(int16_t));
 		img->piDIB->width = Width;
 		img->piDIB->pitch = Width;
 		img->piDIB->depth = BitsPerPixel;
 		img->piDIB->height = Height;
 
-		bool bVar7 = BitsPerPixel != 4;
+		bool isNot4Bit = BitsPerPixel != 4;
 
-		if (bVar7) {
+		if (isNot4Bit) {
 			Width = 0;
 		}
 		img->height = img->piDIB->height;
-		if (!bVar7) {
+		if (!isNot4Bit) {
 			Width = Height - 1;
 		}
 		img->depth = img->piDIB->depth;
 
 		uint8_t* data = inputStream->getTop();
-		if (bVar7) {
+		if (isNot4Bit) {
 			for (; Width < Height; Width = Width + 1) {
-				std::memcpy(img->piDIB->pBmp + img->piDIB->pitch * Width, data + iVar8 * (Height + (-1 - Width)),
+				std::memcpy(img->piDIB->pBmp + img->piDIB->pitch * Width, data + pitchBytes * (Height + (-1 - Width)),
 				            (int)ColorsUsed >> 3);
 			}
 		} else {
 			for (int i = 0; i < Height; i++) {
-				std::memcpy(img->piDIB->pBmp + (i * img->piDIB->pitch >> 1), data + iVar8 * Width,
+				std::memcpy(img->piDIB->pBmp + (i * img->piDIB->pitch >> 1), data + pitchBytes * Width,
 				            (int)ColorsUsed >> 3);
 				Width = Width - 1;
 			}
 		}
-		inputStream->offsetCursor(iVar8 * Height);
+		inputStream->offsetCursor(pitchBytes * Height);
 
 		if ((short)BitsPerPixel == 4) {
-			uint8_t* pbVar4 = (uint8_t*)std::malloc(sVar6);
+			uint8_t* pbVar4 = (uint8_t*)std::malloc(pixelCount);
 			uint8_t* _data = pbVar4;
-			for (ColorsUsed = 0; ColorsUsed < sVar6 >> 1; ColorsUsed = ColorsUsed + 1) {
+			for (ColorsUsed = 0; ColorsUsed < pixelCount >> 1; ColorsUsed = ColorsUsed + 1) {
 				uint8_t bVar1 = img->piDIB->pBmp[ColorsUsed];
 				_data[0] = bVar1 >> 4;
 				_data[1] = bVar1 & 0xf;
 				_data += 2;
 			}
-			for (ColorsUsed = 0; ColorsUsed < sVar6; ColorsUsed = ColorsUsed + 1) {
+			for (ColorsUsed = 0; ColorsUsed < pixelCount; ColorsUsed = ColorsUsed + 1) {
 				img->piDIB->pBmp[ColorsUsed] = pbVar4[ColorsUsed];
 			}
 			std::free(pbVar4);

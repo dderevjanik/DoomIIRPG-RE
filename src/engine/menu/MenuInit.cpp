@@ -1076,20 +1076,20 @@ void MenuSystem::initMenu(int menu) {
 	}
 
 	int y, h;
-	int iVar16, iVar14;
-	int iVar18 = 0;
+	int itemIdx, itemHeight;
+	int totalHeight = 0;
 	int oldMenu = this->numItems;
 	MenuSystem* pMVar15 = this;
-	for (iVar16 = 0; iVar16 < this->numItems; iVar16++) {
-		if ((pMVar15->items[iVar16].flags & 0x8000U) == 0) {
-			iVar14 = this->getMenuItemHeight(iVar16);
-			iVar18 = iVar18 + iVar14;
+	for (itemIdx = 0; itemIdx < this->numItems; itemIdx++) {
+		if ((pMVar15->items[itemIdx].flags & 0x8000U) == 0) {
+			itemHeight = this->getMenuItemHeight(itemIdx);
+			totalHeight = totalHeight + itemHeight;
 		}
 	}
 
 	//printf("menuRect[3] %d\n", app->canvas->menuRect[3]);
-	//printf("iVar18 %d\n", iVar18);
-	if (app->canvas->menuRect[3] < iVar18) {
+	//printf("totalHeight %d\n", totalHeight);
+	if (app->canvas->menuRect[3] < totalHeight) {
 		//printf("true\n");
 		this->m_scrollBar->SetScrollBarImages(nullptr, nullptr, nullptr, nullptr);
 
@@ -1103,21 +1103,21 @@ void MenuSystem::initMenu(int menu) {
 			h = sbc.barImg ? sbc.barImg->height : 0;
 			y = app->canvas->menuRect[1] + (app->canvas->menuRect[3] - h >> 1);
 			this->m_scrollBar->SetScrollBarImages(sbc.barImg, sbc.topImg, sbc.midImg, sbc.bottomImg);
-			iVar16 = sbc.x;
-			iVar14 = sbc.width;
+			itemIdx = sbc.x;
+			itemHeight = sbc.width;
 			oldMenu = 0;
 		} else {
 			// Dial scrollbar (main menu style)
 			if (sbDef && sbDef->scrollbarXOffset >= 0) {
-				iVar16 = app->canvas->menuRect[0] + sbDef->scrollbarXOffset;
+				itemIdx = app->canvas->menuRect[0] + sbDef->scrollbarXOffset;
 				y = app->canvas->menuRect[1] + sbDef->scrollbarYOffset;
 			} else {
 				int defX = (sbTheme) ? sbTheme->scrollbar.defaultX : 408;
 				int defY = (sbTheme) ? sbTheme->scrollbar.defaultY : 81;
-				iVar16 = defX;
+				itemIdx = defX;
 				y = defY;
 			}
-			iVar14 = this->imgMenuDial->width;
+			itemHeight = this->imgMenuDial->width;
 			h = this->imgMenuDial->height;
 			oldMenu = h + 0xf;
 			if (-1 < h) {
@@ -1128,16 +1128,16 @@ void MenuSystem::initMenu(int menu) {
 		}
 
 		this->m_scrollBar->enabled = 1;
-		this->m_scrollBar->barRect.Set(iVar16, y, iVar14, h);
+		this->m_scrollBar->barRect.Set(itemIdx, y, itemHeight, h);
 		if (oldMenu == 0) {
 			this->m_scrollBar->SetScrollBox
 			(app->canvas->menuRect[0], app->canvas->menuRect[1], app->canvas->menuRect[2],
-				app->canvas->menuRect[3], iVar18);
+				app->canvas->menuRect[3], totalHeight);
 		}
 		else {
 			this->m_scrollBar->SetScrollBox
 			(app->canvas->menuRect[0], app->canvas->menuRect[1], app->canvas->menuRect[2],
-				app->canvas->menuRect[3], iVar18 - 50, oldMenu);
+				app->canvas->menuRect[3], totalHeight - 50, oldMenu);
 		}
 
 		// [GEC] salva posiciones actuales

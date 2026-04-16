@@ -520,20 +520,20 @@ void MenuSystem::paint(Graphics* graphics) {
 }
 
 void MenuSystem::drawScrollbar(Graphics* graphics) {
-	fmScrollButton* pfVar1;
-	int uVar2;
+	fmScrollButton* scrollBar;
+	int knobOffset;
 	int x, y;
 
 	if(this->isMainMenuScrollBar) {
 		x = this->m_scrollBar->barRect.x;
 		y = this->m_scrollBar->barRect.y;
 		graphics->drawImage(this->imgMenuDial, x, y, 0, 0, 0);
-		pfVar1 = this->m_scrollBar;
-		uVar2 = pfVar1->enabled;
-		if (uVar2 != 0) {
-			uVar2 = pfVar1->thumbPosition + (pfVar1->thumbSize >> 1);
+		scrollBar = this->m_scrollBar;
+		knobOffset = scrollBar->enabled;
+		if (knobOffset != 0) {
+			knobOffset = scrollBar->thumbPosition + (scrollBar->thumbSize >> 1);
 		}
-		graphics->drawImage(this->imgMenuDialKnob, x + 12, y + ((uVar2 * 4) / 5 - (this->imgMenuDialKnob->height >> 1)) + 16, 0, 0, 0);
+		graphics->drawImage(this->imgMenuDialKnob, x + 12, y + ((knobOffset * 4) / 5 - (this->imgMenuDialKnob->height >> 1)) + 16, 0, 0, 0);
 	}
 	else {
 		if (this->menu >= Menus::MENU_INGAME || this->type != 5 || this->menu == Menus::MENU_END_RANKING || this->menu == Menus::MENU_LEVEL_STATS) {

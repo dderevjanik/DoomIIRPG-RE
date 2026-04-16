@@ -234,9 +234,9 @@ int Render::nodeClassifyPoint(int n, int n2, int n3, int n4) {
 void Render::drawNodeGeometry(short n) {
 
 
-	int iVar10;
+	int renderMode;
 	int offset;
-	bool bVar15;
+	bool hasMorePolys;
 	uint32_t z, s, t;
 
 	if ((this->nodeOffsets[n] & 0xFFFF) != 0xFFFF) {
@@ -247,30 +247,30 @@ void Render::drawNodeGeometry(short n) {
 	int meshCount = this->nodePolys[offset++];
 
 	for (int i = 0; i < meshCount; i++) {
-		uint16_t uVar3 = this->nodePolys[offset + 4] | (this->nodePolys[offset + 5] << 8);
+		uint16_t polyData = this->nodePolys[offset + 4] | (this->nodePolys[offset + 5] << 8);
 		offset += 6;
-		uint32_t uVar7 = (uint32_t)(uVar3 >> 7);
-		iVar10 = Render::RENDER_NORMAL;
+		uint32_t tileIndex = (uint32_t)(polyData >> 7);
+		renderMode = Render::RENDER_NORMAL;
 		app->tinyGL->faceCull = TinyGL::CULL_CCW;
 
-		if (uVar7 == TILE_HELL_HANDS) {
-			iVar10 = Render::RENDER_BLEND50;
-		} else if ((uVar7 == TILE_FADE) || (uVar7 == TILE_SCORCH_MARK)) {
-			iVar10 = Render::RENDER_NORMAL;
+		if (tileIndex == TILE_HELL_HANDS) {
+			renderMode = Render::RENDER_BLEND50;
+		} else if ((tileIndex == TILE_FADE) || (tileIndex == TILE_SCORCH_MARK)) {
+			renderMode = Render::RENDER_NORMAL;
 			if (!this->_gles->isInit) {
-				iVar10 = Render::RENDER_SUB; // [GEC] TinyGL Only like J2ME/BREW
+				renderMode = Render::RENDER_SUB; // [GEC] TinyGL Only like J2ME/BREW
 			}
-		} else if ((uVar7 == TILE_FLAT_LAVA) || (uVar7 == TILE_FLAT_LAVA2)) {
-			iVar10 = Render::RENDER_NORMAL;
+		} else if ((tileIndex == TILE_FLAT_LAVA) || (tileIndex == TILE_FLAT_LAVA2)) {
+			renderMode = Render::RENDER_NORMAL;
 			app->tinyGL->faceCull = TinyGL::CULL_NONE;
 		}
 
-		this->setupTexture(uVar7, 0, iVar10, 0);
-		if (uVar7 == TILE_FLAT_LAVA) {
+		this->setupTexture(tileIndex, 0, renderMode, 0);
+		if (tileIndex == TILE_FLAT_LAVA) {
 			z = 2 * (this->sinTable[app->time / 2 & 0x3FF] - this->sinTable[256]) >> 14;
 			s = (app->time / 16 & 0x3FF);
 			t = (app->time / 32 & 0x3FF);
-		} else if (uVar7 == TILE_FLAT_LAVA2) {
+		} else if (tileIndex == TILE_FLAT_LAVA2) {
 			z = 0;
 			s = 0;
 			t = (app->time / 4 & 0x3FF);
@@ -280,7 +280,7 @@ void Render::drawNodeGeometry(short n) {
 			t = 0;
 		}
 
-		for (int j = 0; j < (int)(uVar3 & 127); j++) {
+		for (int j = 0; j < (int)(polyData & 127); j++) {
 			int polyFlags = this->nodePolys[offset++];
 			int numVerts = (polyFlags & Enums::POLY_FLAG_VERTS_MASK) + 2;
 			app->tinyGL->swapXY = (polyFlags & Enums::POLY_FLAG_SWAPXY) ? true : false;

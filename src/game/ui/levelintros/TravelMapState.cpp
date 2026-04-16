@@ -487,9 +487,9 @@ static bool drawStartPathLine(Canvas* canvas, Graphics* graphics, int n, const T
 
 
 static int yCoordOfSpaceShip(Canvas* canvas, int n) {
-	int iVar1;
-	iVar1 = (n * 11) / 15;
-	return ((-851 * (iVar1 * iVar1) / 110880 + 6115 * iVar1 / 22176 + 40) * 15) / 11;
+	int scaled;
+	scaled = (n * 11) / 15;
+	return ((-851 * (scaled * scaled) / 110880 + 6115 * scaled / 22176 + 40) * 15) / 11;
 }
 
 
@@ -549,14 +549,14 @@ static void drawLocatorBoxAndName(Canvas* canvas, Graphics* graphics, bool b, in
 
 static void drawGridLines(Canvas* canvas, Graphics* graphics, int i) {
 	const auto& t = s_tmConfig.timing;
-	int iVar1;
+	int pos;
 
-	for (iVar1 = (i / t.gridScrollPeriod) % t.gridCellSize + canvas->displayRect[0]; iVar1 < canvas->displayRect[2]; iVar1 += t.gridCellSize) {
-		graphics->drawImage(canvas->imgMapVertGridLines, iVar1, canvas->displayRect[1], 0x14, 0, 2);
+	for (pos = (i / t.gridScrollPeriod) % t.gridCellSize + canvas->displayRect[0]; pos < canvas->displayRect[2]; pos += t.gridCellSize) {
+		graphics->drawImage(canvas->imgMapVertGridLines, pos, canvas->displayRect[1], 0x14, 0, 2);
 	}
-	for (iVar1 = canvas->displayRect[1] + 5; iVar1 < canvas->displayRect[3]; iVar1 += t.gridCellSize) {
-		graphics->drawImage(canvas->imgMapHorzGridLines, canvas->displayRect[0], iVar1, 20, 0, 2);
-		graphics->drawImage(canvas->imgMapHorzGridLines, 240, iVar1, 20, 0, 2);
+	for (pos = canvas->displayRect[1] + 5; pos < canvas->displayRect[3]; pos += t.gridCellSize) {
+		graphics->drawImage(canvas->imgMapHorzGridLines, canvas->displayRect[0], pos, 20, 0, 2);
+		graphics->drawImage(canvas->imgMapHorzGridLines, 240, pos, 20, 0, 2);
 	}
 }
 

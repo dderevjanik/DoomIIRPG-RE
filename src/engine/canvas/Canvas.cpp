@@ -1360,7 +1360,7 @@ int keys_codeActions[NUM_CODES] = {
 
 int Canvas::getKeyAction(int i) {
 
-	int iVar1;
+	int keyCode;
 
 	//printf("getKeyAction i %d\n", i);
 
@@ -1439,14 +1439,14 @@ int Canvas::getKeyAction(int i) {
 		return Enums::ACTION_FIRE;
 	}
 
-	iVar1 = (i ^ i >> 0x1f) - (i >> 0x1f);
-	if (iVar1 == 19) { // KEY_LEFTSOFT
+	keyCode = (i ^ i >> 0x1f) - (i >> 0x1f);
+	if (keyCode == 19) { // KEY_LEFTSOFT
 		return Enums::ACTION_MENU;
 	}
-	if (iVar1 == 20) { // KEY_RIGHTSOFT
+	if (keyCode == 20) { // KEY_RIGHTSOFT
 		return Enums::ACTION_AUTOMAP; // ACTION_AUTOMAP
 	}
-	if (iVar1 == 18) { // KEY_CLR, KEY_BACK
+	if (keyCode == 18) { // KEY_CLR, KEY_BACK
 		return Enums::ACTION_BACK;
 	}
 
@@ -2872,7 +2872,7 @@ void Canvas::setLoadingBarText(short loadingStringID, short loadingStringType) {
 
 void Canvas::updateLoadingBar(bool b) {
 
-	int uVar2;
+	int flags;
 
 	if (b == false) {
 		if (app->upTimeMs - this->lastPacifierUpdate < 0x96) {
@@ -2880,12 +2880,12 @@ void Canvas::updateLoadingBar(bool b) {
 		}
 		this->lastPacifierUpdate = app->upTimeMs;
 	}
-	uVar2 = this->loadingFlags;
-	this->loadingFlags = uVar2 | 3;
+	flags = this->loadingFlags;
+	this->loadingFlags = flags | 3;
 	if ((this->loadingStringID == -1) || (this->loadingStringType == -1)) {
 		this->setLoadingBarText((short)0, (short)57);
 	}
-	this->loadingFlags = uVar2 | 3;
+	this->loadingFlags = flags | 3;
 	this->repaintFlags |= Canvas::REPAINT_LOADING_BAR;
 	return;
 }
@@ -2893,23 +2893,23 @@ void Canvas::updateLoadingBar(bool b) {
 void Canvas::drawLoadingBar(Graphics* graphics) {
 
 	Text* text;
-	int iVar1;
-	int iVar2;
-	int iVar3;
-	int uVar4;
-	int iVar5;
-	int iVar6;
+	int centerX;
+	int barRight;
+	int pacifierPos;
+	int barFlags;
+	int newPacifierX;
+	int centerY;
 
 	if ((this->loadingFlags & 3) != 0) {
-		iVar1 = this->SCR_CX;
-		iVar6 = this->SCR_CY;
+		centerX = this->SCR_CX;
+		centerY = this->SCR_CY;
 		if ((this->loadingFlags & 1) != 0) {
 			text = app->localization->getSmallBuffer();
 			this->loadingFlags &= 0xfffffffe;
 			graphics->eraseRgn(this->displayRect);
-			graphics->fillRegion(this->imgFabricBG, iVar1 + -0x4b, iVar6 + -0x1d, 0x96, 0x3a);
+			graphics->fillRegion(this->imgFabricBG, centerX + -0x4b, centerY + -0x1d, 0x96, 0x3a);
 			graphics->setColor(0xffffffff);
-			graphics->drawRect(iVar1 + -0x4b, iVar6 + -0x1d, 0x96, 0x3a);
+			graphics->drawRect(centerX + -0x4b, centerY + -0x1d, 0x96, 0x3a);
 			app->localization->composeText(this->loadingStringID, this->loadingStringType, text);
 			text->dehyphenate();
 			graphics->drawString(text, this->SCR_CX, this->SCR_CY + -0x16, 0x11);
@@ -2918,38 +2918,38 @@ void Canvas::drawLoadingBar(Graphics* graphics) {
 			text->dehyphenate();
 			graphics->drawString(text, this->SCR_CX, this->SCR_CY + -6, 0x11);
 			text->dispose();
-			iVar1 = this->SCR_CX;
-			iVar6 = this->SCR_CY;
+			centerX = this->SCR_CX;
+			centerY = this->SCR_CY;
 		}
 		this->loadingFlags &= 0xfffffffd;
-		iVar2 = iVar1 + 0x3e;
-		iVar5 = this->pacifierX + 10;
-		this->pacifierX = iVar5;
-		iVar3 = iVar2;
-		if (iVar2 <= iVar5) {
-			iVar3 = iVar1 + -0x42;
+		barRight = centerX + 0x3e;
+		newPacifierX = this->pacifierX + 10;
+		this->pacifierX = newPacifierX;
+		pacifierPos = barRight;
+		if (barRight <= newPacifierX) {
+			pacifierPos = centerX + -0x42;
 		}
-		if ((iVar2 <= iVar5) || (iVar3 = iVar1 + -0x42, iVar5 < iVar3)) {
-			this->pacifierX = iVar3;
+		if ((barRight <= newPacifierX) || (pacifierPos = centerX + -0x42, newPacifierX < pacifierPos)) {
+			this->pacifierX = pacifierPos;
 		}
 		graphics->setColor(-0x1000000);
-		graphics->fillRect(iVar1 + -0x43, iVar6 + 0xb, 0x86, 0xc);
+		graphics->fillRect(centerX + -0x43, centerY + 0xb, 0x86, 0xc);
 		graphics->setColor(-1);
-		graphics->drawRect(iVar1 + -0x43, iVar6 + 0xb, 0x86, 0xc);
-		iVar3 = this->pacifierX;
-		iVar1 = (iVar1 + 0x43) - iVar3;
-		if (0x19 < iVar1) {
-			iVar1 = 0x1a;
+		graphics->drawRect(centerX + -0x43, centerY + 0xb, 0x86, 0xc);
+		pacifierPos = this->pacifierX;
+		centerX = (centerX + 0x43) - pacifierPos;
+		if (0x19 < centerX) {
+			centerX = 0x1a;
 		}
-		iVar2 = ((iVar3 / 10) / 6) * 8;
-		uVar4 = (iVar3 / 10) % 6;
-		if (uVar4 < 3) {
-			iVar2 = 6;
+		barRight = ((pacifierPos / 10) / 6) * 8;
+		barFlags = (pacifierPos / 10) % 6;
+		if (barFlags < 3) {
+			barRight = 6;
 		}
-		if (2 < uVar4) {
-			iVar2 = 0;
+		if (2 < barFlags) {
+			barRight = 0;
 		}
-		graphics->drawRegion(this->imgLoadingFire, 0, 0, iVar1, 9, iVar3, iVar6 + 0xd, 0, iVar2, 0);
+		graphics->drawRegion(this->imgLoadingFire, 0, 0, centerX, 9, pacifierPos, centerY + 0xd, 0, barRight, 0);
 	}
 }
 
@@ -3353,10 +3353,10 @@ void Canvas::touchMove(int pressX, int pressY) {
 void Canvas::touchEnd(int pressX, int pressY) {
 
 
-	short sVar1;
-	int iVar3;
+	short stateShort;
+	int eventCode;
 	int state;
-	int uVar5;
+	int dlgFlags;
 
 	state = this->state;
 	//printf("state %d\n", state);
@@ -3383,7 +3383,7 @@ void Canvas::touchEnd(int pressX, int pressY) {
 		if (state == 4) {
 			return;
 		}
-		iVar3 = 6;
+		eventCode = 6;
 	}
 	else {
 		if (this->state != Canvas::ST_DIALOG) {
@@ -3426,9 +3426,9 @@ void Canvas::touchEnd(int pressX, int pressY) {
 							if (state == 0) {
 								state = this->numEvents;
 								if (state != 4) {
-									iVar3 = 2;
+									eventCode = 2;
 								LAB_00022c48:
-									this->events[state] = iVar3;
+									this->events[state] = eventCode;
 									this->numEvents = state + 1;
 									this->keyPressedTime = app->upTimeMs;
 								}
@@ -3437,7 +3437,7 @@ void Canvas::touchEnd(int pressX, int pressY) {
 								if (state == 1) {
 									state = this->numEvents;
 									if (state != 4) {
-										iVar3 = 4;
+										eventCode = 4;
 										goto LAB_00022c48;
 									}
 								}
@@ -3452,12 +3452,12 @@ void Canvas::touchEnd(int pressX, int pressY) {
 			if (state == -1) {
 				return;
 			}
-			iVar3 = this->numEvents;
-			if (iVar3 == 4) {
+			eventCode = this->numEvents;
+			if (eventCode == 4) {
 				return;
 			}
-			this->events[iVar3] = state;
-			this->numEvents = iVar3 + 1;
+			this->events[eventCode] = state;
+			this->numEvents = eventCode + 1;
 			state = app->upTimeMs;
 			goto LAB_00022ca4;
 		}
@@ -3466,14 +3466,14 @@ void Canvas::touchEnd(int pressX, int pressY) {
 			state = 6;
 		LAB_00022944:
 			if (this->currentDialogLine < this->numDialogLines - this->dialogViewLines) goto LAB_00022980;
-			uVar5 = this->dialogFlags;
-			if ((uVar5 & 2) != 0) {
+			dlgFlags = this->dialogFlags;
+			if ((dlgFlags & 2) != 0) {
 				return;
 			}
-			if ((uVar5 & 4) != 0) {
+			if ((dlgFlags & 4) != 0) {
 				return;
 			}
-			if ((uVar5 & 1) != 0) {
+			if ((dlgFlags & 1) != 0) {
 				return;
 			}
 		LAB_00022af8:
@@ -3483,15 +3483,15 @@ void Canvas::touchEnd(int pressX, int pressY) {
 		if (state == 6) goto LAB_00022944;
 	LAB_00022980:
 		if ((1 < state - 5U) || (this->numDialogLines <= this->dialogViewLines)) {
-			uVar5 = this->dialogFlags;
-			if ((uVar5 & 2) == 0) {
-				if (uVar5 == 0) {
+			dlgFlags = this->dialogFlags;
+			if ((dlgFlags & 2) == 0) {
+				if (dlgFlags == 0) {
 					return;
 				}
 				if (this->currentDialogLine < this->numDialogLines - this->dialogViewLines) {
 					return;
 				}
-				if (((uVar5 & 4) == 0) && ((uVar5 & 1) == 0)) {
+				if (((dlgFlags & 4) == 0) && ((dlgFlags & 1) == 0)) {
 					return;
 				}
 				if (1 < state - 3U) {
@@ -3505,37 +3505,37 @@ void Canvas::touchEnd(int pressX, int pressY) {
 				}
 			}
 			else {
-				iVar3 = this->dialogStyle;
-				sVar1 = (short)state;
-				if (iVar3 == 11) {
+				eventCode = this->dialogStyle;
+				stateShort = (short)state;
+				if (eventCode == 11) {
 					if (state == 0) {
-						app->game->scriptStateVars[4] = sVar1;
+						app->game->scriptStateVars[4] = stateShort;
 					}
 					else {
 						if (state != 1) {
 							return;
 						}
-						app->game->scriptStateVars[4] = sVar1;
+						app->game->scriptStateVars[4] = stateShort;
 					}
-					iVar3 = this->numEvents;
-					if (iVar3 != 4) {
-						this->events[iVar3] = 6;
-						this->numEvents = iVar3 + 1;
+					eventCode = this->numEvents;
+					if (eventCode != 4) {
+						this->events[eventCode] = 6;
+						this->numEvents = eventCode + 1;
 						this->keyPressedTime = app->upTimeMs;
 					}
-					iVar3 = this->dialogStyle;
+					eventCode = this->dialogStyle;
 				}
-				if (iVar3 != 10) {
+				if (eventCode != 10) {
 					return;
 				}
 				if (state == 0) {
-					app->game->scriptStateVars[4] = sVar1;
+					app->game->scriptStateVars[4] = stateShort;
 				}
 				else {
 					if (state != 1) {
 						return;
 					}
-					app->game->scriptStateVars[4] = sVar1;
+					app->game->scriptStateVars[4] = stateShort;
 				}
 			}
 			goto LAB_00022af8;
@@ -3545,9 +3545,9 @@ void Canvas::touchEnd(int pressX, int pressY) {
 		if (state == 4) {
 			return;
 		}
-		iVar3 = 19;
+		eventCode = 19;
 	}
-	this->events[state] = iVar3;
+	this->events[state] = eventCode;
 	this->numEvents = state + 1;
 	state = app->upTimeMs;
 LAB_00022ca4:
@@ -3679,50 +3679,50 @@ void Canvas::drawTouchSoftkeyBar(Graphics* graphics, bool highlighted_Left, bool
 
 void Canvas::touchSwipe(int swDir) {
 
-	int iVar1;
-	int iVar2;
+	int keyCode;
+	int eventIdx;
 
 	if (this->state == Canvas::ST_PLAYING || this->state == Canvas::ST_COMBAT) {
 #if 0 // IOS
 		switch (swDir) {
 			case fmSwipeArea::SwipeDir::Left:
-				iVar1 = 2;
+				keyCode = 2;
 				break;
 			case fmSwipeArea::SwipeDir::Right:
-				iVar1 = 4;
+				keyCode = 4;
 				break;
 			case fmSwipeArea::SwipeDir::Down:
-				iVar1 = AVK_RIGHT;
+				keyCode = AVK_RIGHT;
 				break;
 			case fmSwipeArea::SwipeDir::Up:
-				iVar1 = AVK_LEFT;
+				keyCode = AVK_LEFT;
 				break;
 			default:
 				return;
 		}
 
 		if (this->isZoomedIn != false) {
-			bool bVar4 = iVar1 == 2;
+			bool bVar4 = keyCode == 2;
 			if (bVar4) {
-				iVar1 = 5;
+				keyCode = 5;
 			}
-			if ((!bVar4) && (iVar1 == 4)) {
-				iVar1 = 7;
+			if ((!bVar4) && (keyCode == 4)) {
+				keyCode = 7;
 			}
 		}
 #else
 		switch (swDir) {
 			case fmSwipeArea::SwipeDir::Left:
-				iVar1 = AVK_MOVELEFT;
+				keyCode = AVK_MOVELEFT;
 				break;
 			case fmSwipeArea::SwipeDir::Right:
-				iVar1 = AVK_MOVERIGHT;
+				keyCode = AVK_MOVERIGHT;
 				break;
 			case fmSwipeArea::SwipeDir::Down:
-				iVar1 = AVK_DOWN;
+				keyCode = AVK_DOWN;
 				break;
 			case fmSwipeArea::SwipeDir::Up:
-				iVar1 = AVK_UP;
+				keyCode = AVK_UP;
 				break;
 			default:
 				return;
@@ -3730,7 +3730,7 @@ void Canvas::touchSwipe(int swDir) {
 #endif
 
 		if (this->numEvents != 4) {
-			this->events[this->numEvents++] = iVar1;
+			this->events[this->numEvents++] = keyCode;
 			this->keyPressedTime = app->upTimeMs;
 		}
 	}

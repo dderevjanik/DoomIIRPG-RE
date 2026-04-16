@@ -103,11 +103,11 @@ void Canvas::drawMiniGameHelpText(Graphics* graphics, int i, int i2) {
 
 	int x;
 	Text* textBuff1;
-	int iVar1;
+	int lineIdx;
 	Text* textBuff2;
-	int iVar2;
+	int textLen;
 	Text* textBuff3;
-	int iVar3;
+	int newlinePos;
 
 	textBuff1 = app->localization->getSmallBuffer();
 	x = (this->screenRect[2] - this->screenRect[0]) / 2;
@@ -119,29 +119,29 @@ void Canvas::drawMiniGameHelpText(Graphics* graphics, int i, int i2) {
 	textBuff1->setLength(0);
 	app->localization->composeText(i2, textBuff1);
 	textBuff1->wrapText(0x31, '\n');
-	iVar1 = textBuff1->getNumLines();
-	this->helpTextNumberOfLines = iVar1;
+	lineIdx = textBuff1->getNumLines();
+	this->helpTextNumberOfLines = lineIdx;
 
 	textBuff2 = app->localization->getSmallBuffer();
 	textBuff2->setLength(0);
-	for (iVar1 = 0; iVar1 < this->miniGameHelpScrollPosition; iVar1 = iVar1 + 1) {
-		iVar3 = textBuff1->findFirstOf('\n');
+	for (lineIdx = 0; lineIdx < this->miniGameHelpScrollPosition; lineIdx = lineIdx + 1) {
+		newlinePos = textBuff1->findFirstOf('\n');
 		textBuff3 = textBuff1;
-		if (iVar3 != -1) {
-			iVar2 = textBuff1->length();
-			textBuff1->substring(textBuff2, iVar3 + 1, (iVar2 - iVar3) + -1);
+		if (newlinePos != -1) {
+			textLen = textBuff1->length();
+			textBuff1->substring(textBuff2, newlinePos + 1, (textLen - newlinePos) + -1);
 			textBuff1->setLength(0);
 			textBuff3 = textBuff2;
 			textBuff2 = textBuff1;
 		}
 		textBuff1 = textBuff3;
 	}
-	for (iVar1 = this->miniGameHelpScrollPosition + 0x10; iVar1 < this->helpTextNumberOfLines;
-		iVar1 = iVar1 + 1) {
-		iVar3 = textBuff1->findLastOf('\n');
+	for (lineIdx = this->miniGameHelpScrollPosition + 0x10; lineIdx < this->helpTextNumberOfLines;
+		lineIdx = lineIdx + 1) {
+		newlinePos = textBuff1->findLastOf('\n');
 		textBuff3 = textBuff1;
-		if (iVar3 != -1) {
-			textBuff1->substring(textBuff2, 0, iVar3);
+		if (newlinePos != -1) {
+			textBuff1->substring(textBuff2, 0, newlinePos);
 			textBuff1->setLength(0);
 			textBuff3 = textBuff2;
 			textBuff2 = textBuff1;
@@ -151,13 +151,13 @@ void Canvas::drawMiniGameHelpText(Graphics* graphics, int i, int i2) {
 	textBuff2->dispose();
 
 	graphics->drawString(textBuff1, this->screenRect[0] + 0x12, this->screenRect[1] + 0x2d, 0x14);
-	iVar3 = this->helpTextNumberOfLines;
-	iVar1 = this->miniGameHelpScrollPosition + 0x10;
-	if (iVar3 < iVar1) {
-		iVar1 = iVar3;
+	newlinePos = this->helpTextNumberOfLines;
+	lineIdx = this->miniGameHelpScrollPosition + 0x10;
+	if (newlinePos < lineIdx) {
+		lineIdx = newlinePos;
 	}
 	this->drawScrollBar(graphics, this->screenRect[2] + -0x12, this->screenRect[1] + 0x2d, 0x100,
-		this->miniGameHelpScrollPosition, iVar1, iVar3, 0x10);
+		this->miniGameHelpScrollPosition, lineIdx, newlinePos, 0x10);
 	textBuff1->setLength(0);
 	app->localization->composeText(0, 0x60, textBuff1);
 	textBuff1->dehyphenate();
@@ -167,28 +167,28 @@ void Canvas::drawMiniGameHelpText(Graphics* graphics, int i, int i2) {
 
 
 void Canvas::handleMiniGameHelpScreenScroll(int i) {
-	int iVar1;
-	int iVar2;
+	int maxScroll;
+	int newPos;
 
 	if (i < 0) {
-		iVar1 = i + this->miniGameHelpScrollPosition;
-		if (iVar1 < 0) {
-			iVar1 = 0;
+		newPos = i + this->miniGameHelpScrollPosition;
+		if (newPos < 0) {
+			newPos = 0;
 		}
-		this->miniGameHelpScrollPosition = iVar1;
+		this->miniGameHelpScrollPosition = newPos;
 		return;
 	}
 	if (0 < i) {
-		iVar1 = this->helpTextNumberOfLines + -0x10;
-		if (iVar1 < 0) {
-			iVar1 = 0;
+		maxScroll = this->helpTextNumberOfLines + -0x10;
+		if (maxScroll < 0) {
+			maxScroll = 0;
 		}
-		iVar2 = i + this->miniGameHelpScrollPosition;
-		if (iVar1 < iVar2) {
-			this->miniGameHelpScrollPosition = iVar1;
+		newPos = i + this->miniGameHelpScrollPosition;
+		if (maxScroll < newPos) {
+			this->miniGameHelpScrollPosition = maxScroll;
 		}
 		else {
-			this->miniGameHelpScrollPosition = iVar2;
+			this->miniGameHelpScrollPosition = newPos;
 		}
 		return;
 	}

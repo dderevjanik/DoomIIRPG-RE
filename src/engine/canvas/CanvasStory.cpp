@@ -384,12 +384,12 @@ void Canvas::playIntroMovie(Graphics* graphics) {
 
 				app->game->mayaCameras->Update(app->game->activeCameraKey, this->stateVars[0]);
 
-				int uVar3 = app->game->posShift;
+				int shiftAmount = app->game->posShift;
 				int texW = this->displayRect[2];
 				int texH = this->displayRect[3];
 
-				int posX = app->game->mayaCameras->x >> (uVar3 & 0xff);
-				int posY = app->game->mayaCameras->y >> (uVar3 & 0xff);
+				int posX = app->game->mayaCameras->x >> (shiftAmount & 0xff);
+				int posY = app->game->mayaCameras->y >> (shiftAmount & 0xff);
 
 				int texX = posX - this->SCR_CX; 
 				if (texX < 0) {

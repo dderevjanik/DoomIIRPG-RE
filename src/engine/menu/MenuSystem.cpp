@@ -1341,14 +1341,14 @@ void MenuSystem::updateTouchButtonState() {
 				button02->drawButton = true;
 			} else if (!infoDef) {
 				// Fallback: original hardcoded info button check
-				uint32_t uVar2 = this->menu;
-				bool bVar5 = Menus::MENU_INGAME_LANGUAGE < uVar2;
-				if (uVar2 != Menus::MENU_INGAME_HELP) {
-					bVar5 = uVar2 != Menus::MENU_INGAME;
+				uint32_t menuId = this->menu;
+				bool isInfoMenu = Menus::MENU_INGAME_LANGUAGE < menuId;
+				if (menuId != Menus::MENU_INGAME_HELP) {
+					isInfoMenu = menuId != Menus::MENU_INGAME;
 				}
-				if (((((!bVar5 || (uVar2 == Menus::MENU_INGAME_HELP || uVar2 == Menus::MENU_INGAME_STATUS)) || (uVar2 == Menus::MENU_INGAME_HELP)) || (uVar2 == Menus::MENU_ITEMS)) ||
-					((uVar2 == Menus::MENU_ITEMS_WEAPONS || (uVar2 == Menus::MENU_ITEMS_DRINKS)))) ||
-					((uVar2 == Menus::MENU_VENDING_MACHINE_CONFIRM || ((uVar2 == Menus::MENU_VENDING_MACHINE_DRINKS || (uVar2 == Menus::MENU_VENDING_MACHINE_SNACKS)))))) {
+				if (((((!isInfoMenu || (menuId == Menus::MENU_INGAME_HELP || menuId == Menus::MENU_INGAME_STATUS)) || (menuId == Menus::MENU_INGAME_HELP)) || (menuId == Menus::MENU_ITEMS)) ||
+					((menuId == Menus::MENU_ITEMS_WEAPONS || (menuId == Menus::MENU_ITEMS_DRINKS)))) ||
+					((menuId == Menus::MENU_VENDING_MACHINE_CONFIRM || ((menuId == Menus::MENU_VENDING_MACHINE_DRINKS || (menuId == Menus::MENU_VENDING_MACHINE_SNACKS)))))) {
 					button02 = this->m_infoButtons->GetButton(buttonID);
 					button02->drawButton = true;
 				}
