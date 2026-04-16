@@ -624,7 +624,7 @@ int fmSwipeArea::UpdateSwipe(int x, int y, SwipeDir* swDir) {
 		iVar5 = this->begY + iVar2;
 		if ((y < iVar5) && (iVar3 <= x)) {
 			iVar4 = this->begX;
-			if (iVar3 - iVar4 <= this->endY) goto LAB_00074b9c;
+			if (iVar3 - iVar4 <= this->endY) goto no_swipe;
 			iVar1 = 1;
 			this->touched = false;
 			*swDir = SwipeDir::Right;
@@ -637,11 +637,11 @@ int fmSwipeArea::UpdateSwipe(int x, int y, SwipeDir* swDir) {
 			if (iVar3 < y) {
 				iVar4 = this->begX;
 			}
-			if (y <= iVar3) goto LAB_00074bd0;
+			if (y <= iVar3) goto load_begX;
 		}
 		else {
 			iVar4 = this->begX;
-		LAB_00074b9c:
+		no_swipe:
 			iVar1 = 0;
 		}
 		if ((y < iVar5) && (this->endY < iVar4 - this->curX)) {
@@ -649,32 +649,32 @@ int fmSwipeArea::UpdateSwipe(int x, int y, SwipeDir* swDir) {
 			*swDir = SwipeDir::Left;
 			iVar2 = this->endX;
 			iVar1 = 1;
-			goto LAB_00074bd0;
+			goto load_begX;
 		}
 	}
 	else {
-	LAB_00074bd0:
+	load_begX:
 		iVar4 = this->begX;
 	}
-	if ((x <= iVar4 - iVar2) || (iVar4 = iVar4 + iVar2, iVar4 <= x)) goto LAB_00074c68;
+	if ((x <= iVar4 - iVar2) || (iVar4 = iVar4 + iVar2, iVar4 <= x)) goto store_and_return;
 	if (this->endY < this->curY - this->begY) {
 		this->touched = false;
 		*swDir = SwipeDir::Down;
 		if (this->begX - this->endX < x) {
 			iVar1 = 1;
 			iVar4 = this->begX + this->endX;
-			goto LAB_00074c34;
+			goto check_up_swipe;
 		}
 	}
 	else {
-	LAB_00074c34:
+	check_up_swipe:
 		if ((iVar4 <= x) || (this->begY - this->curY <= this->endY))
-			goto LAB_00074c68;
+			goto store_and_return;
 		this->touched = false;
 		*swDir = SwipeDir::Up;
 	}
 	iVar1 = 1;
-LAB_00074c68:
+store_and_return:
 	this->curX = x;
 	this->curY = y;
 	return iVar1;

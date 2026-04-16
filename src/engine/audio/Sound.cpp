@@ -355,12 +355,12 @@ void Sound::playSound(int16_t resID, uint8_t flags, int priority, bool unused) {
 					while (this->channel[searchIdx].resID != soundResID) {
 						++searchIdx;
 						if (searchIdx == 10)
-							goto LABEL_19;
+							goto found_existing_slot;
 					}
 					if (!this->openAL_IsPlaying(this->channel[searchIdx].sourceId)) {
-					LABEL_19:
+					found_existing_slot:
 						existingSlot = chanIdx;
-						goto LABEL_29;
+						goto check_play_mode;
 					}
 					if (priority == 6) {
 						existingSlot = chanIdx;
@@ -379,9 +379,9 @@ void Sound::playSound(int16_t resID, uint8_t flags, int priority, bool unused) {
 			}
 
 			existingSlot = -1;
-		LABEL_29:
+		check_play_mode:
 			if (priority == 6 || (flags & 1) != 0) {
-			LABEL_31:
+			skip_if_playing:
 				if (existingSlot != -1 && this->openAL_IsPlaying(this->channel[existingSlot].sourceId))
 					return;
 			}

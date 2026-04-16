@@ -354,23 +354,23 @@ void Graphics::drawRegion(Image* img, int texX, int texY, int texW, int texH, in
     if ((flags & 1U) == 0) {
         if ((flags & 8U) != 0) {
             x = 0 - texW;
-            goto LAB_0003d4f8;
+            goto apply_x_offset;
         }
     }
     else {
         x = 0 - (texW / 2);
-    LAB_0003d4f8:
+    apply_x_offset:
         x = posX + x;
     }
     if ((flags & 2U) == 0) {
-        if ((flags & 0x20U) == 0) goto LAB_0003d52c;
+        if ((flags & 0x20U) == 0) goto apply_translation;
         y = 0 - texH;
     }
     else {
         y = 0 - (texH / 2);
     }
     y = posY + y;
-LAB_0003d52c:
+apply_translation:
     x = x + this->transX;
     y = y + this->transY;
     w = this->graphClipRect[0];

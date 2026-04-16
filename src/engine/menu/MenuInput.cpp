@@ -764,7 +764,7 @@ void MenuSystem::handleUserTouch(int x, int y, bool b) {
 			btnScroll->contentDragging = 0;
 			return;
 		}
-		goto LABEL_17;
+		goto clear_button_highlights;
 	}
 	if (this->m_scrollBar->enabled && this->m_scrollBar->barRect.ContainsPoint(x, y))
 	{
@@ -778,7 +778,7 @@ void MenuSystem::handleUserTouch(int x, int y, bool b) {
 		this->m_scrollBar->barTouched = 1;
 		return;
 	}
-LABEL_17:
+clear_button_highlights:
 	for (i = 0; i < 16; i++) {
 		this->m_menuButtons->GetButton(i)->SetHighlighted(false);
 	}
@@ -806,7 +806,7 @@ LABEL_17:
 				{
 					if (this->menu != Menus::MENU_END_RANKING && this->menu != Menus::MENU_LEVEL_STATS)
 					{
-					LABEL_49:
+					handle_vending_confirm:
 						if (this->menu != Menus::MENU_VENDING_MACHINE_CONFIRM)
 							return;
 						if (v4)
@@ -815,7 +815,7 @@ LABEL_17:
 							v25 = v8;
 							btnContainer03 = this->m_vendingButtons;
 							v27 = 1;
-						LABEL_61:
+						highlight_vending_button:
 							btnContainer03->HighlightButton(v24, v25, v27);
 							return;
 						}
@@ -823,11 +823,11 @@ LABEL_17:
 						if (v28)
 						{
 							if (v28 != 1)
-								goto LABEL_60;
+								goto reset_vending_highlight;
 							vendingMachine = app->vendingMachine.get();
 							currentItemQuantity = vendingMachine->currentItemQuantity;
 							if (currentItemQuantity <= 1)
-								goto LABEL_60;
+								goto reset_vending_highlight;
 							vendingMachine->currentItemQuantity = currentItemQuantity - 1;
 						}
 						else
@@ -835,16 +835,16 @@ LABEL_17:
 							v29 = app->vendingMachine.get();
 							v30 = v29->currentItemQuantity;
 							if (app->player->inventory[24] < v29->currentItemPrice + v30 * v29->currentItemPrice)
-								goto LABEL_60;
+								goto reset_vending_highlight;
 							v29->currentItemQuantity = v30 + 1;
 						}
 						this->setMenu(Menus::MENU_VENDING_MACHINE_CONFIRM);
-					LABEL_60:
+					reset_vending_highlight:
 						v24 = 0;
 						btnContainer03 = this->m_vendingButtons;
 						v25 = 0;
 						v27 = 0;
-						goto LABEL_61;
+						goto highlight_vending_button;
 					}
 					app->canvas->handleEvent(13);
 				}
@@ -882,7 +882,7 @@ LABEL_17:
 				this->selectedHelpIndex = this->m_infoButtons->GetButton(v17)->selectedIndex;
 			}
 		}
-		goto LABEL_49;
+		goto handle_vending_confirm;
 	}
 	if (!v4)
 	{

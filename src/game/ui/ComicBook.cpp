@@ -154,12 +154,12 @@ void ComicBook::Draw(Graphics* graphics) {
         {
             isFlipped = 1;
             isRotated = this->is_iPhoneComic;
-            goto LABEL_29;
+            goto draw_current_page;
         }
         isRotated = this->is_iPhoneComic;
     }
     isFlipped = 0;
-LABEL_29:
+draw_current_page:
     this->DrawImage(imgiPhoneComicBook[iPhonePage], this->endPoint, 0, isRotated, alpha, isFlipped);
     if (this->isTouching || this->isTransitioning)
     {
@@ -548,18 +548,18 @@ void ComicBook::UpdateMovement() {
             if (curPage == totalPages - 1)
             {
                 newEndPoint -= 2 * speed;
-                goto LABEL_27;
+                goto set_end_point;
             }
         }
         isWrapping = iPhonePage == lastPage;
         if (iPhonePage == lastPage)
             isWrapping = curPage == 0;
         if (!isWrapping)
-            goto LABEL_28;
+            goto check_bounds;
         newEndPoint += 2 * speed;
-    LABEL_27:
+    set_end_point:
         this->endPoint = newEndPoint;
-    LABEL_28:
+    check_bounds:
         if (is_iPhoneComic)
             screenSize = Applet::IOS_HEIGHT;
         else
@@ -730,14 +730,14 @@ void ComicBook::Touch(int x, int y, bool b)
         if (!isPhoneComic)
         {
             nextPageIdx = page + 1;
-        LABEL_35:
+        set_cur_page:
             this->curPage = nextPageIdx;
-            goto LABEL_41;
+            goto clamp_cur_page;
         }
         prevPageIdx = page - 1;
-    LABEL_36:
+    set_cur_iphone_page:
         this->cur_iPhonePage = prevPageIdx;
-        goto LABEL_41;
+        goto clamp_cur_page;
     }
     if (endPoint < -halfScreen || midPoint < -2)
     {
@@ -745,10 +745,10 @@ void ComicBook::Touch(int x, int y, bool b)
         if (is_iPhoneComic)
         {
             nextPageIdx = this->page - 1;
-            goto LABEL_35;
+            goto set_cur_page;
         }
         prevPageIdx = this->iPhonePage + 1;
-        goto LABEL_36;
+        goto set_cur_iphone_page;
     }
     this->curPage = this->page;
     if (endPoint)
@@ -756,21 +756,21 @@ void ComicBook::Touch(int x, int y, bool b)
     this->cur_iPhonePage = this->iPhonePage;
     if (endPoint)
         this->isSnappingBack = 1;
-LABEL_41:
+clamp_cur_page:
     curPage = this->curPage;
     if (curPage < 0)
     {
         wrappedPage = 16;
-    LABEL_45:
+    write_clamped_page:
         this->curPage = wrappedPage;
-        goto LABEL_46;
+        goto clamp_iphone_page;
     }
     if (curPage > 16)
     {
         wrappedPage = 0;
-        goto LABEL_45;
+        goto write_clamped_page;
     }
-LABEL_46:
+clamp_iphone_page:
     cur_iPhonePage = this->cur_iPhonePage;
     if (cur_iPhonePage >= 0)
     {

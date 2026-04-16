@@ -185,13 +185,13 @@ void MenuSystem::paint(Graphics* graphics) {
 	this->drawTouchButtons(graphics, false);
 
 	if (this->menu != Menus::MENU_MAIN_OPTIONS) {
-		goto LABEL_66;
+		goto draw_touch_buttons;
 	}
 	if (this->HasVibration()) {
 		this->drawTouchButtons(graphics, true);
 	}
 	if (this->menu != Menus::MENU_MAIN_OPTIONS || !HasVibration()) {
-	LABEL_66:
+	draw_touch_buttons:
 		this->drawTouchButtons(graphics, true);
 	}
 
@@ -246,7 +246,7 @@ void MenuSystem::paint(Graphics* graphics) {
 		if ((items->flags & 0x8000) != 0)
 		{
 			v35 = v33;
-			goto LABEL_155;
+			goto next_menu_item;
 		}
 		v35 = v33 + this->getMenuItemHeight(v79);
 
@@ -292,10 +292,10 @@ void MenuSystem::paint(Graphics* graphics) {
 					if (action)
 					{
 						v81 = menuRect[0] + (this->menuItem_width >> 1) - v42;
-						goto LABEL_130;
+						goto apply_menu_type;
 					}
 					v81 = menuRect[0] + (menuRect[2] >> 1) - v42;
-				LABEL_121:
+				check_menu_offset:
 					v46 = this->menu;
 					v47 = v46 == Menus::MENU_MAIN_EXIT;
 					if (v46 != Menus::MENU_MAIN_EXIT)
@@ -303,7 +303,7 @@ void MenuSystem::paint(Graphics* graphics) {
 					if (v47 || v46 == Menus::MENU_MAIN_DIFFICULTY || v46 == Menus::MENU_MAIN_MINIGAME || v46 == Menus::MENU_END_ || v46 == Menus::MENU_END_FINALQUIT || v46 == Menus::MENU_SELECT_LANGUAGE)
 					{
 						v80 += 8;
-						goto LABEL_132;
+						goto draw_item_string;
 					}
 				}
 				else
@@ -377,8 +377,8 @@ void MenuSystem::paint(Graphics* graphics) {
 						
 					}
 					if (!action)
-						goto LABEL_121;
-				LABEL_130:
+						goto check_menu_offset;
+				apply_menu_type:
 					v46 = this->menu;
 				}
 				v49 = v46 == Menus::MENU_MAIN_CONFIRMNEW;
@@ -406,7 +406,7 @@ void MenuSystem::paint(Graphics* graphics) {
 				if (action)
 					graphics->drawString(textBuffer1, v81, v80 + (this->menuItem_height >> 1), 2);
 				else
-					LABEL_132:
+					draw_item_string:
 				graphics->drawString(textBuffer1, v81, v80, 0);
 
 
@@ -454,7 +454,7 @@ void MenuSystem::paint(Graphics* graphics) {
 		}
 		app->setFontRenderMode(0); // [GEC]
 		numItems = this->numItems;
-	LABEL_155:
+	next_menu_item:
 		++items;
 		v33 = v35;
 		++v79;

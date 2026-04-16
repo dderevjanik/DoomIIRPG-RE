@@ -890,7 +890,7 @@ static void drawStarField(Canvas* canvas, Graphics* graphics, int x, int y) {
 	row = 0;
 	halfHeight = sfHeight / 2;
 	offsetY = sfHeight / -2;
-LABEL_20:
+next_star_row:
 	if (row < sfHeight - canvas->starFieldScrollY)
 	{
 		drawX = x;
@@ -903,13 +903,13 @@ LABEL_20:
 				++drawY;
 				++offsetY;
 				sfHeight = canvas->starFieldHeight;
-				goto LABEL_20;
+				goto next_star_row;
 			}
 			pixelValue = canvas->app->tinyGL->pixels[i + canvas->starFieldWidth * row];
 			starType = pixelValue >> 10;
 			if ((pixelValue & 0x3FF) != 0)
 				break;
-		LABEL_17:
+		next_star_pixel:
 			++drawX;
 			++offsetX;
 		}
@@ -927,7 +927,7 @@ LABEL_20:
 			if (!starType || starType != 2)
 			{
 				starSize = combinedDist >> 11;
-			LABEL_9:
+			draw_star:
 				if (starSize <= 0 || starSize == 1)
 				{
 					graphics->fillRect(drawX, drawY, 1, 1);
@@ -936,12 +936,12 @@ LABEL_20:
 				{
 					graphics->fillCircle(drawX, drawY, starSize);
 				}
-				goto LABEL_17;
+				goto next_star_pixel;
 			}
 			scaledDist = 10 * avgDist;
 		}
 		starSize = scaledDist >> 10;
-		goto LABEL_9;
+		goto draw_star;
 	}
 }
 

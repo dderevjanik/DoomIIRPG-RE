@@ -591,13 +591,13 @@ void Applet::CalcAccelerometerAngles() {
 		zoomAngle = this->canvas->zoomAngle;
 		if (zoomAngle >= -200) {
 			if (zoomAngle <= 200)
-				goto LABEL_13;
+				goto calc_zoom_pitch;
 			v14 = 200;
 		} else {
 			v14 = -200;
 		}
 		this->canvas->zoomAngle = v14;
-	LABEL_13:
+	calc_zoom_pitch:
 		this->canvas->zoomPitch = (int)(float)((float)(this->accelAvgY - this->accelBaseY) * 420.0);
 		zoomMaxAngle = this->canvas->zoomMaxAngle;
 		zoomPitch = this->canvas->zoomPitch;

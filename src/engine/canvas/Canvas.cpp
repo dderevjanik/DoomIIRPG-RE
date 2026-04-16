@@ -3378,7 +3378,7 @@ void Canvas::touchEnd(int pressX, int pressY) {
 			}
 		}
 		this->stateVars[0] = state;
-	LAB_00022b00:
+	queue_event:
 		state = this->numEvents;
 		if (state == 4) {
 			return;
@@ -3405,10 +3405,10 @@ void Canvas::touchEnd(int pressX, int pressY) {
 						if ((app->canvas->softKeyRightID != -1) &&
 							(state = this->m_softKeyButtons->GetTouchedButtonID(pressX, pressY),
 								state == 20)) {
-						LAB_00022c60:
+						set_softkey_state:
 							
 							state = 6;
-							goto LAB_00022c64;
+							goto handle_control_touch;
 						}
 					}
 					else {
@@ -3419,15 +3419,15 @@ void Canvas::touchEnd(int pressX, int pressY) {
 						else {
 							if (this->state == Canvas::ST_CHARACTER_SELECTION) { // [GEC]
 								state = AVK_PASSTURN;
-								goto LAB_00022c64;
+								goto handle_control_touch;
 							}
-							if (this->state != Canvas::ST_TREADMILL) goto LAB_00022c60;
+							if (this->state != Canvas::ST_TREADMILL) goto set_softkey_state;
 							state = this->m_treadmillButtons->GetTouchedButtonID(pressX, pressY);
 							if (state == 0) {
 								state = this->numEvents;
 								if (state != 4) {
 									eventCode = 2;
-								LAB_00022c48:
+								store_treadmill_event:
 									this->events[state] = eventCode;
 									this->numEvents = state + 1;
 									this->keyPressedTime = app->upTimeMs;
@@ -3438,7 +3438,7 @@ void Canvas::touchEnd(int pressX, int pressY) {
 									state = this->numEvents;
 									if (state != 4) {
 										eventCode = 4;
-										goto LAB_00022c48;
+										goto store_treadmill_event;
 									}
 								}
 							}
@@ -3447,7 +3447,7 @@ void Canvas::touchEnd(int pressX, int pressY) {
 					state = -1;
 				}
 			}
-		LAB_00022c64:
+		handle_control_touch:
 			this->m_controlButtonIsTouched = false;
 			if (state == -1) {
 				return;
@@ -3459,13 +3459,13 @@ void Canvas::touchEnd(int pressX, int pressY) {
 			this->events[eventCode] = state;
 			this->numEvents = eventCode + 1;
 			state = app->upTimeMs;
-			goto LAB_00022ca4;
+			goto set_key_pressed_time;
 		}
 		state = this->m_dialogButtons->GetTouchedButtonID(pressX, pressY);
 		if (state - 7U < 2) {
 			state = 6;
-		LAB_00022944:
-			if (this->currentDialogLine < this->numDialogLines - this->dialogViewLines) goto LAB_00022980;
+		check_dialog_scroll:
+			if (this->currentDialogLine < this->numDialogLines - this->dialogViewLines) goto handle_dialog_buttons;
 			dlgFlags = this->dialogFlags;
 			if ((dlgFlags & 2) != 0) {
 				return;
@@ -3476,12 +3476,12 @@ void Canvas::touchEnd(int pressX, int pressY) {
 			if ((dlgFlags & 1) != 0) {
 				return;
 			}
-		LAB_00022af8:
+		finish_dialog_input:
 			//pCVar4 = *Applet;
-			goto LAB_00022b00;
+			goto queue_event;
 		}
-		if (state == 6) goto LAB_00022944;
-	LAB_00022980:
+		if (state == 6) goto check_dialog_scroll;
+	handle_dialog_buttons:
 		if ((1 < state - 5U) || (this->numDialogLines <= this->dialogViewLines)) {
 			dlgFlags = this->dialogFlags;
 			if ((dlgFlags & 2) == 0) {
@@ -3538,9 +3538,9 @@ void Canvas::touchEnd(int pressX, int pressY) {
 					app->game->scriptStateVars[4] = stateShort;
 				}
 			}
-			goto LAB_00022af8;
+			goto finish_dialog_input;
 		}
-		if (state != 5) goto LAB_00022af8;
+		if (state != 5) goto finish_dialog_input;
 		state = this->numEvents;
 		if (state == 4) {
 			return;
@@ -3550,7 +3550,7 @@ void Canvas::touchEnd(int pressX, int pressY) {
 	this->events[state] = eventCode;
 	this->numEvents = state + 1;
 	state = app->upTimeMs;
-LAB_00022ca4:
+set_key_pressed_time:
 	this->keyPressedTime = state;
 	return;
 }
