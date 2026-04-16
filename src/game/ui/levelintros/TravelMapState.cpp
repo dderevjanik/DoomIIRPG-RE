@@ -799,10 +799,10 @@ static void initTravelMap(Canvas* canvas) {
 
 	// Unused
 	canvas->imgStarField = canvas->app->loadImage("cockpit.bmp", true);
-	canvas->_field_0xf24 = Applet::IOS_WIDTH;
-	canvas->_field_0xf20 = canvas->imgStarField->height;
-	canvas->_field_0xf28 = 0;
-	canvas->_field_0xf2c = 1;
+	canvas->starFieldWidth = Applet::IOS_WIDTH;
+	canvas->starFieldHeight = canvas->imgStarField->height;
+	canvas->starFieldScrollY = 0;
+	canvas->starFieldZoom = 1;
 }
 
 
@@ -836,7 +836,7 @@ static void drawStarFieldPage(Canvas* canvas, Graphics* graphics) {
 
 
 	if (canvas->app->upTimeMs - canvas->stateVars[0] > 5250) {
-		canvas->_field_0xf2c = 2u;
+		canvas->starFieldZoom = 2u;
 		finishTravelMapAndLoadLevel(canvas);
 	}
 	else {
@@ -860,7 +860,7 @@ static void drawStarField(Canvas* canvas, Graphics* graphics, int x, int y) {
 
 	int upTimeMs; // r2
 	int result; // r0
-	int field_0xf20; // r2
+	int sfHeight; // r2
 	unsigned int v8; // r2
 	unsigned int v9; // r11
 	int v10; // r6
@@ -878,34 +878,34 @@ static void drawStarField(Canvas* canvas, Graphics* graphics, int x, int y) {
 	int v26; // [sp+24h] [bp-20h]
 	int v27; // [sp+28h] [bp-1Ch]
 
-	graphics->fillRect(x, y, canvas->_field_0xf24, canvas->_field_0xf20, 0xFF000000);
+	graphics->fillRect(x, y, canvas->starFieldWidth, canvas->starFieldHeight, 0xFF000000);
 	if (canvas->app->upTimeMs - canvas->stateVars[7] > 59) {
 		canvas->stateVars[7] = canvas->app->upTimeMs;
 		runStarFieldFrame(canvas);
 	}
 
-	v23 = canvas->_field_0xf24 / 2;
-	field_0xf20 = canvas->_field_0xf20;
+	v23 = canvas->starFieldWidth / 2;
+	sfHeight = canvas->starFieldHeight;
 	v26 = y;
 	v25 = 0;
-	v24 = field_0xf20 / 2;
-	v27 = field_0xf20 / -2;
+	v24 = sfHeight / 2;
+	v27 = sfHeight / -2;
 LABEL_20:
-	if (v25 < field_0xf20 - canvas->_field_0xf28)
+	if (v25 < sfHeight - canvas->starFieldScrollY)
 	{
 		v17 = x;
 		v18 = -v23;
 		for (i = 0; ; ++i)
 		{
-			if (i >= canvas->_field_0xf24)
+			if (i >= canvas->starFieldWidth)
 			{
 				++v25;
 				++v26;
 				++v27;
-				field_0xf20 = canvas->_field_0xf20;
+				sfHeight = canvas->starFieldHeight;
 				goto LABEL_20;
 			}
-			v8 = canvas->app->tinyGL->pixels[i + canvas->_field_0xf24 * v25];
+			v8 = canvas->app->tinyGL->pixels[i + canvas->starFieldWidth * v25];
 			v9 = v8 >> 10;
 			if ((v8 & 0x3FF) != 0)
 				break;
@@ -997,9 +997,9 @@ static void runStarFieldFrame(Canvas* canvas) {
 	int v48; // [sp+58h] [bp-20h]
 	int v49; // [sp+5Ch] [bp-1Ch]
 
-	v1 = canvas->_field_0xf24;
+	v1 = canvas->starFieldWidth;
 	v38 = v1 / 2;
-	v2 = canvas->_field_0xf20;
+	v2 = canvas->starFieldHeight;
 	v39 = v2 / 2;
 	for (i = 0; i < v2 / 2; ++i)
 	{
@@ -1033,23 +1033,23 @@ static void runStarFieldFrame(Canvas* canvas) {
 					v6 = 300;
 					v7 = 300;
 				}
-				v31 = canvas->_field_0xf2c;
+				v31 = canvas->starFieldZoom;
 				v8 = canvas->app->render->sinTable;
 				v46 = (v8[(v47 + 256) & 0x3FF] * (v7 / v31) / v38) >> 16;
 				v9 = (v8[v47] * (v6 / v31) / v39) >> 16;
 				if (v48 + v9 >= -v39 && v39 > v48 + v9 && -v38 <= v11 + v46 && v38 > v11 + v46)
 				{
 					pixels[v10 + v1 * (i - v9) + v46] = v47 | ((short)v5 << 10);
-					v1 = canvas->_field_0xf24;
+					v1 = canvas->starFieldWidth;
 					tinyGL = canvas->app->tinyGL.get();
 				}
 				tinyGL->pixels[v10 + v1 * i] = 0;
-				v1 = canvas->_field_0xf24;
+				v1 = canvas->starFieldWidth;
 			}
 			++v10;
 			++v11;
 		}
-		v2 = canvas->_field_0xf20;
+		v2 = canvas->starFieldHeight;
 	}
 	v49 = v2 - 1;
 	v43 = v39 - (v2 - 1);
@@ -1084,30 +1084,30 @@ static void runStarFieldFrame(Canvas* canvas) {
 					v16 = 300;
 					v17 = 300;
 				}
-				v30 = canvas->_field_0xf2c;
+				v30 = canvas->starFieldZoom;
 				v18 = canvas->app->render->sinTable;
 				v41 = (v18[(v40 + 256) & 0x3FF] * (v17 / v30) / v38) >> 16;
 				v19 = (v18[v40] * (v16 / v30) / v39) >> 16;
 				if (v43 + v19 >= -v39 && v39 > v43 + v19 && v21 + v41 >= -v38 && v38 > v21 + v41)
 				{
 					v44[v20 + v1 * (v49 - v19) + v41] = v40 | ((short)v15 << 10);
-					v1 = canvas->_field_0xf24;
+					v1 = canvas->starFieldWidth;
 					v13 = canvas->app->tinyGL.get();
 				}
 				v13->pixels[v20 + v1 * v49] = 0;
-				v1 = canvas->_field_0xf24;
+				v1 = canvas->starFieldWidth;
 			}
 			++v20;
 			++v21;
 		}
 		--v49;
 		++v43;
-		v2 = canvas->_field_0xf20;
+		v2 = canvas->starFieldHeight;
 	}
 	v22 = 0;
 	while (1)
 	{
-		result = 4 / canvas->_field_0xf2c;
+		result = 4 / canvas->starFieldZoom;
 		if (v22 >= result)
 			break;
 		++v22;
@@ -1120,7 +1120,7 @@ static void runStarFieldFrame(Canvas* canvas) {
 		v28 = canvas->app->nextInt() % 15 + 1;
 		if (v25 >= 512)
 			v28 = -v28;
-		canvas->app->tinyGL->pixels[v27 + v38 + canvas->_field_0xf24 * (v39 - v28)] = v25 | ((short)v26 << 10);
+		canvas->app->tinyGL->pixels[v27 + v38 + canvas->starFieldWidth * (v39 - v28)] = v25 | ((short)v26 << 10);
 	}
 }
 

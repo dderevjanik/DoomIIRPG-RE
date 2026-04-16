@@ -41,11 +41,11 @@ template <typename T> void writeData(T data, uint8_t* stream, uint32_t& cursor) 
 InputStream::InputStream() {
 	// printf("InputStream::init\n");
 	this->data = nullptr;
-	this->field_0x4 = 0;
+	this->unused_0x4 = 0;
 	this->cursor = 0;
-	this->field_0x0 = 0;
+	this->unused_0x0 = 0;
 	this->file = nullptr;
-	this->field_0x28 = 0;
+	this->unused_0x28 = 0;
 }
 
 InputStream::~InputStream() {
@@ -178,7 +178,7 @@ OutputStream::OutputStream() {
 	this->file = nullptr;
 	this->App = CAppContainer::getInstance()->app;
 	;
-	this->field_0x24_ = -1;
+	this->unused_0x24 = -1;
 	this->written = 0;
 	this->flushCount = 0;
 	this->isOpen = false;

@@ -990,7 +990,7 @@ void MenuSystem::drawOptionsScreen(Graphics* graphics)
 	fmButton* v28; // r0
 	int v29; // r5
 	int v30; // r6
-	int field_0x668; // r3
+	int sfxScrollPos; // r3
 	int v32; // r4
 	int v33; // r4
 	int v34; // r5
@@ -998,7 +998,7 @@ void MenuSystem::drawOptionsScreen(Graphics* graphics)
 	int v36; // r4
 	int v37; // r5
 	fmButton* v38; // r0
-	int field_0x66c; // r0
+	int musicScrollPos; // r0
 	int v40; // r4
 	int v41; // r4
 	int v42; // r6
@@ -1011,7 +1011,7 @@ void MenuSystem::drawOptionsScreen(Graphics* graphics)
 	fmButton* v50; // r0
 	int v51; // r6
 	int v52; // r5
-	int field_0x670; // r0
+	int alphaScrollPos; // r0
 	int v54; // r4
 	float green; // r3
 	int v57; // [sp+0h] [bp-84h]
@@ -1157,11 +1157,11 @@ void MenuSystem::drawOptionsScreen(Graphics* graphics)
 		graphics->setColor(-13487566);
 		if (this->m_menuButtons->GetButton(12)->highlighted)
 		{
-			field_0x668 = this->sfxVolumeScroll;
-			v32 = field_0x668 - 12;
-			if (v23 <= field_0x668 - 12)
+			sfxScrollPos = this->sfxVolumeScroll;
+			v32 = sfxScrollPos - 12;
+			if (v23 <= sfxScrollPos - 12)
 			{
-				if (v66 < field_0x668 + 12)
+				if (v66 < sfxScrollPos + 12)
 					v32 = v66 - 24;
 			}
 			else
@@ -1205,11 +1205,11 @@ void MenuSystem::drawOptionsScreen(Graphics* graphics)
 		graphics->setColor(-13487566);
 		if (this->m_menuButtons->GetButton(13)->highlighted)
 		{
-			field_0x66c = this->musicVolumeScroll;
-			v40 = field_0x66c - 12;
-			if (v23 <= field_0x66c - 12)
+			musicScrollPos = this->musicVolumeScroll;
+			v40 = musicScrollPos - 12;
+			if (v23 <= musicScrollPos - 12)
 			{
-				if (v66 < field_0x66c + 12)
+				if (v66 < musicScrollPos + 12)
 					v40 = v66 - 24;
 			}
 			else
@@ -1264,11 +1264,11 @@ void MenuSystem::drawOptionsScreen(Graphics* graphics)
 		graphics->setColor(-13487566);
 		if (this->m_menuButtons->GetButton(14)->highlighted)
 		{
-			field_0x670 = this->alphaScroll;
-			v54 = field_0x670 - 12;
-			if (v44 <= field_0x670 - 12)
+			alphaScrollPos = this->alphaScroll;
+			v54 = alphaScrollPos - 12;
+			if (v44 <= alphaScrollPos - 12)
 			{
-				if (v60 < field_0x670 + 12)
+				if (v60 < alphaScrollPos + 12)
 					v54 = v60 - 24;
 			}
 			else

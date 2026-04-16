@@ -148,7 +148,7 @@ public:
     int placedBombs[4] = {};
     Entity* gridEntities[Game::MAX_GRID_ENTITIES] = {};
     int64_t curPath = 0;
-    long field_0x486c_ = 0;
+    long unused_0x486c = 0; // never used
     int pathDepth = 0;
     int pathSearchDepth = 0;
     int64_t closestPath = 0;

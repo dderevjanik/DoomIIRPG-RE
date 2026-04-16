@@ -183,7 +183,7 @@ public:
 	int begY = 0;
 	int curX = 0;
 	int curY = 0;
-	int field_0x22_ = 0;
+	int unused_0x22 = 0; // never used
 	int endX = 0;
 	int endY = 0;
 

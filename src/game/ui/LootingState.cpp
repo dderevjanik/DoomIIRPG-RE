@@ -47,7 +47,7 @@ void LootingState::onEnter(Canvas* canvas) {
 	canvas->lootingTime = app->time;
 	canvas->crouchingForLoot = true;
 	canvas->lootingCachedPitch = canvas->destPitch;
-	canvas->field_0xac5_ = false;
+	canvas->lootSoundPlayed = false;
 }
 
 void LootingState::onExit(Canvas* canvas) {
@@ -79,8 +79,8 @@ void LootingState::update(Canvas* canvas) {
 		canvas->updateView();
 	}
 	else {
-		if (!canvas->field_0xac5_) {
-			canvas->field_0xac5_ = true;
+		if (!canvas->lootSoundPlayed) {
+			canvas->lootSoundPlayed = true;
 			app->sound->playSound(Sounds::getResIDByName(SoundName::LOOT), 0, 3, 0);
 		}
 		if (canvas->crouchingForLoot) {

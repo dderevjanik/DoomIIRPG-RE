@@ -129,9 +129,9 @@ public:
 	int touchMe = 0;
 	int tileDistances[Combat::MAX_TILEDISTANCES] = {};
 	int16_t* monsterAttacks = nullptr;
-	int field_0x50_ = 0;
+	int unused_0x50 = 0; // never used
 	int drawLogo = 0;
-	int field_0x58_ = 0;
+	int unused_0x58 = 0; // never used
 	int8_t* wpinfo = nullptr;
 	int8_t* wpDisplayOffsetY = nullptr;   // Per-weapon general Y offset (all renderers)
 	int8_t* wpSwOffsetX = nullptr;        // Per-weapon software renderer X offset
@@ -296,7 +296,7 @@ public:
 	bool lerpWpDown = false;
 	int lerpWpStartTime = 0;
 	int lerpWpDur = 0;
-	int field_0x110_ = 0;
+	int combatAnimState = 0; // guessed — reset to -1 at stage transitions
 	bool flashDone = false;
 	int flashDoneTime = 0;
 	int flashTime = 0;

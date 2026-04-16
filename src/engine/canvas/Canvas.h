@@ -309,7 +309,7 @@ public:
 	int scrollingTextSpacingHeight = 0;
 	int lootingTime = 0;
 	bool crouchingForLoot = false;
-	bool field_0xac5_ = false;
+	bool lootSoundPlayed = false;
 	int st_fields[Canvas::SPD_NUM_FIELDS] = {};
 	bool st_enabled = false;
 	int st_count = 0;
@@ -442,10 +442,10 @@ public:
 	int yDiff = 0;
 	int mapWidth = 0;
 	int mapHeight = 0;
-	int _field_0xf20 = 0;
-	int _field_0xf24 = 0;
-	int _field_0xf28 = 0;
-	int _field_0xf2c = 0;
+	int starFieldHeight = 0; // guessed — star field image height
+	int starFieldWidth = 0; // guessed — star field render width
+	int starFieldScrollY = 0; // guessed — star field Y scroll offset
+	int starFieldZoom = 0; // guessed — star field zoom/scale factor
 	int miniGameHelpScrollPosition = 0;
 	int helpTextNumberOfLines = 0;
 

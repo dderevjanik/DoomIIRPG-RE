@@ -68,7 +68,7 @@ void Combat::performAttack(Entity* curAttacker, Entity* curTarget, int attackX, 
     this->curAttacker = curAttacker;
     this->curTarget = curTarget;
     this->accumRoundDamage = 0;
-    this->field_0x110_ = -1;
+    this->combatAnimState = -1;
     if (curAttacker == nullptr || curTarget == nullptr) {
         app->player->updateStats();
     }
@@ -191,7 +191,7 @@ int Combat::playerSeq() {
         this->stage = this->nextStage;
         this->nextStageTime = 0;
         this->nextStage = -1;
-        this->field_0x110_ = -1;
+        this->combatAnimState = -1;
     }
     if (this->stage == 0) {
         this->isGibbed = false;
@@ -426,7 +426,7 @@ int Combat::monsterSeq() {
             this->nextStageTime = 0;
             this->nextStage = -1;
         }
-        this->field_0x110_ = -1;
+        this->combatAnimState = -1;
     }
     if (this->stage == 0) {
         this->totalDamage = 0;

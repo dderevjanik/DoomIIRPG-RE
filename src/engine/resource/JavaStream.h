@@ -18,13 +18,13 @@ class Applet;
 
 class InputStream {
   private:
-	int field_0x0;
-	int field_0x4;
+	int unused_0x0; // never used
+	int unused_0x4; // never used
 
 	uint32_t cursor;
 	FILE* file;
 	int fileSize;
-	int field_0x28;
+	int unused_0x28; // never used
 
   public:
 	static constexpr int LOADTYPE_RESOURCE = 5;
@@ -65,7 +65,7 @@ class OutputStream {
 	uint8_t* buffer;
 	uint32_t written;
 	uint8_t* writeBuff;
-	int field_0x24_;
+	int unused_0x24; // never used
 	int fileSize;
 	int flushCount;
 	bool noWrite;
