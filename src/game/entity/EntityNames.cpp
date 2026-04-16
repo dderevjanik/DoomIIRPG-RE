@@ -14,6 +14,7 @@ std::unordered_map<std::string, int> EntityNames::doorSubtypes;
 std::unordered_map<std::string, int> EntityNames::decorSubtypes;
 std::unordered_map<std::string, int> EntityNames::weaponNames;
 std::unordered_map<std::string, int> EntityNames::ammoParms;
+std::unordered_map<std::string, int> EntityNames::inventoryParms;
 std::vector<std::string> EntityNames::entityTypesByIndex;
 std::vector<std::string> EntityNames::weaponNamesByIndex;
 
@@ -89,6 +90,34 @@ std::expected<void, std::string> EntityNames::parseTypes(const DataNode&) {
 		{"revenant", 9}, {"arch_vile", 10}, {"sentry_bot", 11},
 		{"cyberdemon", 12}, {"mastermind", 13}, {"phantom", 14},
 		{"boss_vios", 15}, {"boss_vios2", 16},
+	};
+
+	// Inventory item parms (for loot drop name resolution)
+	inventoryParms = {
+		{"energy_blast", Enums::INV_DRINK_ENERGY_BLAST},
+		{"focus_juice", Enums::INV_DRINK_FOCUS_JUICE},
+		{"super_quench", Enums::INV_DRINK_SUPER_QUENCH},
+		{"power_punch", Enums::INV_DRINK_POWER_PUNCH},
+		{"snake_venom", Enums::INV_DRINK_SNAKE_VENOM},
+		{"youth_serum", Enums::INV_DRINK_YOUTH_SERUM},
+		{"caffeine_block", Enums::INV_DRINK_CAFFEINE_BLOCK},
+		{"diet_might", Enums::INV_DRINK_DIET_MIGHT},
+		{"smoothie", Enums::INV_DRINK_SMOOTHIE},
+		{"monster_shot", Enums::INV_DRINK_MONSTER_SHOT},
+		{"hell_knight_sweat", Enums::INV_DRINK_HELL_KNIGHT_SWEAT},
+		{"armor_large", Enums::INV_ARMOR_LARGE},
+		{"armor_small", Enums::INV_ARMOR_SMALL},
+		{"bottled_water", Enums::INV_BOTTLED_WATER},
+		{"ration_bar", Enums::INV_HEALTH_RATION_BAR},
+		{"health_pack", Enums::INV_HEALTH_PACK},
+		{"journal", Enums::INV_OTHER_JOURNAL},
+		{"red_key", Enums::INV_OTHER_RED_KEY},
+		{"blue_key", Enums::INV_OTHER_BLUE_KEY},
+		{"empty_syringe", Enums::INV_EMPTY_SYRINGE},
+		{"holy_water", Enums::INV_OTHER_HOLY_WATER},
+		{"pack", Enums::INV_OTHER_PACK},
+		{"uac_credit", Enums::INV_ONE_UAC_CREDIT},
+		{"uac_credits_100", Enums::INV_ONE_HUNDRED_UAC_CREDITS},
 	};
 
 	buildIndexVector(entityTypes, entityTypesByIndex);
@@ -167,6 +196,8 @@ int EntityNames::lookupParm(int eType, int eSubType, const std::string& name) {
 			return lookupInMap(weaponNames, name, 0);
 		if (eSubType == Enums::ITEM_AMMO)
 			return lookupInMap(ammoParms, name, 0);
+		if (eSubType == Enums::ITEM_CONSUMABLE)
+			return lookupInMap(inventoryParms, name, 0);
 	}
 	try { return std::stoi(name); } catch (...) { return 0; }
 }
@@ -180,4 +211,15 @@ std::string EntityNames::weaponFromIndex(int index) {
 		return weaponNamesByIndex[index];
 	}
 	return std::to_string(index);
+}
+
+std::pair<int, int> EntityNames::resolveDropName(const std::string& name) {
+	if (name == "joke_item") return {6, 0};
+	if (auto it = ammoParms.find(name); it != ammoParms.end())
+		return {Enums::ITEM_AMMO, it->second};
+	if (auto it = inventoryParms.find(name); it != inventoryParms.end())
+		return {Enums::ITEM_CONSUMABLE, it->second};
+	if (auto it = weaponNames.find(name); it != weaponNames.end())
+		return {Enums::ITEM_WEAPON, it->second};
+	return {0, 0};
 }

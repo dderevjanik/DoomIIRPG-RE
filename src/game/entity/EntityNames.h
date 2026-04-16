@@ -14,6 +14,7 @@ class EntityNames {
 	static std::unordered_map<std::string, int> decorSubtypes;
 	static std::unordered_map<std::string, int> weaponNames;
 	static std::unordered_map<std::string, int> ammoParms;
+	static std::unordered_map<std::string, int> inventoryParms;
 
 	// Index-to-name for reverse lookups (entity types, weapon names)
 	static std::vector<std::string> entityTypesByIndex;
@@ -31,6 +32,9 @@ class EntityNames {
 	// Subtype/parm resolution (replaces resolveSubtype/resolveParm)
 	static int lookupSubtype(int eType, const std::string& name);
 	static int lookupParm(int eType, int eSubType, const std::string& name);
+
+	// Resolve a loot drop name to (item category, item parm)
+	static std::pair<int, int> resolveDropName(const std::string& name);
 
 	// Weapon name lookups (replaces WeaponNames namespace)
 	static int weaponToIndex(const std::string& name);

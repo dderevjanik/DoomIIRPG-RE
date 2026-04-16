@@ -30,6 +30,36 @@
 
 // --- Helpers for data parsing (file-static) ---
 
+static void parseLootConfig(const DataNode& loot, MonsterDef::LootConfig& lc) {
+	DataNode dropNode = loot["drop"];
+	if (dropNode) {
+		std::string dropName = dropNode.asString("");
+		if (dropName == "joke_item") {
+			lc.base = 0;
+			lc.modulus = 0;
+			lc.offset = 0;
+		} else {
+			auto [category, parm] = EntityNames::resolveDropName(dropName);
+			lc.base = (int16_t)((category << 12) | (parm << 6));
+			std::string qtyStr = loot["quantity"].asString("1");
+			int qmin = 0, qmax = 0;
+			if (auto dash = qtyStr.find('-'); dash != std::string::npos) {
+				qmin = std::stoi(qtyStr.substr(0, dash));
+				qmax = std::stoi(qtyStr.substr(dash + 1));
+			} else {
+				qmin = qmax = std::stoi(qtyStr);
+			}
+			lc.offset = (int8_t)qmin;
+			lc.modulus = (int8_t)(qmax - qmin + 1);
+		}
+	} else if (loot["base"]) {
+		lc.base = (int16_t)loot["base"].asInt(0);
+		lc.modulus = (int8_t)loot["modulus"].asInt(0);
+		lc.offset = (int8_t)loot["offset"].asInt(0);
+	}
+	lc.noCorpseLoot = loot["no_corpse_loot"].asBool(lc.noCorpseLoot);
+}
+
 static int projTypeFromName(const std::string& name) {
 	if (name == "none")
 		return -1;
@@ -1065,10 +1095,7 @@ bool parseMonsters(Applet* app, const DataNode& config) {
 			// Loot drop config (type-level default)
 			DataNode loot = beh["loot"];
 			if (loot) {
-				mb.lootConfig.base = (int16_t)loot["base"].asInt(0);
-				mb.lootConfig.modulus = (int8_t)loot["modulus"].asInt(0);
-				mb.lootConfig.offset = (int8_t)loot["offset"].asInt(0);
-				mb.lootConfig.noCorpseLoot = loot["no_corpse_loot"].asBool(false);
+				parseLootConfig(loot, mb.lootConfig);
 			}
 		}
 
@@ -1138,9 +1165,8 @@ bool parseMonsters(Applet* app, const DataNode& config) {
 				DataNode tloot = tier["loot"];
 				if (tloot) {
 					auto& lt = app->combat->monsterBehaviors[idx].lootTiers[p];
-					lt.base = (int16_t)tloot["base"].asInt(app->combat->monsterBehaviors[idx].lootConfig.base);
-					lt.modulus = (int8_t)tloot["modulus"].asInt(app->combat->monsterBehaviors[idx].lootConfig.modulus);
-					lt.offset = (int8_t)tloot["offset"].asInt(app->combat->monsterBehaviors[idx].lootConfig.offset);
+					lt = app->combat->monsterBehaviors[idx].lootConfig;
+					parseLootConfig(tloot, lt);
 					app->combat->monsterBehaviors[idx].hasLootTiers = true;
 				} else if (p < MonsterBehaviors::MAX_LOOT_TIERS) {
 					app->combat->monsterBehaviors[idx].lootTiers[p] = app->combat->monsterBehaviors[idx].lootConfig;
@@ -1382,14 +1408,18 @@ std::expected<void, std::string> parseMonsterCombatFromEntities(Applet* app, con
 			}
 		}
 
-		// Loot
+		// Loot (stored per-tier when parm < MAX_LOOT_TIERS)
 		DataNode loot = combat["loot"];
 		if (loot) {
 			MonsterBehaviors& mb = app->combat->monsterBehaviors[mi];
-			mb.lootConfig.base = (int16_t)loot["base"].asInt(0);
-			mb.lootConfig.modulus = (int8_t)loot["modulus"].asInt(0);
-			mb.lootConfig.offset = (int8_t)loot["offset"].asInt(0);
-			mb.lootConfig.noCorpseLoot = loot["no_corpse_loot"].asBool(false);
+			if (parm < MonsterBehaviors::MAX_LOOT_TIERS) {
+				mb.lootTiers[parm] = mb.lootConfig;
+				parseLootConfig(loot, mb.lootTiers[parm]);
+				mb.hasLootTiers = true;
+			}
+			if (parm == 0) {
+				parseLootConfig(loot, mb.lootConfig);
+			}
 		}
 
 		loaded++;
