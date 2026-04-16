@@ -1229,6 +1229,10 @@ void gles::CreateTextureForMediaID(int n, int mediaID, bool b) {
 	}
 
 	ct = this->chains + mediaID;
+	if (ct->texnum != 0 || ct->next != nullptr || ct->prev != nullptr) {
+		LOG_INFO("[gles] WARN: chain[{}] not clean before legacy alloc: texnum={} next={} prev={} (tile={})\n",
+		         mediaID, ct->texnum, (void*)ct->next, (void*)ct->prev, n);
+	}
 	assert(ct->texnum == 0);
 	//__assert_rtn("CreateTextureForMediaID","/Users/greghodges/doom2rpg/trunk/Doom2rpg_iphone/xcode/Classes/GLES.cpp", 774,"ct->texnum == 0");
 

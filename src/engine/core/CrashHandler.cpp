@@ -23,6 +23,9 @@ static const char* signalName(int sig) {
 #endif
 		case SIGFPE:  return "SIGFPE (Floating point exception)";
 		case SIGILL:  return "SIGILL (Illegal instruction)";
+#ifdef SIGTRAP
+		case SIGTRAP: return "SIGTRAP (Trace trap)";
+#endif
 		default:      return "Unknown signal";
 	}
 }
@@ -109,4 +112,7 @@ void CrashHandler_Init() {
 #endif
 	signal(SIGFPE, crashHandler);
 	signal(SIGILL, crashHandler);
+#ifdef SIGTRAP
+	signal(SIGTRAP, crashHandler);
+#endif
 }
