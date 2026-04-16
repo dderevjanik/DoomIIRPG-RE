@@ -249,8 +249,8 @@ entities:
         death: imp_death1
       blood_color: '#92F59A'
       loot:
-        drop: joke_item
-        joke: "Pock-et Lint"
+        drop: trinket
+        trinket: "Pock-et Lint"
   imp_parm1:
     sprite: monster_imp2
     corpse: corpse_imp_parm1
@@ -294,8 +294,8 @@ entities:
         death: imp_death1
       blood_color: '#92F59A'
       loot:
-        drop: joke_item
-        joke: "Hu-man Fin-ger"
+        drop: trinket
+        trinket: "Hu-man Fin-ger"
   imp_parm2:
     sprite: monster_imp3
     corpse: corpse_imp_parm2
@@ -339,8 +339,8 @@ entities:
         death: imp_death1
       blood_color: '#92F59A'
       loot:
-        drop: joke_item
-        joke: "Rub-ber Ducky"
+        drop: trinket
+        trinket: "Rub-ber Ducky"
   sawcubus_parm0:
     sprite: monster_saw_goblin
     corpse: corpse_sawcubus_parm0
@@ -392,8 +392,8 @@ entities:
         death: chainsawgoblin_death
       blood_color: '#27565A'
       loot:
-        drop: joke_item
-        joke: "Ac-tion Fig-ure"
+        drop: trinket
+        trinket: "Ac-tion Fig-ure"
   sawcubus_parm1:
     sprite: monster_saw_goblin2
     corpse: corpse_sawcubus_parm1
@@ -445,8 +445,8 @@ entities:
         death: chainsawgoblin_death
       blood_color: '#27565A'
       loot:
-        drop: joke_item
-        joke: "Dead Bat-tery"
+        drop: trinket
+        trinket: "Dead Bat-tery"
   sawcubus_parm2:
     sprite: monster_saw_goblin3
     corpse: corpse_sawcubus_parm2
@@ -498,8 +498,8 @@ entities:
         death: chainsawgoblin_death
       blood_color: '#27565A'
       loot:
-        drop: joke_item
-        joke: "Hu-man Ear"
+        drop: trinket
+        trinket: "Hu-man Ear"
   lost_soul_parm0:
     sprite: monster_lost_soul
     corpse: corpse_lost_soul_parm0
@@ -544,8 +544,8 @@ entities:
         death: fireball_impact
       blood_color: '#BC77AF'
       loot:
-        drop: joke_item
-        joke: "Pu-trid En-trails"
+        drop: trinket
+        trinket: "Pu-trid En-trails"
   lost_soul_parm1:
     sprite: monster_lost_soul2
     corpse: corpse_lost_soul_parm1
@@ -590,8 +590,8 @@ entities:
         death: fireball_impact
       blood_color: '#BC77AF'
       loot:
-        drop: joke_item
-        joke: "Fried Cir-cui-try"
+        drop: trinket
+        trinket: "Fried Cir-cui-try"
   lost_soul_parm2:
     sprite: monster_lost_soul3
     corpse: corpse_lost_soul_parm2
@@ -636,8 +636,8 @@ entities:
         death: fireball_impact
       blood_color: '#BC77AF'
       loot:
-        drop: joke_item
-        joke: "Bag of Bone Frag-ments"
+        drop: trinket
+        trinket: "Bag of Bone Frag-ments"
   pinky_parm0:
     sprite: monster_pinky
     corpse: corpse_pinky_parm0
@@ -680,8 +680,8 @@ entities:
         death: pinky_death
       blood_color: '#7A7A3A'
       loot:
-        drop: joke_item
-        joke: "Hu-man Ashes"
+        drop: trinket
+        trinket: "Hu-man Ashes"
   pinky_parm1:
     sprite: monster_pinky2
     corpse: corpse_pinky_parm1
@@ -724,8 +724,8 @@ entities:
         death: pinky_death
       blood_color: '#7A7A3A'
       loot:
-        drop: joke_item
-        joke: "Bot-tle Open-er"
+        drop: trinket
+        trinket: "Bot-tle Open-er"
   pinky_parm2:
     sprite: monster_pinky3
     corpse: corpse_pinky_parm2
@@ -768,8 +768,8 @@ entities:
         death: pinky_death
       blood_color: '#7A7A3A'
       loot:
-        drop: joke_item
-        joke: "Green Goo"
+        drop: trinket
+        trinket: "Green Goo"
   revenant_parm0:
     sprite: monster_revenant
     corpse: corpse_revenant_parm0
@@ -1292,8 +1292,8 @@ entities:
         pain: sentinel_pain
         death: sentinel_death
       loot:
-        drop: joke_item
-        joke: "Comic Book"
+        drop: trinket
+        trinket: "Comic Book"
   sentinel_parm1:
     sprite: monster_sentinel2
     corpse: corpse_sentinel_parm1
@@ -1339,8 +1339,8 @@ entities:
         pain: sentinel_pain
         death: sentinel_death
       loot:
-        drop: joke_item
-        joke: "Can-cun Shot Glass"
+        drop: trinket
+        trinket: "Can-cun Shot Glass"
   sentinel_parm2:
     sprite: monster_sentinel3
     corpse: corpse_sentinel_parm2
@@ -1386,8 +1386,8 @@ entities:
         pain: sentinel_pain
         death: sentinel_death
       loot:
-        drop: joke_item
-        joke: "Small Fi-gur-ine"
+        drop: trinket
+        trinket: "Small Fi-gur-ine"
   arch_vile_parm0:
     sprite: monster_arch_vile
     corpse: corpse_arch_vile_parm0
@@ -1440,8 +1440,8 @@ entities:
         pain: archvile_pain
         death: archvile_death
       loot:
-        drop: joke_item
-        joke: "De-mon-ic Pa-ra-sites"
+        drop: trinket
+        trinket: "De-mon-ic Pa-ra-sites"
   arch_vile_parm1:
     sprite: monster_arch_vile2
     corpse: corpse_arch_vile_parm1
@@ -1494,8 +1494,8 @@ entities:
         pain: archvile_pain
         death: archvile_death
       loot:
-        drop: joke_item
-        joke: "Rot-ting Teeth"
+        drop: trinket
+        trinket: "Rot-ting Teeth"
   arch_vile_parm2:
     sprite: monster_arch_vile3
     corpse: corpse_arch_vile_parm2
@@ -1548,8 +1548,8 @@ entities:
         pain: archvile_pain
         death: archvile_death
       loot:
-        drop: joke_item
-        joke: "20--sided Die"
+        drop: trinket
+        trinket: "20--sided Die"
   cyberdemon_parm0:
     sprite: boss_cyberdemon
     corpse: corpse_cyberdemon_parm0

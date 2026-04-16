@@ -214,7 +214,7 @@ std::string EntityNames::weaponFromIndex(int index) {
 }
 
 std::pair<int, int> EntityNames::resolveDropName(const std::string& name) {
-	if (name == "joke_item") return {6, 0};
+	if (name == "trinket") return {6, 0};
 	if (auto it = ammoParms.find(name); it != ammoParms.end())
 		return {Enums::ITEM_AMMO, it->second};
 	if (auto it = inventoryParms.find(name); it != inventoryParms.end())

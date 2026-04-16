@@ -247,8 +247,8 @@ void Entity::populateDefaultLootSet() {
             ? mb.lootTiers[this->def->parm] : mb.lootConfig;
         if (lc.modulus > 0) {
             this->loot->lootSet[0] = lc.base | (this->getSprite() % lc.modulus + lc.offset);
-        } else if (lc.jokeStringIdx >= 0) {
-            this->loot->lootSet[0] = (0x6000 | lc.jokeStringIdx);
+        } else if (lc.trinketStringIdx >= 0) {
+            this->loot->lootSet[0] = (0x6000 | lc.trinketStringIdx);
         }
     }
 }

@@ -124,8 +124,8 @@ struct GameConfig {
 	int vendSliderStart = 5;
 	std::vector<IQHint> vendIQHints = { {80, 3}, {50, 2}, {20, 1} };
 
-	// Global joke item strings (indexed by LootConfig::jokeStringIdx)
-	std::vector<std::string> jokeStrings;
+	// Global trinket strings (indexed by LootConfig::trinketStringIdx)
+	std::vector<std::string> trinketStrings;
 
 	// Combat timing/scale constants (from game.yaml combat section)
 	int combatMaxActiveMissiles = 8;

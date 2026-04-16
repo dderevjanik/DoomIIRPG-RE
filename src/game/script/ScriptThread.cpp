@@ -2145,10 +2145,10 @@ void ScriptThread::composeLootDialog() {
         int n3 = uShortArg >> 12 & 0xF;
         if (n3 == 6) {
             short n4 = (short)(uShortArg & 0xFFF);
-            const auto& jokeStrings = CAppContainer::getInstance()->gameConfig.jokeStrings;
+            const auto& trinketStrings = CAppContainer::getInstance()->gameConfig.trinketStrings;
             largeBuffer->append('\x88');
-            if (n4 >= 0 && n4 < (int)jokeStrings.size()) {
-                largeBuffer->append(jokeStrings[n4].c_str());
+            if (n4 >= 0 && n4 < (int)trinketStrings.size()) {
+                largeBuffer->append(trinketStrings[n4].c_str());
             }
             largeBuffer->append("|");
         }
