@@ -44,7 +44,7 @@ void VendingMachine::playFromMainMenu() {
     this->stateVars[2] = 0;
 }
 
-void VendingMachine::initGame(ScriptThread* callingThread, int a, int a2) {
+void VendingMachine::initGame(ScriptThread* callingThread, int mapNumber, int machineNumber) {
     if (!this->app) this->app = CAppContainer::getInstance()->app;
     Applet* app = this->app;
     this->stateVars = app->canvas->stateVars;
@@ -59,8 +59,8 @@ void VendingMachine::initGame(ScriptThread* callingThread, int a, int a2) {
     app->canvas->clearSoftKeys();
     app->canvas->initMiniGameHelpScreen();
     this->machineJustHacked = false;
-    this->currentMapNumber = std::max(std::min(a, 9), 1);
-    this->currentMachineNumber = std::max(std::min(a2, 18), 1);
+    this->currentMapNumber = std::max(std::min(mapNumber, 9), 1);
+    this->currentMachineNumber = std::max(std::min(machineNumber, 18), 1);
     this->triesLeft = (this->gamePlayedFromMainMenu ? 4 : app->player->getVendingMachineTriesLeft(this->currentMachineNumber));
     this->machineHasBeenHacked = (!this->gamePlayedFromMainMenu && app->player->vendingMachineIsHacked(this->currentMachineNumber));
     this->correctSum = 0;

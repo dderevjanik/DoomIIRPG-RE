@@ -314,7 +314,7 @@ bool Sound::cacheSounds() {
 	return false;
 }
 
-void Sound::playSound(int16_t resID, uint8_t flags, int priority, bool a5) {
+void Sound::playSound(int16_t resID, uint8_t flags, int priority, bool unused) {
 	if (this->headless) { return; }
 	ALenum error;
 
@@ -435,7 +435,7 @@ void Sound::playSound(int16_t resID, uint8_t flags, int priority, bool a5) {
 	}
 }
 
-int Sound::getFreeSlot(int a2) {
+int Sound::getFreeSlot(int minPriority) {
 	int v4;       // r5
 	int v6;       // r11
 	int v7;       // r10
@@ -448,8 +448,8 @@ int Sound::getFreeSlot(int a2) {
 	while (this->channel[v4].resID != -1 &&
 	       (this->openAL_IsPlaying(this->channel[v4].sourceId) || this->openAL_IsPaused(this->channel[v4].sourceId))) {
 		priority = this->channel[v4].priority;
-		v9 = priority < a2;
-		if (priority < a2)
+		v9 = priority < minPriority;
+		if (priority < minPriority)
 			v9 = priority < v7;
 		if (v9)
 			v6 = v4;

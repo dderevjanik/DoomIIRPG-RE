@@ -88,8 +88,8 @@ public:
 	bool openAL_LoadAllSounds();
 
 	bool cacheSounds();
-	void playSound(int16_t resID, uint8_t flags, int priority, bool a5);
-	int getFreeSlot(int a2);
+	void playSound(int16_t resID, uint8_t flags, int priority, bool unused); // guessed — param never read
+	int getFreeSlot(int minPriority); // guessed
 	void soundStop();
 	void stopSound(int resID, bool fadeOut);
 	bool isSoundPlaying(int16_t resID);

@@ -63,7 +63,7 @@ public:
 	bool startup();
 
 	void playFromMainMenu() override;
-	void initGame(ScriptThread* callingThread, int a, int a2);
+	void initGame(ScriptThread* callingThread, int mapNumber, int machineNumber);
 	void returnFromBuying();
 	bool machineCanBeHacked();
 	void randomizeGame();
