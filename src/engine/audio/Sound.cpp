@@ -318,115 +318,107 @@ void Sound::playSound(int16_t resID, uint8_t flags, int priority, bool unused) {
 	if (this->headless) { return; }
 	ALenum error;
 
-	int v5;               // r5
-	bool v7;              // zf
-	bool v9;              // zf
-	int v10;              // r10
-	int v12;              // r6
-	int v14;              // r1
-	int v15;              // r2
-	int v17;              // r6
-	int musicVolume;      // r2
-	ALenum v20;           // r0
-	const ALchar* v21;    // r0
-	int soundFxVolume;    // r2
-	ALenum Error;         // r0
-	const ALchar* String; // r0
-	int v26;              // r2
-	ALuint v28;           // r1
-	int FreeSlot;         // [sp+8h] [bp-1Ch]
+	int soundResID;
+	bool isInvalid;
+	bool isBlocked;
+	int existingSlot;
+	int chanIdx;
+	int searchIdx;
+	int stopIdx;
+	int volume;
+	int freeSlot;
 
 	SoundStream* channel;
 
-	v5 = resID;
-	v7 = resID == -1;
+	soundResID = resID;
+	isInvalid = resID == -1;
 	if (resID != -1)
-		v7 = resID == 255;
+		isInvalid = resID == 255;
 
-	if (!v7) {
-		v9 = resID == 1255;
+	if (!isInvalid) {
+		isBlocked = resID == 1255;
 		if (resID != 1255)
-			v9 = this->soundCapacity == 0;
-		if (!v9 && !this->isMuted) {
+			isBlocked = this->soundCapacity == 0;
+		if (!isBlocked && !this->isMuted) {
 			if ((unsigned int)(resID - 1067) <= 4) {
 				if (!this->allowMusics /* || isUserMusicOn()*/)
 					return;
 			} else if (!this->allowSounds) {
 				return;
 			}
-			if (this->resID == v5)
+			if (this->resID == soundResID)
 				return;
-			FreeSlot = -1;
-			for (v12 = 0; v12 < 10; v12++) {
-				if (this->channel[v12].resID == v5) {
-					v14 = 0;
-					while (this->channel[v14].resID != v5) {
-						++v14;
-						if (v14 == 10)
+			freeSlot = -1;
+			for (chanIdx = 0; chanIdx < 10; chanIdx++) {
+				if (this->channel[chanIdx].resID == soundResID) {
+					searchIdx = 0;
+					while (this->channel[searchIdx].resID != soundResID) {
+						++searchIdx;
+						if (searchIdx == 10)
 							goto LABEL_19;
 					}
-					if (!this->openAL_IsPlaying(this->channel[v14].sourceId)) {
+					if (!this->openAL_IsPlaying(this->channel[searchIdx].sourceId)) {
 					LABEL_19:
-						v10 = v12;
+						existingSlot = chanIdx;
 						goto LABEL_29;
 					}
 					if (priority == 6) {
-						v10 = v12;
-						if (v12 != -1 && this->openAL_IsPlaying(this->channel[v12].sourceId))
+						existingSlot = chanIdx;
+						if (chanIdx != -1 && this->openAL_IsPlaying(this->channel[chanIdx].sourceId))
 							return;
 					}
 				}
 
-				if (FreeSlot == -1) {
-					if (this->channel[v12].resID == -1) {
-						FreeSlot = v12;
+				if (freeSlot == -1) {
+					if (this->channel[chanIdx].resID == -1) {
+						freeSlot = chanIdx;
 					} else {
-						FreeSlot = -1;
+						freeSlot = -1;
 					}
 				}
 			}
 
-			v10 = -1;
+			existingSlot = -1;
 		LABEL_29:
 			if (priority == 6 || (flags & 1) != 0) {
 			LABEL_31:
-				if (v10 != -1 && this->openAL_IsPlaying(this->channel[v10].sourceId))
+				if (existingSlot != -1 && this->openAL_IsPlaying(this->channel[existingSlot].sourceId))
 					return;
 			}
 			if ((flags & 2) != 0) {
-				for (v17 = 0; v17 < 10; v17++) {
-					alSourceStop(this->channel[v17].sourceId);
-					this->channel[v17].priority = 1;
-					this->channel[v17].fadeInProgress = 0;
+				for (stopIdx = 0; stopIdx < 10; stopIdx++) {
+					alSourceStop(this->channel[stopIdx].sourceId);
+					this->channel[stopIdx].priority = 1;
+					this->channel[stopIdx].fadeInProgress = 0;
 				}
 			}
 
-			if (v10 == -1) {
-				if (FreeSlot == -1) {
-					FreeSlot = this->getFreeSlot(priority);
-					if (FreeSlot == -1)
+			if (existingSlot == -1) {
+				if (freeSlot == -1) {
+					freeSlot = this->getFreeSlot(priority);
+					if (freeSlot == -1)
 						return;
 				}
-				channel = &this->channel[FreeSlot];
+				channel = &this->channel[freeSlot];
 				channel->resID = resID;
 				channel->priority = priority;
 				alSourceStop(channel->sourceId);
 				alSourcei(channel->sourceId, AL_BUFFER, 0);
-				this->openAL_LoadSound(v5, &this->channel[FreeSlot]);
+				this->openAL_LoadSound(soundResID, &this->channel[freeSlot]);
 				alSourcei(channel->sourceId, AL_BUFFER, channel->bufferId);
 				if ((unsigned int)(channel->resID - 1067) > 4)
-					soundFxVolume = this->soundFxVolume;
+					volume = this->soundFxVolume;
 				else
-					soundFxVolume = this->musicVolume;
-				this->openAL_SetVolume(channel->sourceId, soundFxVolume);
+					volume = this->musicVolume;
+				this->openAL_SetVolume(channel->sourceId, volume);
 				OpenAL_ERROR(258);
 			} else {
-				channel = &this->channel[v10];
+				channel = &this->channel[existingSlot];
 				if ((unsigned int)(channel->resID - 1067) > 4)
-					musicVolume = this->soundFxVolume;
+					volume = this->soundFxVolume;
 				else
-					musicVolume = this->musicVolume;
-				this->openAL_SetVolume(channel->sourceId, musicVolume);
+					volume = this->musicVolume;
+				this->openAL_SetVolume(channel->sourceId, volume);
 				OpenAL_ERROR(214);
 			}
 
@@ -436,30 +428,30 @@ void Sound::playSound(int16_t resID, uint8_t flags, int priority, bool unused) {
 }
 
 int Sound::getFreeSlot(int minPriority) {
-	int v4;       // r5
-	int v6;       // r11
-	int v7;       // r10
-	int priority; // r3
-	bool v9;      // cc
+	int slotIdx;
+	int bestSlot;
+	int lowestPriority;
+	int chanPriority;
+	bool isBetter;
 
-	v4 = 0;
-	v6 = -1;
-	v7 = 6;
-	while (this->channel[v4].resID != -1 &&
-	       (this->openAL_IsPlaying(this->channel[v4].sourceId) || this->openAL_IsPaused(this->channel[v4].sourceId))) {
-		priority = this->channel[v4].priority;
-		v9 = priority < minPriority;
-		if (priority < minPriority)
-			v9 = priority < v7;
-		if (v9)
-			v6 = v4;
-		++v4;
-		if (v9)
-			v7 = priority;
-		if (v4 == 10)
-			return v6;
+	slotIdx = 0;
+	bestSlot = -1;
+	lowestPriority = 6;
+	while (this->channel[slotIdx].resID != -1 &&
+	       (this->openAL_IsPlaying(this->channel[slotIdx].sourceId) || this->openAL_IsPaused(this->channel[slotIdx].sourceId))) {
+		chanPriority = this->channel[slotIdx].priority;
+		isBetter = chanPriority < minPriority;
+		if (chanPriority < minPriority)
+			isBetter = chanPriority < lowestPriority;
+		if (isBetter)
+			bestSlot = slotIdx;
+		++slotIdx;
+		if (isBetter)
+			lowestPriority = chanPriority;
+		if (slotIdx == 10)
+			return bestSlot;
 	}
-	return v4;
+	return slotIdx;
 }
 
 void Sound::soundStop() {

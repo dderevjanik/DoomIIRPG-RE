@@ -660,19 +660,19 @@ void Hud::drawBottomBar(Graphics* graphics) {
 		graphics->drawImage(imgHealth, 133, 258, 0, 0, 0);
 		this->drawNumbers(graphics, 173, 268, 1, app->player->ce->getStat(0), -1);
 
-		int v28 = app->player->ce->getStat(0);
-		int v29 = 4 - 5 * v28 / app->player->ce->getStat(1);
-		if (v29 < 0) {
-			v29 = 0;
+		int currentHealth = app->player->ce->getStat(0);
+		int faceFrame = 4 - 5 * currentHealth / app->player->ce->getStat(1);
+		if (faceFrame < 0) {
+			faceFrame = 0;
 		}
 
 		if (this->m_hudButtons->GetButton(3)->highlighted) {
-			graphics->drawRegion(this->imgPlayerActive, 0, 32 * v29, this->imgPlayerActive->width, 32, 224, 263, 20, 0, 0);
+			graphics->drawRegion(this->imgPlayerActive, 0, 32 * faceFrame, this->imgPlayerActive->width, 32, 224, 263, 20, 0, 0);
 			graphics->drawImage(this->imgPlayerFrameActive, 216, 255, 20, 0, 0);
 		}
 		else {
 			if (this->imgPlayerFaces) {
-				graphics->drawRegion(this->imgPlayerFaces, 0, 32 * v29, this->imgPlayerFaces->width, 32, 224, 263, 20, 0, 0);
+				graphics->drawRegion(this->imgPlayerFaces, 0, 32 * faceFrame, this->imgPlayerFaces->width, 32, 224, 263, 20, 0, 0);
 			}
 			graphics->drawImage(this->imgPlayerFrameNormal, 216, 255, 20, 0, 0);
 		}
@@ -989,25 +989,25 @@ void Hud::drawWeapon(Graphics* graphics, int x, int y, int weapon, bool highligh
 }
 
 void Hud::drawNumbers(Graphics* graphics, int x, int y, int space, int num, int weapon) {
-	int v11;
-	int v12;
-	int v15;
+	int hundreds;
+	int tens;
+	int ones;
 
 
 	if (num < 1000)
 	{
-		v11 = num / 100;
-		v12 = num % 100 / 10;
-		v15 = num % 100 % 10;
+		hundreds = num / 100;
+		tens = num % 100 / 10;
+		ones = num % 100 % 10;
 		if (app->combat->getWeaponFlags(weapon).soulAmmoDisplay) {
-			v11 = num % 100 % 10;
-			v15 = 5;
-			v12 = -1;
+			hundreds = num % 100 % 10;
+			ones = 5;
+			tens = -1;
 		}
-		graphics->drawRegion(this->imgNumbers, 0, 20 * (9 - v11), 10, 20, x, y, 20, 0, 0);
+		graphics->drawRegion(this->imgNumbers, 0, 20 * (9 - hundreds), 10, 20, x, y, 20, 0, 0);
 		int posX = x + space + 10;
-		graphics->drawRegion(this->imgNumbers, 0, 20 * (9 - v12), 10, 20, posX, y, 20, 0, 0);
-		graphics->drawRegion(this->imgNumbers, 0, 20 * (9 - v15), 10, 20, space + posX + 10, y, 20, 0, 0);
+		graphics->drawRegion(this->imgNumbers, 0, 20 * (9 - tens), 10, 20, posX, y, 20, 0, 0);
+		graphics->drawRegion(this->imgNumbers, 0, 20 * (9 - ones), 10, 20, space + posX + 10, y, 20, 0, 0);
 	}
 	else {
 		std::println(stderr, "ERROR: drawnumbers() does not currently support values over 999");
@@ -1016,28 +1016,28 @@ void Hud::drawNumbers(Graphics* graphics, int x, int y, int space, int num, int 
 
 void Hud::drawCurrentKeys(Graphics* graphics, int x, int y) {
 
-	int v9;
+	int keyFrame;
 
 	Player* player = app->player.get();
 	if (player->inventory[19] <= 0) {
 		if (player->inventory[20] <= 0) {
-			v9 = 0;
+			keyFrame = 0;
 		}
 		else {
-			v9 = 2;
+			keyFrame = 2;
 		}
 	}
 	else if (player->inventory[20] <= 0) {
-		v9 = 1;
+		keyFrame = 1;
 	}
 	else {
-		v9 = 3;
+		keyFrame = 3;
 	}
 	fmButton* Button = this->m_hudButtons->GetButton(6);
 	if (Button->highlighted)
-		return graphics->drawRegion(this->imgKeyActive, 0, 44 * v9, this->imgKeyActive->width, 44, x, y, 20, 0, 0);
+		return graphics->drawRegion(this->imgKeyActive, 0, 44 * keyFrame, this->imgKeyActive->width, 44, x, y, 20, 0, 0);
 	else
-		return graphics->drawRegion(this->imgKeyNormal, 0, 44 * v9, this->imgKeyNormal->width, 44, x, y, 20, 0, 0);
+		return graphics->drawRegion(this->imgKeyNormal, 0, 44 * keyFrame, this->imgKeyNormal->width, 44, x, y, 20, 0, 0);
 }
 
 void Hud::drawWeaponSelection(Graphics* graphics) {
@@ -1053,16 +1053,16 @@ void Hud::drawWeaponSelection(Graphics* graphics) {
 	}
 
 	int posY = -4;
-	int v8 = 0;
+	int weaponCount = 0;
 	int posX = 0;
 	for (int i = 0; i < 15; i++) {
 		if (((weapons >> i) & 1) != 0) {
-			if (v8 > 0 && (v8 & 3) == 0)
+			if (weaponCount > 0 && (weaponCount & 3) == 0)
 			{
 				posY -= 48;
 				posX = 0;
 			}
-			v8++;
+			weaponCount++;
 
 			fmButton* button = this->m_weaponsButtons->GetButton(i);
 			button->drawButton = true;

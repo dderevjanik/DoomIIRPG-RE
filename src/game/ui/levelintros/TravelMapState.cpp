@@ -861,22 +861,22 @@ static void drawStarField(Canvas* canvas, Graphics* graphics, int x, int y) {
 	int upTimeMs; // r2
 	int result; // r0
 	int sfHeight; // r2
-	unsigned int v8; // r2
-	unsigned int v9; // r11
-	int v10; // r6
-	int v11; // r0
-	signed int v12; // r5
-	int v13; // r6
-	int v14; // r3
-	int v15; // r0
+	unsigned int pixelValue; // r2
+	unsigned int starType; // r11
+	int distX; // r6
+	int distY; // r0
+	signed int combinedDist; // r5
+	int avgDist; // r6
+	int starSize; // r3
+	int scaledDist; // r0
 	int i; // r4
-	int v17; // r10
-	int v18; // r8
-	int v23; // [sp+18h] [bp-2Ch]
-	int v24; // [sp+1Ch] [bp-28h]
-	int v25; // [sp+20h] [bp-24h]
-	int v26; // [sp+24h] [bp-20h]
-	int v27; // [sp+28h] [bp-1Ch]
+	int drawX; // r10
+	int offsetX; // r8
+	int halfWidth; // [sp+18h] [bp-2Ch]
+	int halfHeight; // [sp+1Ch] [bp-28h]
+	int row; // [sp+20h] [bp-24h]
+	int drawY; // [sp+24h] [bp-20h]
+	int offsetY; // [sp+28h] [bp-1Ch]
 
 	graphics->fillRect(x, y, canvas->starFieldWidth, canvas->starFieldHeight, 0xFF000000);
 	if (canvas->app->upTimeMs - canvas->stateVars[7] > 59) {
@@ -884,63 +884,63 @@ static void drawStarField(Canvas* canvas, Graphics* graphics, int x, int y) {
 		runStarFieldFrame(canvas);
 	}
 
-	v23 = canvas->starFieldWidth / 2;
+	halfWidth = canvas->starFieldWidth / 2;
 	sfHeight = canvas->starFieldHeight;
-	v26 = y;
-	v25 = 0;
-	v24 = sfHeight / 2;
-	v27 = sfHeight / -2;
+	drawY = y;
+	row = 0;
+	halfHeight = sfHeight / 2;
+	offsetY = sfHeight / -2;
 LABEL_20:
-	if (v25 < sfHeight - canvas->starFieldScrollY)
+	if (row < sfHeight - canvas->starFieldScrollY)
 	{
-		v17 = x;
-		v18 = -v23;
+		drawX = x;
+		offsetX = -halfWidth;
 		for (i = 0; ; ++i)
 		{
 			if (i >= canvas->starFieldWidth)
 			{
-				++v25;
-				++v26;
-				++v27;
+				++row;
+				++drawY;
+				++offsetY;
 				sfHeight = canvas->starFieldHeight;
 				goto LABEL_20;
 			}
-			v8 = canvas->app->tinyGL->pixels[i + canvas->starFieldWidth * v25];
-			v9 = v8 >> 10;
-			if ((v8 & 0x3FF) != 0)
+			pixelValue = canvas->app->tinyGL->pixels[i + canvas->starFieldWidth * row];
+			starType = pixelValue >> 10;
+			if ((pixelValue & 0x3FF) != 0)
 				break;
 		LABEL_17:
-			++v17;
-			++v18;
+			++drawX;
+			++offsetX;
 		}
-		v10 = (int)(abs(v18) << 10) / v23;
-		v11 = (int)(abs(v27) << 10) / v24;
-		v12 = v10 + v11 + ((unsigned int)(v10 + v11) >> 31);
-		v13 = (v10 + v11) / 2;
-		graphics->setColor(65793 * ((v13 << 7 >> 10) + 128) - 0x1000000);
-		if (v9 == 1)
+		distX = (int)(abs(offsetX) << 10) / halfWidth;
+		distY = (int)(abs(offsetY) << 10) / halfHeight;
+		combinedDist = distX + distY + ((unsigned int)(distX + distY) >> 31);
+		avgDist = (distX + distY) / 2;
+		graphics->setColor(65793 * ((avgDist << 7 >> 10) + 128) - 0x1000000);
+		if (starType == 1)
 		{
-			v15 = 8 * v13;
+			scaledDist = 8 * avgDist;
 		}
 		else
 		{
-			if (!v9 || v9 != 2)
+			if (!starType || starType != 2)
 			{
-				v14 = v12 >> 11;
+				starSize = combinedDist >> 11;
 			LABEL_9:
-				if (v14 <= 0 || v14 == 1)
+				if (starSize <= 0 || starSize == 1)
 				{
-					graphics->fillRect(v17, v26, 1, 1);
+					graphics->fillRect(drawX, drawY, 1, 1);
 				}
 				else
 				{
-					graphics->fillCircle(v17, v26, v14);
+					graphics->fillCircle(drawX, drawY, starSize);
 				}
 				goto LABEL_17;
 			}
-			v15 = 10 * v13;
+			scaledDist = 10 * avgDist;
 		}
-		v14 = v15 >> 10;
+		starSize = scaledDist >> 10;
 		goto LABEL_9;
 	}
 }
@@ -949,178 +949,178 @@ LABEL_20:
 static void runStarFieldFrame(Canvas* canvas) {
 
 
-	int v1; // r11
-	int v2; // r3
+	int fieldWidth; // r11
+	int fieldHeight; // r3
 	TinyGL* tinyGL; // r5
-	unsigned int v4; // r3
-	unsigned int v5; // r3
-	int v6; // r6
-	signed int v7; // r0
-	int* v8; // r10
-	int v9; // r0
-	int v10; // r4
-	int v11; // r8
-	unsigned int v12; // r3
-	TinyGL* v13; // r5
-	unsigned int v14; // r3
-	unsigned int v15; // r3
-	int v16; // r6
-	signed int v17; // r0
-	int* v18; // r10
-	int v19; // r0
-	int v20; // r4
-	int v21; // r8
-	int v22; // r11
-	unsigned int v23; // r3
-	int v24; // r6
-	int v25; // r10
-	int v26; // r4
-	int v27; // r5
-	int v28; // r0
+	unsigned int pixelValue; // r3
+	unsigned int starType; // r3
+	int radiusY; // r6
+	signed int radiusX; // r0
+	int* sinTable; // r10
+	int offsetY; // r0
+	int col; // r4
+	int colOffset; // r8
+	unsigned int rowDist; // r3
+	TinyGL* btmTinyGL; // r5
+	unsigned int btmPixelValue; // r3
+	unsigned int btmStarType; // r3
+	int btmRadiusY; // r6
+	signed int btmRadiusX; // r0
+	int* btmSinTable; // r10
+	int btmOffsetY; // r0
+	int btmCol; // r4
+	int btmColOffset; // r8
+	int spawnIndex; // r11
+	unsigned int btmRowDist; // r3
+	int randAngle; // r6
+	int starAngle; // r10
+	int randType; // r4
+	int spawnX; // r5
+	int spawnY; // r0
 	int result; // r0
-	int v30; // [sp+0h] [bp-78h]
-	int v31; // [sp+4h] [bp-74h]
-	int v32; // [sp+8h] [bp-70h]
-	int v33; // [sp+Ch] [bp-6Ch]
-	int v34; // [sp+10h] [bp-68h]
-	int v35; // [sp+14h] [bp-64h]
-	int v38; // [sp+20h] [bp-58h]
-	int v39; // [sp+24h] [bp-54h]
-	int v40; // [sp+28h] [bp-50h]
-	int v41; // [sp+30h] [bp-48h]
+	int btmZoom; // [sp+0h] [bp-78h]
+	int zoom; // [sp+4h] [bp-74h]
+	int btmSmallRadius; // [sp+8h] [bp-70h]
+	int btmLargeRadius; // [sp+Ch] [bp-6Ch]
+	int smallRadius; // [sp+10h] [bp-68h]
+	int largeRadius; // [sp+14h] [bp-64h]
+	int halfWidth; // [sp+20h] [bp-58h]
+	int halfHeight; // [sp+24h] [bp-54h]
+	int btmAngle; // [sp+28h] [bp-50h]
+	int btmOffsetXResult; // [sp+30h] [bp-48h]
 	int i; // [sp+34h] [bp-44h]
-	int v43; // [sp+3Ch] [bp-3Ch]
-	unsigned short* v44; // [sp+44h] [bp-34h]
+	int btmRowOffset; // [sp+3Ch] [bp-3Ch]
+	unsigned short* btmPixels; // [sp+44h] [bp-34h]
 	unsigned short* pixels; // [sp+48h] [bp-30h]
-	int v46; // [sp+4Ch] [bp-2Ch]
-	int v47; // [sp+54h] [bp-24h]
-	int v48; // [sp+58h] [bp-20h]
-	int v49; // [sp+5Ch] [bp-1Ch]
+	int offsetXResult; // [sp+4Ch] [bp-2Ch]
+	int angle; // [sp+54h] [bp-24h]
+	int rowOffset; // [sp+58h] [bp-20h]
+	int btmRow; // [sp+5Ch] [bp-1Ch]
 
-	v1 = canvas->starFieldWidth;
-	v38 = v1 / 2;
-	v2 = canvas->starFieldHeight;
-	v39 = v2 / 2;
-	for (i = 0; i < v2 / 2; ++i)
+	fieldWidth = canvas->starFieldWidth;
+	halfWidth = fieldWidth / 2;
+	fieldHeight = canvas->starFieldHeight;
+	halfHeight = fieldHeight / 2;
+	for (i = 0; i < fieldHeight / 2; ++i)
 	{
-		v10 = 0;
-		v48 = v39 - i;
-		v12 = abs(v39 - i);
-		v35 = 60 * v12;
-		v34 = 20 * v12;
-		v11 = -v38;
-		while (v10 < v1)
+		col = 0;
+		rowOffset = halfHeight - i;
+		rowDist = abs(halfHeight - i);
+		largeRadius = 60 * rowDist;
+		smallRadius = 20 * rowDist;
+		colOffset = -halfWidth;
+		while (col < fieldWidth)
 		{
 			tinyGL = canvas->app->tinyGL.get();
 			pixels = tinyGL->pixels;
-			v4 = pixels[v10 + v1 * i];
-			v47 = v4 & 0x3FF;
-			if ((v4 & 0x3FF) != 0)
+			pixelValue = pixels[col + fieldWidth * i];
+			angle = pixelValue & 0x3FF;
+			if ((pixelValue & 0x3FF) != 0)
 			{
-				v5 = v4 >> 10;
-				if (v5 == 1)
+				starType = pixelValue >> 10;
+				if (starType == 1)
 				{
-					v6 = v34;
-					v7 = 20 * abs(v11);
+					radiusY = smallRadius;
+					radiusX = 20 * abs(colOffset);
 				}
-				else if (v5)
+				else if (starType)
 				{
-					v6 = v35;
-					v7 = 60 * abs(v11);
+					radiusY = largeRadius;
+					radiusX = 60 * abs(colOffset);
 				}
 				else
 				{
-					v6 = 300;
-					v7 = 300;
+					radiusY = 300;
+					radiusX = 300;
 				}
-				v31 = canvas->starFieldZoom;
-				v8 = canvas->app->render->sinTable;
-				v46 = (v8[(v47 + 256) & 0x3FF] * (v7 / v31) / v38) >> 16;
-				v9 = (v8[v47] * (v6 / v31) / v39) >> 16;
-				if (v48 + v9 >= -v39 && v39 > v48 + v9 && -v38 <= v11 + v46 && v38 > v11 + v46)
+				zoom = canvas->starFieldZoom;
+				sinTable = canvas->app->render->sinTable;
+				offsetXResult = (sinTable[(angle + 256) & 0x3FF] * (radiusX / zoom) / halfWidth) >> 16;
+				offsetY = (sinTable[angle] * (radiusY / zoom) / halfHeight) >> 16;
+				if (rowOffset + offsetY >= -halfHeight && halfHeight > rowOffset + offsetY && -halfWidth <= colOffset + offsetXResult && halfWidth > colOffset + offsetXResult)
 				{
-					pixels[v10 + v1 * (i - v9) + v46] = v47 | ((short)v5 << 10);
-					v1 = canvas->starFieldWidth;
+					pixels[col + fieldWidth * (i - offsetY) + offsetXResult] = angle | ((short)starType << 10);
+					fieldWidth = canvas->starFieldWidth;
 					tinyGL = canvas->app->tinyGL.get();
 				}
-				tinyGL->pixels[v10 + v1 * i] = 0;
-				v1 = canvas->starFieldWidth;
+				tinyGL->pixels[col + fieldWidth * i] = 0;
+				fieldWidth = canvas->starFieldWidth;
 			}
-			++v10;
-			++v11;
+			++col;
+			++colOffset;
 		}
-		v2 = canvas->starFieldHeight;
+		fieldHeight = canvas->starFieldHeight;
 	}
-	v49 = v2 - 1;
-	v43 = v39 - (v2 - 1);
-	while (v49 >= v2 / 2)
+	btmRow = fieldHeight - 1;
+	btmRowOffset = halfHeight - (fieldHeight - 1);
+	while (btmRow >= fieldHeight / 2)
 	{
-		v20 = 0;
-		v23 = abs(v43);
-		v21 = -v38;
-		v33 = 60 * v23;
-		v32 = 20 * v23;
-		while (v20 < v1)
+		btmCol = 0;
+		btmRowDist = abs(btmRowOffset);
+		btmColOffset = -halfWidth;
+		btmLargeRadius = 60 * btmRowDist;
+		btmSmallRadius = 20 * btmRowDist;
+		while (btmCol < fieldWidth)
 		{
-			v13 = canvas->app->tinyGL.get();
-			v44 = v13->pixels;
-			v14 = v44[v20 + v1 * v49];
-			v40 = v14 & 0x3FF;
-			if ((v14 & 0x3FF) != 0)
+			btmTinyGL = canvas->app->tinyGL.get();
+			btmPixels = btmTinyGL->pixels;
+			btmPixelValue = btmPixels[btmCol + fieldWidth * btmRow];
+			btmAngle = btmPixelValue & 0x3FF;
+			if ((btmPixelValue & 0x3FF) != 0)
 			{
-				v15 = v14 >> 10;
-				if (v15 == 1)
+				btmStarType = btmPixelValue >> 10;
+				if (btmStarType == 1)
 				{
-					v16 = v32;
-					v17 = 20 * abs(v21);
+					btmRadiusY = btmSmallRadius;
+					btmRadiusX = 20 * abs(btmColOffset);
 				}
-				else if (v15)
+				else if (btmStarType)
 				{
-					v16 = v33;
-					v17 = 60 * abs(v21);
+					btmRadiusY = btmLargeRadius;
+					btmRadiusX = 60 * abs(btmColOffset);
 				}
 				else
 				{
-					v16 = 300;
-					v17 = 300;
+					btmRadiusY = 300;
+					btmRadiusX = 300;
 				}
-				v30 = canvas->starFieldZoom;
-				v18 = canvas->app->render->sinTable;
-				v41 = (v18[(v40 + 256) & 0x3FF] * (v17 / v30) / v38) >> 16;
-				v19 = (v18[v40] * (v16 / v30) / v39) >> 16;
-				if (v43 + v19 >= -v39 && v39 > v43 + v19 && v21 + v41 >= -v38 && v38 > v21 + v41)
+				btmZoom = canvas->starFieldZoom;
+				btmSinTable = canvas->app->render->sinTable;
+				btmOffsetXResult = (btmSinTable[(btmAngle + 256) & 0x3FF] * (btmRadiusX / btmZoom) / halfWidth) >> 16;
+				btmOffsetY = (btmSinTable[btmAngle] * (btmRadiusY / btmZoom) / halfHeight) >> 16;
+				if (btmRowOffset + btmOffsetY >= -halfHeight && halfHeight > btmRowOffset + btmOffsetY && btmColOffset + btmOffsetXResult >= -halfWidth && halfWidth > btmColOffset + btmOffsetXResult)
 				{
-					v44[v20 + v1 * (v49 - v19) + v41] = v40 | ((short)v15 << 10);
-					v1 = canvas->starFieldWidth;
-					v13 = canvas->app->tinyGL.get();
+					btmPixels[btmCol + fieldWidth * (btmRow - btmOffsetY) + btmOffsetXResult] = btmAngle | ((short)btmStarType << 10);
+					fieldWidth = canvas->starFieldWidth;
+					btmTinyGL = canvas->app->tinyGL.get();
 				}
-				v13->pixels[v20 + v1 * v49] = 0;
-				v1 = canvas->starFieldWidth;
+				btmTinyGL->pixels[btmCol + fieldWidth * btmRow] = 0;
+				fieldWidth = canvas->starFieldWidth;
 			}
-			++v20;
-			++v21;
+			++btmCol;
+			++btmColOffset;
 		}
-		--v49;
-		++v43;
-		v2 = canvas->starFieldHeight;
+		--btmRow;
+		++btmRowOffset;
+		fieldHeight = canvas->starFieldHeight;
 	}
-	v22 = 0;
+	spawnIndex = 0;
 	while (1)
 	{
 		result = 4 / canvas->starFieldZoom;
-		if (v22 >= result)
+		if (spawnIndex >= result)
 			break;
-		++v22;
-		v24 = canvas->app->nextInt() % 1023;
-		v25 = v24 + 1;
-		v26 = canvas->app->nextInt() % 3;
-		v27 = canvas->app->nextInt() % 15 + 1;
-		if ((unsigned int)(v24 - 256) <= 0x1FE)
-			v27 = -v27;
-		v28 = canvas->app->nextInt() % 15 + 1;
-		if (v25 >= 512)
-			v28 = -v28;
-		canvas->app->tinyGL->pixels[v27 + v38 + canvas->starFieldWidth * (v39 - v28)] = v25 | ((short)v26 << 10);
+		++spawnIndex;
+		randAngle = canvas->app->nextInt() % 1023;
+		starAngle = randAngle + 1;
+		randType = canvas->app->nextInt() % 3;
+		spawnX = canvas->app->nextInt() % 15 + 1;
+		if ((unsigned int)(randAngle - 256) <= 0x1FE)
+			spawnX = -spawnX;
+		spawnY = canvas->app->nextInt() % 15 + 1;
+		if (starAngle >= 512)
+			spawnY = -spawnY;
+		canvas->app->tinyGL->pixels[spawnX + halfWidth + canvas->starFieldWidth * (halfHeight - spawnY)] = starAngle | ((short)randType << 10);
 	}
 }
 

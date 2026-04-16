@@ -277,26 +277,26 @@ bool Canvas::startup() {
 				m_controlButtons[4] = new fmButtonContainer();
 
 				if (i == 1) {
-					int v53 = 5;
-					int v49 = 117;
+					int btnX = 5;
+					int btnY = 117;
 					while (1)
 					{
-						button = new fmButton(5, v53, v53 + 116, 13, v49, -1);
+						button = new fmButton(5, btnX, btnX + 116, 13, btnY, -1);
 						//button->drawTouchArea = true; // Test
 						m_controlButtons[2]->AddButton(button);
-						button = new fmButton(7, 140 - v53, v53 + 116, 13, v49, -1);
+						button = new fmButton(7, 140 - btnX, btnX + 116, 13, btnY, -1);
 						//button->drawTouchArea = true; // Test
 						m_controlButtons[2]->AddButton(button);
-						button = new fmButton(3, v53 + 13, v53 + 103, v49, 13, -1);
+						button = new fmButton(3, btnX + 13, btnX + 103, btnY, 13, -1);
 						//button->drawTouchArea = true; // Test
 						m_controlButtons[0]->AddButton(button);
-						button = new fmButton(9, v53 + 13, 243 - v53, v49, 13, -1);
+						button = new fmButton(9, btnX + 13, 243 - btnX, btnY, 13, -1);
 						//button->drawTouchArea = true; // Test
 						m_controlButtons[0]->AddButton(button);
-						v49 -= 26;
-						if (v53 == 44)
+						btnY -= 26;
+						if (btnX == 44)
 							break;
-						v53 += 13;
+						btnX += 13;
 					}
 					button = new fmButton(6, 153, 25, 322, 226, -1);
 					m_controlButtons[2]->AddButton(button);
@@ -649,20 +649,20 @@ void Canvas::backPaint(Graphics* graphics) {
 			}
 			largeBuffer2->setLength(0);
 			largeBuffer2->append("OSTime: ");
-			int v30 = 0;
+			int totalOsTime = 0;
 			for (int i = 0; i < 8; i++) {
-				v30 += app->osTime[i];
+				totalOsTime += app->osTime[i];
 			}
-			largeBuffer2->append(v30 / 8);
+			largeBuffer2->append(totalOsTime / 8);
 			graphics->drawString(largeBuffer2, this->viewRect[0], n3, 0);
 			n3 += Applet::FONT_HEIGHT[app->fontType];
 			largeBuffer2->setLength(0);
 			largeBuffer2->append("Code: ");
-			int v31 = 0;
+			int totalCodeTime = 0;
 			for (int i = 0; i < 8; i++) {
-				v31 += app->codeTime[i];
+				totalCodeTime += app->codeTime[i];
 			}
-			largeBuffer2->append(v31 / 8);
+			largeBuffer2->append(totalCodeTime / 8);
 			graphics->drawString(largeBuffer2, this->viewRect[0], n3, 0);
 			largeBuffer2->dispose();
 			n3 += Applet::FONT_HEIGHT[app->fontType];
@@ -2507,33 +2507,33 @@ void Canvas::logoState() {
 
 void Canvas::drawScrollBar(Graphics* graphics, int i, int i2, int i3, int i4, int i5, int i6, int i7)
 {
-	bool v9; // cc
-	int v12; // r1
-	Canvas* v14; // [sp+20h] [bp-24h]
-	int v15; // [sp+24h] [bp-20h]
-	int v16; // [sp+28h] [bp-1Ch]
+	bool needsScrollBar; // cc
+	int visibleRange; // r1
+	Canvas* self; // [sp+20h] [bp-24h]
+	int thumbHeight; // [sp+24h] [bp-20h]
+	int thumbOffset; // [sp+28h] [bp-1Ch]
 
-	v14 = this;
-	v9 = i7 < 0;
+	self = this;
+	needsScrollBar = i7 < 0;
 	if (i7)
-		v9 = i7 < i6;
-	if (v9)
+		needsScrollBar = i7 < i6;
+	if (needsScrollBar)
 	{
-		v12 = i6 - i7;
+		visibleRange = i6 - i7;
 		if (i6 - i7 < i4)
-			v12 = i4;
-		v15 = 3 * i3 / (4 * ((i7 + i6 - 1) / i7));
-		v16 = ((i4 << 16) / (v12 << 8) * ((i3 - v15 - 14) << 8)) >> 16;
+			visibleRange = i4;
+		thumbHeight = 3 * i3 / (4 * ((i7 + i6 - 1) / i7));
+		thumbOffset = ((i4 << 16) / (visibleRange << 8) * ((i3 - thumbHeight - 14) << 8)) >> 16;
 		if (i6 == i5)
-			v16 = i3 - 3 * i3 / (4 * ((i7 + i6 - 1) / i7)) - 14;
+			thumbOffset = i3 - 3 * i3 / (4 * ((i7 + i6 - 1) / i7)) - 14;
 		graphics->drawRegion(this->imgUIImages, 60, 0, 7, 7, i, i2, 24, 0, 0);
-		graphics->drawRegion(v14->imgUIImages, 60, 7, 7, 7, i, i3 + i2, 40, 0, 0);
+		graphics->drawRegion(self->imgUIImages, 60, 7, 7, 7, i, i3 + i2, 40, 0, 0);
 		graphics->setColor(-5002605);
 		graphics->fillRect(i - 7, i2 + 7, 7, i3 - 14);
 		graphics->setColor(-1585235);
-		graphics->fillRect(i - 7, v16 + 7 + i2, 7, v15);
+		graphics->fillRect(i - 7, thumbOffset + 7 + i2, 7, thumbHeight);
 		graphics->setColor(-16777216);
-		graphics->drawRect(i - 7, v16 + 7 + i2, 6, v15 - 1);
+		graphics->drawRect(i - 7, thumbOffset + 7 + i2, 6, thumbHeight - 1);
 		graphics->drawRect(i - 7, i2, 6, i3 - 1);
 	}
 }
@@ -3747,73 +3747,73 @@ void Canvas::turnEntityIntoWaterSpout(Entity* entity) {
 
 
 void Canvas::flipControls() {
-	int v1; // r10
-	fmButtonContainer** v2; // r6
+	int setIndex; // r10
+	fmButtonContainer** containerPtr; // r6
 	int x; // r8
 	fmButton* Button; // r5
-	fmButton* v5; // r0
-	bool v6; // zf
-	fmButton* v7; // r4
-	fmButton* v8; // r4
-	fmButton* v9; // r0
-	bool v10; // zf
-	fmButton* v11; // r4
-	fmButton* v12; // r0
-	bool v13; // zf
-	fmButton* v14; // r5
-	int v15; // r8
+	fmButton* rightButton; // r0
+	bool eitherNull; // zf
+	fmButton* rightBtn; // r4
+	fmButton* leftTempBtn; // r4
+	fmButton* rightTempBtn; // r0
+	bool eitherTempNull; // zf
+	fmButton* upButton; // r4
+	fmButton* downButton; // r0
+	bool eitherUpDownNull; // zf
+	fmButton* downBtn; // r5
+	int savedX; // r8
 
-	v1 = 0;
-	v2 = &this->m_controlButtons[4];
+	setIndex = 0;
+	containerPtr = &this->m_controlButtons[4];
 	this->isFlipControls ^= 1u;
 	do
 	{
-		v2[-4]->FlipButtons();
-		v2[-2]->FlipButtons();
-		v2[0]->FlipButtons();
+		containerPtr[-4]->FlipButtons();
+		containerPtr[-2]->FlipButtons();
+		containerPtr[0]->FlipButtons();
 		while (1)
 		{
-			Button = v2[-2]->GetButton(5);
-			v5 = v2[-2]->GetButton(7);
-			v6 = Button == 0;
+			Button = containerPtr[-2]->GetButton(5);
+			rightButton = containerPtr[-2]->GetButton(7);
+			eitherNull = Button == 0;
 			if (Button)
-				v6 = v5 == 0;
-			v7 = v5;
-			if (v6)
+				eitherNull = rightButton == 0;
+			rightBtn = rightButton;
+			if (eitherNull)
 				break;
 			x = Button->touchArea.x;
-			Button->SetTouchArea(v5->touchArea.x, Button->touchArea.y, Button->touchArea.w, Button->touchArea.h);
-			v7->SetTouchArea(x, v7->touchArea.y, v7->touchArea.w, v7->touchArea.h);
+			Button->SetTouchArea(rightButton->touchArea.x, Button->touchArea.y, Button->touchArea.w, Button->touchArea.h);
+			rightBtn->SetTouchArea(x, rightBtn->touchArea.y, rightBtn->touchArea.w, rightBtn->touchArea.h);
 			Button->buttonID = -2;
-			v7->buttonID = -3;
+			rightBtn->buttonID = -3;
 		}
 		while (1)
 		{
-			v8 = v2[-2]->GetButton(-2);
-			v9 = v2[-2]->GetButton(-3);
-			v10 = v8 == 0;
-			if (v8)
-				v10 = v9 == 0;
-			if (v10)
+			leftTempBtn = containerPtr[-2]->GetButton(-2);
+			rightTempBtn = containerPtr[-2]->GetButton(-3);
+			eitherTempNull = leftTempBtn == 0;
+			if (leftTempBtn)
+				eitherTempNull = rightTempBtn == 0;
+			if (eitherTempNull)
 				break;
-			v8->buttonID = 5;
-			v9->buttonID = 7;
+			leftTempBtn->buttonID = 5;
+			rightTempBtn->buttonID = 7;
 		}
-		v11 = v2[0]->GetButton(2);
-		v12 = v2[0]->GetButton(4);
-		v13 = v11 == 0;
-		if (v11)
-			v13 = v12 == 0;
-		v14 = v12;
-		if (!v13)
+		upButton = containerPtr[0]->GetButton(2);
+		downButton = containerPtr[0]->GetButton(4);
+		eitherUpDownNull = upButton == 0;
+		if (upButton)
+			eitherUpDownNull = downButton == 0;
+		downBtn = downButton;
+		if (!eitherUpDownNull)
 		{
-			v15 = v11->touchArea.x;
-			v11->SetTouchArea(v12->touchArea.x, v11->touchArea.y, v11->touchArea.w, v11->touchArea.h);
-			v14->SetTouchArea(v15, v14->touchArea.y, v14->touchArea.w, v14->touchArea.h);
+			savedX = upButton->touchArea.x;
+			upButton->SetTouchArea(downButton->touchArea.x, upButton->touchArea.y, upButton->touchArea.w, upButton->touchArea.h);
+			downBtn->SetTouchArea(savedX, downBtn->touchArea.y, downBtn->touchArea.w, downBtn->touchArea.h);
 		}
-		++v1;
-		++v2;
-	} while (v1 != 2);
+		++setIndex;
+		++containerPtr;
+	} while (setIndex != 2);
 }
 
 void Canvas::setControlLayout() {
