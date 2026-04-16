@@ -21,6 +21,7 @@
 #include "ConfigEnums.h"
 #include "Render.h"
 #include "Log.h"
+#include "WidgetScreen.h"
 #include "EventBus.h"
 #include "GameEvents.h"
 
@@ -71,6 +72,10 @@ bool DoomIIRPGGame::startup(Applet* app) {
 	// ST_LOADING and ST_SAVING remain inline — their update() needs early return from run()
 	// app->canvas->registerStateHandler(Canvas::ST_LOADING, &loadingState);
 	// app->canvas->registerStateHandler(Canvas::ST_SAVING, &savingState);
+
+	// Widget screen (new UI framework)
+	widgetScreen.loadFromYAML(app, "screens/test_settings.yaml");
+	app->canvas->registerStateHandler(Canvas::ST_WIDGET_SCREEN, &widgetScreen);
 
 	// Register minigames
 	auto& mgReg = CAppContainer::getInstance()->minigameRegistry;

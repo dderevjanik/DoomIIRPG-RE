@@ -68,7 +68,8 @@ static const std::unordered_map<std::string, int> s_actions = {
 	{"ronlyrender", 117}, {"rskipdecals", 118}, {"rskip2dstretch", 119},
 	{"driving_mode", 120}, {"render_mode", 121}, {"equipformap", 122},
 	{"oneshot", 123}, {"debug_font", 124}, {"sys_test", 125},
-	{"skip_minigames", 126}, {"show_heap", 127}
+	{"skip_minigames", 126}, {"show_heap", 127},
+	{"widget_screen", 128}
 };
 static const std::unordered_map<std::string, int> s_flags = {
 	{"noselect", 0x1}, {"nodehyphenate", 0x2}, {"disabled", 0x4}, {"align_center", 0x8},
@@ -226,7 +227,8 @@ bool MenuSystem::loadUIFromYAML(const char* path) {
 
 	// Build image name -> Image* lookup from member variables
 	// Maps ui.yaml image names to the already-loaded and processed member images
-	std::unordered_map<std::string, Image*> imageMap;
+	this->imageMap.clear();
+	auto& imageMap = this->imageMap;
 	imageMap["menu_btn_bg"] = this->imgMenuBtnBackground;
 	imageMap["menu_btn_bg_on"] = this->imgMenuBtnBackgroundOn;
 	imageMap["menu_arrow_down"] = this->imgMenuArrowDown;
@@ -275,6 +277,7 @@ bool MenuSystem::loadUIFromYAML(const char* path) {
 	imageMap["vending_scroll_btn_mid"] = this->imgVendingScrollButtonMiddle;
 	imageMap["vending_scroll_btn_bottom"] = this->imgVendingScrollButtonBottom;
 	imageMap["logo"] = this->imgLogo;
+	imageMap["main_bg"] = this->imgMainBG;
 
 	// Build UI sound alias -> ResID lookup from sounds.yaml ui_sounds section
 	std::unordered_map<std::string, int> soundMap;
@@ -914,9 +917,12 @@ const MenuSystem::YAMLMenuDef* MenuSystem::getMenuDef(int menuId) const {
 }
 
 Image* MenuSystem::resolveMenuImage(const std::string& name) const {
+	// Dynamic images that can change at runtime — resolve from members directly
 	if (name == "main_bg") return this->imgMainBG;
 	if (name == "logo") return this->imgLogo;
-	// Add more dynamic image mappings here as needed
+	// Static images resolved from the map built during loadUIFromYAML
+	auto it = this->imageMap.find(name);
+	if (it != this->imageMap.end()) return it->second;
 	return nullptr;
 }
 

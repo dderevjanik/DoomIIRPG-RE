@@ -362,6 +362,7 @@ public:
 
     std::vector<YAMLMenuDef> yamlMenuDefs;
     std::unordered_map<int, int> yamlMenuById; // menuId -> index in yamlMenuDefs
+    std::unordered_map<std::string, Image*> imageMap; // image name -> Image* (for widget system)
 
 	// Constructor
 	MenuSystem();

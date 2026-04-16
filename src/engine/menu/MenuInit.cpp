@@ -411,6 +411,14 @@ void MenuSystem::initMenu(int menu) {
 				this->items[22].textField2 = this->getLastArgString();
 			}
 			this->items[26].textField2 = this->onOffValue(app->canvas->showFreeHeap);
+			{
+				Text* buf = app->localization->getSmallBuffer();
+				buf->setLength(0);
+				buf->append("Widget Screen");
+				app->localization->addTextArg(buf);
+				buf->dispose();
+				this->addItem(this->getLastArgString(), MenuSystem::EMPTY_TEXT, 0, 128, 0, MenuSystem::EMPTY_TEXT);
+			}
 			break;
 		}
 

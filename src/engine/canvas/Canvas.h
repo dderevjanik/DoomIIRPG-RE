@@ -102,6 +102,7 @@ public:
 	static constexpr int ST_TREADMILL = 24;
 	static constexpr int ST_BOT_DYING = 25;
 	static constexpr int ST_LOGO = 26;
+	static constexpr int ST_WIDGET_SCREEN = 27;
 
 	static constexpr int viewStepValues[] = { 64, 0, 64, -64, 0, -64, -64, -64, -64, 0, -64, 64, 0, 64, 64, 64 };
 

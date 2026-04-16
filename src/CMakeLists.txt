@@ -42,6 +42,7 @@ target_include_directories(drpg-engine-lib PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/engine/resource
 	${CMAKE_CURRENT_SOURCE_DIR}/engine/script
 	${CMAKE_CURRENT_SOURCE_DIR}/engine/data
+	${CMAKE_CURRENT_SOURCE_DIR}/engine/widget
 	# game root + subfolders
 	${CMAKE_CURRENT_SOURCE_DIR}/game
 	${CMAKE_CURRENT_SOURCE_DIR}/game/core

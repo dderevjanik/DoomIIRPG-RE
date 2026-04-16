@@ -36,6 +36,7 @@
 #include "Menus.h"
 #include "Input.h"
 #include "ICanvasState.h"
+#include "WidgetScreen.h"
 
 Canvas::Canvas() = default;
 
@@ -978,6 +979,7 @@ static const char* canvasStateName(int state) {
 		case Canvas::ST_TREADMILL: return "TREADMILL";
 		case Canvas::ST_BOT_DYING: return "BOT_DYING";
 		case Canvas::ST_LOGO: return "LOGO";
+		case Canvas::ST_WIDGET_SCREEN: return "WIDGET_SCREEN";
 		default: return "UNKNOWN";
 	}
 }
@@ -1364,7 +1366,7 @@ int Canvas::getKeyAction(int i) {
 
 	//printf("getKeyAction i %d\n", i);
 
-	if (this->state == Canvas::ST_MENU) {
+	if (this->state == Canvas::ST_MENU || this->state == Canvas::ST_WIDGET_SCREEN) {
 		if (i & AVK_MENU_UP) {
 			return Enums::ACTION_UP;
 		}
@@ -3224,6 +3226,10 @@ void Canvas::touchStart(int pressX, int pressY) {
 	else if (this->state == Canvas::ST_CAMERA) { // [GEC ]Port: New
 		this->m_softKeyButtons->HighlightButton(pressX, pressY, true);
 	}
+	else if (this->state == Canvas::ST_WIDGET_SCREEN) {
+		if (auto* ws = static_cast<WidgetScreen*>(this->stateHandlers[Canvas::ST_WIDGET_SCREEN]))
+			ws->touchStart(pressX, pressY);
+	}
 }
 
 void Canvas::touchMove(int pressX, int pressY) {
@@ -3348,6 +3354,10 @@ void Canvas::touchMove(int pressX, int pressY) {
 	else if (this->state == Canvas::ST_CAMERA) { // [GEC]: New
 		this->m_softKeyButtons->HighlightButton(pressX, pressY, true);
 	}
+	else if (this->state == Canvas::ST_WIDGET_SCREEN) {
+		if (auto* ws = static_cast<WidgetScreen*>(this->stateHandlers[Canvas::ST_WIDGET_SCREEN]))
+			ws->touchMove(pressX, pressY);
+	}
 }
 
 void Canvas::touchEnd(int pressX, int pressY) {
@@ -3362,6 +3372,12 @@ void Canvas::touchEnd(int pressX, int pressY) {
 	//printf("state %d\n", state);
 	if (this->state == Canvas::ST_MENU) {
 		app->menuSystem->handleUserTouch(pressX, pressY, false);
+		return;
+	}
+
+	if (this->state == Canvas::ST_WIDGET_SCREEN) {
+		if (auto* ws = static_cast<WidgetScreen*>(this->stateHandlers[Canvas::ST_WIDGET_SCREEN]))
+			ws->touchEnd(pressX, pressY);
 		return;
 	}
 
