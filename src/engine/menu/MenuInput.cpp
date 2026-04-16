@@ -708,35 +708,35 @@ void MenuSystem::selectDebugAction(int i) {
 
 void MenuSystem::handleUserTouch(int x, int y, bool b) {
 
-	bool v4; // r6
-	int v5; // s16
-	int v8; // s17
-	fmButton* Button; // r0
-	fmScrollButton* v10; // r0
-	fmScrollButton* btnScroll; // r2
-	int i; // r4
-	fmButton* v13; // r0
-	int j; // r4
-	fmButton* v15; // r0
-	int TouchedButtonID; // r8
-	int v17; // r4
-	fmButton* v18; // r0
-	fmButtonContainer* btnContainer02; // r0
-	fmButton* v20; // r0
-	int selectedIndex; // r1
-	int v24; // r1
-	int v25; // r2
-	fmButtonContainer* btnContainer03; // r0
-	bool v27; // r3
-	int v28; // r0
-	VendingMachine* v29; // r2
-	int v30; // r12
-	VendingMachine* vendingMachine; // r2
-	int currentItemQuantity; // r3
+	bool isPressed;
+	int touchX;
+	int touchY;
+	fmButton* Button;
+	fmScrollButton* v10;
+	fmScrollButton* btnScroll;
+	int i;
+	fmButton* v13;
+	int j;
+	fmButton* v15;
+	int menuButtonID;
+	int infoButtonID;
+	fmButton* v18;
+	fmButtonContainer* btnContainer02;
+	fmButton* v20;
+	int selectedIndex;
+	int highlightX;
+	int highlightY;
+	fmButtonContainer* btnContainer03;
+	bool highlightState;
+	int vendingButtonID;
+	VendingMachine* v29;
+	int quantity;
+	VendingMachine* vendingMachine;
+	int currentItemQuantity;
 
-	v4 = b;
-	v5 = x;
-	v8 = y;
+	isPressed = b;
+	touchX = x;
+	touchY = y;
 	if (this->menu == Menus::MENU_COMIC_BOOK) {
 		app->comicBook->Touch(x, y, b);
 		return;
@@ -769,11 +769,11 @@ void MenuSystem::handleUserTouch(int x, int y, bool b) {
 	if (this->m_scrollBar->enabled && this->m_scrollBar->barRect.ContainsPoint(x, y))
 	{
 		if (this->isMainMenuScrollBar){
-			this->m_scrollBar->SetTouchOffset(v5, v8);
+			this->m_scrollBar->SetTouchOffset(touchX, touchY);
 		}
 		else {
 			this->m_scrollBar->thumbDragOffset = 0;
-			this->m_scrollBar->Update(v5, v8);
+			this->m_scrollBar->Update(touchX, touchY);
 		}
 		this->m_scrollBar->barTouched = 1;
 		return;
@@ -795,34 +795,34 @@ clear_button_highlights:
 			return;
 		}
 
-		TouchedButtonID = this->m_menuButtons->GetTouchedButtonID(v5, v8);
-		v17 = this->m_infoButtons->GetTouchedButtonID(v5, v8);
+		menuButtonID = this->m_menuButtons->GetTouchedButtonID(touchX, touchY);
+		infoButtonID = this->m_infoButtons->GetTouchedButtonID(touchX, touchY);
 
-		if (v17 < 0)
+		if (infoButtonID < 0)
 		{
-			if (TouchedButtonID < 0)
+			if (menuButtonID < 0)
 			{
-				if (!v4)
+				if (!isPressed)
 				{
 					if (this->menu != Menus::MENU_END_RANKING && this->menu != Menus::MENU_LEVEL_STATS)
 					{
 					handle_vending_confirm:
 						if (this->menu != Menus::MENU_VENDING_MACHINE_CONFIRM)
 							return;
-						if (v4)
+						if (isPressed)
 						{
-							v24 = v5;
-							v25 = v8;
+							highlightX = touchX;
+							highlightY = touchY;
 							btnContainer03 = this->m_vendingButtons;
-							v27 = 1;
+							highlightState = 1;
 						highlight_vending_button:
-							btnContainer03->HighlightButton(v24, v25, v27);
+							btnContainer03->HighlightButton(highlightX, highlightY, highlightState);
 							return;
 						}
-						v28 = this->m_vendingButtons->GetTouchedButtonID(v5, v8);
-						if (v28)
+						vendingButtonID = this->m_vendingButtons->GetTouchedButtonID(touchX, touchY);
+						if (vendingButtonID)
 						{
-							if (v28 != 1)
+							if (vendingButtonID != 1)
 								goto reset_vending_highlight;
 							vendingMachine = app->vendingMachine.get();
 							currentItemQuantity = vendingMachine->currentItemQuantity;
@@ -833,58 +833,58 @@ clear_button_highlights:
 						else
 						{
 							v29 = app->vendingMachine.get();
-							v30 = v29->currentItemQuantity;
-							if (app->player->inventory[24] < v29->currentItemPrice + v30 * v29->currentItemPrice)
+							quantity = v29->currentItemQuantity;
+							if (app->player->inventory[24] < v29->currentItemPrice + quantity * v29->currentItemPrice)
 								goto reset_vending_highlight;
-							v29->currentItemQuantity = v30 + 1;
+							v29->currentItemQuantity = quantity + 1;
 						}
 						this->setMenu(Menus::MENU_VENDING_MACHINE_CONFIRM);
 					reset_vending_highlight:
-						v24 = 0;
+						highlightX = 0;
 						btnContainer03 = this->m_vendingButtons;
-						v25 = 0;
-						v27 = 0;
+						highlightY = 0;
+						highlightState = 0;
 						goto highlight_vending_button;
 					}
 					app->canvas->handleEvent(13);
 				}
 			}
-			else if (this->m_menuButtons->GetButton(TouchedButtonID)->drawButton)
+			else if (this->m_menuButtons->GetButton(menuButtonID)->drawButton)
 			{
-				if (v4)
+				if (isPressed)
 				{
-					this->m_menuButtons->GetButton(TouchedButtonID)->SetHighlighted(true);
-					if (this->updateVolumeSlider(TouchedButtonID, v5))
+					this->m_menuButtons->GetButton(menuButtonID)->SetHighlighted(true);
+					if (this->updateVolumeSlider(menuButtonID, touchX))
 					{
-						this->sliderID = TouchedButtonID;
+						this->sliderID = menuButtonID;
 						this->updateSlider = 1;
 					}
 				}
-				else if (TouchedButtonID == 11) {
+				else if (menuButtonID == 11) {
 					this->back();
 				}
-				else if (TouchedButtonID == 15) {
+				else if (menuButtonID == 15) {
 					this->returnToGame();
 				}
 				else {
-					this->selectedIndex = this->m_menuButtons->GetButton(TouchedButtonID)->selectedIndex;
+					this->selectedIndex = this->m_menuButtons->GetButton(menuButtonID)->selectedIndex;
 					this->select(this->selectedIndex);
 				}
 			}
 		}
-		else if (this->m_infoButtons->GetButton(v17)->drawButton)
+		else if (this->m_infoButtons->GetButton(infoButtonID)->drawButton)
 		{
-			if (v4) {
-				this->m_infoButtons->GetButton(v17)->SetHighlighted(true);
+			if (isPressed) {
+				this->m_infoButtons->GetButton(infoButtonID)->SetHighlighted(true);
 			}
 			else {
 				this->drawHelpText = true;
-				this->selectedHelpIndex = this->m_infoButtons->GetButton(v17)->selectedIndex;
+				this->selectedHelpIndex = this->m_infoButtons->GetButton(infoButtonID)->selectedIndex;
 			}
 		}
 		goto handle_vending_confirm;
 	}
-	if (!v4)
+	if (!isPressed)
 	{
 		this->drawHelpText = false;
 		this->selectedHelpIndex = -1;
