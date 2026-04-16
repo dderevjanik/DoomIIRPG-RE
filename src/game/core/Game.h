@@ -113,7 +113,7 @@ public:
     uint16_t totalLoot = 0;
     MayaCamera* activeCamera = nullptr;
     int activeCameraTime = 0;
-    int activeCameraKey = 0;
+    int activeCameraKey = -1;
     bool activeCameraView = false;
     Entity* watchLine = nullptr;
     LerpSprite lerpSprites[16] = {};
