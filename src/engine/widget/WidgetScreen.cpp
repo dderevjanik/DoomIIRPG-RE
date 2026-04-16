@@ -178,7 +178,7 @@ void WidgetScreen::touchEnd(int x, int y) {
 void WidgetScreen::buildFocusOrder() {
     focusOrder.clear();
     for (auto& w : widgets) {
-        if (w->focusable && w->visible) {
+        if (w->focusable && w->visible && !w->disabled) {
             focusOrder.push_back(w.get());
         }
     }

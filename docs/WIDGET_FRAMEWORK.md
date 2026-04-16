@@ -139,6 +139,47 @@ Focusable horizontal slider with label, track, fill bar, and numeric value displ
 | `max` | int | 100 | Maximum value |
 | `step` | int | 5 | Increment per Left/Right press |
 
+### selector
+
+Focusable value cycler. Left/Right cycles through options, displayed as `< value >` when focused. Wraps around at both ends.
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `id` | string | required | Unique widget ID |
+| `x`, `y` | int | 0 | Position |
+| `w`, `h` | int | 300x24 | Size |
+| `text` | string | `""` | Label text |
+| `string_id` | int | -1 | Localized string ID |
+| `color` | int | 0xFFFFFFFF | Text color |
+| `highlight_color` | int | 0xFF3366FF | Focus highlight color |
+| `selected` | int | 0 | Initially selected option index |
+| `options` | list | `[]` | Available options |
+
+Each option:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `label` | string | Display text |
+| `value` | int | Arbitrary value (defaults to index) |
+
+Example:
+```yaml
+- type: selector
+  id: window_mode
+  x: 60
+  y: 100
+  w: 360
+  h: 26
+  text: "Window Mode"
+  options:
+    - label: "Fullscreen"
+      value: 0
+    - label: "Windowed"
+      value: 1
+    - label: "Borderless"
+      value: 2
+```
+
 ### scroll_panel
 
 Container that clips children to its bounds and supports scroll.
@@ -279,6 +320,7 @@ Currently accessible via the **debug menu** (cheat code `3666`) → scroll to bo
 |------|---------|
 | `src/engine/widget/Widget.h/.cpp` | Base class, `WidgetInput` types |
 | `src/engine/widget/WImage.h/.cpp` | Image widget |
+| `src/engine/widget/WSelector.h/.cpp` | Selector (value cycler) widget |
 | `src/engine/widget/WSlider.h/.cpp` | Slider widget |
 | `src/engine/widget/WLabel.h/.cpp` | Label widget |
 | `src/engine/widget/WButton.h/.cpp` | Button widget |
@@ -293,6 +335,7 @@ Currently accessible via the **debug menu** (cheat code `3666`) → scroll to bo
 
 ## Notes
 
+- All widgets support `disabled: true` in YAML. Disabled widgets render dimmed, are skipped in focus order, and ignore input. Can also be toggled at runtime via `widget->disabled = true` and calling `screen->buildFocusOrder()`.
 - Coordinates are absolute pixels in 480x320 space.
 - `string_id` references the localization system (same IDs used in `menus.yaml`).
 - Colors are `0xAARRGGBB` hex integers.

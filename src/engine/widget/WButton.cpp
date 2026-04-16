@@ -34,7 +34,7 @@ void WButton::draw(Graphics* graphics, Applet* app, bool focused) {
         buf->append(text.c_str());
     }
 
-    graphics->setColor(color);
+    graphics->setColor(effectiveColor(color));
     int textX = bounds.x + bounds.w / 2;
     int textY = bounds.y + bounds.h / 2;
     graphics->drawString(buf, textX, textY, Graphics::ANCHORS_CENTER);
@@ -42,6 +42,7 @@ void WButton::draw(Graphics* graphics, Applet* app, bool focused) {
 }
 
 bool WButton::handleInput(const WidgetInput& input) {
+    if (disabled) return false;
     if (input.action == WidgetAction::Confirm) {
         if (onClick) onClick();
         return true;

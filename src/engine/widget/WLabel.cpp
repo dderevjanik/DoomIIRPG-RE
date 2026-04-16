@@ -20,7 +20,7 @@ void WLabel::draw(Graphics* graphics, Applet* app, bool focused) {
         buf->append(text.c_str());
     }
 
-    graphics->setColor(color);
+    graphics->setColor(effectiveColor(color));
     graphics->drawString(buf, bounds.x, bounds.y, anchor);
     buf->dispose();
 }

@@ -11,3 +11,9 @@ void Widget::setBounds(int x, int y, int w, int h) {
     bounds.w = w;
     bounds.h = h;
 }
+
+int Widget::effectiveColor(int c) const {
+    if (!disabled) return c;
+    // Replace alpha channel with DISABLED_ALPHA
+    return (c & 0x00FFFFFF) | (DISABLED_ALPHA << 24);
+}

@@ -31,7 +31,7 @@ void WSlider::draw(Graphics* graphics, Applet* app, bool focused) {
     } else {
         buf->append(text.c_str());
     }
-    graphics->setColor(color);
+    graphics->setColor(effectiveColor(color));
     graphics->drawString(buf, bounds.x + 4, bounds.y + bounds.h / 2,
                          Graphics::ANCHORS_LEFT | Graphics::ANCHORS_VCENTER);
 
@@ -56,6 +56,7 @@ void WSlider::draw(Graphics* graphics, Applet* app, bool focused) {
 }
 
 bool WSlider::handleInput(const WidgetInput& input) {
+    if (disabled) return false;
     if (input.action == WidgetAction::Left) {
         value -= step;
         clampValue();

@@ -8,6 +8,7 @@
 #include "WScrollPanel.h"
 #include "WImage.h"
 #include "WSlider.h"
+#include "WSelector.h"
 #include "DataNode.h"
 #include "Graphics.h"
 #include "Image.h"
@@ -38,6 +39,7 @@ bool WidgetLoader::loadScreen(WidgetScreen* screen, Applet* app, const char* yam
     for (int i = 0; i < widgetsNode.size(); i++) {
         auto widget = parseWidget(widgetsNode[i], app);
         if (widget) {
+            widget->disabled = widgetsNode[i]["disabled"].asBool(false);
             screen->widgets.push_back(std::move(widget));
         }
     }
@@ -115,6 +117,27 @@ std::unique_ptr<Widget> WidgetLoader::parseWidget(const DataNode& node, Applet* 
         w->step = node["step"].asInt(5);
         w->setBounds(node["x"].asInt(), node["y"].asInt(),
                      node["w"].asInt(300), node["h"].asInt(24));
+        return w;
+    }
+
+    if (type == "selector") {
+        auto w = std::make_unique<WSelector>();
+        w->id = node["id"].asString();
+        w->text = node["text"].asString();
+        w->stringId = node["string_id"].asInt(-1);
+        w->color = node["color"].asInt(0xFFFFFFFF);
+        w->highlightColor = node["highlight_color"].asInt(0xFF3366FF);
+        w->selectedOption = node["selected"].asInt(0);
+        w->setBounds(node["x"].asInt(), node["y"].asInt(),
+                     node["w"].asInt(300), node["h"].asInt(24));
+
+        DataNode optionsNode = node["options"];
+        for (int i = 0; i < optionsNode.size(); i++) {
+            WSelector::Option opt;
+            opt.label = optionsNode[i]["label"].asString();
+            opt.value = optionsNode[i]["value"].asInt(i);
+            w->options.push_back(std::move(opt));
+        }
         return w;
     }
 

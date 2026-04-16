@@ -1,4 +1,8 @@
+doom1rpg
+DoomRPG.zip
+
 # Build
+build-debug/
 build/
 CMakeCache.txt
 CMakeFiles/
@@ -20,7 +24,10 @@ Doom 2 RPG.ipa
 Doom 2 RPG/
 Doom2rpg.app/
 *.bin
-games/
+/games/*
+!/games/doom2rpg/
+/games/doom2rpg/*
+!/games/doom2rpg/screens/
 
 # Extracted assets
 textures/

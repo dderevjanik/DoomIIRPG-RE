@@ -31,6 +31,7 @@ public:
     GuiRect bounds{};
     bool visible = true;
     bool focusable = false;
+    bool disabled = false;  // dimmed, skipped in focus order, ignores input
     Widget* parent = nullptr;
 
     virtual ~Widget() = default;
@@ -46,4 +47,9 @@ public:
 
     bool containsPoint(int x, int y) const;
     void setBounds(int x, int y, int w, int h);
+
+    // Returns a dimmed version of a color when disabled
+    int effectiveColor(int c) const;
+
+    static constexpr int DISABLED_ALPHA = 0x60;
 };

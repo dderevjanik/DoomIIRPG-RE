@@ -34,7 +34,7 @@ void WVerticalMenu::draw(Graphics* graphics, Applet* app, bool focused) {
             buf->append(items[i].text.c_str());
         }
 
-        graphics->setColor(color);
+        graphics->setColor(effectiveColor(color));
         int textY = itemY + itemHeight / 2;
         graphics->drawString(buf, bounds.x + 8, textY, Graphics::ANCHORS_LEFT | Graphics::ANCHORS_VCENTER);
     }
@@ -53,7 +53,7 @@ void WVerticalMenu::draw(Graphics* graphics, Applet* app, bool focused) {
 }
 
 bool WVerticalMenu::handleInput(const WidgetInput& input) {
-    if (items.empty()) return false;
+    if (disabled || items.empty()) return false;
 
     if (input.action == WidgetAction::Up) {
         if (selectedIndex > 0) {
