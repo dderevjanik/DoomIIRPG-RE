@@ -25,30 +25,30 @@ ComicBook::ComicBook() {
     this->exitBtnRect[1] = 10;
     this->exitBtnRect[2] = 60;
     this->exitBtnRect[3] = 30;
-    this->field_0x16c = 200;
-    this->field_0x170 = 20;
-    this->field_0x164 = 140;
+    this->unused_0x16c = 200;
+    this->unused_0x170 = 20;
+    this->unused_0x164 = 140;
     this->isLoaded = 0;
     this->comicBookIndex = 0;
     this->iPhoneComicIndex = 0;
-    this->field_0x1c = 0;
+    this->loadingCounter = 0;
     this->iPhonePage = 0;
     this->page = 0;
     this->curPage = 0;
-    this->field_0x110 = 0;
+    this->isTransitioning = 0;
     this->endPoint = 0;
-    this->field_0x118 = 0;
-    this->field_0x11c = 0;
+    this->isSnappingBack = 0;
+    this->unused_0x11c = 0;
     this->midPoint = 0;
     this->is_iPhoneComic = false;
-    this->field_0x135 = 0;
-    this->field_0x138 = 0;
-    this->field_0x13c = 0;
-    this->field_0x140 = 0;
+    this->isFadingOut = 0;
+    this->fadeCounter = 0;
+    this->isOrientationSwitch = 0;
+    this->transitionCounter = 0;
     this->drawExitButton = 0;
-    this->field_0x14c = 0;
-    this->field_0x168 = 280;
-    this->field_0x174 = 0;
+    this->frameCounter = 0;
+    this->unused_0x168 = 280;
+    this->exitCancelled = 0;
 }
 
 ComicBook::~ComicBook() {
@@ -87,7 +87,7 @@ void ComicBook::Draw(Graphics* graphics) {
     Image** v21; // r1
     int v23; // [sp+10h] [bp-28h]
 
-    ++this->field_0x14c;
+    ++this->frameCounter;
     this->isLoaded = true;
 
     if (this->comicBookIndex <= 16) {
@@ -113,10 +113,10 @@ void ComicBook::Draw(Graphics* graphics) {
 
     if (this->is_iPhoneComic && !GetOrientation())
     {
-        v5 = !this->field_0x13c;
-        if (!this->field_0x13c)
-            v5 = !this->field_0x135;
-        if (v5 && !this->field_0x110) {
+        v5 = !this->isOrientationSwitch;
+        if (!this->isOrientationSwitch)
+            v5 = !this->isFadingOut;
+        if (v5 && !this->isTransitioning) {
             SetOrientationRight();
         }
     }
@@ -125,9 +125,9 @@ void ComicBook::Draw(Graphics* graphics) {
     this->UpdateTransition();
     app->render->_gles->ClearBuffer(0xFFFFFF);
 
-    if (this->field_0x13c)
+    if (this->isOrientationSwitch)
     {
-        v6 = (float)((float)this->field_0x140 / -30.0) + 1.0;
+        v6 = (float)((float)this->transitionCounter / -30.0) + 1.0;
         v8 = 1.0 - v6;
         if (this->is_iPhoneComic)
         {
@@ -161,7 +161,7 @@ void ComicBook::Draw(Graphics* graphics) {
     v13 = 0;
 LABEL_29:
     this->DrawImage(imgiPhoneComicBook[iPhonePage], this->endPoint, 0, v10, v6, v13);
-    if (this->field_0x10 || this->field_0x110)
+    if (this->isTouching || this->isTransitioning)
     {
         v14 = this->is_iPhoneComic;
         v15 = iPhonePage + 1;
@@ -207,7 +207,7 @@ void ComicBook::DrawLoading(Graphics* graphics) {
     int x; // r10
     int y; // r8
     int flags; // r0
-    ++this->field_0x1c;
+    ++this->loadingCounter;
     app->render->_gles->ClearBuffer(0x000000);
     if (this->is_iPhoneComic) {
         x = 160;
@@ -220,7 +220,7 @@ void ComicBook::DrawLoading(Graphics* graphics) {
     Text* textBuff = app->localization->getSmallBuffer();
     textBuff->setLength(0);
     std::string loadingText;
-    switch (this->field_0x14c / 5 % 4)
+    switch (this->frameCounter / 5 % 4)
     {
     case 0:
         loadingText = "Loading   ";
@@ -473,16 +473,16 @@ void ComicBook::CheckImageExistence(Image* image) {
     }
 }
 
-void ComicBook::DrawImage(Image* image, int a3, int a4, char a5, float alpha, char a7)
+void ComicBook::DrawImage(Image* image, int posX, int posY, char rotated, float alpha, char flipped)
 {
     this->CheckImageExistence(image);
-    int posX = a3;
-    int posY = a4;
-    if (a5) {
-        posX = a4;
-        posY = a3;
+    int drawX = posX;
+    int drawY = posY;
+    if (rotated) {
+        drawX = posY;
+        drawY = posX;
     }
-    image->DrawTextureAlpha(posX, posY, alpha, (bool)a5, (bool)a7);
+    image->DrawTextureAlpha(drawX, drawY, alpha, (bool)rotated, (bool)flipped);
 }
 
 
@@ -502,7 +502,7 @@ void ComicBook::UpdateMovement() {
     int v13; // r2
     int v14; // r3
 
-    if (this->field_0x10)
+    if (this->isTouching)
         return;
     is_iPhoneComic = this->is_iPhoneComic;
     cur_iPhonePage = this->cur_iPhonePage;
@@ -522,7 +522,7 @@ void ComicBook::UpdateMovement() {
     if (iPhonePage != curPage)
     {
         midPoint = this->midPoint;
-        this->field_0x110 = 1;
+        this->isTransitioning = 1;
         if (is_iPhoneComic)
             v7 = 5;
         else
@@ -572,18 +572,18 @@ void ComicBook::UpdateMovement() {
                 this->iPhonePage = cur_iPhonePage;
             this->midPoint = 0;
             this->endPoint = 0;
-            this->field_0x110 = 0;
+            this->isTransitioning = 0;
         }
     }
-    if (this->field_0x118)
+    if (this->isSnappingBack)
     {
-        this->field_0x110 = 1;
+        this->isTransitioning = 1;
         v14 = 4 * this->endPoint / 5;
         this->endPoint = v14;
         if (!v14)
         {
-            this->field_0x118 = 0;
-            this->field_0x110 = 0;
+            this->isSnappingBack = 0;
+            this->isTransitioning = 0;
         }
     }
 }
@@ -599,45 +599,45 @@ void ComicBook::UpdateTransition()
     int v9; // r3
     float v10; // s15
 
-    v3 = !this->field_0x110;
-    if (!this->field_0x110)
+    v3 = !this->isTransitioning;
+    if (!this->isTransitioning)
     {
-        v3 = !this->field_0x10;
+        v3 = !this->isTouching;
     }
     if (v3)
     {
-        if (this->field_0x135)
+        if (this->isFadingOut)
         {
-            v4 = this->field_0x138 + 1;
-            v5 = this->field_0x138 - 29 < 0;
-            this->field_0x138 = v4;
+            v4 = this->fadeCounter + 1;
+            v5 = this->fadeCounter - 29 < 0;
+            this->fadeCounter = v4;
             
             if (!(v5 ^ (v4 | 30) | (v4 == 30)))
             {
-                this->field_0x138 = 0;
-                this->field_0x135 = 0;
-                this->field_0x140 = 0;
-                this->field_0x13c = 1;
+                this->fadeCounter = 0;
+                this->isFadingOut = 0;
+                this->transitionCounter = 0;
+                this->isOrientationSwitch = 1;
             }
         }
-        if (this->field_0x13c)
+        if (this->isOrientationSwitch)
         {
             is_iPhoneComic = this->is_iPhoneComic;
             v7 = -3.0;
             if (is_iPhoneComic)
                 v7 = 3.0;
-            v8 = this->field_0x144;
-            v9 = this->field_0x140 + 1;
-            this->field_0x140 = v9;
+            v8 = this->transitionOffset;
+            v9 = this->transitionCounter + 1;
+            this->transitionCounter = v9;
             v10 = v7 + v8;
             if (v9 > 29)
             {
                 this->is_iPhoneComic = !is_iPhoneComic;
-                this->field_0x140 = 0;
-                this->field_0x13c = 0;
+                this->transitionCounter = 0;
+                this->isOrientationSwitch = 0;
             }
             this->drawExitButton = false;
-            this->field_0x144 = v10;
+            this->transitionOffset = v10;
         }
     }
 }
@@ -678,13 +678,13 @@ void ComicBook::Touch(int x, int y, bool b)
 
     if (v4)
     {
-        this->field_0x14c = 0;
+        this->frameCounter = 0;
     }
     else
     {
         if (this->exitBtnHighlighted)
         {
-            v9 = this->field_0x174;
+            v9 = this->exitCancelled;
             this->exitBtnHighlighted = 0;
             if (!v9)
             {
@@ -692,25 +692,25 @@ void ComicBook::Touch(int x, int y, bool b)
                 app->menuSystem->back();
             }
         }
-        this->field_0x174 = 0;
-        //printf("this->field_0x14c %d\n", this->field_0x14c);
-        if (this->field_0x14c <= 8) { // Old 4
+        this->exitCancelled = 0;
+        //printf("this->frameCounter %d\n", this->frameCounter);
+        if (this->frameCounter <= 8) { // Old 4
             this->drawExitButton ^= true;
         }
     }
-    v10 = this->field_0x110;
-    if (this->field_0x110 || !this->field_0x10 && !v4)
+    v10 = this->isTransitioning;
+    if (this->isTransitioning || !this->isTouching && !v4)
         return;
     is_iPhoneComic = this->is_iPhoneComic;
-    this->field_0x4 = v7;
-    this->field_0x10 = v4;
+    this->touchStartY = v7;
+    this->isTouching = v4;
     if (!is_iPhoneComic)
         v7 = x;
-    this->field_0x0 = x;
+    this->touchStartX = x;
     this->begPoint = v7;
     if (v4)
     {
-        this->field_0x118 = v10;
+        this->isSnappingBack = v10;
         this->midPoint = v10;
         return;
     }
@@ -722,7 +722,7 @@ void ComicBook::Touch(int x, int y, bool b)
     if (v13 < endPoint || (midPoint = this->midPoint, midPoint > 2))
     {
         v15 = !is_iPhoneComic;
-        this->field_0x118 = v10;
+        this->isSnappingBack = v10;
         if (is_iPhoneComic)
             page = this->page;
         else
@@ -741,7 +741,7 @@ void ComicBook::Touch(int x, int y, bool b)
     }
     if (endPoint < -v13 || midPoint < -2)
     {
-        this->field_0x118 = v10;
+        this->isSnappingBack = v10;
         if (is_iPhoneComic)
         {
             v17 = this->page - 1;
@@ -752,10 +752,10 @@ void ComicBook::Touch(int x, int y, bool b)
     }
     this->curPage = this->page;
     if (endPoint)
-        this->field_0x118 = 1;
+        this->isSnappingBack = 1;
     this->cur_iPhonePage = this->iPhonePage;
     if (endPoint)
-        this->field_0x118 = 1;
+        this->isSnappingBack = 1;
 LABEL_41:
     curPage = this->curPage;
     if (curPage < 0)
@@ -826,10 +826,10 @@ void ComicBook::TouchMove(int x, int y)
     int endPoint; // r3
     int begPoint; // r3
 
-    if (this->isLoaded && !this->field_0x174)
+    if (this->isLoaded && !this->exitCancelled)
     {
         this->ButtonTouch(x, y);
-        if (!this->field_0x110 && this->field_0x10)
+        if (!this->isTransitioning && this->isTouching)
         {
             is_iPhoneComic = this->is_iPhoneComic;
             this->curX = x;
@@ -865,7 +865,7 @@ void ComicBook::DeleteImages() {
     }
     this->comicBookIndex = 0;
     this->iPhoneComicIndex = 0;
-    this->field_0x1c = 0;
+    this->loadingCounter = 0;
 }
 
 void ComicBook::DrawExitButton(Graphics* graphics) {
