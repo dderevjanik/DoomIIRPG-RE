@@ -1,0 +1,110 @@
+screen:
+  id: options
+  background_color: 0xFF0D0D1A
+  background_image: main_bg
+
+  widgets:
+    - type: label
+      id: title
+      x: 240
+      y: 12
+      text: "Options"
+      anchor: hcenter
+      color: 0xFFFF7F00
+
+    # --- Sound ---
+    - type: label
+      id: sound_header
+      x: 60
+      y: 44
+      text: "Sound"
+      color: 0xFF888888
+
+    - type: checkbox
+      id: sound_enabled
+      x: 60
+      y: 66
+      w: 360
+      h: 26
+      text: "Sound Enabled"
+      checked: true
+
+    - type: slider
+      id: sfx_volume
+      x: 60
+      y: 96
+      w: 360
+      h: 26
+      text: "FX Volume"
+      min: 0
+      max: 100
+      step: 5
+      value: 100
+      fill_color: 0xFF2288DD
+
+    - type: slider
+      id: music_volume
+      x: 60
+      y: 126
+      w: 360
+      h: 26
+      text: "Music Volume"
+      min: 0
+      max: 100
+      step: 5
+      value: 100
+      fill_color: 0xFF2288DD
+
+    # --- Controls ---
+    - type: label
+      id: controls_header
+      x: 60
+      y: 160
+      text: "Controls"
+      color: 0xFF888888
+
+    - type: checkbox
+      id: vibration_enabled
+      x: 60
+      y: 182
+      w: 360
+      h: 26
+      text: "Vibration"
+      checked: true
+
+    - type: slider
+      id: vibration_intensity
+      x: 60
+      y: 212
+      w: 360
+      h: 26
+      text: "Vibration"
+      min: 0
+      max: 100
+      step: 10
+      value: 100
+      fill_color: 0xFFDD8822
+
+    - type: slider
+      id: deadzone
+      x: 60
+      y: 242
+      w: 360
+      h: 26
+      text: "Dead Zone"
+      min: 0
+      max: 100
+      step: 5
+      value: 15
+      fill_color: 0xFFDD8822
+
+    # --- Bottom buttons ---
+    - type: button
+      id: back_btn
+      x: 300
+      y: 280
+      w: 120
+      h: 28
+      text: "Back"
+      action: back
+      highlight_color: 0xFF00AA00

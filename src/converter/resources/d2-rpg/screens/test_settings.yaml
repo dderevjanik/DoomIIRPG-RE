@@ -22,6 +22,9 @@ screen:
       visible_count: 5
       highlight_color: 0xFF3366FF
       items:
+        - id: options
+          text: "Options"
+          action: goto:options
         - id: option_a
           text: "Option A"
           action: test_action_a

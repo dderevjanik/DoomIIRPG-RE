@@ -22,6 +22,10 @@
 #include "Render.h"
 #include "Log.h"
 #include "WidgetScreen.h"
+#include "WSlider.h"
+#include "WCheckbox.h"
+#include "Sound.h"
+#include "Input.h"
 #include "EventBus.h"
 #include "GameEvents.h"
 
@@ -76,6 +80,54 @@ bool DoomIIRPGGame::startup(Applet* app) {
 	// Widget screen (new UI framework)
 	widgetScreen.loadFromYAML(app, "screens/test_settings.yaml");
 	app->canvas->registerStateHandler(Canvas::ST_WIDGET_SCREEN, &widgetScreen);
+
+	// Wire options screen actions — called when goto:options navigates there
+	widgetScreen.onAction("save_and_back", [app, this]() {
+		app->game->saveConfig();
+		widgetScreen.dispatchAction("back");
+	});
+
+	// Options screen: bind widgets to game settings when the screen loads
+	widgetScreen.onScreenLoaded = [app](WidgetScreen* screen) {
+		if (screen->screenId != "options") return;
+
+		// Read current values into widgets
+		if (auto* w = dynamic_cast<WCheckbox*>(screen->findWidget("sound_enabled")))
+			w->checked = app->sound->allowSounds;
+		if (auto* w = dynamic_cast<WSlider*>(screen->findWidget("sfx_volume")))
+			w->value = app->sound->soundFxVolume;
+		if (auto* w = dynamic_cast<WSlider*>(screen->findWidget("music_volume")))
+			w->value = app->sound->musicVolume;
+		if (auto* w = dynamic_cast<WCheckbox*>(screen->findWidget("vibration_enabled")))
+			w->checked = app->canvas->vibrateEnabled;
+		if (auto* w = dynamic_cast<WSlider*>(screen->findWidget("vibration_intensity")))
+			w->value = gVibrationIntensity;
+		if (auto* w = dynamic_cast<WSlider*>(screen->findWidget("deadzone")))
+			w->value = gDeadZone;
+
+		// Wire onChange callbacks
+		if (auto* w = dynamic_cast<WCheckbox*>(screen->findWidget("sound_enabled"))) {
+			w->onToggle = [app](bool v) {
+				app->sound->allowSounds = v;
+				app->canvas->areSoundsAllowed = v;
+			};
+		}
+		if (auto* w = dynamic_cast<WSlider*>(screen->findWidget("sfx_volume"))) {
+			w->onChange = [app](int v) { app->sound->soundFxVolume = v; };
+		}
+		if (auto* w = dynamic_cast<WSlider*>(screen->findWidget("music_volume"))) {
+			w->onChange = [app](int v) { app->sound->musicVolume = v; };
+		}
+		if (auto* w = dynamic_cast<WCheckbox*>(screen->findWidget("vibration_enabled"))) {
+			w->onToggle = [app](bool v) { app->canvas->vibrateEnabled = v; };
+		}
+		if (auto* w = dynamic_cast<WSlider*>(screen->findWidget("vibration_intensity"))) {
+			w->onChange = [](int v) { gVibrationIntensity = v; };
+		}
+		if (auto* w = dynamic_cast<WSlider*>(screen->findWidget("deadzone"))) {
+			w->onChange = [](int v) { gDeadZone = v; };
+		}
+	};
 
 	// Register minigames
 	auto& mgReg = CAppContainer::getInstance()->minigameRegistry;

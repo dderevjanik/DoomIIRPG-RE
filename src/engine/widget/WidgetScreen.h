@@ -20,6 +20,9 @@ public:
     // Action handlers: action string -> callback
     std::unordered_map<std::string, std::function<void()>> actionHandlers;
 
+    // Called after a screen YAML is loaded (for wiring game-specific callbacks)
+    std::function<void(WidgetScreen*)> onScreenLoaded;
+
     void onAction(const std::string& actionName, std::function<void()> handler);
 
     bool loadFromYAML(Applet* app, const char* yamlPath);

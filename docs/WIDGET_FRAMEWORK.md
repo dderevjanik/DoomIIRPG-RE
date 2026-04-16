@@ -119,6 +119,26 @@ Each item:
 | `string_id` | int | Localized string ID |
 | `action` | string | Action to dispatch on select |
 
+### slider
+
+Focusable horizontal slider with label, track, fill bar, and numeric value display. Left/Right adjusts the value. Touch sets it directly on the track.
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `id` | string | required | Unique widget ID |
+| `x`, `y` | int | 0 | Position |
+| `w`, `h` | int | 300x24 | Size |
+| `text` | string | `""` | Label text |
+| `string_id` | int | -1 | Localized string ID |
+| `color` | int | 0xFFFFFFFF | Text color |
+| `highlight_color` | int | 0xFF3366FF | Focus highlight color |
+| `track_color` | int | 0xFF444444 | Track background color |
+| `fill_color` | int | 0xFF00AA00 | Fill bar color |
+| `value` | int | 50 | Initial value |
+| `min` | int | 0 | Minimum value |
+| `max` | int | 100 | Maximum value |
+| `step` | int | 5 | Increment per Left/Right press |
+
 ### scroll_panel
 
 Container that clips children to its bounds and supports scroll.
@@ -216,6 +236,20 @@ widgetScreen.onAction("do_something", [app]() {
 });
 ```
 
+### Binding Widgets to Game State
+
+Use `onScreenLoaded` to read current values into widgets and wire `onChange`/`onToggle` callbacks when a screen is loaded:
+
+```cpp
+widgetScreen.onScreenLoaded = [app](WidgetScreen* screen) {
+    if (screen->screenId != "options") return;
+    if (auto* w = dynamic_cast<WSlider*>(screen->findWidget("sfx_volume"))) {
+        w->value = app->sound->soundFxVolume;
+        w->onChange = [app](int v) { app->sound->soundFxVolume = v; };
+    }
+};
+```
+
 ---
 
 ## Focus & Navigation
@@ -245,6 +279,7 @@ Currently accessible via the **debug menu** (cheat code `3666`) → scroll to bo
 |------|---------|
 | `src/engine/widget/Widget.h/.cpp` | Base class, `WidgetInput` types |
 | `src/engine/widget/WImage.h/.cpp` | Image widget |
+| `src/engine/widget/WSlider.h/.cpp` | Slider widget |
 | `src/engine/widget/WLabel.h/.cpp` | Label widget |
 | `src/engine/widget/WButton.h/.cpp` | Button widget |
 | `src/engine/widget/WCheckbox.h/.cpp` | Checkbox widget |

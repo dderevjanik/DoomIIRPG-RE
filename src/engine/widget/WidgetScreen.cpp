@@ -1,6 +1,7 @@
 #include "WidgetScreen.h"
 #include "WidgetLoader.h"
 #include "WButton.h"
+#include "WSlider.h"
 #include "WVerticalMenu.h"
 #include "Canvas.h"
 #include "App.h"
@@ -22,6 +23,7 @@ bool WidgetScreen::loadFromYAML(Applet* app, const char* yamlPath) {
     backgroundImageName.clear();
     if (!WidgetLoader::loadScreen(this, app, yamlPath)) return false;
     wireActions();
+    if (onScreenLoaded) onScreenLoaded(this);
     return true;
 }
 
@@ -188,6 +190,7 @@ void WidgetScreen::dispatchAction(const std::string& actionName) {
         focusIndex = 0;
         WidgetLoader::loadScreen(this, app, path.c_str());
         wireActions();
+        if (onScreenLoaded) onScreenLoaded(this);
     } else if (actionName == "back" || actionName == "close") {
         if (!screenStack.empty()) {
             // Pop screen stack
@@ -199,6 +202,7 @@ void WidgetScreen::dispatchAction(const std::string& actionName) {
             focusOrder.clear();
             WidgetLoader::loadScreen(this, app, path.c_str());
             wireActions();
+            if (onScreenLoaded) onScreenLoaded(this);
             focusIndex = entry.focusIndex;
             if (focusIndex >= static_cast<int>(focusOrder.size())) {
                 focusIndex = 0;

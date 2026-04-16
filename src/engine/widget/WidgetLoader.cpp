@@ -7,6 +7,7 @@
 #include "WVerticalMenu.h"
 #include "WScrollPanel.h"
 #include "WImage.h"
+#include "WSlider.h"
 #include "DataNode.h"
 #include "Graphics.h"
 #include "Image.h"
@@ -95,6 +96,24 @@ std::unique_ptr<Widget> WidgetLoader::parseWidget(const DataNode& node, Applet* 
         w->checked = node["checked"].asBool(false);
         w->setBounds(node["x"].asInt(), node["y"].asInt(),
                      node["w"].asInt(200), node["h"].asInt(24));
+        return w;
+    }
+
+    if (type == "slider") {
+        auto w = std::make_unique<WSlider>();
+        w->id = node["id"].asString();
+        w->text = node["text"].asString();
+        w->stringId = node["string_id"].asInt(-1);
+        w->color = node["color"].asInt(0xFFFFFFFF);
+        w->highlightColor = node["highlight_color"].asInt(0xFF3366FF);
+        w->trackColor = node["track_color"].asInt(0xFF444444);
+        w->fillColor = node["fill_color"].asInt(0xFF00AA00);
+        w->value = node["value"].asInt(50);
+        w->minValue = node["min"].asInt(0);
+        w->maxValue = node["max"].asInt(100);
+        w->step = node["step"].asInt(5);
+        w->setBounds(node["x"].asInt(), node["y"].asInt(),
+                     node["w"].asInt(300), node["h"].asInt(24));
         return w;
     }
 
