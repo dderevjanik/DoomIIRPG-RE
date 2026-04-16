@@ -31,15 +31,15 @@ bool Sound::startup() {
 	this->headless = CAppContainer::getInstance()->headless;
 	LOG_INFO("[sound] startup\n");
 
-	this->field_0x162 = 0;
+	this->hasDeferredSound = 0;
 	this->app = app;
 	this->allowSounds = true;
 	this->allowMusics = true;
 	this->soundFxVolume = 80;
 	this->musicVolume = 80;
-	this->field_0x10 = 100;
-	this->field_0x4 = 0;
-	this->field_0x160 = -1;
+	this->soundCapacity = 100;
+	this->isMuted = 0;
+	this->unused_0x160 = -1;
 	this->soundsLoaded = false;
 	this->alContext = nullptr;
 
@@ -346,8 +346,8 @@ void Sound::playSound(int16_t resID, uint8_t flags, int priority, bool a5) {
 	if (!v7) {
 		v9 = resID == 1255;
 		if (resID != 1255)
-			v9 = this->field_0x10 == 0;
-		if (!v9 && !this->field_0x4) {
+			v9 = this->soundCapacity == 0;
+		if (!v9 && !this->isMuted) {
 			if ((unsigned int)(resID - 1067) <= 4) {
 				if (!this->allowMusics /* || isUserMusicOn()*/)
 					return;
@@ -553,15 +553,15 @@ void Sound::volumeDown(int volume) {
 }
 
 void Sound::startFrame() {
-	if (this->field_0x162 != 0) {
-		if (this->field_0x4 == false) {
-			this->playSound(this->resID, this->flags, this->priority, this->field_0x4);
-			this->field_0x160 = -1;
+	if (this->hasDeferredSound != 0) {
+		if (this->isMuted == false) {
+			this->playSound(this->resID, this->flags, this->priority, this->isMuted);
+			this->unused_0x160 = -1;
 			this->resID = -1;
 			this->flags = 0;
 			this->priority = 0;
-			this->field_0x15c = -1;
-			this->field_0x162 = 0;
+			this->unused_0x15c = -1;
+			this->hasDeferredSound = 0;
 		}
 	}
 }
