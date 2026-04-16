@@ -16,12 +16,14 @@
 
 static void drawAutomap(Canvas* canvas, Graphics* graphics, bool b) {
 	Applet* app = canvas->app;
+	const auto& gc = *canvas->gameConfig;
+	const auto& ac = gc.automapColors;
 	graphics->drawRegion(canvas->imgGameHelpBG, 0, 0, Applet::IOS_WIDTH, Applet::IOS_HEIGHT, 0, 0, 0, 0, 0);
 
-	int n3 = 8;
+	int n3 = gc.automapCellSize;
 	int n6 = 0x400000 / (n3 << 8);
-	int n4 = 112;
-	int n5 = 32;
+	int n4 = gc.automapOffsetX;
+	int n5 = gc.automapOffsetY;
 
 	int n7 = 0;
 	for (int i = 0; i < 32; ++i) {
@@ -29,18 +31,18 @@ static void drawAutomap(Canvas* canvas, Graphics* graphics, bool b) {
 			uint8_t b2 = app->render->mapFlags[n7 + j];
 			if ((b2 & 0x8) == 0x0) {
 				if (app->render->mapEntranceAutomap == (i * 32) + j) {
-					graphics->setColor(0xFF00FF00);
+					graphics->setColor(ac.entrance);
 					graphics->fillRect(n4 + (n3 * j) + canvas->screenRect[0], (n5 - 1) + (n3 * i) + canvas->screenRect[1], n3, n3);
 				}
 				else if ((b2 & 0x80) != 0x0) {
 					if (app->render->mapExitAutomap == (i * 32) + j) {
-						graphics->setColor(0xFFFF0000);
+						graphics->setColor(ac.exit);
 						graphics->fillRect(n4 + (n3 * j) + canvas->screenRect[0], (n5 - 1) + (n3 * i) + canvas->screenRect[1], n3, n3);
 					}
 					else if ((b2 & 0x1) == 0x0) {
-						graphics->setColor(0xFF90B9E7);
+						graphics->setColor(ac.visited);
 						graphics->fillRect(n4 + (n3 * j) + canvas->screenRect[0], (n5 - 1) + (n3 * i) + canvas->screenRect[1] + 1, n3, n3);
-						graphics->setColor(0xFF2A3657);
+						graphics->setColor(ac.background);
 					}
 				}
 			}
@@ -54,9 +56,9 @@ static void drawAutomap(Canvas* canvas, Graphics* graphics, bool b) {
 			(app->render->mapFlags[app->render->mapLadders[k]] & 0x8) == 0x0) {
 			int n8 = app->render->mapLadders[k] % 32;
 			int n9 = app->render->mapLadders[k] / 32;
-			graphics->setColor(0xFFFFFF00);
+			graphics->setColor(ac.ladder);
 			graphics->fillRect(n4 + (n3 * n8), n5 + (n3 * n9), n3, n3);
-			graphics->setColor(0xFF000000);
+			graphics->setColor(ac.ladderStripe);
 			for (int l = 0; l < 8; l += 2) {
 				graphics->drawLine(n4 + n3 * n8, n5 + n3 * n9 + l, n4 + n3 * n8 + n3, n5 + n3 * n9 + l);
 			}
@@ -65,7 +67,7 @@ static void drawAutomap(Canvas* canvas, Graphics* graphics, bool b) {
 		}
 	}
 
-	graphics->setColor(0xFF2A3657);
+	graphics->setColor(ac.background);
 	for (int n10 = 0; n10 < app->render->numLines; ++n10) {
 		int n11 = app->render->lineFlags[n10 >> 1] >> ((n10 & 0x1) << 2) & 0xF;
 		if ((n11 & 0x8) != 0x0) {
@@ -94,7 +96,6 @@ static void drawAutomap(Canvas* canvas, Graphics* graphics, bool b) {
 									bool b5 = false;
 									int n18 = 2;
 									if (nextOnTile->def->eType == Enums::ET_DOOR) {
-										const auto& gc = *canvas->gameConfig;
 										short tileIndex = nextOnTile->def->tileIndex;
 										color = gc.automapDoorDefault;
 										for (const auto& dc : gc.automapDoorColors) {
@@ -103,34 +104,34 @@ static void drawAutomap(Canvas* canvas, Graphics* graphics, bool b) {
 										b5 = true;
 									}
 									else if ((n16 & 0x400000) != 0x0) {
-										color = 0xFF2A3657;
+										color = ac.background;
 										b5 = true;
 									}
 									else if (nextOnTile->def->eType == Enums::ET_NONOBSTRUCTING_SPRITEWALL) {
-										color = 0xFF8D8068;
+										color = ac.wall;
 										b5 = true;
 									}
 									else if (nextOnTile->def->eType == Enums::ET_NPC) {
 										b4 = true;
-										color = 0xFF0000FF;
+										color = ac.npc;
 										n18 = 128;
 									}
 									else if (nextOnTile->def->eType == Enums::ET_ATTACK_INTERACTIVE && n17 == 0) {
-										color = 0xFF8000FF;
+										color = ac.interactive;
 									}
 									else if (nextOnTile->def->eType == Enums::ET_MONSTER) {
-										color = 0xFFFF8000;
+										color = ac.monster;
 										n18 = 128;
 									}
 									else if (nextOnTile->def->eType == Enums::ET_DECOR) {
-										color = 0xFF8D8068;
-										const auto& hiddenDecors = canvas->gameConfig->automapHiddenDecors;
+										color = ac.wall;
+										const auto& hiddenDecors = gc.automapHiddenDecors;
 										for (int16_t hd : hiddenDecors) {
 											if (nextOnTile->def->tileIndex == hd) { color = 0; break; }
 										}
 									}
 									else if (app->player->god && nextOnTile->def->eType == Enums::ET_ITEM && nextOnTile->def->eSubType != Enums::ITEM_KEY) {
-										color = 0xFF00FFEA;
+										color = ac.godModeItem;
 									}
 									if (color != 0 && ((b3 & n18) != 0x0 || (n18 & 0x80) == 0x0)) {
 										graphics->setColor(color);
@@ -181,7 +182,7 @@ static void drawAutomap(Canvas* canvas, Graphics* graphics, bool b) {
 				int n31 = app->player->notebookPositions[n30] >> 5 & 0x1F;
 				int n32 = app->player->notebookPositions[n30] & 0x1F;
 				if (n31 + n32 != 0 && (0x80 & app->render->mapFlags[n32 * 32 + n31]) != 0x0) {
-					graphics->setColor(((app->time / 1024 & 0x1) == 0x0) ? 0xFFFF0000 : 0xFF00FF00);
+					graphics->setColor(((app->time / 1024 & 0x1) == 0x0) ? ac.questBlinkA : ac.questBlinkB);
 					Entity* mapEntity = app->game->findMapEntity(n31 << 6, n32 << 6, 32);
 					if (nullptr != mapEntity) {
 						int sprite2 = mapEntity->getSprite();
@@ -209,7 +210,7 @@ static void drawAutomap(Canvas* canvas, Graphics* graphics, bool b) {
 	}
 
 	if (app->time > canvas->automapBlinkTime) {
-		canvas->automapBlinkTime = app->time + 333;
+		canvas->automapBlinkTime = app->time + gc.automapBlinkInterval;
 		canvas->automapBlinkState = !canvas->automapBlinkState;
 	}
 

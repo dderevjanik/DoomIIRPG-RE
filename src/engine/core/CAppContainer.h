@@ -184,6 +184,30 @@ struct GameConfig {
 	uint32_t automapDoorDefault = 0xFF3D68E3;         // default door color
 	std::vector<int16_t> automapHiddenDecors = {173, 180}; // decor tiles invisible on automap
 
+	// Automap entity colors (from game.yaml automap.entity_colors section)
+	struct AutomapColors {
+		uint32_t entrance = 0xFF00FF00;      // green — map entrance marker
+		uint32_t exit = 0xFFFF0000;          // red — map exit marker
+		uint32_t visited = 0xFF90B9E7;       // light blue — visited tile
+		uint32_t background = 0xFF2A3657;    // dark blue — unvisited/background
+		uint32_t ladder = 0xFFFFFF00;        // yellow — ladder marker
+		uint32_t ladderStripe = 0xFF000000;  // black — ladder stripe overlay
+		uint32_t npc = 0xFF0000FF;           // blue — NPC marker
+		uint32_t interactive = 0xFF8000FF;   // purple — interactive entity
+		uint32_t monster = 0xFFFF8000;       // orange — monster marker
+		uint32_t wall = 0xFF8D8068;          // brown — wall/decor
+		uint32_t godModeItem = 0xFF00FFEA;   // cyan — item (god mode only)
+		uint32_t questBlinkA = 0xFFFF0000;   // red — quest objective blink A
+		uint32_t questBlinkB = 0xFF00FF00;   // green — quest objective blink B
+	};
+	AutomapColors automapColors;
+
+	// Automap layout constants (from game.yaml automap section)
+	int automapCellSize = 8;               // pixel size of each map cell
+	int automapOffsetX = 112;              // X offset of map grid on screen
+	int automapOffsetY = 32;               // Y offset of map grid on screen
+	int automapBlinkInterval = 333;        // quest marker blink interval (ms)
+
 	bool isFogDisabled(int mapID) const {
 		for (int id : noFogMaps) {
 			if (id == mapID) return true;

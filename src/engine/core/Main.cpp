@@ -507,6 +507,31 @@ int main(int argc, char* args[]) {
 						gc.automapHiddenDecors.push_back((int16_t)it.value().asInt(0));
 					}
 				}
+
+				// Automap layout constants
+				gc.automapCellSize = am["cell_size"].asInt(gc.automapCellSize);
+				gc.automapOffsetX = am["offset_x"].asInt(gc.automapOffsetX);
+				gc.automapOffsetY = am["offset_y"].asInt(gc.automapOffsetY);
+				gc.automapBlinkInterval = am["blink_interval"].asInt(gc.automapBlinkInterval);
+
+				// Automap entity colors
+				DataNode ec = am["entity_colors"];
+				if (ec) {
+					auto& ac = gc.automapColors;
+					ac.entrance    = (uint32_t)ec["entrance"].asULong(ac.entrance);
+					ac.exit        = (uint32_t)ec["exit"].asULong(ac.exit);
+					ac.visited     = (uint32_t)ec["visited"].asULong(ac.visited);
+					ac.background  = (uint32_t)ec["background"].asULong(ac.background);
+					ac.ladder      = (uint32_t)ec["ladder"].asULong(ac.ladder);
+					ac.ladderStripe = (uint32_t)ec["ladder_stripe"].asULong(ac.ladderStripe);
+					ac.npc         = (uint32_t)ec["npc"].asULong(ac.npc);
+					ac.interactive = (uint32_t)ec["interactive"].asULong(ac.interactive);
+					ac.monster     = (uint32_t)ec["monster"].asULong(ac.monster);
+					ac.wall        = (uint32_t)ec["wall"].asULong(ac.wall);
+					ac.godModeItem = (uint32_t)ec["god_mode_item"].asULong(ac.godModeItem);
+					ac.questBlinkA = (uint32_t)ec["quest_blink_a"].asULong(ac.questBlinkA);
+					ac.questBlinkB = (uint32_t)ec["quest_blink_b"].asULong(ac.questBlinkB);
+				}
 			}
 
 			LOG_INFO("[main] Game: {} (module: {}, save: {})\n", gc.name, gc.module, gc.saveDir);

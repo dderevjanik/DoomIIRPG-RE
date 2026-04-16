@@ -141,6 +141,27 @@ game:
     latency_adjust: 50           # latency adjustment for animations (ms)
     fear_eye_size: 8             # fear-eye sprite size
 
+  # Automap display configuration
+  automap:
+    cell_size: 8                   # pixel size of each map cell
+    offset_x: 112                  # X offset of map grid on screen
+    offset_y: 32                   # Y offset of map grid on screen
+    blink_interval: 333            # quest marker blink interval (ms)
+    entity_colors:
+      entrance: 0xFF00FF00        # green — map entrance marker
+      exit: 0xFFFF0000            # red — map exit marker
+      visited: 0xFF90B9E7         # light blue — visited tile
+      background: 0xFF2A3657      # dark blue — unvisited/background
+      ladder: 0xFFFFFF00          # yellow — ladder marker
+      ladder_stripe: 0xFF000000   # black — ladder stripe overlay
+      npc: 0xFF0000FF             # blue — NPC marker
+      interactive: 0xFF8000FF     # purple — interactive entity
+      monster: 0xFFFF8000         # orange — monster marker
+      wall: 0xFF8D8068            # brown — wall/decor
+      god_mode_item: 0xFF00FFEA   # cyan — item (god mode only)
+      quest_blink_a: 0xFFFF0000   # red — quest objective blink A
+      quest_blink_b: 0xFF00FF00   # green — quest objective blink B
+
   # Scoring formula constants
   scoring:
     per_level: 1000
