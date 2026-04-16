@@ -50,8 +50,8 @@ bool Applet::startup() {
 	this->closeApplet = false;
 	this->fontType = 0;
 	this->accelerationIndex = 0;
-	this->field_0x290 = '\0';
-	this->field_0x291 = '\0';
+	this->accelCalibrated = '\0';
+	this->accelHasSamples = '\0';
 
 	// Iphone Only
 	{
@@ -62,12 +62,12 @@ bool Applet::startup() {
 		}
 	}
 
-	this->field_0x414 = 0;
-	this->field_0x418 = 0;
-	this->field_0x41c = 0;
-	this->field_0x420 = 0;
-	this->field_0x424 = 0;
-	this->field_0x428 = 0;
+	this->accelAvgX = 0;
+	this->accelAvgY = 0;
+	this->accelAvgZ = 0;
+	this->accelBaseX = 0;
+	this->accelBaseY = 0;
+	this->accelBaseZ = 0;
 
 	this->backBuffer = new IDIB;
 	this->backBuffer->pBmp = new uint8_t[Applet::IOS_WIDTH * Applet::IOS_HEIGHT * 2];
@@ -83,8 +83,8 @@ bool Applet::startup() {
 	this->initLoadImages = false;
 	this->time = 0;
 	this->upTimeMs = 0;
-	this->field_0x7c = 0;
-	this->field_0x80 = 0;
+	this->unused_0x7c = 0;
+	this->unused_0x80 = 0;
 	// Engine subsystems
 	this->eventBus = std::make_unique<EventBus>();
 	this->canvas = std::make_unique<Canvas>();
@@ -152,8 +152,8 @@ bool Applet::startup() {
 	this->canvas->graphics.graphClipRect[3] = this->backBuffer->height;
 
 	this->accelerationIndex = 0;
-	this->field_0x290 = false;
-	this->field_0x291 = '\0';
+	this->accelCalibrated = false;
+	this->accelHasSamples = '\0';
 	LOG_INFO("[app] Startup took {} ms\n", this->upTimeMs - time);
 	LOG_INFO("[app] Fragment size {} ms\n", 0);
 
@@ -524,27 +524,27 @@ void Applet::AccelerometerUpdated(float x, float y, float z) {
 	this->accelerationZ[this->accelerationIndex] = z;
 	this->accelerationIndex = (this->accelerationIndex + 1) % 32;
 
-	int v7 = (uint8_t)this->field_0x291;
+	int v7 = (uint8_t)this->accelHasSamples;
 	int v8 = v7 == 0;
 	if (!v7) {
 		v8 = this->accelerationIndex == 0;
 	}
 	if (v8) {
-		this->field_0x291 = v7 + 1;
+		this->accelHasSamples = v7 + 1;
 	}
 	// this->comicBook->UpdateAccelerometer(x, y, z);
 }
 
 void Applet::StartAccelerometer() {
 	this->accelerationIndex = 0;
-	this->field_0x290 = false;
-	this->field_0x291 = false;
+	this->accelCalibrated = false;
+	this->accelHasSamples = false;
 }
 
 void Applet::StopAccelerometer() {
 	this->accelerationIndex = 0;
-	this->field_0x290 = false;
-	this->field_0x291 = false;
+	this->accelCalibrated = false;
+	this->accelHasSamples = false;
 }
 
 void Applet::CalcAccelerometerAngles() {
@@ -560,8 +560,8 @@ void Applet::CalcAccelerometerAngles() {
 	int zoomMaxAngle; // r3
 	int zoomPitch;    // r1
 
-	v2 = this->field_0x291 == false;
-	if (this->field_0x291) {
+	v2 = this->accelHasSamples == false;
+	if (this->accelHasSamples) {
 		v2 = !this->canvas->isZoomedIn;
 	}
 	if (!v2) {
@@ -575,18 +575,18 @@ void Applet::CalcAccelerometerAngles() {
 			z += this->accelerationZ[v5];
 		} while (++v5 < 32);
 
-		this->field_0x414 = x * 0.03125;
-		this->field_0x418 = y * 0.03125;
-		this->field_0x41c = z * 0.03125;
+		this->accelAvgX = x * 0.03125;
+		this->accelAvgY = y * 0.03125;
+		this->accelAvgZ = z * 0.03125;
 
-		if (!this->field_0x290) {
-			this->field_0x290 = true;
-			this->field_0x420 = x * 0.03125;
-			this->field_0x424 = y * 0.03125;
-			this->field_0x428 = z * 0.03125;
+		if (!this->accelCalibrated) {
+			this->accelCalibrated = true;
+			this->accelBaseX = x * 0.03125;
+			this->accelBaseY = y * 0.03125;
+			this->accelBaseZ = z * 0.03125;
 			return;
 		}
-		this->canvas->zoomAngle = (int)(float)((float)(this->field_0x414 - this->field_0x420) * 420.0);
+		this->canvas->zoomAngle = (int)(float)((float)(this->accelAvgX - this->accelBaseX) * 420.0);
 
 		zoomAngle = this->canvas->zoomAngle;
 		if (zoomAngle >= -200) {
@@ -598,7 +598,7 @@ void Applet::CalcAccelerometerAngles() {
 		}
 		this->canvas->zoomAngle = v14;
 	LABEL_13:
-		this->canvas->zoomPitch = (int)(float)((float)(this->field_0x418 - this->field_0x424) * 420.0);
+		this->canvas->zoomPitch = (int)(float)((float)(this->accelAvgY - this->accelBaseY) * 420.0);
 		zoomMaxAngle = this->canvas->zoomMaxAngle;
 		zoomPitch = this->canvas->zoomPitch;
 		if (zoomPitch >= -zoomMaxAngle) {

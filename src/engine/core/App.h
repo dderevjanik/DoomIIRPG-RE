@@ -76,28 +76,28 @@ public:
 	int sysAdvTime = 0;
 	int osTime[8] = {};
 	int codeTime[8] = {};
-	int field_0x26c = 0;
-	int field_0x270 = 0;
-	int field_0x278 = 0;
-	int field_0x27c = 0;
+	int unused_0x26c = 0; // set in header but never used
+	int unused_0x270 = 0; // set in header but never used
+	int unused_0x278 = 0; // set in header but never used
+	int unused_0x27c = 0; // set in header but never used
 	int fontType = 0;
 	int accelerationIndex = 0;
-	bool field_0x290 = false;
-	bool field_0x291 = false;
-	int field_0x7c = 0;
-	int field_0x80 = 0;
+	bool accelCalibrated = false; // guessed
+	bool accelHasSamples = false; // guessed
+	int unused_0x7c = 0; // set in constructor but never read
+	int unused_0x80 = 0; // set in constructor but never read
 
 	// Iphone Only
 	float accelerationX[32] = {};
 	float accelerationY[32] = {};
 	float accelerationZ[32] = {};
 
-	float field_0x414 = 0.0f;
-	float field_0x418 = 0.0f;
-	float field_0x41c = 0.0f;
-	float field_0x420 = 0.0f;
-	float field_0x424 = 0.0f;
-	float field_0x428 = 0.0f;
+	float accelAvgX = 0.0f; // guessed — averaged accelerometer X
+	float accelAvgY = 0.0f; // guessed — averaged accelerometer Y
+	float accelAvgZ = 0.0f; // guessed — averaged accelerometer Z
+	float accelBaseX = 0.0f; // guessed — initial/reference accelerometer X
+	float accelBaseY = 0.0f; // guessed — initial/reference accelerometer Y
+	float accelBaseZ = 0.0f; // guessed — initial/reference accelerometer Z
 	bool closeApplet = false;
 
 	//--- Owned subsystems (engine) ---
