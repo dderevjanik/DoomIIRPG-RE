@@ -525,15 +525,6 @@ int main(int argc, char* args[]) {
 					gc2.noFogMaps.push_back(mapId);
 				}
 
-				DataNode jiNode = levelNode["joke_items"];
-				if (jiNode && jiNode.isSequence()) {
-					std::vector<int> items;
-					for (auto it2 = jiNode.begin(); it2 != jiNode.end(); ++it2) {
-						items.push_back(it2.value().asInt(0));
-					}
-					gc2.jokeItems[mapId] = std::move(items);
-				}
-
 				DataNode skyNode = levelNode["sky_box"];
 				if (skyNode) {
 					gc2.levelInfos[mapId].skyBox = skyNode.asString("");

@@ -5,7 +5,6 @@ map_id: 6
 intro:
   type: travel_map
   file: travel_map.yaml
-joke_items: [78, 79, 80, 81, 82]
 starting_loadout:
   weapons: [plasma_gun, assault_rifle_with_scope, chaingun, super_shotgun, holy_water_pistol, chainsaw, assault_rifle]
   weapon_ammo:

@@ -124,8 +124,8 @@ struct GameConfig {
 	int vendSliderStart = 5;
 	std::vector<IQHint> vendIQHints = { {80, 3}, {50, 2}, {20, 1} };
 
-	// Per-map joke item tables: mapID → list of item IDs (selected by sprite % count)
-	std::flat_map<int, std::vector<int>> jokeItems;
+	// Global joke item strings (indexed by LootConfig::jokeStringIdx)
+	std::vector<std::string> jokeStrings;
 
 	// Combat timing/scale constants (from game.yaml combat section)
 	int combatMaxActiveMissiles = 8;

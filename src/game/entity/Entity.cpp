@@ -247,20 +247,10 @@ void Entity::populateDefaultLootSet() {
             ? mb.lootTiers[this->def->parm] : mb.lootConfig;
         if (lc.modulus > 0) {
             this->loot->lootSet[0] = lc.base | (this->getSprite() % lc.modulus + lc.offset);
-        } else {
-            this->loot->lootSet[0] = (0x6000 | this->findRandomJokeItem());
+        } else if (lc.jokeStringIdx >= 0) {
+            this->loot->lootSet[0] = (0x6000 | lc.jokeStringIdx);
         }
     }
-}
-
-int Entity::findRandomJokeItem() {
-    int sprite = this->getSprite();
-    const auto& jokeItems = this->gameConfig->jokeItems;
-    if (auto it = jokeItems.find(app->canvas->loadMapID); it != jokeItems.end() && !it->second.empty()) {
-        return it->second[sprite % it->second.size()];
-    }
-    app->Error(117); // ERR_ENT_LOOTSET
-    return 0;
 }
 
 void Entity::addToLootSet(int n, int n2, int n3) {

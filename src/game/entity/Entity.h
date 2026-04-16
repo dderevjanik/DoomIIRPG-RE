@@ -136,7 +136,6 @@ public:
 	short getIndex();
 	void updateMonsterFX();
 	void populateDefaultLootSet();
-	int findRandomJokeItem();
 	void addToLootSet(int n, int n2, int n3);
 	bool hasEmptyLootSet();
 	

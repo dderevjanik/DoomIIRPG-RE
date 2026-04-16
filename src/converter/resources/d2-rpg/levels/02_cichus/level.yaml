@@ -6,7 +6,6 @@ intro:
   type: travel_map
   file: travel_map.yaml
 fog: false
-joke_items: [149, 150, 151, 152, 153]
 starting_loadout:
   weapons: [chainsaw, assault_rifle]
   armor: 33

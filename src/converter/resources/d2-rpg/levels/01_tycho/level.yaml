@@ -5,4 +5,3 @@ map_id: 1
 intro:
   type: travel_map
   file: travel_map.yaml
-joke_items: [180, 181, 182, 183, 184]

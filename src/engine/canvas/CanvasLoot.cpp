@@ -91,8 +91,11 @@ void Canvas::poolLoot(int* array) {
 		int n7 = n6 >> 12 & 0xF;
 		if (n7 == 6) {
 			short n8 = (short)(n6 & 0xFFF);
+			const auto& jokeStrings = CAppContainer::getInstance()->gameConfig.jokeStrings;
 			this->lootText->append('\x88');
-			app->localization->composeText(this->loadMapStringID, n8, this->lootText);
+			if (n8 >= 0 && n8 < (int)jokeStrings.size()) {
+				this->lootText->append(jokeStrings[n8].c_str());
+			}
 			this->lootText->append("|");
 		}
 		else {

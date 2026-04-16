@@ -2145,8 +2145,11 @@ void ScriptThread::composeLootDialog() {
         int n3 = uShortArg >> 12 & 0xF;
         if (n3 == 6) {
             short n4 = (short)(uShortArg & 0xFFF);
+            const auto& jokeStrings = CAppContainer::getInstance()->gameConfig.jokeStrings;
             largeBuffer->append('\x88');
-            this->app->localization->composeText(this->app->canvas->loadMapStringID, n4, largeBuffer);
+            if (n4 >= 0 && n4 < (int)jokeStrings.size()) {
+                largeBuffer->append(jokeStrings[n4].c_str());
+            }
             largeBuffer->append("|");
         }
         else if (n3 == 5) {

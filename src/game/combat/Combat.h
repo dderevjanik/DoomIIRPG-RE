@@ -64,9 +64,11 @@ struct MonsterDef {
 	// Loot drop configuration (per type, with optional per-tier overrides)
 	struct LootConfig {
 		int16_t base = 0;       // Base flags/category value (e.g. 0x600, 0x2100)
-		int8_t modulus = 0;     // Sprite % modulus for randomization (0 = use joke items)
+		int8_t modulus = 0;     // Sprite % modulus for randomization (0 = joke item)
 		int8_t offset = 0;      // Added to (sprite % modulus) result
 		bool noCorpseLoot = false; // Skip loot when this monster is a corpse type
+		std::string jokeText;   // Joke item display text (when drop is joke_item)
+		int16_t jokeStringIdx = -1; // Index into GameConfig::jokeStrings (-1 = none)
 	};
 	LootConfig lootConfig;      // Type-level default
 	static constexpr int MAX_LOOT_TIERS = 4;

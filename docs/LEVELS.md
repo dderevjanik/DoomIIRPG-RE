@@ -14,7 +14,7 @@ Each level lives in its own subdirectory under the game's `levels/` folder:
 ```
 games/doom2rpg/
   game.yaml                  # Game definition — registers levels, strings, search paths
-  levels.yaml                # Per-level gameplay config (loadouts, fog, joke items)
+  levels.yaml                # Per-level gameplay config (loadouts, fog)
   sprites.yaml               # Global sprite/tile name -> ID mapping
   entities.yaml              # Entity definitions (monsters, NPCs, items, decorations)
   sounds.yaml                # Sound name -> WAV file mapping
@@ -83,13 +83,11 @@ levels:
   tycho:
     map_id: 1
     file: map00.bin
-    joke_items: [180, 181, 182, 183, 184]
 
   cichus:
     map_id: 2
     file: map01.bin
     fog: false                        # Disable fog (outdoor map)
-    joke_items: [149, 150, 151, 152, 153]
     starting_loadout:                 # Equipment when starting this level
       weapons: [chainsaw, assault_rifle]
       armor: 33
@@ -109,10 +107,9 @@ levels:
 | `map_id` | int | Engine map number (1-based) |
 | `file` | string | Binary map filename (e.g. `map00.bin`) |
 | `fog` | bool | Enable/disable fog (default: true) |
-| `joke_items` | int[] | Entity indices for joke items dropped by corpses |
 | `starting_loadout` | map | Player equipment when entering from a previous level |
 
-The engine reads this file at startup (`Main.cpp`) to populate fog settings, joke items, and starting loadouts.
+The engine reads this file at startup (`Main.cpp`) to populate fog settings and starting loadouts.
 
 ---
 
@@ -123,7 +120,6 @@ Each level's `level.yaml` contains map-specific overrides and data that can be e
 ```yaml
 name: tycho
 map_id: 1
-joke_items: [180, 181, 182, 183, 184]
 
 player_spawn:
   x: 4               # Tile column (0-31)
@@ -310,7 +306,7 @@ When the player enters a new level (map ID N):
 4. **Load scripts.yaml** — Override tile events and static functions (if present)
 5. **Register media** — Mark needed textures from `textures`, then load them
 6. **Load strings** — Load the level's string group for dialog text
-7. **Load levels.yaml** — Apply fog settings and joke items for this map ID
+7. **Load levels.yaml** — Apply fog settings for this map ID
 8. **Initialize scripts** — Run `init_map` static function if defined
 9. **Start gameplay** — Player spawns, `per_turn` begins firing each turn
 

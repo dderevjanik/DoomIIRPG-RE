@@ -38,6 +38,7 @@ static void parseLootConfig(const DataNode& loot, MonsterDef::LootConfig& lc) {
 			lc.base = 0;
 			lc.modulus = 0;
 			lc.offset = 0;
+			lc.jokeText = loot["joke"].asString("");
 		} else {
 			auto [category, parm] = EntityNames::resolveDropName(dropName);
 			lc.base = (int16_t)((category << 12) | (parm << 6));
@@ -1423,6 +1424,30 @@ std::expected<void, std::string> parseMonsterCombatFromEntities(Applet* app, con
 		}
 
 		loaded++;
+	}
+
+	// Build global joke string table from per-monster jokeText fields
+	{
+		auto& jokeStrings = CAppContainer::getInstance()->gameConfig.jokeStrings;
+		std::unordered_map<std::string, int16_t> jokeTextToIdx;
+		auto registerJoke = [&](MonsterDef::LootConfig& lc) {
+			if (lc.jokeText.empty()) return;
+			auto [it, inserted] = jokeTextToIdx.try_emplace(lc.jokeText, (int16_t)jokeStrings.size());
+			if (inserted) {
+				jokeStrings.push_back(lc.jokeText);
+			}
+			lc.jokeStringIdx = it->second;
+		};
+		for (int i = 0; i < N; i++) {
+			auto& mb = app->combat->monsterBehaviors[i];
+			registerJoke(mb.lootConfig);
+			if (mb.hasLootTiers) {
+				for (int t = 0; t < MonsterBehaviors::MAX_LOOT_TIERS; t++) {
+					registerJoke(mb.lootTiers[t]);
+				}
+			}
+		}
+		LOG_INFO("[monster_combat] registered {} unique joke item strings\n", (int)jokeStrings.size());
 	}
 
 	LOG_INFO("[monster_combat] loaded combat data for {}/{} monster entities\n", loaded, N);
