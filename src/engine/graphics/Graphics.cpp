@@ -100,15 +100,15 @@ void Graphics::fillRect(int x, int y, int w, int h, int color) {
 }
 
 void Graphics::FMGL_fillRect(int x, int y, int w, int h, float r, float g, float b, float a) {
-    int v9; // r6
-    int v11; // r1
-    int v13; // r2
-    int v14; // lr
-    int v15; // r12
-    int v16; // r0
-    int v17; // r12
-    bool v18; // cc
-    int v19; // r8
+    int v9;
+    int v11;
+    int v13;
+    int v14;
+    int v15;
+    int v16;
+    int v17;
+    bool v18;
+    int v19;
 
     float vp[12];
 

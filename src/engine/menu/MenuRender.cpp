@@ -43,53 +43,53 @@
 
 void MenuSystem::paint(Graphics* graphics) {
 
-	Canvas* canvas; // r1
-	int* screenRect; // r5
-	int ScrollPos; // r0
-	int yPos; // r10
-	bool v17; // zf
-	bool v22; // zf
-	int v29; // r3
-	bool v30; // zf
-	bool v31; // zf
-	MenuItem* items; // r5
-	int v33; // r6
-	int numItems; // r2
-	int v35; // r10
-	int* v36; // r12
-	int v37; // r0
-	int menuItem_width; // r3
-	int flags; // r3
-	int v40; // r0
-	int action; // r1
-	int v42; // r12
-	int v43; // r2
-	int textField2; // r3
-	int v45; // r4
-	int v46; // r3
-	bool v47; // zf
-	bool v49; // zf
-	int v50; // r4
-	int v55; // r6
-	int v56; // r0
-	Image* imgGameMenuTornPage; // r10
-	VendingMachine* vendingMachine; // r1
-	float v59; // r12
-	int v60; // r3
-	float v61; // r6
-	Text* v62; // r0
-	Canvas* v63; // r5
-	Text* v64; // r4
-	int* menuRect; // [sp+3Ch] [bp-44h]
-	Text* textBuffer1; // [sp+40h] [bp-40h]
-	Text* textBuffer2; // [sp+44h] [bp-3Ch]
-	int v76; // [sp+48h] [bp-38h]
-	int v78; // [sp+50h] [bp-30h]
-	int v79; // [sp+54h] [bp-2Ch]
-	int v80; // [sp+58h] [bp-28h]
-	int v81; // [sp+5Ch] [bp-24h]
-	int v82; // [sp+60h] [bp-20h]
-	int menuHelpMaxChars; // [sp+64h] [bp-1Ch]
+	Canvas* canvas;
+	int* screenRect;
+	int ScrollPos;
+	int yPos;
+	bool v17;
+	bool v22;
+	int v29;
+	bool v30;
+	bool v31;
+	MenuItem* items;
+	int v33;
+	int numItems;
+	int v35;
+	int* v36;
+	int v37;
+	int menuItem_width;
+	int flags;
+	int v40;
+	int action;
+	int v42;
+	int v43;
+	int textField2;
+	int v45;
+	int v46;
+	bool v47;
+	bool v49;
+	int v50;
+	int v55;
+	int v56;
+	Image* imgGameMenuTornPage;
+	VendingMachine* vendingMachine;
+	float v59;
+	int v60;
+	float v61;
+	Text* v62;
+	Canvas* v63;
+	Text* v64;
+	int* menuRect;
+	Text* textBuffer1;
+	Text* textBuffer2;
+	int v76;
+	int v78;
+	int v79;
+	int v80;
+	int v81;
+	int v82;
+	int menuHelpMaxChars;
 
 	if (this->menu == Menus::MENU_COMIC_BOOK) {
 		app->comicBook->Draw(graphics);
@@ -964,70 +964,70 @@ void MenuSystem::drawOptionsScreen(Graphics* graphics)
 {
 
 
-	Text* LargeBuffer; // r0
-	int menu; // r3
-	int v6; // r5
-	int width; // r6
-	fmButton* Button; // r0
-	int v9; // r4
-	int v10; // r10
-	fmButton* v11; // r0
-	Sound* sound; // r2
-	int v13; // r3
-	fmButton* v14; // r0
-	int v15; // r4
-	fmButton* v16; // r0
-	Sound* v17; // r0
-	int v18; // r3
-	int v19; // r6
-	int numItems; // r2
-	int v22; // r5
-	int v23; // r10
-	int MenuItemHeight; // r0
-	Sound* v25; // r3
-	int v26; // r4
-	int v27; // r4
-	fmButton* v28; // r0
-	int v29; // r5
-	int v30; // r6
-	int sfxScrollPos; // r3
-	int v32; // r4
-	int v33; // r4
-	int v34; // r5
-	Sound* v35; // r3
-	int v36; // r4
-	int v37; // r5
-	fmButton* v38; // r0
-	int musicScrollPos; // r0
-	int v40; // r4
-	int v41; // r4
-	int v42; // r6
-	int v43; // r2
-	int v44; // r10
-	int i; // r5
-	int v47; // r0
-	int buttonsAlpha; // r4
-	int v49; // r4
-	fmButton* v50; // r0
-	int v51; // r6
-	int v52; // r5
-	int alphaScrollPos; // r0
-	int v54; // r4
-	float green; // r3
-	int v57; // [sp+0h] [bp-84h]
-	float red; // [sp+4h] [bp-80h]
-	int v59; // [sp+14h] [bp-70h]
-	int v60; // [sp+1Ch] [bp-68h]
-	int v61; // [sp+24h] [bp-60h]
-	int v62; // [sp+28h] [bp-5Ch]
-	Text* v64; // [sp+34h] [bp-50h]
-	int v65; // [sp+38h] [bp-4Ch]
-	int v66; // [sp+40h] [bp-44h]
-	int v67; // [sp+44h] [bp-40h]
-	int v68; // [sp+50h] [bp-34h]
-	int v69; // [sp+60h] [bp-24h]
-	int v70; // [sp+64h] [bp-20h]
-	int menuItem_width; // [sp+68h] [bp-1Ch]
+	Text* LargeBuffer;
+	int menu;
+	int v6;
+	int width;
+	fmButton* Button;
+	int v9;
+	int v10;
+	fmButton* v11;
+	Sound* sound;
+	int v13;
+	fmButton* v14;
+	int v15;
+	fmButton* v16;
+	Sound* v17;
+	int v18;
+	int v19;
+	int numItems;
+	int v22;
+	int v23;
+	int MenuItemHeight;
+	Sound* v25;
+	int v26;
+	int v27;
+	fmButton* v28;
+	int v29;
+	int v30;
+	int sfxScrollPos;
+	int v32;
+	int v33;
+	int v34;
+	Sound* v35;
+	int v36;
+	int v37;
+	fmButton* v38;
+	int musicScrollPos;
+	int v40;
+	int v41;
+	int v42;
+	int v43;
+	int v44;
+	int i;
+	int v47;
+	int buttonsAlpha;
+	int v49;
+	fmButton* v50;
+	int v51;
+	int v52;
+	int alphaScrollPos;
+	int v54;
+	float green;
+	int v57;
+	float red;
+	int v59;
+	int v60;
+	int v61;
+	int v62;
+	Text* v64;
+	int v65;
+	int v66;
+	int v67;
+	int v68;
+	int v69;
+	int v70;
+	int menuItem_width;
 
 	LargeBuffer = app->localization->getLargeBuffer();
 	menu = this->menu;

@@ -368,16 +368,16 @@ void Render::setupTexture(int n, int n2, int renderMode, int renderFlags) {
 void Render::drawSkyMap(int n2) {
 
 
-	uint8_t* p_skyMapTexels; // r4
-	uint16_t* FogPalette;    // r0
-	int16_t v7;              // r2
-	int16_t v9;              // r12
-	int v11;                 // lr
-	int v12;                 // r5
-	int v13;                 // r12
-	uint16_t* pixels;        // r1
-	int v15;                 // r3
-	int v16;                 // r3
+	uint8_t* p_skyMapTexels;
+	uint16_t* FogPalette;
+	int16_t v7;
+	int16_t v9;
+	int v11;
+	int v12;
+	int v13;
+	uint16_t* pixels;
+	int v15;
+	int v16;
 
 	p_skyMapTexels = this->skyMapTexels;
 	app->tinyGL->paletteBase = this->skyMapPalette;

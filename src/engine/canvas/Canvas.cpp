@@ -2509,11 +2509,11 @@ void Canvas::logoState() {
 
 void Canvas::drawScrollBar(Graphics* graphics, int i, int i2, int i3, int i4, int i5, int i6, int i7)
 {
-	bool needsScrollBar; // cc
-	int visibleRange; // r1
-	Canvas* self; // [sp+20h] [bp-24h]
-	int thumbHeight; // [sp+24h] [bp-20h]
-	int thumbOffset; // [sp+28h] [bp-1Ch]
+	bool needsScrollBar;
+	int visibleRange;
+	Canvas* self;
+	int thumbHeight;
+	int thumbOffset;
 
 	self = this;
 	needsScrollBar = i7 < 0;
@@ -3763,21 +3763,21 @@ void Canvas::turnEntityIntoWaterSpout(Entity* entity) {
 
 
 void Canvas::flipControls() {
-	int setIndex; // r10
-	fmButtonContainer** containerPtr; // r6
-	int x; // r8
-	fmButton* Button; // r5
-	fmButton* rightButton; // r0
-	bool eitherNull; // zf
-	fmButton* rightBtn; // r4
-	fmButton* leftTempBtn; // r4
-	fmButton* rightTempBtn; // r0
-	bool eitherTempNull; // zf
-	fmButton* upButton; // r4
-	fmButton* downButton; // r0
-	bool eitherUpDownNull; // zf
-	fmButton* downBtn; // r5
-	int savedX; // r8
+	int setIndex;
+	fmButtonContainer** containerPtr;
+	int x;
+	fmButton* Button;
+	fmButton* rightButton;
+	bool eitherNull;
+	fmButton* rightBtn;
+	fmButton* leftTempBtn;
+	fmButton* rightTempBtn;
+	bool eitherTempNull;
+	fmButton* upButton;
+	fmButton* downButton;
+	bool eitherUpDownNull;
+	fmButton* downBtn;
+	int savedX;
 
 	setIndex = 0;
 	containerPtr = &this->m_controlButtons[4];

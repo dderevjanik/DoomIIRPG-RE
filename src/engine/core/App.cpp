@@ -548,17 +548,17 @@ void Applet::StopAccelerometer() {
 }
 
 void Applet::CalcAccelerometerAngles() {
-	bool v2;          // zf
-	float y;          // s13
-	int v5;           // r2
-	float x;          // s14
-	float z;          // s12
-	float v9;         // s11
-	float v10;        // s14
-	int zoomAngle;    // r3
-	int v14;          // r3
-	int zoomMaxAngle; // r3
-	int zoomPitch;    // r1
+	bool v2;
+	float y;
+	int v5;
+	float x;
+	float z;
+	float v9;
+	float v10;
+	int zoomAngle;
+	int v14;
+	int zoomMaxAngle;
+	int zoomPitch;
 
 	v2 = this->accelHasSamples == false;
 	if (this->accelHasSamples) {

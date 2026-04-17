@@ -66,26 +66,26 @@ void SetOrientationRight(void)
 }
 
 void ComicBook::Draw(Graphics* graphics) {
-    int comicBookIndex; // r1
-    int iPhoneComicIndex; // r1
-    bool canChangeOrientation; // zf
-    float alpha; // s17
-    int is_iPhoneComic; // r5
-    float fadeAlpha; // s16
-    bool isLandscape; // r0
-    bool isRotated; // r3
-    struct Image** imgiPhoneComicBook; // r8
-    int iPhonePage; // r6
-    char isFlipped; // r11
-    bool isPhone; // r3
-    int nextPage; // r1
-    int pageOffset; // r2
-    int maxPages; // r2
-    int prevPage; // r5
-    Image* nextImg; // r12
-    int nextPageIdx; // r10
-    Image** unused_imgArray; // r1
-    int pageStride; // [sp+10h] [bp-28h]
+    int comicBookIndex;
+    int iPhoneComicIndex;
+    bool canChangeOrientation;
+    float alpha;
+    int is_iPhoneComic;
+    float fadeAlpha;
+    bool isLandscape;
+    bool isRotated;
+    struct Image** imgiPhoneComicBook;
+    int iPhonePage;
+    char isFlipped;
+    bool isPhone;
+    int nextPage;
+    int pageOffset;
+    int maxPages;
+    int prevPage;
+    Image* nextImg;
+    int nextPageIdx;
+    Image** unused_imgArray;
+    int pageStride;
 
     ++this->frameCounter;
     this->isLoaded = true;
@@ -204,9 +204,9 @@ draw_current_page:
 void ComicBook::DrawLoading(Graphics* graphics) {
     if (!this->app) this->app = CAppContainer::getInstance()->app;
     Applet* app = this->app;
-    int x; // r10
-    int y; // r8
-    int flags; // r0
+    int x;
+    int y;
+    int flags;
     ++this->loadingCounter;
     app->render->_gles->ClearBuffer(0x000000);
     if (this->is_iPhoneComic) {
@@ -487,20 +487,20 @@ void ComicBook::DrawImage(Image* image, int posX, int posY, char rotated, float 
 
 
 void ComicBook::UpdateMovement() {
-    int totalPages; // r5
-    bool is_iPhoneComic; // r4
-    int cur_iPhonePage; // r6
-    int iPhonePage; // lr
-    int curPage; // r12
-    int midPoint; // r2
-    int minSpeed; // r3
-    int speed; // r1
-    int endPoint; // r3
-    int newEndPoint; // r3
-    int lastPage; // r2
-    bool isWrapping; // zf
-    int screenSize; // r2
-    int snapBackDelta; // r3
+    int totalPages;
+    bool is_iPhoneComic;
+    int cur_iPhonePage;
+    int iPhonePage;
+    int curPage;
+    int midPoint;
+    int minSpeed;
+    int speed;
+    int endPoint;
+    int newEndPoint;
+    int lastPage;
+    bool isWrapping;
+    int screenSize;
+    int snapBackDelta;
 
     if (this->isTouching)
         return;
@@ -590,14 +590,14 @@ void ComicBook::UpdateMovement() {
 
 void ComicBook::UpdateTransition()
 {
-    bool isIdle; // zf
-    int newFadeCounter; // r3
-    bool fadeNotDone; // nf
-    bool is_iPhoneComic; // r2
-    float offsetStep; // s15
-    float currentOffset; // s14
-    int newTransCounter; // r3
-    float newOffset; // s15
+    bool isIdle;
+    int newFadeCounter;
+    bool fadeNotDone;
+    bool is_iPhoneComic;
+    float offsetStep;
+    float currentOffset;
+    int newTransCounter;
+    float newOffset;
 
     isIdle = !this->isTransitioning;
     if (!this->isTransitioning)
@@ -647,22 +647,22 @@ void ComicBook::Touch(int x, int y, bool b)
 {
     if (!this->app) this->app = CAppContainer::getInstance()->app;
     Applet* app = this->app;
-    bool isPressed; // r6
-    int touchY; // r5
-    bool wasCancelled; // r3
-    bool isTransitioning; // r2
-    bool is_iPhoneComic; // r3
-    int endPoint; // r1
-    int halfScreen; // r0
-    int midPoint; // r12
-    bool isPhoneComic; // zf
-    int page; // r3
-    int nextPageIdx; // r3
-    int prevPageIdx; // r3
-    int curPage; // r3
-    int wrappedPage; // r3
-    int cur_iPhonePage; // r3
-    int wrappedIPhonePage; // r3
+    bool isPressed;
+    int touchY;
+    bool wasCancelled;
+    bool isTransitioning;
+    bool is_iPhoneComic;
+    int endPoint;
+    int halfScreen;
+    int midPoint;
+    bool isPhoneComic;
+    int page;
+    int nextPageIdx;
+    int prevPageIdx;
+    int curPage;
+    int wrappedPage;
+    int cur_iPhonePage;
+    int wrappedIPhonePage;
 
     isPressed = b;
     touchY = y;
@@ -787,12 +787,12 @@ clamp_iphone_page:
 
 bool ComicBook::ButtonTouch(int x, int y)
 {
-    int btnX; // r12
-    int btnY; // r2
-    int btnW; // lr
-    int btnH; // r1
-    int rightEdge; // r3
-    bool inXRange; // cc
+    int btnX;
+    int btnY;
+    int btnW;
+    int btnH;
+    int rightEdge;
+    bool inXRange;
 
     this->exitBtnHighlighted = false;
     if (!this->drawExitButton)
@@ -820,11 +820,11 @@ bool ComicBook::ButtonTouch(int x, int y)
 
 void ComicBook::TouchMove(int x, int y)
 {
-    bool is_iPhoneComic; // r3
-    int prevBegPoint; // r3
-    int moveDelta; // r2
-    int endPoint; // r3
-    int begPoint; // r3
+    bool is_iPhoneComic;
+    int prevBegPoint;
+    int moveDelta;
+    int endPoint;
+    int begPoint;
 
     if (this->isLoaded && !this->exitCancelled)
     {
@@ -871,14 +871,14 @@ void ComicBook::DeleteImages() {
 void ComicBook::DrawExitButton(Graphics* graphics) {
     if (!this->app) this->app = CAppContainer::getInstance()->app;
     Applet* app = this->app;
-    int btnX; // r11
-    int btnY; // r10
-    int btnW; // r6
-    int btnH; // r8
-    int rightEdge; // r3
-    int brightness; // r5
-    Text* SmallBuffer; // r5
-    int unused_flags; // r0
+    int btnX;
+    int btnY;
+    int btnW;
+    int btnH;
+    int rightEdge;
+    int brightness;
+    Text* SmallBuffer;
+    int unused_flags;
     btnX = this->exitBtnRect[0];
     btnY = this->exitBtnRect[1];
     btnW = this->exitBtnRect[2];

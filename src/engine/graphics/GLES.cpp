@@ -475,9 +475,9 @@ bool gles::RasterizeConvexPolygon(std::span<GLVert> vertsSpan) {
 }
 
 void gles::UnloadSkyMap() {
-	glChain* chain; // r4
-	glChain* next; // r1
-	glChain* prev; // r2
+	glChain* chain;
+	glChain* next;
+	glChain* prev;
 
 	if (this->render->mediaMappings)
 	{
@@ -796,59 +796,59 @@ void gles::CreateTextureForMediaID(int n, int mediaID, bool b) {
 	//printf("CreateTextureForMediaID %d\n", mediaID);
 
 
-	Render* render; // r2
-	int v5; // r1
-	int v7; // r8
-	char v8; // r1
-	uint16_t* v9; // r4
-	unsigned int v10; // r3
-	unsigned int v12; // r2
-	int v13; // r11
-	int v14; // r10
-	int v15; // lr
-	uint8_t* v16; // r12
-	int rgb565; // r3
-	int b5; // r0
-	int r5; // r1
-	int g6; // r2
-	Render* v23; // r1
-	int v27; // r4
-	int v28; // r3
-	int shapeMin; // lr
-	int v31; // r8
-	unsigned int v34; // r2
-	int i; // r6
+	Render* render;
+	int v5;
+	int v7;
+	char v8;
+	uint16_t* v9;
+	unsigned int v10;
+	unsigned int v12;
+	int v13;
+	int v14;
+	int v15;
+	uint8_t* v16;
+	int rgb565;
+	int b5;
+	int r5;
+	int g6;
+	Render* v23;
+	int v27;
+	int v28;
+	int shapeMin;
+	int v31;
+	unsigned int v34;
+	int i;
 	int x;
-	int y; // r4
-	int runHeight; // r0
-	char* v43; // r1
-	int v44; // r2
-	uint8_t* v45; // r3
-	uint8_t* v46; // r1
-	bool v47; // r4
-	int16_t* v48; // r2
-	int v54; // lr
-	uint8_t* v55; // r2
-	int v58; // r1
-	glChain* ct; // r4
-	glChain* next; // r2
-	glChain* prev; // r3
-	char* data; // [sp+18h] [bp-470h]
-	bool v70; // [sp+1Ch] [bp-46Ch]
-	int __len; // [sp+2Ch] [bp-45Ch]
-	uint8_t* __src; // [sp+34h] [bp-454h]
-	int width; // [sp+38h] [bp-450h]
-	int height; // [sp+3Ch] [bp-44Ch]
-	int v78; // [sp+40h] [bp-448h]
-	uint8_t* v79; // [sp+44h] [bp-444h]
-	int v80; // [sp+48h] [bp-440h]
-	int shapeMax; // [sp+4Ch] [bp-43Ch]
-	int maxY; // [sp+50h] [bp-438h]
+	int y;
+	int runHeight;
+	char* v43;
+	int v44;
+	uint8_t* v45;
+	uint8_t* v46;
+	bool v47;
+	int16_t* v48;
+	int v54;
+	uint8_t* v55;
+	int v58;
+	glChain* ct;
+	glChain* next;
+	glChain* prev;
+	char* data;
+	bool v70;
+	int __len;
+	uint8_t* __src;
+	int width;
+	int height;
+	int v78;
+	uint8_t* v79;
+	int v80;
+	int shapeMax;
+	int maxY;
 	int minY;
-	int v83; // [sp+54h] [bp-434h]
-	int v85; // [sp+5Ch] [bp-42Ch]
-	char* v86; // [sp+60h] [bp-428h]
-	char* __b; // [sp+64h] [bp-424h]
+	int v83;
+	int v85;
+	char* v86;
+	char* __b;
 	uint8_t rgba[1024]; // [sp+6Bh] [bp-41Dh] BYREF
 	bool transAlpha = false;
 
@@ -1018,7 +1018,7 @@ void gles::CreateTextureForMediaID(int n, int mediaID, bool b) {
 		rgb565 = v9[v15];
 		b5 = rgb565 & 0x1F; // b5
 		g6 = (rgb565 >> 5) & 0x3F; // g6
-		r5 = (rgb565 >> 11) & 0x1F; // r5
+		r5 = (rgb565 >> 11) & 0x1F;
 		
 		if (!(v15 <= 0)) {
 			v14 += r5;
@@ -1305,7 +1305,7 @@ void gles::getTextureDims(int tileNum, int frame, int& w, int& h) {
 }
 
 bool gles::DrawSkyMap() {
-	int fogMode; // r6
+	int fogMode;
 	GLVert v5[4]; // [sp+4h] [bp-D0h] BYREF
 
 	if (this->isInit) {

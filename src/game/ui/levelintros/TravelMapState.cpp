@@ -858,25 +858,25 @@ static void drawStarFieldPage(Canvas* canvas, Graphics* graphics) {
 
 static void drawStarField(Canvas* canvas, Graphics* graphics, int x, int y) {
 
-	int upTimeMs; // r2
-	int result; // r0
-	int sfHeight; // r2
-	unsigned int pixelValue; // r2
-	unsigned int starType; // r11
-	int distX; // r6
-	int distY; // r0
-	signed int combinedDist; // r5
-	int avgDist; // r6
-	int starSize; // r3
-	int scaledDist; // r0
-	int i; // r4
-	int drawX; // r10
-	int offsetX; // r8
-	int halfWidth; // [sp+18h] [bp-2Ch]
-	int halfHeight; // [sp+1Ch] [bp-28h]
-	int row; // [sp+20h] [bp-24h]
-	int drawY; // [sp+24h] [bp-20h]
-	int offsetY; // [sp+28h] [bp-1Ch]
+	int upTimeMs;
+	int result;
+	int sfHeight;
+	unsigned int pixelValue;
+	unsigned int starType;
+	int distX;
+	int distY;
+	signed int combinedDist;
+	int avgDist;
+	int starSize;
+	int scaledDist;
+	int i;
+	int drawX;
+	int offsetX;
+	int halfWidth;
+	int halfHeight;
+	int row;
+	int drawY;
+	int offsetY;
 
 	graphics->fillRect(x, y, canvas->starFieldWidth, canvas->starFieldHeight, 0xFF000000);
 	if (canvas->app->upTimeMs - canvas->stateVars[7] > 59) {
@@ -949,53 +949,53 @@ next_star_row:
 static void runStarFieldFrame(Canvas* canvas) {
 
 
-	int fieldWidth; // r11
-	int fieldHeight; // r3
-	TinyGL* tinyGL; // r5
-	unsigned int pixelValue; // r3
-	unsigned int starType; // r3
-	int radiusY; // r6
-	signed int radiusX; // r0
-	int* sinTable; // r10
-	int offsetY; // r0
-	int col; // r4
-	int colOffset; // r8
-	unsigned int rowDist; // r3
-	TinyGL* btmTinyGL; // r5
-	unsigned int btmPixelValue; // r3
-	unsigned int btmStarType; // r3
-	int btmRadiusY; // r6
-	signed int btmRadiusX; // r0
-	int* btmSinTable; // r10
-	int btmOffsetY; // r0
-	int btmCol; // r4
-	int btmColOffset; // r8
-	int spawnIndex; // r11
-	unsigned int btmRowDist; // r3
-	int randAngle; // r6
-	int starAngle; // r10
-	int randType; // r4
-	int spawnX; // r5
-	int spawnY; // r0
-	int result; // r0
-	int btmZoom; // [sp+0h] [bp-78h]
-	int zoom; // [sp+4h] [bp-74h]
-	int btmSmallRadius; // [sp+8h] [bp-70h]
-	int btmLargeRadius; // [sp+Ch] [bp-6Ch]
-	int smallRadius; // [sp+10h] [bp-68h]
-	int largeRadius; // [sp+14h] [bp-64h]
-	int halfWidth; // [sp+20h] [bp-58h]
-	int halfHeight; // [sp+24h] [bp-54h]
-	int btmAngle; // [sp+28h] [bp-50h]
-	int btmOffsetXResult; // [sp+30h] [bp-48h]
-	int i; // [sp+34h] [bp-44h]
-	int btmRowOffset; // [sp+3Ch] [bp-3Ch]
-	unsigned short* btmPixels; // [sp+44h] [bp-34h]
-	unsigned short* pixels; // [sp+48h] [bp-30h]
-	int offsetXResult; // [sp+4Ch] [bp-2Ch]
-	int angle; // [sp+54h] [bp-24h]
-	int rowOffset; // [sp+58h] [bp-20h]
-	int btmRow; // [sp+5Ch] [bp-1Ch]
+	int fieldWidth;
+	int fieldHeight;
+	TinyGL* tinyGL;
+	unsigned int pixelValue;
+	unsigned int starType;
+	int radiusY;
+	signed int radiusX;
+	int* sinTable;
+	int offsetY;
+	int col;
+	int colOffset;
+	unsigned int rowDist;
+	TinyGL* btmTinyGL;
+	unsigned int btmPixelValue;
+	unsigned int btmStarType;
+	int btmRadiusY;
+	signed int btmRadiusX;
+	int* btmSinTable;
+	int btmOffsetY;
+	int btmCol;
+	int btmColOffset;
+	int spawnIndex;
+	unsigned int btmRowDist;
+	int randAngle;
+	int starAngle;
+	int randType;
+	int spawnX;
+	int spawnY;
+	int result;
+	int btmZoom;
+	int zoom;
+	int btmSmallRadius;
+	int btmLargeRadius;
+	int smallRadius;
+	int largeRadius;
+	int halfWidth;
+	int halfHeight;
+	int btmAngle;
+	int btmOffsetXResult;
+	int i;
+	int btmRowOffset;
+	unsigned short* btmPixels;
+	unsigned short* pixels;
+	int offsetXResult;
+	int angle;
+	int rowOffset;
+	int btmRow;
 
 	fieldWidth = canvas->starFieldWidth;
 	halfWidth = fieldWidth / 2;
