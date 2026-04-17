@@ -1,0 +1,93 @@
+screen:
+  id: options_input
+  background_color: 0xFF0D0D1A
+  background_image: main_bg
+  back_action: save_and_back
+
+  widgets:
+    - type: label
+      id: title
+      x: 240
+      y: 16
+      text: "Input Options"
+      anchor: hcenter
+      color: 0xFFFF7F00
+
+    - type: selector
+      id: control_layout
+      x: 60
+      y: 60
+      w: 360
+      h: 28
+      text: "Control Layout"
+      options:
+        - label: "Chevrons"
+          value: 0
+        - label: "D-Pad"
+          value: 1
+
+    - type: checkbox
+      id: flip_controls
+      x: 60
+      y: 96
+      w: 360
+      h: 28
+      text: "Flip Controls"
+
+    - type: slider
+      id: control_alpha
+      x: 60
+      y: 132
+      w: 360
+      h: 28
+      text: "Button Alpha"
+      min: 0
+      max: 255
+      step: 15
+      value: 255
+      fill_color: 0xFFDD8822
+
+    - type: checkbox
+      id: vibration_enabled
+      x: 60
+      y: 176
+      w: 360
+      h: 28
+      text: "Vibration"
+      checked: true
+
+    - type: slider
+      id: vibration_intensity
+      x: 60
+      y: 212
+      w: 360
+      h: 28
+      text: "Vibration"
+      min: 0
+      max: 100
+      step: 10
+      value: 100
+      fill_color: 0xFFDD8822
+
+    - type: slider
+      id: deadzone
+      x: 60
+      y: 248
+      w: 360
+      h: 28
+      text: "Dead Zone"
+      min: 0
+      max: 100
+      step: 5
+      value: 15
+      fill_color: 0xFFDD8822
+
+    - type: button
+      id: back_btn
+      x: 300
+      y: 280
+      w: 120
+      h: 28
+      text: "Back"
+      action: save_and_back
+      highlight_color: 0xFF00AA00

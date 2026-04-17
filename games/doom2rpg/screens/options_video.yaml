@@ -1,0 +1,106 @@
+screen:
+  id: options_video
+  background_color: 0xFF0D0D1A
+  background_image: main_bg
+  back_action: save_and_back
+
+  widgets:
+    - type: label
+      id: title
+      x: 240
+      y: 16
+      text: "Video Options"
+      anchor: hcenter
+      color: 0xFFFF7F00
+
+    - type: selector
+      id: window_mode
+      x: 60
+      y: 60
+      w: 360
+      h: 28
+      text: "Window Mode"
+      options:
+        - label: "Windowed"
+          value: 0
+        - label: "Fullscreen"
+          value: 1
+        - label: "Borderless"
+          value: 2
+
+    - type: checkbox
+      id: vsync
+      x: 60
+      y: 96
+      w: 360
+      h: 28
+      text: "VSync"
+      checked: true
+
+    - type: selector
+      id: resolution
+      x: 60
+      y: 132
+      w: 360
+      h: 28
+      text: "Resolution"
+      options:
+        - label: "480x320"
+          value: 0
+        - label: "640x480"
+          value: 1
+        - label: "720x400"
+          value: 2
+        - label: "720x480"
+          value: 3
+        - label: "720x576"
+          value: 4
+        - label: "800x600"
+          value: 5
+        - label: "832x624"
+          value: 6
+        - label: "960x640"
+          value: 7
+        - label: "1024x768"
+          value: 8
+        - label: "1152x864"
+          value: 9
+        - label: "1152x872"
+          value: 10
+        - label: "1280x720"
+          value: 11
+        - label: "1280x800"
+          value: 12
+        - label: "1280x1024"
+          value: 13
+        - label: "1440x900"
+          value: 14
+        - label: "1600x1000"
+          value: 15
+        - label: "1680x1050"
+          value: 16
+        - label: "1920x1080"
+          value: 17
+
+    - type: slider
+      id: anim_frames
+      x: 60
+      y: 168
+      w: 360
+      h: 28
+      text: "Anim Frames"
+      min: 2
+      max: 15
+      step: 1
+      value: 8
+      fill_color: 0xFF8844CC
+
+    - type: button
+      id: back_btn
+      x: 300
+      y: 280
+      w: 120
+      h: 28
+      text: "Back"
+      action: save_and_back
+      highlight_color: 0xFF00AA00

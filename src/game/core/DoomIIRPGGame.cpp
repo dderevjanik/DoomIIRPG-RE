@@ -23,8 +23,10 @@
 #include "Log.h"
 #include "WidgetScreen.h"
 #include "WSlider.h"
+#include "WSelector.h"
 #include "WCheckbox.h"
 #include "Sound.h"
+#include "SDLGL.h"
 #include "Input.h"
 #include "EventBus.h"
 #include "GameEvents.h"
@@ -87,45 +89,82 @@ bool DoomIIRPGGame::startup(Applet* app) {
 		widgetScreen.dispatchAction("back");
 	});
 
-	// Options screen: bind widgets to game settings when the screen loads
+	// Bind widgets to game settings when any options screen loads
 	widgetScreen.onScreenLoaded = [app](WidgetScreen* screen) {
-		if (screen->screenId != "options") return;
+		const auto& id = screen->screenId;
+		SDLGL* sdlGL = CAppContainer::getInstance()->sdlGL;
 
-		// Read current values into widgets
-		if (auto* w = dynamic_cast<WCheckbox*>(screen->findWidget("sound_enabled")))
-			w->checked = app->sound->allowSounds;
-		if (auto* w = dynamic_cast<WSlider*>(screen->findWidget("sfx_volume")))
-			w->value = app->sound->soundFxVolume;
-		if (auto* w = dynamic_cast<WSlider*>(screen->findWidget("music_volume")))
-			w->value = app->sound->musicVolume;
-		if (auto* w = dynamic_cast<WCheckbox*>(screen->findWidget("vibration_enabled")))
-			w->checked = app->canvas->vibrateEnabled;
-		if (auto* w = dynamic_cast<WSlider*>(screen->findWidget("vibration_intensity")))
-			w->value = gVibrationIntensity;
-		if (auto* w = dynamic_cast<WSlider*>(screen->findWidget("deadzone")))
-			w->value = gDeadZone;
+		// --- Sound ---
+		if (id == "options_sound") {
+			if (auto* w = dynamic_cast<WCheckbox*>(screen->findWidget("sound_enabled"))) {
+				w->checked = app->sound->allowSounds;
+				w->onToggle = [app](bool v) {
+					app->sound->allowSounds = v;
+					app->canvas->areSoundsAllowed = v;
+				};
+			}
+			if (auto* w = dynamic_cast<WSlider*>(screen->findWidget("sfx_volume"))) {
+				w->value = app->sound->soundFxVolume;
+				w->onChange = [app](int v) { app->sound->soundFxVolume = v; };
+			}
+			if (auto* w = dynamic_cast<WSlider*>(screen->findWidget("music_volume"))) {
+				w->value = app->sound->musicVolume;
+				w->onChange = [app](int v) { app->sound->musicVolume = v; };
+			}
+		}
 
-		// Wire onChange callbacks
-		if (auto* w = dynamic_cast<WCheckbox*>(screen->findWidget("sound_enabled"))) {
-			w->onToggle = [app](bool v) {
-				app->sound->allowSounds = v;
-				app->canvas->areSoundsAllowed = v;
-			};
+		// --- Video ---
+		if (id == "options_video") {
+			if (auto* w = dynamic_cast<WSelector*>(screen->findWidget("window_mode"))) {
+				w->selectedOption = sdlGL->windowMode;
+				w->onChange = [sdlGL](int idx, int val) { sdlGL->windowMode = val; };
+			}
+			if (auto* w = dynamic_cast<WCheckbox*>(screen->findWidget("vsync"))) {
+				w->checked = sdlGL->vSync;
+				w->onToggle = [sdlGL](bool v) { sdlGL->vSync = v; };
+			}
+			if (auto* w = dynamic_cast<WSelector*>(screen->findWidget("resolution"))) {
+				w->selectedOption = sdlGL->resolutionIndex;
+				w->onChange = [sdlGL](int idx, int val) { sdlGL->resolutionIndex = val; };
+			}
+			if (auto* w = dynamic_cast<WSlider*>(screen->findWidget("anim_frames"))) {
+				w->value = app->canvas->animFrames;
+				w->onChange = [app](int v) { app->canvas->setAnimFrames(v); };
+			}
 		}
-		if (auto* w = dynamic_cast<WSlider*>(screen->findWidget("sfx_volume"))) {
-			w->onChange = [app](int v) { app->sound->soundFxVolume = v; };
-		}
-		if (auto* w = dynamic_cast<WSlider*>(screen->findWidget("music_volume"))) {
-			w->onChange = [app](int v) { app->sound->musicVolume = v; };
-		}
-		if (auto* w = dynamic_cast<WCheckbox*>(screen->findWidget("vibration_enabled"))) {
-			w->onToggle = [app](bool v) { app->canvas->vibrateEnabled = v; };
-		}
-		if (auto* w = dynamic_cast<WSlider*>(screen->findWidget("vibration_intensity"))) {
-			w->onChange = [](int v) { gVibrationIntensity = v; };
-		}
-		if (auto* w = dynamic_cast<WSlider*>(screen->findWidget("deadzone"))) {
-			w->onChange = [](int v) { gDeadZone = v; };
+
+		// --- Input ---
+		if (id == "options_input") {
+			if (auto* w = dynamic_cast<WSelector*>(screen->findWidget("control_layout"))) {
+				w->selectedOption = app->canvas->m_controlLayout;
+				w->onChange = [app](int idx, int val) {
+					app->canvas->m_controlLayout = val;
+					app->canvas->setControlLayout();
+				};
+			}
+			if (auto* w = dynamic_cast<WCheckbox*>(screen->findWidget("flip_controls"))) {
+				w->checked = app->canvas->isFlipControls;
+				w->onToggle = [app](bool v) {
+					app->canvas->isFlipControls = v;
+					app->canvas->flipControls();
+				};
+			}
+			if (auto* w = dynamic_cast<WSlider*>(screen->findWidget("control_alpha"))) {
+				w->value = app->canvas->m_controlAlpha;
+				w->onChange = [app](int v) { app->canvas->m_controlAlpha = v; };
+			}
+			if (auto* w = dynamic_cast<WCheckbox*>(screen->findWidget("vibration_enabled"))) {
+				w->checked = app->canvas->vibrateEnabled;
+				w->onToggle = [app](bool v) { app->canvas->vibrateEnabled = v; };
+			}
+			if (auto* w = dynamic_cast<WSlider*>(screen->findWidget("vibration_intensity"))) {
+				w->value = gVibrationIntensity;
+				w->onChange = [](int v) { gVibrationIntensity = v; };
+			}
+			if (auto* w = dynamic_cast<WSlider*>(screen->findWidget("deadzone"))) {
+				w->value = gDeadZone;
+				w->onChange = [](int v) { gDeadZone = v; };
+			}
 		}
 	};
 

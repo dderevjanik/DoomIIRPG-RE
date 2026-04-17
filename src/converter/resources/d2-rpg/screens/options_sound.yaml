@@ -1,0 +1,59 @@
+screen:
+  id: options_sound
+  background_color: 0xFF0D0D1A
+  background_image: main_bg
+  back_action: save_and_back
+
+  widgets:
+    - type: label
+      id: title
+      x: 240
+      y: 16
+      text: "Sound Options"
+      anchor: hcenter
+      color: 0xFFFF7F00
+
+    - type: checkbox
+      id: sound_enabled
+      x: 60
+      y: 60
+      w: 360
+      h: 28
+      text: "Sound Enabled"
+      checked: true
+
+    - type: slider
+      id: sfx_volume
+      x: 60
+      y: 96
+      w: 360
+      h: 28
+      text: "FX Volume"
+      min: 0
+      max: 100
+      step: 5
+      value: 100
+      fill_color: 0xFF2288DD
+
+    - type: slider
+      id: music_volume
+      x: 60
+      y: 132
+      w: 360
+      h: 28
+      text: "Music Volume"
+      min: 0
+      max: 100
+      step: 5
+      value: 100
+      fill_color: 0xFF2288DD
+
+    - type: button
+      id: back_btn
+      x: 300
+      y: 280
+      w: 120
+      h: 28
+      text: "Back"
+      action: save_and_back
+      highlight_color: 0xFF00AA00
