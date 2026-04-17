@@ -99,6 +99,10 @@ game:
       inventory: 999
       ammo: 100
       bot_fuel: 5
+      armor: 200                 # max armor value
+
+    # Familiar (sentry bot) max health
+    familiar_max_health: 100
 
   # Combat timing/scale constants
   combat:

@@ -122,7 +122,7 @@ void MenuSystem::paint(Graphics* graphics) {
 
 			// Shield
 			textBuffer2->setLength(0);
-			textBuffer2->append(app->player->ce->getStat(Enums::STAT_ARMOR))->append("/")->append(200);
+			textBuffer2->append(app->player->ce->getStat(Enums::STAT_ARMOR))->append("/")->append(app->player->gameConfig->capArmor);
 			while (textBuffer2->length() <= 6) {
 				textBuffer2->insert(' ', 0);
 			}

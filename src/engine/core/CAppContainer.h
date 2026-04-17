@@ -48,6 +48,10 @@ struct GameConfig {
 	int capInventory = 999;
 	int capAmmo = 100;
 	int capBotFuel = 5;
+	int capArmor = 200;                    // max armor value
+
+	// Familiar (sentry bot) max health — used as stat2 for familiar addHealth checks
+	int familiarMaxHealth = 100;
 
 	// XP formula coefficients: linear*n + cubic*((n-1)^3 + (n-1))
 	int xpLinear = 500;

@@ -416,7 +416,9 @@ int main(int argc, char* args[]) {
 					gc.capInventory = caps["inventory"].asInt(gc.capInventory);
 					gc.capAmmo = caps["ammo"].asInt(gc.capAmmo);
 					gc.capBotFuel = caps["bot_fuel"].asInt(gc.capBotFuel);
+					gc.capArmor = caps["armor"].asInt(gc.capArmor);
 				}
+				gc.familiarMaxHealth = player["familiar_max_health"].asInt(gc.familiarMaxHealth);
 			}
 
 			DataNode sc = game["scoring"];

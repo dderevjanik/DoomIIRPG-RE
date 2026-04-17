@@ -36,7 +36,7 @@ bool Player::addHealth(int i, bool b) {
 	int stat2;
 	if (this->isFamiliar) {
 		stat = this->ammo[app->combat->familiarAmmoType];
-		stat2 = 100;
+		stat2 = this->gameConfig->familiarMaxHealth;
 	} else {
 		stat = this->ce->getStat(Enums::STAT_HEALTH);
 		stat2 = this->ce->getStat(Enums::STAT_MAX_HEALTH);
@@ -74,14 +74,14 @@ bool Player::addArmor(int n) {
 
 
 	int stat = this->ce->getStat(2);
-	if (stat >= 200 && n > 0) {
+	if (stat >= this->gameConfig->capArmor && n > 0) {
 		return false;
 	}
 	if (n < 0 && this->god) {
 		return false;
 	}
 	app->hud->repaintFlags |= 0x4;
-	this->ce->setStat(Enums::STAT_ARMOR, std::max(0, std::min(200, stat + n)));
+	this->ce->setStat(Enums::STAT_ARMOR, std::max(0, std::min(this->gameConfig->capArmor, stat + n)));
 	return true;
 }
 
