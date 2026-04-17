@@ -67,3 +67,12 @@ widgets:
     text: "Back"
     action: save_and_back
     highlight_color: 0xFF00AA00
+
+  # --- Automap ---
+  automap_view:
+    type: automap
+    cell_size: 8
+    show_cursor: true
+    show_quest_markers: true
+    show_entities: true
+    show_walls: true

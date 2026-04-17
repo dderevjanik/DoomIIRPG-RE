@@ -1,0 +1,19 @@
+screen:
+  id: automap
+  background_color: 0xFF000000
+
+  widgets:
+    - widget: screen_title
+      id: title
+      text: "Automap"
+
+    - widget: automap_view
+      id: automap
+      x: 112
+      y: 32
+      w: 256
+      h: 256
+      cell_size: 8
+
+    - widget: back_button
+      id: back_btn

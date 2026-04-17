@@ -27,6 +27,9 @@ screen:
         - id: option_c
           text: "Option C"
           action: test_action_c
+        - id: automap
+          text: "Automap"
+          action: goto:automap
         - id: back_item
           text: "Back"
           action: back

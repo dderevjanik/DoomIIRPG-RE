@@ -9,6 +9,7 @@
 #include "WImage.h"
 #include "WSlider.h"
 #include "WSelector.h"
+#include "WAutomap.h"
 #include "DataNode.h"
 #include "Graphics.h"
 #include "Image.h"
@@ -285,6 +286,19 @@ std::unique_ptr<Widget> WidgetLoader::parseWidget(const DataNode& node, Applet* 
                 w->addChild(std::move(child));
             }
         }
+        return w;
+    }
+
+    if (type == "automap") {
+        auto w = std::make_unique<WAutomap>();
+        w->id = node["id"].asString();
+        w->cellSize = node["cell_size"].asInt(0);
+        w->showCursor = node["show_cursor"].asBool(true);
+        w->showQuestMarkers = node["show_quest_markers"].asBool(true);
+        w->showEntities = node["show_entities"].asBool(true);
+        w->showWalls = node["show_walls"].asBool(true);
+        w->setBounds(node["x"].asInt(), node["y"].asInt(),
+                     node["w"].asInt(256), node["h"].asInt(256));
         return w;
     }
 
