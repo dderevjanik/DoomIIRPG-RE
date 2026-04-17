@@ -1,27 +1,17 @@
 screen:
   id: options
-  background_color: 0xFF0D0D1A
-  background_image: main_bg
-  back_action: save_and_back
 
   widgets:
-    - type: label
+    - widget: screen_title
       id: title
-      x: 240
-      y: 16
       text: "Options"
-      anchor: hcenter
-      color: 0xFFFF7F00
 
-    - type: vertical_menu
+    - widget: option_menu
       id: options_menu
       x: 100
       y: 60
       w: 280
       h: 180
-      item_height: 40
-      visible_count: 4
-      highlight_color: 0xFF3366FF
       items:
         - id: sound
           text: "Sound"

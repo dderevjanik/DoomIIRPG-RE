@@ -16,7 +16,85 @@
 #include "MenuSystem.h"
 #include "Log.h"
 
+// Static member definitions
+DataNode WidgetLoader::s_screenDefaults;
+std::unordered_map<std::string, DataNode> WidgetLoader::s_widgetDefs;
+bool WidgetLoader::s_loaded = false;
+
+// ---------------------------------------------------------------------------
+// Widget definitions loading (widgets.yaml)
+// ---------------------------------------------------------------------------
+
+void WidgetLoader::loadWidgetDefs(const char* path) {
+    DataNode root = DataNode::loadFile(path);
+    if (!root) {
+        LOG_WARN("[widget] no widget definitions at {}, using inline defaults\n", path);
+        s_screenDefaults = DataNode();
+        s_widgetDefs.clear();
+        s_loaded = true;
+        return;
+    }
+
+    s_screenDefaults = root["screen_defaults"];
+
+    // First pass: store raw widget definitions
+    DataNode widgetsNode = root["widgets"];
+    std::unordered_map<std::string, DataNode> rawDefs;
+    for (auto it = widgetsNode.begin(); it != widgetsNode.end(); ++it) {
+        std::string name = it.key().asString();
+        rawDefs[name] = it.value();
+    }
+
+    // Second pass: resolve single-level inheritance
+    s_widgetDefs.clear();
+    for (auto& [name, def] : rawDefs) {
+        std::string parentName = def["widget"].asString("");
+        if (!parentName.empty()) {
+            auto pit = rawDefs.find(parentName);
+            if (pit != rawDefs.end()) {
+                // Merge: parent as base, this def as overlay, skip "widget" key
+                s_widgetDefs[name] = DataNode::merge(pit->second, def, "widget");
+            } else {
+                LOG_WARN("[widget] definition '{}' references unknown parent '{}'\n", name, parentName);
+                s_widgetDefs[name] = def;
+            }
+        } else {
+            s_widgetDefs[name] = def;
+        }
+    }
+
+    LOG_INFO("[widget] loaded {} widget definitions from {}\n", s_widgetDefs.size(), path);
+    s_loaded = true;
+}
+
+DataNode WidgetLoader::resolveWidgetDef(const std::string& name) {
+    auto it = s_widgetDefs.find(name);
+    if (it != s_widgetDefs.end()) return it->second;
+    return DataNode();
+}
+
+DataNode WidgetLoader::resolveWidgetNode(const DataNode& node) {
+    std::string defName = node["widget"].asString("");
+    if (defName.empty()) return node;
+
+    DataNode def = resolveWidgetDef(defName);
+    if (!def) {
+        LOG_WARN("[widget] unknown widget definition: {}\n", defName);
+        return node;
+    }
+    return DataNode::merge(def, node, "widget");
+}
+
+// ---------------------------------------------------------------------------
+// Screen loading
+// ---------------------------------------------------------------------------
+
 bool WidgetLoader::loadScreen(WidgetScreen* screen, Applet* app, const char* yamlPath) {
+    // Lazy load widget definitions on first call
+    if (!s_loaded) {
+        loadWidgetDefs("widgets.yaml");
+    }
+
     DataNode root = DataNode::loadFile(yamlPath);
     if (!root) {
         LOG_ERROR("[widget] failed to load {}\n", yamlPath);
@@ -29,6 +107,11 @@ bool WidgetLoader::loadScreen(WidgetScreen* screen, Applet* app, const char* yam
         return false;
     }
 
+    // Apply screen defaults from widgets.yaml (screen's own values override)
+    if (s_screenDefaults) {
+        screenNode = DataNode::merge(s_screenDefaults, screenNode);
+    }
+
     screen->screenId = screenNode["id"].asString();
     screen->backgroundColor = screenNode["background_color"].asInt(0xFF000000);
     screen->backgroundImageName = screenNode["background_image"].asString("");
@@ -36,9 +119,10 @@ bool WidgetLoader::loadScreen(WidgetScreen* screen, Applet* app, const char* yam
 
     DataNode widgetsNode = screenNode["widgets"];
     for (int i = 0; i < widgetsNode.size(); i++) {
-        auto widget = parseWidget(widgetsNode[i], app);
+        DataNode widgetNode = resolveWidgetNode(widgetsNode[i]);
+        auto widget = parseWidget(widgetNode, app);
         if (widget) {
-            widget->disabled = widgetsNode[i]["disabled"].asBool(false);
+            widget->disabled = widgetNode["disabled"].asBool(false);
             screen->widgets.push_back(std::move(widget));
         }
     }
@@ -46,6 +130,10 @@ bool WidgetLoader::loadScreen(WidgetScreen* screen, Applet* app, const char* yam
     screen->buildFocusOrder();
     return true;
 }
+
+// ---------------------------------------------------------------------------
+// Widget parsing
+// ---------------------------------------------------------------------------
 
 std::unique_ptr<Widget> WidgetLoader::parseWidget(const DataNode& node, Applet* app) {
     std::string type = node["type"].asString();
@@ -191,7 +279,8 @@ std::unique_ptr<Widget> WidgetLoader::parseWidget(const DataNode& node, Applet* 
 
         DataNode childrenNode = node["children"];
         for (int i = 0; i < childrenNode.size(); i++) {
-            auto child = parseWidget(childrenNode[i], app);
+            DataNode childNode = resolveWidgetNode(childrenNode[i]);
+            auto child = parseWidget(childNode, app);
             if (child) {
                 w->addChild(std::move(child));
             }

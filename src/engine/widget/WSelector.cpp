@@ -9,6 +9,9 @@ WSelector::WSelector() {
 
 void WSelector::draw(Graphics* graphics, Applet* app, bool focused) {
     if (!visible || options.empty()) return;
+    if (selectedOption < 0 || selectedOption >= static_cast<int>(options.size())) {
+        selectedOption = 0;
+    }
 
     // Focus highlight
     if (focused) {
@@ -16,6 +19,7 @@ void WSelector::draw(Graphics* graphics, Applet* app, bool focused) {
     }
 
     Text* buf = app->localization->getLargeBuffer();
+    if (!buf) return;
 
     // Draw label on the left
     buf->setLength(0);

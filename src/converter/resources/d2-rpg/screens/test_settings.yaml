@@ -1,18 +1,12 @@
 screen:
   id: test_settings
-  background_color: 0xFF1A1A2E
-  background_image: main_bg
 
   widgets:
-    - type: label
+    - widget: screen_title
       id: title
-      x: 240
-      y: 16
       text: "Widget Test Screen"
-      anchor: hcenter
-      color: 0xFFFF7F00
 
-    - type: vertical_menu
+    - widget: option_menu
       id: options_list
       x: 80
       y: 50
@@ -20,7 +14,6 @@ screen:
       h: 180
       item_height: 36
       visible_count: 5
-      highlight_color: 0xFF3366FF
       items:
         - id: options
           text: "Options"
@@ -38,12 +31,10 @@ screen:
           text: "Back"
           action: back
 
-    - type: checkbox
+    - widget: option_checkbox
       id: test_toggle
-      x: 80
       y: 240
       w: 200
-      h: 24
       text: "Test Toggle"
 
     - type: button

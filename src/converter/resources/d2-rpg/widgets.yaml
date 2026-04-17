@@ -1,0 +1,69 @@
+screen_defaults:
+  background_color: 0xFF0D0D1A
+  background_image: main_bg
+  back_action: save_and_back
+
+widgets:
+  # --- Common base ---
+  option_row:
+    x: 60
+    w: 360
+    h: 28
+
+  # --- Labels ---
+  screen_title:
+    type: label
+    x: 240
+    y: 16
+    anchor: hcenter
+    color: 0xFFFF7F00
+
+  section_label:
+    type: label
+    color: 0xFF888888
+
+  # --- Interactive widgets ---
+  option_checkbox:
+    widget: option_row
+    type: checkbox
+    color: 0xFFFFFFFF
+    highlight_color: 0xFF3366FF
+    check_box_color: 0xFF999999
+    check_fill_color: 0xFF00FF00
+    check_size: 12
+
+  option_slider:
+    widget: option_row
+    type: slider
+    color: 0xFFFFFFFF
+    highlight_color: 0xFF3366FF
+    track_color: 0xFF444444
+    fill_color: 0xFF2288DD
+    min: 0
+    max: 100
+    step: 5
+
+  option_selector:
+    widget: option_row
+    type: selector
+    color: 0xFFFFFFFF
+    highlight_color: 0xFF3366FF
+
+  # --- Menus ---
+  option_menu:
+    type: vertical_menu
+    item_height: 40
+    visible_count: 4
+    highlight_color: 0xFF3366FF
+    color: 0xFFFFFFFF
+
+  # --- Buttons ---
+  back_button:
+    type: button
+    x: 300
+    y: 280
+    w: 120
+    h: 28
+    text: "Back"
+    action: save_and_back
+    highlight_color: 0xFF00AA00
