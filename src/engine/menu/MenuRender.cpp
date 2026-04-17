@@ -566,7 +566,7 @@ void MenuSystem::drawTouchButtons(Graphics* graphics, bool b) {
 
 	Text* textBuff;
 	fmButton* button;
-	bool v12;
+	bool isBackOrExit;
 	int buttonID;
 	int height;
 	int posY;
@@ -594,11 +594,11 @@ void MenuSystem::drawTouchButtons(Graphics* graphics, bool b) {
 
 				if (this->menu >= Menus::MENU_INGAME)
 				{
-					v12 = buttonID == 15;
+					isBackOrExit = buttonID == 15;
 					if (buttonID != 15) {
-						v12 = buttonID == 11;
+						isBackOrExit = buttonID == 11;
 					}
-					if (!v12 && posY > 210) {// Old -> posY > 230
+					if (!isBackOrExit && posY > 210) {// Old -> posY > 230
 						maxItemsGame++;
 						button->SetTouchArea(app->canvas->menuRect[0], 350, this->menuItem_width, this->menuItem_height, false); // Port: add param "false"
 					}
@@ -799,9 +799,9 @@ int MenuSystem::drawCustomScrollbar(Graphics* graphics, MenuItem* item, Text* te
 
 
 	int menuItem_width = this->menuItem_width;
-	int v70 = this->menuItem_height >> 1;
-	int v69 = v70 - 2;
-	int v23 = app->canvas->menuRect[0];
+	int halfHeight = this->menuItem_height >> 1;
+	int barHeight = halfHeight - 2;
+	int leftX = app->canvas->menuRect[0];
 
 	int value = 0;
 	int valueScroll = 0;
@@ -866,93 +866,93 @@ int MenuSystem::drawCustomScrollbar(Graphics* graphics, MenuItem* item, Text* te
 			app->setFontRenderMode(2);
 		}
 
-		graphics->drawString(text, menuItem_width + v23 - 4, yPos, 24);
+		graphics->drawString(text, menuItem_width + leftX - 4, yPos, 24);
 		app->setFontRenderMode(0);
-		int v27 = yPos + Applet::FONT_HEIGHT[app->fontType];
+		int barY = yPos + Applet::FONT_HEIGHT[app->fontType];
 		if (button) {
-			button->SetTouchArea(v23, v27 + 1, menuItem_width, v69);
+			button->SetTouchArea(leftX, barY + 1, menuItem_width, barHeight);
 		}
 		graphics->setColor(0xFF323232);
-		graphics->drawRect(v23, v27 + 1, menuItem_width - 1, v70 - 3);
-		graphics->FMGL_fillRect(v23 + 1, v27 + 2, menuItem_width - 2, v70 - 4, 0.42, 0.35, 0.31, 0.7);
+		graphics->drawRect(leftX, barY + 1, menuItem_width - 1, halfHeight - 3);
+		graphics->FMGL_fillRect(leftX + 1, barY + 2, menuItem_width - 2, halfHeight - 4, 0.42, 0.35, 0.31, 0.7);
 
-		int v66 = menuItem_width + v23;
-		int v29 = v27 + 1;
-		int v68 = v70 - 3;
-		int v30 = v27 + 2;
-		int v67 = v70 - 4;
+		int rightX = menuItem_width + leftX;
+		int knobY = barY + 1;
+		int knobH = halfHeight - 3;
+		int knobInnerY = barY + 2;
+		int knobInnerH = halfHeight - 4;
 		graphics->setColor(0xFF323232);
 		if (button && button->highlighted) {
-			int v32 = valueScroll - 12;
-			if (v23 <= valueScroll - 12) {
-				if (v66 < valueScroll + 12) {
-					v32 = v66 - 24;
+			int knobX = valueScroll - 12;
+			if (leftX <= valueScroll - 12) {
+				if (rightX < valueScroll + 12) {
+					knobX = rightX - 24;
 				}
 			}
 			else {
-				v32 = v23;
+				knobX = leftX;
 			}
-			graphics->drawRect(v32, v29, 23, v68);
-			graphics->FMGL_fillRect(v32 + 1, v30, 22, v67, 0.9, 0.9, 0.65, 1.0);
+			graphics->drawRect(knobX, knobY, 23, knobH);
+			graphics->FMGL_fillRect(knobX + 1, knobInnerY, 22, knobInnerH, 0.9, 0.9, 0.65, 1.0);
 		}
 		else
 		{
-			int v33 = v23 + ((menuItem_width - 24) * value) / 100;
-			graphics->drawRect(v33, v29, 23, v68);
-			graphics->FMGL_fillRect(v33 + 1, v30, 22, v67, 0.75, 0.69, 0.65, 1.0);
+			int knobXAuto = leftX + ((menuItem_width - 24) * value) / 100;
+			graphics->drawRect(knobXAuto, knobY, 23, knobH);
+			graphics->FMGL_fillRect(knobXAuto + 1, knobInnerY, 22, knobInnerH, 0.75, 0.69, 0.65, 1.0);
 		}
 
 		if (disable) {
-			graphics->FMGL_fillRect(v23, v30, menuItem_width, v69, 0.5, 0.5, 0.5, 0.3);
+			graphics->FMGL_fillRect(leftX, knobInnerY, menuItem_width, barHeight, 0.5, 0.5, 0.5, 0.3);
 		}
 
 		return 0;
 	}
 	else if (item->flags & Menus::ITEM_SCROLLBARTWO) {
-		int v6 = ((Applet::IOS_WIDTH - this->imgMenuOptionBOX3->width) >> 1) + 1;
-		int v59 = (Applet::IOS_WIDTH - this->imgMenuOptionBOX3->width) >> 1;
-		int v27 = yPos + Applet::FONT_HEIGHT[app->fontType];
+		int boxLeftX = ((Applet::IOS_WIDTH - this->imgMenuOptionBOX3->width) >> 1) + 1;
+		int boxLeftRaw = (Applet::IOS_WIDTH - this->imgMenuOptionBOX3->width) >> 1;
+		int barY = yPos + Applet::FONT_HEIGHT[app->fontType];
 
 		int width = this->imgMenuOptionSliderON->width;
 		if (button) {
-			button->SetTouchArea(v6, v27 - 20, this->imgMenuOptionSliderBar->width, this->imgMenuOptionSliderBar->height);
+			button->SetTouchArea(boxLeftX, barY - 20, this->imgMenuOptionSliderBar->width, this->imgMenuOptionSliderBar->height);
 		}
-		graphics->drawImage(this->imgMenuOptionSliderBar, v6, v27 - 20, 0, 0, 0);
-		int v9 = valueScroll - (width >> 1);
-		int v10;
-		if (v6 <= v9) {
-			v10 = v59 + 246;
-			if (width + v9 > v59 + 246)
-				v9 = v10 - width;
+		graphics->drawImage(this->imgMenuOptionSliderBar, boxLeftX, barY - 20, 0, 0, 0);
+		int knobX = valueScroll - (width >> 1);
+		int numbersX;
+		if (boxLeftX <= knobX) {
+			numbersX = boxLeftRaw + 246;
+			if (width + knobX > boxLeftRaw + 246)
+				knobX = numbersX - width;
 		}
 		else {
-			v9 = v6;
-			v10 = v59 + 246;
+			knobX = boxLeftX;
+			numbersX = boxLeftRaw + 246;
 		}
 		if (button && button->highlighted) {
-			graphics->drawImage(this->imgMenuOptionSliderON, v9, v27, 0, 0, 0);
+			graphics->drawImage(this->imgMenuOptionSliderON, knobX, barY, 0, 0, 0);
 		}
 		else {
-			graphics->drawImage(this->imgMenuOptionSliderOFF, (v6 + ((245 - width) * value) / 100), v27, 0, 0, 0);
+			graphics->drawImage(this->imgMenuOptionSliderOFF, (boxLeftX + ((245 - width) * value) / 100), barY, 0, 0, 0);
 		}
 
 		if (change) {
-			v10 += 5;
-			text->setLength(0); 
+			numbersX += 5;
+			text->setLength(0);
 			text->append("<");
-			graphics->drawString(text, v10, v27+5, 24);
-			v10 += 5;
+			graphics->drawString(text, numbersX, barY+5, 24);
+			numbersX += 5;
 		}
-		this->drawNumbers(graphics, v10, v27+3, 0, value);
+		this->drawNumbers(graphics, numbersX, barY+3, 0, value);
 		if (change) {
-			v10 += 40;
+			numbersX += 40;
 			text->setLength(0);
 			text->append(">");
-			graphics->drawString(text, v10, v27+5, 24);
+			graphics->drawString(text, numbersX, barY+5, 24);
 		}
 
 		if (disable) {
-			graphics->FMGL_fillRect(v6, v27 - 20, 244, 20, 0.2, 0.2, 0.2, 0.5);
+			graphics->FMGL_fillRect(boxLeftX, barY - 20, 244, 20, 0.2, 0.2, 0.2, 0.5);
 		}
 		return 0;
 	}
