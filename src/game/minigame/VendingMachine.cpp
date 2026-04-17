@@ -612,7 +612,7 @@ void VendingMachine::drawVendingMachineBackground(Graphics* graphics, bool b) {
     graphics->drawImage(this->imgVendingBG, 0, 0, 0, 0, 0);
     for (x = app->canvas->screenRect[0] + 200; x < app->canvas->screenRect[2]; x = x + 10) {
     }
-    if (b != false) {
+    if (b) {
         x = 2;
         do {
             y = 3;
@@ -630,7 +630,7 @@ void VendingMachine::drawHelpScreen(Graphics* graphics) {
     Text* textBuff = app->localization->getSmallBuffer();
     textBuff->setLength(0);
     app->localization->composeText(0, 30, textBuff); // Old -> text->append("Exit");
-    if (this->m_vendingButtons->GetButton(10)->highlighted ==  false) {
+    if (!this->m_vendingButtons->GetButton(10)->highlighted) {
         app->setFontRenderMode(2);
     }
     graphics->drawString(textBuff, 445, 302, 3); // Old -> 310, 3);

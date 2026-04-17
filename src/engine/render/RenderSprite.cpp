@@ -588,7 +588,7 @@ void Render::renderStreamSprite(int n) {
 	mv[3].t = mv[2].t = n36 + n32;
 	app->tinyGL->swapXY = false;
 
-	if (this->renderStreamSpriteGL(app->tinyGL->mv, 4) == false) { // [GEC]
+	if (!this->renderStreamSpriteGL(app->tinyGL->mv, 4)) { // [GEC]
 		app->tinyGL->drawModelVerts(app->tinyGL->mv, 4);
 	}
 }

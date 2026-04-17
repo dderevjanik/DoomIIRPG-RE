@@ -243,7 +243,7 @@ void Image::setRenderMode(int renderMode) {
     switch (renderMode) {
     case 0:
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-        if (this->isTransparentMask == false) {
+        if (!this->isTransparentMask) {
             glDisable(GL_ALPHA_TEST);
             glDisable(GL_BLEND);
             return;

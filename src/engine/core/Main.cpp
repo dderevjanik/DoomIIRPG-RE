@@ -701,7 +701,7 @@ int main(int argc, char* args[]) {
 		bool useMouse = false;
 		int ticksRun = 0;
 
-		while (CAppContainer::getInstance()->app->closeApplet != true) {
+		while (!CAppContainer::getInstance()->app->closeApplet) {
 
 			int currentTimeMillis = CAppContainer::getInstance()->getTimeMS();
 

@@ -223,7 +223,7 @@ int OutputStream::openFile(const char* fileName, int openMode) {
 	}
 
 	this->isOpen = false;
-	if (this->noWrite != false) {
+	if (this->noWrite) {
 		return 1;
 	}
 

@@ -141,7 +141,7 @@ bool Applet::startup() {
 	this->gameModule->registerOpcodes(this);
 	this->gameModule->registerEventListeners(this);
 
-	if (this->canvas->isFlipControls != false) {
+	if (this->canvas->isFlipControls) {
 		this->canvas->isFlipControls = false;
 		this->canvas->flipControls();
 	}
@@ -417,7 +417,7 @@ std::flat_map<int, SpriteAnimDef> gSpriteAnimDefs;
 void Applet::loadRuntimeImages() {
 	// printf("Applet::loadRuntimeImages\n");
 	// printf("this->initLoadImages %d\n", this->initLoadImages);
-	if (this->initLoadImages == false) {
+	if (!this->initLoadImages) {
 		this->imageMemory = 1000000000;
 
 		this->canvas->imgMapCursor = this->loadImage("Automap_Cursor.bmp", true);
@@ -564,7 +564,7 @@ void Applet::CalcAccelerometerAngles() {
 	int zoomMaxAngle;
 	int zoomPitch;
 
-	v2 = this->accelHasSamples == false;
+	v2 = !this->accelHasSamples;
 	if (this->accelHasSamples) {
 		v2 = !this->canvas->isZoomedIn;
 	}

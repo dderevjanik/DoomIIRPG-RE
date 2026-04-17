@@ -603,7 +603,7 @@ bool gles::DrawModelVerts(std::span<TGLVert> vertsSpan) {
 
 			glDrawElements(GL_TRIANGLES, (numVerts * 3) - (2 * 3), GL_UNSIGNED_SHORT, this->quad_indexes);
 
-			return (this->isInit == true);
+			return (this->isInit);
 		}
 	}
 

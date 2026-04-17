@@ -1072,7 +1072,7 @@ void Render::renderBSP() {
 	this->bspTime = app->upTimeMs;
 	this->numVisibleNodes = 0;
 	this->numSplitSprites = 0;
-	if (this->skipBSP == false) {
+	if (!this->skipBSP) {
 		this->walkNode(0);
 	}
 

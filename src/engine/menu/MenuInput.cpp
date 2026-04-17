@@ -927,7 +927,7 @@ void MenuSystem::handleUserMoved(int x, int y) {
 	}
 	else {
 		//printf("field_0x674_ %d\n", field_0x674_);
-		if (this->updateSlider != false) {
+		if (this->updateSlider) {
 			this->updateVolumeSlider(this->sliderID, _x);
 			return;
 		}
@@ -943,7 +943,7 @@ void MenuSystem::handleUserMoved(int x, int y) {
 		if (pfVar1->barTouched == 0) {
 			if ((pfVar1->enabled == 0) ||
 				(iVar2 = pfVar1->barRect.ContainsPoint(_x, _y), iVar2 == 0)) {
-				if (this->drawHelpText == false) {
+				if (!this->drawHelpText) {
 					iVar2 = 0;
 					do {
 						iVar4 = iVar2;
@@ -968,7 +968,7 @@ void MenuSystem::handleUserMoved(int x, int y) {
 							if (_y < 0) {
 								if ((-1 < iVar2) &&
 									(pfVar3 = this->m_menuButtons->GetButton(iVar2),
-										pfVar3->drawButton != false)) {
+										pfVar3->drawButton)) {
 									pfVar3 = this->m_menuButtons->GetButton(iVar2);
 									pfVar3->SetHighlighted(true);
 									if (this->updateVolumeSlider(iVar2, _x)) {
@@ -979,7 +979,7 @@ void MenuSystem::handleUserMoved(int x, int y) {
 							}
 							else {
 								pfVar3 = this->m_infoButtons->GetButton(_y);
-								if (pfVar3->drawButton != false) {
+								if (pfVar3->drawButton) {
 									pfVar3 = this->m_infoButtons->GetButton(_y);
 									pfVar3->SetHighlighted(true);
 								}
@@ -996,7 +996,7 @@ void MenuSystem::handleUserMoved(int x, int y) {
 				}
 			}
 			else {
-				if (this->isMainMenuScrollBar == false) {
+				if (!this->isMainMenuScrollBar) {
 					this->m_scrollBar->thumbDragOffset = 0;
 					this->m_scrollBar->Update(_x, _y);
 				}

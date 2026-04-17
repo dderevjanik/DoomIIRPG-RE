@@ -1393,7 +1393,7 @@ int MenuSystem::getScrollPos() {
 		pos = this->m_scrollBar->scrollOffset;
 	}
 
-	if (this->isMainMenu != false) {
+	if (this->isMainMenu) {
 		posY = 0;
 		for (int i = 0; i < this->numItems; i++) {
 			if (!(this->items[i].flags & 0x8000)) {

@@ -712,7 +712,7 @@ void Hud::draw(Graphics* graphics) {
 	if ((this->repaintFlags & 0x4) != 0x0) {
 		//this->repaintFlags &= 0xFFFFFFFB;
 		if (app->canvas->state != Canvas::ST_DIALOG) {
-			if (app->canvas->isZoomedIn == false) {
+			if (!app->canvas->isZoomedIn) {
 				this->drawArrowControls(graphics);
 			}
 			else {
@@ -734,7 +734,7 @@ void Hud::draw(Graphics* graphics) {
 					0);
 			}
 		}
-		if (this->isInWeaponSelect != false) {
+		if (this->isInWeaponSelect) {
 			this->drawWeaponSelection(graphics);
 		}
 		else {
@@ -760,7 +760,7 @@ void Hud::draw(Graphics* graphics) {
 			texBuff->dehyphenate();
 
 			app->setFontRenderMode(2); // [GEC] New
-			if (app->canvas->m_softKeyButtons->GetButton(20)->highlighted != false) { // [GEC] New
+			if (app->canvas->m_softKeyButtons->GetButton(20)->highlighted) { // [GEC] New
 				app->setFontRenderMode(0); // [GEC] New
 			}
 			graphics->drawString(texBuff, Applet::IOS_WIDTH - 2, Applet::IOS_HEIGHT, 40);

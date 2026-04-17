@@ -125,7 +125,7 @@ void StoryRenderer::drawCredits(Canvas* canvas, Graphics* graphics) {
 	Text* textBuff;
 
 	this->drawScrollingText(canvas, graphics);
-	if (this->scrollingTextDone != false) {
+	if (this->scrollingTextDone) {
 		textBuff = app->localization->getSmallBuffer();
 		textBuff->setLength(0);
 		app->localization->composeText(0, 43, textBuff);
@@ -204,7 +204,7 @@ void StoryRenderer::drawStory(Canvas* canvas, Graphics* graphics) {
 			app->localization->composeText(3, 80, this_00); // "Back"
 			this_00->dehyphenate();
 			app->setFontRenderMode(2);
-			if (this->m_storyButtons->GetButton(0)->highlighted != false) {
+			if (this->m_storyButtons->GetButton(0)->highlighted) {
 				app->setFontRenderMode(0);
 			}
 			graphics->drawString(this_00, 17, 310, 36); // Old -> 2, 319, 36
@@ -231,14 +231,14 @@ void StoryRenderer::drawStory(Canvas* canvas, Graphics* graphics) {
 		this_00->dehyphenate();
 		this_01->dehyphenate();
 		app->setFontRenderMode(2);
-		if (this->m_storyButtons->GetButton(1)->highlighted != false) {
+		if (this->m_storyButtons->GetButton(1)->highlighted) {
 			app->setFontRenderMode(0);
 		}
 		graphics->drawString(this_00, 463, 310, 40);
 		app->setFontRenderMode(0);
 
 		app->setFontRenderMode(2);
-		if (this->m_storyButtons->GetButton(2)->highlighted != false) {
+		if (this->m_storyButtons->GetButton(2)->highlighted) {
 			app->setFontRenderMode(0);
 		}
 		graphics->drawString(this_01, 463, 10, 8);
@@ -306,7 +306,7 @@ void StoryRenderer::handleStoryInput(Canvas* canvas, int key, int action) {
 
 
 void StoryRenderer::playIntroMovie(Canvas* canvas, Graphics* graphics) {
-	if (app->canvas->skipIntro != false) {
+	if (app->canvas->skipIntro) {
 		canvas->backToMain(true);
 		return;
 	}
@@ -421,7 +421,7 @@ void StoryRenderer::exitIntroMovie(Canvas* canvas, bool skipExit) {
 	}
 
 	app->sound->soundStop();
-	if (skipExit == false) {
+	if (!skipExit) {
 		app->game->hasSeenIntro = true;
 		app->game->saveConfig();
 		canvas->backToMain(false);

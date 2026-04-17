@@ -290,7 +290,7 @@ bool Sound::openAL_OpenAudioFile(const char* fileName, InputStream* IS) {
 
 bool Sound::openAL_LoadAllSounds() {
 	ALenum error;
-	if (this->soundsLoaded == false) {
+	if (!this->soundsLoaded) {
 		for (int i = 0; i < 10; i++) {
 			alGenBuffers(1, &this->channel[i].bufferId);
 			alGenSources(1, &this->channel[i].sourceId);
@@ -546,7 +546,7 @@ void Sound::volumeDown(int volume) {
 
 void Sound::startFrame() {
 	if (this->hasDeferredSound != 0) {
-		if (this->isMuted == false) {
+		if (!this->isMuted) {
 			this->playSound(this->resID, this->flags, this->priority, this->isMuted);
 			this->unused_0x160 = -1;
 			this->resID = -1;

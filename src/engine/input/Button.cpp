@@ -376,7 +376,7 @@ void fmScrollButton::SetScrollBox(int x, int y, int w, int h, int totalContentSi
 	this->visibleSize = w;
 	(this->boxRect).w = w;
 	barSize = (this->barRect).w;
-	if (this->isVertical != false) {
+	if (this->isVertical) {
 		this->visibleSize = h;
 		barSize = (this->barRect).h;
 	}
@@ -408,7 +408,7 @@ void fmScrollButton::SetScrollBox(int x, int y, int w, int h, int totalContentSi
 	vertical = this->isVertical;
 	(this->boxRect).x = x;
 	(this->boxRect).y = y;
-	vertical = vertical != false;
+	vertical = vertical;
 	this->contentSize = totalContentSize;
 	this->scrollOffset = 0;
 	if (vertical) {
@@ -434,7 +434,7 @@ void fmScrollButton::SetContentTouchOffset(int x, int y)
 	if (this->enabled == 0) {
 		return;
 	}
-	if (this->isVertical != false) {
+	if (this->isVertical) {
 		x = y;
 	}
 	this->touchStartPos = x;
@@ -449,7 +449,7 @@ void fmScrollButton::UpdateContent(int x, int y)
 	float offsetFloat;
 
 	if (this->enabled != 0) {
-		if (this->isVertical == false) {
+		if (!this->isVertical) {
 			newOffset = (this->touchStartScrollOffset - x) + this->touchStartPos;
 		}
 		else {
@@ -474,7 +474,7 @@ void fmScrollButton::UpdateContent(int x, int y)
 void fmScrollButton::SetTouchOffset(int x, int y)
 {
 	if (this->enabled != 0) {
-		if (this->isVertical == false) {
+		if (!this->isVertical) {
 			this->thumbDragOffset = (x - (this->barRect).x) - this->thumbPosition;
 		}
 		else {
@@ -544,7 +544,7 @@ void fmScrollButton::Render(Graphics* graphics) {
 				thumbColor = -0x111156;
 			}
 			graphics->setColor(thumbColor);
-			if (this->isVertical == false) {
+			if (!this->isVertical) {
 				drawW = (this->barRect).h;
 				drawY = (this->barRect).y;
 				drawX = this->thumbPosition + (this->barRect).x;
@@ -606,7 +606,7 @@ int fmSwipeArea::UpdateSwipe(int x, int y, SwipeDir* swDir) {
 	int iVar5;
 
 	*swDir = SwipeDir::Null;
-	if ((this->touched == false) || (this->enable == false)) {
+	if ((!this->touched) || (!this->enable)) {
 		return 0;
 	}
 	iVar3 = this->curX;

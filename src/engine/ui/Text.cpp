@@ -852,12 +852,12 @@ int Text::wrapText(int i, int i2, int i3, char c) {
 	n9 = false;
 	while ((n12 = this->findAnyFirstOf(wordBreaks, i)) != -1) {
 		n5 += n12 - i;
-		if (n9 == false && n8 == '-') {
+		if (!n9 && n8 == '-') {
 			--n5;
 		}
 		if (n5 + ((chars[n12] == '-') ? 1 : 0) > i2 || n8 == '|' || n8 == '\n') {
 			n4 += i - n7;
-			if (n9 != false) {
+			if (n9) {
 				--i;
 			}
 			n7 = this->insertLineBreak(n7, i - 1, c);
@@ -888,12 +888,12 @@ int Text::wrapText(int i, int i2, int i3, char c) {
 		}
 	}
 	n10 = n5 + (this->_length - i);
-	if (n9 == false && n8 == '-') {
+	if (!n9 && n8 == '-') {
 		--n10;
 	}
 	if (n10 > i2 || n8 == '|' || n8 == '\n') {
 		n11 = n4 + (i - n7);
-		if (n9 != false) {
+		if (n9) {
 			--i;
 		}
 		n7 = this->insertLineBreak(n7, i - 1, c);

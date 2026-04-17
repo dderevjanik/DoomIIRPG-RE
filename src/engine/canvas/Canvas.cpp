@@ -776,7 +776,7 @@ void Canvas::run() {
 	app->lastTime = app->time;
 	app->time = upTimeMs;
 
-	if (this->st_enabled != false) {
+	if (this->st_enabled) {
 		this->st_count = this->st_count + 1;
 		this->st_fields[0] = this->st_fields[0] + app->render->frameTime;
 		this->st_fields[1] = this->st_fields[1] + app->render->bspTime;
@@ -2204,7 +2204,7 @@ bool Canvas::loadMedia() {
 	LOG_INFO("[canvas] loadMedia\n");
 
 	//printf("Canvas::isLoaded %d\n", Canvas::isLoaded);
-	if (Canvas::isLoaded == false) {
+	if (!Canvas::isLoaded) {
 		this->updateLoadingBar(Canvas::isLoaded);
 		this->drawLoadingBar(&this->graphics);
 		Canvas::isLoaded = true;
@@ -2882,7 +2882,7 @@ void Canvas::updateLoadingBar(bool b) {
 
 	int flags;
 
-	if (b == false) {
+	if (!b) {
 		if (app->upTimeMs - this->lastPacifierUpdate < 0x96) {
 			return;
 		}
@@ -3723,7 +3723,7 @@ void Canvas::touchSwipe(int swDir) {
 				return;
 		}
 
-		if (this->isZoomedIn != false) {
+		if (this->isZoomedIn) {
 			bool bVar4 = keyCode == 2;
 			if (bVar4) {
 				keyCode = 5;
