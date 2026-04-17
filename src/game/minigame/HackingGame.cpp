@@ -7,6 +7,7 @@
 #include "Game.h"
 #include "Button.h"
 #include "Canvas.h"
+#include "MinigameUI.h"
 #include "Player.h"
 #include "HackingGame.h"
 #include "CombatEntity.h"
@@ -49,7 +50,7 @@ void HackingGame::setupGlobalData() {
 	canvas->stateVars[0] = 2;
 	canvas->stateVars[1] = 0;
 	canvas->stateVars[2] = 0;
-	canvas->initMiniGameHelpScreen();
+	app->minigameUI->initHelpScreen();
 	canvas->clearSoftKeys();
 	this->selected = false;
 }
@@ -206,16 +207,16 @@ void HackingGame::handleInput(int action) {
 			app->canvas->clearSoftKeys();
 		}
 		else if (action == Enums::ACTION_UP) {
-			app->canvas->handleMiniGameHelpScreenScroll(-1);
+			app->minigameUI->handleHelpScreenScroll(-1);
 		}
 		else if (action == Enums::ACTION_DOWN) {
-			app->canvas->handleMiniGameHelpScreenScroll(1);
+			app->minigameUI->handleHelpScreenScroll(1);
 		}
 		else if (action == Enums::ACTION_RIGHT) {
-			app->canvas->handleMiniGameHelpScreenScroll(16);
+			app->minigameUI->handleHelpScreenScroll(16);
 		}
 		else if (action == Enums::ACTION_LEFT) {
-			app->canvas->handleMiniGameHelpScreenScroll(-16);
+			app->minigameUI->handleHelpScreenScroll(-16);
 		}
 	}
 	else if (this->stateVars[1] == 1) {
@@ -232,7 +233,7 @@ void HackingGame::handleInput(int action) {
 				case Enums::ACTION_AUTOMAP: // Old Enums::ACTION_MENU
 				case Enums::ACTION_BACK:
 					this->stateVars[1] = 0;
-					app->canvas->initMiniGameHelpScreen();
+					app->minigameUI->initHelpScreen();
 					app->canvas->clearSoftKeys();
 					break;
 				case Enums::ACTION_FIRE:
@@ -365,7 +366,7 @@ void HackingGame::drawHelpScreen(Graphics* graphics) {
 
 	Text* text;
 
-	app->canvas->drawMiniGameHelpScreen(graphics, 164, 165, this->imgHelpScreenAssets);
+	app->minigameUI->drawHelpScreen(app->canvas.get(), graphics, 164, 165, this->imgHelpScreenAssets);
 	text = app->localization->getSmallBuffer();
 	text->setLength(0);
 	app->localization->composeText((short)0, (short)30, text); // Old -> text->append("Exit");
@@ -626,7 +627,7 @@ void HackingGame::endGame(int n) {
 
 	app->sound->playSound((n == 1) ? 1043 : 1040, '\0', 3, false);
 	if (!this->gamePlayedFromMainMenu) {
-		app->canvas->evaluateMiniGameResults(n);
+		app->minigameUI->evaluateResults(n);
 		app->game->scriptStateVars[7] = (short)n;
 	}
 	if (!this->gamePlayedFromMainMenu) {

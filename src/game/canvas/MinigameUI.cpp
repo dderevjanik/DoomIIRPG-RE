@@ -3,43 +3,28 @@
 #include <algorithm>
 #include "Log.h"
 
-#include "SDLGL.h"
 #include "App.h"
 #include "Image.h"
 #include "CAppContainer.h"
 #include "Canvas.h"
 #include "Graphics.h"
-#include "MayaCamera.h"
 #include "Game.h"
-#include "GLES.h"
-#include "TinyGL.h"
 #include "Hud.h"
-#include "Render.h"
 #include "Combat.h"
 #include "Player.h"
-#include "MenuSystem.h"
-#include "CAppContainer.h"
-#include "IMinigame.h"
 #include "HackingGame.h"
 #include "SentryBotGame.h"
 #include "VendingMachine.h"
-#include "ParticleSystem.h"
 #include "Text.h"
-#include "Button.h"
 #include "Sound.h"
 #include "Sounds.h"
 #include "SoundNames.h"
-#include "Resource.h"
-#include "Enums.h"
-#include "SpriteDefs.h"
+#include "ScriptThread.h"
 #include "Utils.h"
-#include "Menus.h"
-#include "Input.h"
-#include "ICanvasState.h"
+#include "DialogManager.h"
+#include "MinigameUI.h"
 
-void Canvas::loadMiniGameImages() {
-
-
+void MinigameUI::loadImages() {
 	app->beginImageLoading();
 	app->hackingGame->imgEnergyCore = app->loadImage("hackerBG.bmp", true);
 	app->hackingGame->imgGameColors = app->loadImage("blockGameColors.bmp", true);
@@ -63,18 +48,12 @@ void Canvas::loadMiniGameImages() {
 
 	app->vendingMachine->imgHelpScreenAssets = app->sentryBotGame->imgHelpScreenAssets = app->hackingGame->imgHelpScreenAssets;
 
-
 	// [GEC] Fix the image
 	fixImage(app->hackingGame->imgGameColors);
 	fixImage(app->vendingMachine->imgVending_arrow_down);
 }
 
-
-// treadmillState, handleTreadmillEvents, treadmillFall, drawTreadmillReadout moved to TreadmillState.cpp
-
-
-void Canvas::drawTargetPracticeScore(Graphics* graphics) {
-
+void MinigameUI::drawTargetPracticeScore(Graphics* graphics) {
 	if (app->hud->msgCount != 0 && (app->hud->messageFlags[0] & 0x4) != 0x0) {
 		return;
 	}
@@ -86,21 +65,16 @@ void Canvas::drawTargetPracticeScore(Graphics* graphics) {
 	smallBuffer->dispose();
 }
 
-
-void Canvas::initMiniGameHelpScreen() {
+void MinigameUI::initHelpScreen() {
 	this->miniGameHelpScrollPosition = 0;
 }
 
-
-void Canvas::drawMiniGameHelpScreen(Graphics* graphics, int i, int i2, Image* image) {
+void MinigameUI::drawHelpScreen(Canvas* canvas, Graphics* graphics, int titleStr, int bodyStr, Image* image) {
 	graphics->drawImage(image, 0, 0, 0, 0, 0);
-	this->drawMiniGameHelpText(graphics, i, i2);
+	this->drawHelpText(canvas, graphics, titleStr, bodyStr);
 }
 
-
-void Canvas::drawMiniGameHelpText(Graphics* graphics, int i, int i2) {
-
-
+void MinigameUI::drawHelpText(Canvas* canvas, Graphics* graphics, int titleStr, int bodyStr) {
 	int x;
 	Text* textBuff1;
 	int lineIdx;
@@ -110,14 +84,14 @@ void Canvas::drawMiniGameHelpText(Graphics* graphics, int i, int i2) {
 	int newlinePos;
 
 	textBuff1 = app->localization->getSmallBuffer();
-	x = (this->screenRect[2] - this->screenRect[0]) / 2;
+	x = (canvas->screenRect[2] - canvas->screenRect[0]) / 2;
 	textBuff1->setLength(0);
-	app->localization->composeText(i, textBuff1);
+	app->localization->composeText(titleStr, textBuff1);
 	textBuff1->dehyphenate();
-	graphics->drawString(textBuff1, x, this->screenRect[1] + 0x19, 3);
+	graphics->drawString(textBuff1, x, canvas->screenRect[1] + 0x19, 3);
 
 	textBuff1->setLength(0);
-	app->localization->composeText(i2, textBuff1);
+	app->localization->composeText(bodyStr, textBuff1);
 	textBuff1->wrapText(0x31, '\n');
 	lineIdx = textBuff1->getNumLines();
 	this->helpTextNumberOfLines = lineIdx;
@@ -150,40 +124,39 @@ void Canvas::drawMiniGameHelpText(Graphics* graphics, int i, int i2) {
 	}
 	textBuff2->dispose();
 
-	graphics->drawString(textBuff1, this->screenRect[0] + 0x12, this->screenRect[1] + 0x2d, 0x14);
+	graphics->drawString(textBuff1, canvas->screenRect[0] + 0x12, canvas->screenRect[1] + 0x2d, 0x14);
 	newlinePos = this->helpTextNumberOfLines;
 	lineIdx = this->miniGameHelpScrollPosition + 0x10;
 	if (newlinePos < lineIdx) {
 		lineIdx = newlinePos;
 	}
-	this->drawScrollBar(graphics, this->screenRect[2] + -0x12, this->screenRect[1] + 0x2d, 0x100,
+	canvas->drawScrollBar(graphics, canvas->screenRect[2] + -0x12, canvas->screenRect[1] + 0x2d, 0x100,
 		this->miniGameHelpScrollPosition, lineIdx, newlinePos, 0x10);
 	textBuff1->setLength(0);
 	app->localization->composeText(0, 0x60, textBuff1);
 	textBuff1->dehyphenate();
-	graphics->drawString(textBuff1, x, this->screenRect[3] + -0x14, 3);
+	graphics->drawString(textBuff1, x, canvas->screenRect[3] + -0x14, 3);
 	textBuff1->dispose();
 }
 
-
-void Canvas::handleMiniGameHelpScreenScroll(int i) {
+void MinigameUI::handleHelpScreenScroll(int delta) {
 	int maxScroll;
 	int newPos;
 
-	if (i < 0) {
-		newPos = i + this->miniGameHelpScrollPosition;
+	if (delta < 0) {
+		newPos = delta + this->miniGameHelpScrollPosition;
 		if (newPos < 0) {
 			newPos = 0;
 		}
 		this->miniGameHelpScrollPosition = newPos;
 		return;
 	}
-	if (0 < i) {
+	if (0 < delta) {
 		maxScroll = this->helpTextNumberOfLines + -0x10;
 		if (maxScroll < 0) {
 			maxScroll = 0;
 		}
-		newPos = i + this->miniGameHelpScrollPosition;
+		newPos = delta + this->miniGameHelpScrollPosition;
 		if (maxScroll < newPos) {
 			this->miniGameHelpScrollPosition = maxScroll;
 		}
@@ -192,22 +165,18 @@ void Canvas::handleMiniGameHelpScreenScroll(int i) {
 		}
 		return;
 	}
-	return;
 }
 
-
-bool Canvas::startArmorRepair(ScriptThread* armorRepairThread) {
-
-
+bool MinigameUI::startArmorRepair(Canvas* canvas, ScriptThread* thread) {
 	if (app->player->showHelp((short)15, false)) {
 		return false;
 	}
 	if (app->player->inventory[12] >= 5) {
-		this->armorRepairThread = armorRepairThread;
+		this->armorRepairThread = thread;
 		this->repairingArmor = true;
 		Text* smallBuffer = app->localization->getSmallBuffer();
 		app->localization->composeText((short)0, (short)211, smallBuffer);
-		this->startDialog(nullptr, smallBuffer, 13, 1, false);
+		app->dialogManager->startDialog(canvas, nullptr, smallBuffer, 13, 1, false);
 		smallBuffer->dispose();
 		return true;
 	}
@@ -215,7 +184,7 @@ bool Canvas::startArmorRepair(ScriptThread* armorRepairThread) {
 	if (app->player->characterChoice == 1) {
 		app->sound->playSound(Sounds::getResIDByName(SoundName::NO_USE2), 0, 3, 0);
 	}
-	else if (app->player->characterChoice >= 1 && app->player->characterChoice <= 3){
+	else if (app->player->characterChoice >= 1 && app->player->characterChoice <= 3) {
 		app->sound->playSound(Sounds::getResIDByName(SoundName::NO_USE), 0, 3, 0);
 	}
 
@@ -223,20 +192,17 @@ bool Canvas::startArmorRepair(ScriptThread* armorRepairThread) {
 	return false;
 }
 
-
-void Canvas::endArmorRepair() {
+void MinigameUI::endArmorRepair(Canvas* canvas) {
 	if (this->armorRepairThread != nullptr) {
-		this->setState(Canvas::ST_PLAYING);
+		canvas->setState(Canvas::ST_PLAYING);
 		this->armorRepairThread->run();
 		this->armorRepairThread = nullptr;
 		this->repairingArmor = false;
 	}
 }
 
-
-void Canvas::evaluateMiniGameResults(int n) {
-
-	if (n == 1) {
+void MinigameUI::evaluateResults(int result) {
+	if (result == 1) {
 		int modifyStat = app->player->modifyStat(7, 2);
 		app->localization->resetTextArgs();
 		if (modifyStat > 0) {
@@ -248,4 +214,3 @@ void Canvas::evaluateMiniGameResults(int n) {
 		}
 	}
 }
-

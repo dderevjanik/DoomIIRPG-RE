@@ -16,6 +16,7 @@
 #include "Player.h"
 #include "Combat.h"
 #include "Canvas.h"
+#include "DialogManager.h"
 #include "Render.h"
 #include "TinyGL.h"
 #include "Resource.h"
@@ -452,7 +453,7 @@ void Game::unloadMapData() {
 	this->numDestroyableObj = 0;
 	this->destroyedObj = 0;
 	this->lootFound = 0;
-	app->canvas->showingLoot = false;
+	app->dialogManager->showingLoot = false;
 	this->angryVIOS = false;
 	app->sound->freeMonsterSounds();
 }

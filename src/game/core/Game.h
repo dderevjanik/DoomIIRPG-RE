@@ -193,6 +193,7 @@ public:
     void unlinkWorldEntity(int i, int i2);
     void linkWorldEntity(int i, int i2);
     void removeEntity(Entity* entity);
+    void uncoverAutomapAt(int destX, int destY);
     void trace(int n, int n2, int n3, int n4, Entity* entity, int n5, int n6);
     void trace(int n, int n2, int n3, int traceCollisionX, int traceCollisionY, int traceCollisionZ, Entity* entity, int n4, int n5, bool b);
     void loadMapEntities();

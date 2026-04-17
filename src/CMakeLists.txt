@@ -54,6 +54,7 @@ target_include_directories(drpg-engine-lib PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/game/data
 	${CMAKE_CURRENT_SOURCE_DIR}/game/ui
 	${CMAKE_CURRENT_SOURCE_DIR}/game/ui/levelintros
+	${CMAKE_CURRENT_SOURCE_DIR}/game/canvas
 	${CMAKE_CURRENT_SOURCE_DIR}/game/asset
 	# third-party
 	${CMAKE_SOURCE_DIR}/third_party_libs/stb

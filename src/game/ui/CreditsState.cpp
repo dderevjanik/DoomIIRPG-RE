@@ -11,11 +11,12 @@
 #include "Enums.h"
 #include "Menus.h"
 #include "Resource.h"
+#include "StoryRenderer.h"
 
 void CreditsState::onEnter(Canvas* canvas) {
 	Applet* app = canvas->app;
 	app->localization->loadText(2);
-	canvas->initScrollingText(2, 0, false, 16, 5, 500);
+	app->storyRenderer->initScrollingText(canvas, 2, 0, false, 16, 5, 500);
 	app->localization->unloadText(2);
 }
 
@@ -29,7 +30,7 @@ void CreditsState::update(Canvas* canvas) {
 }
 
 void CreditsState::render(Canvas* canvas, Graphics* graphics) {
-	canvas->drawCredits(graphics);
+	canvas->app->storyRenderer->drawCredits(canvas, graphics);
 }
 
 bool CreditsState::handleInput(Canvas* canvas, int key, int action) {
@@ -40,7 +41,7 @@ bool CreditsState::handleInput(Canvas* canvas, int key, int action) {
 	}
 
 	if (canvas->endingGame) {
-		if ((action == Enums::ACTION_FIRE && canvas->scrollingTextDone) || key == 18) {
+		if ((action == Enums::ACTION_FIRE && app->storyRenderer->scrollingTextDone) || key == 18) {
 			canvas->endingGame = false;
 			app->sound->soundStop();
 			app->menuSystem->imgMainBG->~Image();

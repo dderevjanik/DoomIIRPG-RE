@@ -4,6 +4,7 @@
 #include "Canvas.h"
 #include "Player.h"
 #include "Sound.h"
+#include "StoryRenderer.h"
 
 void EpilogueState::onEnter(Canvas* canvas) {
 	Applet* app = canvas->app;
@@ -12,7 +13,7 @@ void EpilogueState::onEnter(Canvas* canvas) {
 	app->sound->allowSounds = canvas->areSoundsAllowed;
 	app->sound->allowSounds = soundEnabled;
 	canvas->clearSoftKeys();
-	canvas->loadEpilogueText();
+	app->storyRenderer->loadEpilogueText(canvas);
 	canvas->stateVars[0] = 1;
 }
 
@@ -20,18 +21,18 @@ void EpilogueState::onExit(Canvas* canvas) {
 }
 
 void EpilogueState::update(Canvas* canvas) {
-	if (canvas->scrollingTextDone) {
-		canvas->disposeEpilogue();
+	if (canvas->app->storyRenderer->scrollingTextDone) {
+		canvas->app->storyRenderer->disposeEpilogue(canvas);
 	}
 }
 
 void EpilogueState::render(Canvas* canvas, Graphics* graphics) {
-	canvas->drawScrollingText(graphics);
+	canvas->app->storyRenderer->drawScrollingText(canvas, graphics);
 }
 
 bool EpilogueState::handleInput(Canvas* canvas, int key, int action) {
 	if (key == 18) {
-		canvas->disposeEpilogue();
+		canvas->app->storyRenderer->disposeEpilogue(canvas);
 	}
 	return true;
 }

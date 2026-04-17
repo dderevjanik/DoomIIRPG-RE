@@ -9,6 +9,7 @@
 #include "Player.h"
 #include "Combat.h"
 #include "Canvas.h"
+#include "DialogManager.h"
 #include "Render.h"
 #include "Game.h"
 #include "Text.h"
@@ -373,7 +374,7 @@ void Player::addLevel() {
 	if (app->canvas->state != Canvas::ST_MENU) {
 		app->sound->soundStop();
 		app->sound->playSound(Sounds::getResIDByName(SoundName::MUSIC_LEVELUP), 0, 5, false);
-		dispose = (app->canvas->enqueueHelpDialog(textBuff, 0) ? false : true);
+		dispose = (app->dialogManager->enqueueHelpDialog(app->canvas.get(), textBuff, 0) ? false : true);
 	}
 
 	if (dispose) {
@@ -757,7 +758,7 @@ void Player::showInvHelp(int n, bool b) {
 		return;
 	}
 	this->invHelpBitmask |= 1 << n2;
-	app->canvas->enqueueHelpDialog(app->entityDefManager->find(6, 0, n));
+	app->dialogManager->enqueueHelpDialog(app->canvas.get(), app->entityDefManager->find(6, 0, n));
 }
 
 void Player::showAmmoHelp(int n, bool b) {
@@ -771,7 +772,7 @@ void Player::showAmmoHelp(int n, bool b) {
 		return;
 	}
 	this->ammoHelpBitmask |= n2;
-	app->canvas->enqueueHelpDialog(app->entityDefManager->find(6, 2, n));
+	app->dialogManager->enqueueHelpDialog(app->canvas.get(), app->entityDefManager->find(6, 2, n));
 }
 
 bool Player::showHelp(short n, bool b) {
@@ -788,9 +789,9 @@ bool Player::showHelp(short n, bool b) {
 		return false;
 	}
 	this->helpBitmask |= 1 << n;
-	app->canvas->enqueueHelpDialog(n);
+	app->dialogManager->enqueueHelpDialog(app->canvas.get(), n);
 	if (n != 5 && (app->canvas->state == Canvas::ST_AUTOMAP || app->canvas->state == Canvas::ST_PLAYING)) {
-		app->canvas->dequeueHelpDialog();
+		app->dialogManager->dequeueHelpDialog(app->canvas.get());
 	}
 	return true;
 }
@@ -805,7 +806,7 @@ void Player::showWeaponHelp(int n, bool b) {
 		return;
 	}
 	this->weaponHelpBitmask |= 1 << n;
-	app->canvas->enqueueHelpDialog(app->entityDefManager->find(6, 1, n));
+	app->dialogManager->enqueueHelpDialog(app->canvas.get(), app->entityDefManager->find(6, 1, n));
 }
 
 
@@ -884,7 +885,7 @@ void Player::giveAll() {
 	for (int k = 0; k < 26; ++k) {
 		if (k != 24) {
 			this->give(0, (uint8_t)k, gc.capInventory, true);
-			app->canvas->numHelpMessages = 0;
+			app->dialogManager->numHelpMessages = 0;
 		}
 	}
 	this->give(0, 24, gc.capCredits, true);
@@ -1038,7 +1039,7 @@ void Player::showAchievementMessage(int n) {
 	app->localization->addTextArg(smallBuffer);
 	smallBuffer->dispose();
 	app->localization->composeText((short)0, (short)135, smallBuffer2);
-	if (!app->canvas->enqueueHelpDialog(smallBuffer2, 3)) {
+	if (!app->dialogManager->enqueueHelpDialog(app->canvas.get(), smallBuffer2, 3)) {
 		smallBuffer2->dispose();
 	}
 	int n2 = 10;

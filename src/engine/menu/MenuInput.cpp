@@ -12,6 +12,7 @@
 #include "Game.h"
 #include "Sound.h"
 #include "Canvas.h"
+#include "DialogManager.h"
 #include "Player.h"
 #include "MenuSystem.h"
 #include "MenuStrings.h"
@@ -706,7 +707,7 @@ void MenuSystem::selectDebugAction(int i) {
 		case 122: app->player->equipForLevel(app->canvas->loadMapID); return;
 		case 123: app->combat->oneShotCheat = !app->combat->oneShotCheat; break;
 		case 124:
-			app->canvas->enqueueHelpDialog((short)3, (short)342, (uint8_t)(-1));
+			app->dialogManager->enqueueHelpDialog(app->canvas.get(), (short)3, (short)342, (uint8_t)(-1));
 			this->returnToGame();
 			return;
 		case 125: this->systemTest(this->items[i].param + 332); return;

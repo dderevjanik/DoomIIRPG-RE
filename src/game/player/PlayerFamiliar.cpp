@@ -9,6 +9,7 @@
 #include "Player.h"
 #include "Combat.h"
 #include "Canvas.h"
+#include "DialogManager.h"
 #include "Render.h"
 #include "Game.h"
 #include "Text.h"
@@ -352,7 +353,7 @@ void Player::startSelfDestructDialog() {
 		this->attemptingToSelfDestructFamiliar = true;
 		Text* smallBuffer = app->localization->getSmallBuffer();
 		app->localization->composeText((short)0, (short)194, smallBuffer);
-		app->canvas->startDialog(nullptr, smallBuffer, 12, 1, false);
+		app->dialogManager->startDialog(app->canvas.get(), nullptr, smallBuffer, 12, 1, false);
 		smallBuffer->dispose();
 	}
 }

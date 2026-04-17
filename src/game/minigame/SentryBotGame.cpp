@@ -7,6 +7,7 @@
 #include "Game.h"
 #include "Button.h"
 #include "Canvas.h"
+#include "MinigameUI.h"
 #include "Player.h"
 #include "SentryBotGame.h"
 #include "CombatEntity.h"
@@ -42,7 +43,7 @@ void SentryBotGame::setupGlobalData() {
 	this->stateVars[0] = 0;
 	this->stateVars[1] = 0;
 	this->stateVars[2] = 0;
-	app->canvas->initMiniGameHelpScreen();
+	app->minigameUI->initHelpScreen();
 	app->canvas->clearSoftKeys();
 }
 
@@ -176,16 +177,16 @@ void SentryBotGame::handleInput(int action) {
             app->canvas->clearSoftKeys();
         }
         else if (action == Enums::ACTION_UP) {
-            app->canvas->handleMiniGameHelpScreenScroll(-1);
+            app->minigameUI->handleHelpScreenScroll(-1);
         }
         else if (action == Enums::ACTION_DOWN) {
-            app->canvas->handleMiniGameHelpScreenScroll(1);
+            app->minigameUI->handleHelpScreenScroll(1);
         }
         else if (action == Enums::ACTION_RIGHT) {
-            app->canvas->handleMiniGameHelpScreenScroll(16);
+            app->minigameUI->handleHelpScreenScroll(16);
         }
         else if (action == Enums::ACTION_LEFT) {
-            app->canvas->handleMiniGameHelpScreenScroll(-16);
+            app->minigameUI->handleHelpScreenScroll(-16);
         }
     }
     else if (this->stateVars[1] == 1) {
@@ -195,7 +196,7 @@ void SentryBotGame::handleInput(int action) {
                 case Enums::ACTION_AUTOMAP: // Old ACTION_MENU
                 case Enums::ACTION_BACK: {
                     stateVars[1] = 0;
-                    app->canvas->initMiniGameHelpScreen();
+                    app->minigameUI->initHelpScreen();
                     app->canvas->clearSoftKeys();
                     break;
                 }
@@ -491,7 +492,7 @@ void SentryBotGame::drawSuccessScreen(Graphics* graphics) {
 void SentryBotGame::drawHelpScreen(Graphics* graphics) {
 
     Applet* app = this->app;
-    app->canvas->drawMiniGameHelpScreen(graphics, Localization::STRINGID((short)0, (short)171), Localization::STRINGID((short)0, (short)172), this->imgHelpScreenAssets);
+    app->minigameUI->drawHelpScreen(app->canvas.get(), graphics, Localization::STRINGID((short)0, (short)171), Localization::STRINGID((short)0, (short)172), this->imgHelpScreenAssets);
     Text* text = app->localization->getSmallBuffer();
     app->setFontRenderMode(0);;
     app->localization->composeText((short)0, (short)30, text); // Old -> text->append("Exit");
@@ -824,7 +825,7 @@ void SentryBotGame::endGame(int n) {
     app->sound->playSound((n == 1) ? 1043 : 1040, 0, 3, 0);
 
     if (!this->gamePlayedFromMainMenu) {
-        app->canvas->evaluateMiniGameResults(n);
+        app->minigameUI->evaluateResults(n);
         app->game->scriptStateVars[7] = (short)n;
     }
     if (!this->gamePlayedFromMainMenu) {

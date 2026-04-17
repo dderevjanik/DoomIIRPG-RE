@@ -28,6 +28,10 @@
 #include "SentryBotGame.h"
 #include "VendingMachine.h"
 #include "ComicBook.h"
+#include "LootDistributor.h"
+#include "MinigameUI.h"
+#include "StoryRenderer.h"
+#include "DialogManager.h"
 #include "JavaStream.h"
 #include "Image.h"
 #include "Graphics.h"
@@ -116,7 +120,7 @@ bool Applet::startup() {
 	this->resource->startup();
 	if (!this->canvas->startup()) { LOG_ERROR("[app] Canvas::startup() failed — check above for font/image loading errors\n"); return false; }
 	this->testImg = Applet::loadImage("cockpit.bmp", true);
-	this->canvas->loadMiniGameImages();
+	this->minigameUI->loadImages();
 	if (!this->localization->startup()) { LOG_ERROR("[app] Localization::startup() failed — check string files in game.yaml\n"); return false; }
 	if (!this->render->startup()) { LOG_ERROR("[app] Render::startup() failed — check texture/level assets\n"); return false; }
 	this->loadTables();

@@ -43,6 +43,10 @@ class HackingGame;
 class SentryBotGame;
 class VendingMachine;
 class ComicBook;
+class LootDistributor;
+class MinigameUI;
+class StoryRenderer;
+class DialogManager;
 class InputStream;
 
 class Applet
@@ -120,6 +124,10 @@ public:
 	std::unique_ptr<SentryBotGame> sentryBotGame;
 	std::unique_ptr<VendingMachine> vendingMachine;
 	std::unique_ptr<ComicBook> comicBook;
+	std::unique_ptr<LootDistributor> lootDistributor;
+	std::unique_ptr<MinigameUI> minigameUI;
+	std::unique_ptr<StoryRenderer> storyRenderer;
+	std::unique_ptr<DialogManager> dialogManager;
 	//--- Non-owning pointers ---
 	IGameModule* gameModule = nullptr;
 	Image* testImg = nullptr;

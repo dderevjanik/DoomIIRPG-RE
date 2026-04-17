@@ -8,6 +8,7 @@
 #include "MenuSystem.h"
 #include "Enums.h"
 #include "Menus.h"
+#include "DialogManager.h"
 
 void DyingState::onEnter(Canvas* canvas) {
 	Applet* app = canvas->app;
@@ -25,7 +26,7 @@ void DyingState::onEnter(Canvas* canvas) {
 	canvas->clearSoftKeys();
 	canvas->deathTime = app->time;
 	canvas->destPitch = 64;
-	canvas->numHelpMessages = 0;
+	app->dialogManager->numHelpMessages = 0;
 }
 
 void DyingState::onExit(Canvas* canvas) {

@@ -3,44 +3,30 @@
 #include <algorithm>
 #include "Log.h"
 
-#include "SDLGL.h"
 #include "App.h"
 #include "Image.h"
 #include "CAppContainer.h"
 #include "Canvas.h"
 #include "Graphics.h"
-#include "MayaCamera.h"
 #include "Game.h"
-#include "GLES.h"
-#include "TinyGL.h"
 #include "Hud.h"
 #include "Render.h"
 #include "Combat.h"
 #include "Player.h"
-#include "MenuSystem.h"
-#include "CAppContainer.h"
-#include "IMinigame.h"
-#include "HackingGame.h"
-#include "SentryBotGame.h"
-#include "VendingMachine.h"
-#include "ParticleSystem.h"
+#include "Entity.h"
+#include "EntityDef.h"
+#include "MinigameUI.h"
 #include "Text.h"
 #include "Button.h"
 #include "Sound.h"
 #include "Sounds.h"
 #include "SoundNames.h"
-#include "Resource.h"
 #include "Enums.h"
-#include "SpriteDefs.h"
-#include "Utils.h"
-#include "Menus.h"
-#include "Input.h"
-#include "ICanvasState.h"
+#include "ScriptThread.h"
+#include "DialogManager.h"
 
-void Canvas::dialogState(Graphics* graphics) {
-
-
-	if (this->dialogBuffer != nullptr && this->dialogBuffer->length() == 0) {
+void DialogManager::render(Canvas* canvas, Graphics* graphics) {
+	if (canvas->dialogBuffer != nullptr && canvas->dialogBuffer->length() == 0) {
 		return;
 	}
 
@@ -52,11 +38,11 @@ void Canvas::dialogState(Graphics* graphics) {
 	this->m_dialogButtons->GetButton(6)->drawButton = false;
 	this->m_dialogButtons->GetButton(7)->drawButton = false;
 
-	int* dialogRect = this->dialogRect;
-	dialogRect[0] = -this->screenRect[0];
-	dialogRect[2] = this->hudRect[2];
+	int* dialogRect = canvas->dialogRect;
+	dialogRect[0] = -canvas->screenRect[0];
+	dialogRect[2] = canvas->hudRect[2];
 	dialogRect[3] = this->dialogViewLines * 16 + 8;
-	dialogRect[1] = Applet::IOS_HEIGHT - dialogRect[3] - 1;//Canvas.screenRect[3] - dialogRect[3] - 1;
+	dialogRect[1] = Applet::IOS_HEIGHT - dialogRect[3] - 1;
 	this->dialogTypeLineIdx = this->numDialogLines;
 	int n = dialogRect[0] + 1;
 	int n2 = 0xFF000000;
@@ -64,13 +50,13 @@ void Canvas::dialogState(Graphics* graphics) {
 	int color2 = 0xFF666666;
 	if (this->dialogStyle == 3) {
 		// Scroll style: custom drawing
-		n = -this->screenRect[0] + 1;
+		n = -canvas->screenRect[0] + 1;
 		dialogRect[1] = Applet::IOS_HEIGHT - dialogRect[3] - 10;
-		graphics->fillRect(dialogRect[0], dialogRect[1] - 10, this->hudRect[2], this->dialogRect[3] + 20, 12800);
+		graphics->fillRect(dialogRect[0], dialogRect[1] - 10, canvas->hudRect[2], canvas->dialogRect[3] + 20, 12800);
 		graphics->setColor(color);
 		graphics->drawRect(dialogRect[0], dialogRect[1] - 10, dialogRect[2] - 1, dialogRect[3] + 19);
-	} else if (this->dialogStyle >= 0 && this->dialogStyle < this->dialogStyleDefCount) {
-		const DialogStyleDef& style = this->dialogStyleDefs[this->dialogStyle];
+	} else if (this->dialogStyle >= 0 && this->dialogStyle < canvas->dialogStyleDefCount) {
+		const DialogStyleDef& style = canvas->dialogStyleDefs[this->dialogStyle];
 		n2 = style.bgColor;
 		if (style.altBgColor != -1 && (this->dialogFlags & 0x1) != 0) {
 			n2 = style.altBgColor;
@@ -82,10 +68,10 @@ void Canvas::dialogState(Graphics* graphics) {
 			dialogRect[1] += style.yAdjust;
 		}
 		if (style.positionTop) {
-			dialogRect[1] = this->hudRect[1] + 20;
+			dialogRect[1] = canvas->hudRect[1] + 20;
 		}
 		if (style.posTopOnFlag != 0 && (this->dialogFlags & style.posTopOnFlag) != 0) {
-			dialogRect[1] = this->hudRect[1] + 20;
+			dialogRect[1] = canvas->hudRect[1] + 20;
 		}
 	}
 
@@ -97,13 +83,11 @@ void Canvas::dialogState(Graphics* graphics) {
 	{
 		this->m_dialogButtons->GetButton(3)->drawButton = false;
 		assert(m_dialogButtons->GetButton(4));
-		//__symbol_stub4::___assert_rtn("dialogState","/Users/greghodges/doom2rpg/trunk/Doom2rpg_iphone/xcode/Classes/Canvas.cpp", 0x1499,"m_dialogButtons->GetButton(4)");
-		
 		this->m_dialogButtons->GetButton(4)->drawButton = false;
 	}
 
-	const DialogStyleDef& style = (this->dialogStyle >= 0 && this->dialogStyle < this->dialogStyleDefCount)
-		? this->dialogStyleDefs[this->dialogStyle] : this->dialogStyleDefs[0];
+	const DialogStyleDef& style = (this->dialogStyle >= 0 && this->dialogStyle < canvas->dialogStyleDefCount)
+		? canvas->dialogStyleDefs[this->dialogStyle] : canvas->dialogStyleDefs[0];
 
 	int currentDialogLine = 0;
 	if (style.hasHeader) {
@@ -127,9 +111,9 @@ void Canvas::dialogState(Graphics* graphics) {
 			graphics->drawRegion(app->hud->imgActions, 0, 18 * this->specialLootIcon, 18, 18, dialogRect[2] - 18, dialogRect[1] - 17, 0, 0, 0);
 		}
 		if (style.greenTerminal) {
-			this->graphics.currentCharColor = 2;
+			canvas->graphics.currentCharColor = 2;
 		}
-		graphics->drawString(this->dialogBuffer, this->SCR_CX, dialogRect[1] - 16, 1, this->dialogIndexes[0], this->dialogIndexes[1]);
+		graphics->drawString(canvas->dialogBuffer, canvas->SCR_CX, dialogRect[1] - 16, 1, this->dialogIndexes[0], this->dialogIndexes[1]);
 	}
 	else if (style.hasChestHeader) {
 		// Chest dialog with optional item name header
@@ -143,7 +127,7 @@ void Canvas::dialogState(Graphics* graphics) {
 			graphics->fillRect(dialogRect[0], dialogRect[1] - 12, dialogRect[2], 12);
 			graphics->setColor(color);
 			graphics->drawRect(dialogRect[0], dialogRect[1] - 12, dialogRect[2] - 1, 12);
-			graphics->drawString(this->dialogBuffer, dialogRect[0] + (dialogRect[2] + 10 - 2 >> 1), dialogRect[1] - 5, 3, this->dialogIndexes[0], this->dialogIndexes[1]);
+			graphics->drawString(canvas->dialogBuffer, dialogRect[0] + (dialogRect[2] + 10 - 2 >> 1), dialogRect[1] - 5, 3, this->dialogIndexes[0], this->dialogIndexes[1]);
 			this->m_dialogButtons->GetButton(8)->drawButton = true;
 			fmButton* Button = this->m_dialogButtons->GetButton(8);
 			Button->SetTouchArea(*dialogRect, dialogRect[1] - 12, dialogRect[2], dialogRect[3] + 12);
@@ -186,20 +170,20 @@ void Canvas::dialogState(Graphics* graphics) {
 		if (style.iconSrcX >= 0) {
 			int iconX, iconY, iconAnchor;
 			if (style.iconBottom) {
-				iconX = this->SCR_CX + 10;
+				iconX = canvas->SCR_CX + 10;
 				iconY = dialogRect[1] + dialogRect[3];
 				iconAnchor = 0;
 			} else if (this->dialogStyle == 5 && (this->dialogFlags & 0x2) != 0x0) {
 				// Monster icon: positioned at bottom when flag set
-				iconX = this->SCR_CX - 64;
+				iconX = canvas->SCR_CX - 64;
 				iconY = dialogRect[1] + dialogRect[3] + 6;
 				iconAnchor = 36;
 			} else {
-				iconX = this->SCR_CX - 64;
+				iconX = canvas->SCR_CX - 64;
 				iconY = dialogRect[1] + 1;
 				iconAnchor = 36;
 			}
-			graphics->drawRegion(this->imgUIImages, style.iconSrcX, style.iconSrcY, style.iconW, style.iconH, iconX, iconY, iconAnchor, 0, 0);
+			graphics->drawRegion(canvas->imgUIImages, style.iconSrcX, style.iconSrcY, style.iconW, style.iconH, iconX, iconY, iconAnchor, 0, 0);
 		}
 	}
 	if (this->currentDialogLine < currentDialogLine) {
@@ -222,37 +206,36 @@ void Canvas::dialogState(Graphics* graphics) {
 			n15 = n14;
 		}
 		if (this->dialogStyle == 9) {
-			this->graphics.currentCharColor = 2;
+			canvas->graphics.currentCharColor = 2;
 		}
-		graphics->drawString(this->dialogBuffer, n, n11, 0, n13, n15);
+		graphics->drawString(canvas->dialogBuffer, n, n11, 0, n13, n15);
 		n11 += 16;
 	}
-	int8_t b = this->OSC_CYCLE[app->time / 200 % 4];
+	int8_t b = canvas->OSC_CYCLE[app->time / 200 % 4];
 	short n16 = app->game->scriptStateVars[4];
 	if ((this->dialogFlags & 0x2) != 0x0) {
-		int y = this->screenRect[3] - 214;
-		int x = this->screenRect[0] + 3;
+		int y = canvas->screenRect[3] - 214;
+		int x = canvas->screenRect[0] + 3;
 
 		Text* smallBuffer = app->localization->getSmallBuffer();
 		Text* smallBuffer2 = app->localization->getSmallBuffer();
 		if ((this->dialogFlags & 0x8) != 0x0) {
-			app->localization->composeText((short)0, (short)214, smallBuffer); // VIOS_MALLOC
-			app->localization->composeText((short)0, (short)215, smallBuffer2); // VIOS_DELETE
+			app->localization->composeText((short)0, (short)214, smallBuffer);
+			app->localization->composeText((short)0, (short)215, smallBuffer2);
 		}
 		else {
-			app->localization->composeText((short)0, (short)141, smallBuffer); // YES_LABEL
-			app->localization->composeText((short)0, (short)140, smallBuffer2); // NO_LABEL
+			app->localization->composeText((short)0, (short)141, smallBuffer);
+			app->localization->composeText((short)0, (short)140, smallBuffer2);
 		}
 		smallBuffer->dehyphenate();
 		smallBuffer2->dehyphenate();
 
-		int strX = x + 4; // Old x + 8
-		int strY = y + 9; // Old y + 1
+		int strX = x + 4;
+		int strY = y + 9;
 		int strH = 32;
 		int strW = std::max(smallBuffer->getStringWidth(), smallBuffer2->getStringWidth());
-		strW += 20;// strW += 18
+		strW += 20;
 
-		//------------------------------------------------------------------------
 		this->m_dialogButtons->GetButton(0)->drawButton = true;
 		int hColor = (this->m_dialogButtons->GetButton(0)->highlighted) ? 0xFF8A8A8A : 0xFF4A4A4A;
 		graphics->fillRect(x, y, strW, strH, hColor);
@@ -260,12 +243,11 @@ void Canvas::dialogState(Graphics* graphics) {
 		graphics->drawString(smallBuffer, strX, strY, 4);
 		this->m_dialogButtons->GetButton(0)->SetTouchArea(x, y, strW, (strH - 5));
 
-		if (n16 == 0) { // J2ME/BREW
+		if (n16 == 0) {
 			graphics->drawCursor(strX + strW + b - 8, strY, 0x18, false);
 		}
 
-		//------------------------------------------------------------------------
-		strY = y + 73; // Old y + 71
+		strY = y + 73;
 		this->m_dialogButtons->GetButton(1)->drawButton = true;
 		hColor = (this->m_dialogButtons->GetButton(1)->highlighted) ? 0xFF8A8A8A : 0xFF4A4A4A;
 		graphics->fillRect(x, y + 64, strW, strH, hColor);
@@ -273,10 +255,9 @@ void Canvas::dialogState(Graphics* graphics) {
 		graphics->drawString(smallBuffer2, strX, strY, 4);
 		this->m_dialogButtons->GetButton(1)->SetTouchArea(x, y + 64, strW, (strH - 5));
 
-		if (n16 == 1) {// J2ME/BREW
+		if (n16 == 1) {
 			graphics->drawCursor(strX + strW + b - 8, strY, 0x18, false);
 		}
-		//------------------------------------------------------------------------
 		smallBuffer->dispose();
 		smallBuffer2->dispose();
 	}
@@ -289,12 +270,11 @@ void Canvas::dialogState(Graphics* graphics) {
 			n20 = 141;
 		}
 		if ((this->dialogFlags & 0x4) != 0x0 || (this->dialogFlags & 0x1) != 0x0) {
-			int n21 = this->dialogRect[1] + (16 * this->dialogViewLines) - 14;
+			int n21 = canvas->dialogRect[1] + (16 * this->dialogViewLines) - 14;
 
 			int v75 = Applet::FONT_HEIGHT[app->fontType] + 2;
 			int v113 = Applet::FONT_HEIGHT[app->fontType];
 
-			//------------------------------------------------------------------------
 			smallBuffer3->setLength(0);
 			app->localization->composeText((short)0, n19, smallBuffer3);
 			smallBuffer3->dehyphenate();
@@ -305,10 +285,10 @@ void Canvas::dialogState(Graphics* graphics) {
 			graphics->drawString(smallBuffer3, 144, n21 + (v75 >> 1) + 2, 3);
 			this->m_dialogButtons->GetButton(3)->SetTouchArea(96, n21 - 40, 96, v113 + 42);
 
-			if (n16 == 0) { // J2ME/BREW
+			if (n16 == 0) {
 				graphics->drawCursor((128 - (smallBuffer3->getStringWidth() >> 1)) + b, n21 + (v113 >> 1) - 5, 0);
 			}
-			//------------------------------------------------------------------------
+
 			smallBuffer3->setLength(0);
 			app->localization->composeText((short)0, n20, smallBuffer3);
 			smallBuffer3->dehyphenate();
@@ -319,7 +299,7 @@ void Canvas::dialogState(Graphics* graphics) {
 			graphics->drawString(smallBuffer3, 336, n21 + (v75 >> 1) + 2, 3);
 			this->m_dialogButtons->GetButton(4)->SetTouchArea(288, n21 - 40, 96, v113 + 42);
 
-			if (n16 == 1) { // J2ME/BREW
+			if (n16 == 1) {
 				graphics->drawCursor((320 - (smallBuffer3->getStringWidth() >> 1)) + b, n21 + (v113 >> 1) - 5, 4);
 			}
 		}
@@ -341,7 +321,7 @@ void Canvas::dialogState(Graphics* graphics) {
 			numDialogLines = this->currentDialogLine + this->dialogViewLines;
 		}
 
-		this->drawScrollBar(graphics, dialogRect[0] + dialogRect[2] - 1, dialogRect[1] + 2, dialogRect[3] - 4, this->currentDialogLine - currentDialogLine, numDialogLines - currentDialogLine, this->numDialogLines - currentDialogLine, this->dialogViewLines);
+		canvas->drawScrollBar(graphics, dialogRect[0] + dialogRect[2] - 1, dialogRect[1] + 2, dialogRect[3] - 4, this->currentDialogLine - currentDialogLine, numDialogLines - currentDialogLine, this->numDialogLines - currentDialogLine, this->dialogViewLines);
 
 		if (this->numDialogLines - currentDialogLine > this->dialogViewLines) {
 			if (this->currentDialogLine > 1) {
@@ -365,43 +345,17 @@ void Canvas::dialogState(Graphics* graphics) {
 
 	this->m_dialogButtons->GetButton(8)->drawButton = true;
 	this->m_dialogButtons->GetButton(8)->Render(graphics);
-	this->clearLeftSoftKey();
-
-#if 0
-	if (this->dialogFlags > this->dialogViewLines) {
-		int numDialogLines;
-		if (this->currentDialogLine + this->dialogViewLines > this->numDialogLines) {
-			numDialogLines = this->numDialogLines;
-		}
-		else {
-			numDialogLines = this->currentDialogLine + this->dialogViewLines;
-		}
-		if (this->dialogStyle == 3) {
-			this->drawScrollBar(graphics, dialogRect[0] + dialogRect[2] - 1, dialogRect[1] - 8, dialogRect[3] + 16, this->currentDialogLine - currentDialogLine, numDialogLines - currentDialogLine, this->numDialogLines - currentDialogLine, this->dialogViewLines);
-		}
-		else {
-			this->drawScrollBar(graphics, dialogRect[0] + dialogRect[2] - 1, dialogRect[1] + 2, dialogRect[3] - 4, this->currentDialogLine - currentDialogLine, numDialogLines - currentDialogLine, this->numDialogLines - currentDialogLine, this->dialogViewLines);
-		}
-	}
-	if (this->currentDialogLine > currentDialogLine) {
-		this->setLeftSoftKey((short)0, (short)125);
-	}
-	else {
-		//this->clearLeftSoftKey();
-	}
-#endif
+	canvas->clearLeftSoftKey();
 }
 
 
-void Canvas::closeDialog(bool skipDialog) {
-
-
+void DialogManager::close(Canvas* canvas, bool skipDialog) {
 	this->dialogClosing = true;
 	this->specialLootIcon = -1;
 	this->showingLoot = false;
 	app->player->unpause(app->time - this->dialogStartTime);
-	this->dialogBuffer->dispose();
-	this->dialogBuffer = nullptr;
+	canvas->dialogBuffer->dispose();
+	canvas->dialogBuffer = nullptr;
 	if (this->numHelpMessages == 0 && (this->dialogStyle == 3 || this->dialogStyle == 4 || (this->dialogStyle == 2 && this->dialogType == 1) || (this->dialogStyle == 12 && app->game->scriptStateVars[4] == 1 && !skipDialog))) {
 		app->game->queueAdvanceTurn = true;
 	}
@@ -413,22 +367,22 @@ void Canvas::closeDialog(bool skipDialog) {
 			app->game->angryVIOS = true;
 		}
 	}
-	if (this->oldState == Canvas::ST_INTER_CAMERA) {
+	if (canvas->oldState == Canvas::ST_INTER_CAMERA) {
 		app->game->activeCameraTime = app->gameTime - app->game->activeCameraTime;
-		this->setState(Canvas::ST_INTER_CAMERA);
+		canvas->setState(Canvas::ST_INTER_CAMERA);
 	}
 	else if (app->game->isCameraActive()) {
 		app->game->activeCameraTime = app->gameTime - app->game->activeCameraTime;
-		this->setState(Canvas::ST_CAMERA);
+		canvas->setState(Canvas::ST_CAMERA);
 	}
-	else if (this->oldState == Canvas::ST_COMBAT && !this->combatDone) {
-		this->setState(Canvas::ST_COMBAT);
+	else if (canvas->oldState == Canvas::ST_COMBAT && !canvas->combatDone) {
+		canvas->setState(Canvas::ST_COMBAT);
 	}
 	else {
-		this->setState(Canvas::ST_PLAYING);
+		canvas->setState(Canvas::ST_PLAYING);
 	}
 	if (this->dialogResumeMenu) {
-		this->setState(Canvas::ST_MENU);
+		canvas->setState(Canvas::ST_MENU);
 	}
 	this->dialogClosing = false;
 	if (this->dialogResumeScriptAfterClosed) {
@@ -442,7 +396,7 @@ void Canvas::closeDialog(bool skipDialog) {
 			app->player->familiarDying(true);
 		}
 	}
-	else if (this->dialogStyle == 13 && this->repairingArmor) {
+	else if (this->dialogStyle == 13 && app->minigameUI->repairingArmor) {
 		if (app->game->scriptStateVars[4] == 1 && !skipDialog) {
 			if (app->player->inventory[12] >= 5) {
 				app->player->give(0, 12, -5);
@@ -468,14 +422,13 @@ void Canvas::closeDialog(bool skipDialog) {
 				app->hud->addMessage((short)0, (short)210, 3);
 			}
 		}
-		this->endArmorRepair();
+		app->minigameUI->endArmorRepair(canvas);
 	}
-	this->repaintFlags |= Canvas::REPAINT_VIEW3D;
+	canvas->repaintFlags |= Canvas::REPAINT_VIEW3D;
 }
 
 
-void Canvas::prepareDialog(Text* text, int dialogStyle, int dialogFlags) {
-
+void DialogManager::prepare(Canvas* canvas, Text* text, int dialogStyle, int dialogFlags) {
 	int i = 0;
 	int n = 0;
 	Text* smallBuffer = app->localization->getSmallBuffer();
@@ -492,7 +445,7 @@ void Canvas::prepareDialog(Text* text, int dialogStyle, int dialogFlags) {
 		this->dialogViewLines = 4;
 	}
 	if (dialogStyle == 1 || (dialogStyle == 5 && ((dialogFlags & 0x2) != 0x0 || (dialogFlags & 0x4) != 0x0))) {
-		this->updateFacingEntity = true;
+		canvas->updateFacingEntity = true;
 		Entity* facingEntity = app->player->facingEntity;
 		if (facingEntity != nullptr && facingEntity->def != nullptr && (facingEntity->def->eType == Enums::ET_MONSTER || facingEntity->def->eType == Enums::ET_NPC)) {
 			app->combat->curTarget = facingEntity;
@@ -503,11 +456,11 @@ void Canvas::prepareDialog(Text* text, int dialogStyle, int dialogFlags) {
 			app->game->scriptStateVars[4] = 0;
 		}
 	}
-	if (this->dialogBuffer == nullptr) {
-		this->dialogBuffer = app->localization->getLargeBuffer();
+	if (canvas->dialogBuffer == nullptr) {
+		canvas->dialogBuffer = app->localization->getLargeBuffer();
 	}
 	else {
-		this->dialogBuffer->setLength(0);
+		canvas->dialogBuffer->setLength(0);
 	}
 	if ((dialogFlags & 0x4) != 0x0 || (dialogFlags & 0x1) != 0x0) {
 		if (dialogStyle == 12) {
@@ -521,13 +474,12 @@ void Canvas::prepareDialog(Text* text, int dialogStyle, int dialogFlags) {
 		text->append(smallBuffer);
 	}
 	if (dialogStyle == 8) {
-		int n2 = this->dialogMaxChars;
-		//int n3 = Hud.imgPortraitsSM.getWidth() / 9 + 1;
+		int n2 = canvas->dialogMaxChars;
 		smallBuffer->setLength(0);
 		smallBuffer->append("   ");
 		int n3 = smallBuffer->length();
 		for (int j = 0; j < 2; ++j) {
-			Text* dialogBuffer = this->dialogBuffer;
+			Text* dialogBuffer = canvas->dialogBuffer;
 			int length;
 			for (int k = 0; k < text->length(); k += dialogBuffer->wrapText(length, n2 - n3, 1, '|')) {
 				length = dialogBuffer->length();
@@ -538,36 +490,36 @@ void Canvas::prepareDialog(Text* text, int dialogStyle, int dialogFlags) {
 					break;
 				}
 				dialogBuffer->setLength(0);
-				n2 = this->dialogWithBarMaxChars;
+				n2 = canvas->dialogWithBarMaxChars;
 			}
 		}
 	}
 	else if (dialogStyle == 3) {
-		this->dialogBuffer->append(text);
-		this->dialogBuffer->wrapText(this->scrollMaxChars);
-		if (this->dialogBuffer->getNumLines() > this->dialogViewLines) {
-			this->dialogBuffer->setLength(0);
-			this->dialogBuffer->append(text);
-			this->dialogBuffer->wrapText(this->scrollWithBarMaxChars);
+		canvas->dialogBuffer->append(text);
+		canvas->dialogBuffer->wrapText(canvas->scrollMaxChars);
+		if (canvas->dialogBuffer->getNumLines() > this->dialogViewLines) {
+			canvas->dialogBuffer->setLength(0);
+			canvas->dialogBuffer->append(text);
+			canvas->dialogBuffer->wrapText(canvas->scrollWithBarMaxChars);
 		}
 	}
 	else {
-		this->dialogBuffer->append(text);
-		this->dialogBuffer->wrapText(this->dialogMaxChars);
-		int numLines = this->dialogBuffer->getNumLines();
+		canvas->dialogBuffer->append(text);
+		canvas->dialogBuffer->wrapText(canvas->dialogMaxChars);
+		int numLines = canvas->dialogBuffer->getNumLines();
 		if (dialogStyle == 2 || dialogStyle == 16 || dialogStyle == 9) {
 			--numLines;
 		}
 		if (numLines > this->dialogViewLines) {
-			this->dialogBuffer->setLength(0);
-			this->dialogBuffer->append(text);
-			this->dialogBuffer->wrapText(this->dialogWithBarMaxChars);
+			canvas->dialogBuffer->setLength(0);
+			canvas->dialogBuffer->append(text);
+			canvas->dialogBuffer->wrapText(canvas->dialogWithBarMaxChars);
 		}
 	}
-	int length2 = this->dialogBuffer->length();
+	int length2 = canvas->dialogBuffer->length();
 	this->numDialogLines = 0;
 	while (i < length2) {
-		if (this->dialogBuffer->charAt(i) == '|') {
+		if (canvas->dialogBuffer->charAt(i) == '|') {
 			this->dialogIndexes[this->numDialogLines * 2] = (short)n;
 			this->dialogIndexes[this->numDialogLines * 2 + 1] = (short)(i - n);
 			this->numDialogLines++;
@@ -593,51 +545,47 @@ void Canvas::prepareDialog(Text* text, int dialogStyle, int dialogFlags) {
 }
 
 
-void Canvas::startDialog(ScriptThread* scriptThread, short n, int n2, int n3) {
-	this->startDialog(scriptThread, (short)0, n, n2, n3, false);
+void DialogManager::startDialog(Canvas* canvas, ScriptThread* scriptThread, short n, int n2, int n3) {
+	this->startDialog(canvas, scriptThread, (short)0, n, n2, n3, false);
 }
 
 
-void Canvas::startDialog(ScriptThread* scriptThread, short n, short n2, int n3, int n4, bool b) {
-
-
+void DialogManager::startDialog(Canvas* canvas, ScriptThread* scriptThread, short n, short n2, int n3, int n4, bool b) {
 	Text* largeBuffer = app->localization->getLargeBuffer();
 	app->localization->composeText(n, n2, largeBuffer);
-	this->startDialog(scriptThread, largeBuffer, n3, n4, b);
+	this->startDialog(canvas, scriptThread, largeBuffer, n3, n4, b);
 	largeBuffer->dispose();
 }
 
 
-void Canvas::startDialog(ScriptThread* scriptThread, Text* text, int n, int n2) {
-	this->startDialog(scriptThread, text, n, n2, false);
+void DialogManager::startDialog(Canvas* canvas, ScriptThread* scriptThread, Text* text, int n, int n2) {
+	this->startDialog(canvas, scriptThread, text, n, n2, false);
 }
 
 
-void Canvas::startDialog(ScriptThread* dialogThread, Text* text, int n, int n2, bool dialogResumeScriptAfterClosed) {
+void DialogManager::startDialog(Canvas* canvas, ScriptThread* dialogThread, Text* text, int n, int n2, bool dialogResumeScriptAfterClosed) {
 	this->dialogResumeScriptAfterClosed = dialogResumeScriptAfterClosed;
 	this->dialogResumeMenu = false;
 	this->dialogThread = dialogThread;
-	this->readyWeaponSound = 0;
-	this->prepareDialog(text, n, n2);
-	this->setState(Canvas::ST_DIALOG);
+	canvas->readyWeaponSound = 0;
+	this->prepare(canvas, text, n, n2);
+	canvas->setState(Canvas::ST_DIALOG);
 }
 
 
-void Canvas::dequeueHelpDialog() {
-	this->dequeueHelpDialog(false);
+void DialogManager::dequeueHelpDialog(Canvas* canvas) {
+	this->dequeueHelpDialog(canvas, false);
 }
 
 
-void Canvas::dequeueHelpDialog(bool b) {
-
-
+void DialogManager::dequeueHelpDialog(Canvas* canvas, bool b) {
 	if (this->numHelpMessages == 0) {
 		return;
 	}
-	if (this->state == Canvas::ST_DIALOG || this->dialogClosing) {
+	if (canvas->state == Canvas::ST_DIALOG || this->dialogClosing) {
 		return;
 	}
-	if (!b && this->state != Canvas::ST_PLAYING && this->state != Canvas::ST_INTER_CAMERA && app->game->monstersTurn == 0) {
+	if (!b && canvas->state != Canvas::ST_PLAYING && canvas->state != Canvas::ST_INTER_CAMERA && app->game->monstersTurn == 0) {
 		return;
 	}
 	if (app->game->secretActive) {
@@ -669,7 +617,7 @@ void Canvas::dequeueHelpDialog(bool b) {
 			n4 = 36;
 		}
 		else if (eSubType != Enums::ITEM_AMMO) {
-			app->Error(0); // ERR_DEQUEUEHELP
+			app->Error(0);
 			return;
 		}
 		if (entityDef != nullptr) {
@@ -704,29 +652,27 @@ void Canvas::dequeueHelpDialog(bool b) {
 	this->numHelpMessages--;
 	if (app->player->enableHelp) {
 		if (n3 == -1) {
-			this->startDialog(nullptr, largeBuffer, n, n2, false);
+			this->startDialog(canvas, nullptr, largeBuffer, n, n2, false);
 		}
 		else {
-			this->startDialog(&app->game->scriptThreads[n3], largeBuffer, n, n2, true);
+			this->startDialog(canvas, &app->game->scriptThreads[n3], largeBuffer, n, n2, true);
 		}
 	}
 	largeBuffer->dispose();
 }
 
 
-void Canvas::enqueueHelpDialog(short n) {
-	this->enqueueHelpDialog((short)0, n, (uint8_t)(-1));
+void DialogManager::enqueueHelpDialog(Canvas* canvas, short n) {
+	this->enqueueHelpDialog(canvas, (short)0, n, (uint8_t)(-1));
 }
 
 
-bool Canvas::enqueueHelpDialog(short n, short n2, uint8_t b) {
-
-
-	if (!app->player->enableHelp || this->state == Canvas::ST_DYING) {
+bool DialogManager::enqueueHelpDialog(Canvas* canvas, short n, short n2, uint8_t b) {
+	if (!app->player->enableHelp || canvas->state == Canvas::ST_DYING) {
 		return false;
 	}
 	if (this->numHelpMessages == 16) {
-		app->Error(41); // ERR_MAXHELP
+		app->Error(41);
 		return false;
 	}
 	this->helpMessageTypes[this->numHelpMessages] = 2;
@@ -734,56 +680,50 @@ bool Canvas::enqueueHelpDialog(short n, short n2, uint8_t b) {
 	this->helpMessageObjs[this->numHelpMessages] = nullptr;
 	this->helpMessageThreads[this->numHelpMessages] = b;
 	this->numHelpMessages++;
-	if (this->state == Canvas::ST_PLAYING) {
-		this->dequeueHelpDialog();
+	if (canvas->state == Canvas::ST_PLAYING) {
+		this->dequeueHelpDialog(canvas);
 	}
 	return true;
 }
 
 
-bool Canvas::enqueueHelpDialog(Text* text) {
-	return this->enqueueHelpDialog(text, 0);
+bool DialogManager::enqueueHelpDialog(Canvas* canvas, Text* text) {
+	return this->enqueueHelpDialog(canvas, text, 0);
 }
 
 
-bool Canvas::enqueueHelpDialog(Text* text, int n) {
-
-
-	if (!app->player->enableHelp || this->state == Canvas::ST_DYING) {
+bool DialogManager::enqueueHelpDialog(Canvas* canvas, Text* text, int n) {
+	if (!app->player->enableHelp || canvas->state == Canvas::ST_DYING) {
 		return false;
 	}
 	if (this->numHelpMessages == 16) {
-		app->Error(41); // ERR_MAXHELP
+		app->Error(41);
 		return false;
 	}
 	this->helpMessageTypes[this->numHelpMessages] = n;
 	this->helpMessageObjs[this->numHelpMessages] = text;
 	this->helpMessageThreads[this->numHelpMessages] = -1;
 	this->numHelpMessages++;
-	if (this->state == Canvas::ST_PLAYING) {
-		this->dequeueHelpDialog();
+	if (canvas->state == Canvas::ST_PLAYING) {
+		this->dequeueHelpDialog(canvas);
 	}
 	return true;
 }
 
 
-void Canvas::enqueueHelpDialog(EntityDef* entityDef) {
-
-
-	if (!app->player->enableHelp || this->state == Canvas::ST_DYING) {
+void DialogManager::enqueueHelpDialog(Canvas* canvas, EntityDef* entityDef) {
+	if (!app->player->enableHelp || canvas->state == Canvas::ST_DYING) {
 		return;
 	}
 	if (this->numHelpMessages == 16) {
-		app->Error(41); // ERR_MAXHELP
+		app->Error(41);
 		return;
 	}
 	this->helpMessageTypes[this->numHelpMessages] = 1;
 	this->helpMessageObjs[this->numHelpMessages] = entityDef;
 	this->helpMessageThreads[this->numHelpMessages] = -1;
 	this->numHelpMessages++;
-	if (this->state == Canvas::ST_PLAYING) {
-		this->dequeueHelpDialog();
+	if (canvas->state == Canvas::ST_PLAYING) {
+		this->dequeueHelpDialog(canvas);
 	}
 }
-
-

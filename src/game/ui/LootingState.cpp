@@ -13,11 +13,13 @@
 #include "Sounds.h"
 #include "SoundNames.h"
 #include "Enums.h"
+#include "LootDistributor.h"
 
 static void giveLootPool(Canvas* canvas) {
 	Applet* app = canvas->app;
-	for (int i = 0; i < canvas->numPoolItems; ++i) {
-		int n = canvas->lootPool[i];
+	LootDistributor* ld = app->lootDistributor.get();
+	for (int i = 0; i < ld->numPoolItems; ++i) {
+		int n = ld->lootPool[i];
 		int n2 = n >> 12 & 0xF;
 		if (n2 != 6) {
 			int n3 = (n & 0xFC0) >> 6;
@@ -31,14 +33,14 @@ static void giveLootPool(Canvas* canvas) {
 			}
 		}
 	}
-	if (canvas->lootPoolCredits != 0) {
-		app->player->give(0, 24, canvas->lootPoolCredits, false);
-		canvas->lootPoolCredits = 0;
+	if (ld->lootPoolCredits != 0) {
+		app->player->give(0, 24, ld->lootPoolCredits, false);
+		ld->lootPoolCredits = 0;
 	}
-	app->game->foundLoot(canvas->viewX + canvas->viewStepX, canvas->viewY + canvas->viewStepY, canvas->viewZ, canvas->numLootItems);
-	canvas->numPoolItems = 0;
-	canvas->numLootItems = 0;
-	canvas->lootText->dispose();
+	app->game->foundLoot(canvas->viewX + canvas->viewStepX, canvas->viewY + canvas->viewStepY, canvas->viewZ, ld->numLootItems);
+	ld->numPoolItems = 0;
+	ld->numLootItems = 0;
+	ld->lootText->dispose();
 }
 
 void LootingState::onEnter(Canvas* canvas) {
@@ -122,26 +124,28 @@ void LootingState::render(Canvas* canvas, Graphics* graphics) {
 		smallBuffer->dehyphenate();
 		graphics->drawString(smallBuffer, canvas->SCR_CX, dialogRect[1] - 16, 1);
 		smallBuffer->dispose();
+		LootDistributor* ld = app->lootDistributor.get();
 		for (int i = 0; i < 3; ++i) {
-			graphics->drawString(canvas->lootText, dialogRect[0] + 5, dialogRect[1] + 1 + i * 16, 20, canvas->lootPoolIndices[2 * (i + canvas->lootLineNum)], canvas->lootPoolIndices[2 * (i + canvas->lootLineNum) + 1]);
+			graphics->drawString(ld->lootText, dialogRect[0] + 5, dialogRect[1] + 1 + i * 16, 20, ld->lootPoolIndices[2 * (i + ld->lootLineNum)], ld->lootPoolIndices[2 * (i + ld->lootLineNum) + 1]);
 		}
-		int n = canvas->numPoolItems + ((canvas->lootPoolCredits != 0) ? 1 : 0);
-		canvas->drawScrollBar(graphics, dialogRect[0] + dialogRect[2], dialogRect[1] + 1, dialogRect[3] - 1, canvas->lootLineNum, (canvas->lootLineNum + 3 > n) ? n : (canvas->lootLineNum + 3), n, 3);
+		int n = ld->numPoolItems + ((ld->lootPoolCredits != 0) ? 1 : 0);
+		canvas->drawScrollBar(graphics, dialogRect[0] + dialogRect[2], dialogRect[1] + 1, dialogRect[3] - 1, ld->lootLineNum, (ld->lootLineNum + 3 > n) ? n : (ld->lootLineNum + 3), n, 3);
 	}
 }
 
 bool LootingState::handleInput(Canvas* canvas, int key, int action) {
 	Applet* app = canvas->app;
 	if (canvas->crouchingForLoot && app->time > canvas->lootingTime + 500) {
-		int max = std::max(canvas->numPoolItems + ((canvas->lootPoolCredits != 0) ? 1 : 0) - 3, 0);
+		LootDistributor* ld = app->lootDistributor.get();
+		int max = std::max(ld->numPoolItems + ((ld->lootPoolCredits != 0) ? 1 : 0) - 3, 0);
 		if (action == Enums::ACTION_FIRE) {
-			if (canvas->lootLineNum >= max) {
+			if (ld->lootLineNum >= max) {
 				canvas->lootingTime = app->time;
 				canvas->crouchingForLoot = false;
 				giveLootPool(canvas);
 			}
 			else {
-				canvas->lootLineNum = std::min(canvas->lootLineNum + 3, max);
+				ld->lootLineNum = std::min(ld->lootLineNum + 3, max);
 			}
 		}
 		else if (action == Enums::ACTION_PASSTURN || action == Enums::ACTION_BACK) {
@@ -150,16 +154,16 @@ bool LootingState::handleInput(Canvas* canvas, int key, int action) {
 			giveLootPool(canvas);
 		}
 		else if (action == Enums::ACTION_DOWN) {
-			canvas->lootLineNum = std::min(canvas->lootLineNum + 1, max);
+			ld->lootLineNum = std::min(ld->lootLineNum + 1, max);
 		}
 		else if (action == Enums::ACTION_UP) {
-			canvas->lootLineNum = std::max(canvas->lootLineNum - 1, 0);
+			ld->lootLineNum = std::max(ld->lootLineNum - 1, 0);
 		}
 		else if (action == Enums::ACTION_LEFT) {
-			canvas->lootLineNum = 0;
+			ld->lootLineNum = 0;
 		}
 		else if (action == Enums::ACTION_RIGHT) {
-			canvas->lootLineNum = max;
+			ld->lootLineNum = max;
 		}
 	}
 	return true;

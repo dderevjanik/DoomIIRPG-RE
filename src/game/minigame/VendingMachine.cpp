@@ -8,6 +8,7 @@
 #include "Game.h"
 #include "Button.h"
 #include "Canvas.h"
+#include "MinigameUI.h"
 #include "Player.h"
 #include "VendingMachine.h"
 #include "MenuStrings.h"
@@ -57,7 +58,7 @@ void VendingMachine::initGame(ScriptThread* callingThread, int mapNumber, int ma
     this->stateVars[4] = 0;
     this->stateVars[3] = app->time;
     app->canvas->clearSoftKeys();
-    app->canvas->initMiniGameHelpScreen();
+    app->minigameUI->initHelpScreen();
     this->machineJustHacked = false;
     this->currentMapNumber = std::max(std::min(mapNumber, 9), 1);
     this->currentMachineNumber = std::max(std::min(machineNumber, 18), 1);
@@ -208,7 +209,7 @@ void VendingMachine::handleInputForBasicVendingMachine(int action) {
             }
             else if (this->mainTerminalCursor == 1) {
                 app->canvas->stateVars[1] = 0;
-                app->canvas->initMiniGameHelpScreen();
+                app->minigameUI->initHelpScreen();
                 app->canvas->clearSoftKeys();
             }
         }
@@ -252,16 +253,16 @@ void VendingMachine::handleInputForHelpScreen(int action) {
         app->canvas->clearSoftKeys();
     }
     else if (action == Enums::ACTION_UP) {
-        app->canvas->handleMiniGameHelpScreenScroll(-1);
+        app->minigameUI->handleHelpScreenScroll(-1);
     }
     else if (action == Enums::ACTION_DOWN) {
-        app->canvas->handleMiniGameHelpScreenScroll(1);
+        app->minigameUI->handleHelpScreenScroll(1);
     }
     else if (action == Enums::ACTION_RIGHT) {
-        app->canvas->handleMiniGameHelpScreenScroll(16);
+        app->minigameUI->handleHelpScreenScroll(16);
     }
     else if (action == Enums::ACTION_LEFT) {
-        app->canvas->handleMiniGameHelpScreenScroll(-16);
+        app->minigameUI->handleHelpScreenScroll(-16);
     }
 }
 
@@ -297,7 +298,7 @@ void VendingMachine::handleInputForGame(int action) {
         else if ((action == Enums::ACTION_AUTOMAP/*Enums::ACTION_MENU*/ || action == Enums::ACTION_BACK)) {
             if (this->triesLeft != 0) {
                 this->stateVars[1] = 0;
-                app->canvas->initMiniGameHelpScreen();
+                app->minigameUI->initHelpScreen();
             }
             app->canvas->clearSoftKeys();
         }
@@ -324,7 +325,7 @@ void VendingMachine::handleInputForGame(int action) {
     }
     else if (action == Enums::ACTION_AUTOMAP/*Enums::ACTION_MENU*/ || action == Enums::ACTION_BACK) {
         this->stateVars[1] = 0;
-        app->canvas->initMiniGameHelpScreen();
+        app->minigameUI->initHelpScreen();
         app->canvas->clearSoftKeys();
     }
     else if (action == Enums::ACTION_FIRE) {
@@ -625,7 +626,7 @@ void VendingMachine::drawVendingMachineBackground(Graphics* graphics, bool b) {
 
 void VendingMachine::drawHelpScreen(Graphics* graphics) {
     Applet* app = this->app;
-    app->canvas->drawMiniGameHelpScreen(graphics, 195, 196, this->imgHelpScreenAssets);
+    app->minigameUI->drawHelpScreen(app->canvas.get(), graphics, 195, 196, this->imgHelpScreenAssets);
     Text* textBuff = app->localization->getSmallBuffer();
     textBuff->setLength(0);
     app->localization->composeText(0, 30, textBuff); // Old -> text->append("Exit");

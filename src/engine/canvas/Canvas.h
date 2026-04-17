@@ -140,11 +140,7 @@ public:
 	int lastBacklightRefresh = 0;
 	int blockInputTime = 0;
 	bool changeMapStarted = false;
-	int storyX = 0;
-	int storyY = 0;
-	int storyPage = 0;
-	int storyTotalPages = 0;
-	int storyIndexes[4] = {};
+	// storyX/Y/Page/TotalPages/Indexes moved to StoryRenderer
 	int fontRenderMode = 0;
 	Image* imgFont_16p_Light = nullptr;
 	Image* imgFont_16p_Dark = nullptr;
@@ -163,7 +159,7 @@ public:
 	Image* imgBootL = nullptr;
 	Image* imgBootR = nullptr;
 	Image* imgStartupLogo = nullptr;
-	Image* imgProlog = nullptr;
+	// imgProlog moved to StoryRenderer
 	Image* imgMagGlass = nullptr;
 	Image* imgTravelBG = nullptr;
 	Image* imgTravelPath = nullptr;
@@ -233,7 +229,7 @@ public:
 	int animAngle = 0;
 	bool automapDrawn = false;
 	int automapTime = 0;
-	int specialLootIcon = 0;
+	// specialLootIcon moved to DialogManager
 	bool showSpeeds = false;
 	bool showLocation = false;
 	bool showFreeHeap = false;
@@ -266,25 +262,10 @@ public:
 	int shakeIntensity = 0;
 	int shakeX = 0;
 	int shakeY = 0;
-	short dialogIndexes[1024] = {};
+	// Most dialog state moved to DialogManager. dialogBuffer stays here as a
+	// shared large text buffer also used by StoryRenderer/epilogue rendering.
 	Text* dialogBuffer = nullptr;
-	EntityDef* dialogItem = nullptr;
-	int dialogViewLines = 0;
-	int dialogLineStartTime = 0;
-	int dialogStartTime = 0;
-	int dialogTypeLineIdx = 0;
-	int dialogStyle = 0;
-	int dialogType = 0;
-	int dialogFlags = 0;
-	bool dialogResumeScriptAfterClosed = false;
-	bool dialogResumeMenu = false;
-	bool dialogClosing = false;
-	ScriptThread* dialogThread = nullptr;
-	int numDialogLines = 0;
-	int currentDialogLine = 0;
-	bool showingLoot = false;
-	ScriptThread* armorRepairThread = nullptr;
-	bool repairingArmor = false;
+	// armorRepairThread and repairingArmor moved to MinigameUI
 	ScriptThread* targetPracticeThread = nullptr;
 	ScriptThread* gotoThread = nullptr;
 	int beforeRender = 0;
@@ -300,14 +281,7 @@ public:
 	int deathTime = 0;
 	int familiarDeathTime = 0;
 	bool familiarSelfDestructed = false;
-	int scrollingTextStart = 0;
-	int scrollingTextEnd = 0;
-	int scrollingTextMSLine = 0;
-	int scrollingTextLines = 0;
-	int scrollingTextSpacing = 0;
-	bool scrollingTextDone = false;
-	int scrollingTextFontHeight = 0;
-	int scrollingTextSpacingHeight = 0;
+	// scrollingText* moved to StoryRenderer
 	int lootingTime = 0;
 	bool crouchingForLoot = false;
 	bool lootSoundPlayed = false;
@@ -333,11 +307,7 @@ public:
 	int softKeyY = 0;
 	int softKeyLeftID = 0;
 	int softKeyRightID = 0;
-	int helpMessageTypes[16] = {};
-	int helpMessageInts[16] = {};
-	void* helpMessageObjs[16] = {};
-	char helpMessageThreads[16] = {};
-	int numHelpMessages = 0;
+	// helpMessage* and numHelpMessages moved to DialogManager
 	int renderSceneCount = 0;
 	int staleTime = 0;
 	bool staleView = false;
@@ -375,11 +345,11 @@ public:
 	fmButtonContainer* m_controlButtons[6] = {};
 	fmButtonContainer* m_sniperScopeButtons = nullptr;
 	fmScrollButton* m_sniperScopeDialScrollButton = nullptr;
-	fmButtonContainer* m_dialogButtons = nullptr;
+	// m_dialogButtons moved to DialogManager
 	fmButtonContainer* m_characterButtons = nullptr;
 	fmButtonContainer* m_softKeyButtons = nullptr;
 	fmButtonContainer* m_mixingButtons = nullptr;
-	fmButtonContainer* m_storyButtons = nullptr;
+	// m_storyButtons moved to StoryRenderer
 	fmButtonContainer* m_treadmillButtons = nullptr;
 	fmSwipeArea* m_swipeArea[2] = {};
 
@@ -421,13 +391,7 @@ public:
 	int fadeTime = 0;
 	int fadeDuration = 0;
 	int fadeColor = 0;
-	short lootPoolIndices[18] = {};
-	int lootPool[9] = {};
-	int lootPoolCredits = 0;
-	int numPoolItems = 0;
-	int numLootItems = 0;
-	Text* lootText = nullptr;
-	int lootLineNum = 0;
+	// Loot pool state moved to LootDistributor (src/game/canvas/LootDistributor.h)
 	int lootingCachedPitch = 0;
 	int treadmillNumSteps = 0;
 	int treadmillLastStep = 0;
@@ -447,8 +411,7 @@ public:
 	int starFieldWidth = 0; // guessed — star field render width
 	int starFieldScrollY = 0; // guessed — star field Y scroll offset
 	int starFieldZoom = 0; // guessed — star field zoom/scale factor
-	int miniGameHelpScrollPosition = 0;
-	int helpTextNumberOfLines = 0;
+	// miniGameHelpScrollPosition and helpTextNumberOfLines moved to MinigameUI
 
 	// State object registry — states with ICanvasState implementations are dispatched through them
 	// Max state ID is ST_LOGO = 26, so 32 slots is enough
@@ -484,15 +447,10 @@ public:
 	void loadState(int loadType, short n, short n2);
 	void saveState(int saveType, short n, short n2);
 	void loadMap(int loadMapID, bool b, bool tm_NewGame);
-	void loadPrologueText();
-	void loadEpilogueText();
+	// loadPrologueText, loadEpilogueText, disposeIntro, disposeEpilogue,
+	// initScrollingText, drawCredits, drawScrollingText moved to StoryRenderer
 	// setupCharacterSelection moved to CharacterSelectionState
-	void disposeIntro();
-	void disposeEpilogue();
 	void drawScroll(Graphics* graphics, int n, int n2, int n3, int n4);
-	void initScrollingText(short i, short i2, bool dehyphenate, int spacingHeight, int numLines, int textMSLine);
-	void drawCredits(Graphics* graphics);
-	void drawScrollingText(Graphics* graphics);
 	// handleDialogEvents moved to DialogState::handleInput()
 	bool handlePlayingEvents(int key, int action);
 	bool handleCinematicInput(int action);
@@ -502,7 +460,7 @@ public:
 	void runInputEvents();
 	bool loadMedia();
 	// combatState moved to CombatState::update()
-	void dialogState(Graphics* graphics);
+	// dialogState moved to DialogManager::render
 	void automapState();
 	void renderOnlyState();
 	// playingState moved to PlayingState::update()
@@ -511,29 +469,17 @@ public:
 	// familiarDyingState moved to BotDyingState::update()
 	void logoState();
 	void drawScrollBar(Graphics* graphics, int i, int i2, int i3, int i4, int i5, int i6, int i7);
-	void uncoverAutomap();
+	// uncoverAutomap moved to Game::uncoverAutomapAt
 	// drawAutomap moved to AutomapState
-	void closeDialog(bool skipDialog);
-	void prepareDialog(Text* text, int dialogStyle, int dialogFlags);
-	void startDialog(ScriptThread* scriptThread, short n, int n2, int n3);
-	void startDialog(ScriptThread* scriptThread, short n, short n2, int n3, int n4, bool b);
-	void startDialog(ScriptThread* scriptThread, Text* text, int n, int n2);
-	void startDialog(ScriptThread* dialogThread, Text* text, int n, int n2, bool dialogResumeScriptAfterClosed);
+	// closeDialog, prepareDialog, startDialog (all overloads) moved to DialogManager
 	void renderScene(int viewX, int viewY, int viewZ, int viewAngle, int viewPitch, int viewRoll, int viewFov);
 	void startSpeedTest(bool b);
 	void backToMain(bool b);
 	void drawPlayingSoftKeys();
-	void changeStoryPage(int i);
-	void drawStory(Graphics* graphics);
+	// changeStoryPage, drawStory moved to StoryRenderer
 	// getCharacterConstantByOrder moved to CharacterSelectionState
 	// drawCharacterSelection, drawCharacterSelectionAvatar, drawCharacterSelectionStats moved to CharacterSelectionState
-	void dequeueHelpDialog();
-	void dequeueHelpDialog(bool b);
-	void enqueueHelpDialog(short n);
-	bool enqueueHelpDialog(short n, short n2, uint8_t b);
-	bool enqueueHelpDialog(Text* text);
-	bool enqueueHelpDialog(Text* text, int n);
-	void enqueueHelpDialog(EntityDef* entityDef);
+	// dequeueHelpDialog and enqueueHelpDialog (all overloads) moved to DialogManager
 	void updateView();
 	void clearSoftKeys();
 	void clearLeftSoftKey();
@@ -554,13 +500,13 @@ public:
 	bool handleZoomEvents(int key, int action);
 	bool handleZoomEvents(int key, int action, bool b);
 	// handleCharacterSelectionInput moved to CharacterSelectionState
-	void handleStoryInput(int key, int action);
+	// handleStoryInput moved to StoryRenderer
 	// lootingState, handleLootingEvents, drawLootingMenu moved to LootingState
-	void poolLoot(int* array);
+	// poolLoot moved to LootDistributor::poolLoot
 	// giveLootPool moved to LootingState
 	// handleTreadmillEvents, treadmillState, treadmillFall moved to TreadmillState
 	void drawTreadmillReadout(Graphics* graphics);
-	void drawTargetPracticeScore(Graphics* graphics);
+	// drawTargetPracticeScore moved to MinigameUI
 	// drawTravelMap and all travel map helpers moved to TravelMapState
 	bool inHell(int n);
 	// handleTravelMapInput, finishTravelMapAndLoadLevel, drawLocatorLines,
@@ -568,9 +514,8 @@ public:
 	// runStarFieldFrame moved to TravelMapState
 	
 
-	void loadMiniGameImages();
-	void playIntroMovie(Graphics* graphics);
-	void exitIntroMovie(bool b);
+	// loadMiniGameImages moved to MinigameUI::loadImages
+	// playIntroMovie, exitIntroMovie moved to StoryRenderer
 
 	void setMenuDimentions(int x, int y, int w, int h);
 	void setBlendSpecialAlpha(float alpha);
@@ -580,10 +525,8 @@ public:
 	void touchEndUnhighlight();
 
 	
-	void initMiniGameHelpScreen();
-	void drawMiniGameHelpScreen(Graphics* graphics, int i, int i2, Image* image);
-	void drawMiniGameHelpText(Graphics* graphics, int i, int i2);
-	void handleMiniGameHelpScreenScroll(int i);
+	// initMiniGameHelpScreen / drawMiniGameHelpScreen / drawMiniGameHelpText
+	// / handleMiniGameHelpScreenScroll moved to MinigameUI
 
 	
 	
@@ -591,8 +534,7 @@ public:
 
 	bool pitchIsControlled(int n, int n2, int n3);
 	int touchToKey_Play(int pressX, int pressY);
-	bool startArmorRepair(ScriptThread* armorRepairThread);
-	void endArmorRepair();
+	// startArmorRepair and endArmorRepair moved to MinigameUI
 	
 	void drawTouchSoftkeyBar(Graphics* graphics, bool highlighted_Left, bool highlighted_Right);
 	void touchSwipe(int swDir);
@@ -601,6 +543,6 @@ public:
 	void turnEntityIntoWaterSpout(Entity* entity);
 	void flipControls();
 	void setControlLayout();
-	void evaluateMiniGameResults(int n);
+	// evaluateMiniGameResults moved to MinigameUI::evaluateResults
 	void addEvents(int event); // [GEC]
 };

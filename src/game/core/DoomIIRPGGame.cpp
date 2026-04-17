@@ -10,6 +10,10 @@
 #include "SentryBotGame.h"
 #include "VendingMachine.h"
 #include "ComicBook.h"
+#include "LootDistributor.h"
+#include "MinigameUI.h"
+#include "StoryRenderer.h"
+#include "DialogManager.h"
 #include "Canvas.h"
 #include "CAppContainer.h"
 #include "ResourceManager.h"
@@ -43,6 +47,10 @@ void DoomIIRPGGame::createGameObjects(Applet* app) {
 	app->sentryBotGame = std::make_unique<SentryBotGame>();
 	app->vendingMachine = std::make_unique<VendingMachine>();
 	app->comicBook = std::make_unique<ComicBook>();
+	app->lootDistributor = std::make_unique<LootDistributor>(app);
+	app->minigameUI = std::make_unique<MinigameUI>(app);
+	app->storyRenderer = std::make_unique<StoryRenderer>(app);
+	app->dialogManager = std::make_unique<DialogManager>(app);
 }
 
 bool DoomIIRPGGame::startup(Applet* app) {

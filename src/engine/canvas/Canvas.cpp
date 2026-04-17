@@ -23,6 +23,10 @@
 #include "HackingGame.h"
 #include "SentryBotGame.h"
 #include "VendingMachine.h"
+#include "LootDistributor.h"
+#include "MinigameUI.h"
+#include "StoryRenderer.h"
+#include "DialogManager.h"
 #include "ParticleSystem.h"
 #include "Text.h"
 #include "Button.h"
@@ -75,7 +79,7 @@ bool Canvas::startup() {
 	//printf("this->displayRect[3] %d\n", this->displayRect[3]);
 
 	this->graphics.setGraphics();
-	this->specialLootIcon = -1;
+	app->dialogManager->specialLootIcon = -1;
 	this->pacLogoTime = -1;
 	this->vibrateEnabled = true;
 	this->loadMapStringID = -1;
@@ -84,19 +88,19 @@ bool Canvas::startup() {
 	this->saveType = 0;
 	this->st_count = 0;
 	this->knockbackDist = 0;
-	this->numHelpMessages = 0;
+	app->dialogManager->numHelpMessages = 0;
 	this->destZ = 36;
 	this->viewZ = 36;
 	this->screenRect[2] = 0;
 	this->screenRect[3] = 0;
-	this->dialogThread = nullptr;
+	app->dialogManager->dialogThread = nullptr;
 	this->ignoreFrameInput = false;
 	this->blockInputTime = 0;
 	this->showLocation = false;
 	this->lastPacifierUpdate = 0;
 	this->numEvents = 0;
-	this->dialogItem = nullptr;
-	this->dialogViewLines = 0;
+	app->dialogManager->dialogItem = nullptr;
+	app->dialogManager->dialogViewLines = 0;
 	this->lastMapID = 0;
 	this->loadMapID = 0;
 	this->automapDrawn = false;
@@ -352,9 +356,10 @@ bool Canvas::startup() {
 			createButtons(this->m_characterButtons, charDefs);
 		}
 
-		// Setup Dialog Buttons
+		// Setup Dialog Buttons (owned by DialogManager).
 		{
-			this->m_dialogButtons = new fmButtonContainer();
+			app->dialogManager->m_dialogButtons = new fmButtonContainer();
+			fmButtonContainer* dlgBtns = app->dialogManager->m_dialogButtons;
 			ButtonDef dialogBaseDefs[] = {
 				{.id = 0, .x = 0, .y = 0, .w = 0, .h = 0, .soundResID = 1027},
 				{.id = 1, .x = 0, .y = 0, .w = 0, .h = 0, .soundResID = 1027},
@@ -362,27 +367,27 @@ bool Canvas::startup() {
 				{.id = 3, .x = 0, .y = 0, .w = 0, .h = 0, .soundResID = 1027},
 				{.id = 4, .x = 0, .y = 0, .w = 0, .h = 0, .soundResID = 1027},
 			};
-			createButtons(this->m_dialogButtons, dialogBaseDefs);
+			createButtons(dlgBtns, dialogBaseDefs);
 			button = new fmButton(5, 390, 20, 90, 90, 1027);
 			button->SetImage(this->imgPageUP_Icon, true);
 			button->SetHighlightImage(this->imgPageUP_Icon, true);
 			button->normalRenderMode = 12;
 			button->highlightRenderMode = 0;
-			this->m_dialogButtons->AddButton(button);
+			dlgBtns->AddButton(button);
 			button = new fmButton(6, 390, 110, 90, 90, 1027);
 			button->SetImage(this->imgPageDOWN_Icon, true);
 			button->SetHighlightImage(this->imgPageDOWN_Icon, true);
 			button->normalRenderMode = 12;
 			button->highlightRenderMode = 0;
-			this->m_dialogButtons->AddButton(button);
+			dlgBtns->AddButton(button);
 			button = new fmButton(7, 390, 110, 90, 90, 1027);
 			button->SetImage(this->imgPageOK_Icon, true);
 			button->SetHighlightImage(this->imgPageOK_Icon, true);
 			button->normalRenderMode = 12;
 			button->highlightRenderMode = 0;
-			this->m_dialogButtons->AddButton(button);
+			dlgBtns->AddButton(button);
 			button = new fmButton(8, 0, 0, 0, 0, 1027);
-			this->m_dialogButtons->AddButton(button);
+			dlgBtns->AddButton(button);
 		}
 
 		// Setup SoftKey Buttons
@@ -400,15 +405,16 @@ bool Canvas::startup() {
 			this->m_mixingButtons = new fmButtonContainer();
 		}
 
-		// Setup Story Buttons
+		// Setup Story Buttons (owned by StoryRenderer; initialised here so the
+		// layout lives alongside the other Canvas button containers).
 		{
-			this->m_storyButtons = new fmButtonContainer();
+			app->storyRenderer->m_storyButtons = new fmButtonContainer();
 			static const ButtonDef storyDefs[] = {
 				{0, 0,   280, 60,  40, 1027}, // Back
 				{1, 380, 280, 100, 40, 1027}, // Next
 				{2, 420, 0,   60,  40, 1027}, // Skip
 			};
-			createButtons(this->m_storyButtons, storyDefs);
+			createButtons(app->storyRenderer->m_storyButtons, storyDefs);
 		}
 
 		// Setup TreadMill Buttons
@@ -486,7 +492,7 @@ void Canvas::backPaint(Graphics* graphics) {
 	}
 
 	if (app->player->inTargetPractice) {
-		this->drawTargetPracticeScore(graphics);
+		app->minigameUI->drawTargetPracticeScore(graphics);
 	}
 
 	// Dispatch render to registered state handler
@@ -1176,11 +1182,11 @@ void Canvas::finishMovement() {
 		//if (this->state != Canvas::ST_AUTOMAP) {
 			this->updateFacingEntity = true;
 		//}
-		this->uncoverAutomap();
+		app->game->uncoverAutomapAt(this->destX, this->destY);
 		app->game->advanceTurn();
 	}
 	else if (this->state == Canvas::ST_AUTOMAP) {
-		this->uncoverAutomap();
+		app->game->uncoverAutomapAt(this->destX, this->destY);
 		app->game->advanceTurn();
 		if (app->game->animatingEffects != 0) {
 			this->setState(Canvas::ST_PLAYING);
@@ -1912,7 +1918,7 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 		}
 		if (n6 != 0) {
 			this->setState(Canvas::ST_LOOTING);
-			this->poolLoot(entity->calcPosition());
+			app->lootDistributor->poolLoot(entity->calcPosition());
 			return true;
 		}
 		int n12 = weapon2 * 9;
@@ -2293,16 +2299,16 @@ bool Canvas::loadMedia() {
 		this->prevY = this->destY;
 		app->game->executeTile(this->viewX >> 6, this->viewY >> 6, 4081, 1);
 		this->finishRotation(false);
-		this->dequeueHelpDialog(true);
+		app->dialogManager->dequeueHelpDialog(this, true);
 	}
 	this->finishRotation(false);
 
 	app->game->endMonstersTurn();
-	this->uncoverAutomap();
+	app->game->uncoverAutomapAt(this->destX, this->destY);
 	this->updateLoadingBar(false);
 	app->game->isSaved = (app->game->isLoaded = false);
 	app->game->activeLoadType = 0;
-	this->dequeueHelpDialog(true);
+	app->dialogManager->dequeueHelpDialog(this, true);
 	if (this->state == 0) {
 		this->setState(Canvas::ST_PLAYING);
 	}
@@ -3208,10 +3214,10 @@ void Canvas::touchStart(int pressX, int pressY) {
 		this->m_mixingButtons->HighlightButton(pressX, pressY, true);
 	}
 	else if (this->state == Canvas::ST_INTRO) {
-		this->m_storyButtons->HighlightButton(pressX, pressY, true);
+		app->storyRenderer->m_storyButtons->HighlightButton(pressX, pressY, true);
 	}
 	else if (this->state == Canvas::ST_DIALOG) {
-		this->m_dialogButtons->HighlightButton(pressX, pressY, true);
+		app->dialogManager->m_dialogButtons->HighlightButton(pressX, pressY, true);
 	}
 	else if (this->state == Canvas::ST_TREADMILL) {
 		this->m_treadmillButtons->HighlightButton(pressX, pressY, true);
@@ -3336,10 +3342,10 @@ void Canvas::touchMove(int pressX, int pressY) {
 		this->m_mixingButtons->HighlightButton(pressX, pressY, true);
 	}
 	else if (this->state == Canvas::ST_INTRO) {
-		this->m_storyButtons->HighlightButton(pressX, pressY, true);
+		app->storyRenderer->m_storyButtons->HighlightButton(pressX, pressY, true);
 	}
 	else if (this->state == Canvas::ST_DIALOG) {
-		this->m_dialogButtons->HighlightButton(pressX, pressY, true);
+		app->dialogManager->m_dialogButtons->HighlightButton(pressX, pressY, true);
 	}
 	else if (this->state == Canvas::ST_TREADMILL) {
 		this->m_treadmillButtons->HighlightButton(pressX, pressY, true);
@@ -3382,10 +3388,10 @@ void Canvas::touchEnd(int pressX, int pressY) {
 	}
 
 	if (this->state == Canvas::ST_INTRO) {
-		state = this->m_storyButtons->GetTouchedButtonID(pressX, pressY);
+		state = app->storyRenderer->m_storyButtons->GetTouchedButtonID(pressX, pressY);
 		if (state != 1) {
 			if (state == 2) {
-				if (this->storyPage >= this->storyTotalPages - 1) {
+				if (app->storyRenderer->storyPage >= app->storyRenderer->storyTotalPages - 1) {
 					return;
 				}
 			}
@@ -3477,12 +3483,12 @@ void Canvas::touchEnd(int pressX, int pressY) {
 			state = app->upTimeMs;
 			goto set_key_pressed_time;
 		}
-		state = this->m_dialogButtons->GetTouchedButtonID(pressX, pressY);
+		state = app->dialogManager->m_dialogButtons->GetTouchedButtonID(pressX, pressY);
 		if (state - 7U < 2) {
 			state = 6;
 		check_dialog_scroll:
-			if (this->currentDialogLine < this->numDialogLines - this->dialogViewLines) goto handle_dialog_buttons;
-			dlgFlags = this->dialogFlags;
+			if (app->dialogManager->currentDialogLine < app->dialogManager->numDialogLines - app->dialogManager->dialogViewLines) goto handle_dialog_buttons;
+			dlgFlags = app->dialogManager->dialogFlags;
 			if ((dlgFlags & 2) != 0) {
 				return;
 			}
@@ -3498,13 +3504,13 @@ void Canvas::touchEnd(int pressX, int pressY) {
 		}
 		if (state == 6) goto check_dialog_scroll;
 	handle_dialog_buttons:
-		if ((1 < state - 5U) || (this->numDialogLines <= this->dialogViewLines)) {
-			dlgFlags = this->dialogFlags;
+		if ((1 < state - 5U) || (app->dialogManager->numDialogLines <= app->dialogManager->dialogViewLines)) {
+			dlgFlags = app->dialogManager->dialogFlags;
 			if ((dlgFlags & 2) == 0) {
 				if (dlgFlags == 0) {
 					return;
 				}
-				if (this->currentDialogLine < this->numDialogLines - this->dialogViewLines) {
+				if (app->dialogManager->currentDialogLine < app->dialogManager->numDialogLines - app->dialogManager->dialogViewLines) {
 					return;
 				}
 				if (((dlgFlags & 4) == 0) && ((dlgFlags & 1) == 0)) {
@@ -3521,7 +3527,7 @@ void Canvas::touchEnd(int pressX, int pressY) {
 				}
 			}
 			else {
-				eventCode = this->dialogStyle;
+				eventCode = app->dialogManager->dialogStyle;
 				stateShort = (short)state;
 				if (eventCode == 11) {
 					if (state == 0) {
@@ -3539,7 +3545,7 @@ void Canvas::touchEnd(int pressX, int pressY) {
 						this->numEvents = eventCode + 1;
 						this->keyPressedTime = app->upTimeMs;
 					}
-					eventCode = this->dialogStyle;
+					eventCode = app->dialogManager->dialogStyle;
 				}
 				if (eventCode != 10) {
 					return;
@@ -3577,7 +3583,7 @@ void Canvas::touchEndUnhighlight() {
 		this->m_mixingButtons->HighlightButton(0, 0, false);
 	}
 	else if (this->state == Canvas::ST_INTRO) {
-		this->m_storyButtons->HighlightButton(0, 0, false);
+		app->storyRenderer->m_storyButtons->HighlightButton(0, 0, false);
 	}
 
 	if (this->state == Canvas::ST_PLAYING || this->state == Canvas::ST_COMBAT || this->state == Canvas::ST_AUTOMAP || this->state == Canvas::ST_DIALOG || this->state == Canvas::ST_CAMERA) {
@@ -3586,7 +3592,7 @@ void Canvas::touchEndUnhighlight() {
 		this->m_controlButtons[this->m_controlMode + 4]->HighlightButton(0, 0, false);
 		this->m_sniperScopeButtons->HighlightButton(0, 0, false);
 		this->m_softKeyButtons->HighlightButton(0, 0, false);
-		this->m_dialogButtons->HighlightButton(0, 0, false);
+		app->dialogManager->m_dialogButtons->HighlightButton(0, 0, false);
 		this->m_characterButtons->HighlightButton(0, 0, false);
 	}
 	else if (this->state == Canvas::ST_TREADMILL) {

@@ -1,6 +1,7 @@
 #include "PlayingState.h"
 #include "CAppContainer.h"
 #include "App.h"
+#include "DialogManager.h"
 #include "Canvas.h"
 #include "Game.h"
 #include "Player.h"
@@ -41,7 +42,7 @@ void PlayingState::update(Canvas* canvas) {
 		canvas->handleEvent(canvas->m_controlButton->buttonID);
 	}
 	app->game->updateAutomap = true;
-	if (canvas->numHelpMessages == 0 && app->game->queueAdvanceTurn) {
+	if (app->dialogManager->numHelpMessages == 0 && app->game->queueAdvanceTurn) {
 		app->game->snapMonsters(true);
 		app->game->advanceTurn();
 	}
@@ -61,7 +62,7 @@ void PlayingState::update(Canvas* canvas) {
 	if (app->hud->isShiftingCenterMsg()) {
 		canvas->staleView = true;
 	}
-	if (canvas->knockbackDist == 0 && app->game->activePropogators == 0 && app->game->animatingEffects == 0 && app->game->monstersTurn != 0 && canvas->numHelpMessages == 0) {
+	if (canvas->knockbackDist == 0 && app->game->activePropogators == 0 && app->game->animatingEffects == 0 && app->game->monstersTurn != 0 && app->dialogManager->numHelpMessages == 0) {
 		app->game->updateMonsters();
 	}
 	app->game->updateLerpSprites();
@@ -79,7 +80,7 @@ void PlayingState::update(Canvas* canvas) {
 		app->hud->update();
 	}
 	if (canvas->state == Canvas::ST_INTER_CAMERA || (!app->game->isCameraActive() && canvas->state == Canvas::ST_PLAYING) || canvas->state == Canvas::ST_AUTOMAP) {
-		canvas->dequeueHelpDialog();
+		app->dialogManager->dequeueHelpDialog(canvas);
 	}
 	if (canvas->state == Canvas::ST_PLAYING) {
 		canvas->repaintFlags |= Canvas::REPAINT_HUD;

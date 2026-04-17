@@ -4,7 +4,6 @@
 
 #include "App.h"
 #include "CAppContainer.h"
-#include "Canvas.h"
 #include "Game.h"
 #include "Player.h"
 #include "Combat.h"
@@ -13,9 +12,9 @@
 #include "Text.h"
 #include "EntityTypes.h"
 #include "LootComponent.h"
+#include "LootDistributor.h"
 
-// poolLoot stays on Canvas — called from handlePlayingEvents in Canvas.cpp
-void Canvas::poolLoot(int* array) {
+void LootDistributor::poolLoot(int* array) {
 
 	Entity* entity = app->game->findMapEntity(array[0], array[1], 512);
 	this->lootText = app->localization->getLargeBuffer();

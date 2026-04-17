@@ -8,6 +8,8 @@
 #include "Game.h"
 #include "Render.h"
 #include "Canvas.h"
+#include "MinigameUI.h"
+#include "DialogManager.h"
 #include "Enums.h"
 #include "MayaCamera.h"
 #include "Text.h"
@@ -573,7 +575,7 @@ uint32_t ScriptThread::run() {
                     this->app->player->prevWeapon = this->app->player->ce->weapon;
                     for (uint8_t b4 = 0; b4 < 20; ++b4) {
                         if (&this->app->game->scriptThreads[b4] == this) {
-                            enqueueHelpDialog = this->app->canvas->enqueueHelpDialog(this->app->canvas->loadMapStringID, uByteArg5, b4);
+                            enqueueHelpDialog = this->app->dialogManager->enqueueHelpDialog(this->app->canvas.get(), this->app->canvas->loadMapStringID, uByteArg5, b4);
                             break;
                         }
                     }
@@ -585,7 +587,7 @@ uint32_t ScriptThread::run() {
                     if (n32 == 4) {
                         this->app->player->prevWeapon = this->app->player->ce->weapon;
                     }
-                    this->app->canvas->startDialog(this, this->app->canvas->loadMapStringID, uByteArg5, n32, n31, true);
+                    this->app->dialogManager->startDialog(this->app->canvas.get(), this, this->app->canvas->loadMapStringID, uByteArg5, n32, n31, true);
                 }
                 this->app->game->skipAdvanceTurn = true;
                 this->app->game->queueAdvanceTurn = false;
@@ -1115,7 +1117,7 @@ uint32_t ScriptThread::run() {
                 }
                 this->app->Error(14); // ERR_EV_SHOWCHATBUBBLE
 
-                if (this->app->canvas->showingLoot) {
+                if (this->app->dialogManager->showingLoot) {
                     this->unpauseTime = 1;
                     return 2;
                 }
@@ -1144,7 +1146,7 @@ uint32_t ScriptThread::run() {
 
             case Enums::EV_GIVELOOT: {
                 //printf("EV_GIVELOOT -> %d\n", this->IP);
-                if (this->app->canvas->showingLoot) {
+                if (this->app->dialogManager->showingLoot) {
                     this->unpauseTime = 1;
                     return 2;
                 }
@@ -1729,7 +1731,7 @@ uint32_t ScriptThread::run() {
 
             case Enums::EV_START_ARMORREPAIR: {
                 //printf("EV_START_ARMORREPAIR -> %d\n", this->IP);
-                if (this->app->canvas->startArmorRepair(this)) {
+                if (this->app->minigameUI->startArmorRepair(this->app->canvas.get(), this)) {
                     this->unpauseTime = -1;
                     n = 2;
                     break;
@@ -2134,7 +2136,7 @@ void ScriptThread::composeLootDialog() {
         this->app->localization->composeText((short)0, (short)130, largeBuffer);
     }
     if (!this->throwAwayLoot) {
-        this->app->canvas->showingLoot = true;
+        this->app->dialogManager->showingLoot = true;
         this->app->canvas->setState(Canvas::ST_DIALOG);
     }
     int n = 0;
@@ -2218,7 +2220,7 @@ void ScriptThread::composeLootDialog() {
     }
     if (!this->throwAwayLoot) {
         largeBuffer->setLength(largeBuffer->length() - 1);
-        this->app->canvas->startDialog(this, largeBuffer, 4, 0, true);
+        this->app->dialogManager->startDialog(this->app->canvas.get(), this, largeBuffer, 4, 0, true);
     }
     else {
         largeBuffer->setLength(0);
