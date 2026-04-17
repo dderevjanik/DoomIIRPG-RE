@@ -727,24 +727,24 @@ void MenuSystem::handleUserTouch(int x, int y, bool b) {
 	int touchX;
 	int touchY;
 	fmButton* Button;
-	fmScrollButton* v10;
+	fmScrollButton* unusedScroll;
 	fmScrollButton* btnScroll;
 	int i;
-	fmButton* v13;
+	fmButton* unusedBtn1;
 	int j;
-	fmButton* v15;
+	fmButton* unusedBtn2;
 	int menuButtonID;
 	int infoButtonID;
-	fmButton* v18;
+	fmButton* unusedBtn3;
 	fmButtonContainer* btnContainer02;
-	fmButton* v20;
+	fmButton* unusedBtn4;
 	int selectedIndex;
 	int highlightX;
 	int highlightY;
 	fmButtonContainer* btnContainer03;
 	bool highlightState;
 	int vendingButtonID;
-	VendingMachine* v29;
+	VendingMachine* vendingRef;
 	int quantity;
 	VendingMachine* vendingMachine;
 	int currentItemQuantity;
@@ -847,11 +847,11 @@ clear_button_highlights:
 						}
 						else
 						{
-							v29 = app->vendingMachine.get();
-							quantity = v29->currentItemQuantity;
-							if (app->player->inventory[24] < v29->currentItemPrice + quantity * v29->currentItemPrice)
+							vendingRef = app->vendingMachine.get();
+							quantity = vendingRef->currentItemQuantity;
+							if (app->player->inventory[24] < vendingRef->currentItemPrice + quantity * vendingRef->currentItemPrice)
 								goto reset_vending_highlight;
-							v29->currentItemQuantity = quantity + 1;
+							vendingRef->currentItemQuantity = quantity + 1;
 						}
 						this->setMenu(Menus::MENU_VENDING_MACHINE_CONFIRM);
 					reset_vending_highlight:

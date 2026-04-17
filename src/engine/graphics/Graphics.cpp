@@ -63,10 +63,10 @@ void Graphics::fillCircle(int x, int y, int rad) {
 	vertIndex = 0;
 	do
 	{
-		float v16 = (float)(amount * 0.017444f);
+		float angleRad = (float)(amount * 0.017444f);
 
-        scaleX = (float)(rad) * (float)cos(v16);
-        scaleY = (float)(rad) * (float)sin(v16);
+        scaleX = (float)(rad) * (float)cos(angleRad);
+        scaleY = (float)(rad) * (float)sin(angleRad);
         //CAppContainer::getInstance()->sdlGL->transformCoord2f(&scaleX, &scaleY);
 
 		vp[vertIndex++] = scaleX;
@@ -100,74 +100,74 @@ void Graphics::fillRect(int x, int y, int w, int h, int color) {
 }
 
 void Graphics::FMGL_fillRect(int x, int y, int w, int h, float r, float g, float b, float a) {
-    int v9;
-    int v11;
-    int v13;
-    int v14;
-    int v15;
-    int v16;
-    int v17;
-    bool v18;
-    int v19;
+    int rectMaxY;
+    int clipX;
+    int excess;
+    int clipY;
+    int clipW;
+    int maxY;
+    int maxX;
+    bool inBounds;
+    int rectMaxX;
 
     float vp[12];
 
-    v11 = this->graphClipRect[0];
-    v14 = this->graphClipRect[1];
-    v15 = this->graphClipRect[2];
-    v16 = this->graphClipRect[3];
-    v13 = x + w;
-    if (v11 <= x + w)
+    clipX = this->graphClipRect[0];
+    clipY = this->graphClipRect[1];
+    clipW = this->graphClipRect[2];
+    maxY = this->graphClipRect[3];
+    excess = x + w;
+    if (clipX <= x + w)
     {
-        v17 = v11 + v15;
-        v18 = x <= v17;
-        if (x <= v17)
+        maxX = clipX + clipW;
+        inBounds = x <= maxX;
+        if (x <= maxX)
         {
-            v13 = h;
-            v9 = y + h;
-            v18 = v14 <= y + h;
+            excess = h;
+            rectMaxY = y + h;
+            inBounds = clipY <= y + h;
         }
-        if (v18)
+        if (inBounds)
         {
-            v16 += v14;
-            v18 = y <= v16;
+            maxY += clipY;
+            inBounds = y <= maxY;
         }
-        if (v18)
+        if (inBounds)
         {
-            if (v11 > x)
+            if (clipX > x)
             {
-                v13 = v11 - x;
-                if (w < v11 - x) {
+                excess = clipX - x;
+                if (w < clipX - x) {
                     return;
                 }
-                w -= v13;
-                x = v11;
+                w -= excess;
+                x = clipX;
             }
-            if (v14 > y)
+            if (clipY > y)
             {
-                v13 = v14 - y;
-                if (h < v14 - y) {
+                excess = clipY - y;
+                if (h < clipY - y) {
                     return;
                 }
-                y = v14;
-                v9 = v14 + h - v13;
-                h -= v13;
+                y = clipY;
+                rectMaxY = clipY + h - excess;
+                h -= excess;
             }
-            v19 = x + w;
-            if (v17 < x + w)
+            rectMaxX = x + w;
+            if (maxX < x + w)
             {
-                v13 = v19 - v17;
-                w = v17 - x;
-                v19 = v17;
+                excess = rectMaxX - maxX;
+                w = maxX - x;
+                rectMaxX = maxX;
             }
-            if (v16 < v9) {
-                w = v9 - v16;
+            if (maxY < rectMaxY) {
+                w = rectMaxY - maxY;
             }
-            if (v16 < v9) {
-                v13 = h;
+            if (maxY < rectMaxY) {
+                excess = h;
             }
-            if (v16 < v9) {
-                v9 = y + v13 - w;
+            if (maxY < rectMaxY) {
+                rectMaxY = y + excess - w;
             }
 
             // v1
@@ -206,8 +206,8 @@ void Graphics::FMGL_fillRect(int x, int y, int w, int h, float r, float g, float
 
             float scaleX = (float)(x);
             float scaleY = (float)(y);
-            float scaleW = (float)(v19);
-            float scaleH = (float)(v9);
+            float scaleW = (float)(rectMaxX);
+            float scaleH = (float)(rectMaxY);
             //CAppContainer::getInstance()->sdlGL->transformCoord2f(&scaleX, &scaleY);
             //CAppContainer::getInstance()->sdlGL->transformCoord2f(&scaleW, &scaleH);
 

@@ -166,17 +166,17 @@ void Entity::saveState(OutputStream* OS, int n) {
         OS->writeByte((uint8_t)(this->def->eType | this->def->eSubType << 4));
         OS->writeByte(this->def->parm);
         if ((n & 0x100000) != 0x0) {
-            int v3;
-            int v2;
-            int v = v2 = (v3 = 0);
+            int lootSet2;
+            int lootSet0;
+            int lootSet1 = lootSet0 = (lootSet2 = 0);
             if (this->loot != nullptr) {
-                v2 = this->loot->lootSet[0];
-                v = this->loot->lootSet[1];
-                v3 = this->loot->lootSet[2];
+                lootSet0 = this->loot->lootSet[0];
+                lootSet1 = this->loot->lootSet[1];
+                lootSet2 = this->loot->lootSet[2];
             }
-            OS->writeInt(v2);
-            OS->writeInt(v);
-            OS->writeInt(v3);
+            OS->writeInt(lootSet0);
+            OS->writeInt(lootSet1);
+            OS->writeInt(lootSet2);
         }
         if (this->def->eType == Enums::ET_DECOR_NOCLIP && this->def->eSubType == Enums::DECOR_DYNAMITE) {
             OS->writeByte((mapSpriteInfo[sprite] & 0xFF000000) >> 24);

@@ -272,21 +272,21 @@ void DialogManager::render(Canvas* canvas, Graphics* graphics) {
 		if ((this->dialogFlags & 0x4) != 0x0 || (this->dialogFlags & 0x1) != 0x0) {
 			int n21 = canvas->dialogRect[1] + (16 * this->dialogViewLines) - 14;
 
-			int v75 = Applet::FONT_HEIGHT[app->fontType] + 2;
-			int v113 = Applet::FONT_HEIGHT[app->fontType];
+			int rowHeight = Applet::FONT_HEIGHT[app->fontType] + 2;
+			int fontHeight = Applet::FONT_HEIGHT[app->fontType];
 
 			smallBuffer3->setLength(0);
 			app->localization->composeText((short)0, n19, smallBuffer3);
 			smallBuffer3->dehyphenate();
 			this->m_dialogButtons->GetButton(3)->drawButton = true;
 			int hColor = (this->m_dialogButtons->GetButton(3)->highlighted) ? ((n2 + 0x333333) | 0xFF000000) : n2;
-			graphics->fillRect(96, n21, 96, v75, hColor);
-			graphics->drawRect(96, n21, 96, v75, -1);
-			graphics->drawString(smallBuffer3, 144, n21 + (v75 >> 1) + 2, 3);
-			this->m_dialogButtons->GetButton(3)->SetTouchArea(96, n21 - 40, 96, v113 + 42);
+			graphics->fillRect(96, n21, 96, rowHeight, hColor);
+			graphics->drawRect(96, n21, 96, rowHeight, -1);
+			graphics->drawString(smallBuffer3, 144, n21 + (rowHeight >> 1) + 2, 3);
+			this->m_dialogButtons->GetButton(3)->SetTouchArea(96, n21 - 40, 96, fontHeight + 42);
 
 			if (n16 == 0) {
-				graphics->drawCursor((128 - (smallBuffer3->getStringWidth() >> 1)) + b, n21 + (v113 >> 1) - 5, 0);
+				graphics->drawCursor((128 - (smallBuffer3->getStringWidth() >> 1)) + b, n21 + (fontHeight >> 1) - 5, 0);
 			}
 
 			smallBuffer3->setLength(0);
@@ -294,13 +294,13 @@ void DialogManager::render(Canvas* canvas, Graphics* graphics) {
 			smallBuffer3->dehyphenate();
 			this->m_dialogButtons->GetButton(4)->drawButton = true;
 			hColor = (this->m_dialogButtons->GetButton(4)->highlighted) ? ((n2 + 0x333333) | 0xFF000000) : n2;
-			graphics->fillRect(288, n21, 96, v75, hColor);
-			graphics->drawRect(288, n21, 96, v75, -1);
-			graphics->drawString(smallBuffer3, 336, n21 + (v75 >> 1) + 2, 3);
-			this->m_dialogButtons->GetButton(4)->SetTouchArea(288, n21 - 40, 96, v113 + 42);
+			graphics->fillRect(288, n21, 96, rowHeight, hColor);
+			graphics->drawRect(288, n21, 96, rowHeight, -1);
+			graphics->drawString(smallBuffer3, 336, n21 + (rowHeight >> 1) + 2, 3);
+			this->m_dialogButtons->GetButton(4)->SetTouchArea(288, n21 - 40, 96, fontHeight + 42);
 
 			if (n16 == 1) {
-				graphics->drawCursor((320 - (smallBuffer3->getStringWidth() >> 1)) + b, n21 + (v113 >> 1) - 5, 4);
+				graphics->drawCursor((320 - (smallBuffer3->getStringWidth() >> 1)) + b, n21 + (fontHeight >> 1) - 5, 4);
 			}
 		}
 		smallBuffer3->dispose();

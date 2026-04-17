@@ -1492,8 +1492,8 @@ bool MenuSystem::updateVolumeSlider(int buttonId, int x)
 {
 
 	int* value;
-	int v9;
-	int v10;
+	int sliderRange;
+	int scaledValue;
 	//printf("buttonId %d\n", buttonId);
 
 	if ((buttonId >= 12 && buttonId <= 14) || (buttonId >= 16 && buttonId <= 17)) {
@@ -1518,15 +1518,15 @@ bool MenuSystem::updateVolumeSlider(int buttonId, int x)
 			value = &gDeadZone;
 		}
 		if (this->menu == Menus::MENU_MAIN_OPTIONS || this->menu == Menus::MENU_MAIN_OPTIONS_SOUND || this->menu == Menus::MENU_MAIN_CONTROLS || this->menu == Menus::MENU_MAIN_CONTROLLER) {
-			v9 = 245 - this->imgMenuOptionSliderON->width;
-			v10 = 100 * (x - ((this->imgMenuOptionSliderON->width >> 1) + ((Applet::IOS_WIDTH - this->imgMenuOptionBOX3->width) >> 1) + 4));
+			sliderRange = 245 - this->imgMenuOptionSliderON->width;
+			scaledValue = 100 * (x - ((this->imgMenuOptionSliderON->width >> 1) + ((Applet::IOS_WIDTH - this->imgMenuOptionBOX3->width) >> 1) + 4));
 		}
 		else
 		{
-			v9 = this->menuItem_width - 24;
-			v10 = 100 * (x - (app->canvas->menuRect[0] + 12));
+			sliderRange = this->menuItem_width - 24;
+			scaledValue = 100 * (x - (app->canvas->menuRect[0] + 12));
 		}
-		*value = v10 / v9;
+		*value = scaledValue / sliderRange;
 		if (*value < 0) {
 			*value = 0;
 		}

@@ -311,13 +311,13 @@ void Game::saveWorldState(OutputStream* OS, bool b) {
 		OS->writeByte(v);
 	}
 	for (int n6 = 1024, n7 = 0; n7 < n6; n7 += 8) {
-		int v2 = 0;
+		int flagBits = 0;
 		for (int n8 = 0; n8 < 8; ++n8) {
 			if (0x0 != (app->render->mapFlags[n7 + n8] & 0x80)) {
-				v2 |= 1 << n8;
+				flagBits |= 1 << n8;
 			}
 		}
-		OS->writeByte(v2);
+		OS->writeByte(flagBits);
 	}
 	short* scriptStateVars = this->scriptStateVars;
 	for (int n9 = 0; n9 < 128; ++n9) {
@@ -919,15 +919,15 @@ bool Game::hasElement(const char* name) {
 
 bool Game::hasSavedState() {
 	if (this->hasConfig()) {
-		bool v3 = false;
+		bool hasWorldSave = false;
 		for (int i = 0; i < 10; i++) {
 			if (this->hasElement(this->GetSaveFile(Game::FILE_NAME_BRIEFWORLD, i))) {
-				v3 = true;
+				hasWorldSave = true;
 			}
 		}
 		if (this->hasElement(this->GetSaveFile(Game::FILE_NAME_BRIEFPLAYER, 0))) {
 			if (this->hasElement(this->GetSaveFile(Game::FILE_NAME_FULLPLAYER, 0))) {
-				if (v3) {
+				if (hasWorldSave) {
 					return true;
 				}
 			}

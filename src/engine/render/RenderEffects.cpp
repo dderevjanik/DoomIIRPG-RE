@@ -370,89 +370,89 @@ void Render::drawSkyMap(int n2) {
 
 	uint8_t* p_skyMapTexels;
 	uint16_t* FogPalette;
-	int16_t v7;
-	int16_t v9;
-	int v11;
-	int v12;
-	int v13;
+	int16_t offsetClamped;
+	int16_t skyOffsetY;
+	int rowOffset;
+	int pixelCount;
+	int texelU;
 	uint16_t* pixels;
-	int v15;
-	int v16;
+	int unused15;
+	int unused16;
 
 	p_skyMapTexels = this->skyMapTexels;
 	app->tinyGL->paletteBase = this->skyMapPalette;
 	FogPalette = app->tinyGL->getFogPalette(0x10000000);
 
-	v7 = n2 + 255;
+	offsetClamped = n2 + 255;
 	if (n2 >= 0) {
-		v7 = n2;
+		offsetClamped = n2;
 	}
-	v9 = (v7 & 0xFF00) + (app->tinyGL->viewportY << 8) - 256;
+	skyOffsetY = (offsetClamped & 0xFF00) + (app->tinyGL->viewportY << 8) - 256;
 
 	// Original BREW version
 #if 0
 	for (int i = app->tinyGL->viewportY; i < app->tinyGL->viewportY2; i++) {
-		v11 = v9 & 0xFF00;
-		v12 = app->tinyGL->viewportX2 - app->tinyGL->viewportX;
-		v13 = n2;
+		rowOffset = skyOffsetY & 0xFF00;
+		pixelCount = app->tinyGL->viewportX2 - app->tinyGL->viewportX;
+		texelU = n2;
 		pixels = &app->tinyGL->pixels[app->tinyGL->viewportX + i * app->tinyGL->screenWidth];
-		while (v12 >= 8) {
-			*pixels++ = FogPalette[p_skyMapTexels[v11 | (v13 & 255)]];
-			v13++;
-			*pixels++ = FogPalette[p_skyMapTexels[v11 | (v13 & 255)]];
-			v13++;
-			*pixels++ = FogPalette[p_skyMapTexels[v11 | (v13 & 255)]];
-			v13++;
-			*pixels++ = FogPalette[p_skyMapTexels[v11 | (v13 & 255)]];
-			v13++;
-			*pixels++ = FogPalette[p_skyMapTexels[v11 | (v13 & 255)]];
-			v13++;
-			*pixels++ = FogPalette[p_skyMapTexels[v11 | (v13 & 255)]];
-			v13++;
-			*pixels++ = FogPalette[p_skyMapTexels[v11 | (v13 & 255)]];
-			v13++;
-			*pixels++ = FogPalette[p_skyMapTexels[v11 | (v13 & 255)]];
-			v13++;
-			v12 -= 8;
+		while (pixelCount >= 8) {
+			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU & 255)]];
+			texelU++;
+			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU & 255)]];
+			texelU++;
+			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU & 255)]];
+			texelU++;
+			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU & 255)]];
+			texelU++;
+			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU & 255)]];
+			texelU++;
+			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU & 255)]];
+			texelU++;
+			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU & 255)]];
+			texelU++;
+			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU & 255)]];
+			texelU++;
+			pixelCount -= 8;
 		}
-		while (--v12 >= 0) {
-			*pixels++ = FogPalette[p_skyMapTexels[v11 | (v13 & 255)]];
-			v13++;
+		while (--pixelCount >= 0) {
+			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU & 255)]];
+			texelU++;
 		}
-		v9 = v11 + 256;
+		skyOffsetY = rowOffset + 256;
 	}
 #endif
 
 	// [GEC] It is adjusted like this to be consistent with the IOS version
 	for (int i = app->tinyGL->viewportY; i < app->tinyGL->viewportY2; i++) {
-		v11 = v9 & 0xFF00;
-		v12 = app->tinyGL->viewportX2 - app->tinyGL->viewportX;
-		v13 = (n2 + 132) << 8;
+		rowOffset = skyOffsetY & 0xFF00;
+		pixelCount = app->tinyGL->viewportX2 - app->tinyGL->viewportX;
+		texelU = (n2 + 132) << 8;
 		pixels = &app->tinyGL->pixels[app->tinyGL->viewportX + i * app->tinyGL->screenWidth];
-		while (v12 >= 8) {
-			*pixels++ = FogPalette[p_skyMapTexels[v11 | (v13 >> 8 & 255)]];
-			v13 += 128;
-			*pixels++ = FogPalette[p_skyMapTexels[v11 | (v13 >> 8 & 255)]];
-			v13 += 128;
-			*pixels++ = FogPalette[p_skyMapTexels[v11 | (v13 >> 8 & 255)]];
-			v13 += 128;
-			*pixels++ = FogPalette[p_skyMapTexels[v11 | (v13 >> 8 & 255)]];
-			v13 += 128;
-			*pixels++ = FogPalette[p_skyMapTexels[v11 | (v13 >> 8 & 255)]];
-			v13 += 128;
-			*pixels++ = FogPalette[p_skyMapTexels[v11 | (v13 >> 8 & 255)]];
-			v13 += 128;
-			*pixels++ = FogPalette[p_skyMapTexels[v11 | (v13 >> 8 & 255)]];
-			v13 += 128;
-			*pixels++ = FogPalette[p_skyMapTexels[v11 | (v13 >> 8 & 255)]];
-			v13 += 128;
-			v12 -= 8;
+		while (pixelCount >= 8) {
+			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU >> 8 & 255)]];
+			texelU += 128;
+			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU >> 8 & 255)]];
+			texelU += 128;
+			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU >> 8 & 255)]];
+			texelU += 128;
+			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU >> 8 & 255)]];
+			texelU += 128;
+			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU >> 8 & 255)]];
+			texelU += 128;
+			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU >> 8 & 255)]];
+			texelU += 128;
+			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU >> 8 & 255)]];
+			texelU += 128;
+			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU >> 8 & 255)]];
+			texelU += 128;
+			pixelCount -= 8;
 		}
-		while (--v12 >= 0) {
-			*pixels++ = FogPalette[p_skyMapTexels[v11 | (v13 >> 8 & 255)]];
-			v13 += 128;
+		while (--pixelCount >= 0) {
+			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU >> 8 & 255)]];
+			texelU += 128;
 		}
-		v9 = v11 + 256;
+		skyOffsetY = rowOffset + 256;
 	}
 }
 

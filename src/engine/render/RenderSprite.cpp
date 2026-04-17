@@ -47,15 +47,15 @@ void Render::draw2DSprite(int tileNum, int frame, int x, int y, int flags, int r
 
 	this->setupTexture(tileNum, frame, renderMode, renderFlags);
 
-	int v12 = (176 * scaleFactor) / 0x10000;
+	int scaledHeight = (176 * scaleFactor) / 0x10000;
 
 	vert1->x = x << 3;
-	vert1->y = y + v12 << 3;
+	vert1->y = y + scaledHeight << 3;
 	vert1->z = 8192;
 	vert1->s = 0;
 
-	vert2->x = x + v12 << 3;
-	vert2->y = y + v12 << 3;
+	vert2->x = x + scaledHeight << 3;
+	vert2->y = y + scaledHeight << 3;
 	vert2->z = 8192;
 	vert2->s = 0x800000;
 
@@ -81,9 +81,9 @@ void Render::draw2DSprite(int tileNum, int frame, int x, int y, int flags, int r
 	tinyGL->mv[0].z =
 	    tinyGL->viewZ - ((int)(5 * ((tinyGL->view[10] & 0xFFFFFFE0) + (8 * (tinyGL->view[10] >> 5)))) >> 8);
 
-	int v27 = ((x - tinyGL->viewportWidth / 2) << 15) / tinyGL->viewportWidth;
-	int v28 = (((y + v12) - tinyGL->viewportHeight / 2) << 15) / tinyGL->viewportWidth;
-	int v33 = (v12 << 15) / tinyGL->viewportWidth;
+	int projX = ((x - tinyGL->viewportWidth / 2) << 15) / tinyGL->viewportWidth;
+	int projY = (((y + scaledHeight) - tinyGL->viewportHeight / 2) << 15) / tinyGL->viewportWidth;
+	int projSize = (scaledHeight << 15) / tinyGL->viewportWidth;
 
 	int view0 = (tinyGL->view[0] >> 5);
 	int view1 = (tinyGL->view[1] >> 5);
@@ -92,22 +92,22 @@ void Render::draw2DSprite(int tileNum, int frame, int x, int y, int flags, int r
 	int view8 = (tinyGL->view[8] >> 5);
 	int view9 = (tinyGL->view[9] >> 5);
 
-	tinyGL->mv[0].x += (((v28 * view1) + (v27 * view0)) >> 14);
-	tinyGL->mv[0].y += (((v28 * view5) + (v27 * view4)) >> 14);
-	tinyGL->mv[0].z += (((v28 * view9) + (v27 * view8)) >> 14);
+	tinyGL->mv[0].x += (((projY * view1) + (projX * view0)) >> 14);
+	tinyGL->mv[0].y += (((projY * view5) + (projX * view4)) >> 14);
+	tinyGL->mv[0].z += (((projY * view9) + (projX * view8)) >> 14);
 
-	tinyGL->mv[1].x = tinyGL->mv[0].x + ((v33 * view0) >> 14);
-	tinyGL->mv[1].y = tinyGL->mv[0].y + ((v33 * view4) >> 14);
-	tinyGL->mv[1].z = tinyGL->mv[0].z + ((v33 * view8) >> 14);
+	tinyGL->mv[1].x = tinyGL->mv[0].x + ((projSize * view0) >> 14);
+	tinyGL->mv[1].y = tinyGL->mv[0].y + ((projSize * view4) >> 14);
+	tinyGL->mv[1].z = tinyGL->mv[0].z + ((projSize * view8) >> 14);
 
-	tinyGL->mv[2].x = tinyGL->mv[1].x - ((v33 * view1) >> 14);
-	tinyGL->mv[2].y = tinyGL->mv[1].y - ((v33 * view5) >> 14);
-	tinyGL->mv[2].z = tinyGL->mv[1].z - ((v33 * view9) >> 14);
+	tinyGL->mv[2].x = tinyGL->mv[1].x - ((projSize * view1) >> 14);
+	tinyGL->mv[2].y = tinyGL->mv[1].y - ((projSize * view5) >> 14);
+	tinyGL->mv[2].z = tinyGL->mv[1].z - ((projSize * view9) >> 14);
 
 	this->_gles->SetGLState();
-	bool v37 = this->_gles->DrawWorldSpaceSpriteLine(&tinyGL->mv[0], &tinyGL->mv[1], &tinyGL->mv[2], flags ^ 0x20000);
+	bool drawnByGLES = this->_gles->DrawWorldSpaceSpriteLine(&tinyGL->mv[0], &tinyGL->mv[1], &tinyGL->mv[2], flags ^ 0x20000);
 	this->_gles->ResetGLState();
-	if (!v37) {
+	if (!drawnByGLES) {
 		app->tinyGL->drawClippedSpriteLine(vert1, vert2, vert3, flags, false);
 	}
 }

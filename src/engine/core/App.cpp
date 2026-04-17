@@ -528,13 +528,13 @@ void Applet::AccelerometerUpdated(float x, float y, float z) {
 	this->accelerationZ[this->accelerationIndex] = z;
 	this->accelerationIndex = (this->accelerationIndex + 1) % 32;
 
-	int v7 = (uint8_t)this->accelHasSamples;
-	int v8 = v7 == 0;
-	if (!v7) {
-		v8 = this->accelerationIndex == 0;
+	int hasSamples = (uint8_t)this->accelHasSamples;
+	int shouldIncrement = hasSamples == 0;
+	if (!hasSamples) {
+		shouldIncrement = this->accelerationIndex == 0;
 	}
-	if (v8) {
-		this->accelHasSamples = v7 + 1;
+	if (shouldIncrement) {
+		this->accelHasSamples = hasSamples + 1;
 	}
 	// this->comicBook->UpdateAccelerometer(x, y, z);
 }
@@ -552,32 +552,30 @@ void Applet::StopAccelerometer() {
 }
 
 void Applet::CalcAccelerometerAngles() {
-	bool v2;
+	bool skipUpdate;
 	float y;
-	int v5;
+	int sampleIdx;
 	float x;
 	float z;
-	float v9;
-	float v10;
 	int zoomAngle;
-	int v14;
+	int clampedZoomAngle;
 	int zoomMaxAngle;
 	int zoomPitch;
 
-	v2 = !this->accelHasSamples;
+	skipUpdate = !this->accelHasSamples;
 	if (this->accelHasSamples) {
-		v2 = !this->canvas->isZoomedIn;
+		skipUpdate = !this->canvas->isZoomedIn;
 	}
-	if (!v2) {
-		v5 = 0;
+	if (!skipUpdate) {
+		sampleIdx = 0;
 		x = 0.0;
 		y = 0.0;
 		z = 0.0;
 		do {
-			x += this->accelerationX[v5];
-			y += this->accelerationY[v5];
-			z += this->accelerationZ[v5];
-		} while (++v5 < 32);
+			x += this->accelerationX[sampleIdx];
+			y += this->accelerationY[sampleIdx];
+			z += this->accelerationZ[sampleIdx];
+		} while (++sampleIdx < 32);
 
 		this->accelAvgX = x * 0.03125;
 		this->accelAvgY = y * 0.03125;
@@ -596,11 +594,11 @@ void Applet::CalcAccelerometerAngles() {
 		if (zoomAngle >= -200) {
 			if (zoomAngle <= 200)
 				goto calc_zoom_pitch;
-			v14 = 200;
+			clampedZoomAngle = 200;
 		} else {
-			v14 = -200;
+			clampedZoomAngle = -200;
 		}
-		this->canvas->zoomAngle = v14;
+		this->canvas->zoomAngle = clampedZoomAngle;
 	calc_zoom_pitch:
 		this->canvas->zoomPitch = (int)(float)((float)(this->accelAvgY - this->accelBaseY) * 420.0);
 		zoomMaxAngle = this->canvas->zoomMaxAngle;
