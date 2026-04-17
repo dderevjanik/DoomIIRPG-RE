@@ -337,7 +337,7 @@ int Game::updateLerpSprite(LerpSprite* lerpSprite) {
 	int n5 = app->gameTime - lerpSprite->startTime;
 	int n6 = app->render->getSpriteInfoRaw(n2);
 	int n7 = n6 & 0xFF;
-	if ((n6 & 0x400000) != 0x0) {
+	if ((n6 & Enums::SPRITE_FLAG_TILE) != 0x0) {
 		n7 += 257;
 	}
 	if (n5 >= lerpSprite->travelTime) {
@@ -376,7 +376,7 @@ int Game::updateLerpSprite(LerpSprite* lerpSprite) {
 	}
 	int n12 = app->render->getSpriteX(n2) >> 6;
 	int n13 = app->render->getSpriteY(n2) >> 6;
-	if (app->render->getSpriteEnt(n2) != -1 && !(app->render->getSpriteInfoRaw(n2) & 0x10000)) {
+	if (app->render->getSpriteEnt(n2) != -1 && !(app->render->getSpriteInfoRaw(n2) & Enums::SPRITE_FLAG_HIDDEN)) {
 		Entity* entity = &this->entities[app->render->getSpriteEnt(n2)];
 		int n14 = entity->linkIndex % 32;
 		int n15 = entity->linkIndex / 32;
@@ -556,7 +556,7 @@ void Game::freeLerpSprite(LerpSprite* lerpSprite) {
 	Entity* entity = nullptr;
 	int sprite = lerpSprite->hSprite - 1;
 	int n2 = app->render->getSpriteInfoRaw(sprite) & 0xFF;
-	if ((app->render->getSpriteInfoRaw(sprite) & 0x400000) != 0x0) {
+	if ((app->render->getSpriteInfoRaw(sprite) & Enums::SPRITE_FLAG_TILE) != 0x0) {
 		n2 += 257;
 	}
 	app->render->setSpriteX(sprite, (short)lerpSprite->dstX);
@@ -573,7 +573,7 @@ void Game::freeLerpSprite(LerpSprite* lerpSprite) {
 	}
 	int n3 = lerpSprite->dstX >> 6;
 	int n4 = lerpSprite->dstY >> 6;
-	if (nullptr != entity && 0x0 == (app->render->getSpriteInfoRaw(sprite) & 0x10000)) {
+	if (nullptr != entity && 0x0 == (app->render->getSpriteInfoRaw(sprite) & Enums::SPRITE_FLAG_HIDDEN)) {
 		if (entity->def->eType == Enums::ET_NPC || entity->def->eType == Enums::ET_MONSTER) {
 			if (entity->ai != nullptr) {
 				entity->ai->frameTime = 0;

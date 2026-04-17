@@ -507,9 +507,9 @@ void Render::relinkSprite(int n, int n2, int n3, int n4) {
 short Render::getNodeForPoint(int n, int n2, int n3, int n4) {
 	short n5 = 0;
 	int i = this->nodeOffsets[n5] & 0xFFFF;
-	bool b = (n4 & 0xF000000) != 0x0;
+	bool b = (n4 & Enums::SPRITE_FLAGS_ORIENTED) != 0x0;
 	int n6 = n4 & 0xFF;
-	if ((n4 & 0x400000) != 0x0) {
+	if ((n4 & Enums::SPRITE_FLAG_TILE) != 0x0) {
 		n6 += 256 + 1;
 	}
 
@@ -517,7 +517,7 @@ short Render::getNodeForPoint(int n, int n2, int n3, int n4) {
 	while (i != 65535) {
 		int nodeClassifyPoint = this->nodeClassifyPoint(n5, n, n2, n3);
 		if (nodeClassifyPoint == 0 && b) {
-			if ((n4 & 0x9000000) != 0x0) {
+			if ((n4 & (Enums::SPRITE_FLAG_NORTH | Enums::SPRITE_FLAG_WEST)) != 0x0) {
 				n5 = this->nodeChildOffset1[n5];
 			} else {
 				n5 = this->nodeChildOffset2[n5];
@@ -569,7 +569,7 @@ void Render::postProcessSprites() {
 			mapSprites[this->S_Z + i] -= 32;
 		}
 		int n3 = (uint8_t)(mapSpriteInfo[i] & 0xFF);
-		if ((mapSpriteInfo[i] & 0x400000) != 0x0) {
+		if ((mapSpriteInfo[i] & Enums::SPRITE_FLAG_TILE) != 0x0) {
 			n3 += 257;
 		}
 		if (n3 == 479) {

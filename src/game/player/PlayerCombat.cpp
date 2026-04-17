@@ -249,7 +249,7 @@ bool Player::fireWeapon(Entity* entity, int n, int n2) {
 	}
 
 	if (entity->isMonster()) {
-		entity->monsterFlags &= 0xfff7;
+		entity->monsterFlags &= ~Enums::MFLAG_NOACTIVATE;
 	}
 
 	if (app->combat->getWeaponFlags(this->ce->weapon).chainsawHitEvent &&

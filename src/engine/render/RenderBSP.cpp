@@ -136,7 +136,7 @@ bool Render::cullBoundingBox(int n, int n2, int n3, int n4, bool b) {
 void Render::addSprite(short n) {
 
 
-	if ((this->mapSpriteInfo[n] & 0x10000) != 0x0) {
+	if ((this->mapSpriteInfo[n] & Enums::SPRITE_FLAG_HIDDEN) != 0x0) {
 		return;
 	}
 	int n2 = this->mapSpriteInfo[n] & 0xFF;
@@ -145,18 +145,18 @@ void Render::addSprite(short n) {
 		entity = &app->game->entities[this->mapSprites[this->S_ENT + n]];
 	}
 	int n3;
-	if ((this->mapSpriteInfo[n] & 0x10000000) != 0x0) {
+	if ((this->mapSpriteInfo[n] & Enums::SPRITE_FLAG_DECAL) != 0x0) {
 		n3 = 0x7fffffff;
 	} else {
 		short n4 = this->mapSprites[this->S_X + n];
 		short n5 = this->mapSprites[this->S_Y + n];
 		int* mvp = app->tinyGL->mvp;
 		n3 = (n4 * mvp[2] + n5 * mvp[6] + this->mapSprites[this->S_Z + n] * mvp[10] >> 14) + mvp[14];
-		if ((this->mapSpriteInfo[n] & 0x400000) != 0x0) {
+		if ((this->mapSpriteInfo[n] & Enums::SPRITE_FLAG_TILE) != 0x0) {
 			n3 += 6;
 		} else if (n2 == 240 || n2 == 246 || n2 == 245 || n2 == 247) {
 			n3 = 0x80000000;
-		} else if (0x0 != (this->mapSpriteInfo[n] & 0xF000000)) {
+		} else if (0x0 != (this->mapSpriteInfo[n] & Enums::SPRITE_FLAGS_ORIENTED)) {
 			n3 += 5;
 		} else if (entity != nullptr && (entity->info & 0x1010000) != 0x0) {
 			++n3;
@@ -175,7 +175,7 @@ void Render::addSprite(short n) {
 	}
 	this->mapSpriteInfo[this->SINFO_SORTZ + n] = n3;
 	if (app->game->updateAutomap) {
-		this->mapSpriteInfo[n] |= 0x200000;
+		this->mapSpriteInfo[n] |= Enums::SPRITE_FLAG_AUTOMAP_VISIBLE;
 	}
 	if (this->viewSprites == -1) {
 		this->mapSprites[this->S_VIEWNEXT + n] = -1;
@@ -365,13 +365,13 @@ void Render::walkNode(short n) {
 
 		for (short n2 = this->nodeSprites[n]; n2 != -1; n2 = this->mapSprites[this->S_NODENEXT + n2]) {
 			int n3 = this->mapSpriteInfo[n2];
-			if ((n3 & 0x10000) == 0x0) {
+			if ((n3 & Enums::SPRITE_FLAG_HIDDEN) == 0x0) {
 				int n4 = this->mapSpriteInfo[n2] & 0xFF;
 				Entity* entity = nullptr;
 				if (this->mapSprites[this->S_ENT + n2] != -1) {
 					entity = &app->game->entities[this->mapSprites[this->S_ENT + n2]];
 				}
-				if (entity != nullptr && (n3 & 0x400000) != 0x0) {
+				if (entity != nullptr && (n3 & Enums::SPRITE_FLAG_TILE) != 0x0) {
 					n4 += 257;
 					if (n4 < 450) {
 						this->occludeSpriteLine(n2);

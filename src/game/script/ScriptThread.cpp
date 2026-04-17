@@ -376,7 +376,7 @@ uint32_t ScriptThread::run() {
                 if (sEnt != -1) {
                     this->app->game->entities[sEnt].info |= 0x400000;
                     if (this->app->game->entities[sEnt].monster != nullptr) {
-                        this->app->game->entities[sEnt].monsterFlags |= 0x4000;
+                        this->app->game->entities[sEnt].monsterFlags |= Enums::MFLAG_LERP_SHADOW;
                     }
                 }
                 lerpSprite->dstZ = this->app->render->getHeight(lerpSprite->dstX, lerpSprite->dstY) + dstZ;
@@ -1416,7 +1416,7 @@ uint32_t ScriptThread::run() {
                 if (n15 != -1) {
                     this->app->game->entities[n15].info |= 0x400000;
                     if (this->app->game->entities[n15].monster != nullptr) {
-                        this->app->game->entities[n15].monsterFlags |= 0x4000;
+                        this->app->game->entities[n15].monsterFlags |= Enums::MFLAG_LERP_SHADOW;
                     }
                 }
                 allocLerpSprite2->dstZ = this->app->render->getHeight(allocLerpSprite2->dstX, allocLerpSprite2->dstY) + n14;
@@ -1667,7 +1667,7 @@ uint32_t ScriptThread::run() {
                 if (n133 != -1) {
                     this->app->game->entities[n133].info |= 0x400000;
                     if (this->app->game->entities[n133].monster != nullptr) {
-                        this->app->game->entities[n133].monsterFlags &= 0xFFFFBFFF;
+                        this->app->game->entities[n133].monsterFlags &= ~Enums::MFLAG_LERP_SHADOW;
                     }
                 }
                 allocLerpSprite4->srcX = this->app->render->getSpriteX(n129);
@@ -1977,7 +1977,7 @@ uint32_t ScriptThread::run() {
                 if (n139 != -1) {
                     this->app->game->entities[n139].info |= 0x400000;
                     if (this->app->game->entities[n139].monster != nullptr) {
-                        this->app->game->entities[n139].monsterFlags &= 0xFFFFBFFF;
+                        this->app->game->entities[n139].monsterFlags &= ~Enums::MFLAG_LERP_SHADOW;
                     }
                 }
                 allocLerpSprite5->srcX = this->app->render->getSpriteX(n135);

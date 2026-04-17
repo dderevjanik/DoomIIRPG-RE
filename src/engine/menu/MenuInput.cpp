@@ -81,7 +81,7 @@ void MenuSystem::doDetailsSelect()
 	}
 	this->cheatCombo = 0;
 
-	if (this->items[this->selectedIndex].flags & 0x20) {
+	if (this->items[this->selectedIndex].flags & Menus::ITEM_SHOWDETAILS) {
 		this->showDetailsMenu();
 	}
 	else if (this->items[this->selectedIndex].action != 0) {

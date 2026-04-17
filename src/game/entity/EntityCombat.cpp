@@ -249,12 +249,12 @@ bool Entity::pain(int n, Entity* entity) {
                     this->monsterEffects &= ~1u;
                 }
             }
-            if (b && (this->monsterFlags & 0x20) != 0x0) {
+            if (b && (this->monsterFlags & Enums::MFLAG_NOTHINK) != 0x0) {
                 app->combat->animLoopCount = 1;
             }
         }
 
-        if ((this->monsterFlags & 0x4) != 0x0 && n2 <= 0) {
+        if ((this->monsterFlags & Enums::MFLAG_NOKILL) != 0x0 && n2 <= 0) {
             n2 = 1;
         }
         this->combat->setStat(0, n2);
@@ -331,7 +331,7 @@ int Entity::checkMonsterDeath(bool b, bool b2) {
             }
             app->player->addXP(xpAwarded);
         }
-        if ((this->monsterFlags & 0x80) == 0x0) {
+        if ((this->monsterFlags & Enums::MFLAG_NOTRACK) == 0x0) {
             app->player->fillMonsterStats();
             if (app->player->monsterStats[0] == app->player->monsterStats[1] && (app->player->killedMonstersLevels & 1 << (app->canvas->loadMapID - 1)) == 0x0) {
                 app->player->showAchievementMessage(2);
@@ -349,7 +349,7 @@ void Entity::died(bool b, Entity* entity) {
     short n = app->render->getSpriteX(sprite);
     short n2 = app->render->getSpriteY(sprite);
     int n3 = app->render->getSpriteInfoRaw(sprite);
-    if ((this->info & 0x20000) == 0x0 || (this->isMonster() && (this->monsterFlags & 0x4) != 0x0)) {
+    if ((this->info & 0x20000) == 0x0 || (this->isMonster() && (this->monsterFlags & Enums::MFLAG_NOKILL) != 0x0)) {
         return;
     }
     this->info &= 0xFFFDFFFF;
@@ -398,7 +398,7 @@ void Entity::died(bool b, Entity* entity) {
             this->monsterEffects &= 0xFFFF801F;
             this->monsterEffects |= 0x220220;
         }
-        if (app->game->difficulty == Enums::DIFFICULTY_NIGHTMARE && (this->monsterFlags & 0x40) == 0x0) {
+        if (app->game->difficulty == Enums::DIFFICULTY_NIGHTMARE && (this->monsterFlags & Enums::MFLAG_NORAISE) == 0x0) {
             int n5 = 2 + app->nextInt() % 3;
             this->monsterEffects &= 0xFFFE1FFB;
             this->monsterEffects |= n5 << 13;
@@ -424,7 +424,7 @@ void Entity::died(bool b, Entity* entity) {
         this->def = this->def->corpseDef;
         this->name = (short)(this->def->name | 0x400);
         app->canvas->invalidateRect();
-        if (app->game->difficulty == Enums::DIFFICULTY_NIGHTMARE && (this->monsterFlags & 0x40) == 0x0 && (this->info & 0x80000) == 0x0) {
+        if (app->game->difficulty == Enums::DIFFICULTY_NIGHTMARE && (this->monsterFlags & Enums::MFLAG_NORAISE) == 0x0 && (this->info & 0x80000) == 0x0) {
             int n6 = 2 + app->nextInt() % 3;
             this->monsterEffects |= n6 << 13;
             this->monsterEffects |= 0x4;
@@ -476,14 +476,14 @@ void Entity::aiCalcSimpleGoal(bool b) {
         this->ai->goalType = 3;
         this->ai->goalParam = 1;
         if (app->combat->monsterBehaviors[this->def->monsterIdx].evading) {
-            this->monsterFlags |= 0x1;
+            this->monsterFlags |= Enums::MFLAG_ABILITY;
         }
     }
     else {
         this->ai->goalType = 2;
         this->ai->goalParam = 1;
         if (app->combat->monsterBehaviors[this->def->monsterIdx].evading) {
-            this->monsterFlags &= ~0x1;
+            this->monsterFlags &= ~Enums::MFLAG_ABILITY;
         }
     }
 }
@@ -764,8 +764,8 @@ bool Entity::checkLineOfSight(int n, int n2, int n3, int n4, int n5) {
 
 void Entity::attack() {
 
-    if ((this->monsterFlags & 0x400) == 0x0) {
-        this->monsterFlags |= 0x400;
+    if ((this->monsterFlags & Enums::MFLAG_ATTACKING) == 0x0) {
+        this->monsterFlags |= Enums::MFLAG_ATTACKING;
         this->nextAttacker = app->game->combatMonsters;
         app->game->combatMonsters = this;
     }
@@ -773,10 +773,10 @@ void Entity::attack() {
 
 void Entity::undoAttack() {
 
-    if ((this->monsterFlags & 0x400) == 0x0) {
+    if ((this->monsterFlags & Enums::MFLAG_ATTACKING) == 0x0) {
         return;
     }
-    this->monsterFlags &= ~0x400;
+    this->monsterFlags &= ~Enums::MFLAG_ATTACKING;
     int sprite = this->getSprite();
     if (app->combat->getWeaponFlags(this->combat->weapon).chargeAttack) {
         app->render->setSpriteFrame(sprite, 0);
@@ -863,7 +863,7 @@ void Entity::knockback(int n, int n2, int n3) {
         this->ai->goalType = 1;
         this->ai->goalX = goalX;
         this->ai->goalY = goalY;
-        this->monsterFlags |= 0x1000;
+        this->monsterFlags |= Enums::MFLAG_KNOCKBACK;
         LerpSprite* aiInitLerp = this->aiInitLerp(400);
         app->game->unlinkEntity(this);
         app->game->linkEntity(this, goalX, goalY);
@@ -967,7 +967,7 @@ void Entity::resurrect(int n, int n2, int n3) {
     CombatEntity* ce = this->combat;
     this->initspawn();
     ce->setStat(0, ce->getStat(1));
-    this->monsterFlags &= ~0x1000;
+    this->monsterFlags &= ~Enums::MFLAG_KNOCKBACK;
     app->game->unlinkEntity(this);
     app->game->linkEntity(this, n >> 6, n2 >> 6);
     app->canvas->updateFacingEntity = true;

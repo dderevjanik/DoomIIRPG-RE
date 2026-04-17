@@ -344,19 +344,19 @@ void MenuSystem::moveDir(int n) { // J2ME
 		int begY2 = 0;
 
 		for (int i = 0; i < numItems; i++) { // Ajusta la posici�n si es necesario
-			if (!(this->items[i].flags & 0x8001)) {
+			if (!(this->items[i].flags & (Menus::ITEM_HIDDEN | Menus::ITEM_NOSELECT))) {
 				endItem = i;
 			}
 		}
 
 		//printf("endItem %d\n", endItem);
 		for (int i = 0; i < numItems; i++) { // Ajusta la posici�n si es necesario
-			if (!(this->items[i].flags & 0x8001)) {
+			if (!(this->items[i].flags & (Menus::ITEM_HIDDEN | Menus::ITEM_NOSELECT))) {
 				begItem = i;
 				break;
 			}
 			else {
-				if (!(this->items[i].flags & 0x8000)) {
+				if (!(this->items[i].flags & Menus::ITEM_HIDDEN)) {
 					begY1 += this->getMenuItemHeight2(i);
 					begY2 += iVar2;
 
@@ -382,7 +382,7 @@ void MenuSystem::moveDir(int n) { // J2ME
 
 			if (this->selectedIndex == this->scrollIndex) {
 				for (int i = 0; i < this->selectedIndex; i++) { // Ajusta la posici�n si es necesario
-					if (!(this->items[i].flags & 0x8000)) {
+					if (!(this->items[i].flags & Menus::ITEM_HIDDEN)) {
 						y1 += this->getMenuItemHeight2(i);
 						y2 += iVar2;
 					}
@@ -1396,7 +1396,7 @@ int MenuSystem::getScrollPos() {
 	if (this->isMainMenu) {
 		posY = 0;
 		for (int i = 0; i < this->numItems; i++) {
-			if (!(this->items[i].flags & 0x8000)) {
+			if (!(this->items[i].flags & Menus::ITEM_HIDDEN)) {
 				height = this->getMenuItemHeight(i);
 				if (pos < (posY + (height >> 1))) {
 					return posY;

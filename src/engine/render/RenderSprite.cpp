@@ -122,7 +122,7 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 
 	int n10 = scaleFactor;
 
-	if ((flags & 0x80000000) != 0x0) {
+	if ((flags & Enums::SPRITE_FLAG_DOORLERP) != 0x0) {
 		scaleFactor = 65536;
 	}
 	if (scaleFactor == 0) {
@@ -141,18 +141,18 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 	int n14 = (n11 << 10) / app->tinyGL->sWidth;
 	int n15 = ((app->tinyGL->tHeight - app->tinyGL->imageBounds[3]) << 10) / app->tinyGL->tHeight;
 	int n16 = (n12 << 10) / app->tinyGL->tHeight;
-	if ((flags & 0x10100000) != 0x0) {
+	if ((flags & (Enums::SPRITE_FLAG_TWO_SIDED | Enums::SPRITE_FLAG_DECAL)) != 0x0) {
 		app->tinyGL->faceCull = TinyGL::CULL_NONE;
 	} else {
 		app->tinyGL->faceCull = TinyGL::CULL_CCW;
 	}
-	if ((flags & 0x2F000000) == 0x0) {
+	if ((flags & (Enums::SPRITE_FLAG_FLAT | Enums::SPRITE_FLAGS_ORIENTED)) == 0x0) {
 		z -= 512;
 		int n17 = 0;
 		int n18 = 4;
 		int n19;
 		int n20;
-		if (0x0 != (flags & 0x400000) || app->tinyGL->textureBaseSize == app->tinyGL->sWidth * app->tinyGL->tHeight) {
+		if (0x0 != (flags & Enums::SPRITE_FLAG_TILE) || app->tinyGL->textureBaseSize == app->tinyGL->sWidth * app->tinyGL->tHeight) {
 			n19 = ((((n11 >> 2) << 4) + 7) * scaleFactor) / 0x10000;
 			n20 = ((((n12 >> 1) << 4) + 7) * scaleFactor) / 0x10000;
 		} else {
@@ -182,7 +182,7 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 		}
 
 		TGLVert* transform3DVerts = app->tinyGL->transform3DVerts(app->tinyGL->mv, n18);
-		if (0x0 != (flags & 0x400000) || app->tinyGL->textureBaseSize == app->tinyGL->sWidth * app->tinyGL->tHeight) {
+		if (0x0 != (flags & Enums::SPRITE_FLAG_TILE) || app->tinyGL->textureBaseSize == app->tinyGL->sWidth * app->tinyGL->tHeight) {
 			app->tinyGL->ClipQuad(&transform3DVerts[0], &transform3DVerts[1], &transform3DVerts[2],
 			                      &transform3DVerts[3]);
 		} else {
@@ -213,13 +213,13 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 		}
 
 		int n23 = 0;
-		if ((flags & 0x4000000) != 0x0) {
+		if ((flags & Enums::SPRITE_FLAG_EAST) != 0x0) {
 			n23 = 0;
-		} else if ((flags & 0x1000000) != 0x0) {
+		} else if ((flags & Enums::SPRITE_FLAG_NORTH) != 0x0) {
 			n23 = 2;
-		} else if ((flags & 0x8000000) != 0x0) {
+		} else if ((flags & Enums::SPRITE_FLAG_WEST) != 0x0) {
 			n23 = 4;
-		} else if ((flags & 0x2000000) != 0x0) {
+		} else if ((flags & Enums::SPRITE_FLAG_SOUTH) != 0x0) {
 			n23 = 6;
 		}
 		if ((app->tinyGL->textureBaseSize == app->tinyGL->sWidth * app->tinyGL->tHeight) ||
@@ -236,7 +236,7 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 			}
 			int n26 = n24 * scaleFactor / 65536;
 			int n27 = n25 * scaleFactor / 65536;
-			if ((flags & 0x20000000) == 0x0) {
+			if ((flags & Enums::SPRITE_FLAG_FLAT) == 0x0) {
 				z += app->tinyGL->tHeight - app->tinyGL->imageBounds[3] << 4;
 				z -= 16 * (scaleFactor / 2048);
 			} else {
@@ -250,7 +250,7 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 			x <<= 4;
 			y <<= 4;
 			/*if (tileNum == Enums::TILENUM_GLASS && frame == 0) { // J2ME
-			    if ((flags & 0x3000000) != 0x0) {
+			    if ((flags & Enums::SPRITE_FLAGS_HORIZONTAL) != 0x0) {
 			        n13 += std::abs(x - this->viewX >> 2);
 			        n15 -= std::abs(y - this->viewY >> 3);
 			    }
@@ -259,17 +259,17 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 			        n15 -= std::abs(x - this->viewX >> 3);
 			    }
 			}*/
-			if ((flags & 0x20000) != 0x0) {
+			if ((flags & Enums::SPRITE_FLAG_FLIP_HORIZONTAL) != 0x0) {
 				n13 += n14;
 				n14 = -n14;
 			}
-			if ((flags & 0x40000) != 0x0) {
+			if ((flags & Enums::SPRITE_FLAG_FLIP_VERTICAL) != 0x0) {
 				n15 += n16;
 				n16 = -n16;
 			}
 
 			int n32 = n31;
-			if ((flags & 0x80000000) != 0x0) {
+			if ((flags & Enums::SPRITE_FLAG_DOORLERP) != 0x0) {
 				if (tileNum >= TILE_RED_DOOR_LOCKED && tileNum <= TILE_BLUE_DOOR_UNLOCKED) {
 					int n33 = n16;
 					n31 = (n10 * n31) / 65536;
@@ -306,7 +306,7 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 					app->tinyGL->swapXY = true;
 					app->tinyGL->drawModelVerts(app->tinyGL->mv, 4);
 				}
-			} else if ((flags & 0x20000000) == 0x0) { // Wall
+			} else if ((flags & Enums::SPRITE_FLAG_FLAT) == 0x0) { // Wall
 				for (int l = 0; l < 4; ++l) {
 					int n42 = (l & 0x2) >> 1;
 					int n43 = (l & 0x1) ^ n42 ^ 0x1;
@@ -365,13 +365,13 @@ void Render::occludeSpriteLine(int n) {
 	app->tinyGL->mv[1].z = 0;
 
 	int n6 = 0;
-	if ((n2 & 0x4000000) != 0x0) {
+	if ((n2 & Enums::SPRITE_FLAG_EAST) != 0x0) {
 		n6 = 4;
-	} else if ((n2 & 0x1000000) != 0x0) {
+	} else if ((n2 & Enums::SPRITE_FLAG_NORTH) != 0x0) {
 		n6 = 6;
-	} else if ((n2 & 0x8000000) != 0x0) {
+	} else if ((n2 & Enums::SPRITE_FLAG_WEST) != 0x0) {
 		n6 = 4;
-	} else if ((n2 & 0x2000000) != 0x0) {
+	} else if ((n2 & Enums::SPRITE_FLAG_SOUTH) != 0x0) {
 		n6 = 6;
 	}
 
@@ -597,7 +597,7 @@ void Render::renderSpriteObject(int n) {
 
 	// printf("renderSpriteObject %d\viewPitch", viewPitch);
 	unsigned int n2 = this->mapSpriteInfo[n];
-	if ((n2 & 0x10000) != 0x0) {
+	if ((n2 & Enums::SPRITE_FLAG_HIDDEN) != 0x0) {
 		return;
 	}
 
@@ -610,7 +610,7 @@ void Render::renderSpriteObject(int n) {
 	int scaleFactor = this->mapSprites[this->S_SCALEFACTOR + n] << 10;
 	int n10 = 0;
 
-	if ((this->mapSpriteInfo[n] & 0x400000) != 0x0) {
+	if ((this->mapSpriteInfo[n] & Enums::SPRITE_FLAG_TILE) != 0x0) {
 		n3 += 257;
 	}
 
@@ -644,7 +644,7 @@ void Render::renderSpriteObject(int n) {
 		this->delayedSpriteBuffer[2] = -1;
 	}
 
-	if ((n2 & 0x80000) != 0x0) {
+	if ((n2 & Enums::SPRITE_FLAG_AUTO_ANIMATE) != 0x0) {
 		n7 = (n + app->time / 100) % n7;
 	}
 
@@ -720,7 +720,7 @@ void Render::renderSpriteObject(int n) {
 		}
 	}
 
-	if ((n2 & 0x400000) != 0x0) {
+	if ((n2 & Enums::SPRITE_FLAG_TILE) != 0x0) {
 		this->renderSprite(x, y, z, n3, n7, n2, renderMode, scaleFactor, n10);
 	} else {
 		if (monster != nullptr) {
@@ -737,7 +737,7 @@ void Render::renderSpriteObject(int n) {
 				n2 = (n2 ^ (n12 & 0x1) << 17 ^ (n12 & 0x2) >> 1 << 18);
 			}
 			n2 &= 0xFFF7FFFF;
-			if ((n2 & 0xF000000) == 0x0) {
+			if ((n2 & Enums::SPRITE_FLAGS_ORIENTED) == 0x0) {
 				z += 288;
 			}
 		} else if (spriteProps && spriteProps->glow.hasGlow()) {
@@ -766,12 +766,12 @@ void Render::renderSpriteObject(int n) {
 					if (entity->param == 2) {
 						n18 = 255;
 					}
-					this->renderSprite(x, y, z + n17, n18, 0, this->mapSpriteInfo[n] & 0xFFFDFFFF, 0, scaleFactor, n10);
+					this->renderSprite(x, y, z + n17, n18, 0, this->mapSpriteInfo[n] & ~Enums::SPRITE_FLAG_FLIP_HORIZONTAL, 0, scaleFactor, n10);
 				}
 				return;
 			}
 			if (n3 == TILE_PRACTICE_TARGET) {
-				int n19 = n2 & 0xFFFDFFFF;
+				int n19 = n2 & ~Enums::SPRITE_FLAG_FLIP_HORIZONTAL;
 
 				if (app->canvas->legShotTime) {
 					if (app->canvas->legShotTime > app->time) {
@@ -1079,7 +1079,7 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 			this->renderSprite(x + (n17 * this->viewRightStepX >> 6), y + (n17 * this->viewRightStepY >> 6), z + n15,
 			                   tileNum, n26, flags, renderMode, scaleFactor, renderFlags);
 
-			bool b = (flags & 0x20000) != 0x0;
+			bool b = (flags & Enums::SPRITE_FLAG_FLIP_HORIZONTAL) != 0x0;
 
 			// Determine if head should render separately
 			bool renderHead = true;
@@ -1122,7 +1122,7 @@ void Render::renderSpriteAnim(int n, int frame, int x, int y, int z, int tileNum
 					// First flash (dual-flare monsters like Mancubus, Revenant)
 					int fx = flare.flash1X * this->viewRightStepX >> 6;
 					int fy = flare.flash1X * this->viewRightStepY >> 6;
-					if ((flags & 0x20000) != 0x0) {
+					if ((flags & Enums::SPRITE_FLAG_FLIP_HORIZONTAL) != 0x0) {
 						fx = -fx;
 						fy = -fy;
 					}
@@ -1266,7 +1266,7 @@ void Render::renderFloaterAnim(int n, int frame, int x, int y, int z, int tileNu
 			}
 			this->renderSprite(x, y, z + (n15 << 4), tileNum, frame, flags, renderMode, scaleFactor, renderFlags);
 			if (anim == Enums::MANIM_WALK_BACK && fl.hasBackExtraSprite) {
-				this->renderSprite(x, y, z, tileNum, fl.backExtraSpriteIdx, flags & 0xFFFDFFFF, renderMode,
+				this->renderSprite(x, y, z, tileNum, fl.backExtraSpriteIdx, flags & ~Enums::SPRITE_FLAG_FLIP_HORIZONTAL, renderMode,
 				                   scaleFactor, renderFlags);
 				break;
 			}
@@ -1469,7 +1469,7 @@ void Render::renderSpecialBossAnim(int n, int frame, int x, int y, int z, int ti
 					int n26;
 					int pos = sb.flareLateralPos;
 					int flareZ = sb.attackTorsoZ + sb.flareTorsoZExtra;
-					if ((flags & 0x20000) != 0x0) {
+					if ((flags & Enums::SPRITE_FLAG_FLIP_HORIZONTAL) != 0x0) {
 						n25 = x - (pos * this->viewRightStepX >> 6);
 						n26 = y - (pos * this->viewRightStepY >> 6);
 					} else {

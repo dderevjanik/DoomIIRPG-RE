@@ -49,7 +49,7 @@ void Game::prepareMonsters() {
 			if (entity->isMonster()) {
 				int sprite = entity->getSprite();
 				EntityMonster* monster = entity->monster;
-				if (0x0 != (entity->info & 0x1010000) && 0x0 == (entity->monsterFlags & 0x90) && n4 < n3 / 2 && n2 < 8 &&
+				if (0x0 != (entity->info & 0x1010000) && 0x0 == (entity->monsterFlags & (Enums::MFLAG_NOTRACK | Enums::MFLAG_NORESPAWN)) && n4 < n3 / 2 && n2 < 8 &&
 				    app->nextByte() <= 100) {
 					Render* render = app->render.get();
 					if (this->findMapEntity(render->getSpriteX(sprite),
@@ -112,7 +112,7 @@ void Game::activate(Entity* entity, bool b, bool b2, bool b3, bool b4) {
 	}
 	entity->info |= 0x40000;
 	entity->monsterFlags &= ~Enums::MFLAG_NOACTIVATE;
-	if (b && 0x0 != (entity->monsterFlags & 0x2)) {
+	if (b && 0x0 != (entity->monsterFlags & Enums::MFLAG_TRIGGERONACTIVATE)) {
 		this->executeStaticFunc(9);
 		entity->monsterFlags &= ~Enums::MFLAG_TRIGGERONACTIVATE;
 	}
@@ -128,7 +128,7 @@ void Game::killAll() {
 		if (entity->def != nullptr && entity->def->eType == Enums::ET_MONSTER) {
 			if (!entity->isBoss()) {
 				if ((entity->info & 0x20000) != 0x0) {
-					if ((entity->monsterFlags & 0x80) == 0x0) {
+					if ((entity->monsterFlags & Enums::MFLAG_NOTRACK) == 0x0) {
 						entity->died(false, nullptr);
 					}
 				}
@@ -493,7 +493,7 @@ void Game::spawnDropItem(Entity* entity) {
 	if (!entity->isMonster()) {
 		b2 = (b & entity->param == 0);
 	} else {
-		b2 = (b & (entity->monsterFlags & 0x800) == 0x0);
+		b2 = (b & (entity->monsterFlags & Enums::MFLAG_LOOTED) == 0x0);
 	}
 	if (b2) {
 		int n = entity->loot->lootSet[0];
@@ -785,7 +785,7 @@ void Game::raiseCorpses() {
 			int sprite = inactiveMonsters->getSprite();
 			if ((inactiveMonsters->info & 0x10000) == 0x0 && (inactiveMonsters->info & 0x8000000) == 0x0 &&
 			    (inactiveMonsters->info & 0x1000000) != 0x0 && !inactiveMonsters->isBoss() &&
-			    (inactiveMonsters->monsterFlags & 0x40) == 0x0 &&
+			    (inactiveMonsters->monsterFlags & Enums::MFLAG_NORAISE) == 0x0 &&
 			    this->findMapEntity(app->render->getSpriteX(sprite),
 			                        app->render->getSpriteY(sprite), 15535) == nullptr &&
 			    (this->difficulty != Enums::DIFFICULTY_NIGHTMARE || 0x0 == (inactiveMonsters->monsterEffects & 0x4))) {

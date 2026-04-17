@@ -11,6 +11,7 @@
 #include "EntityDef.h"
 #include "Text.h"
 #include "EntityTypes.h"
+#include "Enums.h"
 #include "LootComponent.h"
 #include "LootDistributor.h"
 
@@ -33,11 +34,11 @@ void LootDistributor::poolLoot(int* array) {
 				++entity->param;
 			}
 			else {
-				if ((entity->monsterFlags & 0x800) != 0x0) {
+				if ((entity->monsterFlags & Enums::MFLAG_LOOTED) != 0x0) {
 					entity = entity->nextOnTile;
 					continue;
 				}
-				entity->monsterFlags |= 0x800;
+				entity->monsterFlags |= Enums::MFLAG_LOOTED;
 			}
 			entity->info |= 0x400000;
 			for (int i = 0; i < 3; ++i) {

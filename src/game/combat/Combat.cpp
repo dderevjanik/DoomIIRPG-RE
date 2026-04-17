@@ -562,7 +562,7 @@ int Combat::monsterSeq() {
             app->canvas->shakeTime = 0;
             app->hud->damageDir = 0;
             app->hud->damageTime = 0;
-            this->curAttacker->monsterFlags |= 0x400;
+            this->curAttacker->monsterFlags |= Enums::MFLAG_ATTACKING;
             app->game->gsprite_clear(64);
             app->canvas->invalidateRect();
             return 0;
@@ -829,7 +829,7 @@ void Combat::explodeOnMonster() {
             }
             if (this->targetMonster->ce.getStat(Enums::STAT_HEALTH) > 0) {
                 int n = 0;
-                if (0x0 != (this->curTarget->monsterEffects & 0x2) || (this->curTarget->monsterFlags & 0x1000) != 0x0 || pain) {
+                if (0x0 != (this->curTarget->monsterEffects & 0x2) || (this->curTarget->monsterFlags & Enums::MFLAG_KNOCKBACK) != 0x0 || pain) {
                     n = 0;
                 }
                 if (n > 0) {
@@ -1088,7 +1088,7 @@ void Combat::hurtEntityAt(int n, int n2, int n3, int n4, int n5, int n6, Entity*
                         app->render->setSpriteScaleFactor(gSprite->sprite, 32);
                     }
                     bool pain = mapEntity->pain(n8, nullptr);
-                    if ((mapEntity->monsterFlags & 0x1000) == 0x0 && !pain) {
+                    if ((mapEntity->monsterFlags & Enums::MFLAG_KNOCKBACK) == 0x0 && !pain) {
                         mapEntity->knockback((n3 << 6) + 32, (n4 << 6) + 32, n5);
                     }
                     app->localization->resetTextArgs();

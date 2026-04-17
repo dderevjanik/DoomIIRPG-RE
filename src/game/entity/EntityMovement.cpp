@@ -50,10 +50,10 @@ void Entity::aiMoveToGoal() {
 
 void Entity::aiThink(bool b) {
     EntityMonster* monster = this->monster;
-    if (this->monsterFlags & 0x400) {
-        this->monsterFlags &= ~0x400;
+    if (this->monsterFlags & Enums::MFLAG_ATTACKING) {
+        this->monsterFlags &= ~Enums::MFLAG_ATTACKING;
     }
-    if (!(this->monsterFlags & 0x20)) {
+    if (!(this->monsterFlags & Enums::MFLAG_NOTHINK)) {
         if (!this->aiIsValidGoal()) {
             this->aiChooseNewGoal(b);
         }
@@ -85,8 +85,8 @@ LerpSprite* Entity::aiInitLerp(int travelTime) {
 
 void Entity::aiFinishLerp() {
     this->ai->goalFlags &= ~1;
-    if ((this->monsterFlags & 0x1000) != 0x0) {
-        this->monsterFlags &= ~0x1000;
+    if ((this->monsterFlags & Enums::MFLAG_KNOCKBACK) != 0x0) {
+        this->monsterFlags &= ~Enums::MFLAG_KNOCKBACK;
         this->info &= ~0x10000000;
     }
     else {
@@ -305,7 +305,7 @@ void Entity::aiReachedGoal_MOVE() {
     AIComponent* ai = this->ai;
     EntityDef* def = this->def;
     this->info &= ~0x10000000;
-    if (ai->goalType != 4 && ai->goalType != 5 && (app->combat->monsterBehaviors[def->monsterIdx].moveToAttack || (app->combat->monsterBehaviors[def->monsterIdx].evading && !(this->monsterFlags & 0x1)))) {
+    if (ai->goalType != 4 && ai->goalType != 5 && (app->combat->monsterBehaviors[def->monsterIdx].moveToAttack || (app->combat->monsterBehaviors[def->monsterIdx].evading && !(this->monsterFlags & Enums::MFLAG_ABILITY)))) {
         Entity* target = &app->game->entities[1];
         int aiWeaponForTarget = this->aiWeaponForTarget(target);
         if (aiWeaponForTarget != -1) {
@@ -321,7 +321,7 @@ void Entity::aiReachedGoal_MOVE() {
         }
     }
     if (app->combat->monsterBehaviors[def->monsterIdx].evading) {
-        this->monsterFlags |= 0x1;
+        this->monsterFlags |= Enums::MFLAG_ABILITY;
     }
     if ((ai->goalFlags & 0x10) != 0x0) {
         ai->goalFlags &= ~0x10;

@@ -243,7 +243,7 @@ void MenuSystem::paint(Graphics* graphics) {
 		bool isScrollBarTwo = (items->flags & Menus::ITEM_SCROLLBARTWO); // [GEC]
 		action = (items->action && !isScrollBar && !isScrollBarTwo) ? items->action : 0; // [GEC]
 
-		if ((items->flags & 0x8000) != 0)
+		if ((items->flags & Menus::ITEM_HIDDEN) != 0)
 		{
 			v35 = v33;
 			goto next_menu_item;
@@ -257,16 +257,16 @@ void MenuSystem::paint(Graphics* graphics) {
 		if (v35 > 0)
 		{
 			v80 = v33 + menuRect[1];
-			if (items->textField != 3072 || (items->flags & 0x40) != 0)
+			if (items->textField != 3072 || (items->flags & Menus::ITEM_DIVIDER) != 0)
 			{
 				textBuffer1->setLength(0);
-				if ((items->flags & 0x400) != 0)
+				if ((items->flags & Menus::ITEM_CHECKED) != 0)
 				{
 					textBuffer1->append('\x87');
 					textBuffer1->append(" ");
 				}
 				app->localization->composeTextField(items->textField, textBuffer1);
-				if ((items->flags & 2) == 0) {
+				if ((items->flags & Menus::ITEM_NODEHYPHENATE) == 0) {
 					textBuffer1->dehyphenate();
 				}
 				if (action)
@@ -280,12 +280,12 @@ void MenuSystem::paint(Graphics* graphics) {
 					}
 				}
 				flags = items->flags;
-				if ((flags & 0x40) != 0)
+				if ((flags & Menus::ITEM_DIVIDER) != 0)
 				{
 					this->buildDivider(textBuffer1, v78);
 					flags = items->flags;
 				}
-				if ((flags & 8) != 0)
+				if ((flags & Menus::ITEM_ALIGN_CENTER) != 0)
 				{
 					v40 = textBuffer1->getStringWidth(false);
 					v42 = v40 >> 1;
@@ -553,7 +553,7 @@ void MenuSystem::drawButtonFrame(Graphics* graphics) {
 	{
 		int posY = 0;
 		for (int i = 0; i < this->numItems; i = i + 1) {
-			if (!(this->items[i].flags & 0x8000)) {
+			if (!(this->items[i].flags & Menus::ITEM_HIDDEN)) {
 				posY += this->getMenuItemHeight(i);
 			}
 		}
@@ -579,7 +579,7 @@ void MenuSystem::drawTouchButtons(Graphics* graphics, bool b) {
 	int maxItemsGame = 0;
 	for (int i = 0; (i < this->numItems) && (posY < app->canvas->menuRect[3]); i++)
 	{
-		if (!(this->items[i].flags & 0x8000)) {
+		if (!(this->items[i].flags & Menus::ITEM_HIDDEN)) {
 			height = this->getMenuItemHeight(i);
 
 			if ((posY + height) > 0) { // [GEC]
@@ -1126,7 +1126,7 @@ void MenuSystem::drawOptionsScreen(Graphics* graphics)
 		v23 = app->canvas->menuRect[0];
 
 		for (v22 = 0; v22 < numItems; ++v22) {
-			if (!(this->items[v22].flags & 0x8000)) {
+			if (!(this->items[v22].flags & Menus::ITEM_HIDDEN)) {
 				MenuItemHeight = MenuSystem::getMenuItemHeight(v22);
 				numItems = this->numItems;
 				v19 += MenuItemHeight;
@@ -1237,7 +1237,7 @@ void MenuSystem::drawOptionsScreen(Graphics* graphics)
 		v43 = this->numItems;
 		v44 = app->canvas->menuRect[0];
 		for (i = 0; i < v43; ++i) {
-			if (!(this->items[i].flags & 0x8000)) {
+			if (!(this->items[i].flags & Menus::ITEM_HIDDEN)) {
 				v47 = this->getMenuItemHeight(i);
 				v43 = this->numItems;
 				v42 += v47;

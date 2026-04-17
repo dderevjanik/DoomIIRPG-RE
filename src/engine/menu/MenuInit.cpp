@@ -1089,7 +1089,7 @@ void MenuSystem::initMenu(int menu) {
 	int oldMenu = this->numItems;
 	MenuSystem* pMVar15 = this;
 	for (itemIdx = 0; itemIdx < this->numItems; itemIdx++) {
-		if ((pMVar15->items[itemIdx].flags & 0x8000U) == 0) {
+		if ((pMVar15->items[itemIdx].flags & Menus::ITEM_HIDDEN) == 0) {
 			itemHeight = this->getMenuItemHeight(itemIdx);
 			totalHeight = totalHeight + itemHeight;
 		}

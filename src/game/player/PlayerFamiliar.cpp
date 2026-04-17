@@ -164,7 +164,7 @@ void Player::familiarDied() {
 		app->canvas->shakeTime = 0;
 		app->hud->damageDir = 0;
 		app->hud->damageTime = 0;
-		app->combat->curAttacker->monsterFlags |= 0x400;
+		app->combat->curAttacker->monsterFlags |= Enums::MFLAG_ATTACKING;
 		app->game->gsprite_clear(64);
 		app->canvas->invalidateRect();
 	}

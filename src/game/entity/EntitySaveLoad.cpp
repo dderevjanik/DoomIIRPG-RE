@@ -152,7 +152,7 @@ void Entity::saveState(OutputStream* OS, int n) {
     if (this->isMonster()) {
         OS->writeShort(this->monsterFlags);
         if ((this->info & 0x10000) == 0x0) {
-            if ((this->monsterFlags & 0x200) != 0x0) {
+            if ((this->monsterFlags & Enums::MFLAG_SCALED) != 0x0) {
                 OS->writeByte(mapSprites[app->render->S_SCALEFACTOR + sprite]);
             }
             if ((n & 0x100000) == 0x0) {
@@ -251,15 +251,15 @@ void Entity::loadState(InputStream* IS, int n) {
     }
     if (this->isMonster()) {
         if ((n & 0x800000) != 0x0) {
-            this->monsterFlags |= 0x10;
+            this->monsterFlags |= Enums::MFLAG_NORESPAWN;
             this->info |= 0x400000;
         }
         if ((n & 0x400000) != 0x0) {
-            this->monsterFlags |= 0x80;
+            this->monsterFlags |= Enums::MFLAG_NOTRACK;
             this->info |= 0x400000;
         }
         if ((n & 0x8000000) != 0x0) {
-            this->monsterFlags |= 0x800;
+            this->monsterFlags |= Enums::MFLAG_LOOTED;
             this->info |= 0x400000;
         }
     }
@@ -333,7 +333,7 @@ void Entity::loadState(InputStream* IS, int n) {
     if (this->isMonster()) {
         this->monsterFlags = IS->readShort();
         if ((this->info & 0x10000) == 0x0) {
-            if ((this->monsterFlags & 0x200) != 0x0) {
+            if ((this->monsterFlags & Enums::MFLAG_SCALED) != 0x0) {
                 app->render->setSpriteScaleFactor(sprite2, (short)IS->readUnsignedByte());
             }
             if ((n & 0x100000) != 0x0) {
@@ -451,18 +451,18 @@ int Entity::getSaveHandle(bool b) {
         }
     }
     if (this->isMonster()) {
-        if ((this->monsterFlags & 0x10) != 0x0) {
+        if ((this->monsterFlags & Enums::MFLAG_NORESPAWN) != 0x0) {
             n |= 0x800000;
         }
-        if ((this->monsterFlags & 0x80) != 0x0) {
+        if ((this->monsterFlags & Enums::MFLAG_NOTRACK) != 0x0) {
             n |= 0x400000;
         }
-        if ((this->monsterFlags & 0x800) != 0x0) {
+        if ((this->monsterFlags & Enums::MFLAG_LOOTED) != 0x0) {
             n |= 0x8000000;
         }
     }
     if (b) {
-        if (this->def->eType == Enums::ET_CORPSE && this->def->eSubType != Enums::CORPSE_SKELETON && !droppedEntity && this->isMonster() && 0x0 == (this->monsterFlags & 0x80)) {
+        if (this->def->eType == Enums::ET_CORPSE && this->def->eSubType != Enums::CORPSE_SKELETON && !droppedEntity && this->isMonster() && 0x0 == (this->monsterFlags & Enums::MFLAG_NOTRACK)) {
             n = ((n & 0xFFFBFFFF) | 0x80000);
         }
         else if (this->def->eType == Enums::ET_MONSTER) {
