@@ -65,7 +65,7 @@ Non-focusable text display.
 
 ### button
 
-Focusable button with highlight state. Triggers an action on press.
+Focusable button with highlight state. Triggers an action on press. Supports background images or colored rect fallback.
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
@@ -76,9 +76,11 @@ Focusable button with highlight state. Triggers an action on press.
 | `string_id` | int | -1 | Localized string ID |
 | `color` | int | 0xFFFFFFFF | Text color |
 | `highlight_color` | int | 0xFF3366FF | Focus highlight color |
+| `bg_color` | int | 0xFF333333 | Fallback background color (when no image) |
+| `border_color` | int | 0xFF666666 | Fallback border color (when no image) |
 | `action` | string | `""` | Action to dispatch on click |
-| `image` | string | `""` | Normal state background image |
-| `image_highlight` | string | `""` | Focused/highlight background image |
+| `image` | string | `""` | Normal state background image name |
+| `image_highlight` | string | `""` | Focused background image name |
 
 ### checkbox
 
@@ -93,6 +95,10 @@ Focusable toggle with check indicator.
 | `string_id` | int | -1 | Localized string ID |
 | `color` | int | 0xFFFFFFFF | Text color |
 | `highlight_color` | int | 0xFF3366FF | Focus highlight color |
+| `check_box_color` | int | 0xFF999999 | Checkbox outline color |
+| `check_fill_color` | int | 0xFF00FF00 | Checkbox fill color when checked |
+| `check_size` | int | 12 | Checkbox box size in pixels |
+| `check_padding` | int | 6 | Space between checkbox and label text |
 | `checked` | bool | false | Initial checked state |
 
 ### vertical_menu
@@ -106,8 +112,13 @@ Focusable scrollable list of selectable items. Up/Down navigates internally; at 
 | `w`, `h` | int | 320x160 | Size |
 | `item_height` | int | 32 | Height per item in pixels |
 | `visible_count` | int | 5 | Number of visible items |
+| `item_text_padding` | int | 8 | Left padding for item text |
 | `color` | int | 0xFFFFFFFF | Text color |
 | `highlight_color` | int | 0xFF3366FF | Selected item highlight |
+| `scrollbar_color` | int | 0xFF666666 | Scrollbar indicator color |
+| `scrollbar_width` | int | 3 | Scrollbar width in pixels |
+| `scrollbar_offset` | int | 4 | Scrollbar distance from right edge |
+| `scrollbar_min_height` | int | 8 | Minimum scrollbar height |
 | `items` | list | `[]` | Menu items (see below) |
 
 Each item:
@@ -134,6 +145,10 @@ Focusable horizontal slider with label, track, fill bar, and numeric value displ
 | `highlight_color` | int | 0xFF3366FF | Focus highlight color |
 | `track_color` | int | 0xFF444444 | Track background color |
 | `fill_color` | int | 0xFF00AA00 | Fill bar color |
+| `track_height` | int | 6 | Track bar height in pixels |
+| `label_width` | int | 40 | Label area width (percentage of widget width) |
+| `value_text_width` | int | 40 | Pixels reserved for value text on the right |
+| `text_padding` | int | 4 | Padding for label and value text |
 | `value` | int | 50 | Initial value |
 | `min` | int | 0 | Minimum value |
 | `max` | int | 100 | Maximum value |
@@ -152,6 +167,7 @@ Focusable value cycler. Left/Right cycles through options, displayed as `< value
 | `string_id` | int | -1 | Localized string ID |
 | `color` | int | 0xFFFFFFFF | Text color |
 | `highlight_color` | int | 0xFF3366FF | Focus highlight color |
+| `text_padding` | int | 4 | Padding for label and value text |
 | `selected` | int | 0 | Initially selected option index |
 | `options` | list | `[]` | Available options |
 
@@ -161,24 +177,6 @@ Each option:
 |----------|------|-------------|
 | `label` | string | Display text |
 | `value` | int | Arbitrary value (defaults to index) |
-
-Example:
-```yaml
-- type: selector
-  id: window_mode
-  x: 60
-  y: 100
-  w: 360
-  h: 26
-  text: "Window Mode"
-  options:
-    - label: "Fullscreen"
-      value: 0
-    - label: "Windowed"
-      value: 1
-    - label: "Borderless"
-      value: 2
-```
 
 ### scroll_panel
 
@@ -190,7 +188,19 @@ Container that clips children to its bounds and supports scroll.
 | `x`, `y` | int | 0 | Position |
 | `w`, `h` | int | 200x200 | Size |
 | `scroll_speed` | int | 20 | Pixels per scroll step |
+| `scrollbar_color` | int | 0xFF666666 | Scrollbar indicator color |
+| `scrollbar_width` | int | 3 | Scrollbar width in pixels |
+| `scrollbar_offset` | int | 4 | Scrollbar distance from right edge |
+| `scrollbar_min_height` | int | 8 | Minimum scrollbar height |
 | `children` | list | `[]` | Child widgets |
+
+### Common properties
+
+All widgets support these properties:
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `disabled` | bool | false | Dimmed, skipped in focus order, ignores input |
 
 ---
 

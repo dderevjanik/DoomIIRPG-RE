@@ -15,11 +15,16 @@ public:
 
     std::vector<Item> items;
     int selectedIndex = 0;
-    int scrollOffset = 0;       // index of first visible item
+    int scrollOffset = 0;
     int visibleCount = 5;
     int itemHeight = 32;
+    int itemTextPadding = 8;
     int highlightColor = 0xFF3366FF;
     int color = 0xFFFFFFFF;
+    int scrollbarColor = 0xFF666666;
+    int scrollbarWidth = 3;
+    int scrollbarOffset = 4;    // from right edge
+    int scrollbarMinHeight = 8;
 
     std::function<void(int index, const std::string& actionName)> onSelect;
 

@@ -10,7 +10,7 @@ WCheckbox::WCheckbox() {
 void WCheckbox::draw(Graphics* graphics, Applet* app, bool focused) {
     if (!visible) return;
 
-    int checkY = bounds.y + (bounds.h - CHECK_SIZE) / 2;
+    int checkY = bounds.y + (bounds.h - checkSize) / 2;
 
     // Draw focus highlight behind entire widget
     if (focused) {
@@ -18,9 +18,9 @@ void WCheckbox::draw(Graphics* graphics, Applet* app, bool focused) {
     }
 
     // Draw checkbox box
-    graphics->drawRect(bounds.x, checkY, CHECK_SIZE, CHECK_SIZE, 0xFF999999);
+    graphics->drawRect(bounds.x, checkY, checkSize, checkSize, effectiveColor(checkBoxColor));
     if (checked) {
-        graphics->fillRect(bounds.x + 2, checkY + 2, CHECK_SIZE - 4, CHECK_SIZE - 4, 0xFF00FF00);
+        graphics->fillRect(bounds.x + 2, checkY + 2, checkSize - 4, checkSize - 4, effectiveColor(checkFillColor));
     }
 
     // Draw label text
@@ -35,7 +35,7 @@ void WCheckbox::draw(Graphics* graphics, Applet* app, bool focused) {
     }
 
     graphics->setColor(effectiveColor(color));
-    int textX = bounds.x + CHECK_SIZE + CHECK_PADDING;
+    int textX = bounds.x + checkSize + checkPadding;
     int textY = bounds.y + bounds.h / 2;
     graphics->drawString(buf, textX, textY, Graphics::ANCHORS_LEFT | Graphics::ANCHORS_VCENTER);
     buf->dispose();

@@ -11,11 +11,10 @@ void WSlider::draw(Graphics* graphics, Applet* app, bool focused) {
     if (!visible) return;
 
     // Layout: [label text] [===track====] [value]
-    int labelW = bounds.w * LABEL_WIDTH_RATIO / 100;
-    int valueTextW = 40;
+    int labelW = bounds.w * labelWidthRatio / 100;
     int trackX = bounds.x + labelW;
-    int trackW = bounds.w - labelW - valueTextW;
-    int trackY = bounds.y + (bounds.h - TRACK_HEIGHT) / 2;
+    int trackW = bounds.w - labelW - valueTextWidth;
+    int trackY = bounds.y + (bounds.h - trackHeight) / 2;
 
     // Focus highlight
     if (focused) {
@@ -32,7 +31,7 @@ void WSlider::draw(Graphics* graphics, Applet* app, bool focused) {
         buf->append(text.c_str());
     }
     graphics->setColor(effectiveColor(color));
-    graphics->drawString(buf, bounds.x + 4, bounds.y + bounds.h / 2,
+    graphics->drawString(buf, bounds.x + textPadding, bounds.y + bounds.h / 2,
                          Graphics::ANCHORS_LEFT | Graphics::ANCHORS_VCENTER);
 
     // Draw value text
@@ -40,18 +39,18 @@ void WSlider::draw(Graphics* graphics, Applet* app, bool focused) {
     if (focused) buf->append("< ");
     buf->append(value);
     if (focused) buf->append(" >");
-    graphics->drawString(buf, bounds.x + bounds.w - 4, bounds.y + bounds.h / 2,
+    graphics->drawString(buf, bounds.x + bounds.w - textPadding, bounds.y + bounds.h / 2,
                          Graphics::ANCHORS_RIGHT | Graphics::ANCHORS_VCENTER);
     buf->dispose();
 
     // Draw track background
-    graphics->fillRect(trackX, trackY, trackW, TRACK_HEIGHT, trackColor);
+    graphics->fillRect(trackX, trackY, trackW, trackHeight, effectiveColor(trackColor));
 
     // Draw fill
     int range = maxValue - minValue;
     if (range > 0) {
         int fillW = trackW * (value - minValue) / range;
-        graphics->fillRect(trackX, trackY, fillW, TRACK_HEIGHT, fillColor);
+        graphics->fillRect(trackX, trackY, fillW, trackHeight, effectiveColor(fillColor));
     }
 }
 
@@ -71,11 +70,9 @@ bool WSlider::handleInput(const WidgetInput& input) {
     }
     if (input.action == WidgetAction::TouchUp) {
         if (containsPoint(input.touchX, input.touchY)) {
-            // Map touch X to value within the track area
-            int labelW = bounds.w * LABEL_WIDTH_RATIO / 100;
-            int valueTextW = 40;
+            int labelW = bounds.w * labelWidthRatio / 100;
             int trackX = bounds.x + labelW;
-            int trackW = bounds.w - labelW - valueTextW;
+            int trackW = bounds.w - labelW - valueTextWidth;
             if (trackW > 0 && input.touchX >= trackX) {
                 int range = maxValue - minValue;
                 value = minValue + range * (input.touchX - trackX) / trackW;

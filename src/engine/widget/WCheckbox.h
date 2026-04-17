@@ -9,6 +9,10 @@ public:
     int stringId = -1;
     int color = 0xFFFFFFFF;
     int highlightColor = 0xFF3366FF;
+    int checkBoxColor = 0xFF999999;
+    int checkFillColor = 0xFF00FF00;
+    int checkSize = 12;
+    int checkPadding = 6;
     bool checked = false;
 
     std::function<void(bool)> onToggle;
@@ -19,6 +23,4 @@ public:
 
 private:
     void toggle();
-    static constexpr int CHECK_SIZE = 12;
-    static constexpr int CHECK_PADDING = 6;
 };

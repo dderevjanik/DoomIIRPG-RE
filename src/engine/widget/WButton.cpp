@@ -1,6 +1,7 @@
 #include "WButton.h"
 #include "Graphics.h"
 #include "App.h"
+#include "MenuSystem.h"
 #include "Text.h"
 #include "Image.h"
 
@@ -11,16 +12,20 @@ WButton::WButton() {
 void WButton::draw(Graphics* graphics, Applet* app, bool focused) {
     if (!visible) return;
 
+    // Resolve images by name at render time (avoids stale pointers)
+    Image* imgN = imgNormalName.empty() ? nullptr : app->menuSystem->resolveMenuImage(imgNormalName);
+    Image* imgH = imgHighlightName.empty() ? nullptr : app->menuSystem->resolveMenuImage(imgHighlightName);
+
     // Draw background
-    if (focused && imgHighlight) {
-        graphics->drawImage(imgHighlight, bounds.x, bounds.y, 0, 0, 0);
-    } else if (imgNormal) {
-        graphics->drawImage(imgNormal, bounds.x, bounds.y, 0, 0, 0);
+    if (focused && imgH) {
+        graphics->drawImage(imgH, bounds.x, bounds.y, 0, 0, 0);
+    } else if (imgN) {
+        graphics->drawImage(imgN, bounds.x, bounds.y, 0, 0, 0);
     } else {
         // Fallback: draw a filled rect
-        int bgColor = focused ? highlightColor : 0xFF333333;
-        graphics->fillRect(bounds.x, bounds.y, bounds.w, bounds.h, bgColor);
-        graphics->drawRect(bounds.x, bounds.y, bounds.w, bounds.h, 0xFF666666);
+        int bg = focused ? highlightColor : bgColor;
+        graphics->fillRect(bounds.x, bounds.y, bounds.w, bounds.h, bg);
+        graphics->drawRect(bounds.x, bounds.y, bounds.w, bounds.h, borderColor);
     }
 
     // Draw text centered in bounds

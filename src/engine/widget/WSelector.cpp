@@ -26,7 +26,7 @@ void WSelector::draw(Graphics* graphics, Applet* app, bool focused) {
         buf->append(text.c_str());
     }
     graphics->setColor(effectiveColor(color));
-    graphics->drawString(buf, bounds.x + 4, bounds.y + bounds.h / 2,
+    graphics->drawString(buf, bounds.x + textPadding, bounds.y + bounds.h / 2,
                          Graphics::ANCHORS_LEFT | Graphics::ANCHORS_VCENTER);
 
     // Draw selected value on the right: < value >
@@ -34,7 +34,7 @@ void WSelector::draw(Graphics* graphics, Applet* app, bool focused) {
     if (focused) buf->append("< ");
     buf->append(options[selectedOption].label.c_str());
     if (focused) buf->append(" >");
-    graphics->drawString(buf, bounds.x + bounds.w - 4, bounds.y + bounds.h / 2,
+    graphics->drawString(buf, bounds.x + bounds.w - textPadding, bounds.y + bounds.h / 2,
                          Graphics::ANCHORS_RIGHT | Graphics::ANCHORS_VCENTER);
 
     buf->dispose();
@@ -47,7 +47,7 @@ bool WSelector::handleInput(const WidgetInput& input) {
         if (selectedOption > 0) {
             selectedOption--;
         } else {
-            selectedOption = static_cast<int>(options.size()) - 1; // wrap
+            selectedOption = static_cast<int>(options.size()) - 1;
         }
         if (onChange) onChange(selectedOption, options[selectedOption].value);
         return true;
@@ -57,7 +57,7 @@ bool WSelector::handleInput(const WidgetInput& input) {
             if (selectedOption < static_cast<int>(options.size()) - 1) {
                 selectedOption++;
             } else {
-                selectedOption = 0; // wrap
+                selectedOption = 0;
             }
         }
         if (onChange) onChange(selectedOption, options[selectedOption].value);
@@ -65,7 +65,6 @@ bool WSelector::handleInput(const WidgetInput& input) {
     }
     if (input.action == WidgetAction::TouchUp) {
         if (containsPoint(input.touchX, input.touchY)) {
-            // Cycle forward on touch
             selectedOption = (selectedOption + 1) % static_cast<int>(options.size());
             if (onChange) onChange(selectedOption, options[selectedOption].value);
             return true;

@@ -9,8 +9,10 @@ public:
     int stringId = -1;
     int color = 0xFFFFFFFF;
     int highlightColor = 0xFF3366FF;
-    Image* imgNormal = nullptr;
-    Image* imgHighlight = nullptr;
+    int bgColor = 0xFF333333;
+    int borderColor = 0xFF666666;
+    std::string imgNormalName;
+    std::string imgHighlightName;
     std::string actionName;
 
     std::function<void()> onClick;

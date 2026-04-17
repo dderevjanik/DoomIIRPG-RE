@@ -12,11 +12,9 @@ void WScrollPanel::draw(Graphics* graphics, Applet* app, bool focused) {
 
     for (auto& child : children) {
         if (!child->visible) continue;
-        // Temporarily offset child bounds for drawing
         int origY = child->bounds.y;
         child->bounds.y -= scrollY;
 
-        // Only draw if within visible area
         if (child->bounds.y + child->bounds.h > bounds.y &&
             child->bounds.y < bounds.y + bounds.h) {
             child->draw(graphics, app, false);
@@ -27,12 +25,12 @@ void WScrollPanel::draw(Graphics* graphics, Applet* app, bool focused) {
 
     // Draw scrollbar if content overflows
     if (contentHeight > bounds.h) {
-        int barX = bounds.x + bounds.w - 4;
+        int barX = bounds.x + bounds.w - scrollbarOffset;
         int barH = bounds.h * bounds.h / contentHeight;
-        if (barH < 8) barH = 8;
+        if (barH < scrollbarMinHeight) barH = scrollbarMinHeight;
         int maxScroll = contentHeight - bounds.h;
         int barY = bounds.y + (bounds.h - barH) * scrollY / maxScroll;
-        graphics->fillRect(barX, barY, 3, barH, 0xFF666666);
+        graphics->fillRect(barX, barY, scrollbarWidth, barH, effectiveColor(scrollbarColor));
     }
 
     graphics->clearClipRect();

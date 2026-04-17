@@ -36,16 +36,16 @@ void WVerticalMenu::draw(Graphics* graphics, Applet* app, bool focused) {
 
         graphics->setColor(effectiveColor(color));
         int textY = itemY + itemHeight / 2;
-        graphics->drawString(buf, bounds.x + 8, textY, Graphics::ANCHORS_LEFT | Graphics::ANCHORS_VCENTER);
+        graphics->drawString(buf, bounds.x + itemTextPadding, textY, Graphics::ANCHORS_LEFT | Graphics::ANCHORS_VCENTER);
     }
 
     // Draw scrollbar indicator if content overflows
     if (static_cast<int>(items.size()) > visibleCount) {
-        int barX = bounds.x + bounds.w - 4;
+        int barX = bounds.x + bounds.w - scrollbarOffset;
         int barH = bounds.h * visibleCount / static_cast<int>(items.size());
-        if (barH < 8) barH = 8;
+        if (barH < scrollbarMinHeight) barH = scrollbarMinHeight;
         int barY = bounds.y + (bounds.h - barH) * scrollOffset / (static_cast<int>(items.size()) - visibleCount);
-        graphics->fillRect(barX, barY, 3, barH, 0xFF666666);
+        graphics->fillRect(barX, barY, scrollbarWidth, barH, effectiveColor(scrollbarColor));
     }
 
     buf->dispose();
@@ -61,7 +61,7 @@ bool WVerticalMenu::handleInput(const WidgetInput& input) {
             ensureVisible();
             return true;
         }
-        return false; // at top, let focus move to previous widget
+        return false;
     }
     if (input.action == WidgetAction::Down) {
         if (selectedIndex < static_cast<int>(items.size()) - 1) {
@@ -69,7 +69,7 @@ bool WVerticalMenu::handleInput(const WidgetInput& input) {
             ensureVisible();
             return true;
         }
-        return false; // at bottom, let focus move to next widget
+        return false;
     }
     if (input.action == WidgetAction::Confirm) {
         if (onSelect) onSelect(selectedIndex, items[selectedIndex].actionName);

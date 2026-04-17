@@ -31,7 +31,6 @@ bool WidgetLoader::loadScreen(WidgetScreen* screen, Applet* app, const char* yam
 
     screen->screenId = screenNode["id"].asString();
     screen->backgroundColor = screenNode["background_color"].asInt(0xFF000000);
-
     screen->backgroundImageName = screenNode["background_image"].asString("");
     screen->backAction = screenNode["back_action"].asString("back");
 
@@ -70,9 +69,11 @@ std::unique_ptr<Widget> WidgetLoader::parseWidget(const DataNode& node, Applet* 
         w->stringId = node["string_id"].asInt(-1);
         w->color = node["color"].asInt(0xFFFFFFFF);
         w->highlightColor = node["highlight_color"].asInt(0xFF3366FF);
+        w->bgColor = node["bg_color"].asInt(0xFF333333);
+        w->borderColor = node["border_color"].asInt(0xFF666666);
         w->actionName = node["action"].asString();
-        w->imgNormal = resolveImage(app, node["image"].asString(""));
-        w->imgHighlight = resolveImage(app, node["image_highlight"].asString(""));
+        w->imgNormalName = node["image"].asString("");
+        w->imgHighlightName = node["image_highlight"].asString("");
         w->setBounds(node["x"].asInt(), node["y"].asInt(),
                      node["w"].asInt(120), node["h"].asInt(30));
         return w;
@@ -96,6 +97,10 @@ std::unique_ptr<Widget> WidgetLoader::parseWidget(const DataNode& node, Applet* 
         w->stringId = node["string_id"].asInt(-1);
         w->color = node["color"].asInt(0xFFFFFFFF);
         w->highlightColor = node["highlight_color"].asInt(0xFF3366FF);
+        w->checkBoxColor = node["check_box_color"].asInt(0xFF999999);
+        w->checkFillColor = node["check_fill_color"].asInt(0xFF00FF00);
+        w->checkSize = node["check_size"].asInt(12);
+        w->checkPadding = node["check_padding"].asInt(6);
         w->checked = node["checked"].asBool(false);
         w->setBounds(node["x"].asInt(), node["y"].asInt(),
                      node["w"].asInt(200), node["h"].asInt(24));
@@ -111,6 +116,10 @@ std::unique_ptr<Widget> WidgetLoader::parseWidget(const DataNode& node, Applet* 
         w->highlightColor = node["highlight_color"].asInt(0xFF3366FF);
         w->trackColor = node["track_color"].asInt(0xFF444444);
         w->fillColor = node["fill_color"].asInt(0xFF00AA00);
+        w->trackHeight = node["track_height"].asInt(6);
+        w->labelWidthRatio = node["label_width"].asInt(40);
+        w->valueTextWidth = node["value_text_width"].asInt(40);
+        w->textPadding = node["text_padding"].asInt(4);
         w->value = node["value"].asInt(50);
         w->minValue = node["min"].asInt(0);
         w->maxValue = node["max"].asInt(100);
@@ -127,6 +136,7 @@ std::unique_ptr<Widget> WidgetLoader::parseWidget(const DataNode& node, Applet* 
         w->stringId = node["string_id"].asInt(-1);
         w->color = node["color"].asInt(0xFFFFFFFF);
         w->highlightColor = node["highlight_color"].asInt(0xFF3366FF);
+        w->textPadding = node["text_padding"].asInt(4);
         w->selectedOption = node["selected"].asInt(0);
         w->setBounds(node["x"].asInt(), node["y"].asInt(),
                      node["w"].asInt(300), node["h"].asInt(24));
@@ -146,8 +156,13 @@ std::unique_ptr<Widget> WidgetLoader::parseWidget(const DataNode& node, Applet* 
         w->id = node["id"].asString();
         w->itemHeight = node["item_height"].asInt(32);
         w->visibleCount = node["visible_count"].asInt(5);
+        w->itemTextPadding = node["item_text_padding"].asInt(8);
         w->highlightColor = node["highlight_color"].asInt(0xFF3366FF);
         w->color = node["color"].asInt(0xFFFFFFFF);
+        w->scrollbarColor = node["scrollbar_color"].asInt(0xFF666666);
+        w->scrollbarWidth = node["scrollbar_width"].asInt(3);
+        w->scrollbarOffset = node["scrollbar_offset"].asInt(4);
+        w->scrollbarMinHeight = node["scrollbar_min_height"].asInt(8);
         w->setBounds(node["x"].asInt(), node["y"].asInt(),
                      node["w"].asInt(320), node["h"].asInt(160));
 
@@ -167,6 +182,10 @@ std::unique_ptr<Widget> WidgetLoader::parseWidget(const DataNode& node, Applet* 
         auto w = std::make_unique<WScrollPanel>();
         w->id = node["id"].asString();
         w->scrollSpeed = node["scroll_speed"].asInt(20);
+        w->scrollbarColor = node["scrollbar_color"].asInt(0xFF666666);
+        w->scrollbarWidth = node["scrollbar_width"].asInt(3);
+        w->scrollbarOffset = node["scrollbar_offset"].asInt(4);
+        w->scrollbarMinHeight = node["scrollbar_min_height"].asInt(8);
         w->setBounds(node["x"].asInt(), node["y"].asInt(),
                      node["w"].asInt(200), node["h"].asInt(200));
 

@@ -9,6 +9,10 @@ public:
     int scrollY = 0;
     int contentHeight = 0;
     int scrollSpeed = 20;
+    int scrollbarColor = 0xFF666666;
+    int scrollbarWidth = 3;
+    int scrollbarOffset = 4;    // from right edge
+    int scrollbarMinHeight = 8;
 
     WScrollPanel();
     void draw(Graphics* graphics, Applet* app, bool focused) override;
