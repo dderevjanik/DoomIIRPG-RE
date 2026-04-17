@@ -1,46 +1,50 @@
 #pragma once
 #include <stdexcept>
+#include "EntityTypes.h"
 
 class Enums
 {
 public:
-    static constexpr int MAX_ENTITY_DEFS = 200;
-    static constexpr int ET_WORLD = 0;
-    static constexpr int ET_PLAYER = 1;
-    static constexpr int ET_MONSTER = 2;
-    static constexpr int ET_NPC = 3;
-    static constexpr int ET_PLAYERCLIP = 4;
-    static constexpr int ET_DOOR = 5;
-    static constexpr int ET_ITEM = 6;
-    static constexpr int ET_DECOR = 7;
-    static constexpr int ET_ENV_DAMAGE = 8;
-    static constexpr int ET_CORPSE = 9;
-    static constexpr int ET_ATTACK_INTERACTIVE = 10;
-    static constexpr int ET_MONSTERBLOCK_ITEM = 11;
-    static constexpr int ET_SPRITEWALL = 12;
-    static constexpr int ET_NONOBSTRUCTING_SPRITEWALL = 13;
-    static constexpr int ET_DECOR_NOCLIP = 14;
-    static constexpr int ET_MAX = 15;
+    // Engine-level entity/collision constants. Source of truth lives in
+    // src/engine/core/EntityTypes.h. Aliased here for backwards compatibility
+    // with existing game-side callers that reference Enums::ET_* / CONTENTS_*.
+    static constexpr int MAX_ENTITY_DEFS = EntityTypes::MAX_ENTITY_DEFS;
+    static constexpr int ET_WORLD = EntityTypes::ET_WORLD;
+    static constexpr int ET_PLAYER = EntityTypes::ET_PLAYER;
+    static constexpr int ET_MONSTER = EntityTypes::ET_MONSTER;
+    static constexpr int ET_NPC = EntityTypes::ET_NPC;
+    static constexpr int ET_PLAYERCLIP = EntityTypes::ET_PLAYERCLIP;
+    static constexpr int ET_DOOR = EntityTypes::ET_DOOR;
+    static constexpr int ET_ITEM = EntityTypes::ET_ITEM;
+    static constexpr int ET_DECOR = EntityTypes::ET_DECOR;
+    static constexpr int ET_ENV_DAMAGE = EntityTypes::ET_ENV_DAMAGE;
+    static constexpr int ET_CORPSE = EntityTypes::ET_CORPSE;
+    static constexpr int ET_ATTACK_INTERACTIVE = EntityTypes::ET_ATTACK_INTERACTIVE;
+    static constexpr int ET_MONSTERBLOCK_ITEM = EntityTypes::ET_MONSTERBLOCK_ITEM;
+    static constexpr int ET_SPRITEWALL = EntityTypes::ET_SPRITEWALL;
+    static constexpr int ET_NONOBSTRUCTING_SPRITEWALL = EntityTypes::ET_NONOBSTRUCTING_SPRITEWALL;
+    static constexpr int ET_DECOR_NOCLIP = EntityTypes::ET_DECOR_NOCLIP;
+    static constexpr int ET_MAX = EntityTypes::ET_MAX;
     // Difficulty levels (set from menu param)
     static constexpr int DIFFICULTY_EASY = 1;       // "Wuss"
     static constexpr int DIFFICULTY_NORMAL = 2;     // "Brave"
     static constexpr int DIFFICULTY_NIGHTMARE = 4;  // "Nightmare"
 
-    static constexpr int CONTENTS_ANY = -1;
-    static constexpr int CONTENTS_PICKUP = 64;
-    static constexpr int CONTENTS_INTERACTIVE = 1068;
-    static constexpr int CONTENTS_PLAYERSOLID = 13501;
-    static constexpr int CONTENTS_MONSTERSOLID = 15535;
-    static constexpr int CONTENTS_WEAPONSOLID = 13997;
-    static constexpr int CONTENTS_VIEWSOLID = 5293;
-    static constexpr int CONTENTS_MONSTERWPSOLID = 5295;
-    static constexpr int CONTENTS_WORLD = 1;
-    static constexpr int CONTENTS_SPRITEWALL = 12288;
-    static constexpr int CONTENTS_NOFLOAT = 12424;
-    static constexpr int CONTENTS_DYNAMITE_SOLID = 13349;
-    static constexpr int CONTENTS_ISEMPTY_SCRIPT = 25152;
-    static constexpr int CONTENTS_SPLASH_SOLID = 4129;
-    static constexpr int CONTENTS_LINE_O_SIGHT = 4131;
+    static constexpr int CONTENTS_ANY = EntityTypes::CONTENTS_ANY;
+    static constexpr int CONTENTS_PICKUP = EntityTypes::CONTENTS_PICKUP;
+    static constexpr int CONTENTS_INTERACTIVE = EntityTypes::CONTENTS_INTERACTIVE;
+    static constexpr int CONTENTS_PLAYERSOLID = EntityTypes::CONTENTS_PLAYERSOLID;
+    static constexpr int CONTENTS_MONSTERSOLID = EntityTypes::CONTENTS_MONSTERSOLID;
+    static constexpr int CONTENTS_WEAPONSOLID = EntityTypes::CONTENTS_WEAPONSOLID;
+    static constexpr int CONTENTS_VIEWSOLID = EntityTypes::CONTENTS_VIEWSOLID;
+    static constexpr int CONTENTS_MONSTERWPSOLID = EntityTypes::CONTENTS_MONSTERWPSOLID;
+    static constexpr int CONTENTS_WORLD = EntityTypes::CONTENTS_WORLD;
+    static constexpr int CONTENTS_SPRITEWALL = EntityTypes::CONTENTS_SPRITEWALL;
+    static constexpr int CONTENTS_NOFLOAT = EntityTypes::CONTENTS_NOFLOAT;
+    static constexpr int CONTENTS_DYNAMITE_SOLID = EntityTypes::CONTENTS_DYNAMITE_SOLID;
+    static constexpr int CONTENTS_ISEMPTY_SCRIPT = EntityTypes::CONTENTS_ISEMPTY_SCRIPT;
+    static constexpr int CONTENTS_SPLASH_SOLID = EntityTypes::CONTENTS_SPLASH_SOLID;
+    static constexpr int CONTENTS_LINE_O_SIGHT = EntityTypes::CONTENTS_LINE_O_SIGHT;
     static constexpr int ENV_DAMAGE_SPIKES = 0;
     static constexpr int ENV_DAMAGE_FIRE = 1;
     static constexpr int DECOR_MISC = 0;

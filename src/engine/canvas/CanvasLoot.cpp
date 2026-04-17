@@ -11,7 +11,7 @@
 #include "Entity.h"
 #include "EntityDef.h"
 #include "Text.h"
-#include "Enums.h"
+#include "EntityTypes.h"
 #include "LootComponent.h"
 
 // poolLoot stays on Canvas — called from handlePlayingEvents in Canvas.cpp
@@ -25,7 +25,7 @@ void Canvas::poolLoot(int* array) {
 	this->lootLineNum = 0;
 	this->lootPoolCredits = 0;
 	while (entity != nullptr) {
-		if (entity->def->eType == Enums::ET_CORPSE) {
+		if (entity->def->eType == EntityTypes::ET_CORPSE) {
 			if (!entity->isMonster()) {
 				if (entity->param != 0) {
 					entity = entity->nextOnTile;

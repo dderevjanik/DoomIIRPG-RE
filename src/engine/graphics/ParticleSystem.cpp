@@ -12,7 +12,7 @@
 #include "Canvas.h"
 #include "Entity.h"
 #include "EntityDef.h"
-#include "Enums.h"
+#include "EntityTypes.h"
 
 // ----------------------
 // ParticleEmitter Class
@@ -236,7 +236,7 @@ void ParticleSystem::spawnMonsterBlood(Entity* entity, bool b) {
     int color = ((palColor & 0x7E0) << 5) | ((palColor & 0xF800) << 8) | ((palColor & 0x1F) << 3);
 
     short z = 0;
-    if (entity->def->eType == Enums::ET_CORPSE) {
+    if (entity->def->eType == EntityTypes::ET_CORPSE) {
         z -= 26;
     }
 
