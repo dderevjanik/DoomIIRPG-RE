@@ -273,8 +273,15 @@ void Game::loadTableCamera(int i, int i2) {
 
 	this->cleanUpCamMemory();
 
-	// Try loading from YAML first (data/intro_camera.yaml)
-	DataNode camYaml = DataNode::loadFile("data/intro_camera.yaml");
+	// Resolve intro scene path from game.yaml (intro: { type, file }). Empty = skip intro.
+	const GameConfig& gc = CAppContainer::getInstance()->gameConfig;
+	const std::string& introPath = gc.introFile;
+	if (introPath.empty()) {
+		LOG_INFO("[game] game.yaml has no 'intro:' section — skipping intro\n");
+		return;
+	}
+
+	DataNode camYaml = DataNode::loadFile(introPath.c_str());
 	if (camYaml) {
 		this->mayaCameras = new MayaCamera[1];
 		this->mayaCameras[0].isTableCam = true;
@@ -344,7 +351,7 @@ void Game::loadTableCamera(int i, int i2) {
 		return;
 	}
 
-	app->Error("data/intro_camera.yaml not found\n");
+	LOG_WARN("[game] intro scene '{}' not found — skipping intro\n", introPath);
 }
 
 void Game::setKeyOffsets() {

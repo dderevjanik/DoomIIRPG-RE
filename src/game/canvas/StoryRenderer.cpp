@@ -306,7 +306,7 @@ void StoryRenderer::handleStoryInput(Canvas* canvas, int key, int action) {
 
 
 void StoryRenderer::playIntroMovie(Canvas* canvas, Graphics* graphics) {
-	if (app->canvas->skipIntro) {
+	if (app->canvas->skipIntro || CAppContainer::getInstance()->gameConfig.introFile.empty()) {
 		canvas->backToMain(true);
 		return;
 	}
@@ -319,6 +319,11 @@ void StoryRenderer::playIntroMovie(Canvas* canvas, Graphics* graphics) {
 	if (canvas->stateVars[1] == 0) {  // load table camera
 		canvas->stateVars[1] = app->gameTime;
 		app->game->loadTableCamera(14, 15);
+		if (!app->game->mayaCameras) {
+			// Intro scene path configured but load failed — skip gracefully.
+			canvas->backToMain(true);
+			return;
+		}
 		canvas->numEvents = 0;
 		canvas->keyDown = false;
 		canvas->keyDownCausedMove = false;

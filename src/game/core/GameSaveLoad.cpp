@@ -1132,41 +1132,13 @@ const char* Game::GetSaveFile(int i, int i2) {
 		case 3: // SDFPLAYER
 			name = "FULLPLAYER";
 			break;
-		case 4: // SDBWORLD
-			switch (i2) {
-				case 0:
-					name = "SB_1";
-					break;
-				case 1:
-					name = "SB_2";
-					break;
-				case 2:
-					name = "SB_3";
-					break;
-				case 3:
-					name = "SB_4";
-					break;
-				case 4:
-					name = "SB_5";
-					break;
-				case 5:
-					name = "SB_6";
-					break;
-				case 6:
-					name = "SB_7";
-					break;
-				case 7:
-					name = "SB_8";
-					break;
-				case 8:
-					name = "SB_9";
-					break;
-				case 9: // IOS Missing File
-					name = "SB_10";
-					break;
-				default:
-					name = nullptr;
-					break;
+		case 4: // SDBWORLD — per-level brief snapshot ("SB_<N>" for map ID N = i2 + 1)
+			if (i2 >= 0) {
+				thread_local char sbBuf[16];
+				std::snprintf(sbBuf, sizeof(sbBuf), "SB_%d", i2 + 1);
+				name = sbBuf;
+			} else {
+				name = nullptr;
 			}
 			break;
 		default:

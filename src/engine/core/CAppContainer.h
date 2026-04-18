@@ -37,6 +37,9 @@ struct GameConfig {
 	std::string module = "doom2rpg";
 	std::string saveDir = "Doom2rpg.app";
 	std::string entryMap = "map00";
+	// Optional game intro played before main menu (mirrors level.yaml intro schema).
+	std::string introType;   // e.g. "travel_map"; empty = skip intro
+	std::string introFile;   // path to intro scene YAML (relative to game dir)
 	std::vector<int> noFogMaps;  // Map IDs where fog is disabled (e.g. outdoor maps)
 	std::vector<std::string> searchDirs;  // VFS search subdirectories for asset resolution
 	std::unordered_map<int, std::string> stringFiles;  // group index -> YAML file path (from game.yaml strings:)

@@ -7,6 +7,7 @@
 
 #include "CAppContainer.h"
 #include "DataNode.h"
+#include "VFS.h"
 #include "App.h"
 #include "Hud.h"
 #include "Game.h"
@@ -142,12 +143,22 @@ bool MenuSystem::startup() {
 	this->slideAnim2 = 0;
 	this->animTime = 0;
 
-	// Load UI definitions (button containers + themes) from ui.yaml
-	// Must be called after images are loaded since it references them for button creation
-	LOG_INFO("[menu] loading from ui.yaml\n");
-	if (!this->loadUIFromYAML("ui.yaml")) {
-		app->Error("Failed to load ui.yaml\n");
-		return false;
+	// Ensure button containers always exist so setMenuSettings() can safely
+	// walk them even when ui.yaml is absent (it allocates them from `screens:`).
+	if (!this->m_menuButtons) this->m_menuButtons = new fmButtonContainer();
+	if (!this->m_infoButtons) this->m_infoButtons = new fmButtonContainer();
+	if (!this->m_vendingButtons) this->m_vendingButtons = new fmButtonContainer();
+
+	// Load legacy UI definitions (button containers + themes) from ui.yaml.
+	// Optional: games built on widgets.yaml + screens/*.yaml can omit ui.yaml.
+	if (CAppContainer::getInstance()->vfs->fileExists("ui.yaml")) {
+		LOG_INFO("[menu] loading from ui.yaml\n");
+		if (!this->loadUIFromYAML("ui.yaml")) {
+			app->Error("Failed to load ui.yaml\n");
+			return false;
+		}
+	} else {
+		LOG_INFO("[menu] no ui.yaml — using widgets.yaml + screens/ only\n");
 	}
 
 	this->sliderID = 0;
@@ -1202,6 +1213,7 @@ void MenuSystem::setMenuSettings() {
 
 	for (int i = 0; i < 9; i++) {
 		button = this->m_menuButtons->GetButton(i);
+		if (!button) continue;  // button may be absent when ui.yaml is omitted
 		button->normalRenderMode = 0;
 		button->highlightRenderMode = 0;
 	}
@@ -1228,6 +1240,7 @@ void MenuSystem::setMenuSettings() {
 	if (theme && theme->infoBtnImage) {
 		for (int i = 0; i != 9; i++) {
 			button = this->m_infoButtons->GetButton(i);
+			if (!button) continue;
 			button->SetImage(theme->infoBtnImage, false);
 			button->SetHighlightImage(theme->infoBtnHighlightImage, false);
 			button->normalRenderMode = theme->infoBtnRenderMode;
@@ -1237,16 +1250,18 @@ void MenuSystem::setMenuSettings() {
 		if (this->menu <= Menus::MENU_ITEMS_HOLY_WATER_MAX) {
 			for (int i = 0; i != 9; i++) {
 				button = this->m_infoButtons->GetButton(i);
+				if (!button) continue;
 				button->SetImage(this->imgGameMenuInfoButtonNormal, false);
 				button->SetHighlightImage(this->imgGameMenuInfoButtonPressed, false);
 				button->normalRenderMode = 0;
 				button->highlightRenderMode = 0;
 			}
-		} else {
+		} else if (this->imgVendingButtonLarge) {
 			this->menuItem_width = this->imgVendingButtonLarge->width;
 			this->menuItem_paddingBottom = 3;
 			for (int i = 0; i != 9; i++) {
 				button = this->m_infoButtons->GetButton(i);
+				if (!button) continue;
 				button->SetImage(this->imgVendingButtonHelp, false);
 				button->SetHighlightImage(nullptr, false);
 				button->normalRenderMode = 2;
@@ -1281,8 +1296,8 @@ void MenuSystem::updateTouchButtonState() {
 	//printf("MenuSystem::updateTouchButtonState\n");
 
 	for (int i = 0; i < 9; i++) {
-		this->m_menuButtons->GetButton(i)->SetTouchArea(Applet::IOS_WIDTH, 0, 0, 0);
-		this->m_infoButtons->GetButton(i)->SetTouchArea(Applet::IOS_WIDTH, 0, 0, 0);
+		if (fmButton* b = this->m_menuButtons->GetButton(i)) b->SetTouchArea(Applet::IOS_WIDTH, 0, 0, 0);
+		if (fmButton* b = this->m_infoButtons->GetButton(i)) b->SetTouchArea(Applet::IOS_WIDTH, 0, 0, 0);
 	}
 
 	for (int i = 0; i < 9; i++) {

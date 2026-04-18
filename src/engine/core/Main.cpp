@@ -290,6 +290,10 @@ int main(int argc, char* args[]) {
 			else gc.windowTitle = gc.name;
 			if (game["save_dir"]) gc.saveDir = game["save_dir"].asString();
 			if (game["entry_map"]) gc.entryMap = game["entry_map"].asString();
+			if (DataNode intro = game["intro"]) {
+				gc.introType = intro["type"].asString("");
+				gc.introFile = intro["file"].asString("");
+			}
 
 			DataNode searchDirs = game["search_dirs"];
 			if (searchDirs) {

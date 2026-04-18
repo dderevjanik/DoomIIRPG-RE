@@ -15,6 +15,11 @@ game:
   # Entry map (first map loaded on new game)
   entry_map: map00
 
+  # Optional intro played before the main menu. Omit the block to skip.
+  intro:
+    type: travel_map
+    file: data/intro_camera.yaml
+
   # Per-level directory mappings (map_id -> directory path)
   levels:
     1: levels/01_tycho
