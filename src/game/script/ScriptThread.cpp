@@ -1786,12 +1786,12 @@ uint32_t ScriptThread::run() {
                     short uByteArg26 = this->getUByteArg();
                     for (short n70 = 0; n70 < uByteArg26; ++n70) {
                         int uShortArg16 = this->getUShortArg();
-                        if (b8) {
+                        if (b8 && n70 < LootComponent::MAX_SLOTS) {
                             entity22->loot->lootSet[n70] = uShortArg16;
                         }
                     }
                     if (b8) {
-                        for (int j = uByteArg26; j < 3; ++j) {
+                        for (int j = uByteArg26; j < LootComponent::MAX_SLOTS; ++j) {
                             entity22->loot->lootSet[j] = 0;
                         }
                     }

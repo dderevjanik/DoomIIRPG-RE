@@ -240,22 +240,36 @@ void Entity::populateDefaultLootSet() {
         if (!mb.lootConfig.noCorpseLoot) {
             this->loot->lootSet[0] = 1089;
         }
+        return;
     }
-    else {
-        const MonsterBehaviors& mb = app->combat->monsterBehaviors[this->def->monsterIdx];
-        const auto& lc = (mb.hasLootTiers && this->def->parm < MonsterBehaviors::MAX_LOOT_TIERS)
-            ? mb.lootTiers[this->def->parm] : mb.lootConfig;
-        if (lc.modulus > 0) {
-            this->loot->lootSet[0] = lc.base | (this->getSprite() % lc.modulus + lc.offset);
-        } else if (lc.trinketStringIdx >= 0) {
-            this->loot->lootSet[0] = (0x6000 | lc.trinketStringIdx);
+
+    const MonsterBehaviors& mb = app->combat->monsterBehaviors[this->def->monsterIdx];
+    const auto& lc = (mb.hasLootTiers && this->def->parm < MonsterBehaviors::MAX_LOOT_TIERS)
+        ? mb.lootTiers[this->def->parm] : mb.lootConfig;
+
+    int slot = 0;
+    for (const auto& e : lc.drops) {
+        if (slot >= LootComponent::MAX_SLOTS) break;
+        if (e.chancePct == 0) continue;
+        if (e.chancePct < 100) {
+            int roll = (int)(app->nextInt() % 100); // [0,99]
+            if (roll >= e.chancePct) continue;
         }
+        int packed;
+        if (e.modulus > 0) {
+            packed = e.base | (this->getSprite() % e.modulus + e.offset);
+        } else if (e.trinketStringIdx >= 0) {
+            packed = 0x6000 | e.trinketStringIdx;
+        } else {
+            continue;
+        }
+        this->loot->lootSet[slot++] = packed;
     }
 }
 
 void Entity::addToLootSet(int n, int n2, int n3) {
     if (this->loot != nullptr && n3 > 0) {
-        for (int i = 0; i < 3; ++i) {
+        for (int i = 0; i < LootComponent::MAX_SLOTS; ++i) {
             if (this->loot->lootSet[i] == 0) {
                 this->loot->lootSet[i] = (n << 12 | n2 << 6 | n3);
                 return;

@@ -14,6 +14,7 @@
 #include "EntityMonster.h"
 #include "CombatEntity.h"
 #include "AIComponent.h"
+#include "LootComponent.h"
 #include "Player.h"
 #include "Combat.h"
 #include "Render.h"
@@ -322,8 +323,14 @@ void DevConsole::drawEntityInspector() {
 			ent.ai->goalType, ent.ai->goalTurns, ent.ai->goalX, ent.ai->goalY);
 	}
 	if (ent.loot) {
-		ImGui::Text("Loot: [0x%X, 0x%X, 0x%X]",
-			ent.loot->lootSet[0], ent.loot->lootSet[1], ent.loot->lootSet[2]);
+		char buf[160];
+		int off = snprintf(buf, sizeof(buf), "Loot: [");
+		for (int i = 0; i < LootComponent::MAX_SLOTS && off < (int)sizeof(buf); ++i) {
+			off += snprintf(buf + off, sizeof(buf) - off, "%s0x%X",
+				i == 0 ? "" : ", ", ent.loot->lootSet[i]);
+		}
+		snprintf(buf + off, sizeof(buf) - off, "]");
+		ImGui::Text("%s", buf);
 	}
 
 	ImGui::End();

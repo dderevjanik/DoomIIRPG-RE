@@ -30,34 +30,75 @@
 
 // --- Helpers for data parsing (file-static) ---
 
-static void parseLootConfig(const DataNode& loot, MonsterDef::LootConfig& lc) {
-	DataNode dropNode = loot["drop"];
-	if (dropNode) {
-		std::string dropName = dropNode.asString("");
-		if (dropName == "trinket") {
-			lc.base = 0;
-			lc.modulus = 0;
-			lc.offset = 0;
-			lc.trinketText = loot["trinket"].asString("");
+// Parse a single drop entry. `entry` keeps item-name semantics compatible with the
+// legacy scalar `drop:` schema. In the new `drops:` list form, each element is a
+// map with `item`, optional `quantity`, optional `chance`, and optional `trinket`.
+// In the legacy form, `entry` is the top-level `loot:` node and holds `drop`,
+// `quantity`, `trinket` keys directly.
+static bool parseLootDropEntry(const DataNode& entry, MonsterDef::LootDropEntry& out) {
+	DataNode itemNode = entry["item"];
+	if (!itemNode) itemNode = entry["drop"]; // legacy alias
+	if (!itemNode) return false;
+
+	std::string dropName = itemNode.asString("");
+	if (dropName == "trinket") {
+		out.base = 0;
+		out.modulus = 0;
+		out.offset = 0;
+		out.trinketText = entry["trinket"].asString("");
+	} else {
+		auto [category, parm] = EntityNames::resolveDropName(dropName);
+		out.base = (int16_t)((category << 12) | (parm << 6));
+		std::string qtyStr = entry["quantity"].asString("1");
+		int qmin = 0, qmax = 0;
+		if (auto dash = qtyStr.find('-'); dash != std::string::npos) {
+			qmin = std::stoi(qtyStr.substr(0, dash));
+			qmax = std::stoi(qtyStr.substr(dash + 1));
 		} else {
-			auto [category, parm] = EntityNames::resolveDropName(dropName);
-			lc.base = (int16_t)((category << 12) | (parm << 6));
-			std::string qtyStr = loot["quantity"].asString("1");
-			int qmin = 0, qmax = 0;
-			if (auto dash = qtyStr.find('-'); dash != std::string::npos) {
-				qmin = std::stoi(qtyStr.substr(0, dash));
-				qmax = std::stoi(qtyStr.substr(dash + 1));
-			} else {
-				qmin = qmax = std::stoi(qtyStr);
+			qmin = qmax = std::stoi(qtyStr);
+		}
+		out.offset = (int8_t)qmin;
+		out.modulus = (int8_t)(qmax - qmin + 1);
+	}
+
+	int chance = entry["chance"].asInt(100);
+	if (chance < 0) chance = 0;
+	if (chance > 100) chance = 100;
+	out.chancePct = (uint8_t)chance;
+	return true;
+}
+
+static void parseLootConfig(const DataNode& loot, MonsterDef::LootConfig& lc) {
+	lc.drops.clear();
+
+	if (DataNode dropsNode = loot["drops"]; dropsNode && dropsNode.isSequence()) {
+		int n = dropsNode.size();
+		lc.drops.reserve(n);
+		for (int i = 0; i < n; ++i) {
+			MonsterDef::LootDropEntry e;
+			if (parseLootDropEntry(dropsNode[i], e)) {
+				lc.drops.push_back(std::move(e));
 			}
-			lc.offset = (int8_t)qmin;
-			lc.modulus = (int8_t)(qmax - qmin + 1);
+		}
+	} else if (loot["drop"]) {
+		// Legacy single-drop shorthand: `drop: <item>` + optional `quantity:` / `trinket:`
+		MonsterDef::LootDropEntry e;
+		if (parseLootDropEntry(loot, e)) {
+			lc.drops.push_back(std::move(e));
 		}
 	} else if (loot["base"]) {
-		lc.base = (int16_t)loot["base"].asInt(0);
-		lc.modulus = (int8_t)loot["modulus"].asInt(0);
-		lc.offset = (int8_t)loot["offset"].asInt(0);
+		// Low-level fallback (raw packed fields)
+		MonsterDef::LootDropEntry e;
+		e.base = (int16_t)loot["base"].asInt(0);
+		e.modulus = (int8_t)loot["modulus"].asInt(0);
+		e.offset = (int8_t)loot["offset"].asInt(0);
+		int chance = loot["chance"].asInt(100);
+		if (chance < 0) chance = 0;
+		if (chance > 100) chance = 100;
+		e.chancePct = (uint8_t)chance;
+		lc.drops.push_back(std::move(e));
 	}
+
 	lc.noCorpseLoot = loot["no_corpse_loot"].asBool(lc.noCorpseLoot);
 }
 
@@ -1431,12 +1472,14 @@ std::expected<void, std::string> parseMonsterCombatFromEntities(Applet* app, con
 		auto& trinketStrings = CAppContainer::getInstance()->gameConfig.trinketStrings;
 		std::unordered_map<std::string, int16_t> trinketTextToIdx;
 		auto registerTrinket = [&](MonsterDef::LootConfig& lc) {
-			if (lc.trinketText.empty()) return;
-			auto [it, inserted] = trinketTextToIdx.try_emplace(lc.trinketText, (int16_t)trinketStrings.size());
-			if (inserted) {
-				trinketStrings.push_back(lc.trinketText);
+			for (auto& e : lc.drops) {
+				if (e.trinketText.empty()) continue;
+				auto [it, inserted] = trinketTextToIdx.try_emplace(e.trinketText, (int16_t)trinketStrings.size());
+				if (inserted) {
+					trinketStrings.push_back(e.trinketText);
+				}
+				e.trinketStringIdx = it->second;
 			}
-			lc.trinketStringIdx = it->second;
 		};
 		for (int i = 0; i < N; i++) {
 			auto& mb = app->combat->monsterBehaviors[i];

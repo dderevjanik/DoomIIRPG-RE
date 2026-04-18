@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <vector>
 #include "CombatEntity.h"
 
 class Entity;
@@ -61,14 +62,21 @@ struct MonsterDef {
 	static constexpr int MAX_WEAKNESS_MODS = 16;
 	int8_t weaknessMods[MAX_WEAKNESS_MODS] = {};  // 0 = no modifier for all weapons
 
+	// Single drop entry. A LootConfig holds a list of these; each is rolled
+	// independently against its chancePct at death time.
+	struct LootDropEntry {
+		int16_t base = 0;              // Packed category (bits 12-15) | parm (bits 6-11)
+		int8_t modulus = 0;            // Sprite % modulus for quantity randomization (0 = trinket path)
+		int8_t offset = 0;             // Added to (sprite % modulus) result
+		uint8_t chancePct = 100;       // 0..100; 100 = always drops (roll skipped)
+		std::string trinketText;       // Trinket display text (when drop is trinket)
+		int16_t trinketStringIdx = -1; // Index into GameConfig::trinketStrings (-1 = none)
+	};
+
 	// Loot drop configuration (per type, with optional per-tier overrides)
 	struct LootConfig {
-		int16_t base = 0;       // Base flags/category value (e.g. 0x600, 0x2100)
-		int8_t modulus = 0;     // Sprite % modulus for randomization (0 = trinket)
-		int8_t offset = 0;      // Added to (sprite % modulus) result
+		std::vector<LootDropEntry> drops;
 		bool noCorpseLoot = false; // Skip loot when this monster is a corpse type
-		std::string trinketText;   // Trinket display text (when drop is trinket)
-		int16_t trinketStringIdx = -1; // Index into GameConfig::trinketStrings (-1 = none)
 	};
 	LootConfig lootConfig;      // Type-level default
 	static constexpr int MAX_LOOT_TIERS = 4;

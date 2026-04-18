@@ -20,6 +20,7 @@
 #include "Resource.h"
 #include "MayaCamera.h"
 #include "LerpSprite.h"
+#include "LootComponent.h"
 #include "JavaStream.h"
 #include "MenuSystem.h"
 #include "ParticleSystem.h"
@@ -496,23 +497,24 @@ void Game::spawnDropItem(Entity* entity) {
 		b2 = (b & (entity->monsterFlags & Enums::MFLAG_LOOTED) == 0x0);
 	}
 	if (b2) {
-		int n = entity->loot->lootSet[0];
-		int n2 = n >> 12 & 0xF;
-		if (n2 != 6) {
+		for (int i = 0; i < LootComponent::MAX_SLOTS; ++i) {
+			int n = entity->loot->lootSet[i];
+			if (n == 0) break; // sentinel: zero terminates the slot list
+			int n2 = n >> 12 & 0xF;
+			if (n2 == 6) continue; // trinket — handled elsewhere
 			int n3 = (n & 0xFC0) >> 6;
 			int n4 = n & 0x3F;
-			if (n4 > 0) {
-				EntityDef* find = app->entityDefManager->find(6, n2, n3);
-				if (find != nullptr) {
-					if (find->tileIndex != 0) {
-						int sprite = entity->getSprite();
-						this->spawnDropItem(app->render->getSpriteX(sprite),
-						                    app->render->getSpriteY(sprite), find->tileIndex, find,
-						                    n4, false);
-					}
-				} else {
-					app->Error("Cannot find a def for the dropItem.", 117); // ERR_ENT_LOOTSET
+			if (n4 <= 0) continue;
+			EntityDef* find = app->entityDefManager->find(6, n2, n3);
+			if (find != nullptr) {
+				if (find->tileIndex != 0) {
+					int sprite = entity->getSprite();
+					this->spawnDropItem(app->render->getSpriteX(sprite),
+					                    app->render->getSpriteY(sprite), find->tileIndex, find,
+					                    n4, false);
 				}
+			} else {
+				app->Error("Cannot find a def for the dropItem.", 117); // ERR_ENT_LOOTSET
 			}
 		}
 	}
