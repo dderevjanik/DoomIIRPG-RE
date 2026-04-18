@@ -33,9 +33,11 @@ D2_CEIL_TILE = 462
 # D1 door textures (0-10)
 D1_DOOR_TEXTURES = set(range(0, 11))
 
-# Poly flags
-POLY_FLAG_AXIS_NONE = 24
-POLY_FLAG_WALL_TEXTURE = 32
+# Poly flags (per docs/d2-rpg/BSP_COMPILER_NOTES.md and engine decoder in RenderBSP.cpp)
+# Final flag byte: ((numVerts - 2) & 7) | AXIS_NONE | (SWAPXY if wall else 0)
+# Floor/ceiling: 0x1a. Wall: 0x5a.
+POLY_FLAG_AXIS_NONE = 0x18
+POLY_FLAG_SWAPXY = 0x40
 
 # ─── Binary helpers ──────────────────────────────────────────────────────────
 
@@ -183,9 +185,18 @@ def is_door_tile(bsp, col, row):
     return False
 
 def generate_geometry(bsp):
-    """Generate wall quads, floor quads, and collision lines from the D1 tile grid."""
-    polys = []   # list of (verts, tile_num, is_wall)
-    lines = []   # list of (x1, x2, y1, y2, flags)
+    """Generate wall quads, floor quads, and collision lines from the D1 tile grid.
+
+    Returns:
+        polys: list of (verts, tile_num, is_wall, owner_tile)
+               owner_tile = (col, row) of the open tile this poly belongs to
+               - Floor/ceiling quad: the tile itself
+               - Wall quad: the adjacent OPEN neighbor (not the solid source)
+        lines: list of (x0, x1, y0, y1, flags, owner_tile)
+               owner_tile = (col, row) of the adjacent open tile
+    """
+    polys = []
+    lines = []
 
     floor_z = FLOOR_HEIGHT * 8  # world Z for floor
     ceil_z = floor_z + WALL_HEIGHT_WORLD  # world Z for ceiling
@@ -221,24 +232,16 @@ def generate_geometry(bsp):
                         bx1, by1 = wx1 >> 3, wy1 >> 3
                         bzl, bzh = floor_z >> 3, ceil_z >> 3
 
-                        # Extend wall 1 unit past each endpoint to fill corner gaps
-                        # where perpendicular walls meet at 90 degrees
-                        dx = bx1 - bx0
-                        dy = by1 - by0
-                        if dx != 0:
-                            bx0 = max(0, bx0 - (1 if dx > 0 else -1))
-                            bx1 = min(255, bx1 + (1 if dx > 0 else -1))
-                        if dy != 0:
-                            by0 = max(0, by0 - (1 if dy > 0 else -1))
-                            by1 = min(255, by1 + (1 if dy > 0 else -1))
-
+                        # UV matches real D2 maps — 0..16 span per tile
+                        # (t=0 at floor, t=16 at ceiling; s grows along wall).
+                        # Engine decodes s<<6 = texel, so 16<<6 = 1024 texels.
                         verts = [
                             (bx0, by0, bzl, 0, 0),
-                            (bx1, by1, bzl, 1, 0),
-                            (bx1, by1, bzh, 1, 1),
-                            (bx0, by0, bzh, 0, 1),
+                            (bx1, by1, bzl, 16, 0),
+                            (bx1, by1, bzh, 16, 16),
+                            (bx0, by0, bzh, 0, 16),
                         ]
-                        polys.append((verts, D2_WALL_TILE, True))
+                        polys.append((verts, D2_WALL_TILE, True, (nc, nr)))
 
                         # Collision line byte coords: traceWorld does byte<<3 for world coords
                         lx0, ly0 = wx0 >> 3, wy0 >> 3
@@ -248,7 +251,7 @@ def generate_geometry(bsp):
                         lx1 = min(255, lx1); ly1 = min(255, ly1)
                         # Type 4 = passable for door tiles, 0 = solid wall
                         line_type = 4 if is_door_tile(bsp, nc, nr) else 0
-                        lines.append((lx0, lx1, ly0, ly1, line_type))
+                        lines.append((lx0, lx1, ly0, ly1, line_type, (nc, nr)))
 
             else:
                 # Floor quad
@@ -260,21 +263,21 @@ def generate_geometry(bsp):
 
                 verts = [
                     (bx0, by0, bz, 0, 0),
-                    (bx1, by0, bz, 1, 0),
-                    (bx1, by1, bz, 1, 1),
-                    (bx0, by1, bz, 0, 1),
+                    (bx1, by0, bz, 16, 0),
+                    (bx1, by1, bz, 16, 16),
+                    (bx0, by1, bz, 0, 16),
                 ]
-                polys.append((verts, D2_FLOOR_TILE, False))
+                polys.append((verts, D2_FLOOR_TILE, False, (col, row)))
 
                 # Ceiling quad (reversed winding)
                 bzc = ceil_z >> 3
                 verts = [
-                    (bx0, by1, bzc, 0, 1),
-                    (bx1, by1, bzc, 1, 1),
-                    (bx1, by0, bzc, 1, 0),
+                    (bx0, by1, bzc, 0, 16),
+                    (bx1, by1, bzc, 16, 16),
+                    (bx1, by0, bzc, 16, 0),
                     (bx0, by0, bzc, 0, 0),
                 ]
-                polys.append((verts, D2_CEIL_TILE, False))
+                polys.append((verts, D2_CEIL_TILE, False, (col, row)))
 
     return polys, lines
 
@@ -289,115 +292,192 @@ class BSPNode:
         self.right = -1
         self.poly_indices = []
         self.line_indices = []
+        self.tile_set = set()  # leaves only: set of (col, row)
         self.min_x = 0
         self.min_y = 0
         self.max_x = 0
         self.max_y = 0
 
-def build_bsp(polys, lines, poly_idxs, line_idxs, min_x, min_y, max_x, max_y, depth, nodes):
-    """Recursively build BSP tree. Returns node index."""
+
+def _count_crossings_x(open_tiles, k, r0, r1):
+    """Open-tile crossings at vertical split between col k-1 and col k, within rows [r0, r1)."""
+    return sum(1 for r in range(r0, r1)
+               if (k - 1, r) in open_tiles and (k, r) in open_tiles)
+
+
+def _count_crossings_y(open_tiles, k, c0, c1):
+    """Open-tile crossings at horizontal split between row k-1 and row k, within cols [c0, c1)."""
+    return sum(1 for c in range(c0, c1)
+               if (c, k - 1) in open_tiles and (c, k) in open_tiles)
+
+
+def _has_open_in_rect(open_tiles, c0, r0, c1, r1):
+    for c in range(c0, c1):
+        for r in range(r0, r1):
+            if (c, r) in open_tiles:
+                return True
+    return False
+
+
+def build_bsp(open_tiles, c0, r0, c1, r1, depth, nodes):
+    """Tile-centric BSP builder (see docs/d2-rpg/BSP_COMPILER_NOTES.md).
+
+    Partitions the set of OPEN tiles using axis-aligned splits at tile boundaries.
+    Each candidate split is scored by the number of open-tile crossings (open on
+    both sides with no wall between); the split with the FEWEST crossings wins,
+    tiebreak = closest to the region midpoint.
+
+    Leaves hold a tile_set; poly/line attachment happens afterward in
+    attach_polys_lines_to_leaves().
+
+    Bounds are TILE indices; c1/r1 are exclusive.
+    Returns the index of the root of this subtree in `nodes`.
+    """
     idx = len(nodes)
     nodes.append(BSPNode())
     node = nodes[idx]
-    # Bounds: engine does byte<<7 and compares against viewX = world*16+8
-    # So byte = world*16/128 = world/8
-    node.min_x = min(255, min_x >> 3)
-    node.min_y = min(255, min_y >> 3)
-    node.max_x = min(255, max_x >> 3)
-    node.max_y = min(255, max_y >> 3)
 
-    # Leaf condition
-    if len(poly_idxs) <= 4 or depth >= 10 or (max_x - min_x <= 128 and max_y - min_y <= 128):
+    # AABB in byte space for cullBoundingBox. Engine reads byte << 7.
+    node.min_x = min(255, (c0 * TILE_SIZE) >> 3)
+    node.min_y = min(255, (r0 * TILE_SIZE) >> 3)
+    node.max_x = min(255, (c1 * TILE_SIZE) >> 3)
+    node.max_y = min(255, (r1 * TILE_SIZE) >> 3)
+
+    tile_set = {(c, r) for (c, r) in open_tiles if c0 <= c < c1 and r0 <= r < r1}
+
+    # Leaf termination
+    if (c1 - c0 <= 1 and r1 - r0 <= 1) or not tile_set:
         node.is_leaf = True
-        node.poly_indices = poly_idxs
-        node.line_indices = line_idxs
+        node.tile_set = tile_set
         return idx
 
-    # Choose split — at tile CENTERS (not boundaries) to avoid splitting wall quads
-    # that sit exactly on tile boundaries. Tile center = col*64+32.
-    node.axis = depth % 2
-    if node.axis == 0:
-        mid = (min_x + max_x) // 2
-        split = (mid // 64) * 64 + 32  # snap to nearest tile center
-    else:
-        mid = (min_y + max_y) // 2
-        split = (mid // 64) * 64 + 32
-    node.split_coord = split
+    preferred = 'x' if depth % 2 == 0 else 'y'
+    other = 'y' if preferred == 'x' else 'x'
+    best = None  # (crossings, dist_from_mid, axis, k)
 
-    # Partition polygons by center (in world coords)
-    left_p, right_p = [], []
-    for pi in poly_idxs:
-        verts = polys[pi][0]
-        if node.axis == 0:
-            center = sum(v[0] for v in verts) * 8 // len(verts)  # byte>>3 back to world
+    for axis in (preferred, other):
+        if axis == 'x':
+            if c1 - c0 <= 1:
+                continue
+            candidates = range(c0 + 1, c1)
+            mid = (c0 + c1) / 2
         else:
-            center = sum(v[1] for v in verts) * 8 // len(verts)
-        if center < split:
-            left_p.append(pi)
-        else:
-            right_p.append(pi)
+            if r1 - r0 <= 1:
+                continue
+            candidates = range(r0 + 1, r1)
+            mid = (r0 + r1) / 2
 
-    # Partition lines (line coords are world>>3, convert back)
-    left_l, right_l = [], []
-    for li in line_idxs:
-        x1, x2, y1, y2, _ = lines[li]
-        if node.axis == 0:
-            center = (x1 + x2) * 8 // 2
-        else:
-            center = (y1 + y2) * 8 // 2
-        if center < split:
-            left_l.append(li)
-        else:
-            right_l.append(li)
+        axis_best = None
+        for k in candidates:
+            if axis == 'x':
+                left_has = _has_open_in_rect(open_tiles, c0, r0, k, r1)
+                right_has = _has_open_in_rect(open_tiles, k, r0, c1, r1)
+            else:
+                left_has = _has_open_in_rect(open_tiles, c0, r0, c1, k)
+                right_has = _has_open_in_rect(open_tiles, c0, k, c1, r1)
+            if not (left_has and right_has):
+                continue
 
-    if not left_p or not right_p:
+            if axis == 'x':
+                crossings = _count_crossings_x(open_tiles, k, r0, r1)
+            else:
+                crossings = _count_crossings_y(open_tiles, k, c0, c1)
+            score = (crossings, abs(k - mid))
+            if axis_best is None or score < axis_best[:2]:
+                axis_best = (score[0], score[1], axis, k)
+
+        if axis_best is not None:
+            if best is None or axis_best[:2] < best[:2]:
+                best = axis_best
+            # Honor preferred axis: if we found any valid split on it, commit.
+            if axis == preferred:
+                break
+
+    if best is None:
         node.is_leaf = True
-        node.poly_indices = poly_idxs
-        node.line_indices = line_idxs
+        node.tile_set = tile_set
         return idx
 
+    _, _, axis, k = best
     node.is_leaf = False
+    node.axis = 0 if axis == 'x' else 1
+    # split_coord is a WORLD coord at the tile boundary; convert to render-space
+    # offset later in the emit step (splitCoord_world * 16).
+    node.split_coord = k * TILE_SIZE
 
-    if node.axis == 0:
-        l_bounds = (min_x, min_y, split, max_y)
-        r_bounds = (split, min_y, max_x, max_y)
+    if axis == 'x':
+        left_idx = build_bsp(open_tiles, c0, r0, k, r1, depth + 1, nodes)
+        right_idx = build_bsp(open_tiles, k, r0, c1, r1, depth + 1, nodes)
     else:
-        l_bounds = (min_x, min_y, max_x, split)
-        r_bounds = (min_x, split, max_x, max_y)
+        left_idx = build_bsp(open_tiles, c0, r0, c1, k, depth + 1, nodes)
+        right_idx = build_bsp(open_tiles, c0, k, c1, r1, depth + 1, nodes)
 
-    left_idx = build_bsp(polys, lines, left_p, left_l, *l_bounds, depth + 1, nodes)
-    right_idx = build_bsp(polys, lines, right_p, right_l, *r_bounds, depth + 1, nodes)
     nodes[idx].left = left_idx
     nodes[idx].right = right_idx
     return idx
 
+
+def attach_polys_lines_to_leaves(nodes, polys, lines):
+    """After build_bsp, populate each leaf's poly_indices and line_indices
+    based on each record's owner_tile falling within the leaf's tile_set."""
+    # Build tile -> poly/line index maps for O(1) lookup.
+    tile_polys = {}
+    for i, rec in enumerate(polys):
+        owner = rec[3]
+        tile_polys.setdefault(owner, []).append(i)
+
+    tile_lines = {}
+    for i, rec in enumerate(lines):
+        owner = rec[5]
+        tile_lines.setdefault(owner, []).append(i)
+
+    for node in nodes:
+        if not node.is_leaf:
+            continue
+        poly_idxs = []
+        line_idxs = []
+        for tile in node.tile_set:
+            poly_idxs.extend(tile_polys.get(tile, ()))
+            line_idxs.extend(tile_lines.get(tile, ()))
+        node.poly_indices = poly_idxs
+        node.line_indices = line_idxs
+
 # ─── Pack into D2 .bin format ────────────────────────────────────────────────
 
 def pack_polys(polys, poly_indices):
-    """Pack polygon data for a leaf node, grouped by texture."""
+    """Pack polygon data for a leaf node, grouped by texture.
+
+    Polys are 4-tuples: (verts, tile_num, is_wall, owner_tile).
+    """
     from collections import OrderedDict
     by_tex = OrderedDict()
     for pi in poly_indices:
-        verts, tile_num, is_wall = polys[pi]
+        rec = polys[pi]
+        tile_num = rec[1]
         if tile_num not in by_tex:
             by_tex[tile_num] = []
-        by_tex[tile_num].append(polys[pi])
+        by_tex[tile_num].append(rec)
 
     data = bytearray()
     data.append(len(by_tex))  # meshCount
 
     for tile_num, entries in by_tex.items():
+        assert len(entries) <= 127, (
+            f"pack_polys: mesh for tile {tile_num} has {len(entries)} polys "
+            f"(max 127 per mesh). Split this mesh or reduce leaf size."
+        )
         data.extend(b'\x00\x00\x00\x00')  # reserved
-        count = min(len(entries), 127)
+        count = len(entries)
         packed = ((tile_num & 0x1FF) << 7) | (count & 0x7F)
         data.append(packed & 0xFF)
         data.append((packed >> 8) & 0xFF)
 
-        for verts, tn, is_wall in entries[:127]:
+        for rec in entries:
+            verts, _tn, is_wall, _owner = rec
             num_verts = len(verts)
             flags = ((num_verts - 2) & 0x7) | POLY_FLAG_AXIS_NONE
             if is_wall:
-                flags |= POLY_FLAG_WALL_TEXTURE
+                flags |= POLY_FLAG_SWAPXY
             data.append(flags)
             for x, y, z, s, t in verts:
                 data.extend([x & 0xFF, y & 0xFF, z & 0xFF, s & 0xFF, t & 0xFF])
@@ -410,12 +490,24 @@ def convert_bsp_to_bin(bsp):
     # Step 1: Generate geometry from tile grid
     polys, lines = generate_geometry(bsp)
 
-    # Step 2: Build BSP tree
-    all_poly_idx = list(range(len(polys)))
-    all_line_idx = list(range(len(lines)))
+    # Step 2: Build BSP tree — tile-centric, crossings-minimization.
+    # See docs/d2-rpg/BSP_COMPILER_NOTES.md for the algorithm.
+    open_tiles = {(c, r)
+                  for r in range(MAP_SIZE)
+                  for c in range(MAP_SIZE)
+                  if not is_solid(bsp.block_map, c, r)}
     nodes = []
-    build_bsp(polys, lines, all_poly_idx, all_line_idx,
-              0, 0, MAP_SIZE * TILE_SIZE, MAP_SIZE * TILE_SIZE, 0, nodes)
+    build_bsp(open_tiles, 0, 0, MAP_SIZE, MAP_SIZE, 0, nodes)
+    attach_polys_lines_to_leaves(nodes, polys, lines)
+
+    # Per-leaf constraint checks (engine format limits).
+    leaf_count = sum(1 for n in nodes if n.is_leaf)
+    assert leaf_count <= 256, f"BSP has {leaf_count} leaves (engine limit 256)"
+    for i, n in enumerate(nodes):
+        if n.is_leaf:
+            assert len(n.line_indices) <= 63, (
+                f"leaf {i} has {len(n.line_indices)} collision lines (max 63)"
+            )
 
     # Step 3: Collect lines in leaf order (contiguous ranges)
     all_lines_ordered = []
@@ -425,6 +517,9 @@ def convert_bsp_to_bin(bsp):
         if node.is_leaf:
             leaf_line_start[i] = len(all_lines_ordered)
             leaf_line_count[i] = len(node.line_indices)
+            assert leaf_line_start[i] <= 0x3FF, (
+                f"leaf {i} lineStart={leaf_line_start[i]} exceeds 10-bit field (max 1023)"
+            )
             for li in node.line_indices:
                 all_lines_ordered.append(lines[li])
 
@@ -447,6 +542,9 @@ def convert_bsp_to_bin(bsp):
     num_lines = len(all_lines_ordered)
     num_normals = len(normals)
     data_size_polys = len(all_poly_data)
+    assert data_size_polys <= 0xFFFF, (
+        f"dataSizePolys={data_size_polys} exceeds uint16 (max 65535)"
+    )
 
     node_offsets = []
     node_normal_idxs = []
@@ -478,7 +576,7 @@ def convert_bsp_to_bin(bsp):
     line_flags_arr = bytearray((num_lines + 1) // 2)
     line_xs = bytearray(num_lines * 2)
     line_ys = bytearray(num_lines * 2)
-    for i, (x1, x2, y1, y2, flags) in enumerate(all_lines_ordered):
+    for i, (x1, x2, y1, y2, flags, _owner) in enumerate(all_lines_ordered):
         line_xs[i*2+0] = x1 & 0xFF
         line_xs[i*2+1] = x2 & 0xFF
         line_ys[i*2+0] = y1 & 0xFF
@@ -643,7 +741,7 @@ def generate_level_yaml(bsp, output_path):
     lines.append(f"  dir: {dir_names[d2_dir]}")
     lines.append("")
 
-    lines.append("media_indices:")
+    lines.append("textures:")
     lines.append("  - texture_258")
     lines.append("  - texture_451")
     lines.append("  - texture_462")
