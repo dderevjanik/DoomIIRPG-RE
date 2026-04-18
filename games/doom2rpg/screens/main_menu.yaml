@@ -7,50 +7,49 @@ screen:
     # Logo at top
     - type: image
       id: logo
-      x: 159      # (480 - 162) / 2, approximate center
+      x: 159
       y: 0
       image: logo
 
-    # Menu buttons — use original menu_btn_bg textures
-    # Positioned in center: x=159 (480-162)/2, starting at y=60
-    - widget: main_menu_button
+    # Text-only menu items, centered horizontally, stacked vertically
+    - widget: main_menu_text
       id: btn_new_game
-      x: 159
-      y: 60
+      x: 140
+      y: 100
       string_id: 71       # "New Game"
       action: main_new_game
 
-    - widget: main_menu_button
+    - widget: main_menu_text
       id: btn_options
-      x: 159
-      y: 106
+      x: 140
+      y: 130
       string_id: 72       # "Options"
       action: goto:options
 
-    - widget: main_menu_button
+    - widget: main_menu_text
       id: btn_minigames
-      x: 159
-      y: 152
+      x: 140
+      y: 160
       string_id: 73       # "Mini Games"
       action: main_minigames
 
-    - widget: main_menu_button
+    - widget: main_menu_text
       id: btn_help
-      x: 159
-      y: 198
+      x: 140
+      y: 190
       string_id: 74       # "Game Help"
       action: main_help
 
-    - widget: main_menu_button
+    - widget: main_menu_text
       id: btn_about
-      x: 159
-      y: 244
+      x: 140
+      y: 220
       string_id: 75       # "About"
       action: main_about
 
-    - widget: main_menu_button
+    - widget: main_menu_text
       id: btn_exit
-      x: 159
-      y: 290
+      x: 140
+      y: 250
       string_id: 76       # "Exit"
       action: main_exit

@@ -74,11 +74,24 @@ widgets:
     w: 162
     h: 46
     image: menu_btn_bg
-    image_highlight: menu_btn_bg_on
     render_mode: 1
-    highlight_render_mode: 0
-    color: 0xFFFFFFFF          # white text on dim normal button
-    highlight_color: 0xFF000000  # black text on bright highlight button
+    color: 0xFFFFFFFF
+    highlight_color: 0xFFFF7F00
+
+  # Text-only menu item with classic main-menu animation:
+  # when focused, text shifts right and an animated cursor glyph appears.
+  main_menu_text:
+    type: button
+    w: 200
+    h: 24
+    draw_background: false
+    text_align: left
+    color: 0xFFAAAAAA
+    highlight_color: 0xFFFF7F00
+    animate_focus: true
+    animate_period_ms: 800
+    focus_offset_x: 14
+    focus_cursor: true              # animated cursor glyph (wiggles using OSC_CYCLE)
 
   # --- Automap ---
   automap_view:

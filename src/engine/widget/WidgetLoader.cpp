@@ -165,6 +165,18 @@ std::unique_ptr<Widget> WidgetLoader::parseWidget(const DataNode& node, Applet* 
         w->imgHighlightName = node["image_highlight"].asString("");
         w->renderMode = node["render_mode"].asInt(0);
         w->highlightRenderMode = node["highlight_render_mode"].asInt(0);
+        w->drawBackground = node["draw_background"].asBool(true);
+        w->animateFocus = node["animate_focus"].asBool(false);
+        w->animatePeriodMs = node["animate_period_ms"].asInt(600);
+        w->focusOffsetX = node["focus_offset_x"].asInt(0);
+        w->focusPrefix = node["focus_prefix"].asString("");
+        w->focusCursor = node["focus_cursor"].asBool(false);
+        {
+            std::string align = node["text_align"].asString("center");
+            if (align == "left") w->textAlign = 1;
+            else if (align == "right") w->textAlign = 2;
+            else w->textAlign = 0;
+        }
         w->setBounds(node["x"].asInt(), node["y"].asInt(),
                      node["w"].asInt(120), node["h"].asInt(30));
         return w;
