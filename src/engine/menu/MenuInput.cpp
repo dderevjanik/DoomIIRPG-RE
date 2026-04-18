@@ -497,6 +497,15 @@ void MenuSystem::select(int i) {
 			}
 			break;
 		}
+		case 130: { // ACTION_WIDGET_MAIN_MENU
+			auto* ws = static_cast<WidgetScreen*>(app->canvas->stateHandlers[Canvas::ST_WIDGET_SCREEN]);
+			if (ws) {
+				ws->loadFromYAML(app, "screens/main_menu.yaml");
+				this->returnToGame();
+				app->canvas->setState(Canvas::ST_WIDGET_SCREEN);
+			}
+			break;
+		}
 		default:
 			app->Error("Unhandled Menu Action: %i", this->items[i].action);
 			break;

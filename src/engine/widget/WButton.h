@@ -13,6 +13,8 @@ public:
     int borderColor = 0xFF666666;
     std::string imgNormalName;
     std::string imgHighlightName;
+    int renderMode = 0;
+    int highlightRenderMode = 0;
     std::string actionName;
 
     std::function<void()> onClick;

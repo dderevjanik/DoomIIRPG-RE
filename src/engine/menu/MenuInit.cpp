@@ -419,6 +419,14 @@ void MenuSystem::initMenu(int menu) {
 				buf->dispose();
 				this->addItem(this->getLastArgString(), MenuSystem::EMPTY_TEXT, 0, 128, 0, MenuSystem::EMPTY_TEXT);
 			}
+			{
+				Text* buf = app->localization->getSmallBuffer();
+				buf->setLength(0);
+				buf->append("Widget Main Menu");
+				app->localization->addTextArg(buf);
+				buf->dispose();
+				this->addItem(this->getLastArgString(), MenuSystem::EMPTY_TEXT, 0, 130, 0, MenuSystem::EMPTY_TEXT);
+			}
 			break;
 		}
 

@@ -1,0 +1,56 @@
+screen:
+  id: main_menu
+  background_color: 0xFF000000
+  background_image: main_bg
+
+  widgets:
+    # Logo at top
+    - type: image
+      id: logo
+      x: 159      # (480 - 162) / 2, approximate center
+      y: 0
+      image: logo
+
+    # Menu buttons — use original menu_btn_bg textures
+    # Positioned in center: x=159 (480-162)/2, starting at y=60
+    - widget: main_menu_button
+      id: btn_new_game
+      x: 159
+      y: 60
+      string_id: 71       # "New Game"
+      action: main_new_game
+
+    - widget: main_menu_button
+      id: btn_options
+      x: 159
+      y: 106
+      string_id: 72       # "Options"
+      action: goto:options
+
+    - widget: main_menu_button
+      id: btn_minigames
+      x: 159
+      y: 152
+      string_id: 73       # "Mini Games"
+      action: main_minigames
+
+    - widget: main_menu_button
+      id: btn_help
+      x: 159
+      y: 198
+      string_id: 74       # "Game Help"
+      action: main_help
+
+    - widget: main_menu_button
+      id: btn_about
+      x: 159
+      y: 244
+      string_id: 75       # "About"
+      action: main_about
+
+    - widget: main_menu_button
+      id: btn_exit
+      x: 159
+      y: 290
+      string_id: 76       # "Exit"
+      action: main_exit

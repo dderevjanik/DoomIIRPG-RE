@@ -163,6 +163,8 @@ std::unique_ptr<Widget> WidgetLoader::parseWidget(const DataNode& node, Applet* 
         w->actionName = node["action"].asString();
         w->imgNormalName = node["image"].asString("");
         w->imgHighlightName = node["image_highlight"].asString("");
+        w->renderMode = node["render_mode"].asInt(0);
+        w->highlightRenderMode = node["highlight_render_mode"].asInt(0);
         w->setBounds(node["x"].asInt(), node["y"].asInt(),
                      node["w"].asInt(120), node["h"].asInt(30));
         return w;

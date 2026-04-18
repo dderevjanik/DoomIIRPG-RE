@@ -15,6 +15,8 @@
 #include "StoryRenderer.h"
 #include "DialogManager.h"
 #include "Canvas.h"
+#include "MenuSystem.h"
+#include "Menus.h"
 #include "CAppContainer.h"
 #include "ResourceManager.h"
 #include "DataNode.h"
@@ -95,6 +97,32 @@ bool DoomIIRPGGame::startup(Applet* app) {
 	widgetScreen.onAction("save_and_back", [app, this]() {
 		app->game->saveConfig();
 		widgetScreen.dispatchAction("back");
+	});
+
+	// Main menu actions
+	widgetScreen.onAction("main_new_game", [app]() {
+		app->canvas->m_controlAlpha = 0x32;
+		app->canvas->setState(Canvas::ST_MENU);
+		if (app->game->hasSavedState()) {
+			app->menuSystem->gotoMenu(Menus::MENU_MAIN_CONFIRMNEW);
+		} else {
+			app->menuSystem->gotoMenu(Menus::MENU_MAIN_DIFFICULTY);
+		}
+	});
+	widgetScreen.onAction("main_minigames", [app]() {
+		app->canvas->setState(Canvas::ST_MENU);
+		app->menuSystem->gotoMenu(Menus::MENU_MAIN_MINIGAME);
+	});
+	widgetScreen.onAction("main_help", [app]() {
+		app->canvas->setState(Canvas::ST_MENU);
+		app->menuSystem->gotoMenu(Menus::MENU_MAIN_HELP);
+	});
+	widgetScreen.onAction("main_about", [app]() {
+		app->canvas->setState(Canvas::ST_MENU);
+		app->menuSystem->gotoMenu(Menus::MENU_MAIN_ABOUT);
+	});
+	widgetScreen.onAction("main_exit", [app]() {
+		app->shutdown();
 	});
 
 	// Bind widgets to game settings when any options screen loads

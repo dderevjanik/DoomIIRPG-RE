@@ -18,9 +18,9 @@ void WButton::draw(Graphics* graphics, Applet* app, bool focused) {
 
     // Draw background
     if (focused && imgH) {
-        graphics->drawImage(imgH, bounds.x, bounds.y, 0, 0, 0);
+        graphics->drawImage(imgH, bounds.x, bounds.y, 0, 0, highlightRenderMode);
     } else if (imgN) {
-        graphics->drawImage(imgN, bounds.x, bounds.y, 0, 0, 0);
+        graphics->drawImage(imgN, bounds.x, bounds.y, 0, 0, renderMode);
     } else {
         // Fallback: draw a filled rect
         int bg = focused ? highlightColor : bgColor;
@@ -39,7 +39,10 @@ void WButton::draw(Graphics* graphics, Applet* app, bool focused) {
         buf->append(text.c_str());
     }
 
-    graphics->setColor(effectiveColor(color));
+    // Use highlightColor for text when focused so text stays visible
+    // on bright highlight backgrounds (e.g. menu_btn_bg_on)
+    int textColor = focused ? highlightColor : color;
+    graphics->setColor(effectiveColor(textColor));
     int textX = bounds.x + bounds.w / 2;
     int textY = bounds.y + bounds.h / 2;
     graphics->drawString(buf, textX, textY, Graphics::ANCHORS_CENTER);

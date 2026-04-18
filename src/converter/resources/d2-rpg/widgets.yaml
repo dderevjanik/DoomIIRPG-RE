@@ -68,6 +68,18 @@ widgets:
     action: save_and_back
     highlight_color: 0xFF00AA00
 
+  # --- Main menu ---
+  main_menu_button:
+    type: button
+    w: 162
+    h: 46
+    image: menu_btn_bg
+    image_highlight: menu_btn_bg_on
+    render_mode: 1
+    highlight_render_mode: 0
+    color: 0xFFFFFFFF          # white text on dim normal button
+    highlight_color: 0xFF000000  # black text on bright highlight button
+
   # --- Automap ---
   automap_view:
     type: automap
