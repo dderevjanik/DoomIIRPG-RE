@@ -90,6 +90,13 @@ class BSPMap:
         self.bytecodes = []
         self.strings = []
         self.plane_textures = [[0]*1024, [0]*1024]
+        # Per-tile ceiling Z in byte space. Missing entries use the default
+        # (FLOOR_HEIGHT + 8, matching the engine's heightMap+8 convention).
+        self.tile_ceil_byte = {}
+        # Per-tile floor Z in byte space. Missing entries use FLOOR_HEIGHT.
+        # Also written into the level.yaml height_map so the engine's
+        # getHeight() returns the correct player-camera elevation per tile.
+        self.tile_floor_byte = {}
 
 def parse_bsp(data):
     bsp = BSPMap()
@@ -187,19 +194,32 @@ def is_door_tile(bsp, col, row):
 def generate_geometry(bsp):
     """Generate wall quads, floor quads, and collision lines from the D1 tile grid.
 
+    Per-tile ceiling Z is read from `bsp.tile_ceil_byte[(col, row)]` (byte space);
+    tiles without an entry use the default FLOOR_HEIGHT + 8.
+
+    When two adjacent OPEN tiles have different ceiling heights, a "step wall"
+    is emitted at their boundary (visible from the lower-ceiling side).
+
     Returns:
         polys: list of (verts, tile_num, is_wall, owner_tile)
                owner_tile = (col, row) of the open tile this poly belongs to
                - Floor/ceiling quad: the tile itself
-               - Wall quad: the adjacent OPEN neighbor (not the solid source)
+               - Wall quad (solid→open): the adjacent OPEN neighbor
+               - Step wall (open→open with different ceilings): lower-ceiling tile
         lines: list of (x0, x1, y0, y1, flags, owner_tile)
                owner_tile = (col, row) of the adjacent open tile
     """
     polys = []
     lines = []
 
-    floor_z = FLOOR_HEIGHT * 8  # world Z for floor
-    ceil_z = floor_z + WALL_HEIGHT_WORLD  # world Z for ceiling
+    default_ceil_byte = FLOOR_HEIGHT + 8  # 64 bytes = 512 world = 1 tile tall
+    default_floor_byte = FLOOR_HEIGHT
+
+    def ceil_byte(col, row):
+        return bsp.tile_ceil_byte.get((col, row), default_ceil_byte)
+
+    def floor_byte(col, row):
+        return bsp.tile_floor_byte.get((col, row), default_floor_byte)
 
     dirs = [(1, 0), (-1, 0), (0, 1), (0, -1)]
 
@@ -230,7 +250,8 @@ def generate_geometry(bsp):
                         # So byte = world*16/128 = world/8 = world>>3
                         bx0, by0 = wx0 >> 3, wy0 >> 3
                         bx1, by1 = wx1 >> 3, wy1 >> 3
-                        bzl, bzh = floor_z >> 3, ceil_z >> 3
+                        # Wall spans the open neighbor's floor → ceiling
+                        bzl, bzh = floor_byte(nc, nr), ceil_byte(nc, nr)
 
                         # UV matches real D2 maps — 0..16 span per tile
                         # (t=0 at floor, t=16 at ceiling; s grows along wall).
@@ -254,12 +275,12 @@ def generate_geometry(bsp):
                         lines.append((lx0, lx1, ly0, ly1, line_type, (nc, nr)))
 
             else:
-                # Floor quad
+                # Floor quad — per-tile height
                 wx0, wy0 = col * 64, row * 64
                 wx1, wy1 = (col+1) * 64, (row+1) * 64
                 bx0, by0 = wx0 >> 3, wy0 >> 3
                 bx1, by1 = wx1 >> 3, wy1 >> 3
-                bz = floor_z >> 3
+                bz = floor_byte(col, row)
 
                 verts = [
                     (bx0, by0, bz, 0, 0),
@@ -269,8 +290,8 @@ def generate_geometry(bsp):
                 ]
                 polys.append((verts, D2_FLOOR_TILE, False, (col, row)))
 
-                # Ceiling quad (reversed winding)
-                bzc = ceil_z >> 3
+                # Ceiling quad (reversed winding) — per-tile height
+                bzc = ceil_byte(col, row)
                 verts = [
                     (bx0, by1, bzc, 0, 16),
                     (bx1, by1, bzc, 16, 16),
@@ -278,6 +299,50 @@ def generate_geometry(bsp):
                     (bx0, by0, bzc, 0, 0),
                 ]
                 polys.append((verts, D2_CEIL_TILE, False, (col, row)))
+
+                # Step walls with open neighbors of different height.
+                # Only check +X and +Y to avoid emitting each boundary twice.
+                # One Z-strip is emitted per height mismatch (ceiling and/or floor).
+                this_ceil = ceil_byte(col, row)
+                this_floor = floor_byte(col, row)
+                for dc, dr in ((1, 0), (0, 1)):
+                    nc, nr = col + dc, row + dr
+                    if nc >= MAP_SIZE or nr >= MAP_SIZE:
+                        continue
+                    if is_solid(bsp.block_map, nc, nr):
+                        continue
+
+                    if dc == 1:
+                        wx0, wy0 = (col + 1) * 64, row * 64
+                        wx1, wy1 = (col + 1) * 64, (row + 1) * 64
+                    else:
+                        wx0, wy0 = (col + 1) * 64, (row + 1) * 64
+                        wx1, wy1 = col * 64, (row + 1) * 64
+                    sbx0, sby0 = wx0 >> 3, wy0 >> 3
+                    sbx1, sby1 = wx1 >> 3, wy1 >> 3
+
+                    def emit_step(z_low, z_high, owner):
+                        verts = [
+                            (sbx0, sby0, z_low, 0, 0),
+                            (sbx1, sby1, z_low, 16, 0),
+                            (sbx1, sby1, z_high, 16, 16),
+                            (sbx0, sby0, z_high, 0, 16),
+                        ]
+                        polys.append((verts, D2_WALL_TILE, True, owner))
+
+                    # Ceiling step: visible from the lower-ceiling tile.
+                    neigh_ceil = ceil_byte(nc, nr)
+                    if neigh_ceil != this_ceil:
+                        owner = (col, row) if this_ceil < neigh_ceil else (nc, nr)
+                        emit_step(min(this_ceil, neigh_ceil),
+                                  max(this_ceil, neigh_ceil), owner)
+
+                    # Floor step: visible from the lower-floor tile.
+                    neigh_floor = floor_byte(nc, nr)
+                    if neigh_floor != this_floor:
+                        owner = (col, row) if this_floor < neigh_floor else (nc, nr)
+                        emit_step(min(this_floor, neigh_floor),
+                                  max(this_floor, neigh_floor), owner)
 
     return polys, lines
 
