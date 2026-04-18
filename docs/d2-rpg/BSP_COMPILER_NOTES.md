@@ -1,157 +1,143 @@
 # BSP Compiler Notes
 
-## Working Algorithm (Proven 2026-03-31)
+Algorithm reference for the BSP tree builder in [tools/bsp-to-bin.py](../../tools/bsp-to-bin.py). For the authoring-side view (what an editor produces as input) see [LEVEL_AUTHORING.md](LEVEL_AUTHORING.md); for the binary section layout see [LEVEL_FORMAT.md](LEVEL_FORMAT.md).
 
-### Geometry Generation — Verified Correct
+## 1. Purpose of the BSP
 
-Proven by roundtrip test: original test_map BSP tree + our generated polyData = perfect rendering.
+The engine renders via painter's algorithm. For every frame it walks the BSP tree front-to-back (populating `nodeIdxs[]`) and then draws leaves in reverse order (back-to-front). Correct rendering requires that **adjacent leaves at a split boundary either (a) don't share open airspace or (b) are separated by a wall in one of the leaves**. Split planes without walls between the two halves cause the far half's floor / ceiling to bleed through the near half's walls.
 
-**Floor quad** (per open tile):
-- Winding: CW from above `(x0,y1) → (x1,y1) → (x1,y0) → (x0,y0)`
-- Flags: `0x1a` (4 verts + AXIS_NONE, no SWAPXY)
-- Z = heightMap value (e.g., 0 for flat, 7 for D1 maps at height 56)
+The BSP is also used by `traceWorld` ([src/engine/render/RenderBSP.cpp:502](../../src/engine/render/RenderBSP.cpp#L502)) to localise line queries for collision / LOS — but that's O(N) in a leaf regardless, and gameplay works fine on a 32×32 grid even with a flat BSP. Visual correctness is what actually drives the split strategy.
 
-**Ceiling quad** (per open tile):
-- Winding: CCW from above `(x0,y0) → (x1,y0) → (x1,y1) → (x0,y1)`
-- Flags: `0x1a` (same as floor)
-- Z = heightMap + 8 (= floor + 64 world units = 1 tile height)
+## 2. Algorithm — tile-centric crossings-minimisation
 
-**Wall quad** (per solid/open tile boundary):
-- Winding: top-start → top-end → bottom-end → bottom-start
-- Flags: `0x5a` (4 verts + AXIS_NONE + SWAPXY)
-- Z spans floor to ceiling
-- **Assigned to the leaf containing the adjacent OPEN tile** (not the solid tile)
-
-**Vertex coordinates:**
-- Byte = worldCoord / 8 (engine reads `byte << 7` for render space)
-- Tile boundary at col C = `C * 8` bytes
-- Example: col 1 boundary = 8, col 16 = 128
-
-**Mesh ordering within leaf:**
-1. Floor meshes first (max 127 polys each)
-2. Ceiling meshes next
-3. Wall meshes last (draws on top)
-
-**Mesh header:** `(tileNumber << 7) | (polyCount & 0x7F)`. Max 127 polys per mesh — split into multiple meshes if more.
-
-### BSP Tree Generation — Working Algorithm
-
-**Key insight:** The BSP must ensure that adjacent leaves with open tiles ALWAYS have a wall between them. If they don't, far floors/ceilings bleed through near walls (painter's algorithm failure).
-
-**Split strategy — minimize open-tile crossings:**
-
-For each candidate split position, count how many open tiles span the boundary (open on BOTH sides with no wall between). Choose the split with the FEWEST crossings.
+Implemented at [tools/bsp-to-bin.py:297](../../tools/bsp-to-bin.py#L297). Operates on the **set of open tiles** within a region, not on polys.
 
 ```
-def count_crossings_x(col, r0, r1):
-    """Count open tiles that span column boundary at `col`"""
-    return sum(1 for r in range(r0,r1)
-               if not is_solid(col-1,r) and not is_solid(col,r))
+build_bsp(open_tiles, c0, r0, c1, r1, depth, nodes):
+    # c0/r0 inclusive, c1/r1 exclusive — tile indices
+    tile_set = open_tiles ∩ region
 
-def count_crossings_y(row, c0, c1):
-    return sum(1 for c in range(c0,c1)
-               if not is_solid(c,row-1) and not is_solid(c,row))
+    # Leaf termination
+    if (c1 - c0 ≤ 1 and r1 - r0 ≤ 1) or not tile_set:
+        return leaf with tile_set
+
+    # Pick the best split
+    preferred_axis = 'x' if depth % 2 == 0 else 'y'
+    best = None
+
+    for axis in (preferred_axis, other_axis):
+        for each candidate split-line k (tile boundary inside region):
+            if one side has no open tiles:
+                skip
+            crossings = count of open-open tile pairs straddling k
+            dist_from_mid = |k - region_midpoint|
+            score = (crossings, dist_from_mid)    # lexicographic
+            keep the best (axis, k) on this axis
+        if preferred axis produced a candidate, commit it and stop
+
+    if no valid split found:
+        return leaf with tile_set
+
+    recurse on left [c0..k), right [k..c1)
+    return internal node (axis, split_coord = k * TILE_SIZE)
 ```
 
-**Split selection:**
-1. Alternate axis by depth (`depth % 2`: even=X, odd=Y)
-2. Try preferred axis first, then other axis
-3. For each axis, scan ALL positions in the region
-4. Pick the position with fewest crossings (prefer positions near midpoint as tiebreaker)
-5. Split at tile boundaries (col or row number × 64 world units)
-6. If no split possible (region too small), make leaf
+Key properties:
 
-**Leaf termination:** `(c1-c0 <= 1 AND r1-r0 <= 1)` or no open tiles in region.
+- **Splits fall on tile boundaries only.** A split at `col = k` means the boundary between tile columns `k-1` and `k`.
+- **Crossings** = number of rows `r` where both `(k-1, r)` and `(k, r)` are open — these are the places where the split has no wall, and the painter's-algorithm rule above is violated. Minimising crossings is the whole point.
+- **Preferred-axis commitment.** If the preferred axis yields any valid split we commit to it, even if the other axis would score lower. This produces the alternating pattern that keeps the tree balanced; falling through to the other axis only happens when the preferred axis is degenerate (e.g., a 1-wide region).
+- **Balance-minimisation is the tiebreaker**, not the primary objective. Two splits with the same crossing count are broken by proximity to the region midpoint.
 
-**Result for D1 intro map:** ~248 leaves, ~495 nodes, most splits have 0-2 crossings.
+### Result scale
 
-### BSP Node Format
+For a dense D1-style map (~400 open tiles) the algorithm produces ~250 leaves and ~500 total nodes. For a sparse hand-authored map (e.g. 33 open tiles in the two-room test) it produces 33 leaves / 65 total nodes — one leaf per tile. Both shapes are within the 256-leaf engine cap as long as open-tile counts stay under ~256.
 
-**Normals:** `(-16384, 0, 0)` for X-axis, `(0, -16384, 0)` for Y-axis
+## 3. Poly / line attachment
 
-**Node offset for split at tile boundary T:**
-- `offset = T * 64 * 16` (tile → world → render space)
-- Engine classify: `(-viewCoord * 16384 >> 14) + offset = -viewCoord + offset`
-- Result ≥ 0 → child1 (left/near side), < 0 → child2 (right/far side)
+After `build_bsp` returns, `attach_polys_lines_to_leaves` ([tools/bsp-to-bin.py:~400](../../tools/bsp-to-bin.py)) walks the tree and, for every leaf, scans polys / lines and keeps those whose `owner_tile` is in the leaf's `tile_set`. Ownership is assigned at geometry-generation time:
 
-**Leaf node:**
-- `nodeOffset = 0xFFFF` (leaf marker)
-- `child1 = polyData byte offset` (uint16)
-- `child2 = (lineStart & 0x3FF) | ((lineCount & 0x3F) << 10)` (uint16)
+- Floor + ceiling quads of open tile `(c, r)` → owner `(c, r)`.
+- Wall quad between solid tile and open neighbour `(nc, nr)` → owner `(nc, nr)` (the open side).
+- Collision line for that wall → owner `(nc, nr)`.
+- Ceiling step wall between open tiles with mismatched ceilings → owner = **tile with the lower ceiling** (the side from which the step is visible).
+- Floor step wall → owner = **tile with the lower floor**.
 
-**Bounds:** `(min_col*8, min_row*8, max_col*8, max_row*8)` clamped to 0-255
+See [LEVEL_AUTHORING.md §2.1](LEVEL_AUTHORING.md) for the geometry-emit rules.
 
-### Engine Constraints
+## 4. Engine format — node encoding
+
+| Field | Leaf | Internal |
+|---|---|---|
+| `nodeOffsets[n]` (u16) | `0xFFFF` (marker) | `splitCoord_world * 16` (render space) |
+| `nodeNormalIdxs[n]` (u8) | `0` | `0` for X-split, `1` for Y-split |
+| `nodeChildOffset1[n]` (u16) | Byte offset into `nodePolys[]` | Index of left / near child |
+| `nodeChildOffset2[n]` (u16) | `(lineStart & 0x3FF) \| ((lineCount & 0x3F) << 10)` | Index of right / far child |
+| `nodeBounds[n]` (4× u8) | `(min_x, min_y, max_x, max_y)` in byte space (clamped 0..255) | same |
+
+**Normals array is always exactly two entries:** `(-16384, 0, 0)` for X-axis splits, `(0, -16384, 0)` for Y. The engine's classify-point equation with these normals reduces to:
+
+```
+result = (-viewCoord * 16384 >> 14) + offset
+       = -viewCoord + splitCoord_render
+result ≥ 0  → viewCoord ≤ splitCoord  → child1 (near / left / lower)
+```
+
+So `child1` is the lower-coordinate half of the split.
+
+## 5. Geometry format — poly flags
+
+Four-vertex quads, flag byte encoded as:
+
+| Bits | Field | Values used |
+|---|---|---|
+| 0-2 | `numVerts - 2` | `2` for a quad |
+| 3-4 | axis hint | `AXIS_NONE = 0x18` for all emitted polys |
+| 5 | `UV_DELTAX` | unset |
+| 6 | `SWAPXY` | **set (`0x40`) for walls, cleared for floors / ceilings / step walls' matrix-compatible faces** |
+| 7 | unused | unset |
+
+Concrete emitted values:
+
+| Poly kind | Flag byte |
+|---|---|
+| Floor quad | `0x1a` |
+| Ceiling quad | `0x1a` |
+| Wall quad (solid ↔ open) | `0x5a` |
+| Ceiling-step or floor-step wall | `0x5a` |
+
+> **`0x20` is NOT a wall flag.** Earlier versions of the Python converter defined `POLY_FLAG_WALL_TEXTURE = 0x20` and used it instead of `SWAPXY`. That produces stretched / wrongly-oriented wall textures and does not match any real D2 map. Don't reintroduce it.
+
+## 6. Hard limits
 
 | Constraint | Limit | Source |
-|-----------|-------|--------|
-| Max visible leaves | 256 | `Render.cpp:2050` |
-| Max polys per mesh | 127 | 7-bit polyCount in packed header |
-| Max lines per leaf | 63 | 6-bit lineCount |
-| Max line start index | 1023 | 10-bit lineStart |
-| Max polyData size | 65535 | uint16 in header |
-| Coordinate byte | worldCoord / 8 | Engine reads byte << 7 |
-| POLY_FLAG_WALL_TEXTURE | DO NOT USE | Test_map doesn't use it (0x20) |
-| POLY_FLAG_SWAPXY | Walls only | Flags = 0x5a for walls, 0x1a for floors/ceilings |
+|---|---|---|
+| Total BSP leaves | 256 | visible-leaf cap in `Render.cpp` |
+| Polys per mesh (texture group within a leaf) | 127 | 7-bit count in mesh header |
+| Collision lines per leaf | 63 | 6-bit count in `nodeChildOffset2` |
+| `lineStart` | 1023 | 10-bit field in `nodeChildOffset2` |
+| Total `dataSizePolys` | 65535 bytes | u16 header field |
+| Tile grid | 32×32 | engine-wide |
+| Byte coord range | 0..255 | u8 vertex / heightMap fields |
 
-### Doors
+The reference converter asserts leaves, line count, lineStart, and dataSizePolys in `convert_bsp_to_bin`. An editor should pre-check open-tile count before compiling to give authors useful feedback.
 
-Doors are handled via **`level.yaml` entities** + **passable collision lines**:
+## 7. Doors
 
-**Door detection:** D1 lines with texture 0-10 are doors. For each door line, find the midpoint tile `(mx//64, my//64)` and the direction (horizontal = N/S, vertical = E/W).
+Door tiles are **open** tiles whose three non-passage neighbours are solid. They're marked by a single entry in `bsp.lines` with a texture in `0..10` whose midpoint falls inside the tile — `is_door_tile` ([tools/bsp-to-bin.py:171](../../tools/bsp-to-bin.py#L171)) detects it. Consequences for the compiler:
 
-**Door entities in `level.yaml`:**
-```yaml
-entities:
-  - x: 1632         # D1 world coord (midpoint of door line)
-    y: 1504
-    tile: door_unlocked
-    flags: [animation, north, south]   # or [animation, east, west]
-```
-- Horizontal D1 lines → `north, south` direction flags
-- Vertical D1 lines → `east, west` direction flags
+- Collision lines generated for walls *adjacent to* door tiles get `flags = 4` (passable) instead of `0`.
+- Wall quads around the door tile are emitted normally; the door sprite (registered in `level.yaml` `entities:`) renders over them when closed, revealing them when open.
+- The tile's solid bit in `mapFlags` is cleared so `traceWorld` treats the tile as walkable — already handled by the converter (it scans `bsp.lines` and clears the nibble for each door's tile).
 
-**Wall polys:** Keep ALL walls including door tiles — do NOT exclude door wall polys. The door sprite renders on top of the wall texture when closed. When opened, the wall poly remains visible behind the opened door (acceptable visual).
+## 8. History — what was wrong before
 
-**Collision lines:** Door tile walls get line type 4 (passable in `traceWorld`). All other walls get type 0 (blocking). This is set per-tile: if an open tile `(c,r)` is a door tile, ALL its adjacent walls are passable.
+For the record (so no-one re-introduces these):
 
-**Door media:** Register tile 276 (`door_unlocked`) in the binary's media section.
-
-**`scripts.yaml`:** Must be empty (`static_funcs: {}`, `tile_events: []`) to prevent D2 tile event scripts from executing on D1 map data.
-
-**`level.yaml` textures:** Must include `door_unlocked` and `sky_box`:
-```yaml
-textures:
-  - texture_258
-  - texture_451
-  - texture_462
-  - door_unlocked
-  - sky_box
-```
-
-### What Was Wrong in Previous Attempts
-
-1. **BSPCompiler.cpp** — Used `>> 7` instead of `>> 3` for coordinates (16× too small). Also had broken `packPolygons` that wrote more polys than the mesh header declared (>127 overflow).
-
-2. **Grid-based splits** — Splitting at regular intervals (every 2 or 4 tiles) puts far floors and near walls in different leaves, causing painter's algorithm failures.
-
-3. **Single-leaf approach** — Works for small rooms (4×4) but fails for large maps because the engine has no depth ordering within a single leaf.
-
-4. **1×1 tile leaves** — Exceeds 256 visible node limit, causing geometry to be silently dropped.
-
-5. **Wall Z values** — Originally used wrong Z range. Correct: floor Z=0, ceiling Z=8 (for height 0 maps). Wall height = 8 byte units = 64 world units.
-
-6. **Door wall exclusion by tile** — Excluding ALL walls for a door tile removed side walls, exposing skybox. Fix: keep all wall polys, let the door sprite render on top.
-
-7. **Door edge matching** — D1 door lines are placed at tile midpoints (not tile boundaries), so they can't be matched to tile-boundary wall quads by coordinate. Match by tile + direction instead, or just keep all walls.
-
-### Verification Method
-
-**Roundtrip test:** Extract tile grid from a known-working D2 .bin → regenerate geometry → inject into original BSP tree → render. If it matches the original, geometry is correct. Used with `10_test_map/map.bin`.
-
-**Incremental tests:**
-1. Single 4×4 room (1 leaf) — verifies geometry format
-2. Split 4×4 room (2 leaves) — verifies BSP math
-3. Split 4×4 room (4 leaves) — verifies multi-level BSP
-4. Full D1 map with smart splits — verifies at scale
-5. Full D1 map with doors — verifies door rendering and passability
+1. **`src/editor/BSPCompiler.cpp`** — original C++ compiler used `>> 7` for coords instead of `>> 3`, giving geometry 16× too small, and wrote more polys than the mesh header declared. Replaced by the Python converter.
+2. **Midpoint-of-bounds splits** — the old `build_bsp` split at the bounds midpoint, not at tile boundaries, and had no crossings heuristic. On sparse maps this reliably collapsed to a single leaf, producing see-through walls.
+3. **`POLY_FLAG_WALL_TEXTURE = 0x20`** — wrong bit; walls need `SWAPXY = 0x40` (final flag `0x5a`).
+4. **Wall "extension" of ±1 byte past each endpoint** — added to paper over corner gaps caused by walls being placed in the wrong leaves. Unnecessary with correct BSP + correct ownership; stretches wall textures.
+5. **UV span 0..1** — 64 texels per tile, visibly low-res. Real D2 maps use 0..16 = 1024 texels per tile.
+6. **Inverted wall `t` coordinate** — had `t=0` at the ceiling and `t=16` at the floor, flipping wall textures vertically.
+7. **Singleton-leaf fallback** — proposed as a workaround for the broken BSP; kept the idea of "ship a trivial 1-leaf tree and sort polys at draw time" in the back pocket but never needed once the real algorithm was implemented.
