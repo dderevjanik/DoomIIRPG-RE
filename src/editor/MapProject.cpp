@@ -190,6 +190,18 @@ MapProject MapProject::loadFromYaml(const std::string& path) {
 		}
 	}
 
+	if (doc["free_lines"]) {
+		for (const auto& l : doc["free_lines"]) {
+			FreeLine fl;
+			fl.x0 = l["x0"].as<int>(0);
+			fl.y0 = l["y0"].as<int>(0);
+			fl.x1 = l["x1"].as<int>(0);
+			fl.y1 = l["y1"].as<int>(0);
+			fl.texture = l["texture"].as<int>(D2_WALL_TILE);
+			p.freeLines.push_back(fl);
+		}
+	}
+
 	return p;
 }
 
@@ -278,6 +290,17 @@ void MapProject::saveToYaml(const std::string& path) const {
 			os << "  - { col: " << int(d.col)
 			   << ", row: " << int(d.row)
 			   << ", axis: " << (d.axis == 'V' ? "NS" : "EW") << " }\n";
+		}
+	}
+
+	os << "\nfree_lines:";
+	if (freeLines.empty()) { os << " []\n"; }
+	else {
+		os << "\n";
+		for (const FreeLine& fl : freeLines) {
+			os << "  - { x0: " << fl.x0 << ", y0: " << fl.y0
+			   << ", x1: " << fl.x1 << ", y1: " << fl.y1
+			   << ", texture: " << fl.texture << " }\n";
 		}
 	}
 

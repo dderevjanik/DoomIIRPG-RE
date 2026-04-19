@@ -234,6 +234,47 @@ static void generateGeometry(const MapProject& p,
 			}
 		}
 	}
+
+	// --- Free-form lines: one wall quad + one collision line each. ---
+	// Owner tile = the OPEN tile containing the line's midpoint. If the
+	// midpoint is outside any open tile, the line is skipped (nowhere safe
+	// to place it in a BSP leaf).
+	for (const FreeLine& fl : p.freeLines) {
+		int midX = (fl.x0 + fl.x1) / 2;
+		int midY = (fl.y0 + fl.y1) / 2;
+		int oc = midX / 64;
+		int orow = midY / 64;
+		if (oc < 0 || oc >= MAP_SIZE || orow < 0 || orow >= MAP_SIZE) continue;
+		if (p.isSolid(oc, orow)) continue;
+
+		const int bzl = p.floorByte(oc, orow);
+		const int bzh = p.ceilByte(oc, orow);
+		const int bx0 = std::min(255, fl.x0 >> 3);
+		const int by0 = std::min(255, fl.y0 >> 3);
+		const int bx1 = std::min(255, fl.x1 >> 3);
+		const int by1 = std::min(255, fl.y1 >> 3);
+
+		PolyRecord rec{};
+		rec.verts[0] = { uint8_t(bx0), uint8_t(by0), uint8_t(bzl),  0,  0 };
+		rec.verts[1] = { uint8_t(bx1), uint8_t(by1), uint8_t(bzl), 16,  0 };
+		rec.verts[2] = { uint8_t(bx1), uint8_t(by1), uint8_t(bzh), 16, 16 };
+		rec.verts[3] = { uint8_t(bx0), uint8_t(by0), uint8_t(bzh),  0, 16 };
+		rec.tileNum = fl.texture;
+		rec.isWall = true;
+		rec.ownerCol = uint8_t(oc);
+		rec.ownerRow = uint8_t(orow);
+		polys.push_back(rec);
+
+		LineRecord ln{};
+		ln.x0 = uint8_t(bx0);
+		ln.x1 = uint8_t(bx1);
+		ln.y0 = uint8_t(by0);
+		ln.y1 = uint8_t(by1);
+		ln.flags = 0;
+		ln.ownerCol = uint8_t(oc);
+		ln.ownerRow = uint8_t(orow);
+		lines.push_back(ln);
+	}
 }
 
 // -------------------------------------------------------------------------

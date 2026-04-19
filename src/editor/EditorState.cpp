@@ -267,6 +267,11 @@ void EditorState::update(Canvas* canvas) {
 			if (ImGui::IsKeyPressed(ImGuiKey_C, false)) currentTool = Tool::Ceil;
 			if (ImGui::IsKeyPressed(ImGuiKey_G, false)) currentTool = Tool::Door;
 			if (ImGui::IsKeyPressed(ImGuiKey_T, false)) currentTool = Tool::Texture;
+			if (ImGui::IsKeyPressed(ImGuiKey_L, false)) currentTool = Tool::Line;
+			// Escape cancels any pending line.
+			if (linePending && ImGui::IsKeyPressed(ImGuiKey_Escape, false)) {
+				linePending = false;
+			}
 			// Ctrl+S → save, F5 → playtest.
 			bool ctrl = io.KeyCtrl || io.KeySuper;
 			if (ctrl && ImGui::IsKeyPressed(ImGuiKey_S, false)) {
@@ -339,6 +344,7 @@ void EditorState::drawToolPalette() {
 		{ "Door",                   Tool::Door,    "G" },   // 'D' collides with strafe-right
 		{ "Spawn",                  Tool::Spawn,   "—" },   // no hotkey (S=strafe-back)
 		{ "Texture (3D click)",     Tool::Texture, "T" },
+		{ "Line (free wall)",       Tool::Line,    "L" },
 	};
 	for (const Row& r : rows) {
 		bool active = (currentTool == r.tool);
@@ -396,6 +402,20 @@ void EditorState::drawToolPalette() {
 			ImGui::TextDisabled("See the Textures panel to pick a different ID.");
 			break;
 		}
+		case Tool::Line: {
+			const char* snapLabels[] = { "Off (pixel)", "Fine (8 wu)", "Coarse (tile 64 wu)" };
+			int s = int(snapMode);
+			if (ImGui::Combo("Snap", &s, snapLabels, 3)) snapMode = SnapMode(s);
+			ImGui::Text("Texture: %d", selectedTexture);
+			ImGui::TextDisabled(linePending ? "Click end-point to commit." : "Click start of line.");
+			ImGui::TextDisabled("Right-click or ESC cancels.");
+			if (ImGui::Button("Delete last free line")
+			    && !project.freeLines.empty()) {
+				project.freeLines.pop_back();
+				projectDirty = true;
+			}
+			break;
+		}
 		default: break;
 	}
 
@@ -425,6 +445,12 @@ void EditorState::drawTileGrid2D() {
 	if (hoverCol < 0 || hoverCol >= N || hoverRow < 0 || hoverRow >= N) {
 		hoverCol = hoverRow = -1;
 	}
+
+	// World-to-canvas helpers used by markers and free-line rendering below.
+	const float worldToPx = TILE_PX / float(editor::TILE_SIZE);
+	auto worldToCanvas = [&](int wx, int wy) {
+		return ImVec2(canvasPos.x + wx * worldToPx, canvasPos.y + wy * worldToPx);
+	};
 
 	// --- Tile fills ---
 	for (int r = 0; r < N; ++r) {
@@ -499,6 +525,41 @@ void EditorState::drawTileGrid2D() {
 		                      IM_COL32(20, 120, 40, 255));
 	}
 
+	// --- Camera marker — yellow arrow, tip pointing along yaw. ---
+	{
+		// Camera.posX / posZ are in editor units (world / 128).
+		float pxW = camera.posX * 128.0f;   // engine X world coord
+		float pyW = camera.posZ * 128.0f;   // engine Y world coord (ground plane)
+		if (pxW >= 0 && pxW <= editor::MAP_SIZE * editor::TILE_SIZE &&
+		    pyW >= 0 && pyW <= editor::MAP_SIZE * editor::TILE_SIZE) {
+			float cx = canvasPos.x + pxW * worldToPx;
+			float cy = canvasPos.y + pyW * worldToPx;
+			float r  = TILE_PX * 0.45f;
+			// Camera yaw: 0 = +X (east), rotates counter-clockwise in world;
+			// screen Y goes down → flip to match spawn-marker convention.
+			float ang = -camera.yaw * 3.14159265f / 180.0f;
+			float tipX = cx + r * std::cos(ang);
+			float tipY = cy + r * std::sin(ang);
+			float baseL_x = cx + r * 0.55f * std::cos(ang + 2.4f);
+			float baseL_y = cy + r * 0.55f * std::sin(ang + 2.4f);
+			float baseR_x = cx + r * 0.55f * std::cos(ang - 2.4f);
+			float baseR_y = cy + r * 0.55f * std::sin(ang - 2.4f);
+			dl->AddTriangleFilled({tipX, tipY}, {baseL_x, baseL_y}, {baseR_x, baseR_y},
+			                      IM_COL32(255, 220, 60, 255));
+			dl->AddTriangle     ({tipX, tipY}, {baseL_x, baseL_y}, {baseR_x, baseR_y},
+			                      IM_COL32(140, 100, 20, 255));
+			// FOV wedge — translucent yellow fan to hint where the camera is looking.
+			constexpr float halfFov = 45.0f * 3.14159265f / 180.0f;
+			float fovLen = TILE_PX * 1.8f;
+			float lx = cx + fovLen * std::cos(ang - halfFov);
+			float ly = cy + fovLen * std::sin(ang - halfFov);
+			float rx = cx + fovLen * std::cos(ang + halfFov);
+			float ry = cy + fovLen * std::sin(ang + halfFov);
+			dl->AddTriangleFilled({cx, cy}, {lx, ly}, {rx, ry},
+			                      IM_COL32(255, 220, 60, 40));
+		}
+	}
+
 	// --- Grid lines ---
 	ImU32 gridCol = IM_COL32(70, 70, 75, 120);
 	for (int i = 0; i <= N; ++i) {
@@ -506,6 +567,15 @@ void EditorState::drawTileGrid2D() {
 		float y = canvasPos.y + i * TILE_PX;
 		dl->AddLine({x, canvasPos.y}, {x, canvasPos.y + canvasSize.y}, gridCol);
 		dl->AddLine({canvasPos.x, y}, {canvasPos.x + canvasSize.x, y}, gridCol);
+	}
+
+	// --- Free-form wall lines ---
+	for (const editor::FreeLine& fl : project.freeLines) {
+		ImVec2 a = worldToCanvas(fl.x0, fl.y0);
+		ImVec2 b = worldToCanvas(fl.x1, fl.y1);
+		dl->AddLine(a, b, IM_COL32(255, 160, 40, 230), 2.0f);
+		dl->AddCircleFilled(a, 2.5f, IM_COL32(255, 160, 40, 230));
+		dl->AddCircleFilled(b, 2.5f, IM_COL32(255, 160, 40, 230));
 	}
 
 	// --- Hover highlight ---
@@ -517,30 +587,91 @@ void EditorState::drawTileGrid2D() {
 
 	dl->PopClipRect();
 
+	// --- Line tool: cursor → world + snap ---
+	// Compute the cursor's continuous world position and snapped version
+	// independent of tile hover, so the rubber-band follows the cursor even
+	// when it's between tile cells.
+	int cursorWX = -1, cursorWY = -1;
+	if (canvasHovered) {
+		float wx = (mouse.x - canvasPos.x) / worldToPx;
+		float wy = (mouse.y - canvasPos.y) / worldToPx;
+		int iwx = std::clamp(int(wx + 0.5f), 0, editor::MAP_SIZE * editor::TILE_SIZE);
+		int iwy = std::clamp(int(wy + 0.5f), 0, editor::MAP_SIZE * editor::TILE_SIZE);
+		int step =
+			snapMode == SnapMode::Coarse ? editor::TILE_SIZE :
+			snapMode == SnapMode::Fine   ? 8                 :
+			                               1;
+		if (step > 1) {
+			iwx = ((iwx + step / 2) / step) * step;
+			iwy = ((iwy + step / 2) / step) * step;
+		}
+		cursorWX = iwx;
+		cursorWY = iwy;
+	}
+
+	// --- Rubber-band preview for the pending line ---
+	if (currentTool == Tool::Line && linePending && cursorWX >= 0) {
+		ImVec2 a = worldToCanvas(linePendingX, linePendingY);
+		ImVec2 b = worldToCanvas(cursorWX, cursorWY);
+		dl->AddLine(a, b, IM_COL32(255, 200, 80, 180), 2.0f);
+		dl->AddCircleFilled(a, 3.0f, IM_COL32(255, 200, 80, 220));
+		dl->AddCircleFilled(b, 3.0f, IM_COL32(255, 200, 80, 220));
+	}
+
+	// --- Snap-point dot (Line tool, always on when hovering) ---
+	if (currentTool == Tool::Line && cursorWX >= 0) {
+		ImVec2 c = worldToCanvas(cursorWX, cursorWY);
+		dl->AddCircle(c, 4.0f, IM_COL32(120, 255, 255, 255), 0, 1.5f);
+	}
+
 	// --- Interaction ---
-	if (canvasHovered && hoverCol >= 0) {
+	if (canvasHovered) {
 		bool leftDown  = ImGui::IsMouseDown(ImGuiMouseButton_Left);
 		bool leftClick = ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+		bool rightClick = ImGui::IsMouseClicked(ImGuiMouseButton_Right);
 
-		if (leftClick) {
-			bool mutated = false;
-			switch (currentTool) {
-				case Tool::Brush: mutated = applyBrushOnClick(hoverCol, hoverRow); break;
-				case Tool::Floor: mutated = applyFloor       (hoverCol, hoverRow); break;
-				case Tool::Ceil:  mutated = applyCeil        (hoverCol, hoverRow); break;
-				case Tool::Door:  mutated = applyDoor        (hoverCol, hoverRow); break;
-				case Tool::Spawn: mutated = applySpawn       (hoverCol, hoverRow); break;
+		if (currentTool == Tool::Line) {
+			if (leftClick && cursorWX >= 0) {
+				if (!linePending) {
+					linePendingX = cursorWX;
+					linePendingY = cursorWY;
+					linePending = true;
+				} else {
+					// Commit — ignore zero-length.
+					if (linePendingX != cursorWX || linePendingY != cursorWY) {
+						editor::FreeLine fl;
+						fl.x0 = linePendingX; fl.y0 = linePendingY;
+						fl.x1 = cursorWX;     fl.y1 = cursorWY;
+						fl.texture = selectedTexture;
+						project.freeLines.push_back(fl);
+						projectDirty = true;
+					}
+					linePending = false;
+				}
 			}
-			if (mutated) projectDirty = true;
-		} else if (leftDown) {
-			bool mutated = false;
-			switch (currentTool) {
-				case Tool::Brush: mutated = applyBrushOnDrag(hoverCol, hoverRow); break;
-				case Tool::Floor: mutated = applyFloor      (hoverCol, hoverRow); break;
-				case Tool::Ceil:  mutated = applyCeil       (hoverCol, hoverRow); break;
-				default: break;  // no drag semantics for Door/Spawn
+			if (rightClick) linePending = false;
+		} else if (hoverCol >= 0) {
+			if (leftClick) {
+				bool mutated = false;
+				switch (currentTool) {
+					case Tool::Brush: mutated = applyBrushOnClick(hoverCol, hoverRow); break;
+					case Tool::Floor: mutated = applyFloor       (hoverCol, hoverRow); break;
+					case Tool::Ceil:  mutated = applyCeil        (hoverCol, hoverRow); break;
+					case Tool::Door:  mutated = applyDoor        (hoverCol, hoverRow); break;
+					case Tool::Spawn: mutated = applySpawn       (hoverCol, hoverRow); break;
+					default: break;
+				}
+				if (mutated) projectDirty = true;
+			} else if (leftDown) {
+				bool mutated = false;
+				switch (currentTool) {
+					case Tool::Brush: mutated = applyBrushOnDrag(hoverCol, hoverRow); break;
+					case Tool::Floor: mutated = applyFloor      (hoverCol, hoverRow); break;
+					case Tool::Ceil:  mutated = applyCeil       (hoverCol, hoverRow); break;
+					default: break;  // no drag semantics for Door/Spawn
+				}
+				if (mutated) projectDirty = true;
 			}
-			if (mutated) projectDirty = true;
 		}
 	}
 

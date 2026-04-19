@@ -20,6 +20,13 @@ public:
 		Door,       // D — place/remove a door
 		Spawn,      // S — set the player spawn tile
 		Texture,    // T — paint texture on face under crosshair (3D click)
+		Line,       // L — draw a free-form wall line (click start, click end)
+	};
+
+	enum class SnapMode {
+		Off,        // 1-pixel resolution (≈ 4 world units)
+		Fine,       // 8 world units (byte / engine vertex resolution)
+		Coarse,     // 64 world units (tile boundary)
 	};
 
 	// Surface picker result — which face the camera crosshair is pointing at.
@@ -93,6 +100,12 @@ private:
 	// tile clicked (so dragging over mixed tiles doesn't ping-pong).
 	bool    brushDragActive = false;
 	bool    brushDragOpenMode = false;                   // true → painting open, false → solid
+
+	// Line tool state: awaiting second click to commit (x0,y0)→cursor.
+	bool    linePending = false;
+	int     linePendingX = 0;
+	int     linePendingY = 0;
+	SnapMode snapMode = SnapMode::Fine;                  // default: engine resolution
 
 	// Debounced recompile
 	bool      projectDirty = false;

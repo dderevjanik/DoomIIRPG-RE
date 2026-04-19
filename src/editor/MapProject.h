@@ -46,6 +46,16 @@ struct Spawn {
 	uint8_t dir = 0;  // 0..7; 0=east, 2=north, 4=west, 6=south
 };
 
+// Free-form wall segments: endpoints in world coords (0 … MAP_SIZE*TILE_SIZE).
+// Unlike tile-boundary walls, these can sit anywhere and at any angle.
+// The compiler treats each line as a vertical quad spanning the owner tile's
+// floor→ceil Z range, plus a collision line in byte space.
+struct FreeLine {
+	int x0 = 0, y0 = 0;
+	int x1 = 0, y1 = 0;
+	int texture = D2_WALL_TILE;   // override defaults to D2_WALL_TILE
+};
+
 struct MapProject {
 	std::string name;
 	int mapId = 11;
@@ -62,6 +72,7 @@ struct MapProject {
 	std::unordered_map<uint32_t, int>     tileWallTex;     // default D2_WALL_TILE
 
 	std::vector<Door> doors;
+	std::vector<FreeLine> freeLines;
 	Spawn spawn{};
 
 	// Defaults: all tiles solid, spawn at (0,0) facing east.
