@@ -91,3 +91,11 @@ add_executable(${TEST_SCRIPT_VM_TGT} test_script_vm.cpp)
 set_target_properties(${TEST_SCRIPT_VM_TGT} PROPERTIES CXX_STANDARD 23 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
 target_link_libraries(${TEST_SCRIPT_VM_TGT} drpg-engine-lib)
 add_test(NAME script-vm COMMAND ${TEST_SCRIPT_VM_TGT})
+
+# --- Map compiler byte-parity tests (C++ MapCompiler vs Python reference) ---
+set(TEST_MAP_COMPILER_TGT test-map-compiler)
+add_executable(${TEST_MAP_COMPILER_TGT} test_map_compiler.cpp)
+set_target_properties(${TEST_MAP_COMPILER_TGT} PROPERTIES CXX_STANDARD 23 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
+target_include_directories(${TEST_MAP_COMPILER_TGT} PRIVATE ${CMAKE_SOURCE_DIR}/src/editor)
+target_link_libraries(${TEST_MAP_COMPILER_TGT} drpg-engine-lib)
+add_test(NAME map-compiler COMMAND ${TEST_MAP_COMPILER_TGT} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
