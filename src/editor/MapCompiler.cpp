@@ -203,12 +203,26 @@ static void generateGeometry(const MapProject& p,
 					const int sbx0 = swx0 >> 3, sby0 = swy0 >> 3;
 					const int sbx1 = swx1 >> 3, sby1 = swy1 >> 3;
 
-					auto emitStep = [&](int zLow, int zHigh, uint8_t oc, uint8_t orow) {
+					// Default winding (sbx0/sby0 → sbx1/sby1 at bottom, then up to
+					// zHigh) gives a normal in the +dc/+dr direction — i.e. facing
+					// from the current tile into the neighbour. When the OWNER is
+					// the current tile we need the normal flipped (so the face is
+					// visible from inside the owner's BSP leaf, not through the
+					// back face from the neighbour).
+					auto emitStep = [&](int zLow, int zHigh, uint8_t oc, uint8_t orow,
+					                    bool normalTowardCurrent) {
 						PolyRecord sr{};
-						sr.verts[0] = { uint8_t(sbx0), uint8_t(sby0), uint8_t(zLow),   0,  0 };
-						sr.verts[1] = { uint8_t(sbx1), uint8_t(sby1), uint8_t(zLow),  16,  0 };
-						sr.verts[2] = { uint8_t(sbx1), uint8_t(sby1), uint8_t(zHigh), 16, 16 };
-						sr.verts[3] = { uint8_t(sbx0), uint8_t(sby0), uint8_t(zHigh),  0, 16 };
+						if (!normalTowardCurrent) {
+							sr.verts[0] = { uint8_t(sbx0), uint8_t(sby0), uint8_t(zLow),   0,  0 };
+							sr.verts[1] = { uint8_t(sbx1), uint8_t(sby1), uint8_t(zLow),  16,  0 };
+							sr.verts[2] = { uint8_t(sbx1), uint8_t(sby1), uint8_t(zHigh), 16, 16 };
+							sr.verts[3] = { uint8_t(sbx0), uint8_t(sby0), uint8_t(zHigh),  0, 16 };
+						} else {
+							sr.verts[0] = { uint8_t(sbx1), uint8_t(sby1), uint8_t(zLow),   0,  0 };
+							sr.verts[1] = { uint8_t(sbx0), uint8_t(sby0), uint8_t(zLow),  16,  0 };
+							sr.verts[2] = { uint8_t(sbx0), uint8_t(sby0), uint8_t(zHigh), 16, 16 };
+							sr.verts[3] = { uint8_t(sbx1), uint8_t(sby1), uint8_t(zHigh),  0, 16 };
+						}
 						sr.tileNum = D2_WALL_TILE;
 						sr.isWall  = true;
 						sr.ownerCol = oc;
@@ -216,19 +230,36 @@ static void generateGeometry(const MapProject& p,
 						polys.push_back(sr);
 					};
 
+					// Ceiling step — raised ceiling is modelled as an alcove: the
+					// step riser is only visible from INSIDE the taller-ceiling
+					// tile (BSP owner), so from surrounding tiles the ceiling
+					// reads as a flat line at the neighbour's height. Without
+					// this, a single raised tile leaks a visible riser across
+					// the whole room.
 					const int neighCeil = p.ceilByte(nc, nr);
 					if (neighCeil != thisCeil) {
 						const int zLo = std::min(thisCeil, neighCeil);
 						const int zHi = std::max(thisCeil, neighCeil);
-						if (thisCeil < neighCeil) emitStep(zLo, zHi, uint8_t(col), uint8_t(row));
-						else                      emitStep(zLo, zHi, uint8_t(nc),  uint8_t(nr));
+						if (thisCeil > neighCeil) {
+							// current has higher ceiling → owner=current, normal toward current
+							emitStep(zLo, zHi, uint8_t(col), uint8_t(row), /*normalTowardCurrent=*/true);
+						} else {
+							// neighbour has higher ceiling → owner=neighbour, normal toward neighbour
+							emitStep(zLo, zHi, uint8_t(nc),  uint8_t(nr),  /*normalTowardCurrent=*/false);
+						}
 					}
+					// Floor step — keep owner on the LOWER-floor tile (the "step
+					// up" is visually an obstacle looking from the low side), but
+					// flip the winding so the visible face faces that owner.
 					const int neighFloor = p.floorByte(nc, nr);
 					if (neighFloor != thisFloor) {
 						const int zLo = std::min(thisFloor, neighFloor);
 						const int zHi = std::max(thisFloor, neighFloor);
-						if (thisFloor < neighFloor) emitStep(zLo, zHi, uint8_t(col), uint8_t(row));
-						else                        emitStep(zLo, zHi, uint8_t(nc),  uint8_t(nr));
+						if (thisFloor < neighFloor) {
+							emitStep(zLo, zHi, uint8_t(col), uint8_t(row), /*normalTowardCurrent=*/true);
+						} else {
+							emitStep(zLo, zHi, uint8_t(nc),  uint8_t(nr),  /*normalTowardCurrent=*/false);
+						}
 					}
 				}
 			}
