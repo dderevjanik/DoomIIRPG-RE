@@ -56,6 +56,20 @@ struct FreeLine {
 	int texture = D2_WALL_TILE;   // override defaults to D2_WALL_TILE
 };
 
+// Placed entity — emitted into level.yaml `entities:` block. Position is a
+// tile cell; compiler writes the tile centre as the world coord. Door
+// entities still live in `doors` (separate list) because they carry collision
+// semantics; this struct is for everything else (monsters / items / NPCs /
+// decorations).
+struct Entity {
+	uint8_t col = 0;
+	uint8_t row = 0;
+	std::string tile;                     // sprite name — resolved via SpriteDefs at load
+	int      tileId = 0;                  // resolved sprite ID (for media registration); 0 = unresolved
+	int      z = -1;                      // <0 ⇒ not a Z-sprite; >=0 ⇒ emitted with `z:` field
+	std::vector<std::string> flags;       // names: animation, flip_h, north, south, east, west, …
+};
+
 struct MapProject {
 	std::string name;
 	int mapId = 11;
@@ -73,6 +87,7 @@ struct MapProject {
 
 	std::vector<Door> doors;
 	std::vector<FreeLine> freeLines;
+	std::vector<Entity> entities;
 	Spawn spawn{};
 
 	// Defaults: all tiles solid, spawn at (0,0) facing east.

@@ -296,6 +296,7 @@ void EditorState::update(Canvas* canvas) {
 			if (ImGui::IsKeyPressed(ImGuiKey_G, false)) currentTool = Tool::Door;
 			if (ImGui::IsKeyPressed(ImGuiKey_T, false)) currentTool = Tool::Texture;
 			if (ImGui::IsKeyPressed(ImGuiKey_L, false)) currentTool = Tool::Line;
+			if (ImGui::IsKeyPressed(ImGuiKey_N, false)) currentTool = Tool::Entity;
 			// Escape cancels any pending line.
 			if (linePending && ImGui::IsKeyPressed(ImGuiKey_Escape, false)) {
 				linePending = false;
@@ -339,6 +340,8 @@ void EditorState::render(Canvas* canvas, Graphics* graphics) {
 	drawValidationPanel();
 	drawCameraPanel();
 	drawTexturePicker();
+	drawEntityPicker();
+	drawEntityInspector();
 	drawSaveDialog();
 
 	// Crosshair + target HUD (only useful when 3D view is live)
@@ -374,6 +377,7 @@ void EditorState::drawToolPalette() {
 		{ "Spawn",                  Tool::Spawn,   "—" },   // no hotkey (S=strafe-back)
 		{ "Texture (3D click)",     Tool::Texture, "T" },
 		{ "Line (free wall)",       Tool::Line,    "L" },
+		{ "Entity (monster/item)",  Tool::Entity,  "N" },
 	};
 	for (const Row& r : rows) {
 		bool active = (currentTool == r.tool);
@@ -443,6 +447,16 @@ void EditorState::drawToolPalette() {
 				project.freeLines.pop_back();
 				projectDirty = true;
 			}
+			break;
+		}
+		case Tool::Entity: {
+			if (selectedEntityTile.empty()) {
+				ImGui::TextDisabled("Pick an entity in the Entities panel first.");
+			} else {
+				ImGui::Text("Selected: %s", selectedEntityTile.c_str());
+			}
+			ImGui::TextDisabled("Click a tile to place.");
+			ImGui::TextDisabled("Click an existing entity to remove.");
 			break;
 		}
 		default: break;
@@ -529,6 +543,17 @@ void EditorState::drawTileGrid2D() {
 			dl->AddRectFilled(p0, p1, IM_COL32(210, 70, 70, 255));
 		}
 		dl->AddRect(a, b, IM_COL32(255, 40, 40, 255));
+	}
+
+	// --- Entity markers ---
+	for (size_t i = 0; i < project.entities.size(); ++i) {
+		const editor::Entity& e = project.entities[i];
+		float cx = canvasPos.x + (e.col + 0.5f) * TILE_PX;
+		float cy = canvasPos.y + (e.row + 0.5f) * TILE_PX;
+		bool selected = (int(i) == selectedEntityIdx);
+		ImU32 fill = selected ? IM_COL32(255, 180, 80, 255) : IM_COL32(180, 120, 240, 220);
+		dl->AddCircleFilled({cx, cy}, TILE_PX * 0.28f, fill);
+		dl->AddCircle      ({cx, cy}, TILE_PX * 0.28f, IM_COL32(20, 20, 20, 255), 0, 1.0f);
 	}
 
 	// --- Spawn marker ---
@@ -696,8 +721,9 @@ void EditorState::drawTileGrid2D() {
 						mutated = applyCeil(hoverCol, hoverRow);
 						isDragStart = true;
 						break;
-					case Tool::Door:  mutated = applyDoor (hoverCol, hoverRow); break;
-					case Tool::Spawn: mutated = applySpawn(hoverCol, hoverRow); break;
+					case Tool::Door:   mutated = applyDoor  (hoverCol, hoverRow); break;
+					case Tool::Spawn:  mutated = applySpawn (hoverCol, hoverRow); break;
+					case Tool::Entity: mutated = applyEntity(hoverCol, hoverRow); break;
 					default: break;
 				}
 				if (mutated) {
@@ -950,22 +976,32 @@ void EditorState::loadTextureList() {
 				int id = idNode.as<int>(0);
 				if (id <= 0) continue;
 				TextureMeta meta;
-				// Prefer explicit name: field; fall back to the YAML key.
+				meta.key = it->first.as<std::string>();
+				// Prefer explicit name: field for display; fall back to the YAML key.
 				if (YAML::Node nameNode = it->second["name"]; nameNode && nameNode.IsScalar()) {
 					meta.name = nameNode.as<std::string>();
 				}
-				if (meta.name.empty()) meta.name = it->first.as<std::string>();
+				if (meta.name.empty()) meta.name = meta.key;
 				if (YAML::Node tagsNode = it->second["tags"]; tagsNode && tagsNode.IsSequence()) {
 					for (auto tit = tagsNode.begin(); tit != tagsNode.end(); ++tit) {
 						meta.tags.push_back(tit->as<std::string>());
 					}
 				}
 				textureMeta.emplace(id, std::move(meta));
+
+				// Sprite-range IDs (0..256) are entity candidates — monsters,
+				// items, NPCs, decorations, doors. Store their IDs for the
+				// Entity picker. Skip duplicates (ref entries share IDs with
+				// canonical ones).
+				if (id > 0 && id < 257) availableEntities.push_back(id);
 			}
 		}
 	} catch (const std::exception& e) {
 		LOG_WARN("[editor] failed to load sprites.yaml metadata: {}\n", e.what());
 	}
+	std::sort(availableEntities.begin(), availableEntities.end());
+	availableEntities.erase(std::unique(availableEntities.begin(), availableEntities.end()),
+	                        availableEntities.end());
 
 	// Collect the distinct tag set across the available world textures so the
 	// picker's tag-filter dropdown has something to offer.
@@ -1437,4 +1473,148 @@ void EditorState::playtest(Canvas* canvas) {
 	CAppContainer::getInstance()->skipTravelMap = true;
 	canvas->startupMap = project.mapId;
 	canvas->loadMap(project.mapId, /*newGame=*/true, /*reload=*/true);
+}
+
+// =====================================================================
+// Entity placement (Tool::Entity)
+// =====================================================================
+
+int EditorState::findEntityAt(int col, int row) const {
+	for (int i = int(project.entities.size()) - 1; i >= 0; --i) {
+		if (project.entities[i].col == col && project.entities[i].row == row) return i;
+	}
+	return -1;
+}
+
+bool EditorState::applyEntity(int col, int row) {
+	// Click on an existing entity → select it for inspection (non-destructive).
+	// Click on an empty tile → place the currently-selected entity type there.
+	int existing = findEntityAt(col, row);
+	if (existing >= 0) {
+		selectedEntityIdx = existing;
+		return false;   // selection isn't a mutation; no recompile needed
+	}
+	if (selectedEntityTile.empty()) return false;   // nothing to place
+	editor::Entity e;
+	e.col    = uint8_t(col);
+	e.row    = uint8_t(row);
+	e.tile   = selectedEntityTile;
+	e.tileId = selectedEntityId;
+	project.entities.push_back(e);
+	selectedEntityIdx = int(project.entities.size()) - 1;
+	return true;
+}
+
+void EditorState::drawEntityPicker() {
+	ImGui::SetNextWindowPos(ImVec2(1148, 340), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(280, 320), ImGuiCond_FirstUseEver);
+	ImGui::Begin("Entities");
+
+	ImGui::Text("Selected: %s", selectedEntityTile.empty() ? "(none)" : selectedEntityTile.c_str());
+
+	char buf[64];
+	std::strncpy(buf, entityFilter.c_str(), sizeof(buf));
+	buf[sizeof(buf) - 1] = 0;
+	if (ImGui::InputText("Filter", buf, sizeof(buf))) entityFilter = buf;
+
+	ImGui::TextDisabled("%zu entity sprites available", availableEntities.size());
+	ImGui::BeginChild("entlist", ImVec2(0, 0), true);
+
+	// Filter: substring of name (case-insensitive), or numeric ID, or '#tag'.
+	std::string filter = entityFilter;
+	int filterId = -1;
+	std::string tagQuery, nameQuery;
+	if (!filter.empty()) {
+		if (filter[0] == '#') {
+			tagQuery = filter.substr(1);
+		} else {
+			try {
+				size_t pos = 0;
+				filterId = std::stoi(filter, &pos);
+				if (pos != filter.size()) filterId = -1;
+			} catch (...) { filterId = -1; }
+			if (filterId < 0) {
+				nameQuery.reserve(filter.size());
+				for (char c : filter) nameQuery.push_back(std::tolower(static_cast<unsigned char>(c)));
+			}
+		}
+	}
+
+	for (int id : availableEntities) {
+		auto mit = textureMeta.find(id);
+		if (mit == textureMeta.end()) continue;
+		const auto& meta = mit->second;
+		if (!filter.empty()) {
+			if (filterId >= 0 && id != filterId) continue;
+			else if (!tagQuery.empty()) {
+				bool match = false;
+				for (const auto& t : meta.tags) if (t == tagQuery) { match = true; break; }
+				if (!match) continue;
+			} else if (!nameQuery.empty()) {
+				std::string lname = meta.name;
+				for (char& c : lname) c = std::tolower(static_cast<unsigned char>(c));
+				if (lname.find(nameQuery) == std::string::npos) continue;
+			}
+		}
+		char label[96];
+		std::snprintf(label, sizeof(label), "#%d  %s", id, meta.name.c_str());
+		bool sel = (selectedEntityTile == meta.key);
+		if (ImGui::Selectable(label, sel)) {
+			selectedEntityTile = meta.key;
+			selectedEntityId   = id;
+			currentTool = Tool::Entity;
+		}
+	}
+	ImGui::EndChild();
+	ImGui::End();
+}
+
+void EditorState::drawEntityInspector() {
+	if (selectedEntityIdx < 0 || selectedEntityIdx >= int(project.entities.size())) return;
+
+	ImGui::SetNextWindowPos(ImVec2(1148, 672), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(280, 220), ImGuiCond_FirstUseEver);
+	ImGui::Begin("Entity Inspector");
+
+	editor::Entity& e = project.entities[selectedEntityIdx];
+	ImGui::Text("#%d  %s", selectedEntityIdx, e.tile.c_str());
+	ImGui::Text("Tile: (%d, %d)", int(e.col), int(e.row));
+
+	// Z toggle + value.
+	bool hasZ = (e.z >= 0);
+	if (ImGui::Checkbox("Z-sprite (has height)", &hasZ)) {
+		e.z = hasZ ? 32 : -1;
+		projectDirty = true;
+	}
+	if (hasZ) {
+		int zv = e.z;
+		if (ImGui::SliderInt("Z", &zv, 0, 128)) {
+			e.z = zv;
+			projectDirty = true;
+		}
+	}
+
+	// Flags — one checkbox per known flag.
+	static const char* knownFlagNames[] = {
+		"invisible", "flip_h", "animation", "non_entity", "sprite_wall",
+		"north", "south", "east", "west",
+	};
+	for (const char* flag : knownFlagNames) {
+		bool on = std::find(e.flags.begin(), e.flags.end(), flag) != e.flags.end();
+		if (ImGui::Checkbox(flag, &on)) {
+			auto it = std::find(e.flags.begin(), e.flags.end(), flag);
+			if (on && it == e.flags.end()) e.flags.push_back(flag);
+			else if (!on && it != e.flags.end()) e.flags.erase(it);
+			projectDirty = true;
+		}
+	}
+
+	ImGui::Separator();
+	if (ImGui::Button("Delete")) {
+		project.entities.erase(project.entities.begin() + selectedEntityIdx);
+		selectedEntityIdx = -1;
+		projectDirty = true;
+	}
+
+	ImGui::End();
 }

@@ -499,10 +499,13 @@ bool Render::reloadGeometryOnly(const std::vector<uint8_t>& binBytes, int mapNam
 	DataNode levelYaml;
 	this->loadMapLevelOverrides(mapNameID, levelYaml, spritesFromYaml, yamlSpritesNode);
 
-	this->numMapSprites = this->numNormalSprites + this->numZSprites;
-	this->numSprites = this->numMapSprites + Render::MAX_CUSTOM_SPRITES + Render::MAX_DROP_SPRITES;
-	this->numTileEvents   = (int)app->resource->shiftShort();
-	this->mapByteCodeSize = (int)app->resource->shiftShort();
+	const int numMapSpritesLocal = this->numNormalSprites + this->numZSprites;
+	const int numTileEventsLocal  = int(app->resource->shiftShort());
+	const int mapByteCodeSizeLocal = int(app->resource->shiftShort());
+	this->numMapSprites   = numMapSpritesLocal;
+	this->numSprites      = this->numMapSprites + Render::MAX_CUSTOM_SPRITES + Render::MAX_DROP_SPRITES;
+	this->numTileEvents   = numTileEventsLocal;
+	this->mapByteCodeSize = mapByteCodeSizeLocal;
 	app->game->totalMayaCameras    = app->resource->shiftByte();
 	app->game->totalMayaCameraKeys = app->resource->shiftShort();
 	short totalMayaTweens = 0;
@@ -515,7 +518,13 @@ bool Render::reloadGeometryOnly(const std::vector<uint8_t>& binBytes, int mapNam
 	IS.close();
 
 	// --- Free old geometry, keep media. ---
+	// unloadGeometryOnly zeroes numMapSprites / numTileEvents / mapByteCodeSize
+	// as part of its reset — restore them from the locals captured above so the
+	// allocations and init loops below see the right sizes.
 	unloadGeometryOnly();
+	this->numMapSprites   = numMapSpritesLocal;
+	this->numTileEvents   = numTileEventsLocal;
+	this->mapByteCodeSize = mapByteCodeSizeLocal;
 
 	// --- Allocate fresh geometry arrays ---
 	this->nodeNormalIdxs = new uint8_t[this->numNodes];
@@ -670,6 +679,11 @@ bool Render::reloadGeometryOnly(const std::vector<uint8_t>& binBytes, int mapNam
 
 	// Script state reset.
 	this->loadScriptsYaml(mapNameID);
+
+	// Attach sprites to BSP leaves so the renderer actually draws them. Without
+	// this, entities sit in mapSprites[] but never get linked into the
+	// per-node lists that the 3D traversal walks.
+	this->postProcessSprites();
 
 	return true;
 }

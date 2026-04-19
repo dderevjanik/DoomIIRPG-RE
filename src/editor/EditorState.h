@@ -22,6 +22,7 @@ public:
 		Spawn,      // S — set the player spawn tile
 		Texture,    // T — paint texture on face under crosshair (3D click)
 		Line,       // L — draw a free-form wall line (click start, click end)
+		Entity,     // N — place / remove / inspect entities on tiles
 	};
 
 	enum class SnapMode {
@@ -84,8 +85,13 @@ private:
 	int     selectedTexture = editor::D2_WALL_TILE;      // for Texture tool
 	// Cached list of available texture IDs (loaded once from media_texels.yaml).
 	std::vector<int> availableTextures;
-	// Per-ID metadata loaded from sprites.yaml (name = YAML key, tags = tags: [..]).
+	// Per-ID metadata loaded from sprites.yaml. `key` is the YAML map key — the
+	// canonical identifier the engine's SpriteDefs::getIndex(name) accepts.
+	// `name` is the optional human-readable display label (sprites.yaml `name:`);
+	// if absent it falls back to the key. Never emit `name` to level.yaml:
+	// only `key` resolves via SpriteDefs.
 	struct TextureMeta {
+		std::string key;
 		std::string name;
 		std::vector<std::string> tags;
 	};
@@ -94,6 +100,13 @@ private:
 	std::string textureTagFilter;  // tag substring filter (exact-match if non-empty)
 	// All distinct tags found across available textures (sorted, for dropdown).
 	std::vector<std::string> knownTags;
+
+	// Entity catalog (sprites.yaml IDs < 257 — monsters / items / NPCs / decor).
+	std::vector<int>         availableEntities;     // sorted by ID
+	std::string              selectedEntityTile;    // sprite name (YAML key), set by Entity picker
+	int                      selectedEntityId = 0;  // resolved sprite ID paired with selectedEntityTile
+	std::string              entityFilter;
+	int                      selectedEntityIdx = -1; // inspector: index into project.entities; -1 = none
 	// GL texture IDs for ImGui thumbnails (keyed by tex ID; 0 = failed to load).
 	std::unordered_map<int, unsigned int> texturePreviews;
 
@@ -135,6 +148,8 @@ private:
 	void drawValidationPanel();
 	void drawCameraPanel();
 	void drawTexturePicker();
+	void drawEntityPicker();       // palette for Entity tool
+	void drawEntityInspector();    // properties of selectedEntityIdx
 	void drawCrosshairAndHit(const SurfaceHit& hit);
 	void drawSaveDialog();
 	void drawActionsBar();  // save / playtest buttons
@@ -165,4 +180,8 @@ private:
 
 	// Remove a door at (col,row) if one exists; return true if mutated.
 	bool removeDoorAt(int col, int row);
+
+	// Entity tool — place at (col, row), or pick / remove if one exists.
+	bool applyEntity(int col, int row);
+	int  findEntityAt(int col, int row) const;   // returns index or -1
 };

@@ -650,6 +650,12 @@ static std::vector<uint8_t> writeBin(const MapProject& p,
 	mediaSet.insert(D2_FLOOR_TILE);
 	mediaSet.insert(D2_CEIL_TILE);
 	for (const PolyRecord& pr : polys) mediaSet.insert(pr.tileNum);
+	// Placed entities (monsters/items/NPCs) also need their sprite tile media
+	// registered — otherwise the renderer crashes in setupTexture when the BSP
+	// walker reaches the sprite. Entity ID 0 = unresolved (legacy YAML); skip.
+	for (const Entity& e : p.entities) {
+		if (e.tileId > 0) mediaSet.insert(e.tileId);
+	}
 	std::vector<int> mediaIndices(mediaSet.begin(), mediaSet.end());
 
 	// --- Spawn ---
@@ -799,6 +805,12 @@ static std::string writeLevelYaml(const MapProject& p,
 	texSet.insert(D2_FLOOR_TILE);
 	texSet.insert(D2_CEIL_TILE);
 	for (const PolyRecord& pr : polys) texSet.insert(pr.tileNum);
+	// Include entity sprite IDs so loadMapLevelOverrides registers their media.
+	// Without this, the textures-YAML override wipes the .bin's registration
+	// and setupTexture segfaults when the renderer visits the sprite.
+	for (const Entity& e : p.entities) {
+		if (e.tileId > 0) texSet.insert(e.tileId);
+	}
 	for (int t : texSet) os << "  - " << t << "\n";
 	os << "  - door_unlocked\n\n";
 	os << "sky_texture: " << p.skyTexture << "\n\n";
@@ -812,9 +824,11 @@ static std::string writeLevelYaml(const MapProject& p,
 		os << "]\n";
 	}
 
-	bool anyDoor = !p.doors.empty();
-	if (anyDoor) {
+	const bool anyEntity = !p.doors.empty() || !p.entities.empty();
+	if (anyEntity) {
 		os << "\nentities:\n";
+
+		// Doors: same as before.
 		for (const Door& d : p.doors) {
 			int mx = d.col * TILE_SIZE + TILE_SIZE / 2;
 			int my = d.row * TILE_SIZE + TILE_SIZE / 2;
@@ -823,6 +837,24 @@ static std::string writeLevelYaml(const MapProject& p,
 			os << "    y: " << my << "\n";
 			os << "    tile: door_unlocked\n";
 			os << "    flags: [animation, " << dirFlags << "]\n";
+		}
+
+		// User-placed entities (monsters / items / NPCs / decorations).
+		for (const Entity& e : p.entities) {
+			int mx = e.col * TILE_SIZE + TILE_SIZE / 2;
+			int my = e.row * TILE_SIZE + TILE_SIZE / 2;
+			os << "  - x: " << mx << "\n";
+			os << "    y: " << my << "\n";
+			os << "    tile: " << (e.tile.empty() ? "unknown" : e.tile) << "\n";
+			if (e.z >= 0) os << "    z: " << e.z << "\n";
+			if (!e.flags.empty()) {
+				os << "    flags: [";
+				for (size_t i = 0; i < e.flags.size(); ++i) {
+					if (i) os << ", ";
+					os << e.flags[i];
+				}
+				os << "]\n";
+			}
 		}
 	}
 

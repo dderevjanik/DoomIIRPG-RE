@@ -202,6 +202,21 @@ MapProject MapProject::loadFromYaml(const std::string& path) {
 		}
 	}
 
+	if (doc["entities"]) {
+		for (const auto& e : doc["entities"]) {
+			Entity ent;
+			ent.col    = uint8_t(e["col"].as<int>(0));
+			ent.row    = uint8_t(e["row"].as<int>(0));
+			ent.tile   = e["tile"].as<std::string>("");
+			ent.tileId = e["tile_id"].as<int>(0);
+			ent.z      = e["z"].as<int>(-1);
+			if (e["flags"] && e["flags"].IsSequence()) {
+				for (const auto& f : e["flags"]) ent.flags.push_back(f.as<std::string>(""));
+			}
+			p.entities.push_back(ent);
+		}
+	}
+
 	return p;
 }
 
@@ -301,6 +316,27 @@ void MapProject::saveToYaml(const std::string& path) const {
 			os << "  - { x0: " << fl.x0 << ", y0: " << fl.y0
 			   << ", x1: " << fl.x1 << ", y1: " << fl.y1
 			   << ", texture: " << fl.texture << " }\n";
+		}
+	}
+
+	os << "\nentities:";
+	if (entities.empty()) { os << " []\n"; }
+	else {
+		os << "\n";
+		for (const Entity& e : entities) {
+			os << "  - col: " << int(e.col) << "\n";
+			os << "    row: " << int(e.row) << "\n";
+			os << "    tile: " << e.tile << "\n";
+			if (e.tileId > 0) os << "    tile_id: " << e.tileId << "\n";
+			if (e.z >= 0) os << "    z: " << e.z << "\n";
+			if (!e.flags.empty()) {
+				os << "    flags: [";
+				for (size_t i = 0; i < e.flags.size(); ++i) {
+					if (i) os << ", ";
+					os << e.flags[i];
+				}
+				os << "]\n";
+			}
 		}
 	}
 
