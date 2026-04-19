@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 // Map editor as an ICanvasState plugged into the engine's Canvas state machine.
@@ -75,7 +76,15 @@ private:
 	int     selectedTexture = editor::D2_WALL_TILE;      // for Texture tool
 	// Cached list of available texture IDs (loaded once from media_texels.yaml).
 	std::vector<int> availableTextures;
+	// Per-ID metadata loaded from sprites.yaml (name = YAML key, tags = tags: [..]).
+	struct TextureMeta {
+		std::string name;
+		std::vector<std::string> tags;
+	};
+	std::unordered_map<int, TextureMeta> textureMeta;
 	std::string textureFilter;
+	// GL texture IDs for ImGui thumbnails (keyed by tex ID; 0 = failed to load).
+	std::unordered_map<int, unsigned int> texturePreviews;
 
 	// Drag-paint state: the "mode" of the current stroke is set by the first
 	// tile clicked (so dragging over mixed tiles doesn't ping-pong).
@@ -115,6 +124,10 @@ private:
 
 	// --- One-time setup ---
 	void loadTextureList();
+
+	// --- Texture preview helpers ---
+	unsigned int getPreviewTexture(int id);   // lazy-loads + caches GL texture
+	void clearPreviewTextures();
 
 	// --- Tool application at (col, row). Returns true if anything mutated. ---
 	bool applyBrushOnClick(int col, int row);

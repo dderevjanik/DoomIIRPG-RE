@@ -12,7 +12,10 @@
 
 #include "imgui.h"
 #include <SDL.h>
+#include <SDL_opengl.h>
 #include <yaml-cpp/yaml.h>
+#include "stb_image.h"
+#include "VFS.h"
 
 #include <algorithm>
 #include <cmath>
@@ -93,6 +96,7 @@ void EditorState::onEnter(Canvas* canvas) {
 }
 
 void EditorState::onExit(Canvas* canvas) {
+	clearPreviewTextures();
 	restoreLevelInfo();
 	if (resolutionHijacked) {
 		if (auto* sdlGL = CAppContainer::getInstance()->sdlGL) {
@@ -688,6 +692,53 @@ bool EditorState::applySpawn(int col, int row) {
 // Texture picker + 3D surface picker (Phase 4)
 // =====================================================================
 
+unsigned int EditorState::getPreviewTexture(int id) {
+	auto it = texturePreviews.find(id);
+	if (it != texturePreviews.end()) return it->second;
+
+	// Load PNG via VFS (searches game dir + mods). Resource path is
+	// relative to the game dir — `textures/` is on the asset search path.
+	std::string path = std::string("textures/texture_") + std::to_string(id) + ".png";
+	auto* vfs = CAppContainer::getInstance()->vfs;
+	int fileSize = 0;
+	uint8_t* data = vfs ? vfs->readFile(path.c_str(), &fileSize) : nullptr;
+	if (!data) {
+		texturePreviews[id] = 0;
+		return 0;
+	}
+	int w = 0, h = 0, ch = 0;
+	uint8_t* rgba = stbi_load_from_memory(data, fileSize, &w, &h, &ch, 4);
+	std::free(data);
+	if (!rgba) {
+		texturePreviews[id] = 0;
+		return 0;
+	}
+
+	GLuint tex = 0;
+	glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgba);
+	stbi_image_free(rgba);
+
+	texturePreviews[id] = tex;
+	return tex;
+}
+
+void EditorState::clearPreviewTextures() {
+	if (texturePreviews.empty()) return;
+	for (auto& [id, tex] : texturePreviews) {
+		if (tex) {
+			GLuint t = tex;
+			glDeleteTextures(1, &t);
+		}
+	}
+	texturePreviews.clear();
+}
+
 void EditorState::loadTextureList() {
 	if (!availableTextures.empty()) return;
 	try {
@@ -708,6 +759,37 @@ void EditorState::loadTextureList() {
 	} catch (const std::exception& e) {
 		LOG_WARN("[editor] failed to load texture list: {}\n", e.what());
 	}
+
+	// Cross-reference sprites.yaml for human-readable names and tags. Keyed
+	// by the entry's `id:` value so the editor can display `#<id> <name>`
+	// and filter by name substring or tag.
+	try {
+		YAML::Node root = YAML::LoadFile("sprites.yaml");
+		YAML::Node sprites = root["sprites"];
+		if (sprites && sprites.IsMap()) {
+			for (auto it = sprites.begin(); it != sprites.end(); ++it) {
+				if (!it->second.IsMap()) continue;
+				YAML::Node idNode = it->second["id"];
+				if (!idNode) continue;
+				int id = idNode.as<int>(0);
+				if (id <= 0) continue;
+				TextureMeta meta;
+				// Prefer explicit name: field; fall back to the YAML key.
+				if (YAML::Node nameNode = it->second["name"]; nameNode && nameNode.IsScalar()) {
+					meta.name = nameNode.as<std::string>();
+				}
+				if (meta.name.empty()) meta.name = it->first.as<std::string>();
+				if (YAML::Node tagsNode = it->second["tags"]; tagsNode && tagsNode.IsSequence()) {
+					for (auto tit = tagsNode.begin(); tit != tagsNode.end(); ++tit) {
+						meta.tags.push_back(tit->as<std::string>());
+					}
+				}
+				textureMeta.emplace(id, std::move(meta));
+			}
+		}
+	} catch (const std::exception& e) {
+		LOG_WARN("[editor] failed to load sprites.yaml metadata: {}\n", e.what());
+	}
 }
 
 void EditorState::drawTexturePicker() {
@@ -721,6 +803,30 @@ void EditorState::drawTexturePicker() {
 	// ceiling tileNums — clamp to the world-texture range.
 	if (selectedTexture < 257) selectedTexture = 257;
 
+	// Thumbnail of the selected texture.
+	unsigned int previewGL = getPreviewTexture(selectedTexture);
+	if (previewGL) {
+		ImGui::Image(ImTextureID(intptr_t(previewGL)), ImVec2(128, 128));
+	} else {
+		ImGui::TextDisabled("(no preview — textures/texture_%d.png not found)",
+		                    selectedTexture);
+	}
+
+	// Show name + tags of the currently selected texture.
+	if (auto mit = textureMeta.find(selectedTexture); mit != textureMeta.end()) {
+		ImGui::Text("Name: %s", mit->second.name.c_str());
+		if (!mit->second.tags.empty()) {
+			std::string joined;
+			for (size_t i = 0; i < mit->second.tags.size(); ++i) {
+				if (i) joined += ", ";
+				joined += mit->second.tags[i];
+			}
+			ImGui::Text("Tags: %s", joined.c_str());
+		} else {
+			ImGui::TextDisabled("Tags: (none)");
+		}
+	}
+
 	ImGui::TextDisabled("World textures only (IDs ≥ 257).");
 	ImGui::Separator();
 	char buf[64];
@@ -729,18 +835,52 @@ void EditorState::drawTexturePicker() {
 	if (ImGui::InputText("Filter", buf, sizeof(buf))) {
 		textureFilter = buf;
 	}
+	ImGui::TextDisabled("(ID, name substring, or #tag)");
 
 	ImGui::TextDisabled("%zu textures available", availableTextures.size());
 
 	ImGui::BeginChild("texlist", ImVec2(0, 0), true);
-	int filterVal = -1;
-	if (!textureFilter.empty()) {
-		try { filterVal = std::stoi(textureFilter); } catch (...) { filterVal = -1; }
+	// Filter semantics: empty = show all; starts with '#' = tag exact match;
+	// pure integer = exact ID; otherwise = case-insensitive substring of name.
+	std::string filter = textureFilter;
+	int filterId = -1;
+	std::string tagQuery, nameQuery;
+	if (!filter.empty()) {
+		if (filter[0] == '#') {
+			tagQuery = filter.substr(1);
+		} else {
+			try {
+				size_t pos = 0;
+				filterId = std::stoi(filter, &pos);
+				if (pos != filter.size()) filterId = -1;
+			} catch (...) { filterId = -1; }
+			if (filterId < 0) {
+				nameQuery.reserve(filter.size());
+				for (char c : filter) nameQuery.push_back(std::tolower(static_cast<unsigned char>(c)));
+			}
+		}
 	}
+	auto matchesFilter = [&](int id) {
+		if (filter.empty()) return true;
+		if (filterId >= 0) return id == filterId;
+		auto mit = textureMeta.find(id);
+		if (mit == textureMeta.end()) return false;
+		if (!tagQuery.empty()) {
+			for (const auto& t : mit->second.tags) if (t == tagQuery) return true;
+			return false;
+		}
+		std::string lname = mit->second.name;
+		for (char& c : lname) c = std::tolower(static_cast<unsigned char>(c));
+		return lname.find(nameQuery) != std::string::npos;
+	};
 	for (int id : availableTextures) {
-		if (filterVal >= 0 && id != filterVal) continue;
-		char label[32];
-		std::snprintf(label, sizeof(label), "#%d", id);
+		if (!matchesFilter(id)) continue;
+		char label[96];
+		if (auto mit = textureMeta.find(id); mit != textureMeta.end()) {
+			std::snprintf(label, sizeof(label), "#%d  %s", id, mit->second.name.c_str());
+		} else {
+			std::snprintf(label, sizeof(label), "#%d", id);
+		}
 		bool sel = (id == selectedTexture);
 		if (ImGui::Selectable(label, sel)) selectedTexture = id;
 	}

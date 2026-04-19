@@ -2,48 +2,78 @@ sprites:
   assault_rifle:
     file: tables.bin
     id: 1
+    tags: []
+    name: assault_rifle
   chainsaw:
     file: tables.bin
     id: 2
+    tags: []
+    name: chainsaw
   holy_water_pistol:
     file: tables.bin
     id: 3
+    tags: []
+    name: holy_water_pistol
   sentry_bot_shooting:
     file: tables.bin
     id: 4
+    tags: []
+    name: sentry_bot_shooting
   sentry_bot_exploding:
     file: tables.bin
     id: 5
+    tags: []
+    name: sentry_bot_exploding
   super_shotgun:
     file: tables.bin
     id: 6
+    tags: []
+    name: super_shotgun
   chaingun:
     file: tables.bin
     id: 7
+    tags: []
+    name: chaingun
   assault_rifle_with_scope:
     file: tables.bin
     id: 8
+    tags: []
+    name: assault_rifle_with_scope
   plasma_gun:
     file: tables.bin
     id: 9
+    tags: []
+    name: plasma_gun
   rocket_launcher:
     file: tables.bin
     id: 10
+    tags: []
+    name: rocket_launcher
   bfg:
     file: tables.bin
     id: 11
+    tags: []
+    name: bfg
   soul_cube:
     file: tables.bin
     id: 12
+    tags: []
+    name: soul_cube
   sentry_bot_red_shooting:
     file: tables.bin
     id: 13
+    tags: []
+    name: sentry_bot_red_shooting
   sentry_bot_red_exploding:
     file: tables.bin
     id: 14
+    tags: []
+    name: sentry_bot_red_exploding
   world_weapon:
     file: tables.bin
     id: 15
+    tags: []
+    name: world_weapon
   monster_red_sentry_bot:
     file: tables.bin
     id: 18
@@ -51,6 +81,8 @@ sprites:
       loot_aura:
         scale: 18
         flags: 512
+    tags: []
+    name: monster_red_sentry_bot
   monster_sentry_bot:
     file: tables.bin
     id: 19
@@ -58,235 +90,383 @@ sprites:
       loot_aura:
         scale: 18
         flags: 512
+    tags: []
+    name: monster_sentry_bot
   monster_zombie:
     file: tables.bin
     id: 20
+    tags: []
+    name: monster_zombie
   monster_zombie2:
     file: tables.bin
     id: 21
+    tags: []
+    name: monster_zombie2
   monster_zombie3:
     file: tables.bin
     id: 22
+    tags: []
+    name: monster_zombie3
   monster_imp:
     file: tables.bin
     id: 23
+    tags: []
+    name: monster_imp
   monster_imp2:
     file: tables.bin
     id: 24
+    tags: []
+    name: monster_imp2
   monster_imp3:
     file: tables.bin
     id: 25
+    tags: []
+    name: monster_imp3
   monster_saw_goblin:
     file: tables.bin
     id: 26
+    tags: []
+    name: monster_saw_goblin
   monster_saw_goblin2:
     file: tables.bin
     id: 27
+    tags: []
+    name: monster_saw_goblin2
   monster_saw_goblin3:
     file: tables.bin
     id: 28
+    tags: []
+    name: monster_saw_goblin3
   monster_lost_soul:
     file: tables.bin
     id: 29
+    tags: []
+    name: monster_lost_soul
   monster_lost_soul2:
     file: tables.bin
     id: 30
+    tags: []
+    name: monster_lost_soul2
   monster_lost_soul3:
     file: tables.bin
     id: 31
+    tags: []
+    name: monster_lost_soul3
   monster_pinky:
     file: tables.bin
     id: 32
+    tags: []
+    name: monster_pinky
   monster_pinky2:
     file: tables.bin
     id: 33
+    tags: []
+    name: monster_pinky2
   monster_pinky3:
     file: tables.bin
     id: 34
+    tags: []
+    name: monster_pinky3
   monster_revenant:
     file: tables.bin
     id: 35
+    tags: []
+    name: monster_revenant
   monster_revenant2:
     file: tables.bin
     id: 36
+    tags: []
+    name: monster_revenant2
   monster_revenant3:
     file: tables.bin
     id: 37
+    tags: []
+    name: monster_revenant3
   monster_mancubus:
     file: tables.bin
     id: 38
+    tags: []
+    name: monster_mancubus
   monster_mancubus2:
     file: tables.bin
     id: 39
+    tags: []
+    name: monster_mancubus2
   monster_mancubus3:
     file: tables.bin
     id: 40
+    tags: []
+    name: monster_mancubus3
   monster_cacodemon:
     file: tables.bin
     id: 41
+    tags: []
+    name: monster_cacodemon
   monster_cacodemon2:
     file: tables.bin
     id: 42
+    tags: []
+    name: monster_cacodemon2
   monster_cacodemon3:
     file: tables.bin
     id: 43
+    tags: []
+    name: monster_cacodemon3
   monster_sentinel:
     file: tables.bin
     id: 44
+    tags: []
+    name: monster_sentinel
   monster_sentinel2:
     file: tables.bin
     id: 45
+    tags: []
+    name: monster_sentinel2
   monster_sentinel3:
     file: tables.bin
     id: 46
+    tags: []
+    name: monster_sentinel3
   monster_arch_vile:
     file: tables.bin
     id: 50
+    tags: []
+    name: monster_arch_vile
   monster_arch_vile2:
     file: tables.bin
     id: 51
+    tags: []
+    name: monster_arch_vile2
   monster_arch_vile3:
     file: tables.bin
     id: 52
+    tags: []
+    name: monster_arch_vile3
   monster_arachnotron:
     file: tables.bin
     id: 53
+    tags: []
+    name: monster_arachnotron
   boss_cyberdemon:
     file: tables.bin
     id: 54
+    tags: []
+    name: boss_cyberdemon
   boss_pinky:
     file: tables.bin
     id: 56
+    tags: []
+    name: boss_pinky
   boss_mastermind:
     file: tables.bin
     id: 57
+    tags: []
+    name: boss_mastermind
   boss_vios:
     file: tables.bin
     id: 58
     render:
       multiply_shift: true
+    tags: []
+    name: boss_vios
   boss_vios2:
     file: tables.bin
     id: 59
     render:
       multiply_shift: true
+    tags: []
+    name: boss_vios2
   boss_vios3:
     file: tables.bin
     id: 60
     render:
       multiply_shift: true
+    tags: []
+    name: boss_vios3
   boss_vios4:
     file: tables.bin
     id: 61
     render:
       multiply_shift: true
+    tags: []
+    name: boss_vios4
   boss_vios5:
     file: tables.bin
     id: 62
     render:
       multiply_shift: true
+    tags: []
+    name: boss_vios5
   npc_riley_oconnor:
     file: tables.bin
     id: 66
+    tags: []
+    name: npc_riley_oconnor
   npc_major:
     file: tables.bin
     id: 68
+    tags: []
+    name: npc_major
   npc_bob:
     file: tables.bin
     id: 69
+    tags: []
+    name: npc_bob
   npc_civilian:
     file: tables.bin
     id: 71
+    tags: []
+    name: npc_civilian
   npc_sarge:
     file: tables.bin
     id: 72
+    tags: []
+    name: npc_sarge
   npc_female:
     file: tables.bin
     id: 73
+    tags: []
+    name: npc_female
   npc_evil_scientist:
     file: tables.bin
     id: 74
+    tags: []
+    name: npc_evil_scientist
   npc_scientist:
     file: tables.bin
     id: 75
+    tags: []
+    name: npc_scientist
   npc_researcher:
     file: tables.bin
     id: 76
+    tags: []
+    name: npc_researcher
   npc_civilian2:
     file: tables.bin
     id: 77
+    tags: []
+    name: npc_civilian2
   ammo_bullets:
     file: tables.bin
     id: 85
+    tags: []
+    name: ammo_bullets
   ammo_shells:
     file: tables.bin
     id: 86
+    tags: []
+    name: ammo_shells
   ammo_rockets:
     file: tables.bin
     id: 88
+    tags: []
+    name: ammo_rockets
   ammo_cells:
     file: tables.bin
     id: 89
+    tags: []
+    name: ammo_cells
   ammo_holy_water:
     file: tables.bin
     id: 90
+    tags: []
+    name: ammo_holy_water
   one_uac_credit:
     file: tables.bin
     id: 107
+    tags: []
+    name: one_uac_credit
   key_red:
     file: tables.bin
     id: 110
+    tags: []
+    name: key_red
   key_blue:
     file: tables.bin
     id: 111
+    tags: []
+    name: key_blue
   armor_jacket:
     file: tables.bin
     id: 112
+    tags: []
+    name: armor_jacket
   satchel:
     file: tables.bin
     id: 113
+    tags: []
+    name: satchel
   pack_item:
     file: tables.bin
     id: 114
+    tags: []
+    name: pack_item
   worker_pack:
     file: tables.bin
     id: 115
+    tags: []
+    name: worker_pack
   health_pack:
     file: tables.bin
     id: 116
+    tags: []
+    name: health_pack
   food_plate:
     file: tables.bin
     id: 117
+    tags: []
+    name: food_plate
   armor_shard:
     file: tables.bin
     id: 119
+    tags: []
+    name: armor_shard
   obj_table:
     file: tables.bin
     id: 121
+    tags: []
+    name: obj_table
   hell_seal:
     file: tables.bin
     id: 122
+    tags: []
+    name: hell_seal
   toilet:
     file: tables.bin
     id: 123
+    tags: []
+    name: toilet
   dirt_decal:
     file: tables.bin
     id: 124
+    tags: []
+    name: dirt_decal
   ladder:
     file: tables.bin
     id: 125
+    tags: []
+    name: ladder
   blood_splatter:
     file: tables.bin
     id: 126
+    tags: []
+    name: blood_splatter
   sink:
     file: tables.bin
     id: 127
+    tags: []
+    name: sink
   barred_window:
     file: tables.bin
     id: 128
+    tags: []
+    name: barred_window
   hazard_bar:
     file: tables.bin
     id: 129
+    tags: []
+    name: hazard_bar
   obj_fire:
     file: tables.bin
     id: 130
@@ -294,12 +474,18 @@ sprites:
       position_at_view:
         offset_mult: 18
         z_offset: -512
+    tags: []
+    name: obj_fire
   treadmill_monitor:
     file: tables.bin
     id: 131
+    tags: []
+    name: treadmill_monitor
   tech_station:
     file: tables.bin
     id: 133
+    tags: []
+    name: tech_station
   water_spout:
     file: tables.bin
     id: 134
@@ -307,9 +493,13 @@ sprites:
       auto_anim:
         period: 128
         frames: 2
+    tags: []
+    name: water_spout
   obj_chair:
     file: tables.bin
     id: 135
+    tags: []
+    name: obj_chair
   obj_torchiere:
     file: tables.bin
     id: 136
@@ -318,6 +508,8 @@ sprites:
         sprite: sfx_lightglow1
         z_mult: 10
         mode: add50
+    tags: []
+    name: obj_torchiere
   obj_scientist_corpse:
     file: tables.bin
     id: 137
@@ -325,6 +517,8 @@ sprites:
       loot_aura:
         scale: 18
         flags: 512
+    tags: []
+    name: obj_scientist_corpse
   obj_corpse:
     file: tables.bin
     id: 138
@@ -332,6 +526,8 @@ sprites:
       loot_aura:
         scale: 18
         flags: 512
+    tags: []
+    name: obj_corpse
   obj_other_corpse:
     file: tables.bin
     id: 139
@@ -339,119 +535,187 @@ sprites:
       loot_aura:
         scale: 18
         flags: 512
+    tags: []
+    name: obj_other_corpse
   dummy_pain:
     file: tables.bin
     id: 140
+    tags: []
+    name: dummy_pain
   attack_dummy:
     file: tables.bin
     id: 141
+    tags: []
+    name: attack_dummy
   exit_dummy:
     file: tables.bin
     id: 142
+    tags: []
+    name: exit_dummy
   use_dummy:
     file: tables.bin
     id: 143
+    tags: []
+    name: use_dummy
   septic_station:
     file: tables.bin
     id: 147
+    tags: []
+    name: septic_station
   practice_target:
     file: tables.bin
     id: 149
+    tags: []
+    name: practice_target
   obj_printer:
     file: tables.bin
     id: 150
+    tags: []
+    name: obj_printer
   obj_crate:
     file: tables.bin
     id: 152
     render:
       z_offset_floor: -224
+    tags: []
+    name: obj_crate
   vending_machine:
     file: tables.bin
     id: 153
+    tags: []
+    name: vending_machine
   armor_repair:
     file: tables.bin
     id: 154
+    tags: []
+    name: armor_repair
   closed_portal_eye:
     file: tables.bin
     id: 155
     render:
       z_offset_wall: -128
+    tags: []
+    name: closed_portal_eye
   eye_portal:
     file: tables.bin
     id: 156
     render:
       z_offset_wall: -128
+    tags: []
+    name: eye_portal
   portal_socket:
     file: tables.bin
     id: 157
+    tags: []
+    name: portal_socket
   treadmill_side:
     file: tables.bin
     id: 158
     render:
       skip: true
+    tags: []
+    name: treadmill_side
   treadmill_front:
     file: tables.bin
     id: 159
+    tags: []
+    name: treadmill_front
   hell_hands:
     file: tables.bin
     id: 161
+    tags: []
+    name: hell_hands
   doorjamb_decal:
     file: tables.bin
     id: 162
+    tags: []
+    name: doorjamb_decal
   stones_and_skulls:
     file: tables.bin
     id: 164
+    tags: []
+    name: stones_and_skulls
   nonobstructing_spritewall:
     file: tables.bin
     id: 166
+    tags: []
+    name: nonobstructing_spritewall
   fence:
     file: tables.bin
     id: 168
+    tags: []
+    name: fence
   sentinel_spikes:
     file: tables.bin
     id: 170
+    tags: []
+    name: sentinel_spikes
   sentinel_spikes_dummy:
     file: tables.bin
     id: 171
     render:
       skip: true
+    tags: []
+    name: sentinel_spikes_dummy
   switch:
     file: tables.bin
     id: 173
+    tags: []
+    name: switch
   tech_detail:
     file: tables.bin
     id: 175
+    tags: []
+    name: tech_detail
   hell_skulls:
     file: tables.bin
     id: 177
+    tags: []
+    name: hell_skulls
   glass:
     file: tables.bin
     id: 178
+    tags: []
+    name: glass
   terminal_target:
     file: tables.bin
     id: 179
     render:
       z_offset_wall: -256
+    tags: []
+    name: terminal_target
   terminal_general:
     file: tables.bin
     id: 180
+    tags: []
+    name: terminal_general
   terminal_vios:
     file: tables.bin
     id: 181
+    tags: []
+    name: terminal_vios
   terminal_bot:
     file: tables.bin
     id: 182
+    tags: []
+    name: terminal_bot
   terminal_hacking:
     file: tables.bin
     id: 183
     render:
       z_offset_wall: -256
+    tags: []
+    name: terminal_hacking
   elevator_nums:
     file: tables.bin
     id: 184
+    tags: []
+    name: elevator_nums
   bush:
     file: tables.bin
     id: 187
+    tags: []
+    name: bush
   tree_top:
     file: tables.bin
     id: 188
@@ -461,125 +725,205 @@ sprites:
         z_mult: 0
       - sprite: tree_top
         z_mult: 36
+    tags: []
+    name: tree_top
   tree_trunk:
     file: tables.bin
     id: 189
+    tags: []
+    name: tree_trunk
   sfx_lightglow1:
     file: tables.bin
     id: 193
+    tags: []
+    name: sfx_lightglow1
   window3:
     file: tables.bin
     id: 197
+    tags: []
+    name: window3
   glaevenscope:
     file: tables.bin
     id: 201
+    tags: []
+    name: glaevenscope
   fog_gray:
     file: tables.bin
     id: 208
+    tags: []
+    name: fog_gray
   scorch_mark:
     file: tables.bin
     id: 212
+    tags: []
+    name: scorch_mark
   static_flame:
     file: tables.bin
     id: 223
+    tags: []
+    name: static_flame
   missile_player_rocket:
     file: tables.bin
     id: 225
+    tags: []
+    name: missile_player_rocket
   missile_rocket:
     file: tables.bin
     id: 226
+    tags: []
+    name: missile_rocket
   flesh:
     file: tables.bin
     id: 227
+    tags: []
+    name: flesh
   shadow:
     file: tables.bin
     id: 232
+    tags: []
+    name: shadow
   anim_fire:
     file: tables.bin
     id: 234
+    tags: []
+    name: anim_fire
   anim_water:
     file: tables.bin
     id: 235
+    tags: []
+    name: anim_water
   air_vent:
     file: tables.bin
     id: 236
+    tags: []
+    name: air_vent
   soul_cube_attack:
     file: tables.bin
     id: 239
+    tags: []
+    name: soul_cube_attack
   water_stream:
     file: tables.bin
     id: 240
     render:
       path: stream
+    tags: []
+    name: water_stream
   caco_plasma:
     file: tables.bin
     id: 241
+    tags: []
+    name: caco_plasma
   fire_ball:
     file: tables.bin
     id: 242
+    tags: []
+    name: fire_ball
   plasma_ball:
     file: tables.bin
     id: 243
+    tags: []
+    name: plasma_ball
   bfg_ball:
     file: tables.bin
     id: 244
+    tags: []
+    name: bfg_ball
   monster_claw:
     file: tables.bin
     id: 245
+    tags: []
+    name: monster_claw
   monster_bite:
     file: tables.bin
     id: 246
+    tags: []
+    name: monster_bite
   monster_blunt_trauma:
     file: tables.bin
     id: 247
+    tags: []
+    name: monster_blunt_trauma
   electric_slide:
     file: tables.bin
     id: 248
+    tags: []
+    name: electric_slide
   fear_eye:
     file: tables.bin
     id: 251
+    tags: []
+    name: fear_eye
   acid_spit:
     file: tables.bin
     id: 252
+    tags: []
+    name: acid_spit
   npc_chat:
     file: tables.bin
     id: 254
+    tags: []
+    name: npc_chat
   alert:
     file: tables.bin
     id: 255
+    tags: []
+    name: alert
   doorjamb:
     file: tables.bin
     id: 257
+    tags: []
+    name: doorjamb
   red_door_locked:
     file: tables.bin
     id: 271
+    tags: []
+    name: red_door_locked
   red_door_unlocked:
     file: tables.bin
     id: 272
+    tags: []
+    name: red_door_unlocked
   blue_door_locked:
     file: tables.bin
     id: 273
+    tags: []
+    name: blue_door_locked
   blue_door_unlocked:
     file: tables.bin
     id: 274
+    tags: []
+    name: blue_door_unlocked
   door_locked:
     file: tables.bin
     id: 275
+    tags: []
+    name: door_locked
   door_unlocked:
     file: tables.bin
     id: 276
+    tags: []
+    name: door_unlocked
   level_door_locked:
     file: tables.bin
     id: 277
+    tags: []
+    name: level_door_locked
   level_door_unlocked:
     file: tables.bin
     id: 278
+    tags: []
+    name: level_door_unlocked
   sky_box:
     file: tables.bin
     id: 301
+    tags: []
+    name: sky_box
   fade:
     file: tables.bin
     id: 302
+    tags: []
+    name: fade
   flat_lava:
     file: tables.bin
     id: 479
@@ -588,6 +932,8 @@ sprites:
         s_div: 8
         t_div: 16
         mask: 1023
+    tags: []
+    name: flat_lava
   flat_lava2:
     file: tables.bin
     id: 480
@@ -595,418 +941,736 @@ sprites:
       tex_anim:
         t_div: 2
         mask: 1023
+    tags: []
+    name: flat_lava2
   wp_view_assault_rifle:
     file: tables.bin
     id: 1
+    tags: []
+    name: wp_view_assault_rifle
   wp_view_chainsaw:
     file: tables.bin
     id: 2
+    tags: []
+    name: wp_view_chainsaw
   wp_view_holy_water_pistol:
     file: tables.bin
     id: 3
+    tags: []
+    name: wp_view_holy_water_pistol
   wp_view_shooting_sentry_bot:
     file: tables.bin
     id: 4
+    tags: []
+    name: wp_view_shooting_sentry_bot
   wp_view_exploding_sentry_bot:
     file: tables.bin
     id: 5
+    tags: []
+    name: wp_view_exploding_sentry_bot
   wp_view_super_shotgun:
     file: tables.bin
     id: 8
+    tags: []
+    name: wp_view_super_shotgun
   wp_view_chaingun:
     file: tables.bin
     id: 9
+    tags: []
+    name: wp_view_chaingun
   wp_view_assault_rifle_with_scope:
     file: tables.bin
     id: 10
+    tags: []
+    name: wp_view_assault_rifle_with_scope
   wp_view_plasma_gun:
     file: tables.bin
     id: 11
+    tags: []
+    name: wp_view_plasma_gun
   wp_view_rocket_launcher:
     file: tables.bin
     id: 12
+    tags: []
+    name: wp_view_rocket_launcher
   wp_view_bfg:
     file: tables.bin
     id: 13
+    tags: []
+    name: wp_view_bfg
   wp_view_soul_cube:
     file: tables.bin
     id: 14
+    tags: []
+    name: wp_view_soul_cube
   wp_view_red_shooting_sentry_bot:
     file: tables.bin
     id: 13
+    tags: []
+    name: wp_view_red_shooting_sentry_bot
   wp_view_red_exploding_sentry_bot:
     file: tables.bin
     id: 14
+    tags: []
+    name: wp_view_red_exploding_sentry_bot
   wp_view_item:
     file: tables.bin
     id: 15
+    tags: []
+    name: wp_view_item
   menu_btn_bg:
     file: menu_button_background.bmp
+    tags: []
+    name: menu_btn_bg
   menu_btn_bg_on:
     file: menu_button_background_on.bmp
+    tags: []
+    name: menu_btn_bg_on
   menu_arrow_down:
     file: menu_arrow_down.bmp
+    tags: []
+    name: menu_arrow_down
   menu_arrow_up:
     file: menu_arrow_up.bmp
+    tags: []
+    name: menu_arrow_up
   switch_left_normal:
     file: Switch_Left_Normal.bmp
+    tags: []
+    name: switch_left_normal
   switch_left_active:
     file: Switch_Left_Active.bmp
+    tags: []
+    name: switch_left_active
   slider_bar:
     file: Menu_Option_SliderBar.bmp
+    tags: []
+    name: slider_bar
   slider_on:
     file: Menu_Option_SliderON.bmp
+    tags: []
+    name: slider_on
   slider_off:
     file: Menu_Option_SliderOFF.bmp
+    tags: []
+    name: slider_off
   info_btn_normal:
     file: gameMenu_infoButton_Normal.bmp
+    tags: []
+    name: info_btn_normal
   info_btn_pressed:
     file: gameMenu_infoButton_Pressed.bmp
+    tags: []
+    name: info_btn_pressed
   vending_arrow_up_glow:
     file: vending_arrow_up_glow.bmp
+    tags: []
+    name: vending_arrow_up_glow
   vending_arrow_down_glow:
     file: vending_arrow_down_glow.bmp
+    tags: []
+    name: vending_arrow_down_glow
   vending_btn_large:
     file: vending_button_large.bmp
+    tags: []
+    name: vending_btn_large
   vending_btn_help:
     file: vending_button_help.bmp
+    tags: []
+    name: vending_btn_help
   ingame_option_btn:
     file: inGame_menu_option_button.bmp
+    tags: []
+    name: ingame_option_btn
   menu_dial:
     file: Menu_Dial.bmp
+    tags: []
+    name: menu_dial
   menu_dial_knob:
     file: Menu_Dial_Knob.bmp
+    tags: []
+    name: menu_dial_knob
   menu_main_box:
     file: Menu_Main_BOX.bmp
+    tags: []
+    name: menu_main_box
   main_menu_overlay:
     file: Main_Menu_OverLay.bmp
+    tags: []
+    name: main_menu_overlay
   main_help_overlay:
     file: Main_Help_OverLay.bmp
+    tags: []
+    name: main_help_overlay
   main_about_overlay:
     file: Main_About_OverLay.bmp
+    tags: []
+    name: main_about_overlay
   menu_yesno_box:
     file: Menu_YesNo_BOX.bmp
+    tags: []
+    name: menu_yesno_box
   menu_choose_diff_box:
     file: Menu_ChooseDIFF_BOX.bmp
+    tags: []
+    name: menu_choose_diff_box
   menu_language_box:
     file: Menu_Language_BOX.bmp
+    tags: []
+    name: menu_language_box
   menu_option_box3:
     file: Menu_Option_BOX3.bmp
+    tags: []
+    name: menu_option_box3
   menu_option_box4:
     file: Menu_Option_BOX4.bmp
+    tags: []
+    name: menu_option_box4
   hud_numbers:
     file: Hud_Numbers.bmp
+    tags: []
+    name: hud_numbers
   game_menu_panel_bottom:
     file: gameMenu_Panel_bottom.bmp
+    tags: []
+    name: game_menu_panel_bottom
   game_menu_panel_bottom_sentry:
     file: gameMenu_Panel_bottom_sentrybot.bmp
+    tags: []
+    name: game_menu_panel_bottom_sentry
   game_menu_health:
     file: gameMenu_Health.bmp
+    tags: []
+    name: game_menu_health
   game_menu_shield:
     file: gameMenu_Shield.bmp
+    tags: []
+    name: game_menu_shield
   game_menu_torn_page:
     file: gameMenu_TornPage.bmp
+    tags: []
+    name: game_menu_torn_page
   game_menu_background:
     file: gameMenu_Background.bmp
+    tags: []
+    name: game_menu_background
   main_menu_dial_a_anim:
     file: Main_Menu_DialA_anim.bmp
+    tags: []
+    name: main_menu_dial_a_anim
   main_menu_dial_c_anim:
     file: Main_Menu_DialC_anim.bmp
+    tags: []
+    name: main_menu_dial_c_anim
   main_menu_slide_anim:
     file: Main_Menu_Slide_anim.bmp
+    tags: []
+    name: main_menu_slide_anim
   game_menu_scrollbar:
     file: gameMenu_ScrollBar.bmp
+    tags: []
+    name: game_menu_scrollbar
   game_menu_top_slider:
     file: gameMenu_topSlider.bmp
+    tags: []
+    name: game_menu_top_slider
   game_menu_mid_slider:
     file: gameMenu_midSlider.bmp
+    tags: []
+    name: game_menu_mid_slider
   game_menu_bottom_slider:
     file: gameMenu_bottomSlider.bmp
+    tags: []
+    name: game_menu_bottom_slider
   vending_scrollbar:
     file: vending_scroll_bar.bmp
+    tags: []
+    name: vending_scrollbar
   vending_scroll_btn_top:
     file: vending_scroll_button_top.bmp
+    tags: []
+    name: vending_scroll_btn_top
   vending_scroll_btn_mid:
     file: vending_scroll_button_middle.bmp
+    tags: []
+    name: vending_scroll_btn_mid
   vending_scroll_btn_bottom:
     file: vending_scroll_button_bottom.bmp
+    tags: []
+    name: vending_scroll_btn_bottom
   logo:
     file: logo2.bmp
+    tags: []
+    name: logo
   tm_background:
     file: TravelMap.bmp
+    tags: []
+    name: tm_background
   tm_horz_grid:
     file: travelMapHorzGrid.bmp
+    tags: []
+    name: tm_horz_grid
   tm_vert_grid:
     file: travelMapVertGrid.bmp
+    tags: []
+    name: tm_vert_grid
   tm_highlight:
     file: highlight.bmp
+    tags: []
+    name: tm_highlight
   tm_magnifying_glass:
     file: magnifyingGlass.bmp
+    tags: []
+    name: tm_magnifying_glass
   tm_spaceship:
     file: spaceShip.bmp
+    tags: []
+    name: tm_spaceship
   tm_closeup_moon:
     file: TM_Levels1.bmp
+    tags: []
+    name: tm_closeup_moon
   tm_closeup_earth_arrival:
     file: TM_Levels2.bmp
+    tags: []
+    name: tm_closeup_earth_arrival
   tm_closeup_hell:
     file: TM_Levels3.bmp
+    tags: []
+    name: tm_closeup_hell
   tm_closeup_earth:
     file: TM_Levels4.bmp
+    tags: []
+    name: tm_closeup_earth
   tm_path_to_moon:
     file: toMoon.bmp
+    tags: []
+    name: tm_path_to_moon
   tm_path_to_earth:
     file: toEarth.bmp
+    tags: []
+    name: tm_path_to_earth
   tm_path_to_hell:
     file: toHell.bmp
+    tags: []
+    name: tm_path_to_hell
   texture_105:
     file: tables.bin
     id: 105
+    tags: []
+    name: texture_105
   texture_120:
     file: tables.bin
     id: 120
+    tags: []
+    name: texture_120
   texture_132:
     file: tables.bin
     id: 132
+    tags: []
+    name: texture_132
   texture_144:
     file: tables.bin
     id: 144
+    tags: []
+    name: texture_144
   texture_145:
     file: tables.bin
     id: 145
+    tags: []
+    name: texture_145
   texture_146:
     file: tables.bin
     id: 146
+    tags: []
+    name: texture_146
   texture_160:
     file: tables.bin
     id: 160
+    tags: []
+    name: texture_160
   texture_163:
     file: tables.bin
     id: 163
+    tags: []
+    name: texture_163
   texture_167:
     file: tables.bin
     id: 167
+    tags: []
+    name: texture_167
   texture_202:
     file: tables.bin
     id: 202
+    tags: []
+    name: texture_202
   texture_258:
     file: tables.bin
     id: 258
+    tags: []
+    name: texture_258
   texture_259:
     file: tables.bin
     id: 259
+    tags: []
+    name: texture_259
   texture_261:
     file: tables.bin
     id: 261
+    tags: []
+    name: texture_261
   texture_262:
     file: tables.bin
     id: 262
+    tags: []
+    name: texture_262
   texture_263:
     file: tables.bin
     id: 263
+    tags: []
+    name: texture_263
   texture_264:
     file: tables.bin
     id: 264
+    tags: []
+    name: texture_264
   texture_265:
     file: tables.bin
     id: 265
+    tags: []
+    name: texture_265
   texture_266:
     file: tables.bin
     id: 266
+    tags: []
+    name: texture_266
   texture_267:
     file: tables.bin
     id: 267
+    tags: []
+    name: texture_267
   texture_279:
     file: tables.bin
     id: 279
+    tags: []
+    name: texture_279
   texture_280:
     file: tables.bin
     id: 280
+    tags: []
+    name: texture_280
   texture_286:
     file: tables.bin
     id: 286
+    tags: []
+    name: texture_286
   texture_297:
     file: tables.bin
     id: 297
+    tags: []
+    name: texture_297
   texture_298:
     file: tables.bin
     id: 298
+    tags: []
+    name: texture_298
   texture_299:
     file: tables.bin
     id: 299
+    tags: []
+    name: texture_299
   texture_300:
     file: tables.bin
     id: 300
+    tags: []
+    name: texture_300
   texture_303:
     file: tables.bin
     id: 303
+    tags: []
+    name: texture_303
   texture_304:
     file: tables.bin
     id: 304
+    tags: []
+    name: texture_304
   texture_305:
     file: tables.bin
     id: 305
+    tags: []
+    name: texture_305
   texture_307:
     file: tables.bin
     id: 307
+    tags: []
+    name: texture_307
   texture_309:
     file: tables.bin
     id: 309
+    tags: []
+    name: texture_309
   texture_310:
     file: tables.bin
     id: 310
+    tags: []
+    name: texture_310
   texture_311:
     file: tables.bin
     id: 311
+    tags: []
+    name: texture_311
   texture_312:
     file: tables.bin
     id: 312
+    tags: []
+    name: texture_312
   texture_314:
     file: tables.bin
     id: 314
+    tags: []
+    name: texture_314
   texture_316:
     file: tables.bin
     id: 316
+    tags: []
+    name: texture_316
   texture_318:
     file: tables.bin
     id: 318
+    tags: []
+    name: texture_318
   texture_319:
     file: tables.bin
     id: 319
+    tags: []
+    name: texture_319
   texture_320:
     file: tables.bin
     id: 320
+    tags: []
+    name: texture_320
   texture_323:
     file: tables.bin
     id: 323
+    tags: []
+    name: texture_323
   texture_326:
     file: tables.bin
     id: 326
+    tags: []
+    name: texture_326
   texture_327:
     file: tables.bin
     id: 327
+    tags: []
+    name: texture_327
   texture_331:
     file: tables.bin
     id: 331
+    tags: []
+    name: texture_331
   texture_332:
     file: tables.bin
     id: 332
+    tags: []
+    name: texture_332
   texture_336:
     file: tables.bin
     id: 336
+    tags: []
+    name: texture_336
   texture_337:
     file: tables.bin
     id: 337
+    tags: []
+    name: texture_337
   texture_338:
     file: tables.bin
     id: 338
+    tags: []
+    name: texture_338
   texture_339:
     file: tables.bin
     id: 339
+    tags: []
+    name: texture_339
   texture_340:
     file: tables.bin
     id: 340
+    tags: []
+    name: texture_340
   texture_341:
     file: tables.bin
     id: 341
+    tags: []
+    name: texture_341
   texture_342:
     file: tables.bin
     id: 342
+    tags: []
+    name: texture_342
   texture_343:
     file: tables.bin
     id: 343
+    tags: []
+    name: texture_343
   texture_346:
     file: tables.bin
     id: 346
+    tags: []
+    name: texture_346
   texture_351:
     file: tables.bin
     id: 351
+    tags: []
+    name: texture_351
   texture_357:
     file: tables.bin
     id: 357
+    tags: []
+    name: texture_357
   texture_361:
     file: tables.bin
     id: 361
+    tags: []
+    name: texture_361
   texture_363:
     file: tables.bin
     id: 363
+    tags: []
+    name: texture_363
   texture_364:
     file: tables.bin
     id: 364
+    tags: []
+    name: texture_364
   texture_365:
     file: tables.bin
     id: 365
+    tags: []
+    name: texture_365
   texture_451:
     file: tables.bin
     id: 451
+    tags: []
+    name: texture_451
   texture_452:
     file: tables.bin
     id: 452
+    tags: []
+    name: texture_452
   texture_453:
     file: tables.bin
     id: 453
+    tags: []
+    name: texture_453
   texture_454:
     file: tables.bin
     id: 454
+    tags: []
+    name: texture_454
   texture_455:
     file: tables.bin
     id: 455
+    tags: []
+    name: texture_455
   texture_456:
     file: tables.bin
     id: 456
+    tags: []
+    name: texture_456
   texture_457:
     file: tables.bin
     id: 457
+    tags: []
+    name: texture_457
   texture_459:
     file: tables.bin
     id: 459
+    tags: []
+    name: texture_459
   texture_460:
     file: tables.bin
     id: 460
+    tags: []
+    name: texture_460
   texture_462:
     file: tables.bin
     id: 462
+    tags: []
+    name: texture_462
   texture_463:
     file: tables.bin
     id: 463
+    tags: []
+    name: texture_463
   texture_464:
     file: tables.bin
     id: 464
+    tags: []
+    name: texture_464
   texture_465:
     file: tables.bin
     id: 465
+    tags: []
+    name: texture_465
   texture_466:
     file: tables.bin
     id: 466
+    tags: []
+    name: texture_466
   texture_467:
     file: tables.bin
     id: 467
+    tags: []
+    name: texture_467
   texture_468:
     file: tables.bin
     id: 468
+    tags: []
+    name: texture_468
   texture_469:
     file: tables.bin
     id: 469
+    tags: []
+    name: texture_469
   texture_472:
     file: tables.bin
     id: 472
+    tags: []
+    name: texture_472
   texture_474:
     file: tables.bin
     id: 474
+    tags: []
+    name: texture_474
   texture_475:
     file: tables.bin
     id: 475
+    tags: []
+    name: texture_475
   texture_476:
     file: tables.bin
     id: 476
+    tags: []
+    name: texture_476
   texture_478:
     file: tables.bin
     id: 478
+    tags: []
+    name: texture_478
   texture_485:
     file: tables.bin
     id: 485
+    tags: []
+    name: texture_485
   texture_487:
     file: tables.bin
     id: 487
+    tags: []
+    name: texture_487
   texture_488:
     file: tables.bin
     id: 488
+    tags: []
+    name: texture_488

@@ -382,7 +382,8 @@ static bool extractSpritesToYaml(const std::string& outDir) {
 			if (tileIdToName.find(id) == tileIdToName.end()) {
 				auto name = std::format("texture_{:03d}", id);
 				tileIdToName[id] = name;
-				appendYaml += "  " + name + ": {file: tables.bin, id: " + std::to_string(id) + "}\n";
+				appendYaml += "  " + name + ": {file: tables.bin, id: " + std::to_string(id) +
+				              ", name: " + name + ", tags: []}\n";
 				added++;
 			}
 		}

@@ -126,6 +126,15 @@ std::expected<void, std::string> SpriteDefs::parse(const DataNode& config) {
 				src.width = sizeNode[0].asInt(0);
 				src.height = sizeNode[1].asInt(0);
 			}
+
+			// Parse optional tags: ["wall", "metal", ...]
+			DataNode tagsNode = entry["tags"];
+			if (tagsNode && tagsNode.isSequence()) {
+				for (auto tit = tagsNode.begin(); tit != tagsNode.end(); ++tit) {
+					std::string tag = tit.value().asString("");
+					if (!tag.empty()) src.tags.push_back(std::move(tag));
+				}
+			}
 		}
 
 		SpriteDefs::tileNameToSource[name] = src;
@@ -244,6 +253,21 @@ const SpriteSource* SpriteDefs::getSource(int tileIndex) {
 		return getSource(std::string_view(nameIt->second));
 	}
 	return nullptr;
+}
+
+const std::string& SpriteDefs::getName(int tileIndex) {
+	if (auto it = tileIndexToName.find(tileIndex); it != tileIndexToName.end()) {
+		return it->second;
+	}
+	return EMPTY_STRING;
+}
+
+const std::vector<std::string>& SpriteDefs::getTags(int tileIndex) {
+	static const std::vector<std::string> EMPTY_TAGS;
+	if (const SpriteSource* src = getSource(tileIndex)) {
+		return src->tags;
+	}
+	return EMPTY_TAGS;
 }
 
 bool SpriteDefs::isImage(std::string_view name) {

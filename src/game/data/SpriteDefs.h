@@ -20,6 +20,7 @@ struct SpriteSource {
 	int frameWidth = 0;  // frame dimensions (Sheet type only)
 	int frameHeight = 0;
 	int frameCount = 0;  // number of animation frames (Sheet type only)
+	std::vector<std::string> tags;  // editor-facing labels (e.g. "wall", "metal")
 };
 
 // Render properties for sprites with special rendering behavior (parsed from sprites.yaml render: blocks)
@@ -95,6 +96,12 @@ class SpriteDefs {
 
 	// Get full source info by tile index, returns nullptr if not found
 	[[nodiscard]] static const SpriteSource* getSource(int tileIndex);
+
+	// Get the registered name for a tile index, or empty string if unknown.
+	[[nodiscard]] static const std::string& getName(int tileIndex);
+
+	// Get tags for a tile index, or an empty vector if unknown/untagged.
+	[[nodiscard]] static const std::vector<std::string>& getTags(int tileIndex);
 
 	// Check if a sprite is a single image (not from bin, no frames)
 	[[nodiscard]] static bool isImage(std::string_view name);
