@@ -357,13 +357,10 @@ void EditorState::render(Canvas* canvas, Graphics* graphics) {
 	if (ImGui::GetCurrentContext() == nullptr) return;
 
 	drawActionsBar();
-	drawToolPalette();
-	drawTileGrid2D();
-	drawValidationPanel();
-	drawCameraPanel();
-	drawTexturePicker();
-	drawEntityPicker();
-	drawEntityInspector();
+	drawToolStrip();          // left: tool buttons
+	drawInspectorSidebar();   // right: contextual options + pickers
+	drawStatusBar();          // bottom: validation + camera summary
+	drawTileGrid2D();         // floating minimap (hover tooltip inside)
 	drawSaveDialog();
 
 	// Crosshair + target HUD (only useful when 3D view is live)
@@ -385,52 +382,77 @@ bool EditorState::handleInput(Canvas* canvas, int key, int action) {
 // UI panels
 // =====================================================================
 
-void EditorState::drawToolPalette() {
-	ImGui::SetNextWindowPos(ImVec2(12, 32), ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ImVec2(260, 280), ImGuiCond_FirstUseEver);
-	ImGui::Begin("Tools");
+// Left sidebar: one full-width button per Tool enum value with the tool's
+// full name and its hotkey badge. The button itself is the primary
+// affordance; the inspector sidebar to the right shows the active tool's
+// options + pickers. Hotkeys are shown right-aligned on each row as a small
+// dim hint so the user can learn them without a tooltip.
+void EditorState::drawToolStrip() {
+	const ImGuiViewport* vp = ImGui::GetMainViewport();
+	constexpr float kTopBar    = 28.0f;
+	constexpr float kStatusBar = 24.0f;
+	constexpr float kStripW    = 150.0f;
 
-	struct Row { const char* label; Tool tool; const char* key; };
+	ImGui::SetNextWindowPos (ImVec2(vp->WorkPos.x, vp->WorkPos.y + kTopBar), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(kStripW, vp->WorkSize.y - kTopBar - kStatusBar), ImGuiCond_Always);
+	ImGui::Begin("tool_strip", nullptr,
+	             ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+	             ImGuiWindowFlags_NoMove     | ImGuiWindowFlags_NoCollapse |
+	             ImGuiWindowFlags_NoSavedSettings);
+
+	struct Row { const char* label; Tool tool; const char* key; const char* hint; };
 	const Row rows[] = {
-		{ "Brush  (solid/open)",    Tool::Brush,   "B" },
-		{ "Floor byte",             Tool::Floor,   "F" },
-		{ "Ceiling byte",           Tool::Ceil,    "C" },
-		{ "Door",                   Tool::Door,    "G" },   // 'D' collides with strafe-right
-		{ "Spawn",                  Tool::Spawn,   "—" },   // no hotkey (S=strafe-back)
-		{ "Texture (3D click)",     Tool::Texture, "T" },
-		{ "Line (free wall)",       Tool::Line,    "L" },
-		{ "Entity (monster/item)",  Tool::Entity,  "N" },
+		{ "Brush",    Tool::Brush,   "B", "Toggle solid/open on drag" },
+		{ "Floor",    Tool::Floor,   "F", "Paint per-tile floor byte" },
+		{ "Ceiling",  Tool::Ceil,    "C", "Paint per-tile ceiling byte" },
+		{ "Door",     Tool::Door,    "G", "Place / remove door" },
+		{ "Texture",  Tool::Texture, "T", "Click a face in 3D to paint" },
+		{ "Line",     Tool::Line,    "L", "Draw free-form wall segment" },
+		{ "Entity",   Tool::Entity,  "N", "Place monster / item / NPC" },
+		{ "Spawn",    Tool::Spawn,   "—", "Set player spawn tile + dir" },
 	};
+	// Button spans the full sidebar minus padding, text left-aligned so the
+	// hotkey can be overlaid on the right edge.
+	const float innerW = ImGui::GetContentRegionAvail().x;
+	const ImVec2 kBtnSize(innerW, 30);
+	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.0f, 0.5f));
 	for (const Row& r : rows) {
 		bool active = (currentTool == r.tool);
 		if (active) ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.3f, 0.5f, 0.85f, 1.0f));
-		if (ImGui::Button(r.label, ImVec2(170, 0))) currentTool = r.tool;
+		ImVec2 cursor = ImGui::GetCursorScreenPos();
+		if (ImGui::Button(r.label, kBtnSize)) currentTool = r.tool;
 		if (active) ImGui::PopStyleColor();
-		ImGui::SameLine();
-		ImGui::TextDisabled("(%s)", r.key);
+		if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", r.hint);
+		// Right-aligned hotkey badge drawn over the button. A single glyph so
+		// a fixed 16-pixel inset from the right edge is enough.
+		ImGui::GetWindowDrawList()->AddText(
+			ImVec2(cursor.x + kBtnSize.x - 16, cursor.y + 7),
+			IM_COL32(180, 180, 180, 220), r.key);
 	}
+	ImGui::PopStyleVar();
 
-	ImGui::Separator();
-	ImGui::Text("Options for: %s",
-		currentTool == Tool::Brush ? "Brush" :
-		currentTool == Tool::Floor ? "Floor" :
-		currentTool == Tool::Ceil  ? "Ceil"  :
-		currentTool == Tool::Door  ? "Door"  :
-		"Spawn");
+	ImGui::End();
+}
 
+// Body of the right-hand sidebar for the simple tools (Brush/Floor/Ceil/Door/
+// Spawn/Line). Texture and Entity tools have their own richer bodies.
+void EditorState::drawToolOptionsBody() {
 	switch (currentTool) {
+		case Tool::Brush: {
+			ImGui::TextWrapped("Drag on the 2D map to toggle tiles between solid and open.");
+			ImGui::TextDisabled("Starts from whatever the first tile is — dragging over mixed tiles won't ping-pong.");
+			break;
+		}
 		case Tool::Floor: {
 			int v = floorBrush;
-			if (ImGui::SliderInt("Floor byte", &v, 0, 255))
-				floorBrush = uint8_t(v);
+			if (ImGui::SliderInt("Floor byte", &v, 0, 255)) floorBrush = uint8_t(v);
 			ImGui::TextDisabled("Default = %d.  Each unit = 8 world units.", editor::FLOOR_HEIGHT);
 			break;
 		}
 		case Tool::Ceil: {
 			int v = ceilBrush;
-			if (ImGui::SliderInt("Ceil byte", &v, 0, 255))
-				ceilBrush = uint8_t(v);
-			ImGui::TextDisabled("Default = %d.  Step walls auto-emitted at mismatches.",
+			if (ImGui::SliderInt("Ceil byte", &v, 0, 255)) ceilBrush = uint8_t(v);
+			ImGui::TextDisabled("Default = %d.  Step walls auto-emit at mismatches.",
 			                    editor::FLOOR_HEIGHT + 8);
 			break;
 		}
@@ -449,12 +471,7 @@ void EditorState::drawToolPalette() {
 			};
 			int d = spawnDir;
 			if (ImGui::Combo("Facing", &d, names, 8)) spawnDir = uint8_t(d);
-			break;
-		}
-		case Tool::Texture: {
-			ImGui::Text("Selected: %d", selectedTexture);
-			ImGui::TextDisabled("Click a face in the 3D view to apply.");
-			ImGui::TextDisabled("See the Textures panel to pick a different ID.");
+			ImGui::TextDisabled("Click a tile to set the player spawn.");
 			break;
 		}
 		case Tool::Line: {
@@ -464,31 +481,69 @@ void EditorState::drawToolPalette() {
 			ImGui::Text("Texture: %d", selectedTexture);
 			ImGui::TextDisabled(linePending ? "Click end-point to commit." : "Click start of line.");
 			ImGui::TextDisabled("Right-click or ESC cancels.");
-			if (ImGui::Button("Delete last free line")
-			    && !project.freeLines.empty()) {
+			if (ImGui::Button("Delete last free line") && !project.freeLines.empty()) {
 				project.freeLines.pop_back();
 				projectDirty = true;
 			}
 			break;
 		}
-		case Tool::Entity: {
-			if (selectedEntityTile.empty()) {
-				ImGui::TextDisabled("Pick an entity in the Entities panel first.");
-			} else {
-				ImGui::Text("Selected: %s", selectedEntityTile.c_str());
-			}
-			ImGui::TextDisabled("Click a tile to place.");
-			ImGui::TextDisabled("Click an existing entity to remove.");
-			break;
-		}
 		default: break;
+	}
+}
+
+// Single right-edge sidebar. Title + body switch on currentTool so the user
+// always sees just the controls that are relevant to what they're doing.
+void EditorState::drawInspectorSidebar() {
+	const ImGuiViewport* vp = ImGui::GetMainViewport();
+	constexpr float kTopBar    = 28.0f;
+	constexpr float kStatusBar = 24.0f;
+	constexpr float kSidebarW  = 320.0f;
+
+	ImGui::SetNextWindowPos (ImVec2(vp->WorkPos.x + vp->WorkSize.x - kSidebarW,
+	                                vp->WorkPos.y + kTopBar), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(kSidebarW, vp->WorkSize.y - kTopBar - kStatusBar), ImGuiCond_Always);
+
+	const char* title = "Inspector";
+	switch (currentTool) {
+		case Tool::Brush:   title = "Brush";              break;
+		case Tool::Floor:   title = "Floor paint";        break;
+		case Tool::Ceil:    title = "Ceiling paint";      break;
+		case Tool::Door:    title = "Door";               break;
+		case Tool::Spawn:   title = "Spawn";              break;
+		case Tool::Texture: title = "Texture picker";     break;
+		case Tool::Line:    title = "Free wall";          break;
+		case Tool::Entity:  title = "Entity picker";      break;
+	}
+
+	ImGui::Begin(title, nullptr,
+	             ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+	             ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings);
+
+	switch (currentTool) {
+		case Tool::Texture:
+			drawTexturePickerBody();
+			break;
+		case Tool::Entity:
+			drawEntityPickerBody();
+			if (selectedEntityIdx >= 0 && selectedEntityIdx < int(project.entities.size())) {
+				ImGui::Separator();
+				drawEntityInspectorBody();
+			}
+			break;
+		default:
+			drawToolOptionsBody();
+			break;
 	}
 
 	ImGui::End();
 }
 
 void EditorState::drawTileGrid2D() {
-	ImGui::SetNextWindowPos(ImVec2(284, 32), ImGuiCond_FirstUseEver);
+	// The 2D minimap is a floating, movable overlay parked just right of the
+	// left tool strip. It stays on top of the 3D view but users can drag it
+	// anywhere to free up visibility.
+	const ImGuiViewport* vp = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos(ImVec2(vp->WorkPos.x + 160, vp->WorkPos.y + 40), ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowSize(ImVec2(560, 560), ImGuiCond_FirstUseEver);
 	ImGui::Begin("Map (32x32)");
 
@@ -663,6 +718,26 @@ void EditorState::drawTileGrid2D() {
 
 	dl->PopClipRect();
 
+	// Hover tooltip: quick readout of the tile the cursor is on. Avoids users
+	// having to click-probe every tile to discover its floor/ceil byte or
+	// solidity state.
+	if (hoverCol >= 0 && canvasHovered) {
+		const bool solid = project.isSolid(hoverCol, hoverRow);
+		ImGui::BeginTooltip();
+		ImGui::Text("(%d, %d)  %s", hoverCol, hoverRow, solid ? "solid" : "open");
+		if (!solid) {
+			ImGui::Text("floor %d · ceil %d",
+			            project.floorByte(hoverCol, hoverRow),
+			            project.ceilByte (hoverCol, hoverRow));
+			if (project.isDoorTile(hoverCol, hoverRow)) ImGui::TextDisabled("(door tile)");
+			int entIdx = findEntityAt(hoverCol, hoverRow);
+			if (entIdx >= 0) {
+				ImGui::TextDisabled("entity: %s", project.entities[entIdx].tile.c_str());
+			}
+		}
+		ImGui::EndTooltip();
+	}
+
 	// --- Line tool: cursor → world + snap ---
 	// Compute the cursor's continuous world position and snapped version
 	// independent of tile hover, so the rubber-band follows the cursor even
@@ -782,59 +857,58 @@ void EditorState::drawTileGrid2D() {
 	ImGui::End();
 }
 
-void EditorState::drawValidationPanel() {
-	ImGui::SetNextWindowPos(ImVec2(860, 32), ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ImVec2(280, 180), ImGuiCond_FirstUseEver);
-	ImGui::Begin("Validation");
+// Bottom strip. Collapses the old Validation + Camera / Project panels into a
+// single ≤24-pixel status bar — the information is glanceable, not something
+// the user interacts with, so stealing a full right-side column for it was
+// overkill. Colour flips red when leaves or doors breach hard limits.
+void EditorState::drawStatusBar() {
+	const ImGuiViewport* vp = ImGui::GetMainViewport();
+	constexpr float kStatusBar = 24.0f;
+
+	ImGui::SetNextWindowPos (ImVec2(vp->WorkPos.x, vp->WorkPos.y + vp->WorkSize.y - kStatusBar),
+	                         ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(vp->WorkSize.x, kStatusBar), ImGuiCond_Always);
+	ImGui::Begin("status_bar", nullptr,
+	             ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+	             ImGuiWindowFlags_NoMove     | ImGuiWindowFlags_NoScrollbar |
+	             ImGuiWindowFlags_NoSavedSettings);
 
 	int openTiles = 0;
 	for (int r = 0; r < editor::MAP_SIZE; ++r)
 		for (int c = 0; c < editor::MAP_SIZE; ++c)
 			if (!project.isSolid(c, r)) ++openTiles;
+	const int estLeaves = openTiles;
+	const int doorCount = int(project.doors.size());
+	const bool leavesOver = estLeaves > 256;
+	const bool doorsOver  = doorCount > 16;
 
-	// Rough approximation: one leaf per open tile (the typical case).
-	int estLeaves = openTiles;
-
-	ImGui::Text("Open tiles: %d", openTiles);
-	ImGui::Text("Doors: %zu", project.doors.size());
-	ImGui::Text("Estimated leaves: %d", estLeaves);
-
-	auto flag = [](const char* label, int cur, int limit) {
-		bool over = cur > limit;
-		ImU32 col = over ? IM_COL32(255, 80, 80, 255) : IM_COL32(120, 220, 120, 255);
-		ImGui::PushStyleColor(ImGuiCol_Text, col);
-		ImGui::Text("%s: %d / %d %s", label, cur, limit, over ? "(OVER)" : "");
-		ImGui::PopStyleColor();
+	auto push = [&](bool red) {
+		ImGui::PushStyleColor(ImGuiCol_Text,
+			red ? ImVec4(1.0f, 0.35f, 0.35f, 1.0f) : ImVec4(0.80f, 0.80f, 0.80f, 1.0f));
 	};
-	flag("Leaves",    estLeaves,      256);
-	flag("Door count", int(project.doors.size()), 16);   // soft cap for sanity
+	auto pop = []{ ImGui::PopStyleColor(); };
 
-	ImGui::Separator();
-	ImGui::Text(projectDirty ? "● dirty — recompiling soon" : "saved");
-	if (mapLoaded) {
-		ImGui::TextDisabled("Last compile: %u ms ago",
-		                    SDL_GetTicks() - lastCompileMs);
+	push(leavesOver); ImGui::Text("leaves %d/256", estLeaves); pop();
+	ImGui::SameLine(); ImGui::TextDisabled("·");
+	ImGui::SameLine(); push(doorsOver); ImGui::Text("doors %d/16", doorCount); pop();
+	ImGui::SameLine(); ImGui::TextDisabled("·");
+	ImGui::SameLine(); ImGui::Text("%d open tiles", openTiles);
+	ImGui::SameLine(); ImGui::TextDisabled("·");
+	ImGui::SameLine();
+	ImGui::Text("cam %.1f,%.1f,%.1f  yaw %.0f pit %.0f",
+	            camera.posX, camera.posY, camera.posZ, camera.yaw, camera.pitch);
+	ImGui::SameLine(); ImGui::TextDisabled("·");
+	ImGui::SameLine();
+	if (projectDirty) {
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.3f, 1.0f));
+		ImGui::TextUnformatted("● dirty");
+		ImGui::PopStyleColor();
+	} else if (mapLoaded) {
+		ImGui::TextDisabled("compiled %u ms ago", SDL_GetTicks() - lastCompileMs);
+	} else {
+		ImGui::TextDisabled("no map loaded");
 	}
 
-	ImGui::End();
-}
-
-void EditorState::drawCameraPanel() {
-	ImGui::SetNextWindowPos(ImVec2(860, 220), ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ImVec2(280, 200), ImGuiCond_FirstUseEver);
-	ImGui::Begin("Camera / Project");
-	ImGui::Text("Project: %s", loadedProjectPath.empty() ? "(blank)"
-	                                                     : fs::path(loadedProjectPath).filename().string().c_str());
-	if (projectLoaded) {
-		ImGui::Text("Name: %s", project.name.c_str());
-		ImGui::Text("Map ID: %d", project.mapId);
-	}
-	ImGui::Separator();
-	ImGui::Text("Pos (%.1f, %.1f, %.1f)", camera.posX, camera.posY, camera.posZ);
-	ImGui::Text("Yaw %.0f  Pitch %.0f  Spd %.1f", camera.yaw, camera.pitch, camera.moveSpeed);
-	ImGui::Separator();
-	ImGui::TextDisabled("WASD move | Space/Ctrl up/down | Shift sprint");
-	ImGui::TextDisabled("RMB-drag look | Wheel speed | ESC menu");
 	ImGui::End();
 }
 
@@ -1038,11 +1112,9 @@ void EditorState::loadTextureList() {
 	         availableTextures.size(), knownTags.size(), textureMeta.size());
 }
 
-void EditorState::drawTexturePicker() {
-	ImGui::SetNextWindowPos(ImVec2(860, 430), ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ImVec2(280, 320), ImGuiCond_FirstUseEver);
-	ImGui::Begin("Textures");
-
+// Texture picker — rendered INLINE inside the inspector sidebar. No Begin/End
+// here because drawInspectorSidebar already owns the surrounding window.
+void EditorState::drawTexturePickerBody() {
 	ImGui::Text("Selected: %d", selectedTexture);
 	ImGui::InputInt("Texture ID", &selectedTexture);
 	// Sprite-range IDs (< 257) crash the renderer when used as wall/floor/
@@ -1156,8 +1228,6 @@ void EditorState::drawTexturePicker() {
 		if (ImGui::Selectable(label, sel)) selectedTexture = id;
 	}
 	ImGui::EndChild();
-
-	ImGui::End();
 }
 
 // Raymarch from the camera forward direction, step 2 world units, max 512.
@@ -1335,9 +1405,10 @@ void EditorState::openSaveDialog() {
 }
 
 void EditorState::drawActionsBar() {
-	// A thin top-anchored window holding Save / Playtest buttons + last-save msg.
-	ImGui::SetNextWindowPos(ImVec2(12, 12), ImGuiCond_Always);
-	ImGui::SetNextWindowSize(ImVec2(1100, 24), ImGuiCond_Always);
+	// Top-anchored full-width strip: Save / Playtest + project/dirty + fade msg.
+	const ImGuiViewport* vp = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos (ImVec2(vp->WorkPos.x, vp->WorkPos.y),   ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(vp->WorkSize.x, 28),             ImGuiCond_Always);
 	ImGui::Begin("actions", nullptr,
 	             ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
 	             ImGuiWindowFlags_NoMove     | ImGuiWindowFlags_NoScrollbar |
@@ -1531,12 +1602,10 @@ bool EditorState::applyEntity(int col, int row) {
 	return true;
 }
 
-void EditorState::drawEntityPicker() {
-	ImGui::SetNextWindowPos(ImVec2(1148, 340), ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ImVec2(280, 320), ImGuiCond_FirstUseEver);
-	ImGui::Begin("Entities");
-
+// Entity picker — rendered INLINE inside the inspector sidebar.
+void EditorState::drawEntityPickerBody() {
 	ImGui::Text("Selected: %s", selectedEntityTile.empty() ? "(none)" : selectedEntityTile.c_str());
+	ImGui::TextDisabled("Click a tile on the 2D map to place.");
 
 	char buf[64];
 	std::strncpy(buf, entityFilter.c_str(), sizeof(buf));
@@ -1544,7 +1613,9 @@ void EditorState::drawEntityPicker() {
 	if (ImGui::InputText("Filter", buf, sizeof(buf))) entityFilter = buf;
 
 	ImGui::TextDisabled("%zu entity sprites available", availableEntities.size());
-	ImGui::BeginChild("entlist", ImVec2(0, 0), true);
+	// Fixed-height child so that the optional entity inspector below has space
+	// to coexist inside the same sidebar window.
+	ImGui::BeginChild("entlist", ImVec2(0, 220), true);
 
 	// Filter: substring of name (case-insensitive), or numeric ID, or '#tag'.
 	std::string filter = entityFilter;
@@ -1592,15 +1663,13 @@ void EditorState::drawEntityPicker() {
 		}
 	}
 	ImGui::EndChild();
-	ImGui::End();
 }
 
-void EditorState::drawEntityInspector() {
-	if (selectedEntityIdx < 0 || selectedEntityIdx >= int(project.entities.size())) return;
-
-	ImGui::SetNextWindowPos(ImVec2(1148, 672), ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ImVec2(280, 220), ImGuiCond_FirstUseEver);
-	ImGui::Begin("Entity Inspector");
+// Inspector for the currently-selected placed entity — rendered INLINE below
+// the entity picker inside the inspector sidebar. Callers guard against the
+// no-selection case, so we don't re-check here.
+void EditorState::drawEntityInspectorBody() {
+	ImGui::TextUnformatted("Selected instance");
 
 	editor::Entity& e = project.entities[selectedEntityIdx];
 	ImGui::Text("#%d  %s", selectedEntityIdx, e.tile.c_str());
@@ -1641,6 +1710,4 @@ void EditorState::drawEntityInspector() {
 		selectedEntityIdx = -1;
 		projectDirty = true;
 	}
-
-	ImGui::End();
 }

@@ -142,17 +142,24 @@ private:
 	void hijackLevelInfo();
 	void restoreLevelInfo();
 
-	// --- UI panels ---
-	void drawToolPalette();
-	void drawTileGrid2D();
-	void drawValidationPanel();
-	void drawCameraPanel();
-	void drawTexturePicker();
-	void drawEntityPicker();       // palette for Entity tool
-	void drawEntityInspector();    // properties of selectedEntityIdx
+	// --- UI panels (top-level windows) ---
+	// Layout: top actions bar · left tool strip · centered 2D map overlay ·
+	// right contextual inspector sidebar · bottom status bar. Each `draw*Body`
+	// below is a self-contained fragment rendered inline inside its owner
+	// window (e.g. the inspector sidebar picks one body based on currentTool).
+	void drawActionsBar();      // top strip: save / playtest / dirty / fade msg
+	void drawToolStrip();       // left strip: one button per Tool enum value
+	void drawTileGrid2D();      // 2D minimap overlay (own window; hover tooltip)
+	void drawInspectorSidebar();// right sidebar: dispatches on currentTool
+	void drawStatusBar();       // bottom strip: validation + camera summary
 	void drawCrosshairAndHit(const SurfaceHit& hit);
 	void drawSaveDialog();
-	void drawActionsBar();  // save / playtest buttons
+
+	// --- Inspector sidebar bodies (no Begin/End — rendered inside the sidebar) ---
+	void drawToolOptionsBody();   // Brush / Floor / Ceil / Door / Spawn / Line
+	void drawTexturePickerBody(); // Texture tool
+	void drawEntityPickerBody();  // Entity tool: top section (sprite palette)
+	void drawEntityInspectorBody();// Entity tool: bottom section (selected inst)
 
 	// --- Save / Playtest ---
 	void openSaveDialog();
