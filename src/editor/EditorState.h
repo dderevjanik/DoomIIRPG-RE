@@ -82,7 +82,10 @@ private:
 		std::vector<std::string> tags;
 	};
 	std::unordered_map<int, TextureMeta> textureMeta;
-	std::string textureFilter;
+	std::string textureFilter;     // name substring search
+	std::string textureTagFilter;  // tag substring filter (exact-match if non-empty)
+	// All distinct tags found across available textures (sorted, for dropdown).
+	std::vector<std::string> knownTags;
 	// GL texture IDs for ImGui thumbnails (keyed by tex ID; 0 = failed to load).
 	std::unordered_map<int, unsigned int> texturePreviews;
 

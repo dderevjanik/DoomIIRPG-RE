@@ -790,6 +790,18 @@ void EditorState::loadTextureList() {
 	} catch (const std::exception& e) {
 		LOG_WARN("[editor] failed to load sprites.yaml metadata: {}\n", e.what());
 	}
+
+	// Collect the distinct tag set across the available world textures so the
+	// picker's tag-filter dropdown has something to offer.
+	std::set<std::string> tagSet;
+	for (int id : availableTextures) {
+		auto it = textureMeta.find(id);
+		if (it == textureMeta.end()) continue;
+		for (const auto& tag : it->second.tags) tagSet.insert(tag);
+	}
+	knownTags.assign(tagSet.begin(), tagSet.end());
+	LOG_INFO("[editor] texture palette: {} entries, {} unique tags, {} w/ metadata\n",
+	         availableTextures.size(), knownTags.size(), textureMeta.size());
 }
 
 void EditorState::drawTexturePicker() {
@@ -836,6 +848,31 @@ void EditorState::drawTexturePicker() {
 		textureFilter = buf;
 	}
 	ImGui::TextDisabled("(ID, name substring, or #tag)");
+
+	// Tag dropdown — clicking a tag fills the filter with `#<tag>` so users
+	// don't have to remember tag names. "Any tag" clears.
+	if (!knownTags.empty()) {
+		// Build a combo with "Any tag" at index 0.
+		std::vector<const char*> items;
+		items.push_back("Any tag");
+		for (const auto& t : knownTags) items.push_back(t.c_str());
+		int current = 0;
+		if (!textureFilter.empty() && textureFilter[0] == '#') {
+			std::string want = textureFilter.substr(1);
+			for (size_t i = 0; i < knownTags.size(); ++i) {
+				if (knownTags[i] == want) { current = int(i + 1); break; }
+			}
+		}
+		if (ImGui::Combo("Tag", &current, items.data(), int(items.size()))) {
+			if (current == 0) textureFilter.clear();
+			else              textureFilter = "#" + knownTags[current - 1];
+		}
+	}
+
+	if (!textureFilter.empty()) {
+		ImGui::SameLine();
+		if (ImGui::SmallButton("Clear")) textureFilter.clear();
+	}
 
 	ImGui::TextDisabled("%zu textures available", availableTextures.size());
 
