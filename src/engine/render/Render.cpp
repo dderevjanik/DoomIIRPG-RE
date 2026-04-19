@@ -437,6 +437,243 @@ void Render::unloadMap() {
 	}
 }
 
+// Geometry-only teardown used by Render::reloadGeometryOnly. Mirrors the
+// geometry portion of unloadMap() but preserves mediaMappings / mediaPalettes
+// / mediaTexels / GPU textures and the sky. 95% of the teardown cost comes
+// from media; keeping it intact is the whole point of the fast reload path.
+void Render::unloadGeometryOnly() {
+	if (this->normals)          { delete this->normals;           this->normals = nullptr; }
+	if (this->nodeNormalIdxs)   { delete this->nodeNormalIdxs;    this->nodeNormalIdxs = nullptr; }
+	if (this->nodeOffsets)      { delete this->nodeOffsets;       this->nodeOffsets = nullptr; }
+	if (this->nodeChildOffset1) { delete this->nodeChildOffset1;  this->nodeChildOffset1 = nullptr; }
+	if (this->nodeChildOffset2) { delete this->nodeChildOffset2;  this->nodeChildOffset2 = nullptr; }
+	if (this->nodeSprites)      { delete this->nodeSprites;       this->nodeSprites = nullptr; }
+	if (this->nodeBounds)       { delete this->nodeBounds;        this->nodeBounds = nullptr; }
+	if (this->nodePolys)        { delete this->nodePolys;         this->nodePolys = nullptr; }
+	if (this->lineFlags)        { delete this->lineFlags;         this->lineFlags = nullptr; }
+	if (this->lineXs)           { delete this->lineXs;            this->lineXs = nullptr; }
+	if (this->lineYs)           { delete this->lineYs;            this->lineYs = nullptr; }
+	if (this->heightMap)        { delete this->heightMap;         this->heightMap = nullptr; }
+	this->numMapSprites = 0;
+	if (this->mapSprites)       { delete this->mapSprites;        this->mapSprites = nullptr; }
+	if (this->mapSpriteInfo)    { delete this->mapSpriteInfo;     this->mapSpriteInfo = nullptr; }
+	this->numTileEvents = 0;
+	this->mapByteCodeSize = 0;
+	app->game->mapSecretsFound = 0;
+	if (this->tileEvents)       { delete this->tileEvents;        this->tileEvents = nullptr; }
+	if (this->mapByteCode)      { delete this->mapByteCode;       this->mapByteCode = nullptr; }
+	for (int i = 0; i < 12; ++i) this->staticFuncs[i] = -1;
+	for (int j = 0; j < Render::MAX_CUSTOM_SPRITES; ++j) this->customSprites[j] = -1;
+	for (int k = 0; k < Render::MAX_DROP_SPRITES;  ++k) this->dropSprites[k]  = -1;
+}
+
+bool Render::reloadGeometryOnly(const std::vector<uint8_t>& binBytes, int mapNameID) {
+	InputStream IS;
+	if (!IS.loadFromBuffer(binBytes.data(), int(binBytes.size()))) return false;
+
+	// --- Pass 1: header → counts ---
+	this->mapNameID = mapNameID;
+	app->resource->read(&IS, 42);
+	if (app->resource->shiftUByte() != 3) { app->Error(68); return false; }
+	this->mapCompileDate = app->resource->shiftInt();
+	this->mapSpawnIndex  = app->resource->shiftUShort();
+	this->mapSpawnDir    = app->resource->shiftUByte();
+	this->mapFlagsBitmask = app->resource->shiftByte();
+	app->game->totalSecrets = app->resource->shiftByte();
+	app->game->totalLoot    = app->resource->shiftUByte();
+	this->numNodes = app->resource->shiftUShort();
+	int dataSizePolys = app->resource->shiftUShort();
+	this->numLines = app->resource->shiftUShort();
+	this->numNormals = app->resource->shiftUShort();
+	this->numNormalSprites = app->resource->shiftUShort();
+	this->numZSprites = app->resource->shiftShort();
+	const int binNumNormalSprites = this->numNormalSprites;
+	const int binNumZSprites = this->numZSprites;
+	const int binNumMapSprites = binNumNormalSprites + binNumZSprites;
+
+	// Apply level.yaml overrides (entities, height_map). The `textures:`
+	// override is a no-op here because media state is already populated;
+	// loadMapLevelOverrides touches palettes only when unloaded.
+	bool spritesFromYaml = false;
+	DataNode yamlSpritesNode;
+	DataNode levelYaml;
+	this->loadMapLevelOverrides(mapNameID, levelYaml, spritesFromYaml, yamlSpritesNode);
+
+	this->numMapSprites = this->numNormalSprites + this->numZSprites;
+	this->numSprites = this->numMapSprites + Render::MAX_CUSTOM_SPRITES + Render::MAX_DROP_SPRITES;
+	this->numTileEvents   = (int)app->resource->shiftShort();
+	this->mapByteCodeSize = (int)app->resource->shiftShort();
+	app->game->totalMayaCameras    = app->resource->shiftByte();
+	app->game->totalMayaCameraKeys = app->resource->shiftShort();
+	short totalMayaTweens = 0;
+	for (int l = 0; l < 6; ++l) {
+		app->game->ofsMayaTween[l] = totalMayaTweens;
+		short s = app->resource->shiftShort();
+		if (s != -1) totalMayaTweens += s;
+	}
+	app->game->totalMayaTweens = totalMayaTweens;
+	IS.close();
+
+	// --- Free old geometry, keep media. ---
+	unloadGeometryOnly();
+
+	// --- Allocate fresh geometry arrays ---
+	this->nodeNormalIdxs = new uint8_t[this->numNodes];
+	this->nodeOffsets = new short[this->numNodes];
+	this->nodeChildOffset1 = new short[this->numNodes];
+	this->nodeChildOffset2 = new short[this->numNodes];
+	this->nodeSprites = new short[this->numNodes];
+	this->nodeBounds = new uint8_t[this->numNodes * 4];
+	this->nodePolys = new uint8_t[dataSizePolys];
+	this->lineFlags = new uint8_t[(this->numLines + 1) / 2];
+	this->lineXs = new uint8_t[this->numLines * 2];
+	this->lineYs = new uint8_t[this->numLines * 2];
+	this->normals = new short[this->numNormals * 3];
+	this->heightMap = new uint8_t[1024];
+	for (int i = 0; i < this->numNodes; ++i) this->nodeSprites[i] = -1;
+
+	this->mapSprites = new short[this->numSprites * 10];
+	for (int i = 0; i < this->numSprites * 10; ++i) this->mapSprites[i] = 0;
+	this->mapSpriteInfo = new int[this->numSprites * 2];
+	for (int i = 0; i < this->numSprites * 2; ++i) this->mapSprites[i] = 0;
+	this->S_X = this->numSprites * 0;
+	this->S_Y = this->numSprites * 1;
+	this->S_Z = this->numSprites * 2;
+	this->S_RENDERMODE = this->numSprites * 3;
+	this->S_NODE = this->numSprites * 4;
+	this->S_NODENEXT = this->numSprites * 5;
+	this->S_VIEWNEXT = this->numSprites * 6;
+	this->S_ENT = this->numSprites * 7;
+	this->S_SCALEFACTOR = this->numSprites * 8;
+	this->SINFO_SORTZ = this->numSprites;
+
+	this->tileEvents = new int[this->numTileEvents * 2];
+	this->mapByteCode = new uint8_t[this->mapByteCodeSize];
+	app->game->mayaCameras = new MayaCamera[app->game->totalMayaCameras];
+	app->game->mayaCameraKeys = new short[app->game->totalMayaCameraKeys * 7];
+	app->game->mayaCameraTweens = new int8_t[app->game->totalMayaTweens];
+	app->game->mayaTweenIndices = new short[app->game->totalMayaCameraKeys * 6];
+	app->game->setKeyOffsets();
+
+	// --- Pass 2: re-read from the top, parse geometry sections ---
+	IS.loadFromBuffer(binBytes.data(), int(binBytes.size()));
+	app->resource->read(&IS, 42);
+	// Media section header: marker + count + ids + marker. Advance but
+	// don't register — media is intentionally preserved from the previous load.
+	app->resource->readMarker(&IS, 0xDEADBEEF);
+	app->resource->read(&IS, 2);
+	int mediaCount = app->resource->shiftUShort();
+	app->resource->read(&IS, mediaCount * 2);
+	for (int i = 0; i < mediaCount; ++i) app->resource->shiftUShort();
+	app->resource->readMarker(&IS, 0xDEADBEEF);
+	app->resource->readShortArray(&IS, std::span(this->normals, this->numNormals * 3));
+	app->resource->readMarker(&IS);
+	app->resource->readShortArray(&IS, std::span(this->nodeOffsets, this->numNodes));
+	app->resource->readMarker(&IS);
+	app->resource->readByteArray(&IS, std::span(this->nodeNormalIdxs, this->numNodes));
+	app->resource->readMarker(&IS);
+	app->resource->readShortArray(&IS, std::span(this->nodeChildOffset1, this->numNodes));
+	app->resource->readShortArray(&IS, std::span(this->nodeChildOffset2, this->numNodes));
+	app->resource->readMarker(&IS);
+	app->resource->readByteArray(&IS, std::span(this->nodeBounds, this->numNodes * 4));
+	app->resource->readMarker(&IS);
+	app->resource->readByteArray(&IS, std::span(this->nodePolys, dataSizePolys));
+	app->resource->readMarker(&IS);
+	app->resource->readByteArray(&IS, std::span(this->lineFlags, (this->numLines + 1) / 2));
+	app->resource->readByteArray(&IS, std::span(this->lineXs, this->numLines * 2));
+	app->resource->readByteArray(&IS, std::span(this->lineYs, this->numLines * 2));
+	app->resource->readMarker(&IS);
+	app->resource->readByteArray(&IS, std::span(this->heightMap, 1024));
+	app->resource->readMarker(&IS);
+	// Sprites: same sequence as beginLoadMap.
+	app->resource->readCoordArray(&IS, std::span(this->mapSprites + this->S_X, binNumMapSprites));
+	app->resource->readCoordArray(&IS, std::span(this->mapSprites + this->S_Y, binNumMapSprites));
+	for (int i = 0; i < this->numMapSprites; i++) {
+		this->mapSprites[i + this->S_NODE] = -1;
+		this->mapSprites[i + this->S_NODENEXT] = -1;
+		this->mapSprites[i + this->S_VIEWNEXT] = -1;
+		this->mapSprites[i + this->S_ENT] = -1;
+		this->mapSprites[i + this->S_SCALEFACTOR] = 64;
+		this->mapSprites[i + this->S_Z] = 32;
+	}
+	{
+		int n5 = 0;
+		int rem = binNumMapSprites;
+		while (rem > 0) {
+			int n6 = (Resource::IO_SIZE > rem) ? rem : Resource::IO_SIZE;
+			rem -= n6;
+			app->resource->read(&IS, n6);
+			while (--n6 >= 0) this->mapSpriteInfo[n5++] = app->resource->shiftUByte();
+		}
+		app->resource->readMarker(&IS);
+		int n7 = 0;
+		int rem2 = binNumMapSprites;
+		while (rem2 > 0) {
+			int n8 = ((Resource::IO_SIZE / 2) > rem2) ? rem2 : (Resource::IO_SIZE / 2);
+			rem2 -= n8;
+			app->resource->read(&IS, n8 * 2);
+			while (--n8 >= 0) this->mapSpriteInfo[n7++] |= (app->resource->shiftUShort() & 0xFFFF) << 16;
+		}
+		app->resource->readMarker(&IS);
+		app->resource->readUByteArray(&IS, std::span(this->mapSprites + this->S_Z + binNumNormalSprites, binNumZSprites));
+		app->resource->readMarker(&IS);
+		int binNormIdx = binNumNormalSprites;
+		int binZRem = binNumZSprites;
+		while (binZRem > 0) {
+			int n10 = (Resource::IO_SIZE > binZRem) ? binZRem : Resource::IO_SIZE;
+			binZRem -= n10;
+			app->resource->read(&IS, n10);
+			while (--n10 >= 0) this->mapSpriteInfo[binNormIdx++] |= app->resource->shiftUByte() << 8;
+		}
+		app->resource->readMarker(&IS);
+	}
+
+	// Static funcs (12 ushorts).
+	for (int i = 0; i < 12; ++i) this->staticFuncs[i] = (int16_t)app->resource->shiftUShort();
+	app->resource->readMarker(&IS);
+
+	// Tile events.
+	for (int i = 0; i < this->numTileEvents; ++i) {
+		this->tileEvents[i * 2 + 0] = app->resource->shiftInt();
+		this->tileEvents[i * 2 + 1] = app->resource->shiftInt();
+	}
+	app->resource->readMarker(&IS);
+
+	// Bytecode.
+	if (this->mapByteCodeSize > 0) {
+		app->resource->readByteArray(&IS, std::span(this->mapByteCode, this->mapByteCodeSize));
+	}
+	app->resource->readMarker(&IS);
+
+	// Maya cameras + tweens. Editor-compiled bins always emit 0 cams/keys/tweens
+	// (see MapCompiler writeBin), so there's no data between these markers. If
+	// that changes we'd need to mirror the beginLoadMap layout here too.
+	app->resource->readMarker(&IS, 0xDEADBEEF);
+
+	// Map flags (nibble-packed).
+	{
+		uint8_t buf[512];
+		app->resource->readByteArray(&IS, std::span(buf, 512));
+		for (int i = 0; i < 512; ++i) {
+			this->mapFlags[i * 2 + 0] = buf[i] & 0x0F;
+			this->mapFlags[i * 2 + 1] = (buf[i] >> 4) & 0x0F;
+		}
+	}
+	app->resource->readMarker(&IS);
+	IS.close();
+
+	// Sprites from level.yaml (doors, NPCs). Mirrors beginLoadMap's YAML
+	// sprite loading path.
+	if (spritesFromYaml) {
+		this->loadSpritesFromYaml(yamlSpritesNode);
+	}
+
+	// Script state reset.
+	this->loadScriptsYaml(mapNameID);
+
+	return true;
+}
+
 void Render::RegisterMedia(int n) {
 	short mappingsBeg = this->mediaMappings[n];
 	short mappingsEnd = this->mediaMappings[n + 1];

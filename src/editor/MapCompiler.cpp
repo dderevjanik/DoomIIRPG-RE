@@ -522,7 +522,8 @@ static std::vector<uint8_t> writeBin(const MapProject& p,
                                      int& outNumPolys,
                                      int& outNumLines,
                                      int& outNumNodes,
-                                     int& outNumLeaves)
+                                     int& outNumLeaves,
+                                     std::set<int>& outMediaSet)
 {
 	// --- Per-leaf constraint checks ---
 	int leafCount = 0;
@@ -758,6 +759,7 @@ static std::vector<uint8_t> writeBin(const MapProject& p,
 	outNumLines = numLines;
 	outNumNodes = numNodes;
 	outNumLeaves = leafCount;
+	outMediaSet = std::move(mediaSet);
 	return out;
 }
 
@@ -851,7 +853,8 @@ CompiledMap compileMap(const MapProject& project) {
 	CompiledMap result;
 	result.binData = writeBin(project, polys, lines, nodes,
 	                          result.numPolys, result.numLines,
-	                          result.numNodes, result.numLeaves);
+	                          result.numNodes, result.numLeaves,
+	                          result.mediaSet);
 	result.levelYaml = writeLevelYaml(project, polys);
 	return result;
 }

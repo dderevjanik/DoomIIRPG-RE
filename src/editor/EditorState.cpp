@@ -130,6 +130,7 @@ void EditorState::loadProject() {
 void EditorState::compileAndLoadMap(Canvas* canvas) {
 	Applet* app = canvas->app;
 
+	uint32_t tCompileStart = SDL_GetTicks();
 	editor::CompiledMap cm;
 	try {
 		cm = editor::compileMap(project);
@@ -137,8 +138,34 @@ void EditorState::compileAndLoadMap(Canvas* canvas) {
 		LOG_ERROR("[editor] compile failed: {}\n", e.what());
 		return;
 	}
-	LOG_INFO("[editor] compiled: polys={} lines={} nodes={} leaves={} bytes={}\n",
-	         cm.numPolys, cm.numLines, cm.numNodes, cm.numLeaves, cm.binData.size());
+	uint32_t tCompileEnd = SDL_GetTicks();
+
+	// Fast path: media set unchanged, map already loaded → in-place geometry
+	// swap without touching palettes / GPU textures / sky (≈5 ms vs ≈200 ms).
+	const bool canHotReload = mapLoaded && cm.mediaSet == lastCompiledMediaSet;
+
+	if (canHotReload) {
+		uint32_t tReload0 = SDL_GetTicks();
+		// Scratch level.yaml still needs to be on disk because
+		// loadMapLevelOverrides reads from levelInfos[mapId].configFile.
+		writeTextFile(fs::path(scratchDir) / "level.yaml", cm.levelYaml);
+
+		if (!app->render->reloadGeometryOnly(cm.binData, project.mapId)) {
+			LOG_ERROR("[editor] reloadGeometryOnly failed, falling through to full reload\n");
+		} else {
+			LOG_INFO("[editor] hot-reload polys={} lines={} nodes={}  compile={}ms reload={}ms\n",
+			         cm.numPolys, cm.numLines, cm.numNodes,
+			         tCompileEnd - tCompileStart, SDL_GetTicks() - tReload0);
+			lastCompileMs = SDL_GetTicks();
+			projectDirty = false;
+			return;
+		}
+	}
+
+	// --- Slow path: full media + geometry rebuild ---
+	LOG_INFO("[editor] compiled: polys={} lines={} nodes={} leaves={} bytes={}  compile={}ms\n",
+	         cm.numPolys, cm.numLines, cm.numNodes, cm.numLeaves, cm.binData.size(),
+	         tCompileEnd - tCompileStart);
 
 	scratchDir = (fs::path("levels/_editor_scratch") / project.name).string();
 	writeBinFile (fs::path(scratchDir) / "map.bin",    cm.binData);
@@ -149,23 +176,24 @@ void EditorState::compileAndLoadMap(Canvas* canvas) {
 
 	hijackLevelInfo();
 
-	// If a previous map is loaded, tear it down first so beginLoadMap doesn't leak.
-	if (mapLoaded) {
-		canvas->unloadMedia();
-	}
+	if (mapLoaded) canvas->unloadMedia();
 
+	uint32_t tFull0 = SDL_GetTicks();
 	if (!app->render->beginLoadMap(project.mapId)) {
 		LOG_ERROR("[editor] beginLoadMap({}) failed\n", project.mapId);
 		mapLoaded = false;
 		return;
 	}
+	LOG_INFO("[editor] full reload={}ms\n", SDL_GetTicks() - tFull0);
 	mapLoaded = true;
+	lastCompiledMediaSet = cm.mediaSet;
 	lastCompileMs = SDL_GetTicks();
 	projectDirty = false;
 }
 
 void EditorState::recompileIfDirty(Canvas* canvas) {
 	if (!projectDirty) return;
+	if (strokeInProgress) return;  // wait for mouse-up before reloading 3D
 	uint32_t now = SDL_GetTicks();
 	if (now - lastCompileMs < RECOMPILE_DEBOUNCE_MS) return;
 	compileAndLoadMap(canvas);
@@ -286,6 +314,7 @@ void EditorState::update(Canvas* canvas) {
 	// End-of-stroke: release drag state when the mouse comes up.
 	if (ImGui::GetCurrentContext() != nullptr && !ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
 		brushDragActive = false;
+		strokeInProgress = false;    // Win A: mouse-up → allow recompile
 	}
 
 	recompileIfDirty(canvas);
@@ -653,15 +682,28 @@ void EditorState::drawTileGrid2D() {
 		} else if (hoverCol >= 0) {
 			if (leftClick) {
 				bool mutated = false;
+				bool isDragStart = false;
 				switch (currentTool) {
-					case Tool::Brush: mutated = applyBrushOnClick(hoverCol, hoverRow); break;
-					case Tool::Floor: mutated = applyFloor       (hoverCol, hoverRow); break;
-					case Tool::Ceil:  mutated = applyCeil        (hoverCol, hoverRow); break;
-					case Tool::Door:  mutated = applyDoor        (hoverCol, hoverRow); break;
-					case Tool::Spawn: mutated = applySpawn       (hoverCol, hoverRow); break;
+					case Tool::Brush:
+						mutated = applyBrushOnClick(hoverCol, hoverRow);
+						isDragStart = true;
+						break;
+					case Tool::Floor:
+						mutated = applyFloor(hoverCol, hoverRow);
+						isDragStart = true;
+						break;
+					case Tool::Ceil:
+						mutated = applyCeil(hoverCol, hoverRow);
+						isDragStart = true;
+						break;
+					case Tool::Door:  mutated = applyDoor (hoverCol, hoverRow); break;
+					case Tool::Spawn: mutated = applySpawn(hoverCol, hoverRow); break;
 					default: break;
 				}
-				if (mutated) projectDirty = true;
+				if (mutated) {
+					projectDirty = true;
+					if (isDragStart) strokeInProgress = true;
+				}
 			} else if (leftDown) {
 				bool mutated = false;
 				switch (currentTool) {
@@ -670,7 +712,10 @@ void EditorState::drawTileGrid2D() {
 					case Tool::Ceil:  mutated = applyCeil       (hoverCol, hoverRow); break;
 					default: break;  // no drag semantics for Door/Spawn
 				}
-				if (mutated) projectDirty = true;
+				if (mutated) {
+					projectDirty = true;
+					strokeInProgress = true;
+				}
 			}
 		}
 	}

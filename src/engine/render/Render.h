@@ -1,7 +1,9 @@
 #pragma once
 #include "Span.h"
+#include <cstdint>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 class Image;
 class gles;
@@ -362,6 +364,17 @@ public:
 	void FinalizeMediaFromYaml(DataNode& palYaml, DataNode& texYaml);
 	bool loadSkyFromPng(const std::string& path);
 	bool beginLoadMap(int mapNameID);
+	// Fast path for the map editor: re-read the .bin from an in-memory buffer
+	// and swap geometry + heightMap + sprites in place, **without** tearing
+	// down or re-registering media, reloading the sky, or hitting disk. Only
+	// valid when the media set is unchanged from the previous load — see
+	// EditorState::compileAndLoadMap for the gate.
+	bool reloadGeometryOnly(const std::vector<uint8_t>& binBytes, int mapNameID);
+private:
+	// Frees all geometry/sprite/tile-event arrays but leaves media pointers
+	// (palettes, texels, GPU textures, sky) intact. Used by reloadGeometryOnly.
+	void unloadGeometryOnly();
+public:
 	void draw2DSprite(int tileNum, int frame, int x, int y, int flags, int renderMode, int renderFlags, int scaleFactor);
 	void renderSprite(int x, int y, int z, int tileNum, int frame, int flags, int renderMode, int scaleFactor, int renderFlags);
 	void renderSprite(int x, int y, int z, int tileNum, int frame, int flags, int renderMode, int scaleFactor, int renderFlags, int palIndex);

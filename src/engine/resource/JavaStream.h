@@ -42,6 +42,11 @@ class InputStream {
 	bool startup();
 	bool loadResource(const char* fileName);
 	bool loadFile(const char* fileName, int loadType);
+	// Point this stream at a caller-owned memory buffer instead of loading
+	// from the VFS. The stream does NOT take ownership — caller keeps `data`
+	// alive until `close()`. Used by the map editor for fast hot-reload of a
+	// compiled .bin without round-tripping through disk.
+	bool loadFromBuffer(const uint8_t* data, int size);
 	void close();
 	int readInt();
 	int readShort();

@@ -1,5 +1,6 @@
 #include <format>
 #include <cstdlib>
+#include <cstring>
 #include <stdexcept>
 #include <cstdio>
 #include "Log.h"
@@ -120,6 +121,32 @@ bool InputStream::loadFile(const char* fileName, int loadType) {
 	}
 
 	return false;
+}
+
+bool InputStream::loadFromBuffer(const uint8_t* src, int size) {
+	// Malloc a copy so the destructor can std::free it like other load paths.
+	// For the editor's hot-reload .bin (typically <10 KB) this is sub-ms.
+	this->cursor = 0;
+	if (this->data) {
+		std::free(this->data);
+		this->data = nullptr;
+	}
+	if (this->file) {
+		std::fclose(this->file);
+		this->file = nullptr;
+	}
+	if (!src || size <= 0) {
+		this->fileSize = 0;
+		return false;
+	}
+	this->fileSize = size;
+	this->data = (uint8_t*)std::malloc(size);
+	if (!this->data) {
+		this->fileSize = 0;
+		return false;
+	}
+	std::memcpy(this->data, src, size);
+	return true;
 }
 
 void InputStream::close() {

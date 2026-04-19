@@ -5,6 +5,7 @@
 #include "CAppContainer.h"  // for LevelInfo
 
 #include <cstdint>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -107,10 +108,19 @@ private:
 	int     linePendingY = 0;
 	SnapMode snapMode = SnapMode::Fine;                  // default: engine resolution
 
-	// Debounced recompile
+	// Debounced recompile. `strokeInProgress` is set while the user is holding
+	// LMB on a drag-capable tool (Brush/Floor/Ceil); recompile is deferred
+	// until the mouse is released so the engine reload runs at most once per
+	// stroke, not mid-drag at 120 ms cadence.
 	bool      projectDirty = false;
+	bool      strokeInProgress = false;
 	uint32_t  lastCompileMs = 0;
 	static constexpr uint32_t RECOMPILE_DEBOUNCE_MS = 120;
+
+	// Set of texture IDs compiled into the last engine reload. If the next
+	// compile's set is identical we can take the fast geometry-only hot path
+	// (≈5 ms) instead of the full beginLoadMap (≈200 ms).
+	std::set<int> lastCompiledMediaSet;
 
 	// --- Helpers ---
 	void loadProject();
