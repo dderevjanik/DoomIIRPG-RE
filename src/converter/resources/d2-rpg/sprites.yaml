@@ -2,77 +2,77 @@ sprites:
   assault_rifle:
     file: tables.bin
     id: 1
-    tags: []
+    tags: [animated, sprite, weapon]
     name: assault_rifle
   chainsaw:
     file: tables.bin
     id: 2
-    tags: []
+    tags: [animated, rare, sprite, weapon]
     name: chainsaw
   holy_water_pistol:
     file: tables.bin
     id: 3
-    tags: []
+    tags: [animated, rare, sprite, weapon]
     name: holy_water_pistol
   sentry_bot_shooting:
     file: tables.bin
     id: 4
-    tags: []
+    tags: [animated, unused, weapon]
     name: sentry_bot_shooting
   sentry_bot_exploding:
     file: tables.bin
     id: 5
-    tags: []
+    tags: [animated, unused, weapon]
     name: sentry_bot_exploding
   super_shotgun:
     file: tables.bin
     id: 6
-    tags: []
+    tags: [animated, rare, sprite, weapon]
     name: super_shotgun
   chaingun:
     file: tables.bin
     id: 7
-    tags: []
+    tags: [animated, rare, sprite, weapon]
     name: chaingun
   assault_rifle_with_scope:
     file: tables.bin
     id: 8
-    tags: []
+    tags: [animated, rare, sprite, weapon]
     name: assault_rifle_with_scope
   plasma_gun:
     file: tables.bin
     id: 9
-    tags: []
+    tags: [animated, rare, sprite, weapon]
     name: plasma_gun
   rocket_launcher:
     file: tables.bin
     id: 10
-    tags: []
+    tags: [animated, rare, sprite, weapon]
     name: rocket_launcher
   bfg:
     file: tables.bin
     id: 11
-    tags: []
+    tags: [animated, rare, sprite, weapon]
     name: bfg
   soul_cube:
     file: tables.bin
     id: 12
-    tags: []
+    tags: [animated, rare, sprite, weapon]
     name: soul_cube
   sentry_bot_red_shooting:
     file: tables.bin
     id: 13
-    tags: []
+    tags: [animated, unused, weapon]
     name: sentry_bot_red_shooting
   sentry_bot_red_exploding:
     file: tables.bin
     id: 14
-    tags: []
+    tags: [animated, unused, weapon]
     name: sentry_bot_red_exploding
   world_weapon:
     file: tables.bin
     id: 15
-    tags: []
+    tags: [unused, weapon]
     name: world_weapon
   monster_red_sentry_bot:
     file: tables.bin
@@ -81,7 +81,7 @@ sprites:
       loot_aura:
         scale: 18
         flags: 512
-    tags: []
+    tags: [animated, monster, sprite]
     name: monster_red_sentry_bot
   monster_sentry_bot:
     file: tables.bin
@@ -90,382 +90,382 @@ sprites:
       loot_aura:
         scale: 18
         flags: 512
-    tags: []
+    tags: [animated, common, monster, sprite]
     name: monster_sentry_bot
   monster_zombie:
     file: tables.bin
     id: 20
-    tags: []
+    tags: [animated, monster, sprite]
     name: monster_zombie
   monster_zombie2:
     file: tables.bin
     id: 21
-    tags: []
+    tags: [animated, monster, sprite]
     name: monster_zombie2
   monster_zombie3:
     file: tables.bin
     id: 22
-    tags: []
+    tags: [animated, monster, sprite]
     name: monster_zombie3
   monster_imp:
     file: tables.bin
     id: 23
-    tags: []
+    tags: [animated, monster, sprite]
     name: monster_imp
   monster_imp2:
     file: tables.bin
     id: 24
-    tags: []
+    tags: [animated, monster, sprite]
     name: monster_imp2
   monster_imp3:
     file: tables.bin
     id: 25
-    tags: []
+    tags: [animated, common, monster, sprite]
     name: monster_imp3
   monster_saw_goblin:
     file: tables.bin
     id: 26
-    tags: []
+    tags: [animated, monster, sprite]
     name: monster_saw_goblin
   monster_saw_goblin2:
     file: tables.bin
     id: 27
-    tags: []
+    tags: [animated, monster, sprite]
     name: monster_saw_goblin2
   monster_saw_goblin3:
     file: tables.bin
     id: 28
-    tags: []
+    tags: [animated, common, monster, sprite]
     name: monster_saw_goblin3
   monster_lost_soul:
     file: tables.bin
     id: 29
-    tags: []
+    tags: [animated, monster, rare, sprite]
     name: monster_lost_soul
   monster_lost_soul2:
     file: tables.bin
     id: 30
-    tags: []
+    tags: [animated, monster, sprite]
     name: monster_lost_soul2
   monster_lost_soul3:
     file: tables.bin
     id: 31
-    tags: []
+    tags: [animated, monster, sprite]
     name: monster_lost_soul3
   monster_pinky:
     file: tables.bin
     id: 32
-    tags: []
+    tags: [animated, monster, rare, sprite]
     name: monster_pinky
   monster_pinky2:
     file: tables.bin
     id: 33
-    tags: []
+    tags: [animated, common, monster, sprite]
     name: monster_pinky2
   monster_pinky3:
     file: tables.bin
     id: 34
-    tags: []
+    tags: [animated, common, monster, sprite]
     name: monster_pinky3
   monster_revenant:
     file: tables.bin
     id: 35
-    tags: []
+    tags: [animated, monster, rare, sprite]
     name: monster_revenant
   monster_revenant2:
     file: tables.bin
     id: 36
-    tags: []
+    tags: [animated, monster, sprite]
     name: monster_revenant2
   monster_revenant3:
     file: tables.bin
     id: 37
-    tags: []
+    tags: [animated, monster, sprite]
     name: monster_revenant3
   monster_mancubus:
     file: tables.bin
     id: 38
-    tags: []
+    tags: [animated, monster, sprite]
     name: monster_mancubus
   monster_mancubus2:
     file: tables.bin
     id: 39
-    tags: []
+    tags: [animated, monster, sprite]
     name: monster_mancubus2
   monster_mancubus3:
     file: tables.bin
     id: 40
-    tags: []
+    tags: [animated, monster, sprite]
     name: monster_mancubus3
   monster_cacodemon:
     file: tables.bin
     id: 41
-    tags: []
+    tags: [animated, monster, sprite]
     name: monster_cacodemon
   monster_cacodemon2:
     file: tables.bin
     id: 42
-    tags: []
+    tags: [animated, monster, sprite]
     name: monster_cacodemon2
   monster_cacodemon3:
     file: tables.bin
     id: 43
-    tags: []
+    tags: [animated, monster, sprite]
     name: monster_cacodemon3
   monster_sentinel:
     file: tables.bin
     id: 44
-    tags: []
+    tags: [animated, monster, rare, sprite]
     name: monster_sentinel
   monster_sentinel2:
     file: tables.bin
     id: 45
-    tags: []
+    tags: [animated, monster, sprite]
     name: monster_sentinel2
   monster_sentinel3:
     file: tables.bin
     id: 46
-    tags: []
+    tags: [animated, monster, sprite]
     name: monster_sentinel3
   monster_arch_vile:
     file: tables.bin
     id: 50
-    tags: []
+    tags: [animated, monster, sprite]
     name: monster_arch_vile
   monster_arch_vile2:
     file: tables.bin
     id: 51
-    tags: []
+    tags: [animated, monster, sprite]
     name: monster_arch_vile2
   monster_arch_vile3:
     file: tables.bin
     id: 52
-    tags: []
+    tags: [animated, monster, sprite]
     name: monster_arch_vile3
   monster_arachnotron:
     file: tables.bin
     id: 53
-    tags: []
+    tags: [animated, monster, sprite]
     name: monster_arachnotron
   boss_cyberdemon:
     file: tables.bin
     id: 54
-    tags: []
+    tags: [animated, monster, sprite]
     name: boss_cyberdemon
   boss_pinky:
     file: tables.bin
     id: 56
-    tags: []
+    tags: [animated, monster, sprite]
     name: boss_pinky
   boss_mastermind:
     file: tables.bin
     id: 57
-    tags: []
+    tags: [animated, monster, sprite]
     name: boss_mastermind
   boss_vios:
     file: tables.bin
     id: 58
     render:
       multiply_shift: true
-    tags: []
+    tags: [animated, monster, sprite]
     name: boss_vios
   boss_vios2:
     file: tables.bin
     id: 59
     render:
       multiply_shift: true
-    tags: []
+    tags: [animated, monster, rare, sprite]
     name: boss_vios2
   boss_vios3:
     file: tables.bin
     id: 60
     render:
       multiply_shift: true
-    tags: []
+    tags: [animated, monster, rare, sprite]
     name: boss_vios3
   boss_vios4:
     file: tables.bin
     id: 61
     render:
       multiply_shift: true
-    tags: []
+    tags: [animated, monster, rare, sprite]
     name: boss_vios4
   boss_vios5:
     file: tables.bin
     id: 62
     render:
       multiply_shift: true
-    tags: []
+    tags: [animated, monster, sprite]
     name: boss_vios5
   npc_riley_oconnor:
     file: tables.bin
     id: 66
-    tags: []
+    tags: [animated, npc, sprite]
     name: npc_riley_oconnor
   npc_major:
     file: tables.bin
     id: 68
-    tags: []
+    tags: [animated, npc, sprite]
     name: npc_major
   npc_bob:
     file: tables.bin
     id: 69
-    tags: []
+    tags: [animated, npc, sprite]
     name: npc_bob
   npc_civilian:
     file: tables.bin
     id: 71
-    tags: []
+    tags: [animated, common, npc, sprite]
     name: npc_civilian
   npc_sarge:
     file: tables.bin
     id: 72
-    tags: []
+    tags: [animated, npc, sprite]
     name: npc_sarge
   npc_female:
     file: tables.bin
     id: 73
-    tags: []
+    tags: [animated, npc, rare, sprite]
     name: npc_female
   npc_evil_scientist:
     file: tables.bin
     id: 74
-    tags: []
+    tags: [animated, npc, sprite]
     name: npc_evil_scientist
   npc_scientist:
     file: tables.bin
     id: 75
-    tags: []
+    tags: [animated, common, npc, sprite]
     name: npc_scientist
   npc_researcher:
     file: tables.bin
     id: 76
-    tags: []
+    tags: [animated, npc, sprite]
     name: npc_researcher
   npc_civilian2:
     file: tables.bin
     id: 77
-    tags: []
+    tags: [animated, common, npc, sprite]
     name: npc_civilian2
   ammo_bullets:
     file: tables.bin
     id: 85
-    tags: []
+    tags: [ammo, common, sprite]
     name: ammo_bullets
   ammo_shells:
     file: tables.bin
     id: 86
-    tags: []
+    tags: [ammo, common, sprite]
     name: ammo_shells
   ammo_rockets:
     file: tables.bin
     id: 88
-    tags: []
+    tags: [ammo, common, sprite]
     name: ammo_rockets
   ammo_cells:
     file: tables.bin
     id: 89
-    tags: []
+    tags: [ammo, sprite]
     name: ammo_cells
   ammo_holy_water:
     file: tables.bin
     id: 90
-    tags: []
+    tags: [ammo, rare, sprite]
     name: ammo_holy_water
   one_uac_credit:
     file: tables.bin
     id: 107
-    tags: []
+    tags: [common, sprite]
     name: one_uac_credit
   key_red:
     file: tables.bin
     id: 110
-    tags: []
+    tags: [key, sprite]
     name: key_red
   key_blue:
     file: tables.bin
     id: 111
-    tags: []
+    tags: [key, sprite]
     name: key_blue
   armor_jacket:
     file: tables.bin
     id: 112
-    tags: []
+    tags: [common, pickup, sprite]
     name: armor_jacket
   satchel:
     file: tables.bin
     id: 113
-    tags: []
+    tags: [sprite]
     name: satchel
   pack_item:
     file: tables.bin
     id: 114
-    tags: []
+    tags: [common, sprite]
     name: pack_item
   worker_pack:
     file: tables.bin
     id: 115
-    tags: []
+    tags: [sprite]
     name: worker_pack
   health_pack:
     file: tables.bin
     id: 116
-    tags: []
+    tags: [common, pickup, sprite]
     name: health_pack
   food_plate:
     file: tables.bin
     id: 117
-    tags: []
+    tags: [common, sprite]
     name: food_plate
   armor_shard:
     file: tables.bin
     id: 119
-    tags: []
+    tags: [pickup, unused]
     name: armor_shard
   obj_table:
     file: tables.bin
     id: 121
-    tags: []
+    tags: [common, decoration, sprite]
     name: obj_table
   hell_seal:
     file: tables.bin
     id: 122
-    tags: []
+    tags: [floor, sprite, wall]
     name: hell_seal
   toilet:
     file: tables.bin
     id: 123
-    tags: []
+    tags: [animated, common, sprite]
     name: toilet
   dirt_decal:
     file: tables.bin
     id: 124
-    tags: []
+    tags: [nonsquare, unused]
     name: dirt_decal
   ladder:
     file: tables.bin
     id: 125
-    tags: []
+    tags: [floor, medium, nonsquare, sprite, wall]
     name: ladder
   blood_splatter:
     file: tables.bin
     id: 126
-    tags: []
+    tags: [common, floor, sprite, wall]
     name: blood_splatter
   sink:
     file: tables.bin
     id: 127
-    tags: []
+    tags: [animated, common, sprite]
     name: sink
   barred_window:
     file: tables.bin
     id: 128
-    tags: []
+    tags: [ceil, common, floor, sprite, wall]
     name: barred_window
   hazard_bar:
     file: tables.bin
     id: 129
-    tags: []
+    tags: [ceil, common, floor, nonsquare, small, sprite, wall]
     name: hazard_bar
   obj_fire:
     file: tables.bin
@@ -474,17 +474,17 @@ sprites:
       position_at_view:
         offset_mult: 18
         z_offset: -512
-    tags: []
+    tags: [animated, common, decoration, sprite]
     name: obj_fire
   treadmill_monitor:
     file: tables.bin
     id: 131
-    tags: []
+    tags: [common, sprite, wall]
     name: treadmill_monitor
   tech_station:
     file: tables.bin
     id: 133
-    tags: []
+    tags: [medium, nonsquare, sprite]
     name: tech_station
   water_spout:
     file: tables.bin
@@ -493,12 +493,12 @@ sprites:
       auto_anim:
         period: 128
         frames: 2
-    tags: []
+    tags: [animated, sprite]
     name: water_spout
   obj_chair:
     file: tables.bin
     id: 135
-    tags: []
+    tags: [common, decoration, sprite]
     name: obj_chair
   obj_torchiere:
     file: tables.bin
@@ -508,7 +508,7 @@ sprites:
         sprite: sfx_lightglow1
         z_mult: 10
         mode: add50
-    tags: []
+    tags: [common, decoration, sprite]
     name: obj_torchiere
   obj_scientist_corpse:
     file: tables.bin
@@ -517,7 +517,7 @@ sprites:
       loot_aura:
         scale: 18
         flags: 512
-    tags: []
+    tags: [decoration, sprite]
     name: obj_scientist_corpse
   obj_corpse:
     file: tables.bin
@@ -526,7 +526,7 @@ sprites:
       loot_aura:
         scale: 18
         flags: 512
-    tags: []
+    tags: [common, decoration, sprite]
     name: obj_corpse
   obj_other_corpse:
     file: tables.bin
@@ -535,186 +535,186 @@ sprites:
       loot_aura:
         scale: 18
         flags: 512
-    tags: []
+    tags: [common, decoration, sprite]
     name: obj_other_corpse
   dummy_pain:
     file: tables.bin
     id: 140
-    tags: []
+    tags: [unused]
     name: dummy_pain
   attack_dummy:
     file: tables.bin
     id: 141
-    tags: []
+    tags: [unused]
     name: attack_dummy
   exit_dummy:
     file: tables.bin
     id: 142
-    tags: []
+    tags: [unused]
     name: exit_dummy
   use_dummy:
     file: tables.bin
     id: 143
-    tags: []
+    tags: [unused]
     name: use_dummy
   septic_station:
     file: tables.bin
     id: 147
-    tags: []
+    tags: [sprite]
     name: septic_station
   practice_target:
     file: tables.bin
     id: 149
-    tags: []
+    tags: [animated, sprite]
     name: practice_target
   obj_printer:
     file: tables.bin
     id: 150
-    tags: []
+    tags: [decoration, sprite]
     name: obj_printer
   obj_crate:
     file: tables.bin
     id: 152
     render:
       z_offset_floor: -224
-    tags: []
+    tags: [animated, common, decoration, sprite]
     name: obj_crate
   vending_machine:
     file: tables.bin
     id: 153
-    tags: []
+    tags: [common, sprite]
     name: vending_machine
   armor_repair:
     file: tables.bin
     id: 154
-    tags: []
+    tags: [common, pickup, sprite]
     name: armor_repair
   closed_portal_eye:
     file: tables.bin
     id: 155
     render:
       z_offset_wall: -128
-    tags: []
+    tags: [rare, sprite]
     name: closed_portal_eye
   eye_portal:
     file: tables.bin
     id: 156
     render:
       z_offset_wall: -128
-    tags: []
+    tags: [animated, common, sprite]
     name: eye_portal
   portal_socket:
     file: tables.bin
     id: 157
-    tags: []
+    tags: [common, sprite, wall]
     name: portal_socket
   treadmill_side:
     file: tables.bin
     id: 158
     render:
       skip: true
-    tags: []
+    tags: [common, sprite, wall]
     name: treadmill_side
   treadmill_front:
     file: tables.bin
     id: 159
-    tags: []
+    tags: [ceil, floor]
     name: treadmill_front
   hell_hands:
     file: tables.bin
     id: 161
-    tags: []
+    tags: [unused]
     name: hell_hands
   doorjamb_decal:
     file: tables.bin
     id: 162
-    tags: []
+    tags: [ceil, floor, medium, nonsquare, wall]
     name: doorjamb_decal
   stones_and_skulls:
     file: tables.bin
     id: 164
-    tags: []
+    tags: [rare, sprite]
     name: stones_and_skulls
   nonobstructing_spritewall:
     file: tables.bin
     id: 166
-    tags: []
+    tags: [unused]
     name: nonobstructing_spritewall
   fence:
     file: tables.bin
     id: 168
-    tags: []
+    tags: [floor, medium, nonsquare, sprite, wall]
     name: fence
   sentinel_spikes:
     file: tables.bin
     id: 170
-    tags: []
+    tags: [medium, rare, sprite]
     name: sentinel_spikes
   sentinel_spikes_dummy:
     file: tables.bin
     id: 171
     render:
       skip: true
-    tags: []
+    tags: [medium, unused]
     name: sentinel_spikes_dummy
   switch:
     file: tables.bin
     id: 173
-    tags: []
+    tags: [animated, common, medium, sprite, wall]
     name: switch
   tech_detail:
     file: tables.bin
     id: 175
-    tags: []
+    tags: [floor, wall]
     name: tech_detail
   hell_skulls:
     file: tables.bin
     id: 177
-    tags: []
+    tags: [unused]
     name: hell_skulls
   glass:
     file: tables.bin
     id: 178
-    tags: []
+    tags: [animated, common, sprite]
     name: glass
   terminal_target:
     file: tables.bin
     id: 179
     render:
       z_offset_wall: -256
-    tags: []
+    tags: [sprite]
     name: terminal_target
   terminal_general:
     file: tables.bin
     id: 180
-    tags: []
+    tags: [common, floor, sprite]
     name: terminal_general
   terminal_vios:
     file: tables.bin
     id: 181
-    tags: []
+    tags: [common, sprite, wall]
     name: terminal_vios
   terminal_bot:
     file: tables.bin
     id: 182
-    tags: []
+    tags: [common, sprite]
     name: terminal_bot
   terminal_hacking:
     file: tables.bin
     id: 183
     render:
       z_offset_wall: -256
-    tags: []
+    tags: [sprite]
     name: terminal_hacking
   elevator_nums:
     file: tables.bin
     id: 184
-    tags: []
+    tags: [animated, small, sprite]
     name: elevator_nums
   bush:
     file: tables.bin
     id: 187
-    tags: []
+    tags: [sprite]
     name: bush
   tree_top:
     file: tables.bin
@@ -725,204 +725,204 @@ sprites:
         z_mult: 0
       - sprite: tree_top
         z_mult: 36
-    tags: []
+    tags: [unused]
     name: tree_top
   tree_trunk:
     file: tables.bin
     id: 189
-    tags: []
+    tags: [sprite]
     name: tree_trunk
   sfx_lightglow1:
     file: tables.bin
     id: 193
-    tags: []
+    tags: [fx, unused]
     name: sfx_lightglow1
   window3:
     file: tables.bin
     id: 197
-    tags: []
+    tags: [floor, medium, nonsquare, wall]
     name: window3
   glaevenscope:
     file: tables.bin
     id: 201
-    tags: []
+    tags: [floor, medium, nonsquare, sprite, wall]
     name: glaevenscope
   fog_gray:
     file: tables.bin
     id: 208
-    tags: []
+    tags: [fx, unused]
     name: fog_gray
   scorch_mark:
     file: tables.bin
     id: 212
-    tags: []
+    tags: [ceil, common, floor, sprite, wall]
     name: scorch_mark
   static_flame:
     file: tables.bin
     id: 223
-    tags: []
+    tags: [rare, sprite]
     name: static_flame
   missile_player_rocket:
     file: tables.bin
     id: 225
-    tags: []
+    tags: [projectile, sprite]
     name: missile_player_rocket
   missile_rocket:
     file: tables.bin
     id: 226
-    tags: []
+    tags: [projectile, sprite]
     name: missile_rocket
   flesh:
     file: tables.bin
     id: 227
-    tags: []
+    tags: [unused]
     name: flesh
   shadow:
     file: tables.bin
     id: 232
-    tags: []
+    tags: [sprite]
     name: shadow
   anim_fire:
     file: tables.bin
     id: 234
-    tags: []
+    tags: [animated, effect, rare, sprite]
     name: anim_fire
   anim_water:
     file: tables.bin
     id: 235
-    tags: []
+    tags: [animated, effect, unused]
     name: anim_water
   air_vent:
     file: tables.bin
     id: 236
-    tags: []
+    tags: [animated, sprite]
     name: air_vent
   soul_cube_attack:
     file: tables.bin
     id: 239
-    tags: []
+    tags: [animated, unused]
     name: soul_cube_attack
   water_stream:
     file: tables.bin
     id: 240
     render:
       path: stream
-    tags: []
+    tags: [nonsquare, small, unused]
     name: water_stream
   caco_plasma:
     file: tables.bin
     id: 241
-    tags: []
+    tags: [animated, unused]
     name: caco_plasma
   fire_ball:
     file: tables.bin
     id: 242
-    tags: []
+    tags: [animated, sprite]
     name: fire_ball
   plasma_ball:
     file: tables.bin
     id: 243
-    tags: []
+    tags: [animated, unused]
     name: plasma_ball
   bfg_ball:
     file: tables.bin
     id: 244
-    tags: []
+    tags: [animated, rare, sprite]
     name: bfg_ball
   monster_claw:
     file: tables.bin
     id: 245
-    tags: []
+    tags: [monster, unused]
     name: monster_claw
   monster_bite:
     file: tables.bin
     id: 246
-    tags: []
+    tags: [monster, unused]
     name: monster_bite
   monster_blunt_trauma:
     file: tables.bin
     id: 247
-    tags: []
+    tags: [monster, unused]
     name: monster_blunt_trauma
   electric_slide:
     file: tables.bin
     id: 248
-    tags: []
+    tags: [unused]
     name: electric_slide
   fear_eye:
     file: tables.bin
     id: 251
-    tags: []
+    tags: [unused]
     name: fear_eye
   acid_spit:
     file: tables.bin
     id: 252
-    tags: []
+    tags: [animated, unused]
     name: acid_spit
   npc_chat:
     file: tables.bin
     id: 254
-    tags: []
+    tags: [npc, unused]
     name: npc_chat
   alert:
     file: tables.bin
     id: 255
-    tags: []
+    tags: [unused]
     name: alert
   doorjamb:
     file: tables.bin
     id: 257
-    tags: []
+    tags: [rare, wall]
     name: doorjamb
   red_door_locked:
     file: tables.bin
     id: 271
-    tags: []
+    tags: [common, door]
     name: red_door_locked
   red_door_unlocked:
     file: tables.bin
     id: 272
-    tags: []
+    tags: [animated, unused]
     name: red_door_unlocked
   blue_door_locked:
     file: tables.bin
     id: 273
-    tags: []
+    tags: [door]
     name: blue_door_locked
   blue_door_unlocked:
     file: tables.bin
     id: 274
-    tags: []
+    tags: [animated, door]
     name: blue_door_unlocked
   door_locked:
     file: tables.bin
     id: 275
-    tags: []
+    tags: [animated, ceil, common, door, floor, wall]
     name: door_locked
   door_unlocked:
     file: tables.bin
     id: 276
-    tags: []
+    tags: [animated, common, door, wall]
     name: door_unlocked
   level_door_locked:
     file: tables.bin
     id: 277
-    tags: []
+    tags: [door]
     name: level_door_locked
   level_door_unlocked:
     file: tables.bin
     id: 278
-    tags: []
+    tags: [animated, common, door]
     name: level_door_unlocked
   sky_box:
     file: tables.bin
     id: 301
-    tags: []
+    tags: [ceil, wall]
     name: sky_box
   fade:
     file: tables.bin
     id: 302
-    tags: []
+    tags: [ceil, common, floor, nonsquare, small, wall]
     name: fade
   flat_lava:
     file: tables.bin
@@ -932,7 +932,7 @@ sprites:
         s_div: 8
         t_div: 16
         mask: 1023
-    tags: []
+    tags: [floor]
     name: flat_lava
   flat_lava2:
     file: tables.bin
@@ -941,7 +941,7 @@ sprites:
       tex_anim:
         t_div: 2
         mask: 1023
-    tags: []
+    tags: [ceil, floor, rare, wall]
     name: flat_lava2
   wp_view_assault_rifle:
     file: tables.bin
@@ -1257,420 +1257,420 @@ sprites:
   texture_105:
     file: tables.bin
     id: 105
-    tags: []
+    tags: [nonsquare, rare, small, sprite]
     name: texture_105
   texture_120:
     file: tables.bin
     id: 120
-    tags: []
+    tags: [rare, sprite]
     name: texture_120
   texture_132:
     file: tables.bin
     id: 132
-    tags: []
+    tags: [medium, nonsquare, sprite]
     name: texture_132
   texture_144:
     file: tables.bin
     id: 144
-    tags: []
-    name: texture_144
+    tags: [ceil, common, floor, medium, nonsquare, wall]
+    name: wall_144
   texture_145:
     file: tables.bin
     id: 145
-    tags: []
-    name: texture_145
+    tags: [ceil, common, floor, medium, nonsquare, wall]
+    name: wall_145
   texture_146:
     file: tables.bin
     id: 146
-    tags: []
+    tags: [medium, nonsquare, rare, sprite]
     name: texture_146
   texture_160:
     file: tables.bin
     id: 160
-    tags: []
-    name: texture_160
+    tags: [floor, nonsquare, wall]
+    name: wall_160
   texture_163:
     file: tables.bin
     id: 163
-    tags: []
+    tags: [rare, sprite]
     name: texture_163
   texture_167:
     file: tables.bin
     id: 167
-    tags: []
-    name: texture_167
+    tags: [floor, medium, nonsquare, rare, wall]
+    name: wall_167
   texture_202:
     file: tables.bin
     id: 202
-    tags: []
-    name: texture_202
+    tags: [ceil, common, floor, sprite, wall]
+    name: wall_202
   texture_258:
     file: tables.bin
     id: 258
-    tags: []
-    name: texture_258
+    tags: [ceil, common, floor, sprite, wall]
+    name: wall_258
   texture_259:
     file: tables.bin
     id: 259
-    tags: []
-    name: texture_259
+    tags: [ceil, common, floor, sprite, wall]
+    name: wall_259
   texture_261:
     file: tables.bin
     id: 261
-    tags: []
-    name: texture_261
+    tags: [rare, wall]
+    name: wall_261
   texture_262:
     file: tables.bin
     id: 262
-    tags: []
-    name: texture_262
+    tags: [ceil, floor, sprite, wall]
+    name: wall_262
   texture_263:
     file: tables.bin
     id: 263
-    tags: []
-    name: texture_263
+    tags: [floor, wall]
+    name: wall_263
   texture_264:
     file: tables.bin
     id: 264
-    tags: []
-    name: texture_264
+    tags: [ceil, floor, sprite, wall]
+    name: wall_264
   texture_265:
     file: tables.bin
     id: 265
-    tags: []
-    name: texture_265
+    tags: [rare, wall]
+    name: wall_265
   texture_266:
     file: tables.bin
     id: 266
-    tags: []
-    name: texture_266
+    tags: [floor, sprite, wall]
+    name: wall_266
   texture_267:
     file: tables.bin
     id: 267
-    tags: []
-    name: texture_267
+    tags: [ceil, floor, sprite, wall]
+    name: wall_267
   texture_279:
     file: tables.bin
     id: 279
-    tags: []
-    name: texture_279
+    tags: [rare, wall]
+    name: wall_279
   texture_280:
     file: tables.bin
     id: 280
-    tags: []
-    name: texture_280
+    tags: [rare, wall]
+    name: wall_280
   texture_286:
     file: tables.bin
     id: 286
-    tags: []
-    name: texture_286
+    tags: [ceil, floor, sprite, wall]
+    name: wall_286
   texture_297:
     file: tables.bin
     id: 297
-    tags: []
-    name: texture_297
+    tags: [ceil, floor, rare, wall]
+    name: wall_297
   texture_298:
     file: tables.bin
     id: 298
-    tags: []
-    name: texture_298
+    tags: [sprite, wall]
+    name: wall_298
   texture_299:
     file: tables.bin
     id: 299
-    tags: []
-    name: texture_299
+    tags: [rare, sprite, wall]
+    name: wall_299
   texture_300:
     file: tables.bin
     id: 300
-    tags: []
-    name: texture_300
+    tags: [ceil, floor, wall]
+    name: wall_300
   texture_303:
     file: tables.bin
     id: 303
-    tags: []
-    name: texture_303
+    tags: [ceil, common, floor, wall]
+    name: wall_303
   texture_304:
     file: tables.bin
     id: 304
-    tags: []
-    name: texture_304
+    tags: [rare, sprite, wall]
+    name: wall_304
   texture_305:
     file: tables.bin
     id: 305
-    tags: []
-    name: texture_305
+    tags: [sprite, wall]
+    name: wall_305
   texture_307:
     file: tables.bin
     id: 307
-    tags: []
-    name: texture_307
+    tags: [rare, sprite, wall]
+    name: wall_307
   texture_309:
     file: tables.bin
     id: 309
-    tags: []
-    name: texture_309
+    tags: [sprite, wall]
+    name: wall_309
   texture_310:
     file: tables.bin
     id: 310
-    tags: []
-    name: texture_310
+    tags: [wall]
+    name: wall_310
   texture_311:
     file: tables.bin
     id: 311
-    tags: []
-    name: texture_311
+    tags: [ceil, floor, sprite, wall]
+    name: wall_311
   texture_312:
     file: tables.bin
     id: 312
-    tags: []
-    name: texture_312
+    tags: [ceil, floor, sprite, wall]
+    name: wall_312
   texture_314:
     file: tables.bin
     id: 314
-    tags: []
-    name: texture_314
+    tags: [ceil, floor, wall]
+    name: wall_314
   texture_316:
     file: tables.bin
     id: 316
-    tags: []
-    name: texture_316
+    tags: [ceil, floor, rare, wall]
+    name: wall_316
   texture_318:
     file: tables.bin
     id: 318
-    tags: []
-    name: texture_318
+    tags: [ceil, rare, wall]
+    name: wall_318
   texture_319:
     file: tables.bin
     id: 319
-    tags: []
-    name: texture_319
+    tags: [rare, sprite, wall]
+    name: wall_319
   texture_320:
     file: tables.bin
     id: 320
-    tags: []
-    name: texture_320
+    tags: [rare, sprite, wall]
+    name: wall_320
   texture_323:
     file: tables.bin
     id: 323
-    tags: []
-    name: texture_323
+    tags: [rare, wall]
+    name: wall_323
   texture_326:
     file: tables.bin
     id: 326
-    tags: []
-    name: texture_326
+    tags: [floor, sprite, wall]
+    name: wall_326
   texture_327:
     file: tables.bin
     id: 327
-    tags: []
-    name: texture_327
+    tags: [ceil, floor, wall]
+    name: wall_327
   texture_331:
     file: tables.bin
     id: 331
-    tags: []
-    name: texture_331
+    tags: [sprite, wall]
+    name: wall_331
   texture_332:
     file: tables.bin
     id: 332
-    tags: []
-    name: texture_332
+    tags: [sprite, wall]
+    name: wall_332
   texture_336:
     file: tables.bin
     id: 336
-    tags: []
-    name: texture_336
+    tags: [wall]
+    name: wall_336
   texture_337:
     file: tables.bin
     id: 337
-    tags: []
-    name: texture_337
+    tags: [sprite, wall]
+    name: wall_337
   texture_338:
     file: tables.bin
     id: 338
-    tags: []
-    name: texture_338
+    tags: [rare, wall]
+    name: wall_338
   texture_339:
     file: tables.bin
     id: 339
-    tags: []
-    name: texture_339
+    tags: [rare, wall]
+    name: wall_339
   texture_340:
     file: tables.bin
     id: 340
-    tags: []
-    name: texture_340
+    tags: [sprite, wall]
+    name: wall_340
   texture_341:
     file: tables.bin
     id: 341
-    tags: []
-    name: texture_341
+    tags: [ceil, floor, wall]
+    name: wall_341
   texture_342:
     file: tables.bin
     id: 342
-    tags: []
-    name: texture_342
+    tags: [ceil, floor, rare, sprite, wall]
+    name: wall_342
   texture_343:
     file: tables.bin
     id: 343
-    tags: []
-    name: texture_343
+    tags: [rare, wall]
+    name: wall_343
   texture_346:
     file: tables.bin
     id: 346
-    tags: []
-    name: texture_346
+    tags: [rare, wall]
+    name: wall_346
   texture_351:
     file: tables.bin
     id: 351
-    tags: []
-    name: texture_351
+    tags: [rare, wall]
+    name: wall_351
   texture_357:
     file: tables.bin
     id: 357
-    tags: []
-    name: texture_357
+    tags: [wall]
+    name: wall_357
   texture_361:
     file: tables.bin
     id: 361
-    tags: []
-    name: texture_361
+    tags: [wall]
+    name: wall_361
   texture_363:
     file: tables.bin
     id: 363
-    tags: []
-    name: texture_363
+    tags: [rare, wall]
+    name: wall_363
   texture_364:
     file: tables.bin
     id: 364
-    tags: []
-    name: texture_364
+    tags: [rare, wall]
+    name: wall_364
   texture_365:
     file: tables.bin
     id: 365
-    tags: []
-    name: texture_365
+    tags: [wall]
+    name: wall_365
   texture_451:
     file: tables.bin
     id: 451
-    tags: []
-    name: texture_451
+    tags: [ceil, floor, sprite, wall]
+    name: floor_451
   texture_452:
     file: tables.bin
     id: 452
-    tags: []
-    name: texture_452
+    tags: [ceil, floor, sprite, wall]
+    name: ceil_452
   texture_453:
     file: tables.bin
     id: 453
-    tags: []
-    name: texture_453
+    tags: [ceil, rare]
+    name: ceil_453
   texture_454:
     file: tables.bin
     id: 454
-    tags: []
-    name: texture_454
+    tags: [ceil, floor, wall]
+    name: floor_454
   texture_455:
     file: tables.bin
     id: 455
-    tags: []
-    name: texture_455
+    tags: [common, floor, sprite]
+    name: floor_455
   texture_456:
     file: tables.bin
     id: 456
-    tags: []
-    name: texture_456
+    tags: [ceil, floor, wall]
+    name: floor_456
   texture_457:
     file: tables.bin
     id: 457
-    tags: []
-    name: texture_457
+    tags: [floor, rare]
+    name: floor_457
   texture_459:
     file: tables.bin
     id: 459
-    tags: []
-    name: texture_459
+    tags: [ceil, floor, sprite]
+    name: floor_459
   texture_460:
     file: tables.bin
     id: 460
-    tags: []
-    name: texture_460
+    tags: [ceil, wall]
+    name: ceil_460
   texture_462:
     file: tables.bin
     id: 462
-    tags: []
-    name: texture_462
+    tags: [ceil, common, floor, wall]
+    name: ceil_462
   texture_463:
     file: tables.bin
     id: 463
-    tags: []
-    name: texture_463
+    tags: [floor, rare]
+    name: floor_463
   texture_464:
     file: tables.bin
     id: 464
-    tags: []
-    name: texture_464
+    tags: [ceil, floor]
+    name: ceil_464
   texture_465:
     file: tables.bin
     id: 465
-    tags: []
+    tags: [nonsquare, rare, sprite]
     name: texture_465
   texture_466:
     file: tables.bin
     id: 466
-    tags: []
-    name: texture_466
+    tags: [ceil, common, floor, sprite, wall]
+    name: ceil_466
   texture_467:
     file: tables.bin
     id: 467
-    tags: []
-    name: texture_467
+    tags: [ceil, common, floor]
+    name: ceil_467
   texture_468:
     file: tables.bin
     id: 468
-    tags: []
-    name: texture_468
+    tags: [ceil, common, sprite]
+    name: ceil_468
   texture_469:
     file: tables.bin
     id: 469
-    tags: []
-    name: texture_469
+    tags: [ceil]
+    name: ceil_469
   texture_472:
     file: tables.bin
     id: 472
-    tags: []
-    name: texture_472
+    tags: [floor]
+    name: floor_472
   texture_474:
     file: tables.bin
     id: 474
-    tags: []
-    name: texture_474
+    tags: [ceil]
+    name: ceil_474
   texture_475:
     file: tables.bin
     id: 475
-    tags: []
-    name: texture_475
+    tags: [ceil, common, sprite, wall]
+    name: ceil_475
   texture_476:
     file: tables.bin
     id: 476
-    tags: []
-    name: texture_476
+    tags: [ceil, floor, rare, sprite]
+    name: floor_476
   texture_478:
     file: tables.bin
     id: 478
-    tags: []
-    name: texture_478
+    tags: [ceil, common, floor, wall]
+    name: wall_478
   texture_485:
     file: tables.bin
     id: 485
-    tags: []
-    name: texture_485
+    tags: [floor, rare, sprite]
+    name: floor_485
   texture_487:
     file: tables.bin
     id: 487
-    tags: []
-    name: texture_487
+    tags: [ceil, floor, rare, wall]
+    name: wall_487
   texture_488:
     file: tables.bin
     id: 488
-    tags: []
-    name: texture_488
+    tags: [ceil, floor, sprite, wall]
+    name: floor_488
