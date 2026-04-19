@@ -114,6 +114,7 @@ int main(int argc, char* args[]) {
 			printf("  --seed <n>              Set random seed for deterministic runs\n");
 			printf("  --script <file>         Load and replay an input script\n");
 			printf("  --mod <dir|zip>         Load a mod directory or .zip (repeatable)\n");
+			printf("  --editor [<project>]    Launch into the in-engine map editor\n");
 			return 0;
 		} else if (strcmp(args[i], "--gamedir") == 0 && i + 1 < argc) {
 			gameDir = args[++i];
@@ -138,6 +139,12 @@ int main(int argc, char* args[]) {
 			scriptFile = args[++i];
 		} else if (strcmp(args[i], "--mod") == 0 && i + 1 < argc) {
 			modDirs.push_back(args[++i]);
+		} else if (strcmp(args[i], "--editor") == 0) {
+			CAppContainer::getInstance()->editorMode = true;
+			// Optional project path follows; skip when the next arg is another flag.
+			if (i + 1 < argc && args[i + 1][0] != '-') {
+				CAppContainer::getInstance()->editorProjectPath = args[++i];
+			}
 		}
 	}
 
@@ -261,6 +268,20 @@ int main(int argc, char* args[]) {
 		char resolved[PATH_MAX];
 		if (realpath(modDir.c_str(), resolved)) {
 			modDir = resolved;
+		}
+	}
+	{
+		auto& epp = CAppContainer::getInstance()->editorProjectPath;
+		if (!epp.empty()) {
+			char resolved[PATH_MAX];
+			if (realpath(epp.c_str(), resolved)) {
+				epp = resolved;
+			}
+		}
+		// Stash the pre-chdir CWD so the editor can resolve src/editor/scratch/…
+		char cwd[PATH_MAX];
+		if (getcwd(cwd, sizeof(cwd))) {
+			CAppContainer::getInstance()->originalCwd = cwd;
 		}
 	}
 
@@ -778,10 +799,13 @@ void drawView(SDLGL* sdlGL) {
 	}
 	// printf("passedTime %d\n", passedTime);
 
+	// Start ImGui frame BEFORE DoLoop so canvas states (e.g. the map editor)
+	// can submit ImGui windows from inside their render() calls.
+	g_devConsole.newFrame();
+
 	CAppContainer::getInstance()->DoLoop(passedTime);
 
-	// Render ImGui overlay on top of the game frame
-	g_devConsole.newFrame();
+	// Flush the frame's ImGui windows on top of the game frame.
 	g_devConsole.render();
 
 	SDL_GL_SwapWindow(sdlGL->window); // Swap the window/pBmp to display the result.

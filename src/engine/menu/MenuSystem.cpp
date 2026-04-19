@@ -46,7 +46,7 @@ MenuSystem::~MenuSystem() = default;
 
 bool MenuSystem::startup() {
 	this->app = CAppContainer::getInstance()->app;
-	this->sdlGL = this->sdlGL;
+	this->sdlGL = CAppContainer::getInstance()->sdlGL;
 	Applet* app = this->app;
 	LOG_INFO("[menu] startup\n");
 

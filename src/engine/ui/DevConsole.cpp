@@ -70,11 +70,12 @@ bool DevConsole::processEvent(const SDL_Event& event) {
 		}
 	}
 
-	if (!visible) return false;
-
+	// Always forward to ImGui when initialized, so any ImGui-using subsystem
+	// (e.g. the map editor state) can receive mouse/keyboard events even when
+	// the dev-console itself is hidden. ImGui's WantCapture* decides whether
+	// to swallow the event from the game input system.
 	ImGui_ImplSDL2_ProcessEvent(&event);
 
-	// If ImGui wants keyboard or mouse, consume the event
 	ImGuiIO& io = ImGui::GetIO();
 	if (io.WantCaptureKeyboard && (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP || event.type == SDL_TEXTINPUT)) {
 		return true;
@@ -87,47 +88,53 @@ bool DevConsole::processEvent(const SDL_Event& event) {
 }
 
 void DevConsole::newFrame() {
-	if (!initialized || !visible) return;
+	// Always start a new ImGui frame when initialized so other subsystems
+	// (e.g. the map editor state) can submit ImGui windows even while the
+	// dev-console itself is hidden. The `visible` flag only gates the
+	// dev-console's own panels inside render().
+	if (!initialized) return;
 	ImGui_ImplOpenGL2_NewFrame();
 	ImGui_ImplSDL2_NewFrame();
 	ImGui::NewFrame();
 }
 
 void DevConsole::render() {
-	if (!initialized || !visible) return;
+	if (!initialized) return;
 
 	auto* container = CAppContainer::getInstance();
-	if (!container || !container->app) return;
 
-	int canvasState = container->app->canvas ? container->app->canvas->state : -1;
+	if (visible && container && container->app) {
+		int canvasState = container->app->canvas ? container->app->canvas->state : -1;
 
-	// Main menu bar
-	if (ImGui::BeginMainMenuBar()) {
-		if (ImGui::BeginMenu("View")) {
-			ImGui::MenuItem("ImGui Demo", nullptr, &showDemo);
-			ImGui::EndMenu();
+		// Main menu bar
+		if (ImGui::BeginMainMenuBar()) {
+			if (ImGui::BeginMenu("View")) {
+				ImGui::MenuItem("ImGui Demo", nullptr, &showDemo);
+				ImGui::EndMenu();
+			}
+			ImGui::Separator();
+			ImGui::Text("%s", stateName(canvasState));
+			ImGui::Separator();
+			ImGuiIO& io = ImGui::GetIO();
+			ImGui::Text("%.0f FPS", io.Framerate);
+			ImGui::Separator();
+			ImGui::TextDisabled("F12 to close");
+			ImGui::EndMainMenuBar();
 		}
-		ImGui::Separator();
-		ImGui::Text("%s", stateName(canvasState));
-		ImGui::Separator();
-		ImGuiIO& io = ImGui::GetIO();
-		ImGui::Text("%.0f FPS", io.Framerate);
-		ImGui::Separator();
-		ImGui::TextDisabled("F12 to close");
-		ImGui::EndMainMenuBar();
+
+		drawPerformance();
+		drawRenderStats();
+		drawGameState();
+		drawEntityInspector();
+		drawScriptState();
+		drawMods();
+
+		if (showDemo) {
+			ImGui::ShowDemoWindow(&showDemo);
+		}
 	}
 
-	drawPerformance();
-	drawRenderStats();
-	drawGameState();
-	drawEntityInspector();
-	drawScriptState();
-	drawMods();
-
-	if (showDemo) {
-		ImGui::ShowDemoWindow(&showDemo);
-	}
-
+	// Always flush whatever windows were submitted this frame (may be none).
 	ImGui::Render();
 	ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
 }

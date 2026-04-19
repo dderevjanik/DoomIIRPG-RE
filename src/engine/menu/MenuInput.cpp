@@ -506,6 +506,11 @@ void MenuSystem::select(int i) {
 			}
 			break;
 		}
+		case 131: { // ACTION_MAP_EDITOR — jump into the in-engine map editor
+			this->returnToGame();
+			app->canvas->setState(Canvas::ST_EDITOR);
+			break;
+		}
 		default:
 			app->Error("Unhandled Menu Action: %i", this->items[i].action);
 			break;

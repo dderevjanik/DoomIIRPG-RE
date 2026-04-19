@@ -28,6 +28,14 @@ void LogoState::update(Canvas* canvas) {
 		app->sound->cacheSounds();
 	}
 
+	// --editor: jump straight to the map editor, skipping intro / menu.
+	if (CAppContainer::getInstance()->editorMode) {
+		CAppContainer::getInstance()->editorMode = false;   // consume
+		app->sound->soundStop();
+		canvas->setState(Canvas::ST_EDITOR);
+		return;
+	}
+
 	if (CAppContainer::getInstance()->customMapID || CAppContainer::getInstance()->customMapFile) {
 		// Replicate startGame(true) + character selection init
 		if (app->menuSystem->background != app->menuSystem->imgMainBG) {

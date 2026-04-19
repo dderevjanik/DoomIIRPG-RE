@@ -1,10 +1,12 @@
 file(GLOB_RECURSE HEADER_FILES
 	"engine/*.hpp" "engine/*.h"
-	"game/*.hpp" "game/*.h")
+	"game/*.hpp" "game/*.h"
+	"editor/*.hpp" "editor/*.h")
 
 file(GLOB_RECURSE SOURCE_FILES
 	"engine/*.cpp" "engine/*.c"
-	"game/*.cpp" "game/*.c")
+	"game/*.cpp" "game/*.c"
+	"editor/*.cpp" "editor/*.c")
 
 # ZipFile is used by VFS for ZIP mod support and by the converter tool
 
@@ -56,6 +58,8 @@ target_include_directories(drpg-engine-lib PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/game/ui/levelintros
 	${CMAKE_CURRENT_SOURCE_DIR}/game/canvas
 	${CMAKE_CURRENT_SOURCE_DIR}/game/asset
+	# editor (in-engine map editor — see ST_EDITOR canvas state)
+	${CMAKE_CURRENT_SOURCE_DIR}/editor
 	# third-party
 	${CMAKE_SOURCE_DIR}/third_party_libs/stb
 )

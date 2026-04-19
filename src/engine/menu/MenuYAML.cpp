@@ -70,7 +70,8 @@ static const std::unordered_map<std::string, int> s_actions = {
 	{"oneshot", 123}, {"debug_font", 124}, {"sys_test", 125},
 	{"skip_minigames", 126}, {"show_heap", 127},
 	{"widget_screen", 128}, {"widget_options", 129},
-	{"widget_main_menu", 130}
+	{"widget_main_menu", 130},
+	{"map_editor", 131}
 };
 static const std::unordered_map<std::string, int> s_flags = {
 	{"noselect", 0x1}, {"nodehyphenate", 0x2}, {"disabled", 0x4}, {"align_center", 0x8},

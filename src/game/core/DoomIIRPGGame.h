@@ -24,6 +24,7 @@
 #include "CombatState.h"
 #include "MenuState.h"
 #include "WidgetScreen.h"
+#include "EditorState.h"
 
 // Default game module: D2RPG.
 // Creates and manages all D2RPG game objects.
@@ -54,6 +55,7 @@ public:
 	CombatState combatState;
 	MenuState menuState;
 	WidgetScreen widgetScreen;
+	EditorState editorState;
 
 	DoomIIRPGGame() {}
 	~DoomIIRPGGame() override {}

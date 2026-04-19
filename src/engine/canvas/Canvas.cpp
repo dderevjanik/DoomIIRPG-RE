@@ -986,6 +986,7 @@ static const char* canvasStateName(int state) {
 		case Canvas::ST_BOT_DYING: return "BOT_DYING";
 		case Canvas::ST_LOGO: return "LOGO";
 		case Canvas::ST_WIDGET_SCREEN: return "WIDGET_SCREEN";
+		case Canvas::ST_EDITOR: return "EDITOR";
 		default: return "UNKNOWN";
 	}
 }

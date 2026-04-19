@@ -248,6 +248,9 @@ class CAppContainer {
 	bool skipTravelMap;            // --skip-travel-map
 	bool skipIntro;                // --skip-intro
 	bool headless;                 // --headless mode (no rendering, no audio)
+	bool editorMode = false;       // --editor flag: jump to ST_EDITOR after startup
+	std::string editorProjectPath; // --editor <path>: project YAML to open; empty = blank
+	std::string originalCwd;       // absolute path to the CWD at launch (pre-chdir-to-gamedir)
 	uint32_t headlessTimeMs;       // deterministic tick counter for headless mode
 	static CAppContainer* getInstance();
 	static int m_cheatEntry;

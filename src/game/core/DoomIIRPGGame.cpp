@@ -93,6 +93,9 @@ bool DoomIIRPGGame::startup(Applet* app) {
 	widgetScreen.loadFromYAML(app, "screens/test_settings.yaml");
 	app->canvas->registerStateHandler(Canvas::ST_WIDGET_SCREEN, &widgetScreen);
 
+	// Map editor (ST_EDITOR)
+	app->canvas->registerStateHandler(Canvas::ST_EDITOR, &editorState);
+
 	// Wire options screen actions — called when goto:options navigates there
 	widgetScreen.onAction("save_and_back", [app, this]() {
 		app->game->saveConfig();
