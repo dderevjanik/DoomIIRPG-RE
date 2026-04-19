@@ -362,6 +362,10 @@ public:
 	void RegisterMedia(int n);
 	void FinalizeMedia();
 	void FinalizeMediaFromYaml(DataNode& palYaml, DataNode& texYaml);
+	// Incrementally register + finalize a single media ID without touching the
+	// existing registrations. Returns true on success. Used by the editor's
+	// hot-reload path to add new entity sprites without a full teardown.
+	bool registerAndFinalizeMedia(int id);
 	bool loadSkyFromPng(const std::string& path);
 	bool beginLoadMap(int mapNameID);
 	// Fast path for the map editor: re-read the .bin from an in-memory buffer
@@ -370,6 +374,11 @@ public:
 	// valid when the media set is unchanged from the previous load — see
 	// EditorState::compileAndLoadMap for the gate.
 	bool reloadGeometryOnly(const std::vector<uint8_t>& binBytes, int mapNameID);
+
+	// Next free compacted palette / texel index (updated by FinalizeMediaFromYaml
+	// and registerAndFinalizeMedia). Used to hand out new slots incrementally.
+	int nextPalIdx = 0;
+	int nextTexIdx = 0;
 private:
 	// Frees all geometry/sprite/tile-event arrays but leaves media pointers
 	// (palettes, texels, GPU textures, sky) intact. Used by reloadGeometryOnly.

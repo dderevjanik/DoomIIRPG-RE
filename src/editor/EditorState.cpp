@@ -140,9 +140,21 @@ void EditorState::compileAndLoadMap(Canvas* canvas) {
 	}
 	uint32_t tCompileEnd = SDL_GetTicks();
 
-	// Fast path: media set unchanged, map already loaded → in-place geometry
-	// swap without touching palettes / GPU textures / sky (≈5 ms vs ≈200 ms).
-	const bool canHotReload = mapLoaded && cm.mediaSet == lastCompiledMediaSet;
+	// Fast path: every media ID we've seen before is still present, so palettes
+	// / GPU textures / sky can stay. Additions (e.g. a newly placed entity's
+	// sprite) are registered incrementally. Removals are ignored — the stale
+	// media sits unused until the next full reload; harmless.
+	std::vector<int> addedMedia;
+	bool isSuperset = true;
+	for (int id : lastCompiledMediaSet) {
+		if (!cm.mediaSet.count(id)) { isSuperset = false; break; }
+	}
+	if (isSuperset) {
+		for (int id : cm.mediaSet) {
+			if (!lastCompiledMediaSet.count(id)) addedMedia.push_back(id);
+		}
+	}
+	const bool canHotReload = mapLoaded && isSuperset;
 
 	if (canHotReload) {
 		uint32_t tReload0 = SDL_GetTicks();
@@ -150,17 +162,27 @@ void EditorState::compileAndLoadMap(Canvas* canvas) {
 		// loadMapLevelOverrides reads from levelInfos[mapId].configFile.
 		writeTextFile(fs::path(scratchDir) / "level.yaml", cm.levelYaml);
 
+		for (int id : addedMedia) {
+			if (!app->render->registerAndFinalizeMedia(id)) {
+				LOG_WARN("[editor] registerAndFinalizeMedia({}) failed — forcing full reload\n", id);
+				addedMedia.clear();       // signal: bail to full path below
+				goto fullReload;
+			}
+		}
+
 		if (!app->render->reloadGeometryOnly(cm.binData, project.mapId)) {
 			LOG_ERROR("[editor] reloadGeometryOnly failed, falling through to full reload\n");
 		} else {
-			LOG_INFO("[editor] hot-reload polys={} lines={} nodes={}  compile={}ms reload={}ms\n",
-			         cm.numPolys, cm.numLines, cm.numNodes,
+			LOG_INFO("[editor] hot-reload polys={} lines={} nodes={} +{}media  compile={}ms reload={}ms\n",
+			         cm.numPolys, cm.numLines, cm.numNodes, addedMedia.size(),
 			         tCompileEnd - tCompileStart, SDL_GetTicks() - tReload0);
+			for (int id : addedMedia) lastCompiledMediaSet.insert(id);
 			lastCompileMs = SDL_GetTicks();
 			projectDirty = false;
 			return;
 		}
 	}
+fullReload:
 
 	// --- Slow path: full media + geometry rebuild ---
 	LOG_INFO("[editor] compiled: polys={} lines={} nodes={} leaves={} bytes={}  compile={}ms\n",
@@ -1154,7 +1176,11 @@ EditorState::SurfaceHit EditorState::raycastFromCamera() const {
 	float pit = camera.pitch * deg;
 	float fx  = std::cos(yaw) * std::cos(pit);
 	float fy  = -std::sin(yaw) * std::cos(pit);
-	float fz  = std::sin(pit);
+	// Camera::getEngineView sends -pitch to the engine, so the rendered view
+	// looks DOWN when camera.pitch is positive. Mirror that inversion here or
+	// the ray and the crosshair disagree — and texture painting lands on the
+	// opposite surface (floor clicks write the ceiling, and vice versa).
+	float fz  = -std::sin(pit);
 
 	const float stepLen = 2.0f;
 	const int   maxSteps = 600;

@@ -858,6 +858,118 @@ void Render::FinalizeMediaFromYaml(DataNode& palYaml, DataNode& texYaml) {
 	}
 
 	LOG_INFO("[render] Loaded media from YAML: {} palettes, {} texels\n", n5, n9);
+	this->nextPalIdx = n5;
+	this->nextTexIdx = n9;
+}
+
+bool Render::registerAndFinalizeMedia(int id) {
+	if (id <= 0 || id >= Render::MEDIA_MAX_MAPPINGS) return false;
+
+	// Lazy-load the media YAMLs (incremental path is rare vs. full reloads;
+	// loading once per call is fine — tens of KB each).
+	DataNode palYaml = DataNode::loadFile("levels/textures/media_palettes.yaml");
+	DataNode texYaml = DataNode::loadFile("levels/textures/media_texels.yaml");
+	if (!palYaml || !texYaml) {
+		LOG_WARN("[render] registerAndFinalizeMedia({}): media YAMLs missing\n", id);
+		return false;
+	}
+
+	short mappingsBeg = this->mediaMappings[id];
+	short mappingsEnd = this->mediaMappings[id + 1];
+
+	for (short m = mappingsBeg; m < mappingsEnd; ++m) {
+		// --- Palette slot ---
+		int palBase = m;
+		if ((this->mediaPalColors[palBase] & Render::MEDIA_FLAG_REFERENCE) != 0) {
+			// Already-resolved ref points at (0xC0000000 | compactedIdx) so
+			// it's finalized. Raw refs (before finalize) have low bits as the
+			// underlying id; follow those to the target slot.
+			if ((this->mediaPalColors[palBase] & 0x40000000) == 0) {
+				palBase = this->mediaPalColors[palBase] & 0x3FF;
+			}
+		}
+		if ((this->mediaPalColors[palBase] & 0x40000000) == 0) {
+			int numColors = this->mediaPalColors[palBase] & 0x3FFFFFFF;
+			int idx = this->nextPalIdx++;
+			this->paletteMemoryUsage += 4 * numColors;
+			this->mediaPalettesSizes[idx] = numColors;
+			this->mediaPalettes[idx][0] = new uint16_t[numColors]();
+
+			// Load palette colours from media_palettes.yaml
+			DataNode entry = palYaml[palBase];
+			if (entry) {
+				DataNode colors = entry["colors"];
+				if (colors && colors.isSequence()) {
+					int n = std::min(numColors, (int)colors.size());
+					for (int k = 0; k < n; ++k) {
+						this->mediaPalettes[idx][0][k] = (uint16_t)colors[k].asInt(0);
+					}
+				}
+			} else {
+				LOG_WARN("[render] registerAndFinalizeMedia: no palette data for {}\n", palBase);
+			}
+
+			// Allocate the 15 extra tint banks that beginLoadMap sets up after
+			// FinalizeMedia — the sprite rasteriser indexes them via paletteBase.
+			for (int b = 1; b < 16; ++b) {
+				this->paletteMemoryUsage += 4 * numColors;
+				this->mediaPalettes[idx][b] = new uint16_t[numColors]();
+			}
+
+			// Resolve any forward-range refs that pointed at this slot — their
+			// entries still hold the raw ref marker from media_mappings.yaml.
+			int refMarker = (palBase | Render::MEDIA_FLAG_REFERENCE);
+			for (int l = palBase + 1; l < 1024; ++l) {
+				if (this->mediaPalColors[l] == refMarker) {
+					this->mediaPalColors[l] = (0xC0000000 | idx);
+				}
+			}
+			this->mediaPalColors[palBase] = (0x40000000 | idx);
+		}
+
+		// --- Texel slot ---
+		int texBase = m;
+		if ((this->mediaTexelSizes[texBase] & Render::MEDIA_FLAG_REFERENCE) != 0) {
+			if ((this->mediaTexelSizes[texBase] & 0x40000000) == 0) {
+				texBase = this->mediaTexelSizes[texBase] & 0x3FF;
+			}
+		}
+		if ((this->mediaTexelSizes[texBase] & 0x40000000) == 0) {
+			int texelSize = (this->mediaTexelSizes[texBase] & 0x3FFFFFFF) + 1;
+			int idx = this->nextTexIdx++;
+			this->texelMemoryUsage += texelSize;
+			this->mediaTexelSizes2[idx] = texelSize;
+			this->mediaTexels[idx] = new uint8_t[texelSize]();
+
+			// Copy texel bytes from the .dat file referenced by media_texels.yaml.
+			DataNode entry = texYaml[texBase];
+			if (entry) {
+				DataNode fileNode = entry["file"];
+				if (fileNode) {
+					std::string filePath = "levels/textures/media_texels/" + fileNode.asString("");
+					InputStream texIs;
+					if (texIs.loadFile(filePath.c_str(), InputStream::LOADTYPE_RESOURCE)) {
+						int readSize = std::min(texelSize, texIs.getFileSize());
+						memcpy(this->mediaTexels[idx], texIs.getData(), readSize);
+						texIs.close();
+					} else {
+						LOG_WARN("[render] registerAndFinalizeMedia: texel load failed for {}: {}\n", texBase, filePath);
+					}
+				}
+			} else {
+				LOG_WARN("[render] registerAndFinalizeMedia: no texel data for {}\n", texBase);
+			}
+
+			int refMarker = (texBase | Render::MEDIA_FLAG_REFERENCE);
+			for (int l = texBase + 1; l < 1024; ++l) {
+				if (this->mediaTexelSizes[l] == refMarker) {
+					this->mediaTexelSizes[l] = (0xC0000000 | idx);
+				}
+			}
+			this->mediaTexelSizes[texBase] = (0x40000000 | idx);
+		}
+	}
+	return true;
 }
 
 bool Render::loadSkyFromPng(const std::string& path) {
