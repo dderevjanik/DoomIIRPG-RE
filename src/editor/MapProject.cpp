@@ -210,6 +210,7 @@ MapProject MapProject::loadFromYaml(const std::string& path) {
 			ent.tile   = e["tile"].as<std::string>("");
 			ent.tileId = e["tile_id"].as<int>(0);
 			ent.z      = e["z"].as<int>(-1);
+			ent.zAnim  = e["z_anim"].as<int>(0);
 			if (e["flags"] && e["flags"].IsSequence()) {
 				for (const auto& f : e["flags"]) ent.flags.push_back(f.as<std::string>(""));
 			}
@@ -329,6 +330,7 @@ void MapProject::saveToYaml(const std::string& path) const {
 			os << "    tile: " << e.tile << "\n";
 			if (e.tileId > 0) os << "    tile_id: " << e.tileId << "\n";
 			if (e.z >= 0) os << "    z: " << e.z << "\n";
+			if (e.zAnim > 0) os << "    z_anim: " << e.zAnim << "\n";
 			if (!e.flags.empty()) {
 				os << "    flags: [";
 				for (size_t i = 0; i < e.flags.size(); ++i) {

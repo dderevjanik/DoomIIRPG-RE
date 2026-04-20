@@ -145,7 +145,14 @@ static void generateGeometry(const MapProject& p,
 					lx1 = std::min(255, lx1); ly1 = std::min(255, ly1);
 					ln.x0 = uint8_t(lx0); ln.x1 = uint8_t(lx1);
 					ln.y0 = uint8_t(ly0); ln.y1 = uint8_t(ly1);
-					ln.flags = p.isDoorTile(nc, nr) ? 4 : 0;
+					// Every solid/open boundary is a blocking wall (flag=0). Flag
+					// bits 0..2 == 4 mean "passable" in the engine's trace — that
+					// is reserved for the door's own collision line emitted
+					// separately. Previously we flagged any wall whose open
+					// neighbour was within ±TILE_SIZE of a door centre, which
+					// bled the passable bit onto surrounding walls and let the
+					// player walk through them into void tiles.
+					ln.flags = 0;
 					ln.ownerCol = uint8_t(nc);
 					ln.ownerRow = uint8_t(nr);
 					lines.push_back(ln);
@@ -902,6 +909,7 @@ static std::string writeLevelYaml(const MapProject& p,
 			os << "    y: " << my << "\n";
 			os << "    tile: " << (e.tile.empty() ? "unknown" : e.tile) << "\n";
 			if (e.z >= 0) os << "    z: " << e.z << "\n";
+			if (e.zAnim > 0) os << "    z_anim: " << e.zAnim << "\n";
 			if (!e.flags.empty()) {
 				os << "    flags: [";
 				for (size_t i = 0; i < e.flags.size(); ++i) {

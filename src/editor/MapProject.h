@@ -67,6 +67,9 @@ struct Entity {
 	std::string tile;                     // sprite name — resolved via SpriteDefs at load
 	int      tileId = 0;                  // resolved sprite ID (for media registration); 0 = unresolved
 	int      z = -1;                      // <0 ⇒ not a Z-sprite; >=0 ⇒ emitted with `z:` field
+	int      zAnim = 0;                   // animation frame index (loadSpritesFromYaml's `z_anim`).
+	                                      // 0 = omit from YAML. Weapons use z_anim=2 to display the
+	                                      // "laying on ground" frame instead of the held/FPS frame.
 	std::vector<std::string> flags;       // names: animation, flip_h, north, south, east, west, …
 };
 

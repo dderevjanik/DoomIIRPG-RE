@@ -1701,6 +1701,25 @@ bool EditorState::applyEntity(int col, int row) {
 	e.row    = uint8_t(row);
 	e.tile   = selectedEntityTile;
 	e.tileId = selectedEntityId;
+
+	// Tag-driven defaults. Without these, a weapon placed on the floor would
+	// render as its frame 0 (the FPS / held view). Original D2RPG data gives
+	// every pickup weapon `flags: [non_entity]`, `z: 90`, `z_anim: 2` so the
+	// renderer samples the "laying on ground" frame. Other pickup categories
+	// may warrant their own defaults later — keep this block small and
+	// explicit rather than building a general rule engine.
+	if (auto mit = textureMeta.find(selectedEntityId); mit != textureMeta.end()) {
+		bool isWeapon = false;
+		for (const auto& tag : mit->second.tags) {
+			if (tag == "weapon") { isWeapon = true; break; }
+		}
+		if (isWeapon) {
+			e.z = 90;
+			e.zAnim = 2;
+			e.flags.push_back("non_entity");
+		}
+	}
+
 	project.entities.push_back(e);
 	selectedEntityIdx = int(project.entities.size()) - 1;
 	return true;
@@ -1818,6 +1837,14 @@ void EditorState::drawEntityInspectorBody() {
 			e.z = zv;
 			projectDirty = true;
 		}
+	}
+
+	// Animation frame (z_anim). 0 = default frame; weapons default to 2 to
+	// show the pickup/ground frame instead of frame 0 (FPS / held view).
+	int zAnimV = e.zAnim;
+	if (ImGui::SliderInt("z_anim (frame)", &zAnimV, 0, 15)) {
+		e.zAnim = zAnimV;
+		projectDirty = true;
 	}
 
 	// Flags — one checkbox per known flag.
