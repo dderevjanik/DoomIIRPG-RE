@@ -1,5 +1,6 @@
 #include "MapCompiler.h"
 #include "MapProject.h"
+#include "SpriteDefs.h"
 
 #include <algorithm>
 #include <array>
@@ -684,9 +685,21 @@ static std::vector<uint8_t> writeBin(const MapProject& p,
 	// Placed entities (monsters/items/NPCs) also need their sprite tile media
 	// registered — otherwise the renderer crashes in setupTexture when the BSP
 	// walker reaches the sprite. Entity ID 0 = unresolved (legacy YAML); skip.
-	for (const Entity& e : p.entities) {
-		if (e.tileId > 0) mediaSet.insert(e.tileId);
-	}
+	// Multi-layer monsters (e.g. Revenant, Cyberdemon) render as stacked
+	// composite sprites; each layer is a distinct sprite ID that must also
+	// be registered, or the renderer drops those layers and the monster
+	// appears partially drawn (legs only, torso missing).
+	auto addEntityMedia = [&](int id) {
+		if (id <= 0) return;
+		mediaSet.insert(id);
+		if (auto* rp = SpriteDefs::getRenderProps(id)) {
+			for (const auto& layer : rp->composite) {
+				if (layer.sprite > 0) mediaSet.insert(layer.sprite);
+			}
+			if (rp->glow.sprite > 0) mediaSet.insert(rp->glow.sprite);
+		}
+	};
+	for (const Entity& e : p.entities) addEntityMedia(e.tileId);
 	std::vector<int> mediaIndices(mediaSet.begin(), mediaSet.end());
 
 	// --- Spawn ---
@@ -839,9 +852,20 @@ static std::string writeLevelYaml(const MapProject& p,
 	// Include entity sprite IDs so loadMapLevelOverrides registers their media.
 	// Without this, the textures-YAML override wipes the .bin's registration
 	// and setupTexture segfaults when the renderer visits the sprite.
-	for (const Entity& e : p.entities) {
-		if (e.tileId > 0) texSet.insert(e.tileId);
-	}
+	// Composite layers and glow overlays are distinct sprite IDs; missing any
+	// one of them leaves the corresponding layer of a multi-part monster
+	// unrendered (e.g. torso missing while legs render).
+	auto addEntityTex = [&](int id) {
+		if (id <= 0) return;
+		texSet.insert(id);
+		if (auto* rp = SpriteDefs::getRenderProps(id)) {
+			for (const auto& layer : rp->composite) {
+				if (layer.sprite > 0) texSet.insert(layer.sprite);
+			}
+			if (rp->glow.sprite > 0) texSet.insert(rp->glow.sprite);
+		}
+	};
+	for (const Entity& e : p.entities) addEntityTex(e.tileId);
 	for (int t : texSet) os << "  - " << t << "\n";
 	os << "  - door_unlocked\n\n";
 	os << "sky_texture: " << p.skyTexture << "\n\n";

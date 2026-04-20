@@ -9,6 +9,7 @@
 #include "Render.h"
 #include "SDLGL.h"
 #include "Game.h"
+#include "SpriteDefs.h"
 
 #include "imgui.h"
 #include <SDL.h>
@@ -990,47 +991,144 @@ bool EditorState::applySpawn(int col, int row) {
 // Texture picker + 3D surface picker (Phase 4)
 // =====================================================================
 
-unsigned int EditorState::getPreviewTexture(int id) {
+const EditorState::PreviewTex& EditorState::getPreviewTexInfo(int id) {
 	auto it = texturePreviews.find(id);
 	if (it != texturePreviews.end()) return it->second;
 
-	// Load PNG via VFS (searches game dir + mods). Resource path is
-	// relative to the game dir — `textures/` is on the asset search path.
-	std::string path = std::string("textures/texture_") + std::to_string(id) + ".png";
+	PreviewTex& entry = texturePreviews[id];   // default-constructed (zeroed)
+
+	// Resolve the PNG path. World textures (IDs >= 257) use the naming
+	// convention textures/texture_<id>.png. Entity sprites (IDs < 257) live
+	// under sprites/<name>.png and SpriteDefs already tracks that mapping
+	// via the sprites.yaml `file:` field.
+	std::string path;
+	if (auto pit = SpriteDefs::tileIndexToPng.find(id); pit != SpriteDefs::tileIndexToPng.end()) {
+		path = pit->second;
+	} else {
+		path = std::string("textures/texture_") + std::to_string(id) + ".png";
+	}
 	auto* vfs = CAppContainer::getInstance()->vfs;
 	int fileSize = 0;
 	uint8_t* data = vfs ? vfs->readFile(path.c_str(), &fileSize) : nullptr;
-	if (!data) {
-		texturePreviews[id] = 0;
-		return 0;
-	}
+	if (!data) return entry;
+
 	int w = 0, h = 0, ch = 0;
 	uint8_t* rgba = stbi_load_from_memory(data, fileSize, &w, &h, &ch, 4);
 	std::free(data);
-	if (!rgba) {
-		texturePreviews[id] = 0;
-		return 0;
-	}
+	if (!rgba) return entry;
 
 	GLuint tex = 0;
 	glGenTextures(1, &tex);
 	glBindTexture(GL_TEXTURE_2D, tex);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgba);
 	stbi_image_free(rgba);
 
-	texturePreviews[id] = tex;
-	return tex;
+	entry.gl = tex;
+	entry.w = w;
+	entry.h = h;
+
+	// Per-frame dimensions come from sprites.yaml `frame_size:` when a sprite
+	// is packed as a horizontal strip (e.g. monster walk cycles). Without it
+	// we treat the whole image as one frame. Lookup goes via the canonical
+	// YAML key → SpriteSource.
+	if (auto nit = SpriteDefs::tileIndexToName.find(id); nit != SpriteDefs::tileIndexToName.end()) {
+		if (auto sit = SpriteDefs::tileNameToSource.find(nit->second);
+		    sit != SpriteDefs::tileNameToSource.end()) {
+			entry.frameW = sit->second.frameWidth;
+			entry.frameH = sit->second.frameHeight;
+		}
+	}
+	return entry;
+}
+
+unsigned int EditorState::getPreviewTexture(int id) {
+	return getPreviewTexInfo(id).gl;
+}
+
+// Draws the primary sprite's frame 0 plus any composite-layer frames stacked
+// by z-offset, all inside a pxSize×pxSize square at the current ImGui cursor.
+// Layers render back-to-front by zMult so taller layers appear above shorter
+// ones in screen space, mirroring how the 3D renderer stacks them.
+void EditorState::drawSpritePreview(int id, int pxSize) {
+	if (id <= 0) return;
+
+	struct Layer { int sprite; int zMult; };
+	std::vector<Layer> layers;
+	layers.push_back({ id, 0 });
+	if (auto* rp = SpriteDefs::getRenderProps(id)) {
+		for (const auto& c : rp->composite) {
+			if (c.sprite > 0) layers.push_back({ c.sprite, c.zMult });
+		}
+	}
+
+	// Find the canvas size we need to fit the tallest layer + its z-offset.
+	// Each layer's frame height dictates its on-screen size; zMult shifts it
+	// vertically. Scale so the assembled bbox fits pxSize.
+	int maxZ = 0;
+	int maxLayerH = 0;
+	int maxLayerW = 0;
+	for (const Layer& l : layers) {
+		const PreviewTex& pt = getPreviewTexInfo(l.sprite);
+		int fw = pt.frameW > 0 ? pt.frameW : pt.w;
+		int fh = pt.frameH > 0 ? pt.frameH : pt.h;
+		if (fw > maxLayerW) maxLayerW = fw;
+		if (fh > maxLayerH) maxLayerH = fh;
+		int topPx = fh + l.zMult;           // zMult correlates with pixel height of composite stack
+		if (topPx > maxZ) maxZ = topPx;
+	}
+	if (maxLayerW == 0 || maxZ == 0) {
+		ImGui::Dummy(ImVec2(pxSize, pxSize));
+		return;
+	}
+
+	// Fit the assembled stack (width = max layer width, height = maxZ) into
+	// pxSize × pxSize preserving aspect ratio.
+	float scale = std::min(float(pxSize) / float(maxLayerW),
+	                       float(pxSize) / float(maxZ));
+
+	ImVec2 origin = ImGui::GetCursorScreenPos();
+	// Bottom-center of the stack inside the preview square.
+	float baseX = origin.x + pxSize * 0.5f;
+	float baseY = origin.y + pxSize;
+
+	ImDrawList* dl = ImGui::GetWindowDrawList();
+	// Sort layers by zMult ascending so lower layers (legs) draw first and
+	// upper layers (torso) overlap on top — matches natural occlusion.
+	std::sort(layers.begin(), layers.end(),
+	          [](const Layer& a, const Layer& b){ return a.zMult < b.zMult; });
+
+	for (const Layer& l : layers) {
+		const PreviewTex& pt = getPreviewTexInfo(l.sprite);
+		if (!pt.gl) continue;
+		int fw = pt.frameW > 0 ? pt.frameW : pt.w;
+		int fh = pt.frameH > 0 ? pt.frameH : pt.h;
+		float drawW = fw * scale;
+		float drawH = fh * scale;
+		// Bottom of this layer sits at (baseY - zMult*scale); its top is drawH above.
+		float bottomY = baseY - l.zMult * scale;
+		float topY    = bottomY - drawH;
+		float leftX   = baseX - drawW * 0.5f;
+		float rightX  = leftX + drawW;
+		// UV: frame 0 is the top-left rectangle of width frameW inside total w.
+		float u1 = (pt.frameW > 0) ? (float(pt.frameW) / float(pt.w)) : 1.0f;
+		float v1 = (pt.frameH > 0) ? (float(pt.frameH) / float(pt.h)) : 1.0f;
+		dl->AddImage(ImTextureID(intptr_t(pt.gl)),
+		             ImVec2(leftX, topY), ImVec2(rightX, bottomY),
+		             ImVec2(0.0f, 0.0f), ImVec2(u1, v1));
+	}
+	// Reserve the layout space so subsequent widgets render below.
+	ImGui::Dummy(ImVec2(pxSize, pxSize));
 }
 
 void EditorState::clearPreviewTextures() {
 	if (texturePreviews.empty()) return;
-	for (auto& [id, tex] : texturePreviews) {
-		if (tex) {
-			GLuint t = tex;
+	for (auto& [id, entry] : texturePreviews) {
+		if (entry.gl) {
+			GLuint t = entry.gl;
 			glDeleteTextures(1, &t);
 		}
 	}
@@ -1121,10 +1219,12 @@ void EditorState::drawTexturePickerBody() {
 	// ceiling tileNums — clamp to the world-texture range.
 	if (selectedTexture < 257) selectedTexture = 257;
 
-	// Thumbnail of the selected texture.
-	unsigned int previewGL = getPreviewTexture(selectedTexture);
-	if (previewGL) {
-		ImGui::Image(ImTextureID(intptr_t(previewGL)), ImVec2(128, 128));
+	// Thumbnail of the selected texture. Uses the frame-aware drawer so strip-
+	// packed sprites render only frame 0 (matches what the engine samples at
+	// face-paint time). World textures are single-frame so this falls through
+	// to the same behaviour as before for them.
+	if (getPreviewTexInfo(selectedTexture).gl) {
+		drawSpritePreview(selectedTexture, 128);
 	} else {
 		ImGui::TextDisabled("(no preview — textures/texture_%d.png not found)",
 		                    selectedTexture);
@@ -1606,6 +1706,33 @@ bool EditorState::applyEntity(int col, int row) {
 void EditorState::drawEntityPickerBody() {
 	ImGui::Text("Selected: %s", selectedEntityTile.empty() ? "(none)" : selectedEntityTile.c_str());
 	ImGui::TextDisabled("Click a tile on the 2D map to place.");
+
+	// Thumbnail of the currently selected entity sprite. Uses the composite-
+	// aware drawer so multi-part monsters (legs + torso + head) appear fully
+	// assembled, and horizontal-strip sprites show only frame 0 instead of
+	// the whole strip. SpriteDefs provides both the PNG path and the frame
+	// metadata via sprites.yaml.
+	if (selectedEntityId > 0) {
+		if (getPreviewTexInfo(selectedEntityId).gl) {
+			drawSpritePreview(selectedEntityId, 128);
+		} else {
+			ImGui::TextDisabled("(no preview — sprites/*.png not found)");
+		}
+		if (auto mit = textureMeta.find(selectedEntityId); mit != textureMeta.end()) {
+			ImGui::Text("Name: %s", mit->second.name.c_str());
+			if (!mit->second.tags.empty()) {
+				std::string joined;
+				for (size_t i = 0; i < mit->second.tags.size(); ++i) {
+					if (i) joined += ", ";
+					joined += mit->second.tags[i];
+				}
+				ImGui::Text("Tags: %s", joined.c_str());
+			} else {
+				ImGui::TextDisabled("Tags: (none)");
+			}
+		}
+		ImGui::Separator();
+	}
 
 	char buf[64];
 	std::strncpy(buf, entityFilter.c_str(), sizeof(buf));

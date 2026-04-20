@@ -107,8 +107,17 @@ private:
 	int                      selectedEntityId = 0;  // resolved sprite ID paired with selectedEntityTile
 	std::string              entityFilter;
 	int                      selectedEntityIdx = -1; // inspector: index into project.entities; -1 = none
-	// GL texture IDs for ImGui thumbnails (keyed by tex ID; 0 = failed to load).
-	std::unordered_map<int, unsigned int> texturePreviews;
+	// GL texture for ImGui thumbnails, plus native image dimensions and — for
+	// strip-packed sprite sheets — per-frame dimensions. Lets the previews
+	// show only frame 0 instead of the whole strip, and lets composite
+	// multi-layer monsters be assembled in the entity preview.
+	struct PreviewTex {
+		unsigned int gl = 0;    // GL texture name; 0 = load failed
+		int w = 0, h = 0;       // full-image size (pixels)
+		int frameW = 0;         // per-frame width; 0 ⇒ whole image is one frame
+		int frameH = 0;
+	};
+	std::unordered_map<int, PreviewTex> texturePreviews;
 
 	// Drag-paint state: the "mode" of the current stroke is set by the first
 	// tile clicked (so dragging over mixed tiles doesn't ping-pong).
@@ -175,6 +184,14 @@ private:
 
 	// --- Texture preview helpers ---
 	unsigned int getPreviewTexture(int id);   // lazy-loads + caches GL texture
+	// Returns the full PreviewTex entry (GL + dims + per-frame dims) so
+	// callers can compute UVs for a single frame of a horizontal strip.
+	const PreviewTex& getPreviewTexInfo(int id);
+	// Draws a single sprite frame (frame 0 by default) as an ImGui image in
+	// the current window at the cursor. `pxSize` is the edge length of the
+	// preview square. Composite multi-layer sprites draw every layer stacked
+	// with z-offsets derived from each layer's zMult.
+	void drawSpritePreview(int id, int pxSize);
 	void clearPreviewTextures();
 
 	// --- Tool application at (col, row). Returns true if anything mutated. ---
