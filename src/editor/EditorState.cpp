@@ -161,6 +161,10 @@ void EditorState::compileAndLoadMap(Canvas* canvas) {
 		uint32_t tReload0 = SDL_GetTicks();
 		// Scratch level.yaml still needs to be on disk because
 		// loadMapLevelOverrides reads from levelInfos[mapId].configFile.
+		// The .bin also has to be flushed to disk — Playtest calls
+		// canvas->loadMap which re-reads the map file from disk, so if we
+		// only reload geometry in memory the playtested level is stale.
+		writeBinFile (fs::path(scratchDir) / "map.bin",    cm.binData);
 		writeTextFile(fs::path(scratchDir) / "level.yaml", cm.levelYaml);
 
 		for (int id : addedMedia) {
