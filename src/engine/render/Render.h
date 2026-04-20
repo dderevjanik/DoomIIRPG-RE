@@ -121,6 +121,14 @@ public:
 	static constexpr int ROCKTIMEDAMAGE = 200;
 	static constexpr int ROCKTIMEDODGE = 800;
 	static constexpr int ROCKDISTCOMBAT = 6;
+	// Default sprite Z offset (canvas units, scaled <<4 for the engine). A
+	// normal (non-Z) sprite has its S_Z initialised to this; postProcessSprites
+	// then subtracts the same value from Z-sprites so yaml_z becomes an
+	// absolute-from-floor height. Consequently, a Z-sprite with yaml_z ==
+	// 2*SPRITE_Z_DEFAULT is visually equivalent to a normal sprite sitting on
+	// the floor — useful for placing pickups whose animation frame must be
+	// controlled via z_anim (only Z-sprites get that field applied).
+	static constexpr int SPRITE_Z_DEFAULT = 32;
 	static constexpr int MEDIA_FLAG_REFERENCE = 0x80000000;
 	static constexpr int MEDIA_PALETTE_REGISTERED = 0x40000000;
 	static constexpr int MEDIA_TEXELS_REGISTERED = 0x40000000;

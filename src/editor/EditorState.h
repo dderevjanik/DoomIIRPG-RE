@@ -107,6 +107,10 @@ private:
 	int                      selectedEntityId = 0;  // resolved sprite ID paired with selectedEntityTile
 	std::string              entityFilter;
 	int                      selectedEntityIdx = -1; // inspector: index into project.entities; -1 = none
+	// Distinct tags across `availableEntities` — populates the entity picker's
+	// tag-filter dropdown. Separate from `knownTags` (which covers the
+	// world-texture range only) because monster/item/NPC tags don't overlap.
+	std::vector<std::string> knownEntityTags;
 	// GL texture for ImGui thumbnails, plus native image dimensions and — for
 	// strip-packed sprite sheets — per-frame dimensions. Lets the previews
 	// show only frame 0 instead of the whole strip, and lets composite

@@ -566,7 +566,9 @@ void Render::postProcessSprites() {
 	for (i = 0; i < this->numMapSprites; ++i) {
 		mapSprites[this->S_Z + i] += (short)getHeight(mapSprites[this->S_X + i], mapSprites[this->S_Y + i]);
 		if (i >= this->numNormalSprites) {
-			mapSprites[this->S_Z + i] -= 32;
+			// Z-sprites are anchored so yaml_z is absolute-from-floor; the
+			// default sprite offset is subtracted here (see Render::SPRITE_Z_DEFAULT).
+			mapSprites[this->S_Z + i] -= Render::SPRITE_Z_DEFAULT;
 		}
 		int n3 = (uint8_t)(mapSpriteInfo[i] & 0xFF);
 		if ((mapSpriteInfo[i] & Enums::SPRITE_FLAG_TILE) != 0x0) {
@@ -601,7 +603,7 @@ void Render::postProcessSprites() {
 		mapSprites[this->S_RENDERMODE + i] = 0;
 		mapSprites[this->S_SCALEFACTOR + i] = 64;
 		mapSprites[this->S_X + i] = (mapSprites[this->S_Y + i] = 0);
-		mapSprites[this->S_Z + i] = 32;
+		mapSprites[this->S_Z + i] = Render::SPRITE_Z_DEFAULT;
 		++i;
 	}
 	this->firstDropSprite = i;
@@ -615,7 +617,7 @@ void Render::postProcessSprites() {
 		mapSprites[this->S_RENDERMODE + i] = 0;
 		mapSprites[this->S_SCALEFACTOR + i] = 64;
 		mapSprites[this->S_X + i] = (mapSprites[this->S_Y + i] = 0);
-		mapSprites[this->S_Z + i] = 32;
+		mapSprites[this->S_Z + i] = Render::SPRITE_Z_DEFAULT;
 		++i;
 	}
 }

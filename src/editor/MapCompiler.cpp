@@ -1,6 +1,7 @@
 #include "MapCompiler.h"
 #include "MapProject.h"
 #include "SpriteDefs.h"
+#include <yaml-cpp/yaml.h>
 
 #include <algorithm>
 #include <array>
@@ -18,6 +19,51 @@
 
 namespace editor {
 namespace {
+
+// Sprite IDs referenced by any projectile in projectiles.yaml. Monsters spawn
+// these at attack/impact time — if the media isn't registered, setupTexture
+// segfaults the first time the engine tries to draw the effect (e.g. zombie
+// attack spawning `flesh`). Loaded lazily on first compile and cached.
+static const std::set<int>& combatEffectSpriteIds() {
+	static std::set<int> cache;
+	static bool loaded = false;
+	if (loaded) return cache;
+	loaded = true;
+	try {
+		YAML::Node root = YAML::LoadFile("projectiles.yaml");
+		YAML::Node projs = root["projectiles"];
+		if (!projs || !projs.IsMap()) return cache;
+		// Every `sprite*:` scalar inside any projectile entry is a sprite name
+		// the engine may need at runtime. Accept `sprite`, `sprite_player`,
+		// `sprite_monster` — all the variants projectiles.yaml uses today.
+		static const char* spriteFields[] = {
+			"sprite", "sprite_player", "sprite_monster"
+		};
+		auto collectFromStage = [&](const YAML::Node& stage) {
+			if (!stage || !stage.IsMap()) return;
+			for (const char* field : spriteFields) {
+				if (auto n = stage[field]; n && n.IsScalar()) {
+					std::string name = n.as<std::string>("");
+					if (name.empty()) continue;
+					auto it = SpriteDefs::tileNameToIndex.find(name);
+					if (it != SpriteDefs::tileNameToIndex.end() && it->second > 0) {
+						cache.insert(it->second);
+					}
+				}
+			}
+		};
+		for (auto it = projs.begin(); it != projs.end(); ++it) {
+			YAML::Node p = it->second;
+			if (!p || !p.IsMap()) continue;
+			collectFromStage(p["launch"]);
+			collectFromStage(p["impact"]);
+		}
+	} catch (const std::exception&) {
+		// Missing or malformed projectiles.yaml → we just register less. The
+		// existing entity-sprite registration still covers the common cases.
+	}
+	return cache;
+}
 
 // --- Engine constants (mirror tools/bsp-to-bin.py) ---
 constexpr uint8_t POLY_FLAG_AXIS_NONE = 0x18;
@@ -707,6 +753,13 @@ static std::vector<uint8_t> writeBin(const MapProject& p,
 		}
 	};
 	for (const Entity& e : p.entities) addEntityMedia(e.tileId);
+	// If there's any placed entity, conservatively include every projectile's
+	// launch/impact sprite. Combat effects (e.g. zombie → flesh splatter) are
+	// spawned at fight time from monster-attack weapon data we don't walk
+	// here; without these registered, the first projectile draw segfaults.
+	if (!p.entities.empty()) {
+		for (int id : combatEffectSpriteIds()) mediaSet.insert(id);
+	}
 	std::vector<int> mediaIndices(mediaSet.begin(), mediaSet.end());
 
 	// --- Spawn ---
@@ -873,6 +926,11 @@ static std::string writeLevelYaml(const MapProject& p,
 		}
 	};
 	for (const Entity& e : p.entities) addEntityTex(e.tileId);
+	// Same safety net as in mediaSet: include every projectile sprite so the
+	// level.yaml textures override registers their media on full reload.
+	if (!p.entities.empty()) {
+		for (int id : combatEffectSpriteIds()) texSet.insert(id);
+	}
 	for (int t : texSet) os << "  - " << t << "\n";
 	os << "  - door_unlocked\n\n";
 	os << "sky_texture: " << p.skyTexture << "\n\n";

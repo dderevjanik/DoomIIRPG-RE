@@ -603,7 +603,7 @@ bool Render::reloadGeometryOnly(const std::vector<uint8_t>& binBytes, int mapNam
 		this->mapSprites[i + this->S_VIEWNEXT] = -1;
 		this->mapSprites[i + this->S_ENT] = -1;
 		this->mapSprites[i + this->S_SCALEFACTOR] = 64;
-		this->mapSprites[i + this->S_Z] = 32;
+		this->mapSprites[i + this->S_Z] = Render::SPRITE_Z_DEFAULT;
 	}
 	{
 		int n5 = 0;
@@ -865,10 +865,17 @@ void Render::FinalizeMediaFromYaml(DataNode& palYaml, DataNode& texYaml) {
 bool Render::registerAndFinalizeMedia(int id) {
 	if (id <= 0 || id >= Render::MEDIA_MAX_MAPPINGS) return false;
 
-	// Lazy-load the media YAMLs (incremental path is rare vs. full reloads;
-	// loading once per call is fine — tens of KB each).
-	DataNode palYaml = DataNode::loadFile("levels/textures/media_palettes.yaml");
-	DataNode texYaml = DataNode::loadFile("levels/textures/media_texels.yaml");
+	// media_palettes.yaml / media_texels.yaml are multi-MB; parsing them on
+	// every call made a single weapon placement (which drags in ~10 projectile
+	// sprites) spend seconds re-loading the same data. Cache once per session.
+	static DataNode palYaml;
+	static DataNode texYaml;
+	static bool yamlsLoaded = false;
+	if (!yamlsLoaded) {
+		palYaml = DataNode::loadFile("levels/textures/media_palettes.yaml");
+		texYaml = DataNode::loadFile("levels/textures/media_texels.yaml");
+		yamlsLoaded = true;
+	}
 	if (!palYaml || !texYaml) {
 		LOG_WARN("[render] registerAndFinalizeMedia({}): media YAMLs missing\n", id);
 		return false;
@@ -1292,7 +1299,7 @@ bool Render::beginLoadMap(int mapNameID) {
 		this->mapSprites[i + this->S_VIEWNEXT] = -1;
 		this->mapSprites[i + this->S_ENT] = -1;
 		this->mapSprites[i + this->S_SCALEFACTOR] = 64;
-		this->mapSprites[i + this->S_Z] = 32;
+		this->mapSprites[i + this->S_Z] = Render::SPRITE_Z_DEFAULT;
 	}
 
 	int n5 = 0;
@@ -1665,7 +1672,7 @@ void Render::loadSpritesFromYaml(const DataNode& sprites) {
 		this->mapSprites[this->S_X + idx] = (short)s["x"].asInt(0);
 		this->mapSprites[this->S_Y + idx] = (short)s["y"].asInt(0);
 		if (isZ) {
-			this->mapSprites[this->S_Z + idx] = (short)s["z"].asInt(32);
+			this->mapSprites[this->S_Z + idx] = (short)s["z"].asInt(Render::SPRITE_Z_DEFAULT);
 		}
 
 		// Parse tile: accepts sprite name (e.g. "monster_zombie") or numeric ID

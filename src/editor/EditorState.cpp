@@ -10,6 +10,7 @@
 #include "SDLGL.h"
 #include "Game.h"
 #include "SpriteDefs.h"
+#include "EntityPlacement.h"
 
 #include "imgui.h"
 #include <SDL.h>
@@ -1210,6 +1211,18 @@ void EditorState::loadTextureList() {
 		for (const auto& tag : it->second.tags) tagSet.insert(tag);
 	}
 	knownTags.assign(tagSet.begin(), tagSet.end());
+
+	// Entity tags — same build but scoped to the entity ID range (< 257) so
+	// the picker's dropdown surfaces labels like `monster`, `weapon`, `item`,
+	// `npc` instead of world-texture categories like `wall` or `floor`.
+	std::set<std::string> entTagSet;
+	for (int id : availableEntities) {
+		auto it = textureMeta.find(id);
+		if (it == textureMeta.end()) continue;
+		for (const auto& tag : it->second.tags) entTagSet.insert(tag);
+	}
+	knownEntityTags.assign(entTagSet.begin(), entTagSet.end());
+
 	LOG_INFO("[editor] texture palette: {} entries, {} unique tags, {} w/ metadata\n",
 	         availableTextures.size(), knownTags.size(), textureMeta.size());
 }
@@ -1702,23 +1715,11 @@ bool EditorState::applyEntity(int col, int row) {
 	e.tile   = selectedEntityTile;
 	e.tileId = selectedEntityId;
 
-	// Tag-driven defaults. Without these, a weapon placed on the floor would
-	// render as its frame 0 (the FPS / held view). Original D2RPG data gives
-	// every pickup weapon `flags: [non_entity]`, `z: 90`, `z_anim: 2` so the
-	// renderer samples the "laying on ground" frame. Other pickup categories
-	// may warrant their own defaults later — keep this block small and
-	// explicit rather than building a general rule engine.
-	if (auto mit = textureMeta.find(selectedEntityId); mit != textureMeta.end()) {
-		bool isWeapon = false;
-		for (const auto& tag : mit->second.tags) {
-			if (tag == "weapon") { isWeapon = true; break; }
-		}
-		if (isWeapon) {
-			e.z = 90;
-			e.zAnim = 2;
-			e.flags.push_back("non_entity");
-		}
-	}
+	// Placement defaults are resolved via the engine's entity taxonomy
+	// (EntityDefManager::lookup → eType/eSubType) rather than sprites.yaml
+	// tag strings, so category rules stay in sync with the runtime's
+	// understanding of what the sprite is.
+	editor::applyPlacementDefaults(e);
 
 	project.entities.push_back(e);
 	selectedEntityIdx = int(project.entities.size()) - 1;
@@ -1761,6 +1762,31 @@ void EditorState::drawEntityPickerBody() {
 	std::strncpy(buf, entityFilter.c_str(), sizeof(buf));
 	buf[sizeof(buf) - 1] = 0;
 	if (ImGui::InputText("Filter", buf, sizeof(buf))) entityFilter = buf;
+	ImGui::TextDisabled("(ID, name substring, or #tag)");
+
+	// Tag dropdown — same UX as the texture picker: picking a tag rewrites
+	// the filter as `#<tag>` so the list-filter reuses its existing tag
+	// branch. "Any tag" clears the filter.
+	if (!knownEntityTags.empty()) {
+		std::vector<const char*> items;
+		items.push_back("Any tag");
+		for (const auto& t : knownEntityTags) items.push_back(t.c_str());
+		int current = 0;
+		if (!entityFilter.empty() && entityFilter[0] == '#') {
+			std::string want = entityFilter.substr(1);
+			for (size_t i = 0; i < knownEntityTags.size(); ++i) {
+				if (knownEntityTags[i] == want) { current = int(i + 1); break; }
+			}
+		}
+		if (ImGui::Combo("Tag", &current, items.data(), int(items.size()))) {
+			if (current == 0) entityFilter.clear();
+			else              entityFilter = "#" + knownEntityTags[current - 1];
+		}
+	}
+	if (!entityFilter.empty()) {
+		ImGui::SameLine();
+		if (ImGui::SmallButton("Clear")) entityFilter.clear();
+	}
 
 	ImGui::TextDisabled("%zu entity sprites available", availableEntities.size());
 	// Fixed-height child so that the optional entity inspector below has space
