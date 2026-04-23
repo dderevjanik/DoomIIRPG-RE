@@ -351,10 +351,13 @@ void EditorState::update(Canvas* canvas) {
 			if (linePending && ImGui::IsKeyPressed(ImGuiKey_Escape, false)) {
 				linePending = false;
 			}
-			// Ctrl+S → save, F5 → playtest.
+			// Ctrl+S → save, Ctrl+O → load, F5 → playtest.
 			bool ctrl = io.KeyCtrl || io.KeySuper;
 			if (ctrl && ImGui::IsKeyPressed(ImGuiKey_S, false)) {
 				openSaveDialog();
+			}
+			if (ctrl && ImGui::IsKeyPressed(ImGuiKey_O, false)) {
+				openLoadDialog();
 			}
 			if (ImGui::IsKeyPressed(ImGuiKey_F5, false)) {
 				playtest(canvas);
@@ -390,6 +393,7 @@ void EditorState::render(Canvas* canvas, Graphics* graphics) {
 	drawStatusBar();          // bottom: validation + camera summary
 	drawTileGrid2D();         // floating minimap (hover tooltip inside)
 	drawSaveDialog();
+	drawLoadDialog(canvas);
 
 	// Crosshair + target HUD (only useful when 3D view is live)
 	if (mapLoaded && !CAppContainer::getInstance()->headless) {
@@ -1556,6 +1560,8 @@ void EditorState::drawActionsBar() {
 
 	if (ImGui::Button("Save… (Ctrl+S)")) openSaveDialog();
 	ImGui::SameLine();
+	if (ImGui::Button("Load… (Ctrl+O)")) openLoadDialog();
+	ImGui::SameLine();
 	if (ImGui::Button("Playtest (F5)")) {
 		// We need the Canvas pointer; it's the owner of this state — obtain from
 		// CAppContainer to avoid plumbing it through.
@@ -1602,6 +1608,49 @@ void EditorState::drawSaveDialog() {
 			lastSaveMsgMs = SDL_GetTicks();
 			ImGui::CloseCurrentPopup();
 		}
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel", ImVec2(120, 0))) ImGui::CloseCurrentPopup();
+		ImGui::EndPopup();
+	}
+}
+
+void EditorState::drawLoadDialog(Canvas* canvas) {
+	if (loadDialogRequested) {
+		ImGui::OpenPopup("Load Project");
+		loadDialogRequested = false;
+	}
+	if (ImGui::BeginPopupModal("Load Project", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+		if (loadCandidates.empty()) {
+			ImGui::TextDisabled("No levels/*/project.yaml files found under %s",
+			                    fs::current_path().generic_string().c_str());
+		} else {
+			ImGui::TextDisabled("Projects under ./levels/:");
+			ImGui::BeginChild("load_list", ImVec2(420, 240), true);
+			for (int i = 0; i < int(loadCandidates.size()); ++i) {
+				bool selected = (i == loadSelectedIdx);
+				if (ImGui::Selectable(loadCandidates[i].c_str(), selected,
+				                      ImGuiSelectableFlags_AllowDoubleClick)) {
+					loadSelectedIdx = i;
+					if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+						performLoad(canvas, loadCandidates[i]);
+						ImGui::CloseCurrentPopup();
+					}
+				}
+			}
+			ImGui::EndChild();
+		}
+
+		bool canLoad = loadSelectedIdx >= 0 && loadSelectedIdx < int(loadCandidates.size());
+		if (!canLoad) ImGui::BeginDisabled();
+		if (ImGui::Button("Load", ImVec2(120, 0))) {
+			if (canLoad) {
+				bool ok = performLoad(canvas, loadCandidates[loadSelectedIdx]);
+				lastSaveMsg   = ok ? "loaded" : "load failed (see log)";
+				lastSaveMsgMs = SDL_GetTicks();
+				ImGui::CloseCurrentPopup();
+			}
+		}
+		if (!canLoad) ImGui::EndDisabled();
 		ImGui::SameLine();
 		if (ImGui::Button("Cancel", ImVec2(120, 0))) ImGui::CloseCurrentPopup();
 		ImGui::EndPopup();
@@ -1672,6 +1721,72 @@ bool EditorState::performSave() {
 	         project.name, relDir, project.mapId);
 	projectDirty = false;
 	return true;
+}
+
+void EditorState::openLoadDialog() {
+	// Scan levels/*/project.yaml under CWD (active game dir). The engine has
+	// already chdir'd into games/<game>/, so relative paths resolve correctly.
+	loadCandidates.clear();
+	loadSelectedIdx = -1;
+	std::error_code ec;
+	fs::path levelsRoot = "levels";
+	if (fs::is_directory(levelsRoot, ec)) {
+		for (const auto& entry : fs::directory_iterator(levelsRoot, ec)) {
+			if (!entry.is_directory()) continue;
+			fs::path candidate = entry.path() / "project.yaml";
+			if (fs::is_regular_file(candidate, ec)) {
+				loadCandidates.push_back(candidate.generic_string());
+			}
+		}
+	}
+	std::sort(loadCandidates.begin(), loadCandidates.end());
+	// Preselect the current project if it's in the list.
+	for (size_t i = 0; i < loadCandidates.size(); ++i) {
+		if (fs::absolute(loadCandidates[i]) == fs::path(loadedProjectPath)) {
+			loadSelectedIdx = int(i);
+			break;
+		}
+	}
+	if (loadSelectedIdx < 0 && !loadCandidates.empty()) loadSelectedIdx = 0;
+	loadDialogRequested = true;
+}
+
+bool EditorState::performLoad(Canvas* canvas, const std::string& projectPath) {
+	editor::MapProject freshProject;
+	try {
+		freshProject = editor::MapProject::loadFromYaml(projectPath);
+	} catch (const std::exception& e) {
+		LOG_ERROR("[editor] load: failed to parse {}: {}\n", projectPath, e.what());
+		return false;
+	}
+
+	// Tear down any scratch-level hijack attached to the outgoing project,
+	// plus GPU/media state from its last compile — the next compileAndLoadMap
+	// will rebuild everything for the new project.
+	restoreLevelInfo();
+	clearPreviewTextures();
+	mapLoaded = false;
+	projectDirty = false;
+	lastCompiledMediaSet.clear();
+
+	project = std::move(freshProject);
+	loadedProjectPath = fs::absolute(projectPath).string();
+	projectLoaded = true;
+
+	// Recenter camera on the new spawn, matching onEnter's placement logic.
+	int spawnCol = project.spawn.col;
+	int spawnRow = project.spawn.row;
+	int floorWorld = project.floorByte(spawnCol, spawnRow) * 8;
+	camera.posX = (spawnCol * 64 + 32) / 128.0f;
+	camera.posZ = (spawnRow * 64 + 32) / 128.0f;
+	camera.posY = (floorWorld + 36)    / 128.0f;
+	camera.yaw = 0.0f;
+	camera.pitch = 0.0f;
+
+	compileAndLoadMap(canvas);
+	LOG_INFO("[editor] loaded project \"{}\" (map_id={}) from {}\n",
+	         project.name, project.mapId, loadedProjectPath);
+	return mapLoaded;
 }
 
 void EditorState::playtest(Canvas* canvas) {

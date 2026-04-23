@@ -73,6 +73,13 @@ private:
 	std::string lastSaveMsg;
 	uint32_t    lastSaveMsgMs = 0;
 
+	// Load dialog state: candidate project.yaml paths scanned under the active
+	// game dir (CWD/levels/*/project.yaml), plus the index currently selected in
+	// the popup.
+	bool loadDialogRequested = false;
+	std::vector<std::string> loadCandidates;
+	int  loadSelectedIdx = -1;
+
 	// Tracks the previous frame's time for dt.
 	uint32_t lastUpdateMs = 0;
 
@@ -167,6 +174,7 @@ private:
 	void drawStatusBar();       // bottom strip: validation + camera summary
 	void drawCrosshairAndHit(const SurfaceHit& hit);
 	void drawSaveDialog();
+	void drawLoadDialog(Canvas* canvas);
 
 	// --- Inspector sidebar bodies (no Begin/End — rendered inside the sidebar) ---
 	void drawToolOptionsBody();   // Brush / Floor / Ceil / Door / Spawn / Line
@@ -174,9 +182,11 @@ private:
 	void drawEntityPickerBody();  // Entity tool: top section (sprite palette)
 	void drawEntityInspectorBody();// Entity tool: bottom section (selected inst)
 
-	// --- Save / Playtest ---
+	// --- Save / Load / Playtest ---
 	void openSaveDialog();
 	bool performSave();      // writes project yaml + level dir + registers
+	void openLoadDialog();   // scans levels/*/project.yaml, shows modal picker
+	bool performLoad(Canvas* canvas, const std::string& projectPath);
 	void playtest(Canvas* canvas);
 
 	// --- Surface picker ---
