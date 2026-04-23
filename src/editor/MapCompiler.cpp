@@ -735,24 +735,15 @@ static std::vector<uint8_t> writeBin(const MapProject& p,
 	mediaSet.insert(D2_FLOOR_TILE);
 	mediaSet.insert(D2_CEIL_TILE);
 	for (const PolyRecord& pr : polys) mediaSet.insert(pr.tileNum);
-	// Placed entities (monsters/items/NPCs) also need their sprite tile media
-	// registered — otherwise the renderer crashes in setupTexture when the BSP
-	// walker reaches the sprite. Entity ID 0 = unresolved (legacy YAML); skip.
-	// Multi-layer monsters (e.g. Revenant, Cyberdemon) render as stacked
-	// composite sprites; each layer is a distinct sprite ID that must also
-	// be registered, or the renderer drops those layers and the monster
-	// appears partially drawn (legs only, torso missing).
-	auto addEntityMedia = [&](int id) {
-		if (id <= 0) return;
-		mediaSet.insert(id);
-		if (auto* rp = SpriteDefs::getRenderProps(id)) {
-			for (const auto& layer : rp->composite) {
-				if (layer.sprite > 0) mediaSet.insert(layer.sprite);
-			}
-			if (rp->glow.sprite > 0) mediaSet.insert(rp->glow.sprite);
+	// Register every sprite the engine might actually draw for this entity.
+	// SpriteDefs::getRenderedLayers returns the primary plus composite/glow
+	// layers (multi-part monsters like the Revenant have one sprite per body
+	// part), so we stay in sync with whatever the renderer decides to stack.
+	for (const Entity& e : p.entities) {
+		for (const auto& layer : SpriteDefs::getRenderedLayers(e.tileId)) {
+			mediaSet.insert(layer.sprite);
 		}
-	};
-	for (const Entity& e : p.entities) addEntityMedia(e.tileId);
+	}
 	// If there's any placed entity, conservatively include every projectile's
 	// launch/impact sprite. Combat effects (e.g. zombie → flesh splatter) are
 	// spawned at fight time from monster-attack weapon data we don't walk
@@ -909,23 +900,14 @@ static std::string writeLevelYaml(const MapProject& p,
 	texSet.insert(D2_FLOOR_TILE);
 	texSet.insert(D2_CEIL_TILE);
 	for (const PolyRecord& pr : polys) texSet.insert(pr.tileNum);
-	// Include entity sprite IDs so loadMapLevelOverrides registers their media.
-	// Without this, the textures-YAML override wipes the .bin's registration
-	// and setupTexture segfaults when the renderer visits the sprite.
-	// Composite layers and glow overlays are distinct sprite IDs; missing any
-	// one of them leaves the corresponding layer of a multi-part monster
-	// unrendered (e.g. torso missing while legs render).
-	auto addEntityTex = [&](int id) {
-		if (id <= 0) return;
-		texSet.insert(id);
-		if (auto* rp = SpriteDefs::getRenderProps(id)) {
-			for (const auto& layer : rp->composite) {
-				if (layer.sprite > 0) texSet.insert(layer.sprite);
-			}
-			if (rp->glow.sprite > 0) texSet.insert(rp->glow.sprite);
+	// Same story as mediaSet above — emit every layer the renderer may touch
+	// so loadMapLevelOverrides registers their media on full reload and the
+	// textures-YAML override doesn't wipe out e.g. a Revenant's torso.
+	for (const Entity& e : p.entities) {
+		for (const auto& layer : SpriteDefs::getRenderedLayers(e.tileId)) {
+			texSet.insert(layer.sprite);
 		}
-	};
-	for (const Entity& e : p.entities) addEntityTex(e.tileId);
+	}
 	// Same safety net as in mediaSet: include every projectile sprite so the
 	// level.yaml textures override registers their media on full reload.
 	if (!p.entities.empty()) {

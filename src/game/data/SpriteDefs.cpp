@@ -309,3 +309,25 @@ const SpriteRenderProps* SpriteDefs::getRenderProps(int tileIndex) {
 	}
 	return nullptr;
 }
+
+std::vector<SpriteCompositeLayer> SpriteDefs::getRenderedLayers(int primaryTile) {
+	// Shape mirrors what Render::renderSpriteObject actually draws: the primary
+	// sprite, then every composite layer at its own zMult, then (if present)
+	// the glow overlay. Anything that's not a positive tile index gets skipped
+	// so callers can treat the result as a simple "these media IDs must be
+	// registered" set without null-checking.
+	std::vector<SpriteCompositeLayer> layers;
+	if (primaryTile <= 0) return layers;
+	layers.push_back({ primaryTile, 0 });
+	if (const auto* rp = getRenderProps(primaryTile)) {
+		for (const auto& c : rp->composite) {
+			if (c.sprite > 0) layers.push_back(c);
+		}
+		if (rp->glow.sprite > 0) {
+			// zMult for glow is encoded the same way — treat it as another
+			// stacked layer so editor previews line it up visually too.
+			layers.push_back({ rp->glow.sprite, rp->glow.zMult });
+		}
+	}
+	return layers;
+}

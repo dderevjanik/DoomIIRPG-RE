@@ -468,224 +468,11 @@ void Render::unloadGeometryOnly() {
 }
 
 bool Render::reloadGeometryOnly(const std::vector<uint8_t>& binBytes, int mapNameID) {
-	InputStream IS;
-	if (!IS.loadFromBuffer(binBytes.data(), int(binBytes.size()))) return false;
-
-	// --- Pass 1: header → counts ---
-	this->mapNameID = mapNameID;
-	app->resource->read(&IS, 42);
-	if (app->resource->shiftUByte() != 3) { app->Error(68); return false; }
-	this->mapCompileDate = app->resource->shiftInt();
-	this->mapSpawnIndex  = app->resource->shiftUShort();
-	this->mapSpawnDir    = app->resource->shiftUByte();
-	this->mapFlagsBitmask = app->resource->shiftByte();
-	app->game->totalSecrets = app->resource->shiftByte();
-	app->game->totalLoot    = app->resource->shiftUByte();
-	this->numNodes = app->resource->shiftUShort();
-	int dataSizePolys = app->resource->shiftUShort();
-	this->numLines = app->resource->shiftUShort();
-	this->numNormals = app->resource->shiftUShort();
-	this->numNormalSprites = app->resource->shiftUShort();
-	this->numZSprites = app->resource->shiftShort();
-	const int binNumNormalSprites = this->numNormalSprites;
-	const int binNumZSprites = this->numZSprites;
-	const int binNumMapSprites = binNumNormalSprites + binNumZSprites;
-
-	// Apply level.yaml overrides (entities, height_map). The `textures:`
-	// override is a no-op here because media state is already populated;
-	// loadMapLevelOverrides touches palettes only when unloaded.
-	bool spritesFromYaml = false;
-	DataNode yamlSpritesNode;
-	DataNode levelYaml;
-	this->loadMapLevelOverrides(mapNameID, levelYaml, spritesFromYaml, yamlSpritesNode);
-
-	const int numMapSpritesLocal = this->numNormalSprites + this->numZSprites;
-	const int numTileEventsLocal  = int(app->resource->shiftShort());
-	const int mapByteCodeSizeLocal = int(app->resource->shiftShort());
-	this->numMapSprites   = numMapSpritesLocal;
-	this->numSprites      = this->numMapSprites + Render::MAX_CUSTOM_SPRITES + Render::MAX_DROP_SPRITES;
-	this->numTileEvents   = numTileEventsLocal;
-	this->mapByteCodeSize = mapByteCodeSizeLocal;
-	app->game->totalMayaCameras    = app->resource->shiftByte();
-	app->game->totalMayaCameraKeys = app->resource->shiftShort();
-	short totalMayaTweens = 0;
-	for (int l = 0; l < 6; ++l) {
-		app->game->ofsMayaTween[l] = totalMayaTweens;
-		short s = app->resource->shiftShort();
-		if (s != -1) totalMayaTweens += s;
-	}
-	app->game->totalMayaTweens = totalMayaTweens;
-	IS.close();
-
-	// --- Free old geometry, keep media. ---
-	// unloadGeometryOnly zeroes numMapSprites / numTileEvents / mapByteCodeSize
-	// as part of its reset — restore them from the locals captured above so the
-	// allocations and init loops below see the right sizes.
-	unloadGeometryOnly();
-	this->numMapSprites   = numMapSpritesLocal;
-	this->numTileEvents   = numTileEventsLocal;
-	this->mapByteCodeSize = mapByteCodeSizeLocal;
-
-	// --- Allocate fresh geometry arrays ---
-	this->nodeNormalIdxs = new uint8_t[this->numNodes];
-	this->nodeOffsets = new short[this->numNodes];
-	this->nodeChildOffset1 = new short[this->numNodes];
-	this->nodeChildOffset2 = new short[this->numNodes];
-	this->nodeSprites = new short[this->numNodes];
-	this->nodeBounds = new uint8_t[this->numNodes * 4];
-	this->nodePolys = new uint8_t[dataSizePolys];
-	this->lineFlags = new uint8_t[(this->numLines + 1) / 2];
-	this->lineXs = new uint8_t[this->numLines * 2];
-	this->lineYs = new uint8_t[this->numLines * 2];
-	this->normals = new short[this->numNormals * 3];
-	this->heightMap = new uint8_t[1024];
-	for (int i = 0; i < this->numNodes; ++i) this->nodeSprites[i] = -1;
-
-	this->mapSprites = new short[this->numSprites * 10];
-	for (int i = 0; i < this->numSprites * 10; ++i) this->mapSprites[i] = 0;
-	this->mapSpriteInfo = new int[this->numSprites * 2];
-	for (int i = 0; i < this->numSprites * 2; ++i) this->mapSprites[i] = 0;
-	this->S_X = this->numSprites * 0;
-	this->S_Y = this->numSprites * 1;
-	this->S_Z = this->numSprites * 2;
-	this->S_RENDERMODE = this->numSprites * 3;
-	this->S_NODE = this->numSprites * 4;
-	this->S_NODENEXT = this->numSprites * 5;
-	this->S_VIEWNEXT = this->numSprites * 6;
-	this->S_ENT = this->numSprites * 7;
-	this->S_SCALEFACTOR = this->numSprites * 8;
-	this->SINFO_SORTZ = this->numSprites;
-
-	this->tileEvents = new int[this->numTileEvents * 2];
-	this->mapByteCode = new uint8_t[this->mapByteCodeSize];
-	app->game->mayaCameras = new MayaCamera[app->game->totalMayaCameras];
-	app->game->mayaCameraKeys = new short[app->game->totalMayaCameraKeys * 7];
-	app->game->mayaCameraTweens = new int8_t[app->game->totalMayaTweens];
-	app->game->mayaTweenIndices = new short[app->game->totalMayaCameraKeys * 6];
-	app->game->setKeyOffsets();
-
-	// --- Pass 2: re-read from the top, parse geometry sections ---
-	IS.loadFromBuffer(binBytes.data(), int(binBytes.size()));
-	app->resource->read(&IS, 42);
-	// Media section header: marker + count + ids + marker. Advance but
-	// don't register — media is intentionally preserved from the previous load.
-	app->resource->readMarker(&IS, 0xDEADBEEF);
-	app->resource->read(&IS, 2);
-	int mediaCount = app->resource->shiftUShort();
-	app->resource->read(&IS, mediaCount * 2);
-	for (int i = 0; i < mediaCount; ++i) app->resource->shiftUShort();
-	app->resource->readMarker(&IS, 0xDEADBEEF);
-	app->resource->readShortArray(&IS, std::span(this->normals, this->numNormals * 3));
-	app->resource->readMarker(&IS);
-	app->resource->readShortArray(&IS, std::span(this->nodeOffsets, this->numNodes));
-	app->resource->readMarker(&IS);
-	app->resource->readByteArray(&IS, std::span(this->nodeNormalIdxs, this->numNodes));
-	app->resource->readMarker(&IS);
-	app->resource->readShortArray(&IS, std::span(this->nodeChildOffset1, this->numNodes));
-	app->resource->readShortArray(&IS, std::span(this->nodeChildOffset2, this->numNodes));
-	app->resource->readMarker(&IS);
-	app->resource->readByteArray(&IS, std::span(this->nodeBounds, this->numNodes * 4));
-	app->resource->readMarker(&IS);
-	app->resource->readByteArray(&IS, std::span(this->nodePolys, dataSizePolys));
-	app->resource->readMarker(&IS);
-	app->resource->readByteArray(&IS, std::span(this->lineFlags, (this->numLines + 1) / 2));
-	app->resource->readByteArray(&IS, std::span(this->lineXs, this->numLines * 2));
-	app->resource->readByteArray(&IS, std::span(this->lineYs, this->numLines * 2));
-	app->resource->readMarker(&IS);
-	app->resource->readByteArray(&IS, std::span(this->heightMap, 1024));
-	app->resource->readMarker(&IS);
-	// Sprites: same sequence as beginLoadMap.
-	app->resource->readCoordArray(&IS, std::span(this->mapSprites + this->S_X, binNumMapSprites));
-	app->resource->readCoordArray(&IS, std::span(this->mapSprites + this->S_Y, binNumMapSprites));
-	for (int i = 0; i < this->numMapSprites; i++) {
-		this->mapSprites[i + this->S_NODE] = -1;
-		this->mapSprites[i + this->S_NODENEXT] = -1;
-		this->mapSprites[i + this->S_VIEWNEXT] = -1;
-		this->mapSprites[i + this->S_ENT] = -1;
-		this->mapSprites[i + this->S_SCALEFACTOR] = 64;
-		this->mapSprites[i + this->S_Z] = Render::SPRITE_Z_DEFAULT;
-	}
-	{
-		int n5 = 0;
-		int rem = binNumMapSprites;
-		while (rem > 0) {
-			int n6 = (Resource::IO_SIZE > rem) ? rem : Resource::IO_SIZE;
-			rem -= n6;
-			app->resource->read(&IS, n6);
-			while (--n6 >= 0) this->mapSpriteInfo[n5++] = app->resource->shiftUByte();
-		}
-		app->resource->readMarker(&IS);
-		int n7 = 0;
-		int rem2 = binNumMapSprites;
-		while (rem2 > 0) {
-			int n8 = ((Resource::IO_SIZE / 2) > rem2) ? rem2 : (Resource::IO_SIZE / 2);
-			rem2 -= n8;
-			app->resource->read(&IS, n8 * 2);
-			while (--n8 >= 0) this->mapSpriteInfo[n7++] |= (app->resource->shiftUShort() & 0xFFFF) << 16;
-		}
-		app->resource->readMarker(&IS);
-		app->resource->readUByteArray(&IS, std::span(this->mapSprites + this->S_Z + binNumNormalSprites, binNumZSprites));
-		app->resource->readMarker(&IS);
-		int binNormIdx = binNumNormalSprites;
-		int binZRem = binNumZSprites;
-		while (binZRem > 0) {
-			int n10 = (Resource::IO_SIZE > binZRem) ? binZRem : Resource::IO_SIZE;
-			binZRem -= n10;
-			app->resource->read(&IS, n10);
-			while (--n10 >= 0) this->mapSpriteInfo[binNormIdx++] |= app->resource->shiftUByte() << 8;
-		}
-		app->resource->readMarker(&IS);
-	}
-
-	// Static funcs (12 ushorts).
-	for (int i = 0; i < 12; ++i) this->staticFuncs[i] = (int16_t)app->resource->shiftUShort();
-	app->resource->readMarker(&IS);
-
-	// Tile events.
-	for (int i = 0; i < this->numTileEvents; ++i) {
-		this->tileEvents[i * 2 + 0] = app->resource->shiftInt();
-		this->tileEvents[i * 2 + 1] = app->resource->shiftInt();
-	}
-	app->resource->readMarker(&IS);
-
-	// Bytecode.
-	if (this->mapByteCodeSize > 0) {
-		app->resource->readByteArray(&IS, std::span(this->mapByteCode, this->mapByteCodeSize));
-	}
-	app->resource->readMarker(&IS);
-
-	// Maya cameras + tweens. Editor-compiled bins always emit 0 cams/keys/tweens
-	// (see MapCompiler writeBin), so there's no data between these markers. If
-	// that changes we'd need to mirror the beginLoadMap layout here too.
-	app->resource->readMarker(&IS, 0xDEADBEEF);
-
-	// Map flags (nibble-packed).
-	{
-		uint8_t buf[512];
-		app->resource->readByteArray(&IS, std::span(buf, 512));
-		for (int i = 0; i < 512; ++i) {
-			this->mapFlags[i * 2 + 0] = buf[i] & 0x0F;
-			this->mapFlags[i * 2 + 1] = (buf[i] >> 4) & 0x0F;
-		}
-	}
-	app->resource->readMarker(&IS);
-	IS.close();
-
-	// Sprites from level.yaml (doors, NPCs). Mirrors beginLoadMap's YAML
-	// sprite loading path.
-	if (spritesFromYaml) {
-		this->loadSpritesFromYaml(yamlSpritesNode);
-	}
-
-	// Script state reset.
-	this->loadScriptsYaml(mapNameID);
-
-	// Attach sprites to BSP leaves so the renderer actually draws them. Without
-	// this, entities sit in mapSprites[] but never get linked into the
-	// per-node lists that the 3D traversal walks.
-	this->postProcessSprites();
-
-	return true;
+	// Hot-reload path used by the in-engine editor. Media + sky are preserved
+	// from a prior full load; only geometry / sprites / scripts / map flags
+	// change. Body lives in Render::loadMap — this wrapper exists so callers
+	// don't need to know about LoadOptions.
+	return this->loadMap(binBytes, mapNameID, LoadOptions{/*keepMedia=*/true, /*keepSky=*/true});
 }
 
 void Render::RegisterMedia(int n) {
@@ -1041,100 +828,111 @@ bool Render::loadSkyFromPng(const std::string& path) {
 }
 
 bool Render::beginLoadMap(int mapNameID) {
-
-	InputStream IS;
-
-	this->mapNameID = mapNameID;
-	app->canvas->loadMapStringID = (short)(4 + (this->mapNameID - 1));
-	app->localization->loadText(app->canvas->loadMapStringID);
-
-	for (int i = 0; i < 1024; ++i) {
-		this->mapFlags[i] = 0;
-	}
-
-	this->mapEntranceAutomap = -1;
-	this->mapExitAutomap = -1;
-
-	for (int i = 0; i < Render::MAX_LADDERS_PER_MAP; ++i) {
-		this->mapLadders[i] = -1;
-	}
-
-	for (int i = 0; i < Render::MAX_KEEP_PITCH_LEVEL_TILES; ++i) {
-		this->mapKeepPitchLevelTiles[i] = -1;
-	}
-
-	this->portalState = Render::PORTAL_DNE;
-	this->previousPortalState = 0;
-	this->portalScripted = false;
-	this->mapNameField = (0xC00 | app->game->levelNames[this->mapNameID - 1]);
-
-	this->mediaMappings = new short[Render::MEDIA_MAX_MAPPINGS];
-	this->mediaDimensions = new uint8_t[Render::MEDIA_MAX_IMAGES];
-	this->mediaBounds = new short[(Render::MEDIA_MAX_IMAGES * 4)];
-	this->mediaPalColors = new int[Render::MEDIA_MAX_IMAGES];
-	this->mediaPalettesSizes = new int[Render::MEDIA_MAX_IMAGES];
-	this->mediaTexelSizes = new int[Render::MEDIA_MAX_IMAGES];
-	this->mediaTexelSizes2 = new int[Render::MEDIA_MAX_IMAGES];
-	this->mediaTexels = new uint8_t*[1024]();
-	this->mediaPalettes = new uint16_t**[1024]();
-	for (int i = 0; i < 1024; ++i) {
-		this->mediaPalettes[i] = new uint16_t*[16]();
-		for (int j = 0; j < 16; ++j) {
-			this->mediaPalettes[i][j] = nullptr;
-		}
-	}
-
-	app->canvas->updateLoadingBar(false);
-
-	// Load media mappings from YAML
-	DataNode mediaMappingsYaml = DataNode::loadFile("levels/textures/media_mappings.yaml");
-	if (mediaMappingsYaml) {
-		DataNode mNode = mediaMappingsYaml["mappings"];
-		DataNode dNode = mediaMappingsYaml["dimensions"];
-		DataNode bNode = mediaMappingsYaml["bounds"];
-		DataNode pNode = mediaMappingsYaml["pal_colors"];
-		DataNode tNode = mediaMappingsYaml["texel_sizes"];
-
-		for (int i = 0; i < Render::MEDIA_MAX_MAPPINGS && i < mNode.size(); i++) {
-			this->mediaMappings[i] = (short)mNode[i].asInt(0);
-		}
-		for (int i = 0; i < Render::MEDIA_MAX_IMAGES && i < dNode.size(); i++) {
-			this->mediaDimensions[i] = (uint8_t)dNode[i].asInt(0);
-		}
-		for (int i = 0; i < Render::MEDIA_MAX_IMAGES && i < bNode.size(); i++) {
-			DataNode row = bNode[i];
-			int base = i * 4;
-			this->mediaBounds[base + 0] = (short)row[0].asInt(0);
-			this->mediaBounds[base + 1] = (short)row[1].asInt(0);
-			this->mediaBounds[base + 2] = (short)row[2].asInt(0);
-			this->mediaBounds[base + 3] = (short)row[3].asInt(0);
-		}
-		for (int i = 0; i < Render::MEDIA_MAX_IMAGES && i < pNode.size(); i++) {
-			this->mediaPalColors[i] = pNode[i].asInt(0);
-		}
-		for (int i = 0; i < Render::MEDIA_MAX_IMAGES && i < tNode.size(); i++) {
-			this->mediaTexelSizes[i] = tNode[i].asInt(0);
-		}
-	} else {
-		app->Error("media_mappings.yaml not found\n");
-	}
-
-	this->mediaMappings[TILE_SKY_BOX] =
-	    (gles::MAX_MEDIA - 1); // Readjust the index so it doesn't interfere with the fade texture.
-
-	app->canvas->updateLoadingBar(false);
-
+	// Full reload from disk. Reads the compiled .bin into a buffer, then
+	// delegates to the shared loadMap body. All per-map init (level strings,
+	// mapFlags clear, media arrays alloc, FinalizeMedia, sky, palette banks)
+	// runs inside loadMap under `LoadOptions{}` (all-defaults = full reload).
 	std::string mapFilePath = this->gameConfig->getMapFile(mapNameID);
 	const char* mapFile = CAppContainer::getInstance()->customMapFile
 	    ? CAppContainer::getInstance()->customMapFile
 	    : mapFilePath.c_str();
+
+	InputStream IS;
 	IS.loadResource(mapFile);
+	const int sz = IS.getFileSize();
+	if (sz <= 0) return false;
+	std::vector<uint8_t> bytes(IS.getData(), IS.getData() + sz);
+	IS.close();
+
+	return this->loadMap(bytes, mapNameID, LoadOptions{});
+}
+
+bool Render::loadMap(const std::vector<uint8_t>& bin, int mapNameID, LoadOptions opts) {
+	// Canonical map loader. See Render.h for LoadOptions. The full path
+	// (opts = {}) is what beginLoadMap calls; the hot path
+	// (keepMedia=keepSky=true) is what reloadGeometryOnly calls. No other
+	// entry points should exist — every engine step (postProcessSprites,
+	// height_map override, loadMayaCameras, tile-event indexing, etc.) lives
+	// here once so the two callers can't drift out of sync.
+
+	InputStream IS;
+	if (!IS.loadFromBuffer(bin.data(), int(bin.size()))) return false;
+
+	this->mapNameID = mapNameID;
+
+	// --- Per-session init (full reload only; hot path keeps prior state) ---
+	if (!opts.keepMedia) {
+		app->canvas->loadMapStringID = (short)(4 + (this->mapNameID - 1));
+		app->localization->loadText(app->canvas->loadMapStringID);
+
+		for (int i = 0; i < 1024; ++i) this->mapFlags[i] = 0;
+
+		this->mapEntranceAutomap = -1;
+		this->mapExitAutomap = -1;
+		for (int i = 0; i < Render::MAX_LADDERS_PER_MAP; ++i) this->mapLadders[i] = -1;
+		for (int i = 0; i < Render::MAX_KEEP_PITCH_LEVEL_TILES; ++i) this->mapKeepPitchLevelTiles[i] = -1;
+
+		this->portalState = Render::PORTAL_DNE;
+		this->previousPortalState = 0;
+		this->portalScripted = false;
+		this->mapNameField = (0xC00 | app->game->levelNames[this->mapNameID - 1]);
+
+		// Media mapping / palette / texel index arrays. Retained across hot
+		// reloads — allocated here once per full reload.
+		this->mediaMappings = new short[Render::MEDIA_MAX_MAPPINGS];
+		this->mediaDimensions = new uint8_t[Render::MEDIA_MAX_IMAGES];
+		this->mediaBounds = new short[(Render::MEDIA_MAX_IMAGES * 4)];
+		this->mediaPalColors = new int[Render::MEDIA_MAX_IMAGES];
+		this->mediaPalettesSizes = new int[Render::MEDIA_MAX_IMAGES];
+		this->mediaTexelSizes = new int[Render::MEDIA_MAX_IMAGES];
+		this->mediaTexelSizes2 = new int[Render::MEDIA_MAX_IMAGES];
+		this->mediaTexels = new uint8_t*[1024]();
+		this->mediaPalettes = new uint16_t**[1024]();
+		for (int i = 0; i < 1024; ++i) {
+			this->mediaPalettes[i] = new uint16_t*[16]();
+			for (int j = 0; j < 16; ++j) this->mediaPalettes[i][j] = nullptr;
+		}
+
+		app->canvas->updateLoadingBar(false);
+
+		DataNode mediaMappingsYaml = DataNode::loadFile("levels/textures/media_mappings.yaml");
+		if (mediaMappingsYaml) {
+			DataNode mNode = mediaMappingsYaml["mappings"];
+			DataNode dNode = mediaMappingsYaml["dimensions"];
+			DataNode bNode = mediaMappingsYaml["bounds"];
+			DataNode pNode = mediaMappingsYaml["pal_colors"];
+			DataNode tNode = mediaMappingsYaml["texel_sizes"];
+			for (int i = 0; i < Render::MEDIA_MAX_MAPPINGS && i < mNode.size(); i++)
+				this->mediaMappings[i] = (short)mNode[i].asInt(0);
+			for (int i = 0; i < Render::MEDIA_MAX_IMAGES && i < dNode.size(); i++)
+				this->mediaDimensions[i] = (uint8_t)dNode[i].asInt(0);
+			for (int i = 0; i < Render::MEDIA_MAX_IMAGES && i < bNode.size(); i++) {
+				DataNode row = bNode[i];
+				int base = i * 4;
+				this->mediaBounds[base + 0] = (short)row[0].asInt(0);
+				this->mediaBounds[base + 1] = (short)row[1].asInt(0);
+				this->mediaBounds[base + 2] = (short)row[2].asInt(0);
+				this->mediaBounds[base + 3] = (short)row[3].asInt(0);
+			}
+			for (int i = 0; i < Render::MEDIA_MAX_IMAGES && i < pNode.size(); i++)
+				this->mediaPalColors[i] = pNode[i].asInt(0);
+			for (int i = 0; i < Render::MEDIA_MAX_IMAGES && i < tNode.size(); i++)
+				this->mediaTexelSizes[i] = tNode[i].asInt(0);
+		} else {
+			app->Error("media_mappings.yaml not found\n");
+		}
+		// Readjust the sky box index so it doesn't interfere with the fade texture.
+		this->mediaMappings[TILE_SKY_BOX] = (gles::MAX_MEDIA - 1);
+
+		app->canvas->updateLoadingBar(false);
+	}
+
+	// --- Pass 1: header + counts ---
 	app->resource->read(&IS, 42);
 	if (app->resource->shiftUByte() != 3) {
 		app->Error(68); // ERR_BADMAPVERSION
 		return false;
 	}
-
 	this->mapCompileDate = app->resource->shiftInt();
 	this->mapSpawnIndex = app->resource->shiftUShort();
 	this->mapSpawnDir = app->resource->shiftUByte();
@@ -1148,12 +946,15 @@ bool Render::beginLoadMap(int mapNameID) {
 	this->numNormalSprites = app->resource->shiftUShort();
 	this->numZSprites = app->resource->shiftShort();
 
-	// Save binary sprite counts for sequential binary reading
-	int binNumNormalSprites = this->numNormalSprites;
-	int binNumZSprites = this->numZSprites;
-	int binNumMapSprites = binNumNormalSprites + binNumZSprites;
+	// Bin-side sprite counts (numNormalSprites/numZSprites may be overridden
+	// by the YAML sprites block below, but binNumMapSprites drives the
+	// pass-2 byte read from the file).
+	const int binNumNormalSprites = this->numNormalSprites;
+	const int binNumZSprites = this->numZSprites;
+	const int binNumMapSprites = binNumNormalSprites + binNumZSprites;
 
-	// Override map data from level.yaml
+	// level.yaml overrides may swap in YAML-driven sprites (monsters, doors,
+	// NPCs) whose count replaces numNormalSprites/numZSprites.
 	bool spritesFromYaml = false;
 	DataNode yamlSpritesNode;
 	DataNode levelYaml;
@@ -1170,47 +971,69 @@ bool Render::beginLoadMap(int mapNameID) {
 	short totalMayaTweens = 0;
 	for (int l = 0; l < 6; ++l) {
 		app->game->ofsMayaTween[l] = totalMayaTweens;
-		short shiftShort = app->resource->shiftShort();
-		if (shiftShort != -1) {
-			totalMayaTweens += shiftShort;
-		}
+		short s = app->resource->shiftShort();
+		if (s != -1) totalMayaTweens += s;
 	}
 	app->game->totalMayaTweens = totalMayaTweens;
 
-	// Load Media data
+	// --- Media section header (always read; register only on full path) ---
 	app->resource->readMarker(&IS, 0xDEADBEEF);
 	app->resource->read(&IS, 2);
 	int mediaCount = app->resource->shiftUShort();
 	app->resource->read(&IS, mediaCount * 2);
-	for (int i = 0; i < mediaCount; i++) {
-		this->RegisterMedia(app->resource->shiftUShort());
+	if (opts.keepMedia) {
+		// Advance past the media IDs without registering — existing media
+		// state is preserved from the prior full load (and the editor
+		// registers any new IDs incrementally via registerAndFinalizeMedia
+		// before calling this).
+		for (int i = 0; i < mediaCount; ++i) app->resource->shiftUShort();
+	} else {
+		for (int i = 0; i < mediaCount; ++i) this->RegisterMedia(app->resource->shiftUShort());
 	}
 	app->resource->readMarker(&IS, 0xDEADBEEF);
 	IS.close();
 
-	// Override textures from YAML if present
-	DataNode yamlMedia = levelYaml ? levelYaml["textures"] : DataNode();
-	if (yamlMedia && yamlMedia.isSequence() && yamlMedia.size() > 0) {
-		// Re-register media from YAML (clears previous registrations)
-		for (int i = 0; i < Render::MEDIA_MAX_IMAGES; i++) {
-			this->mediaPalColors[i] &= ~0x40000000;
-			this->mediaTexelSizes[i] &= ~0x40000000;
-		}
-		for (int i = 0; i < (int)yamlMedia.size(); i++) {
-			std::string val = yamlMedia[i].asString("");
-			int tileId = 0;
-			if (!val.empty() && (val[0] < '0' || val[0] > '9')) {
-				tileId = SpriteDefs::getIndex(val);
-			} else {
-				tileId = yamlMedia[i].asInt(0);
+	if (!opts.keepMedia) {
+		DataNode yamlMedia = levelYaml ? levelYaml["textures"] : DataNode();
+		if (yamlMedia && yamlMedia.isSequence() && yamlMedia.size() > 0) {
+			// Clear prior registration bits and re-register from YAML. Only
+			// valid on full reload; hot reload would discard already-loaded
+			// palettes/texels here.
+			for (int i = 0; i < Render::MEDIA_MAX_IMAGES; i++) {
+				this->mediaPalColors[i] &= ~0x40000000;
+				this->mediaTexelSizes[i] &= ~0x40000000;
 			}
-			if (tileId > 0) this->RegisterMedia(tileId);
+			for (int i = 0; i < (int)yamlMedia.size(); i++) {
+				std::string val = yamlMedia[i].asString("");
+				int tileId = 0;
+				if (!val.empty() && (val[0] < '0' || val[0] > '9')) {
+					tileId = SpriteDefs::getIndex(val);
+				} else {
+					tileId = yamlMedia[i].asInt(0);
+				}
+				if (tileId > 0) this->RegisterMedia(tileId);
+			}
 		}
+		this->FinalizeMedia();
 	}
 
-	this->FinalizeMedia();
+	// --- Allocate geometry ---
+	// Hot path already has arrays from the prior load; free them without
+	// touching media. The "free" sets numMapSprites/numTileEvents/
+	// mapByteCodeSize back to 0 as part of its bookkeeping — stash the
+	// values parsed from this bin's header so the allocations below use
+	// them.
+	const int numMapSpritesLocal  = this->numMapSprites;
+	const int numTileEventsLocal  = this->numTileEvents;
+	const int mapByteCodeSizeLocal = this->mapByteCodeSize;
+	if (opts.keepMedia) {
+		unloadGeometryOnly();
+		this->numMapSprites   = numMapSpritesLocal;
+		this->numTileEvents   = numTileEventsLocal;
+		this->mapByteCodeSize = mapByteCodeSizeLocal;
+		this->numSprites = this->numMapSprites + Render::MAX_CUSTOM_SPRITES + Render::MAX_DROP_SPRITES;
+	}
 
-	//-----------------------------
 	this->nodeNormalIdxs = new uint8_t[this->numNodes];
 	this->nodeOffsets = new short[this->numNodes];
 	this->nodeChildOffset1 = new short[this->numNodes];
@@ -1223,20 +1046,18 @@ bool Render::beginLoadMap(int mapNameID) {
 	this->lineYs = new uint8_t[this->numLines * 2];
 	this->normals = new short[this->numNormals * 3];
 	this->heightMap = new uint8_t[1024];
-
-	for (int i = 0; i < this->numNodes; ++i) {
-		this->nodeSprites[i] = -1;
-	}
+	for (int i = 0; i < this->numNodes; ++i) this->nodeSprites[i] = -1;
 
 	this->mapSprites = new short[this->numSprites * 10];
-	for (int i = 0; i < this->numSprites * 10; ++i) {
-		this->mapSprites[i] = 0;
-	}
-
+	for (int i = 0; i < this->numSprites * 10; ++i) this->mapSprites[i] = 0;
 	this->mapSpriteInfo = new int[this->numSprites * 2];
-	for (int i = 0; i < this->numSprites * 2; ++i) {
-		this->mapSprites[i] = 0;
-	}
+	// NOTE: the second init loop writes mapSprites (not mapSpriteInfo) — this
+	// matches the original code exactly. It's redundant on top of the loop
+	// above and does NOT zero mapSpriteInfo, but since every slot that ends
+	// up being rendered gets mapSpriteInfo written later (bin read or YAML
+	// sprites), this has never produced a visible bug. Left alone to avoid
+	// changing behaviour during the unification refactor.
+	for (int i = 0; i < this->numSprites * 2; ++i) this->mapSprites[i] = 0;
 
 	this->S_X = this->numSprites * 0;
 	this->S_Y = this->numSprites * 1;
@@ -1257,15 +1078,15 @@ bool Render::beginLoadMap(int mapNameID) {
 	app->game->mayaTweenIndices = new short[app->game->totalMayaCameraKeys * 6];
 	app->game->setKeyOffsets();
 
-	// app->checkPeakMemory("Allocated memory for the map");
-	IS.loadResource(mapFile);
+	// --- Pass 2: re-read from the top, fill geometry arrays ---
+	IS.loadFromBuffer(bin.data(), int(bin.size()));
 	app->canvas->updateLoadingBar(false);
-	// app->checkPeakMemory(, "Reading in final map data");
 
 	app->resource->read(&IS, 42);
 	app->resource->readMarker(&IS, 0xDEADBEEF);
 	app->resource->read(&IS, mediaCount * 2 + 2);
 	app->resource->readMarker(&IS, 0xDEADBEEF);
+
 	app->resource->readShortArray(&IS, std::span(this->normals, this->numNormals * 3));
 	app->resource->readMarker(&IS);
 	app->resource->readShortArray(&IS, std::span(this->nodeOffsets, this->numNodes));
@@ -1287,12 +1108,13 @@ bool Render::beginLoadMap(int mapNameID) {
 	app->resource->readByteArray(&IS, std::span(this->heightMap, 1024));
 	app->resource->readMarker(&IS);
 	app->canvas->updateLoadingBar(false);
-	// Read sprite data from binary (uses binary counts — may be 0 if sprites are in YAML)
+
+	// Sprites — bin counts drive the byte read even when YAML overrides the
+	// sprite list later; we have to consume those bytes either way.
 	app->resource->readCoordArray(&IS, std::span(this->mapSprites + this->S_X, binNumMapSprites));
 	app->resource->readCoordArray(&IS, std::span(this->mapSprites + this->S_Y, binNumMapSprites));
 	app->canvas->updateLoadingBar(false);
 
-	// Initialize default fields for all map sprites (YAML or binary)
 	for (int i = 0; i < this->numMapSprites; i++) {
 		this->mapSprites[i + this->S_NODE] = -1;
 		this->mapSprites[i + this->S_NODENEXT] = -1;
@@ -1302,75 +1124,79 @@ bool Render::beginLoadMap(int mapNameID) {
 		this->mapSprites[i + this->S_Z] = Render::SPRITE_Z_DEFAULT;
 	}
 
-	int n5 = 0;
-	int numMapSpritesRemaining = binNumMapSprites;
-	while (numMapSpritesRemaining > 0) {
-		int n6 = (Resource::IO_SIZE > numMapSpritesRemaining) ? numMapSpritesRemaining : Resource::IO_SIZE;
-		numMapSpritesRemaining -= n6;
-		app->resource->read(&IS, n6);
-		while (--n6 >= 0) {
-			this->mapSpriteInfo[n5++] = app->resource->shiftUByte();
+	{
+		int n5 = 0;
+		int rem = binNumMapSprites;
+		while (rem > 0) {
+			int n6 = (Resource::IO_SIZE > rem) ? rem : Resource::IO_SIZE;
+			rem -= n6;
+			app->resource->read(&IS, n6);
+			while (--n6 >= 0) this->mapSpriteInfo[n5++] = app->resource->shiftUByte();
 		}
-	}
+		app->resource->readMarker(&IS);
+		app->canvas->updateLoadingBar(false);
 
-	app->resource->readMarker(&IS);
-	app->canvas->updateLoadingBar(false);
-
-	int n7 = 0;
-	int numMapSpritesRemaining2 = binNumMapSprites;
-	while (numMapSpritesRemaining2 > 0) {
-		int n8 = ((Resource::IO_SIZE / 2) > numMapSpritesRemaining2) ? numMapSpritesRemaining2 : (Resource::IO_SIZE / 2);
-		numMapSpritesRemaining2 -= n8;
-		app->resource->read(&IS, n8 * 2);
-		while (--n8 >= 0) {
-			this->mapSpriteInfo[n7++] |= (app->resource->shiftUShort() & 0xFFFF) << 16;
+		int n7 = 0;
+		int rem2 = binNumMapSprites;
+		while (rem2 > 0) {
+			int n8 = ((Resource::IO_SIZE / 2) > rem2) ? rem2 : (Resource::IO_SIZE / 2);
+			rem2 -= n8;
+			app->resource->read(&IS, n8 * 2);
+			while (--n8 >= 0) this->mapSpriteInfo[n7++] |= (app->resource->shiftUShort() & 0xFFFF) << 16;
 		}
-	}
+		app->resource->readMarker(&IS);
+		app->resource->readUByteArray(&IS, std::span(this->mapSprites + this->S_Z + binNumNormalSprites, binNumZSprites));
+		app->resource->readMarker(&IS);
 
-	app->resource->readMarker(&IS);
-	app->resource->readUByteArray(&IS, std::span(this->mapSprites + this->S_Z + binNumNormalSprites, binNumZSprites));
-	app->resource->readMarker(&IS);
-
-	int binNormIdx = binNumNormalSprites;
-	int binZRemaining = binNumZSprites;
-	while (binZRemaining > 0) {
-		int n10 = (Resource::IO_SIZE > binZRemaining) ? binZRemaining : Resource::IO_SIZE;
-		binZRemaining -= n10;
-		app->resource->read(&IS, n10);
-		while (--n10 >= 0) {
-			this->mapSpriteInfo[binNormIdx++] |= app->resource->shiftUByte() << 8;
+		int binNormIdx = binNumNormalSprites;
+		int binZRem = binNumZSprites;
+		while (binZRem > 0) {
+			int n10 = (Resource::IO_SIZE > binZRem) ? binZRem : Resource::IO_SIZE;
+			binZRem -= n10;
+			app->resource->read(&IS, n10);
+			while (--n10 >= 0) this->mapSpriteInfo[binNormIdx++] |= app->resource->shiftUByte() << 8;
 		}
+		app->canvas->updateLoadingBar(false);
+		app->resource->readMarker(&IS);
 	}
-	app->canvas->updateLoadingBar(false);
-	app->resource->readMarker(&IS);
 
-	// Populate sprite arrays from YAML if sprites were extracted from binary
-	if (spritesFromYaml) {
-		this->loadSpritesFromYaml(yamlSpritesNode);
-	}
+	// YAML sprites replace the bin sprite data for level.yaml-driven maps.
+	if (spritesFromYaml) this->loadSpritesFromYaml(yamlSpritesNode);
+
 	app->resource->readUShortArray(&IS, std::span(this->staticFuncs, 12));
 	app->resource->readMarker(&IS);
-	app->resource->readIntArray(&IS, std::span(this->tileEvents, app->render->numTileEvents * 2));
 
+	// Tile events + mark event tiles in mapFlags. readIntArray takes N ints.
+	app->resource->readIntArray(&IS, std::span(this->tileEvents, this->numTileEvents * 2));
 	for (int i = 0; i < this->numTileEvents; i++) {
 		int index = this->tileEvents[i << 1] & 0x3FF;
 		this->mapFlags[index] |= 0x40;
 	}
-
 	app->resource->readMarker(&IS);
-	app->resource->readByteArray(&IS, std::span(this->mapByteCode, this->mapByteCodeSize));
+
+	if (this->mapByteCodeSize > 0) {
+		app->resource->readByteArray(&IS, std::span(this->mapByteCode, this->mapByteCodeSize));
+	}
 	app->resource->readMarker(&IS);
 	app->canvas->updateLoadingBar(false);
+
+	// Maya cameras. For editor bins with 0 cameras, the loop body in
+	// loadMayaCameras doesn't execute — so both shipped and editor bin
+	// formats are handled uniformly here.
 	app->game->loadMayaCameras(&IS);
 	app->resource->readMarker(&IS);
 
-	// Override cameras from YAML if present
-	DataNode yamlCameras = levelYaml ? levelYaml["cameras"] : DataNode();
-	if (yamlCameras && yamlCameras.isSequence() && yamlCameras.size() > 0) {
-		this->loadCamerasFromYaml(yamlCameras);
+	// Camera YAML override (full path only — hot reload preserves the camera
+	// state it loaded initially).
+	if (!opts.keepMedia) {
+		DataNode yamlCameras = levelYaml ? levelYaml["cameras"] : DataNode();
+		if (yamlCameras && yamlCameras.isSequence() && yamlCameras.size() > 0) {
+			this->loadCamerasFromYaml(yamlCameras);
+		}
 	}
-	app->resource->read(&IS, 512);
 
+	// Map flags (nibble-packed: 512 bytes → 1024 flags, low then high nibble).
+	app->resource->read(&IS, 512);
 	int cnt = 0;
 	for (int i = 0; i < 512; i++) {
 		short flags = app->resource->shiftUByte();
@@ -1380,7 +1206,7 @@ bool Render::beginLoadMap(int mapNameID) {
 	app->resource->readMarker(&IS);
 	IS.close();
 
-	// Override heightMap from YAML
+	// heightMap YAML override — per-tile floor bytes set by level.yaml.
 	if (levelYaml) {
 		DataNode hm = levelYaml["height_map"];
 		if (hm && hm.isSequence()) {
@@ -1396,34 +1222,38 @@ bool Render::beginLoadMap(int mapNameID) {
 	this->loadScriptsYaml(mapNameID);
 
 	app->canvas->updateLoadingBar(false);
+	// Attach sprites to BSP leaves — without this, placed entities sit in
+	// mapSprites[] but never get linked into the per-node lists the 3D
+	// traversal walks.
 	this->postProcessSprites();
 
-	// Load sky texture from PNG
-	{
+	// --- Sky (full reload only) ---
+	if (!opts.keepSky) {
 		const auto& gc = *this->gameConfig;
 		std::string skyTexPath;
 		if (auto lit = gc.levelInfos.find(this->mapNameID); lit != gc.levelInfos.end()) {
 			skyTexPath = lit->second.skyTexture;
 		}
-		if (!skyTexPath.empty()) {
-			this->loadSkyFromPng(skyTexPath);
-		}
+		if (!skyTexPath.empty()) this->loadSkyFromPng(skyTexPath);
 	}
 	app->canvas->updateLoadingBar(false);
 
-	for (int n19 = 0; n19 < 1024; n19++) {
-		if (this->mediaPalettes[n19][0] != nullptr) {
-			int length = this->mediaPalettesSizes[n19];
-			for (int n20 = 1; n20 < 16; n20++) {
-				this->paletteMemoryUsage += 4 * length;
-				this->mediaPalettes[n19][n20] = new uint16_t[length];
+	// --- Palette tint banks (full reload only — allocated once per media set) ---
+	if (!opts.keepMedia) {
+		for (int n19 = 0; n19 < 1024; n19++) {
+			if (this->mediaPalettes[n19][0] != nullptr) {
+				int length = this->mediaPalettesSizes[n19];
+				for (int n20 = 1; n20 < 16; n20++) {
+					this->paletteMemoryUsage += 4 * length;
+					this->mediaPalettes[n19][n20] = new uint16_t[length];
+				}
 			}
 		}
-	}
 
-	app->canvas->changeMapStarted = false;
-	this->destDizzy = 0;
-	this->baseDizzy = 0;
+		app->canvas->changeMapStarted = false;
+		this->destDizzy = 0;
+		this->baseDizzy = 0;
+	}
 
 	return true;
 }

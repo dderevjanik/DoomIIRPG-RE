@@ -179,6 +179,20 @@ void EditorState::compileAndLoadMap(Canvas* canvas) {
 		if (!app->render->reloadGeometryOnly(cm.binData, project.mapId)) {
 			LOG_ERROR("[editor] reloadGeometryOnly failed, falling through to full reload\n");
 		} else {
+			// Instantiate game-side Entity structs for the new sprite set.
+			// Without this, placed monsters have S_ENT=-1 and fall into
+			// renderSpriteObject's billboard path (frame 0 only — legs, no
+			// torso or head). loadMapEntities walks mapSprites, resolves an
+			// EntityDef per tile, and sets S_ENT so renderSpriteAnim's body-
+			// part rendering kicks in. Same call the full Canvas::loadMap
+			// path makes, here reused for the hot-reload case.
+			// unloadMapData first — matches the normal Canvas flow — so
+			// entityDb, monster lists, gsprites, combat pointers etc. from
+			// the prior load don't collide with the fresh entity set.
+			if (app->game) {
+				app->game->unloadMapData();
+				app->game->loadMapEntities();
+			}
 			LOG_INFO("[editor] hot-reload polys={} lines={} nodes={} +{}media  compile={}ms reload={}ms\n",
 			         cm.numPolys, cm.numLines, cm.numNodes, addedMedia.size(),
 			         tCompileEnd - tCompileStart, SDL_GetTicks() - tReload0);
@@ -211,6 +225,14 @@ fullReload:
 		LOG_ERROR("[editor] beginLoadMap({}) failed\n", project.mapId);
 		mapLoaded = false;
 		return;
+	}
+	// Same Entity-instantiation step the hot path runs — monsters need this
+	// to route through renderSpriteAnim (body parts) instead of the default
+	// single-frame billboard. unloadMapData clears entityDb + monster lists
+	// + gsprites so the second load doesn't inherit stale pointers.
+	if (app->game) {
+		app->game->unloadMapData();
+		app->game->loadMapEntities();
 	}
 	LOG_INFO("[editor] full reload={}ms\n", SDL_GetTicks() - tFull0);
 	mapLoaded = true;
@@ -1061,28 +1083,30 @@ unsigned int EditorState::getPreviewTexture(int id) {
 void EditorState::drawSpritePreview(int id, int pxSize) {
 	if (id <= 0) return;
 
-	struct Layer { int sprite; int zMult; };
-	std::vector<Layer> layers;
-	layers.push_back({ id, 0 });
-	if (auto* rp = SpriteDefs::getRenderProps(id)) {
-		for (const auto& c : rp->composite) {
-			if (c.sprite > 0) layers.push_back({ c.sprite, c.zMult });
-		}
+	// Delegate "what layers does this tile decompose into" to EntityPlacement,
+	// which knows that monsters/NPCs are body-parts-from-same-sheet (different
+	// frame indices, stacked by BodyPartData Z offsets) while everything else
+	// is composite/glow layers from SpriteDefs. This matches Render::render-
+	// SpriteAnim's runtime behaviour so the picker shows what the 3D view
+	// will actually draw.
+	std::vector<editor::PreviewLayer> layers = editor::getPreviewLayers(id);
+	if (layers.empty()) {
+		ImGui::Dummy(ImVec2(pxSize, pxSize));
+		return;
 	}
 
-	// Find the canvas size we need to fit the tallest layer + its z-offset.
-	// Each layer's frame height dictates its on-screen size; zMult shifts it
-	// vertically. Scale so the assembled bbox fits pxSize.
+	// Find the assembled bbox (widest layer × tallest stack top). Each layer
+	// draws a single frame from its sprite sheet — if frame metadata is
+	// present we use the per-frame size; otherwise the whole image is one
+	// frame.
 	int maxZ = 0;
-	int maxLayerH = 0;
 	int maxLayerW = 0;
-	for (const Layer& l : layers) {
+	for (const auto& l : layers) {
 		const PreviewTex& pt = getPreviewTexInfo(l.sprite);
 		int fw = pt.frameW > 0 ? pt.frameW : pt.w;
 		int fh = pt.frameH > 0 ? pt.frameH : pt.h;
 		if (fw > maxLayerW) maxLayerW = fw;
-		if (fh > maxLayerH) maxLayerH = fh;
-		int topPx = fh + l.zMult;           // zMult correlates with pixel height of composite stack
+		int topPx = fh + l.zOffset;
 		if (topPx > maxZ) maxZ = topPx;
 	}
 	if (maxLayerW == 0 || maxZ == 0) {
@@ -1090,42 +1114,41 @@ void EditorState::drawSpritePreview(int id, int pxSize) {
 		return;
 	}
 
-	// Fit the assembled stack (width = max layer width, height = maxZ) into
-	// pxSize × pxSize preserving aspect ratio.
 	float scale = std::min(float(pxSize) / float(maxLayerW),
 	                       float(pxSize) / float(maxZ));
 
 	ImVec2 origin = ImGui::GetCursorScreenPos();
-	// Bottom-center of the stack inside the preview square.
 	float baseX = origin.x + pxSize * 0.5f;
 	float baseY = origin.y + pxSize;
 
 	ImDrawList* dl = ImGui::GetWindowDrawList();
-	// Sort layers by zMult ascending so lower layers (legs) draw first and
-	// upper layers (torso) overlap on top — matches natural occlusion.
+	// Lower layers first so higher layers (torso above legs, head above torso)
+	// overlap on top — matches natural occlusion in the 3D view.
 	std::sort(layers.begin(), layers.end(),
-	          [](const Layer& a, const Layer& b){ return a.zMult < b.zMult; });
+	          [](const editor::PreviewLayer& a, const editor::PreviewLayer& b) {
+		          return a.zOffset < b.zOffset;
+	          });
 
-	for (const Layer& l : layers) {
+	for (const auto& l : layers) {
 		const PreviewTex& pt = getPreviewTexInfo(l.sprite);
 		if (!pt.gl) continue;
 		int fw = pt.frameW > 0 ? pt.frameW : pt.w;
 		int fh = pt.frameH > 0 ? pt.frameH : pt.h;
 		float drawW = fw * scale;
 		float drawH = fh * scale;
-		// Bottom of this layer sits at (baseY - zMult*scale); its top is drawH above.
-		float bottomY = baseY - l.zMult * scale;
+		float bottomY = baseY - l.zOffset * scale;
 		float topY    = bottomY - drawH;
 		float leftX   = baseX - drawW * 0.5f;
 		float rightX  = leftX + drawW;
-		// UV: frame 0 is the top-left rectangle of width frameW inside total w.
-		float u1 = (pt.frameW > 0) ? (float(pt.frameW) / float(pt.w)) : 1.0f;
+		// UVs: frames are laid out horizontally in the atlas. Frame N is the
+		// rectangle [frameW*N .. frameW*(N+1)] × [0 .. frameH].
+		float u0 = (pt.frameW > 0) ? (float(l.frame * pt.frameW) / float(pt.w)) : 0.0f;
+		float u1 = (pt.frameW > 0) ? (float((l.frame + 1) * pt.frameW) / float(pt.w)) : 1.0f;
 		float v1 = (pt.frameH > 0) ? (float(pt.frameH) / float(pt.h)) : 1.0f;
 		dl->AddImage(ImTextureID(intptr_t(pt.gl)),
 		             ImVec2(leftX, topY), ImVec2(rightX, bottomY),
-		             ImVec2(0.0f, 0.0f), ImVec2(u1, v1));
+		             ImVec2(u0, 0.0f), ImVec2(u1, v1));
 	}
-	// Reserve the layout space so subsequent widgets render below.
 	ImGui::Dummy(ImVec2(pxSize, pxSize));
 }
 

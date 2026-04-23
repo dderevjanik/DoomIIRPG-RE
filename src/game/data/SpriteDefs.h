@@ -118,6 +118,16 @@ class SpriteDefs {
 	// Get render properties for a tile index, returns nullptr if none
 	[[nodiscard]] static const SpriteRenderProps* getRenderProps(int tileIndex);
 
+	// Every sprite layer the engine may draw when rendering `primaryTile`:
+	// always the primary itself, plus each composite layer (multi-part monsters
+	// like the Revenant or Cyberdemon) and any glow overlay. Each layer carries
+	// the same `zMult` offset the renderer uses in `renderSpriteObject` so the
+	// editor's entity preview can stack them identically, and the map compiler
+	// can register every layer's media in one pass.
+	//
+	// Returned vector always has at least one entry (the primary), with zMult=0.
+	[[nodiscard]] static std::vector<SpriteCompositeLayer> getRenderedLayers(int primaryTile);
+
 	// Get range value by name, returns 0 if not found
 	[[nodiscard]] static int getRange(std::string_view name);
 

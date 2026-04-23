@@ -375,6 +375,25 @@ public:
 	// hot-reload path to add new entity sprites without a full teardown.
 	bool registerAndFinalizeMedia(int id);
 	bool loadSkyFromPng(const std::string& path);
+
+	// What to preserve across a loadMap call. Default = tear down and rebuild
+	// everything (full reload). Hot reload sets both flags true.
+	struct LoadOptions {
+		// Reuse the existing media arrays (mediaMappings/palettes/texels/GPU
+		// textures). Only valid if a prior full reload has populated them, and
+		// if the caller has already incrementally registered any new media IDs
+		// via registerAndFinalizeMedia().
+		bool keepMedia = false;
+		// Reuse the sky texture loaded on the prior reload.
+		bool keepSky   = false;
+	};
+
+	// Canonical map-load entry point. `beginLoadMap` and `reloadGeometryOnly`
+	// are thin wrappers over this with different LoadOptions. Keeps the two
+	// paths from drifting — every engine step (postProcessSprites, height_map
+	// override, loadMayaCameras, etc.) lives here exactly once.
+	bool loadMap(const std::vector<uint8_t>& binBytes, int mapNameID, LoadOptions opts);
+
 	bool beginLoadMap(int mapNameID);
 	// Fast path for the map editor: re-read the .bin from an in-memory buffer
 	// and swap geometry + heightMap + sprites in place, **without** tearing
