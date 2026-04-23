@@ -1592,7 +1592,7 @@ void EditorState::drawSaveDialog() {
 		std::string relDir = "levels/" + pad2(saveMapId) + "_" + slug;
 		ImGui::TextDisabled("Will write:");
 		ImGui::TextDisabled("  %s/map.bin + level.yaml + stubs", relDir.c_str());
-		ImGui::TextDisabled("  src/editor/projects/%s.yaml", slug.c_str());
+		ImGui::TextDisabled("  %s/project.yaml  (editor source)", relDir.c_str());
 
 		if (ImGui::Button("Save", ImVec2(120, 0))) {
 			project.name  = slug;
@@ -1627,20 +1627,13 @@ bool EditorState::performSave() {
 	              "static_funcs: {}\ntile_events: []\nbytecode: \"\"\n");
 	writeTextFile(levelDir / "strings.yaml", "english: []\n");
 
-	// Project YAML path — live under src/editor/projects/ in the repo root
-	// (resolved via the originalCwd we stashed before the engine chdir'd).
-	std::string origCwd = CAppContainer::getInstance()->originalCwd;
-	fs::path projPath;
-	if (!loadedProjectPath.empty() && fs::path(loadedProjectPath).is_absolute()) {
-		projPath = loadedProjectPath;
-	} else {
-		fs::path base = origCwd.empty() ? fs::current_path() : fs::path(origCwd);
-		projPath = base / "src/editor/projects" / (project.name + ".yaml");
-	}
+	// Project YAML lives alongside the compiled level artifacts, so each
+	// level directory is self-contained under the active game dir.
+	fs::path projPath = levelDir / "project.yaml";
 	try {
 		fs::create_directories(projPath.parent_path());
 		project.saveToYaml(projPath.string());
-		loadedProjectPath = projPath.string();
+		loadedProjectPath = fs::absolute(projPath).string();
 	} catch (const std::exception& e) {
 		LOG_ERROR("[editor] save: project yaml failed: {}\n", e.what());
 		return false;
