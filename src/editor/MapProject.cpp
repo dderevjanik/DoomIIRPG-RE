@@ -221,6 +221,105 @@ MapProject MapProject::loadFromYaml(const std::string& path) {
 	return p;
 }
 
+MapProject MapProject::importFromLevelYaml(const std::string& levelYamlPath) {
+	YAML::Node doc = YAML::LoadFile(levelYamlPath);
+	MapProject p;
+	// Default all tiles to OPEN — the `block_map` field doesn't exist in
+	// shipped level.yaml. We'll mark specific tiles solid below using the
+	// height_map heuristic.
+	p.blockMap.fill(0);
+
+	if (doc["name"])        p.name        = doc["name"].as<std::string>();
+	if (doc["map_id"])      p.mapId       = doc["map_id"].as<int>();
+	if (doc["sky_texture"]) p.skyTexture  = doc["sky_texture"].as<std::string>();
+
+	if (doc["player_spawn"]) {
+		auto s = doc["player_spawn"];
+		p.spawn.col = uint8_t(s["x"].as<int>(0));
+		p.spawn.row = uint8_t(s["y"].as<int>(0));
+		if (auto d = s["dir"]; d && d.IsScalar()) {
+			std::string name = d.as<std::string>();
+			if (!name.empty() && std::isdigit(static_cast<unsigned char>(name[0]))) {
+				p.spawn.dir = uint8_t(std::stoi(name));
+			} else {
+				p.spawn.dir = uint8_t(dirFromName(name));
+			}
+		}
+	}
+
+	// height_map is a 32×32 grid of floor bytes. Cells with value 0 in the
+	// shipped data mean "solid / void" (floor=0 isn't a meaningful open-tile
+	// height in any shipped level). Non-zero cells store the floor byte of
+	// an open tile.
+	if (doc["height_map"]) {
+		auto hm = doc["height_map"];
+		for (int row = 0; row < MAP_SIZE && row < int(hm.size()); ++row) {
+			auto rowNode = hm[row];
+			if (!rowNode || !rowNode.IsSequence()) continue;
+			for (int col = 0; col < MAP_SIZE && col < int(rowNode.size()); ++col) {
+				int floorB = rowNode[col].as<int>(0);
+				if (floorB <= 0) {
+					p.blockMap[row * MAP_SIZE + col] = 1;  // solid
+				} else {
+					p.blockMap[row * MAP_SIZE + col] = 0;  // open
+					if (floorB != FLOOR_HEIGHT) {
+						p.tileFloorByte[tileKey(col, row)] = uint8_t(floorB);
+					}
+				}
+			}
+		}
+	}
+
+	// Entities. The shipped YAML mixes doors with other entities in one
+	// `entities:` block (keyed by `tile: door_*`). Pick them apart back into
+	// our editor's Door vs Entity split.
+	auto tileToCol = [](int worldX) { return worldX / TILE_SIZE; };
+	auto tileToRow = [](int worldY) { return worldY / TILE_SIZE; };
+	if (doc["entities"]) {
+		for (const auto& e : doc["entities"]) {
+			std::string tile = e["tile"].as<std::string>("");
+			int x = e["x"].as<int>(0);
+			int y = e["y"].as<int>(0);
+			int col = tileToCol(x);
+			int row = tileToRow(y);
+
+			// Door detection: shipped data uses "door_*" sprites with
+			// orientation flags naming the passable axis. EW flags = H
+			// (east/west passage), NS = V.
+			bool isDoor = tile.rfind("door_", 0) == 0 || tile == "level_door_unlocked"
+			              || tile == "level_door_locked";
+			if (isDoor) {
+				Door door;
+				door.col = uint8_t(col);
+				door.row = uint8_t(row);
+				door.axis = 'H';
+				if (e["flags"] && e["flags"].IsSequence()) {
+					for (const auto& f : e["flags"]) {
+						std::string fn = f.as<std::string>("");
+						if (fn == "north" || fn == "south") { door.axis = 'V'; break; }
+						if (fn == "east"  || fn == "west")  { door.axis = 'H'; break; }
+					}
+				}
+				p.doors.push_back(door);
+				continue;
+			}
+
+			Entity ent;
+			ent.col   = uint8_t(col);
+			ent.row   = uint8_t(row);
+			ent.tile  = tile;
+			ent.zAnim = e["z_anim"].as<int>(0);
+			ent.z     = e["z"] ? e["z"].as<int>(-1) : -1;
+			if (e["flags"] && e["flags"].IsSequence()) {
+				for (const auto& f : e["flags"]) ent.flags.push_back(f.as<std::string>(""));
+			}
+			p.entities.push_back(ent);
+		}
+	}
+
+	return p;
+}
+
 void MapProject::saveToYaml(const std::string& path) const {
 	std::ostringstream os;
 	os << "# Level project for DRPG editor\n";

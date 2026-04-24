@@ -108,6 +108,17 @@ struct MapProject {
 	// --- YAML I/O (Phase 2 — defined in MapProject.cpp as stubs for now) ---
 	static MapProject loadFromYaml(const std::string& path);
 	void saveToYaml(const std::string& path) const;
+
+	// Reconstructs a best-effort MapProject from a SHIPPED level.yaml — the
+	// compiled output the converter produces, which has no `block_map` /
+	// `wall_tex` / free-line data. The editor-lossy parts (per-tile wall
+	// textures, collision lines, BSP state) fall back to defaults; spawn /
+	// doors / entities / per-tile floor heights round-trip faithfully.
+	// Blockmap (solid vs open) is inferred from height_map: a tile with
+	// non-zero floor height is open. Caveat: the editor loses per-tile wall
+	// texture overrides — re-compiling a shipped level will default every
+	// wall to D2_WALL_TILE. Good enough for inspect / light edits.
+	static MapProject importFromLevelYaml(const std::string& levelYamlPath);
 };
 
 }  // namespace editor

@@ -112,8 +112,23 @@ void EditorState::onExit(Canvas* canvas) {
 
 void EditorState::loadProject() {
 	if (loadedProjectPath.empty()) {
+		// Blank start: carve a centered 3×3 open room on the 32×32 grid with
+		// default floor/ceil bytes and textures, then place the player spawn
+		// in the middle. Gives the user an immediately-valid level they can
+		// walk into and extend instead of starting in a fully-solid void.
 		project = editor::MapProject();
 		project.name = "untitled";
+		constexpr int kRoomSize = 3;
+		constexpr int kRoomMin  = (editor::MAP_SIZE - kRoomSize) / 2;  // = 14
+		constexpr int kRoomMax  = kRoomMin + kRoomSize;                // exclusive = 17
+		for (int r = kRoomMin; r < kRoomMax; ++r) {
+			for (int c = kRoomMin; c < kRoomMax; ++c) {
+				project.blockMap[r * editor::MAP_SIZE + c] = 0;  // open
+			}
+		}
+		project.spawn.col = kRoomMin + kRoomSize / 2;  // = 15
+		project.spawn.row = kRoomMin + kRoomSize / 2;
+		project.spawn.dir = 0;  // east
 		projectLoaded = true;
 		return;
 	}
@@ -1724,8 +1739,11 @@ bool EditorState::performSave() {
 }
 
 void EditorState::openLoadDialog() {
-	// Scan levels/*/project.yaml under CWD (active game dir). The engine has
-	// already chdir'd into games/<game>/, so relative paths resolve correctly.
+	// Scan levels/*/ under CWD (active game dir). Editor-saved projects have
+	// a `project.yaml`; shipped levels (converter output) only have
+	// `level.yaml` + `map.bin`. List both — when the user picks a shipped
+	// level, performLoad falls back to MapProject::importFromLevelYaml so
+	// it can still be inspected / lightly edited.
 	loadCandidates.clear();
 	loadSelectedIdx = -1;
 	std::error_code ec;
@@ -1733,9 +1751,14 @@ void EditorState::openLoadDialog() {
 	if (fs::is_directory(levelsRoot, ec)) {
 		for (const auto& entry : fs::directory_iterator(levelsRoot, ec)) {
 			if (!entry.is_directory()) continue;
-			fs::path candidate = entry.path() / "project.yaml";
-			if (fs::is_regular_file(candidate, ec)) {
-				loadCandidates.push_back(candidate.generic_string());
+			fs::path projectPath = entry.path() / "project.yaml";
+			fs::path levelPath   = entry.path() / "level.yaml";
+			// Prefer the editor's own format when both exist: round-trips
+			// losslessly. Fall back to level.yaml for shipped levels.
+			if (fs::is_regular_file(projectPath, ec)) {
+				loadCandidates.push_back(projectPath.generic_string());
+			} else if (fs::is_regular_file(levelPath, ec)) {
+				loadCandidates.push_back(levelPath.generic_string());
 			}
 		}
 	}
@@ -1754,7 +1777,16 @@ void EditorState::openLoadDialog() {
 bool EditorState::performLoad(Canvas* canvas, const std::string& projectPath) {
 	editor::MapProject freshProject;
 	try {
-		freshProject = editor::MapProject::loadFromYaml(projectPath);
+		// Dispatch by filename: editor-saved projects use project.yaml and
+		// round-trip exactly; shipped levels only have level.yaml, which we
+		// import with MapProject::importFromLevelYaml (lossy for per-tile
+		// wall textures / free lines / BSP).
+		const bool isShippedLevel = fs::path(projectPath).filename() == "level.yaml";
+		if (isShippedLevel) {
+			freshProject = editor::MapProject::importFromLevelYaml(projectPath);
+		} else {
+			freshProject = editor::MapProject::loadFromYaml(projectPath);
+		}
 	} catch (const std::exception& e) {
 		LOG_ERROR("[editor] load: failed to parse {}: {}\n", projectPath, e.what());
 		return false;
