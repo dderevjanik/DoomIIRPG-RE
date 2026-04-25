@@ -107,6 +107,8 @@ weapons:
       show_ammo: true
     behavior:
       no_blood_on_hit: true
+      no_recoil: true
+      out_of_range_still_fires: true
   shooting_sentry_bot:
     index: 3
     sprite: wp_view_shooting_sentry_bot
@@ -285,6 +287,7 @@ weapons:
       show_ammo: true
     behavior:
       has_flash_sprite: true
+      out_of_range_still_fires: true
   chaingun:
     index: 8
     sprite: wp_view_chaingun
@@ -350,6 +353,8 @@ weapons:
     hud:
       tex_row: 5
       show_ammo: true
+    behavior:
+      is_scoped: true
   plasma_gun:
     index: 10
     sprite: wp_view_plasma_gun
@@ -382,6 +387,8 @@ weapons:
     hud:
       tex_row: 6
       show_ammo: true
+    behavior:
+      no_recoil: true
   rocket_launcher:
     index: 11
     sprite: wp_view_rocket_launcher
@@ -417,6 +424,7 @@ weapons:
     behavior:
       splash_damage: true
       splash_divisor: 4
+      full_agility: true
   bfg:
     index: 12
     sprite: wp_view_bfg
@@ -489,6 +497,7 @@ weapons:
       soul_ammo_display: true
       charge_attack: true
       flip_sprite_on_end: true
+      no_recoil: true
   item:
     index: 14
     sprite: wp_view_item
