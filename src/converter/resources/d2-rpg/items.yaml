@@ -1,0 +1,220 @@
+# Inventory item definitions — drink effects, health/armor packs, etc.
+# Per docs-check/monsters/_items.md §2 and §6.
+#
+# Schema (parsed by GameDataParsers.cpp parseItems):
+#   index:             inventory slot index (0..25)
+#   require_mode:      "all" (default) or "any" — which effects must succeed
+#   advance_turn:      bool, default true — does using this item end the player's turn
+#   consume:           bool, default true — decrement inventory[index] on use
+#   skip_empty_check:  bool, default false — allow use when inventory[index] == 0
+#   requires_no_buff:  buff name — refuse if the player already has this buff
+#   effects:           list of {type: health|armor|status_effect, ...}
+#   bonus_effects:     applied unconditionally if main effects succeed
+#   remove_buffs:      list of buff names to clear on use
+#   ammo_cost:         {type: <ammo index>, amount: N}
+#
+# Buff names map to effects.yaml ordering (reflect=0 ... fire=13).
+
+# Inventory slot name -> index map (for loot drop / script lookup).
+inventory:
+  energy_blast: 0
+  focus_juice: 1
+  super_quench: 2
+  power_punch: 3
+  snake_venom: 4
+  youth_serum: 5
+  caffeine_block: 6
+  diet_might: 7
+  smoothie: 8
+  monster_shot: 9
+  hell_knight_sweat: 10
+  armor_large: 11
+  armor_small: 12
+  bottled_water: 13
+  ration_bar: 16
+  health_pack: 17
+  journal: 18
+  red_key: 19
+  blue_key: 20
+  empty_syringe: 21
+  holy_water: 22
+  pack: 23
+  uac_credit: 24
+  uac_credits_100: 25
+
+# Ammo type name -> index map.
+ammo:
+  none: 0
+  bullets: 1
+  shells: 2
+  holy_water: 3
+  cells: 4
+  rockets: 5
+  soul_cube: 6
+  sentry_bot: 7
+  item: 8
+
+items:
+  # --- Energy drinks (IDs 0-10) ---
+  energy_blast:
+    index: 0
+    effects:
+      - type: status_effect
+        buff: fortitude
+        amount: 20
+        duration: 31
+    bonus_effects:
+      - type: health
+        amount: 20
+
+  focus_juice:
+    index: 1
+    effects:
+      - type: status_effect
+        buff: focus
+        amount: 5
+        duration: 31
+
+  super_quench:
+    index: 2
+    effects:
+      - type: status_effect
+        buff: antifire
+        amount: 0
+        duration: 11
+    remove_buffs:
+      - fire
+
+  power_punch:
+    index: 3
+    require_mode: any
+    effects:
+      - type: status_effect
+        buff: anger
+        amount: 25
+        duration: 31
+      - type: status_effect
+        buff: strength
+        amount: 20
+        duration: 31
+
+  snake_venom:
+    index: 4
+    effects:
+      - type: status_effect
+        buff: wp_poison
+        amount: 10
+        duration: 11
+
+  youth_serum:
+    index: 5
+    effects:
+      - type: status_effect
+        buff: regen
+        amount: 5
+        duration: 31
+
+  caffeine_block:
+    index: 6
+    effects:
+      - type: status_effect
+        buff: defense
+        amount: 25
+        duration: 31
+
+  diet_might:
+    index: 7
+    effects:
+      - type: status_effect
+        buff: agility
+        amount: 25
+        duration: 31
+
+  smoothie:
+    index: 8
+    advance_turn: false
+    requires_no_buff: haste
+    effects:
+      - type: status_effect
+        buff: haste
+        amount: 0
+        duration: 21
+
+  monster_shot:
+    index: 9
+    effects:
+      - type: status_effect
+        buff: anger
+        amount: 100
+        duration: 31
+
+  hell_knight_sweat:
+    index: 10
+    require_mode: any
+    effects:
+      - type: status_effect
+        buff: agility
+        amount: 25
+        duration: 31
+      - type: status_effect
+        buff: anger
+        amount: 25
+        duration: 31
+      - type: status_effect
+        buff: defense
+        amount: 25
+        duration: 31
+      - type: status_effect
+        buff: focus
+        amount: 5
+        duration: 31
+
+  # --- Armor (IDs 11-12) ---
+  armor_large:
+    index: 11
+    effects:
+      - type: armor
+        amount: 50
+
+  armor_small:
+    index: 12
+    effects:
+      - type: armor
+        amount: 10
+
+  # --- Health (IDs 16-17) ---
+  ration_bar:
+    index: 16
+    effects:
+      - type: health
+        amount: 20
+
+  health_pack:
+    index: 17
+    effects:
+      - type: health
+        amount: 80
+
+  # --- Holy Water (item, ID 22) ---
+  # Consumes 25 HWP ammo; restores 25 HP and applies fear-resistance overlay (buff fear at strength 100).
+  holy_water:
+    index: 22
+    require_mode: any
+    effects:
+      - type: health
+        amount: 25
+      - type: status_effect
+        buff: fear
+        amount: 100
+        duration: 3
+    ammo_cost:
+      type: 3       # holy_water ammo
+      amount: 25
+
+  # --- Other Pack (ID 23) ---
+  # Container item; opens a sub-menu in original game. No effects, just succeed and consume.
+  pack:
+    index: 23
+    skip_empty_check: true
+    advance_turn: false
+    consume: false
