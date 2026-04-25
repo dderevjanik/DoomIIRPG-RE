@@ -589,6 +589,7 @@ weapons:
     shot_hold: 20
     behavior:
       requires_los_path: true
+      charge_attack: true
   m_flesh_throw:
     index: 19
     damage:
