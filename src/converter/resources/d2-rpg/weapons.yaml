@@ -416,7 +416,7 @@ weapons:
       show_ammo: true
     behavior:
       splash_damage: true
-      splash_divisor: 2
+      splash_divisor: 4
   bfg:
     index: 12
     sprite: wp_view_bfg
@@ -451,7 +451,7 @@ weapons:
       show_ammo: true
     behavior:
       splash_damage: true
-      splash_divisor: 4
+      splash_divisor: 2
   soul_cube:
     index: 13
     sprite: wp_view_soul_cube

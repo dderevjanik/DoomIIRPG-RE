@@ -9,6 +9,7 @@ projectiles:
     impact:
       sprite: anim_water
       render_mode: add75
+      causes_fear: true
   plasma:
     launch:
       render_mode: add
