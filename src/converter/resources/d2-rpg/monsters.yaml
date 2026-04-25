@@ -538,6 +538,8 @@ entities:
     combat:
       behavior:
         evading: true
+        floats: true
+        on_hit_poison: true
       stats:
         health: 20
         armor: 0
@@ -586,6 +588,8 @@ entities:
     combat:
       behavior:
         evading: true
+        floats: true
+        on_hit_poison: true
       stats:
         health: 22
         armor: 0
@@ -634,6 +638,8 @@ entities:
     combat:
       behavior:
         evading: true
+        floats: true
+        on_hit_poison: true
       stats:
         health: 25
         armor: 0
@@ -1168,6 +1174,7 @@ entities:
     combat:
       behavior:
         move_to_attack: true
+        floats: true
       stats:
         health: 20
         armor: 0
@@ -1216,6 +1223,7 @@ entities:
     combat:
       behavior:
         move_to_attack: true
+        floats: true
       stats:
         health: 22
         armor: 0
@@ -1264,6 +1272,7 @@ entities:
     combat:
       behavior:
         move_to_attack: true
+        floats: true
       stats:
         health: 25
         armor: 0

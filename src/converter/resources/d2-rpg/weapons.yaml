@@ -650,6 +650,8 @@ weapons:
     projectile: none
     shots: 1
     shot_hold: 30
+    behavior:
+      poison_on_hit: true
   m_machine_gun:
     index: 24
     damage:
