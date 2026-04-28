@@ -940,10 +940,10 @@ uint32_t ScriptThread::run() {
                 if ((uByteArg21 & 0x80) != 0x0) {
                     int n63 = ((uShortArg12 >> 11 & 0x1F) << 6) + 32;
                     int n64 = ((uShortArg12 >> 6 & 0x1F) << 6) + 32;
-                    this->app->particleSystem->spawnParticles(n60, ParticleSystem::levelColors[n61], n63, n64, n62 + this->app->render->getHeight(n63, n64));
+                    this->app->particleSystem->spawnParticles(n60, this->app->particleSystem->getPaletteColor(n61), n63, n64, n62 + this->app->render->getHeight(n63, n64));
                     break;
                 }
-                this->app->particleSystem->spawnParticles(n60, ParticleSystem::levelColors[n61], uShortArg12);
+                this->app->particleSystem->spawnParticles(n60, this->app->particleSystem->getPaletteColor(n61), uShortArg12);
                 break;
             }
 

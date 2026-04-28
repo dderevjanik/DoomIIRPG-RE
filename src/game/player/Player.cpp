@@ -74,8 +74,8 @@ void Player::advanceTurn() {
 	this->updateStatusEffects();
 	bool b = false;
 
-	if (this->buffs[3] > 0) {
-		this->addHealth(this->buffs[18], false);
+	if (this->buffs[this->regenBuffIdx] > 0) {
+		this->addHealth(this->buffs[15 + this->regenBuffIdx], false);
 	}
 
 	if (this->statusEffects[53] > 0) {
@@ -83,8 +83,8 @@ void Player::advanceTurn() {
 		b = true;
 	}
 
-	if (this->statusEffects[13] > 0) {
-		int fireDmg = this->buffPerTurnDamage[Enums::BUFF_FIRE];
+	if (this->statusEffects[this->fireBuffIdx] > 0) {
+		int fireDmg = this->buffPerTurnDamage[this->fireBuffIdx];
 		this->addHealth(-fireDmg);
 		Text* text = app->hud->getMessageBuffer(0);
 		app->localization->composeText(0, 82, text);

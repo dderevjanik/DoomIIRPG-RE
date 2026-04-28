@@ -243,7 +243,7 @@ void Player::drawBuffs(Graphics* graphics) {
 }
 
 bool Player::hasPurifyEffect() {
-	return this->statusEffects[1] != 0;
+	return this->statusEffects[this->purifyBuffIdx] != 0;
 }
 
 void Player::clearOutFamiliarsStatusEffects() {

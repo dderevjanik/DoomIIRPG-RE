@@ -71,6 +71,24 @@ public:
 	int buffAmtNotDrawnMask = 0;
 	int buffWarningTime = 0;
 
+	// Cached buff indices resolved by name from effects.yaml. -1 if not present in yaml.
+	// Used by call sites that previously referenced Enums::BUFF_* constants directly.
+	int reflectBuffIdx = 0;   // "reflect"
+	int purifyBuffIdx = 1;    // "purify"
+	int hasteBuffIdx = 2;     // "haste"
+	int regenBuffIdx = 3;     // "regen"
+	int defenseBuffIdx = 4;   // "defense"
+	int strengthBuffIdx = 5;  // "strength"
+	int agilityBuffIdx = 6;   // "agility"
+	int focusBuffIdx = 7;     // "focus"
+	int angerBuffIdx = 8;     // "anger"
+	int antifireBuffIdx = 9;  // "antifire"
+	int fortitudeBuffIdx = 10; // "fortitude"
+	int fearBuffIdx = 11;     // "fear"
+	int wpPoisonBuffIdx = 12; // "wp_poison"
+	int fireBuffIdx = 13;     // "fire"
+	int diseaseBuffIdx = 14;  // "disease"
+
 	// Item data loaded from items.yaml
 	std::vector<ItemDef>* itemDefs = nullptr;
 	static constexpr int BOX_X1 = 17;

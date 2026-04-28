@@ -14,6 +14,22 @@
 #include "EntityDef.h"
 #include "EntityTypes.h"
 
+void ParticleSystem::setLevelPalette(const std::vector<uint32_t>& colors) {
+    if (colors.empty()) {
+        this->levelColors.assign(kDefaultPalette, kDefaultPalette + 7);
+    } else {
+        this->levelColors = colors;
+    }
+}
+
+uint32_t ParticleSystem::getPaletteColor(int idx) const {
+    if (this->levelColors.empty()) return 0xFFFFFFFF;
+    if (idx < 0 || idx >= (int)this->levelColors.size()) {
+        return this->levelColors[0];
+    }
+    return this->levelColors[idx];
+}
+
 // ----------------------
 // ParticleEmitter Class
 // ----------------------

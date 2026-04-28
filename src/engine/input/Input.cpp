@@ -81,6 +81,103 @@ float   gCurMouseY;
 
 keyMapping_t keyMapping[KEY_MAPPIN_MAX];
 keyMapping_t keyMappingTemp[KEY_MAPPIN_MAX];
+
+// Action slot names — index matches keyMappingDefault[] order. Used by both
+// the save-game settings round-trip and the controls.yaml defaults loader.
+const char* const keyBindingNames[KEY_MAPPIN_MAX] = {
+    "move_forward", "move_backward", "turn_left",   "turn_right",
+    "strafe_left",  "strafe_right",  "next_weapon", "prev_weapon",
+    "action",       "pass_turn",     "automap",     "menu",
+    "items_info",   "drinks",        "pda",         "bot_discard"};
+
+const char* inputCodeToName(int code) {
+    if (code == -1) {
+        return "none";
+    }
+    if (code & IS_MOUSE_BUTTON) {
+        int btn = code & ~IS_MOUSE_BUTTON;
+        switch (btn) {
+            case 1: return "mouse_left";
+            case 2: return "mouse_middle";
+            case 3: return "mouse_right";
+            case 4: return "mouse_x1";
+            case 5: return "mouse_x2";
+            default: return "mouse_unknown";
+        }
+    }
+    if (code & IS_CONTROLLER_BUTTON) {
+        int btn = code & ~IS_CONTROLLER_BUTTON;
+        switch (btn) {
+            case (int)GamepadInput::BTN_A: return "pad_a";
+            case (int)GamepadInput::BTN_B: return "pad_b";
+            case (int)GamepadInput::BTN_X: return "pad_x";
+            case (int)GamepadInput::BTN_Y: return "pad_y";
+            case (int)GamepadInput::BTN_BACK: return "pad_back";
+            case (int)GamepadInput::BTN_GUIDE: return "pad_guide";
+            case (int)GamepadInput::BTN_START: return "pad_start";
+            case (int)GamepadInput::BTN_LEFT_STICK: return "pad_leftstick";
+            case (int)GamepadInput::BTN_RIGHT_STICK: return "pad_rightstick";
+            case (int)GamepadInput::BTN_LEFT_SHOULDER: return "pad_leftshoulder";
+            case (int)GamepadInput::BTN_RIGHT_SHOULDER: return "pad_rightshoulder";
+            case (int)GamepadInput::BTN_DPAD_UP: return "pad_dpad_up";
+            case (int)GamepadInput::BTN_DPAD_DOWN: return "pad_dpad_down";
+            case (int)GamepadInput::BTN_DPAD_LEFT: return "pad_dpad_left";
+            case (int)GamepadInput::BTN_DPAD_RIGHT: return "pad_dpad_right";
+            case (int)GamepadInput::BTN_LAXIS_UP: return "pad_laxis_up";
+            case (int)GamepadInput::BTN_LAXIS_DOWN: return "pad_laxis_down";
+            case (int)GamepadInput::BTN_LAXIS_LEFT: return "pad_laxis_left";
+            case (int)GamepadInput::BTN_LAXIS_RIGHT: return "pad_laxis_right";
+            case (int)GamepadInput::BTN_RAXIS_UP: return "pad_raxis_up";
+            case (int)GamepadInput::BTN_RAXIS_DOWN: return "pad_raxis_down";
+            case (int)GamepadInput::BTN_RAXIS_LEFT: return "pad_raxis_left";
+            case (int)GamepadInput::BTN_RAXIS_RIGHT: return "pad_raxis_right";
+            default: return "pad_unknown";
+        }
+    }
+    const char* name = SDL_GetScancodeName((SDL_Scancode)code);
+    if (name && name[0] != '\0') {
+        return name;
+    }
+    return "unknown";
+}
+
+int inputCodeFromName(const std::string& name) {
+    if (name.empty() || name == "none" || name == "-1") return -1;
+    if (name == "mouse_left")        return IS_MOUSE_BUTTON | 1;
+    if (name == "mouse_middle")      return IS_MOUSE_BUTTON | 2;
+    if (name == "mouse_right")       return IS_MOUSE_BUTTON | 3;
+    if (name == "mouse_x1")          return IS_MOUSE_BUTTON | 4;
+    if (name == "mouse_x2")          return IS_MOUSE_BUTTON | 5;
+    if (name == "pad_a")             return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_A;
+    if (name == "pad_b")             return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_B;
+    if (name == "pad_x")             return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_X;
+    if (name == "pad_y")             return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_Y;
+    if (name == "pad_back")          return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_BACK;
+    if (name == "pad_guide")         return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_GUIDE;
+    if (name == "pad_start")         return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_START;
+    if (name == "pad_leftstick")     return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LEFT_STICK;
+    if (name == "pad_rightstick")    return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RIGHT_STICK;
+    if (name == "pad_leftshoulder")  return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LEFT_SHOULDER;
+    if (name == "pad_rightshoulder") return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RIGHT_SHOULDER;
+    if (name == "pad_dpad_up")       return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_DPAD_UP;
+    if (name == "pad_dpad_down")     return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_DPAD_DOWN;
+    if (name == "pad_dpad_left")     return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_DPAD_LEFT;
+    if (name == "pad_dpad_right")    return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_DPAD_RIGHT;
+    if (name == "pad_laxis_up")      return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LAXIS_UP;
+    if (name == "pad_laxis_down")    return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LAXIS_DOWN;
+    if (name == "pad_laxis_left")    return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LAXIS_LEFT;
+    if (name == "pad_laxis_right")   return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LAXIS_RIGHT;
+    if (name == "pad_raxis_up")      return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RAXIS_UP;
+    if (name == "pad_raxis_down")    return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RAXIS_DOWN;
+    if (name == "pad_raxis_left")    return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RAXIS_LEFT;
+    if (name == "pad_raxis_right")   return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RAXIS_RIGHT;
+    SDL_Scancode sc = SDL_GetScancodeFromName(name.c_str());
+    if (sc != SDL_SCANCODE_UNKNOWN) {
+        return (int)sc;
+    }
+    try { return std::stoi(name); } catch (...) { return -1; }
+}
+
 keyMapping_t keyMappingDefault[KEY_MAPPIN_MAX] = {
     {AVK_UP | AVK_MENU_UP,				{SDL_SCANCODE_UP,SDL_SCANCODE_W,-1,-1,-1,-1,-1,-1,-1,-1}},	// Move forward
     {AVK_DOWN | AVK_MENU_DOWN,			{SDL_SCANCODE_DOWN,SDL_SCANCODE_S,-1,-1,-1,-1,-1,-1,-1,-1}},	// Move backward

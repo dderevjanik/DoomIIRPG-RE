@@ -59,168 +59,8 @@ static int resolutionFromString(const std::string& str) {
 	return 0;
 }
 
-static const char* scancodeToName(int code) {
-	if (code == -1) {
-		return "none";
-	}
-	if (code & IS_MOUSE_BUTTON) {
-		int btn = code & ~IS_MOUSE_BUTTON;
-		switch (btn) {
-			case 1:
-				return "mouse_left";
-			case 2:
-				return "mouse_middle";
-			case 3:
-				return "mouse_right";
-			case 4:
-				return "mouse_x1";
-			case 5:
-				return "mouse_x2";
-			default:
-				return "mouse_unknown";
-		}
-	}
-	if (code & IS_CONTROLLER_BUTTON) {
-		int btn = code & ~IS_CONTROLLER_BUTTON;
-		switch (btn) {
-			case (int)GamepadInput::BTN_A:
-				return "pad_a";
-			case (int)GamepadInput::BTN_B:
-				return "pad_b";
-			case (int)GamepadInput::BTN_X:
-				return "pad_x";
-			case (int)GamepadInput::BTN_Y:
-				return "pad_y";
-			case (int)GamepadInput::BTN_BACK:
-				return "pad_back";
-			case (int)GamepadInput::BTN_GUIDE:
-				return "pad_guide";
-			case (int)GamepadInput::BTN_START:
-				return "pad_start";
-			case (int)GamepadInput::BTN_LEFT_STICK:
-				return "pad_leftstick";
-			case (int)GamepadInput::BTN_RIGHT_STICK:
-				return "pad_rightstick";
-			case (int)GamepadInput::BTN_LEFT_SHOULDER:
-				return "pad_leftshoulder";
-			case (int)GamepadInput::BTN_RIGHT_SHOULDER:
-				return "pad_rightshoulder";
-			case (int)GamepadInput::BTN_DPAD_UP:
-				return "pad_dpad_up";
-			case (int)GamepadInput::BTN_DPAD_DOWN:
-				return "pad_dpad_down";
-			case (int)GamepadInput::BTN_DPAD_LEFT:
-				return "pad_dpad_left";
-			case (int)GamepadInput::BTN_DPAD_RIGHT:
-				return "pad_dpad_right";
-			case (int)GamepadInput::BTN_LAXIS_UP:
-				return "pad_laxis_up";
-			case (int)GamepadInput::BTN_LAXIS_DOWN:
-				return "pad_laxis_down";
-			case (int)GamepadInput::BTN_LAXIS_LEFT:
-				return "pad_laxis_left";
-			case (int)GamepadInput::BTN_LAXIS_RIGHT:
-				return "pad_laxis_right";
-			case (int)GamepadInput::BTN_RAXIS_UP:
-				return "pad_raxis_up";
-			case (int)GamepadInput::BTN_RAXIS_DOWN:
-				return "pad_raxis_down";
-			case (int)GamepadInput::BTN_RAXIS_LEFT:
-				return "pad_raxis_left";
-			case (int)GamepadInput::BTN_RAXIS_RIGHT:
-				return "pad_raxis_right";
-			default:
-				return "pad_unknown";
-		}
-	}
-	// SDL scancode — use SDL_GetScancodeName
-	const char* name = SDL_GetScancodeName((SDL_Scancode)code);
-	if (name && name[0] != '\0') {
-		return name;
-	}
-	return "unknown";
-}
-
-static int scancodeFromName(const std::string& name) {
-	if (name == "none" || name == "-1") {
-		return -1;
-	}
-	// Mouse buttons
-	if (name == "mouse_left")
-		return IS_MOUSE_BUTTON | 1;
-	if (name == "mouse_middle")
-		return IS_MOUSE_BUTTON | 2;
-	if (name == "mouse_right")
-		return IS_MOUSE_BUTTON | 3;
-	if (name == "mouse_x1")
-		return IS_MOUSE_BUTTON | 4;
-	if (name == "mouse_x2")
-		return IS_MOUSE_BUTTON | 5;
-	// Controller buttons
-	if (name == "pad_a")
-		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_A;
-	if (name == "pad_b")
-		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_B;
-	if (name == "pad_x")
-		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_X;
-	if (name == "pad_y")
-		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_Y;
-	if (name == "pad_back")
-		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_BACK;
-	if (name == "pad_guide")
-		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_GUIDE;
-	if (name == "pad_start")
-		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_START;
-	if (name == "pad_leftstick")
-		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LEFT_STICK;
-	if (name == "pad_rightstick")
-		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RIGHT_STICK;
-	if (name == "pad_leftshoulder")
-		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LEFT_SHOULDER;
-	if (name == "pad_rightshoulder")
-		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RIGHT_SHOULDER;
-	if (name == "pad_dpad_up")
-		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_DPAD_UP;
-	if (name == "pad_dpad_down")
-		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_DPAD_DOWN;
-	if (name == "pad_dpad_left")
-		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_DPAD_LEFT;
-	if (name == "pad_dpad_right")
-		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_DPAD_RIGHT;
-	if (name == "pad_laxis_up")
-		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LAXIS_UP;
-	if (name == "pad_laxis_down")
-		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LAXIS_DOWN;
-	if (name == "pad_laxis_left")
-		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LAXIS_LEFT;
-	if (name == "pad_laxis_right")
-		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_LAXIS_RIGHT;
-	if (name == "pad_raxis_up")
-		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RAXIS_UP;
-	if (name == "pad_raxis_down")
-		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RAXIS_DOWN;
-	if (name == "pad_raxis_left")
-		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RAXIS_LEFT;
-	if (name == "pad_raxis_right")
-		return IS_CONTROLLER_BUTTON | (int)GamepadInput::BTN_RAXIS_RIGHT;
-	// SDL scancode by name
-	SDL_Scancode sc = SDL_GetScancodeFromName(name.c_str());
-	if (sc != SDL_SCANCODE_UNKNOWN) {
-		return (int)sc;
-	}
-	// Try parsing as integer for backward compatibility
-	try {
-		return std::stoi(name);
-	} catch (...) {
-		return -1;
-	}
-}
-
-// Key binding action names for INI file
-static const char* keyBindingNames[KEY_MAPPIN_MAX] = {"move_forward", "move_backward", "turn_left",   "turn_right",
-                                                      "strafe_left",  "strafe_right",  "next_weapon", "prev_weapon",
-                                                      "action",       "pass_turn",     "automap",     "menu",
-                                                      "items_info",   "drinks",        "pda",         "bot_discard"};
+// Helpers `inputCodeToName`/`inputCodeFromName` and `keyBindingNames[]` live in Input.cpp/Input.h
+// so the controls.yaml defaults parser can share them with the save-game settings round-trip.
 
 void Game::saveWorldState(OutputStream* OS, bool b) {
 
@@ -621,7 +461,7 @@ void Game::saveConfig() {
 	for (int i = 0; i < KEY_MAPPIN_MAX; i++) {
 		out << YAML::Key << keyBindingNames[i] << YAML::Value << YAML::Flow << YAML::BeginSeq;
 		for (int j = 0; j < KEYBINDS_MAX; j++) {
-			out << scancodeToName(keyMapping[i].keyBinds[j]);
+			out << inputCodeToName(keyMapping[i].keyBinds[j]);
 		}
 		out << YAML::EndSeq;
 	}
@@ -729,7 +569,7 @@ void Game::loadConfig() {
 			YAML::Node binds = cfg["key_bindings"][keyBindingNames[i]];
 			if (binds && binds.IsSequence()) {
 				for (int j = 0; j < KEYBINDS_MAX && j < (int)binds.size(); j++) {
-					keyMapping[i].keyBinds[j] = scancodeFromName(binds[j].as<std::string>("none"));
+					keyMapping[i].keyBinds[j] = inputCodeFromName(binds[j].as<std::string>("none"));
 				}
 			}
 		}
@@ -1061,7 +901,7 @@ void Game::saveEmptyConfig() {
 	for (int i = 0; i < KEY_MAPPIN_MAX; i++) {
 		out << YAML::Key << keyBindingNames[i] << YAML::Value << YAML::Flow << YAML::BeginSeq;
 		for (int j = 0; j < KEYBINDS_MAX; j++) {
-			out << scancodeToName(keyMapping[i].keyBinds[j]);
+			out << inputCodeToName(keyMapping[i].keyBinds[j]);
 		}
 		out << YAML::EndSeq;
 	}

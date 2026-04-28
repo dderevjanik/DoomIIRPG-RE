@@ -458,7 +458,7 @@ void Entity::aiCalcSimpleGoal(bool b) {
     if (app->combat->monsterBehaviors[this->def->monsterIdx].canResurrect && this->findRaiseTarget(app->combat->monsterBehaviors[this->def->monsterIdx].resurrectSearchRadius, 0, 0) != -1) {
         return;
     }
-    if (app->player->buffs[11] > 0 && !app->combat->monsterBehaviors[this->def->monsterIdx].fearImmune) {
+    if (app->player->buffs[app->player->fearBuffIdx] > 0 && !app->combat->monsterBehaviors[this->def->monsterIdx].fearImmune) {
         this->ai->goalType = 4;
         this->ai->goalParam = 1;
         return;

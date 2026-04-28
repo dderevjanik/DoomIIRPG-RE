@@ -1,8 +1,12 @@
 #pragma once
+#include <cstdint>
+#include <vector>
+
 class ParticleSystem;
 class Image;
 class Graphics;
 class Entity;
+class DataNode;
 
 // ----------------------
 // ParticleEmitter Class
@@ -42,9 +46,18 @@ private:
 public:
 	Applet* app;  // Set in startup(), replaces CAppContainer::getInstance()->app
 
-	static constexpr uint32_t levelColors[] = { 0xFFFFFFFF, 0xFF3A332E, 0xFF626262, 0xFF7F7F7F, 0xFFD1CF11, 0xFFFD8918, 0xFF20B00D };
+	// Default palette matches the original 7 hardcoded level theme colors.
+	// Loaded from particles.yaml at startup; per-level level.yaml may override via setLevelPalette().
+	static constexpr uint32_t kDefaultPalette[7] = { 0xFFFFFFFF, 0xFF3A332E, 0xFF626262, 0xFF7F7F7F, 0xFFD1CF11, 0xFFFD8918, 0xFF20B00D };
+	std::vector<uint32_t> levelColors{ kDefaultPalette, kDefaultPalette + 7 };
+
 	static constexpr int32_t rotationSequence[] = {0, 4, 2, 6};
 	static constexpr int GIB_BONE_MASK = 0x619;
+
+	// Replace the active palette. If `colors` is empty, falls back to the default palette.
+	void setLevelPalette(const std::vector<uint32_t>& colors);
+	// Get a palette color by index, clamped to the active palette (returns white if empty).
+	uint32_t getPaletteColor(int idx) const;
 
 	int systemIdx = 0;
 	ParticleEmitter particleEmitter[4] = {};

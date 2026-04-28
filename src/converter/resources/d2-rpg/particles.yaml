@@ -1,0 +1,13 @@
+# Particle system configuration.
+# default_palette is the global fallback list of ARGB hex colors used when a
+# level does not specify its own particle_palette in its level.yaml.
+# Original game shipped 7 colors keyed by script opcode index 0-6.
+
+default_palette:
+  - 0xFFFFFFFF  # 0: white       (sparks / generic)
+  - 0xFF3A332E  # 1: dark brown  (dirt / rocks)
+  - 0xFF626262  # 2: medium gray (concrete / debris)
+  - 0xFF7F7F7F  # 3: light gray  (smoke)
+  - 0xFFD1CF11  # 4: yellow      (acid / electric)
+  - 0xFFFD8918  # 5: orange      (fire / explosions)
+  - 0xFF20B00D  # 6: green       (toxic / alien)

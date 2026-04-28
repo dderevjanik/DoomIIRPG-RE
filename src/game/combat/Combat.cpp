@@ -521,7 +521,7 @@ int Combat::monsterSeq() {
         }
         MonsterBehaviors& atkBeh = app->combat->monsterBehaviors[this->curAttacker->def->monsterIdx];
         if (this->gotHit && (this->getWeaponFlags(this->attackerWeaponId).poisonOnHit || atkBeh.onHitPoison)) {
-            app->player->addStatusEffect(atkBeh.onHitPoison ? atkBeh.onHitPoisonId : 13, atkBeh.onHitPoison ? atkBeh.onHitPoisonDuration : 5, atkBeh.onHitPoison ? atkBeh.onHitPoisonPower : 3);
+            app->player->addStatusEffect(atkBeh.onHitPoison ? atkBeh.onHitPoisonId : app->player->fireBuffIdx, atkBeh.onHitPoison ? atkBeh.onHitPoisonDuration : 5, atkBeh.onHitPoison ? atkBeh.onHitPoisonPower : 3);
             app->player->translateStatusEffects();
         }
         this->stage = -1;
@@ -550,7 +550,7 @@ int Combat::monsterSeq() {
                 this->curTarget->died(false, nullptr);
             }
             app->localization->resetTextArgs();
-            if (this->accumRoundDamage > 0 && app->player->buffs[0] > 0 && !this->curAttacker->isBoss()) {
+            if (this->accumRoundDamage > 0 && app->player->buffs[app->player->reflectBuffIdx] > 0 && !this->curAttacker->isBoss()) {
                 app->localization->addTextArg(this->accumRoundDamage);
                 app->hud->addMessage((short)0, (short)131);
             }
@@ -889,7 +889,7 @@ void Combat::explodeOnPlayer() {
         app->canvas->staleTime = app->hud->damageTime + 1;
     }
     bool b = false;
-    if (app->player->buffs[0] > 0 && !this->curAttacker->isBoss()) {
+    if (app->player->buffs[app->player->reflectBuffIdx] > 0 && !this->curAttacker->isBoss()) {
         b = true;
     }
     if (this->gotHit && (this->totalDamage > 0 || this->totalArmorDamage > 0)) {
@@ -898,7 +898,7 @@ void Combat::explodeOnPlayer() {
             Entity* entity = &app->game->entities[1];
             app->game->unlinkEntity(this->curAttacker);
             if (this->attackerWeaponProj == 7) {
-                app->player->addStatusEffect(13, 5, 3);
+                app->player->addStatusEffect(app->player->fireBuffIdx, 5, 3);
                 app->player->translateStatusEffects();
             }
             app->player->addArmor(-this->totalArmorDamage);
@@ -1055,7 +1055,7 @@ void Combat::hurtEntityAt(int n, int n2, int n3, int n4, int n5, int n6, Entity*
                         this->crArmorDamage = min;
                         app->player->pain(n6, nullptr, true);
                         app->player->addArmor(-this->crArmorDamage);
-                        app->player->addStatusEffect(13, 5, 3);
+                        app->player->addStatusEffect(app->player->fireBuffIdx, 5, 3);
                         app->player->translateStatusEffects();
                     }
                 }

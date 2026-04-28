@@ -1,5 +1,6 @@
 #pragma once
 #include <utility>
+#include <string>
 //------------------------------------------------------------------------------------------------------------------------------------------
 // Enum representing an input source on a non-generic game controller recognized by SDL (axis or button)
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -161,6 +162,16 @@ enum _AVKType {
 };
 
 extern void controllerVibrate(int duration_ms) noexcept;
+
+// Convert between input bind codes and human-readable names ("W", "pad_a", "mouse_left", "none").
+// Used by both the save-game settings round-trip and the controls.yaml defaults loader.
+const char* inputCodeToName(int code);
+int inputCodeFromName(const std::string& name);
+
+// Action slot names matching keyMappingDefault[KEY_MAPPIN_MAX] order.
+// Used as keys in controls.yaml (e.g. "move_forward", "menu") and in the
+// settings file. Length = KEY_MAPPIN_MAX.
+extern const char* const keyBindingNames[];
 
 class Applet;
 class SDLGL;

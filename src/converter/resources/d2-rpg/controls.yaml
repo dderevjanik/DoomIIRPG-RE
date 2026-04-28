@@ -1,0 +1,30 @@
+# Default key/controller bindings.
+# Modders can override the factory defaults shipped with the game by editing this file.
+# Per-user rebinds (saved via the in-game settings menu) still take priority over these.
+#
+# Each action lists up to 10 keyboard/mouse/controller bindings.
+# Names use SDL scancode names (e.g. "W", "Up", "Return", "Escape", "Space"),
+# mouse_left/mouse_middle/mouse_right/mouse_x1/mouse_x2,
+# pad_a/pad_b/pad_x/pad_y/pad_back/pad_guide/pad_start,
+# pad_leftshoulder/pad_rightshoulder/pad_leftstick/pad_rightstick,
+# pad_dpad_up/pad_dpad_down/pad_dpad_left/pad_dpad_right,
+# pad_laxis_up/down/left/right, pad_raxis_up/down/left/right,
+# or "none" to leave a slot unbound.
+
+actions:
+  move_forward:  [Up, W]
+  move_backward: [Down, S]
+  turn_left:     [Left]
+  turn_right:    [Right]
+  strafe_left:   [A]
+  strafe_right:  [D]
+  next_weapon:   [Z]
+  prev_weapon:   [X]
+  action:        [Return]
+  pass_turn:     [C]
+  automap:       [Tab]
+  menu:          [Escape]
+  items_info:    [I]
+  drinks:        [O]
+  pda:           [P]
+  bot_discard:   [B]

@@ -261,9 +261,9 @@ int CombatEntity::calcHit(CombatEntity* ce, CombatEntity* ce2, bool b, int i, bo
         }
         return app->combat->crFlags;
     }
-    if (b && app->player->statusEffects[18] > 0) {
-        if (--app->player->statusEffects[18] == 0) {
-            app->player->removeStatusEffect(0);
+    if (b && app->player->statusEffects[18 + app->player->reflectBuffIdx] > 0) {
+        if (--app->player->statusEffects[18 + app->player->reflectBuffIdx] == 0) {
+            app->player->removeStatusEffect(app->player->reflectBuffIdx);
         }
         app->player->translateStatusEffects();
         app->combat->crFlags |= 0x100;
@@ -301,7 +301,7 @@ int CombatEntity::calcDamage(CombatEntity* ce, Entity* entity, CombatEntity* ce2
         dmgStrMax *= 2;
     }
 
-    if (b && app->player->buffs[0] > 0) {
+    if (b && app->player->buffs[app->player->reflectBuffIdx] > 0) {
         return app->combat->crDamage = dmgStrMax;
     }
     if (app->game->difficulty == Enums::DIFFICULTY_NIGHTMARE) {
@@ -327,8 +327,8 @@ int CombatEntity::calcDamage(CombatEntity* ce, Entity* entity, CombatEntity* ce2
     int armorDamage = 0;
     int damage;
     if (!b) {
-        if (app->player->buffs[8] > 0) {
-            dmgStrMin += (app->player->buffs[23] << 8) / 100 * dmgStrMin >> 8;
+        if (app->player->buffs[app->player->angerBuffIdx] > 0) {
+            dmgStrMin += (app->player->buffs[15 + app->player->angerBuffIdx] << 8) / 100 * dmgStrMin >> 8;
         }
         int weaponWeakness = app->combat->getWeaponWeakness(ce->weapon, entity->def->monsterIdx);
         if (ce->weapon >= 0 && ce->weapon < MonsterBehaviors::MAX_WEAKNESS_MODS) {
@@ -353,7 +353,7 @@ int CombatEntity::calcDamage(CombatEntity* ce, Entity* entity, CombatEntity* ce2
         else {
             damage = dmgStrMin * 5 / 8;
         }
-        if (app->combat->getWeaponFlags(ce->weapon).blockableByShield && app->player->buffs[9] > 0) {
+        if (app->combat->getWeaponFlags(ce->weapon).blockableByShield && app->player->buffs[app->player->antifireBuffIdx] > 0) {
             armorDamage = 0;
             damage = 0;
         }

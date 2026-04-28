@@ -36,6 +36,7 @@
 #include "Input.h"
 #include "EventBus.h"
 #include "GameEvents.h"
+#include "ParticleSystem.h"
 
 REGISTER_GAME_MODULE("doom2rpg", DoomIIRPGGame);
 
@@ -286,6 +287,20 @@ void DoomIIRPGGame::registerLoaders(Applet* app, ResourceManager* rm) {
 		return parseEffects(app, data);
 	}, 100);
 
+	// particles.yaml (optional — parser falls back to engine default palette if missing)
+	rm->registerLoader("particles", [app](ResourceManager* rm) -> ResourceManager::ParseResult {
+		DataNode data = rm->loadData("particles.yaml");
+		if (!data) data = DataNode();
+		return parseParticles(app, data);
+	}, 105);
+
+	// controls.yaml (optional — parser falls back to compiled-in defaults if missing)
+	rm->registerLoader("controls", [app](ResourceManager* rm) -> ResourceManager::ParseResult {
+		DataNode data = rm->loadData("controls.yaml");
+		if (!data) data = DataNode();
+		return parseControls(app, data);
+	}, 106);
+
 	// items.yaml + effects.yaml — item use definitions (multi-file)
 	rm->registerLoader("items", [app](ResourceManager* rm) -> ResourceManager::ParseResult {
 		DataNode itemsData = rm->loadData("items.yaml");
@@ -333,8 +348,35 @@ void DoomIIRPGGame::registerEventListeners(Applet* app) {
 	app->eventBus->subscribe<WeaponSwitchEvent>([](const WeaponSwitchEvent& e) {
 		LOG_INFO("[event] WeaponSwitch: {} -> {}\n", e.previousWeapon, e.newWeapon);
 	});
-	app->eventBus->subscribe<LevelLoadEvent>([](const LevelLoadEvent& e) {
+	app->eventBus->subscribe<LevelLoadEvent>([app](const LevelLoadEvent& e) {
 		LOG_INFO("[event] LevelLoad: mapID={} newGame={}\n", e.mapID, e.isNewGame);
+
+		// Per-level particle palette override from level.yaml `particle_palette:` (optional).
+		// If unset, the global default palette from particles.yaml stays active.
+		if (!app->particleSystem) return;
+		const auto& gc = *app->canvas->gameConfig;
+		auto it = gc.levelInfos.find(e.mapID);
+		if (it == gc.levelInfos.end() || it->second.configFile.empty()) return;
+		DataNode levelCfg = DataNode::loadFile(it->second.configFile.c_str());
+		if (!levelCfg) return;
+		DataNode pal = levelCfg["particle_palette"];
+		if (!pal || pal.size() == 0) return;
+		std::vector<uint32_t> colors;
+		for (int i = 0; i < pal.size(); i++) {
+			DataNode c = pal[i];
+			if (!c) continue;
+			if (c.isScalar()) {
+				std::string s = c.asString("");
+				if (s.empty()) continue;
+				try { colors.push_back((uint32_t)std::stoul(s, nullptr, 0)); } catch (...) {}
+			} else {
+				colors.push_back((uint32_t)c.asInt(0));
+			}
+		}
+		if (!colors.empty()) {
+			app->particleSystem->setLevelPalette(colors);
+			LOG_INFO("[app] Particles: per-level palette applied ({} colors)\n", (int)colors.size());
+		}
 	});
 	app->eventBus->subscribe<LevelLoadCompleteEvent>([](const LevelLoadCompleteEvent& e) {
 		LOG_INFO("[event] LevelLoadComplete: mapID={} entities={}\n", e.mapID, e.entityCount);

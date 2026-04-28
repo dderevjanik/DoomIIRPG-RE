@@ -27,6 +27,8 @@
 #include "ParticleSystem.h"
 #include "VendingMachine.h"
 #include "EntityDef.h"
+#include "Input.h"
+#include <cstring>
 
 // --- Helpers for data parsing (file-static) ---
 
@@ -585,6 +587,80 @@ std::expected<void, std::string> parseProjectiles(Applet* app, const DataNode& c
 	return {};
 }
 
+// Parse a hex color from yaml. Accepts integer (0xAARRGGBB) or string ("0xAARRGGBB" / "AARRGGBB").
+static bool parseHexColor(const DataNode& node, uint32_t& out) {
+	if (!node) return false;
+	if (node.isScalar()) {
+		std::string s = node.asString("");
+		if (s.empty()) return false;
+		try { out = (uint32_t)std::stoul(s, nullptr, 0); return true; }
+		catch (...) { return false; }
+	}
+	out = (uint32_t)node.asInt(0);
+	return true;
+}
+
+std::expected<void, std::string> parseParticles(Applet* app, const DataNode& config) {
+	if (!app->particleSystem) return {};
+	std::vector<uint32_t> palette;
+	if (config) {
+		DataNode p = config["default_palette"];
+		if (p && p.size() > 0) {
+			for (int i = 0; i < p.size(); i++) {
+				uint32_t c;
+				if (parseHexColor(p[i], c)) palette.push_back(c);
+			}
+		}
+	}
+	app->particleSystem->setLevelPalette(palette); // empty -> default fallback
+	LOG_INFO("[app] Particles: palette has {} colors\n", (int)app->particleSystem->levelColors.size());
+	return {};
+}
+
+std::expected<void, std::string> parseControls(Applet* app, const DataNode& config) {
+	(void)app;
+	if (!config) return {};
+	DataNode actions = config["actions"];
+	if (!actions) return {};
+
+	// Build action_name → slot index map from the canonical keyBindingNames table.
+	std::unordered_map<std::string, int> slotByName;
+	for (int i = 0; i < KEY_MAPPIN_MAX; i++) {
+		slotByName[keyBindingNames[i]] = i;
+	}
+
+	for (auto it = actions.begin(); it != actions.end(); ++it) {
+		std::string actionName = it.key().asString("");
+		auto sit = slotByName.find(actionName);
+		if (sit == slotByName.end()) {
+			LOG_WARN("[app] controls.yaml: unknown action '{}' — ignored\n", actionName);
+			continue;
+		}
+		int slot = sit->second;
+		DataNode binds = it.value();
+		// Reset all keybinds for this slot to "unbound", then fill from yaml.
+		for (int j = 0; j < KEYBINDS_MAX; j++) {
+			keyMappingDefault[slot].keyBinds[j] = -1;
+		}
+		if (binds.isScalar()) {
+			keyMappingDefault[slot].keyBinds[0] = inputCodeFromName(binds.asString(""));
+		} else {
+			int n = std::min((int)binds.size(), (int)KEYBINDS_MAX);
+			for (int j = 0; j < n; j++) {
+				keyMappingDefault[slot].keyBinds[j] = inputCodeFromName(binds[j].asString(""));
+			}
+		}
+	}
+
+	// Re-apply defaults to live mappings so this takes effect even though
+	// Input::init() already ran with the compiled-in defaults.
+	std::memcpy(keyMapping, keyMappingDefault, sizeof(keyMapping));
+	std::memcpy(keyMappingTemp, keyMappingDefault, sizeof(keyMapping));
+
+	LOG_INFO("[app] Controls: applied {} action overrides from controls.yaml\n", (int)actions.size());
+	return {};
+}
+
 std::expected<void, std::string> parseEffects(Applet* app, const DataNode& config) {
 	// Initialize defaults matching original hardcoded values
 	Player* p = app->player.get();
@@ -629,7 +705,12 @@ std::expected<void, std::string> parseEffects(Applet* app, const DataNode& confi
 		return {};
 	}
 
-	int count = std::min((int)buffs.size(), 15);
+	const int maxBuffs = 15; // matches buffMaxStacks[15] etc. in Player.h
+	if ((int)buffs.size() > maxBuffs) {
+		LOG_WARN("[app] effects.yaml has {} buffs, but engine cap is {}. Extra buffs ignored.\n",
+			(int)buffs.size(), maxBuffs);
+	}
+	int count = std::min((int)buffs.size(), maxBuffs);
 
 	// Build name->index lookup from order (must match buff IDs 0-14)
 	std::map<std::string, int> nameToIndex;
@@ -689,6 +770,26 @@ std::expected<void, std::string> parseEffects(Applet* app, const DataNode& confi
 		std::string perTurn = b["per_turn"].asString("");
 		p->buffPerTurnHealByAmount[i] = (perTurn == "heal_by_amount");
 	}
+
+	auto resolve = [&](const char* name, int fallback) -> int {
+		auto it = nameToIndex.find(name);
+		return (it != nameToIndex.end()) ? it->second : fallback;
+	};
+	p->reflectBuffIdx   = resolve("reflect",   Enums::BUFF_REFLECT);
+	p->purifyBuffIdx    = resolve("purify",    Enums::BUFF_PURIFY);
+	p->hasteBuffIdx     = resolve("haste",     Enums::BUFF_HASTE);
+	p->regenBuffIdx     = resolve("regen",     Enums::BUFF_REGEN);
+	p->defenseBuffIdx   = resolve("defense",   Enums::BUFF_DEFENSE);
+	p->strengthBuffIdx  = resolve("strength",  Enums::BUFF_STRENGTH);
+	p->agilityBuffIdx   = resolve("agility",   Enums::BUFF_AGILITY);
+	p->focusBuffIdx     = resolve("focus",     Enums::BUFF_FOCUS);
+	p->angerBuffIdx     = resolve("anger",     Enums::BUFF_ANGER);
+	p->antifireBuffIdx  = resolve("antifire",  Enums::BUFF_ANTIFIRE);
+	p->fortitudeBuffIdx = resolve("fortitude", Enums::BUFF_FORTITUDE);
+	p->fearBuffIdx      = resolve("fear",      Enums::BUFF_FEAR);
+	p->wpPoisonBuffIdx  = resolve("wp_poison", Enums::BUFF_WP_POISON);
+	p->fireBuffIdx      = resolve("fire",      Enums::BUFF_FIRE);
+	p->diseaseBuffIdx   = resolve("disease",   Enums::BUFF_DISEASE);
 
 	LOG_INFO("[app] Effects: loaded {} buffs\n", count);
 	return {};

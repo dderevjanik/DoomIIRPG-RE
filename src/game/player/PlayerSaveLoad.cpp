@@ -294,13 +294,13 @@ void Player::reset() {
 }
 
 void Player::updateStats() {
-	this->ce->setStat(Enums::STAT_MAX_HEALTH, this->baseCe->getStat(Enums::STAT_MAX_HEALTH) + this->buffs[25]);
+	this->ce->setStat(Enums::STAT_MAX_HEALTH, this->baseCe->getStat(Enums::STAT_MAX_HEALTH) + this->buffs[15 + this->fortitudeBuffIdx]);
 	this->ce->setStat(Enums::STAT_HEALTH, this->ce->getStat(Enums::STAT_HEALTH));
-	this->ce->setStat(Enums::STAT_STRENGTH, this->baseCe->getStat(Enums::STAT_STRENGTH) + this->buffs[20]);
+	this->ce->setStat(Enums::STAT_STRENGTH, this->baseCe->getStat(Enums::STAT_STRENGTH) + this->buffs[15 + this->strengthBuffIdx]);
 	this->ce->setStat(Enums::STAT_ACCURACY,
-	                  this->baseCe->getStat(Enums::STAT_ACCURACY) + this->buffs[22] - this->buffs[28]);
-	this->ce->setStat(Enums::STAT_DEFENSE, this->baseCe->getStat(Enums::STAT_DEFENSE) + this->buffs[19]);
-	this->ce->setStat(Enums::STAT_AGILITY, this->baseCe->getStat(Enums::STAT_AGILITY) + this->buffs[21]);
+	                  this->baseCe->getStat(Enums::STAT_ACCURACY) + this->buffs[15 + this->focusBuffIdx] - this->buffs[15 + this->fireBuffIdx]);
+	this->ce->setStat(Enums::STAT_DEFENSE, this->baseCe->getStat(Enums::STAT_DEFENSE) + this->buffs[15 + this->defenseBuffIdx]);
+	this->ce->setStat(Enums::STAT_AGILITY, this->baseCe->getStat(Enums::STAT_AGILITY) + this->buffs[15 + this->agilityBuffIdx]);
 	this->ce->setStat(Enums::STAT_IQ, this->baseCe->getStat(Enums::STAT_IQ));
 }
 
