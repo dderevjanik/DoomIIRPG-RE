@@ -1,0 +1,6 @@
+# Scenario: Sentry-bot minigame loads.
+#
+# args: --minigame sentrybot --seed 42
+
+await MINI_GAME
+expect state == MINI_GAME

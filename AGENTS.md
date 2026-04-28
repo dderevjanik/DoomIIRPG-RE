@@ -45,9 +45,16 @@ scripts/test_map_loading.sh
 scripts/test_minigame_loading.sh
 ```
 
-Test scripts in `Testing/` can be run via `--script` flag:
+**E2E scenario tests** (step-paced scripted inputs + state assertions):
 ```bash
-./build/src/DRPGEngine --game doom2rpg --map levels/maps/map09.bin --script Testing/test_map09.script --seed 1337
+scripts/run_e2e_tests.sh              # windowed (default, more stable)
+scripts/run_e2e_tests.sh --headless   # headless (faster; deeper flows still unstable)
+```
+Each scenario is a `.script` file in `Testing/scenarios/` using a step-paced DSL: `do <ACTION>` dispatches input only when the engine is ready (state interactive, previous input consumed); `await <STATE>` blocks until that state is reached; `expect <key> <op> <value>` is a sticky assertion that waits for the condition. Per-step default timeout is 600 ticks; on timeout the engine prints `STUCK_IN: ...` and exits 2. Engine flags go in `# args:` comment lines. Keys: `state`, `health`, `damage_dealt`, `combat_turns`, `kills`. See [README.md](README.md) for the full grammar.
+
+Run a single scenario manually:
+```bash
+./build/src/DRPGEngine --game doom2rpg --script Testing/scenarios/02_combat_map10.script
 ```
 
 After any change to engine, core, or converter code, verify the game still runs:
@@ -55,7 +62,7 @@ After any change to engine, core, or converter code, verify the game still runs:
 ./build/src/DRPGEngine --game doom2rpg --headless --map levels/maps/map00.bin
 ```
 
-After bigger refactors (engine, asset pipeline, entity system, rendering, level loading), always run `scripts/test_map_loading.sh` before committing.
+After bigger refactors (engine, asset pipeline, entity system, rendering, level loading), always run `scripts/test_map_loading.sh` and `scripts/run_e2e_tests.sh` before committing.
 
 ## Asset Pipeline
 

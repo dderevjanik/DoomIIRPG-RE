@@ -68,8 +68,8 @@ docs/            # Project documentation
 ├── d1-rpg/      # Doom 1 RPG binary format specs (bitshapes, BSP, palettes, etc.)
 ├── d2-rpg/      # Doom 2 RPG binary format specs (entities, levels, media, menus, scripting, strings, tables)
 └── LEVELS.md    # Level structure documentation
-Testing/         # Test scripts for automated map/minigame validation
-scripts/         # Shell scripts for smoke testing
+Testing/         # E2E scenario scripts (Testing/scenarios/*.script)
+scripts/         # Shell scripts: run_e2e_tests.sh + smoke loaders
 ```
 
 ## Asset Pipeline
@@ -118,7 +118,8 @@ See [docs/d2-rpg/](docs/d2-rpg/) for Doom 2 RPG binary format specs and [docs/d1
 | `--headless`           | Run without a window (for testing)                             |
 | `--ticks <n>`          | Exit after N ticks (for testing)                               |
 | `--seed <n>`           | Set random seed (for reproducible runs)                        |
-| `--script <path>`      | Run a test script (e.g. `Testing/test_map09.script`)           |
+| `--script <path>`      | Run a test script (e.g. `Testing/scenarios/02_combat_map10.script`) |
+| `--script-min-delay <n>` | Minimum ticks per `do` step (default: 0 headless, 20 windowed) |
 
 ### Loading a Specific Level
 
@@ -199,16 +200,56 @@ Verifies the MapData binary round-trip (create map → save `.bin` → reload �
 Require game assets in `games/doom2rpg/` and a built binary:
 
 ```bash
-scripts/test_map_loading.sh        # loads map00-map09, verifies no crash
+scripts/test_map_loading.sh        # loads each level, verifies no crash
 scripts/test_minigame_loading.sh   # loads hacking, sentrybot, vending minigames
 ```
 
-### Script-based Tests
+### E2E Scenarios
 
-Test scripts in `Testing/` can exercise specific maps with deterministic seeds:
+Scenario files in [Testing/scenarios/](Testing/scenarios/) drive the engine through scripted inputs and verify game state. Run them all with:
 
 ```bash
-./build/src/DRPGEngine --game doom2rpg --map levels/09_vios --script Testing/test_map09.script --seed 1337
+scripts/run_e2e_tests.sh                # windowed (default)
+scripts/run_e2e_tests.sh --headless     # headless (faster; some flows still unstable)
+```
+
+Each scenario is a single `.script` file. The DSL is **step-paced, not tick-paced** — each step waits for the engine to be ready before advancing, so dialogs and animations can't desync the script:
+
+```
+# args: --map levels/10_test_map --skip-intro --seed 1337
+
+await PLAYING
+do FIRE
+do FIRE
+do FIRE
+expect state == COMBAT
+expect damage_dealt > 0
+do FIRE         # FIRE confirms dialogs / takes loot, depending on state
+do FIRE
+```
+
+Directives:
+- `do <ACTION>` — dispatch ACTION as soon as the engine is **ready** (state is interactive, previous input has been consumed). Same FIRE works to attack in combat, confirm a dialog, take loot, or open a door — the engine decides based on its current state.
+  Actions: `UP`, `DOWN`, `LEFT`, `RIGHT`, `MOVELEFT`, `MOVERIGHT`, `FIRE`/`SELECT`/`USE`/`ATTACK`, `AUTOMAP`, `MENU`, `PASSTURN`, `NEXTWEAPON`, `PREVWEAPON`, `ITEMS`, `DRINKS`, `PDA`, `BOTDISCARD`.
+- `await <STATE>` — block until canvas state matches.
+  States: `LOGO`, `MENU`, `INTRO`, `INTRO_MOVIE`, `CHARACTER_SELECTION`, `LOADING`, `PLAYING`, `COMBAT`, `AUTOMAP`, `DIALOG`, `LOOTING`, `MINI_GAME`, `TRAVELMAP`, `DYING`, `EPILOGUE`, `CREDITS`, `SAVING`, `BENCHMARK`, `BENCHMARKDONE`, `INTER_CAMERA`, `CAMERA`, `ERROR`, `TAF`, `MIXING`, `TREADMILL`, `BOT_DYING`, `WIDGET_SCREEN`, `EDITOR`.
+- `expect <key> <op> <value>` — sticky assertion: block until the condition becomes true.
+  Keys: `state`, `health`, `damage_dealt`, `combat_turns`, `kills`.
+  Ops: `==`, `!=`, `<`, `<=`, `>`, `>=`.
+  State values use the symbolic names from above.
+- `timeout <N>` — sets the per-step timeout (in ticks) for following steps. Default 600. If a step doesn't make progress within its timeout, the script fails with `STUCK_IN: ...` on stderr and the engine exits with code 2.
+- `min_delay <N>` — minimum ticks each following `do` step waits before firing, even if the engine is already ready. Useful when actions in PLAYING (e.g. turning, FIRE with no target) would otherwise resolve in a single tick.
+- `# args: <flags>` — comment line consumed by the runner only; passes flags to the engine. Multiple `# args:` lines are concatenated.
+- `# ...` — comment.
+
+To add a new scenario, drop a file in `Testing/scenarios/`. No code changes, no runner changes.
+
+To run a single scenario manually:
+
+```bash
+./build/src/DRPGEngine --game doom2rpg \
+    --script Testing/scenarios/02_combat_map10.script \
+    --map levels/10_test_map --skip-intro --seed 1337
 ```
 
 ## Acknowledgments

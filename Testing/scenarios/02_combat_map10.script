@@ -1,0 +1,40 @@
+# Scenario: Load level 10 (test map), kill monster, rotate, loot.
+# Verifies that combat dealt damage.
+#
+# Pattern note: this map has scripted help/info dialogs that fire on
+# rotations / movements. We use the chain `do <ACTION>` + `do FIRE` +
+# `await PLAYING` after each movement so that any dialog auto-dismisses
+# and we're guaranteed back in PLAYING before the next step.
+#
+# args: --map levels/10_test_map --skip-intro --seed 1337
+
+# Wait for map load
+await PLAYING
+
+# Attack the monster in front — 3 hits kill at this seed
+do FIRE
+do FIRE
+do FIRE
+
+# Killing the monster opens the souls reward dialog. Dismiss it.
+await DIALOG
+do FIRE
+await PLAYING
+
+# Rotate left, then absorb any auto-dialog that the rotation triggers.
+do LEFT
+do FIRE
+do FIRE
+await PLAYING
+
+# Rotate right. After RIGHT, FIRE may either dismiss a help dialog OR
+# (if facing the corpse) open LOOTING. Drain both possibilities then
+# assert. We don't `await PLAYING` here because the script may legitimately
+# end in LOOTING — checking the assertion is enough.
+do RIGHT
+do FIRE
+do FIRE
+do FIRE
+do FIRE
+
+expect damage_dealt > 0

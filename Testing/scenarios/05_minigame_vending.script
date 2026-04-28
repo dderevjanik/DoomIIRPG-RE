@@ -1,0 +1,6 @@
+# Scenario: Vending-machine minigame loads.
+#
+# args: --minigame vending --seed 42
+
+await MINI_GAME
+expect state == MINI_GAME

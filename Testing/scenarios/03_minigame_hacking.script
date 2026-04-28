@@ -1,0 +1,6 @@
+# Scenario: Hacking minigame loads.
+#
+# args: --minigame hacking --seed 42
+
+await MINI_GAME
+expect state == MINI_GAME

@@ -33,6 +33,7 @@ SentryBotGame::~SentryBotGame() {
 }
 
 void SentryBotGame::playFromMainMenu(){
+	if (!this->app) this->app = CAppContainer::getInstance()->app;
 	this->initGame(nullptr, 0);
 }
 
@@ -49,6 +50,7 @@ void SentryBotGame::setupGlobalData() {
 
 void SentryBotGame::initGame(ScriptThread* scriptThread, short botType) {
 
+    if (!this->app) this->app = CAppContainer::getInstance()->app;
     Applet* app = this->app;
     this->callingThread = scriptThread;
     this->gamePlayedFromMainMenu = (this->callingThread == nullptr) ? true : false;

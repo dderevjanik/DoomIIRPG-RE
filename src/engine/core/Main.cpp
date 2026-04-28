@@ -95,6 +95,7 @@ int main(int argc, char* args[]) {
 	unsigned int seed = 0;      // 0 = don't seed (normal mode)
 	bool hasSeed = false;
 	const char* scriptFile = nullptr;
+	int scriptMinDelay = 0;     // floor on per-`do` step delay (ticks); 0 = no floor
 	std::vector<std::string> modDirs;  // --mod directories (in order specified)
 
 	for (int i = 1; i < argc; i++) {
@@ -113,6 +114,7 @@ int main(int argc, char* args[]) {
 			printf("  --ticks <n>             Quit after n ticks (headless/script mode)\n");
 			printf("  --seed <n>              Set random seed for deterministic runs\n");
 			printf("  --script <file>         Load and replay an input script\n");
+			printf("  --script-min-delay <n>  Force at least N ticks between `do` script steps (for watching)\n");
 			printf("  --mod <dir|zip>         Load a mod directory or .zip (repeatable)\n");
 			printf("  --editor [<project>]    Launch into the in-engine map editor\n");
 			return 0;
@@ -137,6 +139,8 @@ int main(int argc, char* args[]) {
 			hasSeed = true;
 		} else if (strcmp(args[i], "--script") == 0 && i + 1 < argc) {
 			scriptFile = args[++i];
+		} else if (strcmp(args[i], "--script-min-delay") == 0 && i + 1 < argc) {
+			scriptMinDelay = atoi(args[++i]);
 		} else if (strcmp(args[i], "--mod") == 0 && i + 1 < argc) {
 			modDirs.push_back(args[++i]);
 		} else if (strcmp(args[i], "--editor") == 0) {
@@ -632,6 +636,13 @@ int main(int argc, char* args[]) {
 
 	CAppContainer::getInstance()->Construct(&sdlGL, &vfs, &doom2rpgModule);
 
+	// Propagate headless flag to Canvas — the rendering path checks Canvas::headless
+	// to skip backPaint() and 3D-view repaints. Without this, headless mode crashes
+	// in Graphics::fillRect because there is no GL context.
+	if (headless && CAppContainer::getInstance()->app && CAppContainer::getInstance()->app->canvas) {
+		CAppContainer::getInstance()->app->canvas->headless = true;
+	}
+
 	// Initialize ImGui developer console (F12 to toggle)
 	if (!headless && sdlGL.window) {
 		g_devConsole.init(sdlGL.window, SDL_GL_GetCurrentContext());
@@ -677,9 +688,18 @@ int main(int argc, char* args[]) {
 			LOG_ERROR("[main] Failed to load script '{}'\n", scriptFile);
 			return 1;
 		}
+		// In windowed mode, default to a small visual delay so scripted runs are
+		// watchable. Headless/CI users get full speed unless they opt in.
+		if (scriptMinDelay == 0 && !headless) {
+			scriptMinDelay = 20; // ~300ms per `do` step at 15ms/tick
+		}
+		if (scriptMinDelay > 0) {
+			script.setMinDelayFloor(scriptMinDelay);
+			LOG_INFO("[script] min_delay floor: {} ticks\n", scriptMinDelay);
+		}
 		// Auto-set ticks from script if not explicitly given
 		if (maxTicks == 0) {
-			maxTicks = script.lastTick() + 100; // run 100 ticks past last command
+			maxTicks = script.maxTicksEstimate();
 		}
 	}
 
@@ -696,7 +716,11 @@ int main(int argc, char* args[]) {
 			CAppContainer::getInstance()->headlessTimeMs += fixedTimestepMs;
 
 			if (hasScript) {
-				script.injectForTick(CAppContainer::getInstance()->app, ticksRun);
+				script.advance(CAppContainer::getInstance()->app);
+				if (script.isComplete()) {
+					LOG_INFO("[script] Completed all steps after {} ticks\n", ticksRun);
+					break;
+				}
 			}
 
 			CAppContainer::getInstance()->DoLoop(fixedTimestepMs);
@@ -734,7 +758,11 @@ int main(int argc, char* args[]) {
 				input.handleEvents();
 
 				if (hasScript) {
-					script.injectForTick(CAppContainer::getInstance()->app, ticksRun);
+					script.advance(CAppContainer::getInstance()->app);
+					if (script.isComplete()) {
+						LOG_INFO("[script] Completed all steps after {} ticks. Exiting.\n", ticksRun);
+						break;
+					}
 				}
 
 				UpTime = currentTimeMillis + 15;
@@ -754,11 +782,17 @@ int main(int argc, char* args[]) {
 	}
 
 	LOG_INFO("[main] APP_QUIT\n");
+	int exitCode = 0;
+	if (hasScript && script.failedCount() > 0) {
+		LOG_ERROR("[script] {} expectation(s) failed\n", script.failedCount());
+		fprintf(stderr, "[script] %d expectation(s) failed\n", script.failedCount());
+		exitCode = 2;
+	}
 	g_devConsole.shutdown();
 	CAppContainer::getInstance()->devConsole = nullptr;
 	CAppContainer::getInstance()->~CAppContainer();
 	logShutdown();
-	_exit(0);
+	_exit(exitCode);
 }
 
 static uint32_t lastTimems = 0;
