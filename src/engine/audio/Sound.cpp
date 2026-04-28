@@ -323,7 +323,6 @@ void Sound::playSound(int16_t resID, uint8_t flags, int priority, bool unused) {
 	bool isBlocked;
 	int existingSlot;
 	int chanIdx;
-	int searchIdx;
 	int stopIdx;
 	int volume;
 	int freeSlot;
@@ -351,30 +350,18 @@ void Sound::playSound(int16_t resID, uint8_t flags, int priority, bool unused) {
 			freeSlot = -1;
 			for (chanIdx = 0; chanIdx < 10; chanIdx++) {
 				if (this->channel[chanIdx].resID == soundResID) {
-					searchIdx = 0;
-					while (this->channel[searchIdx].resID != soundResID) {
-						++searchIdx;
-						if (searchIdx == 10)
-							goto found_existing_slot;
-					}
-					if (!this->openAL_IsPlaying(this->channel[searchIdx].sourceId)) {
-					found_existing_slot:
+					if (!this->openAL_IsPlaying(this->channel[chanIdx].sourceId)) {
 						existingSlot = chanIdx;
 						goto check_play_mode;
 					}
 					if (priority == 6) {
 						existingSlot = chanIdx;
-						if (chanIdx != -1 && this->openAL_IsPlaying(this->channel[chanIdx].sourceId))
-							return;
+						return;
 					}
 				}
 
-				if (freeSlot == -1) {
-					if (this->channel[chanIdx].resID == -1) {
-						freeSlot = chanIdx;
-					} else {
-						freeSlot = -1;
-					}
+				if (freeSlot == -1 && this->channel[chanIdx].resID == -1) {
+					freeSlot = chanIdx;
 				}
 			}
 
@@ -437,8 +424,12 @@ int Sound::getFreeSlot(int minPriority) {
 	slotIdx = 0;
 	bestSlot = -1;
 	lowestPriority = 6;
-	while (this->channel[slotIdx].resID != -1 &&
-	       (this->openAL_IsPlaying(this->channel[slotIdx].sourceId) || this->openAL_IsPaused(this->channel[slotIdx].sourceId))) {
+	while (this->channel[slotIdx].resID != -1) {
+		ALint state;
+		alGetSourcei(this->channel[slotIdx].sourceId, AL_SOURCE_STATE, &state);
+		if (state != AL_PLAYING && state != AL_PAUSED) {
+			break;
+		}
 		chanPriority = this->channel[slotIdx].priority;
 		isBetter = chanPriority < minPriority;
 		if (chanPriority < minPriority)
