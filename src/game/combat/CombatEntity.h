@@ -27,7 +27,6 @@ public:
 	int getIQPercent();
 	int addStat(int i, int i2);
 	int setStat(int i, int i2);
-	int calcXP();
 	void loadState(InputStream* inputStream, bool b);
 	void saveState(OutputStream* outputStream, bool b);
 	void calcCombat(CombatEntity* combatEntity, Entity* entity, bool b, int n, int n2);

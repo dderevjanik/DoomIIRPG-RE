@@ -325,10 +325,7 @@ int Entity::checkMonsterDeath(bool b, bool b2) {
             app->sound->playSound(resourceID, 0, 5, false);
         }
         if (b) {
-            xpAwarded = this->combat->calcXP();
-            if (this->isBoss()) {
-                xpAwarded += 130;
-            }
+            xpAwarded = app->combat->monsterBehaviors[this->def->monsterIdx].xp;
             app->player->addXP(xpAwarded);
         }
         if ((this->monsterFlags & Enums::MFLAG_NOTRACK) == 0x0) {

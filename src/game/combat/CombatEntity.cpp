@@ -83,10 +83,6 @@ int CombatEntity::setStat(int i, int i2) {
     return this->stats[i] = i2;
 }
 
-int CombatEntity::calcXP() {
-    return ((this->stats[3] + this->stats[4]) * 5 + this->stats[5] * 6 + this->stats[1] * 5 + 49) / 50;
-}
-
 void CombatEntity::loadState(InputStream* inputStream, bool b) {
     if (b) {
         this->stats[0] = (int)inputStream->readShort();

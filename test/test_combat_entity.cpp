@@ -96,40 +96,6 @@ static bool test_addStat_clamps_at_zero() {
     return true;
 }
 
-// --- calcXP ---
-
-static bool test_calcXP_basic() {
-    // Formula: ((defense + strength) * 5 + accuracy * 6 + maxHealth * 5 + 49) / 50
-    CombatEntity ce;
-    ce.setStat(1, 100); // max health
-    ce.setStat(3, 10);  // defense
-    ce.setStat(4, 10);  // strength
-    ce.setStat(5, 10);  // accuracy
-    // ((10 + 10) * 5 + 10 * 6 + 100 * 5 + 49) / 50
-    // = (100 + 60 + 500 + 49) / 50 = 709 / 50 = 14
-    ASSERT_EQ(ce.calcXP(), 14, "calcXP formula check");
-    return true;
-}
-
-static bool test_calcXP_zero_stats() {
-    CombatEntity ce;
-    // All stats zero: (0 + 0 + 0 + 49) / 50 = 0 (integer division)
-    ASSERT_EQ(ce.calcXP(), 0, "calcXP with zero stats should be 0");
-    return true;
-}
-
-static bool test_calcXP_high_stats() {
-    CombatEntity ce;
-    ce.setStat(1, 500); // max health
-    ce.setStat(3, 200); // defense
-    ce.setStat(4, 200); // strength
-    ce.setStat(5, 200); // accuracy
-    // ((200+200)*5 + 200*6 + 500*5 + 49) / 50
-    // = (2000 + 1200 + 2500 + 49) / 50 = 5749 / 50 = 114
-    ASSERT_EQ(ce.calcXP(), 114, "calcXP with high stats");
-    return true;
-}
-
 // --- getStatPercent ---
 
 static bool test_getStatPercent() {
@@ -225,9 +191,6 @@ int main() {
         {"addStat_increases",          test_addStat_increases},
         {"addStat_negative",           test_addStat_negative},
         {"addStat_clamps_at_zero",     test_addStat_clamps_at_zero},
-        {"calcXP_basic",               test_calcXP_basic},
-        {"calcXP_zero_stats",          test_calcXP_zero_stats},
-        {"calcXP_high_stats",          test_calcXP_high_stats},
         {"getStatPercent",             test_getStatPercent},
         {"getStatPercent_zero",        test_getStatPercent_zero},
         {"getIQPercent_below_100",     test_getIQPercent_below_100},

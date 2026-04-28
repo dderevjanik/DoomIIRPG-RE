@@ -1379,6 +1379,11 @@ std::expected<void, std::string> parseMonsterCombatFromEntities(Applet* app, con
 			}
 		}
 
+		// XP reward (sibling of behavior:, stats:, attacks:, loot: under combat:)
+		// Default 0 means no XP awarded — modders should set explicit values.
+		// Boss bonus is baked into the YAML value (no +130 in code).
+		app->combat->monsterBehaviors[mi].xp = combat["xp"].asInt(0);
+
 		// Behaviors
 		DataNode beh = combat["behavior"];
 		if (beh) {

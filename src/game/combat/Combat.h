@@ -19,6 +19,7 @@ struct MonsterDef {
 	// --- Behavioral rules ---
 	bool isBoss = false;
 	int bossMinTier = 0;        // Minimum tier (parm) to be considered a boss (0 = all tiers)
+	int xp = 0;                 // XP awarded to player on kill (loaded from monsters.yaml combat.xp; bosses bake +130 into the value)
 	bool fearImmune = false;
 	bool evading = false;
 	bool moveToAttack = false;
