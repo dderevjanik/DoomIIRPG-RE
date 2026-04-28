@@ -747,6 +747,8 @@ int main(int argc, char* args[]) {
 					LOG_INFO("[script] Completed {} ticks. Exiting.\n", ticksRun);
 					break;
 				}
+			} else {
+				SDL_Delay(1);
 			}
 		}
 	}
