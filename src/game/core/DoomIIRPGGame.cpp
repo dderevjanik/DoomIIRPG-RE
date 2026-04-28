@@ -354,6 +354,7 @@ void DoomIIRPGGame::registerEventListeners(Applet* app) {
 		// Per-level particle palette override from level.yaml `particle_palette:` (optional).
 		// If unset, the global default palette from particles.yaml stays active.
 		if (!app->particleSystem) return;
+		if (!app->canvas || !app->canvas->gameConfig) return;
 		const auto& gc = *app->canvas->gameConfig;
 		auto it = gc.levelInfos.find(e.mapID);
 		if (it == gc.levelInfos.end() || it->second.configFile.empty()) return;
