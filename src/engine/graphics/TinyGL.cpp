@@ -514,13 +514,19 @@ bool TinyGL::clipLine(TGLVert* array) {
 
 
 void TinyGL::projectVerts(TGLVert* array, int n) {
+	const int xBias = this->viewportXBias;
+	const int yBias = this->viewportYBias;
+	const int xScale = this->viewportXScale;
+	const int yScale = this->viewportYScale;
 	for (int i = 0; i < n; i++) {
 		TGLVert* tglVert = &array[i];
-		tglVert->x = this->viewportXBias + ((tglVert->x * this->viewportXScale) / tglVert->w);
-		tglVert->y = this->viewportYBias + ((tglVert->y * this->viewportYScale) / tglVert->w);
-		tglVert->z = 0x7fffff / tglVert->w;
-		tglVert->s *= tglVert->z;
-		tglVert->t *= tglVert->z;
+		const int w = tglVert->w;
+		const int z = 0x7fffff / w;
+		tglVert->x = xBias + ((tglVert->x * xScale) / w);
+		tglVert->y = yBias + ((tglVert->y * yScale) / w);
+		tglVert->z = z;
+		tglVert->s *= z;
+		tglVert->t *= z;
 	}
 }
 
@@ -532,27 +538,29 @@ void TinyGL::RasterizeConvexPolygon(int n) {
 	}
 
 	if (!app->render->_gles->RasterizeConvexPolygon(std::span(this->cv, n))) {
-		for (int i = 0; i < n; ++i) {
-			TGLVert* tglVert = &this->cv[i];
-			tglVert->x = this->viewportXBias + ((tglVert->x * this->viewportXScale) / tglVert->w);
-			tglVert->y = this->viewportYBias + ((tglVert->y * this->viewportYScale) / tglVert->w);
-			if (app->render->isSkyMap) {
-				this->swapXY = false;
-				// Original BREW version
-				//tglVert->s = app->render->skyMapX + tglVert->x << (this->sShift - 7U & 0xff);
-				//tglVert->t = app->render->skyMapY + tglVert->y << (this->tShift + 1U & 0xff);
-				//tglVert->z = 4096;
-
+		if (app->render->isSkyMap) {
+			this->swapXY = false;
+			const int xBias = this->viewportXBias;
+			const int yBias = this->viewportYBias;
+			const int xScale = this->viewportXScale;
+			const int yScale = this->viewportYScale;
+			const int sShiftAmt = (this->sShift - 8U) & 0xff;
+			const int tShiftAmt = (this->tShift + 1U) & 0xff;
+			const int skyMapXBias = (132 << 4) + (app->render->skyMapX * 2);
+			const int skyMapY = app->render->skyMapY;
+			for (int i = 0; i < n; ++i) {
+				TGLVert* tglVert = &this->cv[i];
+				const int w = tglVert->w;
+				tglVert->x = xBias + ((tglVert->x * xScale) / w);
+				tglVert->y = yBias + ((tglVert->y * yScale) / w);
 				// [GEC] It is adjusted like this to be consistent with the IOS version
-				tglVert->s = (132 << 4) + (app->render->skyMapX * 2) + tglVert->x << (this->sShift - 8U & 0xff);
-				tglVert->t = app->render->skyMapY + tglVert->y << (this->tShift + 1U & 0xff);
+				tglVert->s = skyMapXBias + tglVert->x << sShiftAmt;
+				tglVert->t = skyMapY + tglVert->y << tShiftAmt;
 				tglVert->z = 4096;
 			}
-			else {
-				tglVert->z = 0x7FFFFF / tglVert->w;
-				tglVert->s *= tglVert->z;
-				tglVert->t *= tglVert->z;
-			}
+		}
+		else {
+			this->projectVerts(this->cv, n);
 		}
 		//++Span.countDrawn;
 		if ((app->render->renderMode & 0x8) == 0x0) {
