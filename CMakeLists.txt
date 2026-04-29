@@ -40,6 +40,19 @@ find_package(ZLIB REQUIRED)
 find_package(OpenAL REQUIRED)
 find_package(OpenGL REQUIRED)
 
+# Vorbis (libvorbisfile) for streaming Ogg-Vorbis music tracks. Loaded via
+# vcpkg; both libvorbis and libvorbisfile come as a single port. Falls back
+# to pkg-config (e.g. Homebrew on macOS) if the vcpkg config isn't present.
+find_package(Vorbis CONFIG)
+if(NOT Vorbis_FOUND)
+	find_package(PkgConfig QUIET)
+	if(PkgConfig_FOUND)
+		# IMPORTED_TARGET creates `PkgConfig::vorbisfile` with all link/include
+		# flags wired correctly, including the -L path that bare _LIBRARIES misses.
+		pkg_check_modules(VORBISFILE QUIET IMPORTED_TARGET vorbisfile)
+	endif()
+endif()
+
 # yaml-cpp (fetched at configure time)
 include(FetchContent)
 FetchContent_Declare(

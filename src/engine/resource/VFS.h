@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdio>
 #include <stdint.h>
 #include <vector>
 #include <string>
@@ -45,6 +46,13 @@ public:
 	// Returns malloc'd buffer, caller must free(). Sets *sizeOut to file size.
 	// Returns nullptr if not found in any mount.
 	[[nodiscard]] uint8_t* readFile(const char* path, int* sizeOut);
+
+	// Open a file for streaming (random-access reads without loading the entire
+	// file into RAM). Returns a FILE* opened "rb" for the first directory mount
+	// that contains this path, or nullptr if the file is only in a zip mount or
+	// doesn't exist. Sets *sizeOut to file size on success. Caller must fclose().
+	// Used by Sound for music streaming via OpenAL streaming buffers.
+	[[nodiscard]] FILE* openFileForReading(const char* path, int* sizeOut);
 
 	// Check if a file exists in any mount
 	[[nodiscard]] bool fileExists(const char* path);

@@ -1,7 +1,12 @@
 #pragma once
+#include <memory>
+#include <unordered_map>
 #include <vector>
 #include <al.h>
 #include <alc.h>
+#include "AssetLoader.h"
+
+class InputStream;
 
 typedef uint32_t AudioFormatID;
 typedef uint32_t AudioFormatFlags;
@@ -28,6 +33,53 @@ private:
 
 public:
 
+	// Streamed music playback — keeps a file handle open and feeds OpenAL via
+	// 4 small queued buffers refilled per-frame. Avoids the 10 MB-per-track RAM
+	// cost and the multi-tens-of-ms first-play stall of full alBufferData loads.
+	// Auto-detects WAV (RIFF) and Ogg Vorbis (OggS) by file magic — Ogg support
+	// is gated by DRPG_HAS_VORBIS.
+	class MusicStream {
+	public:
+		static constexpr int NUM_BUFFERS = 4;
+		static constexpr int CHUNK_BYTES = 16 * 1024;
+
+		std::unique_ptr<InputStream> stream;
+		ALuint streamBuffers[NUM_BUFFERS] = {};
+		ALenum format = 0;
+		int sampleRate = 0;
+		// WAV path uses dataOffset+dataSize+readCursor as a byte cursor into
+		// the file. Ogg path leaves them zero and uses the OggDecoder pimpl.
+		int dataOffset = 0;
+		int dataSize = 0;
+		int readCursor = 0;
+		bool looping = false;
+		bool eof = false;
+		bool isOgg = false;
+		// Pimpl, only allocated when isOgg. Forward-declared here so callers
+		// don't need to pull in <vorbis/vorbisfile.h>.
+		std::unique_ptr<struct OggDecoder> ogg;
+
+		MusicStream();
+		~MusicStream();
+
+		// Open the music file at fileName (WAV or Ogg), allocate AL buffers,
+		// pre-fill them, and start playing on `source`. Returns false on any
+		// failure (caller falls back to non-streaming load).
+		bool start(const char* fileName, ALuint source, bool loop);
+		// Per-frame refill: unqueue any drained buffers and refill from the file.
+		void update(ALuint source);
+		// Stop playback, drain queued buffers, free AL buffers + close file.
+		void stop(ALuint source);
+
+	private:
+		// Read up to CHUNK_BYTES bytes into `dst`. Dispatches to the WAV or Ogg
+		// decoder based on isOgg. Returns bytes actually read (0 on hard EOF
+		// when !looping).
+		int readNextChunk(uint8_t* dst);
+		int readNextWavChunk(uint8_t* dst);
+		int readNextOggChunk(uint8_t* dst);
+	};
+
 	class SoundStream
 	{
 	public:
@@ -43,6 +95,10 @@ public:
 		int fadeBeg = 0;
 		int fadetime = 0;
 		float fadeVolume = 0.0f;
+		// Non-null only for music tracks (resID 1067..1071). When set, the slot
+		// is in streaming mode: alBufferData was NOT called; instead the stream
+		// queues alSourceQueueBuffers chunks, refilled from Sound::startFrame().
+		std::unique_ptr<MusicStream> music;
 
 		void StartFade(int volume, int fadeBeg, int fadeEnd);
 	};
@@ -67,6 +123,14 @@ public:
 	ALCcontext* alContext = nullptr;
 	ALCdevice* alDevice = nullptr;
 
+	// Background loader for SFX preloading. Worker thread reads WAV bytes off
+	// the main thread; the main thread drains finished results in startFrame()
+	// and publishes them to OpenAL via alBufferData, caching the resulting
+	// buffer ids in preloadedBuffers so subsequent playSound calls skip the
+	// per-play disk I/O entirely.
+	AssetLoader assetLoader;
+	std::unordered_map<int, ALuint> preloadedBuffers;
+
 	// Constructor
 	Sound();
 	// Destructor
@@ -90,6 +154,10 @@ public:
 	bool openAL_LoadAllSounds();
 
 	bool cacheSounds();
+	// Kick off async pre-loading of every non-music SFX in the catalog. Idempotent.
+	void preloadAllSFX();
+	// Drain finished AssetLoader results, publish to OpenAL, populate preloadedBuffers.
+	void drainPreloadResults();
 	void playSound(int16_t resID, uint8_t flags, int priority, bool unused); // guessed — param never read
 	int getFreeSlot(int minPriority); // guessed
 	int allocateChannel();

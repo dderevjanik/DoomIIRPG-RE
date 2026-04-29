@@ -47,6 +47,15 @@ class InputStream {
 	// alive until `close()`. Used by the map editor for fast hot-reload of a
 	// compiled .bin without round-tripping through disk.
 	bool loadFromBuffer(const uint8_t* data, int size);
+	// Open this stream for chunked random-access reads without loading the
+	// entire file into RAM. Used by Sound for music streaming. Only works for
+	// files in directory mounts (not zip mounts) — caller falls back to
+	// loadFile() if this returns false. After open, use readChunk() to read
+	// pieces and getFileSize() for the total size.
+	bool openForStreaming(const char* fileName, int loadType);
+	// Random-access read at byte offset into dst. Works for streamed files
+	// (fseek + fread) and fully-loaded files (memcpy from this->data).
+	bool readChunk(uint8_t* dst, int offset, int len);
 	void close();
 	int readInt();
 	int readShort();

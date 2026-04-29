@@ -215,6 +215,47 @@ uint8_t* VFS::readFile(const char* path, int* sizeOut) {
 	return nullptr;
 }
 
+// Helper: try to open a file from a single directory mount for streaming reads.
+static FILE* openStreamFromDir(const VFSMount& mount, const char* path, int* sizeOut) {
+	std::string fullPath = mount.basePath;
+	if (!fullPath.empty() && fullPath.back() != '/') {
+		fullPath += '/';
+	}
+	fullPath += path;
+
+	FILE* f = std::fopen(fullPath.c_str(), "rb");
+	if (!f) {
+		return nullptr;
+	}
+	std::fseek(f, 0, SEEK_END);
+	*sizeOut = (int)std::ftell(f);
+	std::fseek(f, 0, SEEK_SET);
+	return f;
+}
+
+FILE* VFS::openFileForReading(const char* path, int* sizeOut) {
+	for (const auto& mount : mounts) {
+		if (mount.zip) continue; // zip streaming would need a separate path; skip for now
+		FILE* f = openStreamFromDir(mount, path, sizeOut);
+		if (f) return f;
+	}
+
+	if (!searchDirs.empty()) {
+		if (!fileIndexBuilt) {
+			buildFileIndex();
+		}
+		if (auto it = fileIndex.find(path); it != fileIndex.end()) {
+			for (const auto& mount : mounts) {
+				if (mount.zip) continue;
+				FILE* f = openStreamFromDir(mount, it->second.c_str(), sizeOut);
+				if (f) return f;
+			}
+		}
+	}
+
+	return nullptr;
+}
+
 bool VFS::fileExists(const char* path) {
 	// Try exact path first
 	for (const auto& mount : mounts) {

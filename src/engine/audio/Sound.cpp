@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <cstring>
 #include <print>
 #include <stdexcept>
 #include <al.h>
@@ -11,9 +12,333 @@
 #include "Sounds.h"
 #include "JavaStream.h"
 
+#if defined(DRPG_HAS_VORBIS)
+#include <vorbis/vorbisfile.h>
+#endif
+
+// Forward decl from inside this file — defined before MusicStream below.
+static bool parseWavHeader(InputStream* is, ALenum* alFormat, int* sampleRate, int* dataOffset, int* dataSize);
+
+// ---------------------------------------------------------------------------
+// OggDecoder — pimpl-style state for Vorbis decoding. Lives only in this TU
+// so the rest of the engine doesn't pull in vorbis headers.
+// ---------------------------------------------------------------------------
+
+#if defined(DRPG_HAS_VORBIS)
+struct OggDecoder {
+	OggVorbis_File vf;
+	InputStream* stream = nullptr; // borrowed from MusicStream; not owned
+	int cursor = 0;
+	bool opened = false;
+
+	OggDecoder() { std::memset(&vf, 0, sizeof(vf)); }
+	~OggDecoder() {
+		if (opened) {
+			ov_clear(&vf);
+		}
+	}
+};
+
+// libvorbisfile callbacks adapting to InputStream::readChunk.
+static size_t ovRead(void* ptr, size_t size, size_t nmemb, void* datasource) {
+	OggDecoder* d = (OggDecoder*)datasource;
+	int wanted = (int)(size * nmemb);
+	int avail = d->stream->getFileSize() - d->cursor;
+	int n = std::min(wanted, std::max(0, avail));
+	if (n <= 0) return 0;
+	if (!d->stream->readChunk((uint8_t*)ptr, d->cursor, n)) return 0;
+	d->cursor += n;
+	return (size_t)(n / size);
+}
+
+static int ovSeek(void* datasource, ogg_int64_t offset, int whence) {
+	OggDecoder* d = (OggDecoder*)datasource;
+	int newCursor = d->cursor;
+	switch (whence) {
+		case SEEK_SET: newCursor = (int)offset; break;
+		case SEEK_CUR: newCursor = d->cursor + (int)offset; break;
+		case SEEK_END: newCursor = d->stream->getFileSize() + (int)offset; break;
+		default: return -1;
+	}
+	if (newCursor < 0 || newCursor > d->stream->getFileSize()) return -1;
+	d->cursor = newCursor;
+	return 0;
+}
+
+static long ovTell(void* datasource) {
+	OggDecoder* d = (OggDecoder*)datasource;
+	return d->cursor;
+}
+
+static int ovClose(void*) { return 0; } // we don't close — InputStream owns the file handle
+
+static const ov_callbacks ovCallbacks = { ovRead, ovSeek, ovClose, ovTell };
+#else
+struct OggDecoder {}; // stub when vorbis is unavailable
+#endif
+
+// ---------------------------------------------------------------------------
+// MusicStream — see Sound.h for description.
+// ---------------------------------------------------------------------------
+
+Sound::MusicStream::MusicStream() = default;
+
+Sound::MusicStream::~MusicStream() {
+	for (ALuint buf : streamBuffers) {
+		if (buf != 0) {
+			alDeleteBuffers(1, &buf);
+		}
+	}
+}
+
+// Parse a 16- or 18-byte "fmt " WAV chunk into format/freq/channels/bits and
+// then walk the file looking for the "data" chunk. On success, populates
+// dataOffset/dataSize and returns true. Works against any InputStream — file
+// or in-memory buffer (from loadFromBuffer).
+static bool parseWavHeader(InputStream* is, ALenum* alFormat, int* sampleRate, int* dataOffset, int* dataSize) {
+	uint8_t hdr[44];
+	if (!is->readChunk(hdr, 0, 12)) return false;
+	if (std::memcmp(hdr, "RIFF", 4) != 0) return false;
+	if (std::memcmp(hdr + 8, "WAVE", 4) != 0) return false;
+
+	int pos = 12;
+	int channels = 0, bits = 0;
+	bool haveFmt = false;
+	while (pos + 8 <= is->getFileSize()) {
+		uint8_t chunkHdr[8];
+		if (!is->readChunk(chunkHdr, pos, 8)) return false;
+		uint32_t chunkLen = (uint32_t)chunkHdr[4] | ((uint32_t)chunkHdr[5] << 8)
+		                  | ((uint32_t)chunkHdr[6] << 16) | ((uint32_t)chunkHdr[7] << 24);
+		pos += 8;
+
+		if (std::memcmp(chunkHdr, "fmt ", 4) == 0) {
+			if (chunkLen < 16) return false;
+			uint8_t fmt[18] = {};
+			if (!is->readChunk(fmt, pos, (int)std::min<uint32_t>(chunkLen, 18))) return false;
+			uint16_t fmtId = (uint16_t)fmt[0] | ((uint16_t)fmt[1] << 8);
+			if (fmtId != 1) return false; // PCM only
+			channels = (uint16_t)fmt[2] | ((uint16_t)fmt[3] << 8);
+			*sampleRate = (int)((uint32_t)fmt[4] | ((uint32_t)fmt[5] << 8)
+			                  | ((uint32_t)fmt[6] << 16) | ((uint32_t)fmt[7] << 24));
+			bits = (uint16_t)fmt[14] | ((uint16_t)fmt[15] << 8);
+			haveFmt = true;
+		} else if (std::memcmp(chunkHdr, "data", 4) == 0) {
+			if (!haveFmt) return false;
+			*dataOffset = pos;
+			*dataSize = (int)chunkLen;
+			if (channels == 1 && bits == 8)  *alFormat = AL_FORMAT_MONO8;
+			else if (channels == 1 && bits == 16) *alFormat = AL_FORMAT_MONO16;
+			else if (channels == 2 && bits == 8)  *alFormat = AL_FORMAT_STEREO8;
+			else if (channels == 2 && bits == 16) *alFormat = AL_FORMAT_STEREO16;
+			else return false;
+			return true;
+		}
+		pos += (int)chunkLen + (chunkLen & 1u); // chunks are 2-byte aligned
+	}
+	return false;
+}
+
+int Sound::MusicStream::readNextWavChunk(uint8_t* dst) {
+	int remaining = this->dataSize - this->readCursor;
+	if (remaining <= 0) {
+		if (!this->looping) {
+			this->eof = true;
+			return 0;
+		}
+		this->readCursor = 0;
+		remaining = this->dataSize;
+	}
+	int n = std::min(CHUNK_BYTES, remaining);
+	if (!this->stream->readChunk(dst, this->dataOffset + this->readCursor, n)) {
+		return 0;
+	}
+	this->readCursor += n;
+	return n;
+}
+
+int Sound::MusicStream::readNextOggChunk(uint8_t* dst) {
+#if defined(DRPG_HAS_VORBIS)
+	int totalRead = 0;
+	int section = 0;
+	while (totalRead < CHUNK_BYTES) {
+		long ret = ov_read(&this->ogg->vf, (char*)dst + totalRead,
+		                   CHUNK_BYTES - totalRead, 0, 2, 1, &section);
+		if (ret == 0) {
+			if (this->looping) {
+				ov_pcm_seek(&this->ogg->vf, 0);
+				continue;
+			}
+			this->eof = true;
+			break;
+		}
+		if (ret < 0) {
+			// Decode error; bail out of this chunk.
+			break;
+		}
+		totalRead += (int)ret;
+	}
+	return totalRead;
+#else
+	(void)dst;
+	return 0;
+#endif
+}
+
+int Sound::MusicStream::readNextChunk(uint8_t* dst) {
+	return this->isOgg ? this->readNextOggChunk(dst) : this->readNextWavChunk(dst);
+}
+
+bool Sound::MusicStream::start(const char* fileName, ALuint source, bool loop) {
+	this->stream = std::make_unique<InputStream>();
+	if (!this->stream->openForStreaming(fileName, LT_SOUND_RESOURCE)) {
+		LOG_WARN("[sound] MusicStream: openForStreaming failed for {}\n", fileName);
+		this->stream.reset();
+		return false;
+	}
+
+	// Sniff first 4 bytes to choose between WAV (RIFF) and Ogg (OggS).
+	uint8_t magic[4] = {};
+	if (!this->stream->readChunk(magic, 0, 4)) {
+		LOG_WARN("[sound] MusicStream: cannot read magic bytes from {}\n", fileName);
+		this->stream.reset();
+		return false;
+	}
+
+	if (std::memcmp(magic, "OggS", 4) == 0) {
+#if defined(DRPG_HAS_VORBIS)
+		this->ogg = std::make_unique<OggDecoder>();
+		this->ogg->stream = this->stream.get();
+		this->ogg->cursor = 0;
+		if (ov_open_callbacks(this->ogg.get(), &this->ogg->vf, nullptr, 0, ovCallbacks) != 0) {
+			LOG_WARN("[sound] MusicStream: ov_open_callbacks failed for {}\n", fileName);
+			this->ogg.reset();
+			this->stream.reset();
+			return false;
+		}
+		this->ogg->opened = true;
+		vorbis_info* info = ov_info(&this->ogg->vf, -1);
+		if (!info) {
+			LOG_WARN("[sound] MusicStream: ov_info returned null for {}\n", fileName);
+			this->ogg.reset();
+			this->stream.reset();
+			return false;
+		}
+		this->sampleRate = (int)info->rate;
+		if (info->channels == 1) this->format = AL_FORMAT_MONO16;
+		else if (info->channels == 2) this->format = AL_FORMAT_STEREO16;
+		else {
+			LOG_WARN("[sound] MusicStream: unsupported channel count {} in {}\n",
+			         info->channels, fileName);
+			this->ogg.reset();
+			this->stream.reset();
+			return false;
+		}
+		this->isOgg = true;
+		this->dataOffset = 0;
+		this->dataSize = 0;
+#else
+		LOG_WARN("[sound] MusicStream: Ogg file {} but engine built without DRPG_HAS_VORBIS\n", fileName);
+		this->stream.reset();
+		return false;
+#endif
+	} else if (std::memcmp(magic, "RIFF", 4) == 0) {
+		if (!parseWavHeader(this->stream.get(), &this->format, &this->sampleRate,
+		                    &this->dataOffset, &this->dataSize)) {
+			LOG_WARN("[sound] MusicStream: parseWavHeader failed for {}\n", fileName);
+			this->stream.reset();
+			return false;
+		}
+		this->isOgg = false;
+	} else {
+		LOG_WARN("[sound] MusicStream: unknown magic in {} ({:02x}{:02x}{:02x}{:02x})\n",
+		         fileName, magic[0], magic[1], magic[2], magic[3]);
+		this->stream.reset();
+		return false;
+	}
+
+	this->readCursor = 0;
+	this->eof = false;
+	this->looping = loop;
+
+	alGenBuffers(NUM_BUFFERS, this->streamBuffers);
+
+	uint8_t chunk[CHUNK_BYTES];
+	int queued = 0;
+	for (int i = 0; i < NUM_BUFFERS; ++i) {
+		int n = this->readNextChunk(chunk);
+		if (n <= 0) break;
+		alBufferData(this->streamBuffers[i], this->format, chunk, n, this->sampleRate);
+		alSourceQueueBuffers(source, 1, &this->streamBuffers[i]);
+		++queued;
+	}
+	if (queued == 0) {
+		LOG_WARN("[sound] MusicStream: empty data for {}\n", fileName);
+		alDeleteBuffers(NUM_BUFFERS, this->streamBuffers);
+		std::memset(this->streamBuffers, 0, sizeof(this->streamBuffers));
+		this->ogg.reset();
+		this->stream.reset();
+		return false;
+	}
+
+	alSourcei(source, AL_LOOPING, AL_FALSE); // we handle looping ourselves
+	alSourcePlay(source);
+	LOG_INFO("[sound] MusicStream: started {} ({}, {} Hz, loop={})\n",
+	         fileName, this->isOgg ? "ogg" : "wav", this->sampleRate, loop ? 1 : 0);
+	return true;
+}
+
+void Sound::MusicStream::update(ALuint source) {
+	ALint processed = 0;
+	alGetSourcei(source, AL_BUFFERS_PROCESSED, &processed);
+
+	uint8_t chunk[CHUNK_BYTES];
+	while (processed-- > 0) {
+		ALuint buf = 0;
+		alSourceUnqueueBuffers(source, 1, &buf);
+		if (buf == 0) break;
+		int n = this->readNextChunk(chunk);
+		if (n > 0) {
+			alBufferData(buf, this->format, chunk, n, this->sampleRate);
+			alSourceQueueBuffers(source, 1, &buf);
+		}
+		// else: source will drain naturally; we don't requeue at EOF.
+	}
+
+	// If the source stopped because all queued buffers drained, but we still
+	// have data to play (looping turned on mid-track or we just barely missed
+	// the refill window), kick it back into play.
+	ALint state = AL_STOPPED;
+	alGetSourcei(source, AL_SOURCE_STATE, &state);
+	if (state != AL_PLAYING && state != AL_PAUSED && !this->eof) {
+		ALint queued = 0;
+		alGetSourcei(source, AL_BUFFERS_QUEUED, &queued);
+		if (queued > 0) {
+			alSourcePlay(source);
+		}
+	}
+}
+
+void Sound::MusicStream::stop(ALuint source) {
+	alSourceStop(source);
+	alSourcei(source, AL_BUFFER, 0); // detaches all queued/processed buffers
+	for (ALuint& buf : this->streamBuffers) {
+		if (buf != 0) {
+			alDeleteBuffers(1, &buf);
+			buf = 0;
+		}
+	}
+	this->ogg.reset();    // ov_clear() in ~OggDecoder
+	this->stream.reset();
+}
+
+// ---------------------------------------------------------------------------
+// Sound class
+// ---------------------------------------------------------------------------
+
 Sound::Sound() = default;
 
 Sound::~Sound() {
+	this->assetLoader.shutdown();
 	if (this->headless) { return; }
 	this->soundStop();
 	this->openAL_Close();
@@ -87,6 +412,12 @@ void Sound::openAL_Init() {
 }
 
 void Sound::openAL_Close() {
+	// Drop the preloaded SFX cache before deleting buffers.
+	for (auto& kv : this->preloadedBuffers) {
+		if (kv.second != 0) { alDeleteBuffers(1, &kv.second); }
+	}
+	this->preloadedBuffers.clear();
+
 	for (auto& ch : this->channel) {
 		if (ch.bufferId != 0) { alDeleteBuffers(1, &ch.bufferId); }
 		if (ch.sourceId != 0) { alDeleteSources(1, &ch.sourceId); }
@@ -296,7 +627,8 @@ bool Sound::openAL_LoadAllSounds() {
 
 int Sound::allocateChannel() {
 	ALenum error;
-	SoundStream s;
+	this->channel.emplace_back();
+	SoundStream& s = this->channel.back();
 	s.resID = -1;
 	s.priority = 1;
 	alGenBuffers(1, &s.bufferId);
@@ -304,7 +636,6 @@ int Sound::allocateChannel() {
 	alSource3i(s.sourceId, AL_POSITION, 0, 0, 0);
 	alSourcei(s.sourceId, AL_REFERENCE_DISTANCE, 5000000);
 	OpenAL_ERROR(643);
-	this->channel.push_back(s);
 	return (int)this->channel.size() - 1;
 }
 
@@ -312,9 +643,56 @@ bool Sound::cacheSounds() {
 	if (this->headless) { return true; }
 	if (this->openAL_LoadAllSounds()) {
 		this->updateVolume();
+		this->preloadAllSFX();
 		return true;
 	}
 	return false;
+}
+
+void Sound::preloadAllSFX() {
+	if (this->headless) { return; }
+	this->assetLoader.start(); // idempotent
+	int enqueued = 0;
+	for (int i = 0; i < Sounds::getCount(); ++i) {
+		// Skip music tracks — they stream via MusicStream and shouldn't be
+		// pre-loaded into a single AL buffer.
+		if (i >= 67 && i <= 71) continue;
+		const char* fileName = Sounds::getFileName(i);
+		if (!fileName || !fileName[0]) continue;
+		this->assetLoader.enqueueSoundLoad(i + 1000, std::string(fileName));
+		++enqueued;
+	}
+	LOG_INFO("[sound] preloadAllSFX: enqueued {} SFX for async load\n", enqueued);
+}
+
+void Sound::drainPreloadResults() {
+	if (this->headless) { return; }
+	AssetLoader::Result r;
+	int published = 0;
+	while (this->assetLoader.tryPopResult(r)) {
+		if (!r.success || r.bytes.empty()) continue;
+		// Already cached (e.g. lazy-loaded before the worker got to it).
+		if (this->preloadedBuffers.count(r.resID)) continue;
+
+		// Wrap the bytes in an in-memory InputStream and parse the WAV header.
+		InputStream is;
+		if (!is.loadFromBuffer(r.bytes.data(), (int)r.bytes.size())) continue;
+		ALenum format = 0;
+		int sampleRate = 0, dataOffset = 0, dataSize = 0;
+		if (!parseWavHeader(&is, &format, &sampleRate, &dataOffset, &dataSize)) continue;
+		if (dataOffset + dataSize > (int)r.bytes.size()) continue;
+
+		ALuint buf = 0;
+		alGenBuffers(1, &buf);
+		if (buf == 0) continue;
+		alBufferData(buf, format, r.bytes.data() + dataOffset, dataSize, sampleRate);
+		this->preloadedBuffers[r.resID] = buf;
+		++published;
+	}
+	if (published > 0) {
+		LOG_DEBUG("[sound] drainPreloadResults: published {} buffers (cache size now {})\n",
+		          published, (int)this->preloadedBuffers.size());
+	}
 }
 
 void Sound::playSound(int16_t resID, uint8_t flags, int priority, bool unused) {
@@ -390,12 +768,44 @@ void Sound::playSound(int16_t resID, uint8_t flags, int priority, bool unused) {
 						return;
 				}
 				channel = &this->channel[freeSlot];
+				// Tear down any prior streaming state on this slot before reuse.
+				if (channel->music) {
+					channel->music->stop(channel->sourceId);
+					channel->music.reset();
+				}
 				channel->resID = resID;
 				channel->priority = priority;
 				alSourceStop(channel->sourceId);
 				alSourcei(channel->sourceId, AL_BUFFER, 0);
-				this->openAL_LoadSound(soundResID, &this->channel[freeSlot]);
-				alSourcei(channel->sourceId, AL_BUFFER, channel->bufferId);
+
+				// Music tracks (resID 1067..1071) play via MusicStream — keeps the
+				// file open and feeds OpenAL via 4 small queued buffers refilled
+				// in startFrame(), instead of loading the entire 9–11 MB WAV.
+				if ((unsigned int)(resID - 1067) <= 4) {
+					int index = (uint16_t)(resID - 1000);
+					const char* fileName = Sounds::getFileName(index);
+					if (fileName) {
+						auto stream = std::make_unique<MusicStream>();
+						if (stream->start(fileName, channel->sourceId, (flags & 1) != 0)) {
+							channel->music = std::move(stream);
+							this->openAL_SetVolume(channel->sourceId, this->musicVolume);
+							OpenAL_ERROR(258);
+							return; // alSourcePlay was issued inside MusicStream::start
+						}
+						LOG_WARN("[sound] MusicStream failed for {}; falling back to full load\n", fileName);
+					}
+					// Fall through to non-streaming path on stream failure.
+				}
+
+				// Use the preloaded buffer if the AssetLoader has already published
+				// one for this sound. Skips the per-play disk I/O + RIFF parse.
+				auto preIt = this->preloadedBuffers.find(soundResID);
+				if (preIt != this->preloadedBuffers.end()) {
+					alSourcei(channel->sourceId, AL_BUFFER, preIt->second);
+				} else {
+					this->openAL_LoadSound(soundResID, &this->channel[freeSlot]);
+					alSourcei(channel->sourceId, AL_BUFFER, channel->bufferId);
+				}
 				if ((unsigned int)(channel->resID - 1067) > 4)
 					volume = this->soundFxVolume;
 				else
@@ -448,7 +858,12 @@ int Sound::getFreeSlot(int minPriority) {
 void Sound::soundStop() {
 	if (this->headless) { return; }
 	for (size_t i = 0; i < this->channel.size(); ++i) {
-		alSourceStop(this->channel[i].sourceId);
+		if (this->channel[i].music) {
+			this->channel[i].music->stop(this->channel[i].sourceId);
+			this->channel[i].music.reset();
+		} else {
+			alSourceStop(this->channel[i].sourceId);
+		}
 		this->channel[i].priority = 1;
 		this->channel[i].fadeInProgress = false;
 	}
@@ -468,7 +883,12 @@ void Sound::stopSound(int resID, bool fadeOut) {
 					this->channel[i].StartFade(volume, 0, 500);
 				}
 			} else {
-				alSourceStop(this->channel[i].sourceId);
+				if (this->channel[i].music) {
+					this->channel[i].music->stop(this->channel[i].sourceId);
+					this->channel[i].music.reset();
+				} else {
+					alSourceStop(this->channel[i].sourceId);
+				}
 				this->channel[i].priority = 1;
 				this->channel[i].fadeInProgress = false;
 			}
@@ -546,6 +966,18 @@ void Sound::startFrame() {
 			this->unused_0x15c = -1;
 			this->hasDeferredSound = 0;
 		}
+	}
+
+	// Refill streaming buffers for any music slots. Cheap when there is no
+	// music playing (just an empty range) — only ever 1–2 slots have streams.
+	if (!this->headless) {
+		for (size_t i = 0; i < this->channel.size(); ++i) {
+			if (this->channel[i].music) {
+				this->channel[i].music->update(this->channel[i].sourceId);
+			}
+		}
+		// Publish any SFX that the AssetLoader worker finished reading.
+		this->drainPreloadResults();
 	}
 }
 

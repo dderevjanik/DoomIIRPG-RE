@@ -73,6 +73,23 @@ target_link_libraries(drpg-engine-lib PUBLIC
 	yaml-cpp::yaml-cpp
 	imgui)
 
+# Vorbis (libvorbisfile) for music streaming. Optional — when present, the
+# engine auto-detects Ogg files alongside WAV. When absent, only WAV streams.
+if(Vorbis_FOUND)
+	target_link_libraries(drpg-engine-lib PUBLIC Vorbis::vorbisfile)
+	target_compile_definitions(drpg-engine-lib PUBLIC DRPG_HAS_VORBIS=1)
+	message(STATUS "Vorbis: enabled via vcpkg/CMake config")
+elseif(VORBISFILE_FOUND)
+	# pkg_check_modules splits the link into _LIBRARIES (just names) + _LIBRARY_DIRS.
+	target_include_directories(drpg-engine-lib PUBLIC ${VORBISFILE_INCLUDE_DIRS})
+	target_link_directories(drpg-engine-lib PUBLIC ${VORBISFILE_LIBRARY_DIRS})
+	target_link_libraries(drpg-engine-lib PUBLIC ${VORBISFILE_LIBRARIES})
+	target_compile_definitions(drpg-engine-lib PUBLIC DRPG_HAS_VORBIS=1)
+	message(STATUS "Vorbis: enabled via pkg-config (libdir=${VORBISFILE_LIBRARY_DIRS})")
+else()
+	message(STATUS "Vorbis: NOT FOUND — Ogg music streaming will be disabled")
+endif()
+
 # Main game executable
 if(APPLE)
 	set(MACOSX_ICON "${CMAKE_CURRENT_SOURCE_DIR}/engine/appicon.icns")

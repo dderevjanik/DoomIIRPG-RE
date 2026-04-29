@@ -73,6 +73,40 @@ int InputStream::getFileSize() {
 	return this->fileSize;
 }
 
+bool InputStream::openForStreaming(const char* fileName, int loadType) {
+	this->cursor = 0;
+	this->data = nullptr;
+
+	if (loadType == LT_RESOURCE) {
+		VFS* vfs = CAppContainer::getInstance()->vfs;
+		this->file = vfs->openFileForReading(fileName, &this->fileSize);
+		return this->file != nullptr;
+	}
+	if (loadType == LT_SOUND_RESOURCE) {
+		VFS* vfs = CAppContainer::getInstance()->vfs;
+		auto namePath = std::format("audio/{}", fileName);
+		this->file = vfs->openFileForReading(namePath.c_str(), &this->fileSize);
+		return this->file != nullptr;
+	}
+	return false; // streaming not supported for LT_FILE / save-dir paths
+}
+
+bool InputStream::readChunk(uint8_t* dst, int offset, int len) {
+	if (offset < 0 || len < 0 || offset + len > this->fileSize) {
+		return false;
+	}
+	if (this->file) {
+		if (std::fseek(this->file, offset, SEEK_SET) != 0) return false;
+		size_t got = std::fread(dst, 1, (size_t)len, this->file);
+		return (int)got == len;
+	}
+	if (this->data) {
+		std::memcpy(dst, this->data + offset, (size_t)len);
+		return true;
+	}
+	return false;
+}
+
 bool InputStream::loadResource(const char* fileName) {
 	return loadFile(fileName, LT_RESOURCE);
 }
