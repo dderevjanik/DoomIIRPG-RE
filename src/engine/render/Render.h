@@ -308,11 +308,6 @@ public:
 	int* mediaTexelSizes2 = nullptr;
 	uint16_t*** mediaPalettes = nullptr;
 	int* mediaPalettesSizes = nullptr;
-	int fogTableColor = 0;
-	int fogTableFrac = 0;
-	int fogTableBaseSize = 0; // Pc port only
-	uint16_t* fogTableBase = nullptr;
-	uint16_t* fogTableDest = nullptr;
 	int* splitSprites = nullptr;
 	int numSplitSprites = 0;
 	int traceLine[4] = {};
@@ -434,8 +429,6 @@ public:
 	void savePlayerFog();
 	void snapFogLerp();
 	void startFogLerp(int n, int n2, int fogLerpTime);
-	void buildFogTable();
-	void buildFogTable(int n, int n2, int n3);
 	void buildFogTables(int fogColor);
 	int(*getImageFrameBounds(int n, int n2, int n3, int n4))[4];
 	uint16_t* getPalette(int n, int n2, int n3);

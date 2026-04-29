@@ -51,17 +51,12 @@ public:
     int viewportWidth = 0;
     int viewportHeight = 0;
     int viewportClampX1 = 0;
-    int viewportClampY1 = 0;
     int viewportClampX2 = 0;
-    int viewportClampY2 = 0;
     int viewportX2 = 0;
-    int viewportY2 = 0;
     int viewportXScale = 0;
     int viewportXBias = 0;
     int viewportYScale = 0;
     int viewportYBias = 0;
-    int viewportZScale = 0;
-    int viewportZBias = 0;
     int viewX = 0;
     int viewY = 0;
     int viewZ = 0;
@@ -76,7 +71,6 @@ public:
 	~TinyGL();
 
 	bool startup(int screenWidth, int screenHeight);
-    void clearColorBuffer(int color);
     void buildViewMatrix(int x, int y, int z, int yaw, int pitch, int roll, int* matrix);
     void buildProjectionMatrix(int fov, int aspect, int* matrix);
     void multMatrix(int* matrix1, int* matrix2, int* destMtx);

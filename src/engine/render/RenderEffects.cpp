@@ -76,69 +76,12 @@ void Render::startFogLerp(int n, int n2, int fogLerpTime) {
 	}
 }
 
-void Render::buildFogTable() {
-	int fogTableFrac = this->fogTableFrac;
-	int fogTableColor = this->fogTableColor;
-	uint16_t* fogTableBase = this->fogTableBase;
-	uint16_t* fogTableDest = this->fogTableDest;
-	for (int i = 0; i < this->fogTableBaseSize; i++) {
-		uint16_t dat = fogTableBase[i];
-		fogTableDest[i] = (((fogTableFrac >> 2) * ((dat & 0x07e0) >> 6)) & 0x07e0 |
-		                   (((fogTableFrac >> 3) * (dat & 0xF81F)) >> 5) & 0xF81F) +
-		                  fogTableColor;
-	}
-}
-
-void Render::buildFogTable(int n, int n2, int n3) {
-	int n4 = (n3 & 0xFF000000) >> 24 & 0xFF;
-	int n5 = this->mediaMappings[n] + n2;
-	if ((this->mediaPalColors[n5] & 0x4000) != 0x0) {
-		uint16_t** array = this->mediaPalettes[this->mediaPalColors[n5] & 0x3FFF];
-		this->fogTableBase = array[1];
-		this->fogTableBaseSize = this->mediaPalettesSizes[this->mediaPalColors[n5] & 0x3FFF]; // Pc port only
-		for (int i = 1; i < 16; ++i) {
-			int n6 = (i << 8) / 16 * n4 >> 8;
-			this->fogTableColor = (((n3 & 0xFF00FF00) >> 8) * n6 & 0xFF00FF00) | ((n3 & 0xFF00FF) * n6 >> 8 & 0xFF00FF);
-			this->fogTableColor = Render::upSamplePixel(this->fogTableColor);
-			this->fogTableFrac = 256 - n6;
-			this->fogTableDest = array[i];
-			this->buildFogTable();
-		}
-	}
-}
-
 void Render::buildFogTables(int fogColor) {
-
-
 	app->tinyGL->fogColor = fogColor;
-
 	if ((fogColor & 0xFF000000) == 0x0) {
 		app->tinyGL->fogMin = 32752;
 		app->tinyGL->fogRange = 1;
-		return;
 	}
-
-	int n = (fogColor & 0xFF000000) >> 24 & 0xFF;
-	for (int i = 1; i < 16; ++i) {
-		int n2 = (i << 8) / 16 * n >> 8;
-		this->fogTableColor = Render::upSamplePixel((((app->tinyGL->fogColor & 0xFF00FF00) >> 8) * n2 & 0xFF00FF00) |
-		                                            ((app->tinyGL->fogColor & 0xFF00FF) * n2 >> 8 & 0xFF00FF));
-		this->fogTableFrac = 256 - n2;
-		for (int j = 0; j < 1024; ++j) {
-			if (this->mediaPalettes[j][0] != nullptr) {
-				this->fogTableBase = this->mediaPalettes[j][0];
-				this->fogTableDest = this->mediaPalettes[j][i];
-				this->fogTableBaseSize = this->mediaPalettesSizes[j]; // Pc port only
-				buildFogTable();
-			}
-		}
-		this->fogTableBase = this->skyMapPalette[0];
-		this->fogTableDest = this->skyMapPalette[i];
-		this->fogTableBaseSize = 256; // Pc port only
-		this->buildFogTable();
-	}
-	this->buildFogTable(234, 0, ((n * 180 >> 8 & 0xFF) << 24 | (app->tinyGL->fogColor & 0xFFFFFF)));
-	this->buildFogTable(234, 0, 0xFF000000); // IOS
 }
 
 int (*Render::getImageFrameBounds(int n, int n2, int n3, int n4))[4] {

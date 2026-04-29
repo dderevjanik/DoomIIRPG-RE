@@ -1352,7 +1352,7 @@ void Render::render(int viewX, int viewY, int viewZ, int viewAngle, int viewPitc
 	this->clearColorBuffer = app->upTimeMs;
 	if (app->canvas->state != Canvas::ST_AUTOMAP) {
 		if ((this->renderMode & 0x20) != 0x0) {
-			app->tinyGL->clearColorBuffer(0xFFFF00FF);
+			this->_gles->ClearBuffer(0xFFFF00FF);
 		} else if (this->skyMapTexels != nullptr && app->game->scriptStateVars[5] != 0 && !(this->renderMode & 0x20)) {
 			this->_gles->DrawSkyMap();
 		} else {
@@ -1360,7 +1360,7 @@ void Render::render(int viewX, int viewY, int viewZ, int viewAngle, int viewPitc
 			if (app->tinyGL->fogRange > 1) {
 				fogColor = app->tinyGL->fogColor;
 			}
-			app->tinyGL->clearColorBuffer(fogColor);
+			this->_gles->ClearBuffer(fogColor);
 		}
 	}
 	this->clearColorBuffer = app->upTimeMs - this->clearColorBuffer;

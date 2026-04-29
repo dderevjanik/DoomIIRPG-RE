@@ -39,10 +39,6 @@ bool TinyGL::startup(int screenWidth, int screenHeight) {
 	return true;
 }
 
-void TinyGL::clearColorBuffer(int color) {
-	app->render->_gles->ClearBuffer(color);
-}
-
 void TinyGL::buildViewMatrix(int x, int y, int z, int yaw, int pitch, int roll, int* matrix) {
 
 	int *sinTable = app->render->sinTable;
@@ -111,17 +107,12 @@ void TinyGL::_setViewport(int viewportX, int viewportY, int viewportWidth, int v
 	this->viewportWidth = viewportWidth;
 	this->viewportHeight = viewportHeight;
 	this->viewportX2 = viewportX + viewportWidth;
-	this->viewportY2 = viewportY + viewportHeight;
 	this->viewportClampX1 = viewportX << TinyGL::SCREEN_SHIFT;
-	this->viewportClampY1 = viewportY << TinyGL::SCREEN_SHIFT;
 	this->viewportClampX2 = (this->viewportX2 << TinyGL::SCREEN_SHIFT) + TinyGL::SCREEN_ONE - 1;
-	this->viewportClampY2 = (this->viewportY2 << TinyGL::SCREEN_SHIFT) + TinyGL::SCREEN_ONE - 1;
 	this->viewportXScale = viewportWidth << 2;
 	this->viewportYScale = viewportHeight << 2;
 	this->viewportXBias = ((viewportX + viewportWidth / 2) << 3) - 4;
 	this->viewportYBias = ((viewportY + viewportHeight / 2) << 3) - 4;
-	this->viewportZScale = (TinyGL::UNIT_SCALE / 2);
-	this->viewportZBias = (TinyGL::UNIT_SCALE / 2);
 }
 
 void TinyGL::setViewport(int x, int y, int w, int h) {
