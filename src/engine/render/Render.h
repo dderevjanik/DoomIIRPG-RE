@@ -24,7 +24,6 @@ public:
 	SDLGL* sdlGL = nullptr;
 	bool headless = false; // Set in startup(); when true, render() and renderPortal() are no-ops.
 
-	static constexpr int TEXELS_PER_FILE = 32768;
 	static constexpr int RENDER_NORMAL = 0;
 	static constexpr int RENDER_BLEND25 = 1;
 	static constexpr int RENDER_BLEND50 = 2;
@@ -55,8 +54,6 @@ public:
 		try { return std::stoi(name); } catch (...) { return 0; }
 	}
 
-	static constexpr int CHAT_ZOOM_SCALE = 32768;
-	static constexpr int CHAT_ZOOM_ZOFS = 15;
 	static constexpr int RENDER_FLAG_BLUESHIFT = 32;
 	static constexpr int RENDER_FLAG_GREENSHIFT = 64;
 	static constexpr int RENDER_FLAG_REDSHIFT = 128;
@@ -64,9 +61,6 @@ public:
 	static constexpr int RENDER_FLAG_PULSATE = 512;
 	static constexpr int RENDER_FLAG_SCALE_WEAPON = 1024; // [GEC] New
 	static constexpr int RENDER_FLAG_MULTYPLYSHIFT = 2048; // [GEC] New
-	static constexpr int VIEW_NUDGE = 9;
-	static constexpr int SPRITE_Z_NUDGE = 84;
-	static constexpr int MAP_SIZE = 32;
 	static constexpr int MAPTILE_SIZE = 64;
 	static constexpr int TILE_MASK = 63;
 	static constexpr int MAPTILE_MIDDLE = 32;
@@ -95,12 +89,10 @@ public:
 	static constexpr int MAX_LADDERS_PER_MAP = 10;
 	static constexpr int MAX_KEEP_PITCH_LEVEL_TILES = 20;
 	static constexpr int RENDER_DEFAULT = 31;
-	static constexpr int FADE_FLAG_NONE = 0;
 	static constexpr int FADE_FLAG_FADEOUT = 1;
 	static constexpr int FADE_FLAG_FADEIN = 2;
 	static constexpr int FADE_FLAG_CHANGEMAP = 4;
 	static constexpr int FADE_FLAG_SHOWSTATS = 8;
-	static constexpr int FADE_FLAG_DENYSKIP = 16;
 	static constexpr int FADE_FLAG_EPILOGUE = 32;
 	static constexpr int FADE_SPECIAL_FLAG_MASK = -29;
 	static constexpr int CHANGEMAP_FADE_TIME = 1000;
