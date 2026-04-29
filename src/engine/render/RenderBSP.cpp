@@ -282,7 +282,6 @@ void Render::drawNodeGeometry(short n) {
 		for (int j = 0; j < (int)(polyData & 127); j++) {
 			int polyFlags = this->nodePolys[offset++];
 			int numVerts = (polyFlags & Enums::POLY_FLAG_VERTS_MASK) + 2;
-			app->tinyGL->swapXY = (polyFlags & Enums::POLY_FLAG_SWAPXY) ? true : false;
 			for (int k = 0; k < numVerts; k++) {
 				TGLVert* vert = &app->tinyGL->mv[k];
 				vert->x = (((uint32_t)this->nodePolys[offset + 0] & 0xFF) << 7);

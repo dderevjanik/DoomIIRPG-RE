@@ -73,8 +73,6 @@ void Render::draw2DSprite(int tileNum, int frame, int x, int y, int flags, int r
 		vert2->x = app->tinyGL->viewportClampX2;
 	}
 
-	this->setupPalette(app->tinyGL->getFogPalette(0x40000000), renderMode, renderFlags);
-
 	tinyGL->mv[0].x = tinyGL->viewX - ((int)(5 * ((tinyGL->view[2] & 0xFFFFFFE0) + (8 * (tinyGL->view[2] >> 5)))) >> 8);
 	tinyGL->mv[0].y = tinyGL->viewY - ((int)(5 * ((tinyGL->view[6] & 0xFFFFFFE0) + (8 * (tinyGL->view[6] >> 5)))) >> 8);
 	tinyGL->mv[0].z =
@@ -188,13 +186,6 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 			}
 			if (app->tinyGL->clipLine(transform3DVerts)) {
 				app->tinyGL->projectVerts(transform3DVerts, n18);
-				if (palIndex >= 0) {
-					app->tinyGL->spanPalette = app->tinyGL->paletteBase[palIndex % 16];
-					this->setupPalette(app->tinyGL->spanPalette, renderMode, renderFlags);
-				} else {
-					this->setupPalette(app->tinyGL->getFogPalette(transform3DVerts[0].z << 16), renderMode,
-					                   renderFlags);
-				}
 				this->_gles->DrawWorldSpaceSpriteLine(&app->tinyGL->mv[0], &app->tinyGL->mv[1],
 				                                       &app->tinyGL->mv[2], flags);
 			}
@@ -296,7 +287,6 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 					}
 					z += n36;
 					n15 += n35;
-					app->tinyGL->swapXY = true;
 					app->tinyGL->drawModelVerts(app->tinyGL->mv, 4);
 				}
 			} else if ((flags & Enums::SPRITE_FLAG_FLAT) == 0x0) { // Wall
@@ -311,7 +301,6 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 					tglVert4->s = n13 + n43 * n14;
 					tglVert4->t = n15 + n42 * n16;
 				}
-				app->tinyGL->swapXY = true;
 				app->tinyGL->drawModelVerts(app->tinyGL->mv, 4);
 			} else { // Plane
 				for (int n45 = 0; n45 < 4; n45++) {
@@ -332,7 +321,6 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 							tglVert5->t += (app->time / spriteProps->texAnim.tDivisor & spriteProps->texAnim.mask);
 					}
 				}
-				app->tinyGL->swapXY = false;
 				app->tinyGL->drawModelVerts(app->tinyGL->mv, 4);
 			}
 		}
@@ -579,7 +567,6 @@ void Render::renderStreamSprite(int n) {
 	mv[1].t = mv[0].t = n36;
 	mv[2].s = mv[1].s = n29 + n30;
 	mv[3].t = mv[2].t = n36 + n32;
-	app->tinyGL->swapXY = false;
 
 	if (!this->renderStreamSpriteGL(app->tinyGL->mv, 4)) { // [GEC]
 		app->tinyGL->drawModelVerts(app->tinyGL->mv, 4);

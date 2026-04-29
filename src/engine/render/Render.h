@@ -437,7 +437,6 @@ public:
 	void buildFogTable();
 	void buildFogTable(int n, int n2, int n3);
 	void buildFogTables(int fogColor);
-	void setupPalette(uint16_t* spanPalette, int renderMode, int renderFlags);
 	int(*getImageFrameBounds(int n, int n2, int n3, int n4))[4];
 	uint16_t* getPalette(int n, int n2, int n3);
 	void setupTexture(int n, int n2, int renderMode, int renderFlags);

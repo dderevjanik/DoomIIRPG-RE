@@ -40,21 +40,12 @@ public:
     static constexpr int COLUMN_SCALE_OCCLUDED = (INT_MAX - 1);
 
     int faceCull = 0;
-    uint8_t* textureBase = nullptr;
     int imageBounds[4] = {};
-    uint16_t* spanPalette = nullptr;
-    uint16_t** paletteBase = nullptr;
-    uint16_t* scratchPalette = nullptr;
     int sWidth = 0;
-    int sShift = 0;
-    int sMask = 0;
     int tHeight = 0;
-    int tShift = 0;
-    int tMask = 0;
-    bool swapXY = false;
+    uint32_t textureBaseSize = 0;
     int screenWidth = 0;
     int screenHeight = 0;
-    uint16_t* pixels = nullptr;
     int* columnScale = nullptr;
     int view[16] = {};
     int view2D[16] = {};
@@ -102,10 +93,6 @@ public:
     int c_rejectedQuad = 0;
     int unk03 = 0;
     int unk04 = 0;
-    uint32_t textureBaseSize = 0; // [GEC] new
-    uint32_t paletteBaseSize = 0; // [GEC] new
-    int16_t paletteTransparentMask = 0;// [GEC] new
-    uint32_t mediaID = 0;// [GEC] new
 
 	// Constructor
 	TinyGL();
@@ -113,7 +100,6 @@ public:
 	~TinyGL();
 
 	bool startup(int screenWidth, int screenHeight);
-    uint16_t* getFogPalette(int i);
     void clearColorBuffer(int color);
     void buildViewMatrix(int x, int y, int z, int yaw, int pitch, int roll, int* matrix);
     void buildProjectionMatrix(int fov, int aspect, int* matrix);

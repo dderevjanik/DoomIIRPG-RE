@@ -23,7 +23,6 @@ bool TinyGL::startup(int screenWidth, int screenHeight) {
 
 	LOG_INFO("TinyGL::startup, w [{}], h [{}]\n", screenWidth, screenHeight);
 
-	this->scratchPalette = new uint16_t[256];
 	this->screenWidth = screenWidth;
 	this->screenHeight = screenHeight;
 	this->columnScale = new int[screenWidth];
@@ -40,13 +39,6 @@ bool TinyGL::startup(int screenWidth, int screenHeight) {
 	this->zeroDT = 0;
 	this->zeroDS = 0;
 	return true;
-}
-
-uint16_t* TinyGL::getFogPalette(int i) {
-	i = (((0x7FFFFF / (i >> 16)) - this->fogMin) << 4) / this->fogRange;
-	i = (i & ~i >> 31) - 15;
-	i = (i & i >> 31) + 15;
-	return this->paletteBase[i];
 }
 
 void TinyGL::clearColorBuffer(int color) {
@@ -147,9 +139,6 @@ void TinyGL::setViewport(int x, int y, int w, int h) {
 	if (this->viewportX == posX && this->viewportY == posY && this->viewportWidth == w && this->viewportHeight == h) {
 		return;
 	}
-
-	uint16_t* backBuff = (uint16_t*)app->backBuffer->pBmp;
-	this->pixels = backBuff + (this->screenWidth * 3) + app->canvas->viewRect[0];
 
 	this->_setViewport(posX + 1, posY + 1, w - 2, h - 2);
 

@@ -141,147 +141,6 @@ void Render::buildFogTables(int fogColor) {
 	this->buildFogTable(234, 0, 0xFF000000); // IOS
 }
 
-void Render::setupPalette(uint16_t* spanPalette, int renderMode, int renderFlags) {
-	// Pendiente
-
-
-	bool isMultiply = (renderFlags & Render::RENDER_FLAG_MULTYPLYSHIFT) ? true : false; // [GEC]
-
-	uint16_t* array = app->tinyGL->scratchPalette;
-	app->tinyGL->spanPalette = spanPalette;
-	if (renderFlags & 0x4) { // RENDER_FLAG_GREYSHIFT
-		for (int i = 0; i < app->tinyGL->paletteBaseSize; ++i) {
-			uint16_t n2 = spanPalette[i];
-			// int n3 = ((n2 & 0xFF) + (n2 >> 8 & 0xFF) + (n2 >> 16 & 0xFF)) / 3;
-			// array[i] = (n3 << 16 | n3 << 8 | n3);
-
-			// int64_t v10 = 0x55555556 * (int64_t)(LOBYTE(*(uint16_t*)&spanPalette[i]) +
-			// HIBYTE(*(uint16_t*)&spanPalette[i])); array[i] = (uint16_t)((int)v10 << 8) | (uint16_t)v10;
-
-			uint16_t grayColor = (((n2 & 0xf800) >> 10) + ((n2 >> 5) & 0x3f) + ((n2 & 0x1f) << 1)) / 3; // RGB
-			array[i] = ((grayColor >> 1) << 11) | (grayColor << 5) | (grayColor >> 1);
-		}
-		app->tinyGL->paletteBase = &app->tinyGL->scratchPalette;
-		app->tinyGL->spanPalette = array;
-	} else if ((renderFlags & 0x1E8) !=
-	           0x0) { //(RENDER_FLAG_WHITESHIFT | RENDER_FLAG_BLUESHIFT | RENDER_FLAG_GREENSHIFT | RENDER_FLAG_REDSHIFT
-		              //| RENDER_FLAG_BRIGHTREDSHIFT)
-		int n4 = 0;
-		switch (renderFlags & 0x1E8) {
-			case 8: {                                    // RENDER_FLAG_WHITESHIFT
-				n4 = Render::RGB888ToRGB565(64, 64, 64); // 16904;
-				break;
-			}
-			case 32: { // RENDER_FLAG_BLUESHIFT
-				if (isMultiply) {
-					n4 = Render::RGB888ToRGB565(255, 255, 0); // color inverted 0x0000FF
-				} else {
-					n4 = Render::RGB888ToRGB565(0, 0, 64); // 8;
-				}
-				break;
-			}
-			case 64: { // RENDER_FLAG_GREENSHIFT
-				if (isMultiply) {
-					n4 = Render::RGB888ToRGB565(255, 0, 255); // color inverted 0x00FF00
-				} else {
-					n4 = Render::RGB888ToRGB565(0, 64, 0); // 512;
-				}
-				break;
-			}
-			case 128: { // RENDER_FLAG_REDSHIFT
-				if (isMultiply) {
-					n4 = Render::RGB888ToRGB565(0, 255, 255); // color inverted 0xFF0000
-				} else {
-					n4 = Render::RGB888ToRGB565(64, 0, 0); // 16384;
-				}
-				break;
-			}
-			case 256: {                                 // RENDER_FLAG_BRIGHTREDSHIFT
-				n4 = Render::RGB888ToRGB565(128, 0, 0); // 32768; // Player Only
-				break;
-			}
-		}
-		for (int j = 0; j < app->tinyGL->paletteBaseSize; ++j) {
-			uint32_t n5, n6, n7;
-			if (isMultiply) {
-				n5 = (spanPalette[j] | 0x10821) - (n4 & 0xFFFFF7DE);
-				n6 = n5 & 0x10820;
-				n7 = (n5 ^ n6) & n6 - (n6 >> 4);
-			} else {
-				n5 = (spanPalette[j] & 0xF7DE) + (n4 & 0xffff);
-				n6 = (n5 & 0x10820);
-				n7 = (uint16_t)n5 ^ (uint16_t)n6;
-				if (n6 & 0x1f000) {
-					n7 |= 0xF800;
-				}
-				if (n6 & 0xfc0) {
-					n7 |= 0x7E0;
-				}
-				if (n6 & 0x3e) {
-					n7 |= 0x1F;
-				}
-			}
-
-			array[j] = n7;
-		}
-		app->tinyGL->paletteBase = &app->tinyGL->scratchPalette;
-		app->tinyGL->spanPalette = array;
-	} else if ((renderFlags & 0x200) != 0x0) { // RENDER_FLAG_PULSATE
-		int n7 = app->time >> 2 & 0x1FF;
-		if ((n7 & 0x100) != 0x0) {
-			n7 = 511 - n7;
-		}
-		uint16_t n8 = (n7 >> 1) + 127;
-		uint16_t rgb565 = Render::upSamplePixel(n8 << 16 | n8 << 8 | n8);
-		for (int k = 0; k < app->tinyGL->paletteBaseSize; ++k) {
-			array[k] = rgb565;
-		}
-		app->tinyGL->paletteBase = &app->tinyGL->scratchPalette;
-		app->tinyGL->spanPalette = array;
-	} else if (renderMode != 0) {
-		app->tinyGL->paletteBase = &app->tinyGL->scratchPalette;
-		app->tinyGL->spanPalette = array;
-		int n9 = 0;
-		int n10 = 0;
-		switch (renderMode) {
-			default: {
-				n9 = 0xFFFFE79C;
-				n10 = 1;
-				break;
-			}
-			case 1: {
-				n9 = 0xFFFFE79C;
-				n10 = 2;
-				break;
-			}
-			case 3: {
-				n9 = 0xFFFFF7DE;
-				n10 = 0;
-				break;
-			}
-			case 5: {
-				n9 = 0xFFFFE79C;
-				n10 = 1;
-				break;
-			}
-			case 6: {
-				n9 = 0xFFFFC718;
-				n10 = 2;
-				break;
-			}
-			case 4: {
-				for (int l = 0; l < app->tinyGL->paletteBaseSize; ++l) {
-					array[l] = ((spanPalette[l] & 0xFFFFE79C) >> 1) + ((spanPalette[l] & 0xFFFFC718) >> 2);
-				}
-				return;
-			}
-		}
-		for (int n11 = 0; n11 < app->tinyGL->paletteBaseSize; ++n11) {
-			array[n11] = (spanPalette[n11] & n9) >> n10;
-		}
-	}
-}
-
 int (*Render::getImageFrameBounds(int n, int n2, int n3, int n4))[4] {
 	short n5 = this->mediaMappings[n];
 	this->temp[0] = n2 + n5 << 2;
@@ -317,29 +176,12 @@ void Render::setupTexture(int n, int n2, int renderMode, int renderFlags) {
 	int n5;
 	int n6;
 	if (n == TILE_SKY_BOX) {
-		app->tinyGL->textureBase = this->skyMapTexels;
-		app->tinyGL->paletteBase = this->skyMapPalette;
-		app->tinyGL->textureBaseSize = 256 * 256; // new
-		app->tinyGL->paletteBaseSize = 256;       // new
-		app->tinyGL->mediaID = -1;                // new
+		app->tinyGL->textureBaseSize = 256 * 256;
 		this->isSkyMap = true;
 		n5 = 8;
 		n6 = 8;
-
 	} else {
-		app->tinyGL->textureBase = this->mediaTexels[this->mediaTexelSizes[n4] & 0x3FFF];
-		app->tinyGL->paletteBase = this->mediaPalettes[this->mediaPalColors[n4] & 0x3FFF];
-		app->tinyGL->textureBaseSize = this->mediaTexelSizes2[this->mediaTexelSizes[n4] & 0x3FFF];  // [GEC] new
-		app->tinyGL->paletteBaseSize = this->mediaPalettesSizes[this->mediaPalColors[n4] & 0x3FFF]; // [GEC] new
-		app->tinyGL->mediaID = n4;                                                                  // new
-
-		// [GEC] new
-		app->tinyGL->paletteTransparentMask = -1;
-		for (int i = 0; i < app->tinyGL->paletteBaseSize; i++) {
-			if (app->tinyGL->paletteBase[0][i] == 0xF81F) {
-				app->tinyGL->paletteTransparentMask = i;
-			}
-		}
+		app->tinyGL->textureBaseSize = this->mediaTexelSizes2[this->mediaTexelSizes[n4] & 0x3FFF];
 
 		uint8_t b = this->mediaDimensions[n4];
 		n6 = (b >> 4 & 0xF);
@@ -351,11 +193,7 @@ void Render::setupTexture(int n, int n2, int renderMode, int renderFlags) {
 		this->isSkyMap = false;
 	}
 	app->tinyGL->sWidth = 1 << n6;
-	app->tinyGL->sShift = 26 - n6;
-	app->tinyGL->sMask = app->tinyGL->sWidth - 1;
 	app->tinyGL->tHeight = 1 << n5;
-	app->tinyGL->tShift = 26 - (n5 + n6);
-	app->tinyGL->tMask = (app->tinyGL->tHeight - 1) * app->tinyGL->sWidth;
 }
 
 void Render::unlinkSprite(int n) {
