@@ -1437,18 +1437,18 @@ int Canvas::getKeyAction(int i) {
 	if (i == 17) { // KEY_ARROWDOWN
 		return Enums::ACTION_DOWN;
 	}
-	if (i == 13) { // KEY_OK
+	if (i == AVK_SELECT) { // KEY_OK
 		return Enums::ACTION_FIRE;
 	}
 
 	keyCode = (i ^ i >> 0x1f) - (i >> 0x1f);
-	if (keyCode == 19) { // KEY_LEFTSOFT
+	if (keyCode == AVK_SOFT1) { // KEY_LEFTSOFT
 		return Enums::ACTION_MENU;
 	}
-	if (keyCode == 20) { // KEY_RIGHTSOFT
-		return Enums::ACTION_AUTOMAP; // ACTION_AUTOMAP
+	if (keyCode == AVK_SOFT2) { // KEY_RIGHTSOFT
+		return Enums::ACTION_AUTOMAP;
 	}
-	if (keyCode == 18) { // KEY_CLR, KEY_BACK
+	if (keyCode == AVK_CLR) { // KEY_CLR, KEY_BACK
 		return Enums::ACTION_BACK;
 	}
 
@@ -2146,7 +2146,7 @@ bool Canvas::handleEvent(int key) {
 	//printf("handleEvent key: %d keyAction: %d\n", key, keyAction);
 	//printf("this->state %d\n", state);
 
-	if (key == 26)
+	if (key == AVK_UNK)
 		return true;
 
 	// Dispatch input to registered state handler

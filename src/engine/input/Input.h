@@ -102,40 +102,41 @@ extern float    gBegMouseY;
 extern float    gCurMouseX;
 extern float    gCurMouseY;
 
+// Game action / input-event enum. Originally derived from BREW Application Virtual
+// Keys (AVK_*) but in this engine the values are used as game actions (e.g. AVK_FIRE
+// via AVK_SELECT, menu-open via AVK_MENUOPEN) and as the index range for digit entry
+// (AVK_0 + n with n in 0..9). The high bits (>= AVK_MENU_UP = 0x40) are bitmask
+// flags OR'd onto the low value to disambiguate menu vs gameplay events.
 enum _AVKType {
-	AVK_UNDEFINED = -1,	// hex 0xE010; dec 57360
-	//AVK_FIRST = 1,		// hex 0xE020; dec 57376
+	AVK_UNDEFINED = -1,
 
-	AVK_0,		// hex 0xE021; dec 57377
-	AVK_1,		// hex 0xE022; dec 57378
-	AVK_2,		// hex 0xE023; dec 57379
-	AVK_3,		// hex 0xE024; dec 57380
-	AVK_4,		// hex 0xE025; dec 57381
-	AVK_5,		// hex 0xE026; dec 57382
-	AVK_6,		// hex 0xE027; dec 57383
-	AVK_7,		// hex 0xE028; dec 57384
-	AVK_8,		// hex 0xE029; dec 57385
-	AVK_9,		// hex 0xE02A; dec 57386
-	AVK_STAR,	// hex 0xE02B; dec 57387
-	AVK_POUND,	// hex 0xE02C; dec 57388
+	AVK_0,		// digit-entry base; AVK_0..AVK_0+9 are the digit slots
+	AVK_1,		// reserved (slot for digit 1)
+	AVK_2,		// reserved
+	AVK_3,		// reserved
+	AVK_4,		// reserved
+	AVK_5,		// reserved
+	AVK_6,		// reserved
+	AVK_7,		// reserved
+	AVK_8,		// reserved
+	AVK_9,		// reserved
+	AVK_STAR,
+	AVK_POUND,
 
-	AVK_POWER,	// hex 0xE02D; dec 57389
-	AVK_SELECT,	// hex 0xE02E; dec 57390
-	//AVK_SEND,	// hex 0xE02F; dec 57391
+	AVK_POWER,	// reserved (slot retained to keep AVK_SELECT == 13 stable)
+	AVK_SELECT,	// confirm / KEY_OK
 
-	AVK_UP,		// hex 0xE031; dec 57393
-	AVK_DOWN,	// hex 0xE032; dec 57394
-	AVK_LEFT,	// hex 0xE033; dec 57395
-	AVK_RIGHT,	// hex 0xE034; dec 57396
+	AVK_UP,
+	AVK_DOWN,
+	AVK_LEFT,
+	AVK_RIGHT,
 
-	AVK_CLR,	// hex 0xE030; dec 57392
+	AVK_CLR,	// back / clear
 
-	AVK_SOFT1,	// hex 0xE036; dec 57398
-	AVK_SOFT2,	// hex 0xE037; dec 57399
+	AVK_SOFT1,	// left soft key
+	AVK_SOFT2,	// right soft key
 
-	AVK_UNK = 26,	// IOS
-	AVK_VOLUME_UP = 27,	// IOS
-	AVK_VOLUME_DOWN = 28,	// IOS
+	AVK_UNK = 26,	// touch / unknown event suppressor (see Canvas::handleEvent)
 
 	// New Types Only on port
 	AVK_MENUOPEN = 30,
