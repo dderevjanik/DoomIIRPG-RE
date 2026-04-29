@@ -135,11 +135,6 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 	int n14 = (n11 << 10) / app->tinyGL->sWidth;
 	int n15 = ((app->tinyGL->tHeight - app->tinyGL->imageBounds[3]) << 10) / app->tinyGL->tHeight;
 	int n16 = (n12 << 10) / app->tinyGL->tHeight;
-	if ((flags & (Enums::SPRITE_FLAG_TWO_SIDED | Enums::SPRITE_FLAG_DECAL)) != 0x0) {
-		app->tinyGL->faceCull = TinyGL::CULL_NONE;
-	} else {
-		app->tinyGL->faceCull = TinyGL::CULL_CCW;
-	}
 	if ((flags & (Enums::SPRITE_FLAG_FLAT | Enums::SPRITE_FLAGS_ORIENTED)) == 0x0) {
 		z -= 512;
 		int n17 = 0;
@@ -542,7 +537,6 @@ void Render::renderStreamSprite(int n) {
 		n13 = 0;
 		n14 = -Applet::IOS_HEIGHT;
 	}
-	app->tinyGL->faceCull = TinyGL::CULL_NONE;
 	this->setupTexture(n4, n5, n6, 0);
 	int n27 = app->tinyGL->imageBounds[1] - app->tinyGL->imageBounds[0];
 	int n28 = app->tinyGL->imageBounds[3] - app->tinyGL->imageBounds[2];

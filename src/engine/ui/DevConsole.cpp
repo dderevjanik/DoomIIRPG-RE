@@ -213,8 +213,8 @@ void DevConsole::drawRenderStats() {
 		ImGui::Text("Sprites:    %d rendered / %d total", render->spriteRasterCount, render->spriteCount);
 		ImGui::Text("Lines:      %d rendered / %d total", render->lineRasterCount, render->lineCount);
 		if (tinyGL) {
-			ImGui::Text("Quads:      %d total (%d clipped, %d culled)",
-				tinyGL->c_totalQuad, tinyGL->c_clippedQuad, tinyGL->c_backFacedPolys);
+			ImGui::Text("Quads:      %d total (%d clipped)",
+				tinyGL->c_totalQuad, tinyGL->c_clippedQuad);
 			ImGui::Text("Drawn:      %d polys, %d span px", tinyGL->countDrawn, tinyGL->spanPixels);
 		}
 	}

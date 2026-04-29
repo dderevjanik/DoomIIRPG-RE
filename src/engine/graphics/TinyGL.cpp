@@ -36,8 +36,6 @@ bool TinyGL::startup(int screenWidth, int screenHeight) {
 	this->countDrawn = 0;
 	this->spanPixels = 0;
 	this->spanCalls = 0;
-	this->zeroDT = 0;
-	this->zeroDS = 0;
 	return true;
 }
 
@@ -296,7 +294,6 @@ void TinyGL::ClipQuad(TGLVert* tglVert, TGLVert* tglVert2, TGLVert* tglVert3, TG
 		}
 		else {
 			if (n5 == 15) {
-				++this->c_rejectedQuad;
 				return;
 			}
 			++this->c_clippedQuad;
@@ -304,7 +301,6 @@ void TinyGL::ClipQuad(TGLVert* tglVert, TGLVert* tglVert2, TGLVert* tglVert3, TG
 			return;
 		}
 	}
-	++this->c_unclippedQuad;
 	this->RasterizeConvexPolygon(4);
 }
 
@@ -546,8 +542,6 @@ void TinyGL::resetCounters() {
 	this->countDrawn = 0;
 	this->spanPixels = 0;
 	this->spanCalls = 0;
-	this->zeroDT = 0;
-	this->zeroDS = 0;
 }
 
 

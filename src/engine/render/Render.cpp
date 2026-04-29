@@ -1364,7 +1364,6 @@ void Render::render(int viewX, int viewY, int viewZ, int viewAngle, int viewPitc
 		}
 	}
 	this->clearColorBuffer = app->upTimeMs - this->clearColorBuffer;
-	app->tinyGL->unk04 = 0;
 
 	this->portalInView = false;
 	this->closestPortalDist = 0x7FFFFFFF;

@@ -250,18 +250,13 @@ void Render::drawNodeGeometry(short n) {
 		offset += 6;
 		uint32_t tileIndex = (uint32_t)(polyData >> 7);
 		renderMode = Render::RENDER_NORMAL;
-		app->tinyGL->faceCull = TinyGL::CULL_CCW;
 
 		if (tileIndex == TILE_HELL_HANDS) {
 			renderMode = Render::RENDER_BLEND50;
 		} else if ((tileIndex == TILE_FADE) || (tileIndex == TILE_SCORCH_MARK)) {
 			renderMode = Render::RENDER_NORMAL;
-			if (!this->_gles->isInit) {
-				renderMode = Render::RENDER_SUB; // [GEC] TinyGL Only like J2ME/BREW
-			}
 		} else if ((tileIndex == TILE_FLAT_LAVA) || (tileIndex == TILE_FLAT_LAVA2)) {
 			renderMode = Render::RENDER_NORMAL;
-			app->tinyGL->faceCull = TinyGL::CULL_NONE;
 		}
 
 		this->setupTexture(tileIndex, 0, renderMode, 0);

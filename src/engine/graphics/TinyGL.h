@@ -16,30 +16,14 @@ private:
 public:
     Applet* app = nullptr;  // Set in startup(), replaces CAppContainer::getInstance()->app
 
-    static constexpr int SHIFT_STRETCH = 12;
     static constexpr int UNIT_SCALE = 65536;
-    static constexpr int MATRIX_ONE_SHIFT = 14;
     static constexpr int MATRIX_ONE = 16384;
     static constexpr int SCREEN_SHIFT = 3;
     static constexpr int SCREEN_ONE = 8;
-    static constexpr int INTERPOLATE_SHIFT = 16;
-    static constexpr int INTERPOLATE_TO_PIXELS_SHIFT = 19;
-    static constexpr int SCREEN_PRESTEP = 7;
-    static constexpr int INTERPOLATE_PRESTEP = 524287;
-    static constexpr bool CLAMP_TO_VIEWPORT = false;
-    static constexpr int PIXEL_GUARD_SIZE = 1;
-    static constexpr int MAX_PRIMITIVE_VERTS = 20;
-    static constexpr int OE_SHIFT = 4;
-    static constexpr int CULL_NONE = 0;
-    static constexpr int CULL_CW = 1;
-    static constexpr int CULL_CCW = 2;
     static constexpr int NEAR_CLIP = 256;
     static constexpr int CULL_EXTRA = NEAR_CLIP + 16;
-    static constexpr int NUM_FOG_LEVELS = 16;
     static constexpr int COLUMN_SCALE_INIT = INT_MAX;
-    static constexpr int COLUMN_SCALE_OCCLUDED = (INT_MAX - 1);
 
-    int faceCull = 0;
     int imageBounds[4] = {};
     int sWidth = 0;
     int tHeight = 0;
@@ -62,8 +46,6 @@ public:
     int countDrawn = 0;
     int spanPixels = 0;
     int spanCalls = 0;
-    int zeroDT = 0;
-    int zeroDS = 0;
     int viewportX = 0;
     int viewportY = 0;
     int viewportWidth = 0;
@@ -85,14 +67,8 @@ public:
     int viewZ = 0;
     int viewYaw = 0;
     int viewPitch = 0;
-    int c_backFacedPolys = 0;
-    int c_frontFacedPolys = 0;
     int c_totalQuad = 0;
     int c_clippedQuad = 0;
-    int c_unclippedQuad = 0;
-    int c_rejectedQuad = 0;
-    int unk03 = 0;
-    int unk04 = 0;
 
 	// Constructor
 	TinyGL();
