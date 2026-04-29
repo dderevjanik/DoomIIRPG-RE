@@ -776,7 +776,8 @@ int main(int argc, char* args[]) {
 					break;
 				}
 			} else {
-				SDL_Delay(1);
+				int sleepMs = UpTime - currentTimeMillis;
+				if (sleepMs > 0) { SDL_Delay((Uint32)sleepMs); }
 			}
 		}
 	}
