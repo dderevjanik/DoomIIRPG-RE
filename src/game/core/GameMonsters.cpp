@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <memory>
 #include <sys/stat.h>
@@ -862,29 +863,15 @@ int Game::VecToDir(int n, int n2, bool b) {
 }
 
 void Game::NormalizeVec(int n, int n2, int* array) {
-	int n3 = (int)this->FixedSqrt(n * n + n2 * n2);
-	array[0] = (n << 12) / n3;
-	array[1] = (n2 << 12) / n3;
-}
-
-int64_t Game::FixedSqrt(int64_t n) {
-	if (n == 0LL) {
-		return 0LL;
+	// Returns the unit vector (n, n2) scaled by 256 (Q8 fixed-point).
+	double mag = std::hypot((double)n, (double)n2);
+	if (mag == 0.0) {
+		array[0] = 0;
+		array[1] = 0;
+		return;
 	}
-	n <<= 8;
-	int64_t n2 = 256LL;
-	int64_t n3 = n2 + n / n2 >> 1;
-	int64_t n4 = n3 + n / n3 >> 1;
-	int64_t n5 = n4 + n / n4 >> 1;
-	int64_t n6 = n5 + n / n5 >> 1;
-	for (int i = 0; i < 12; ++i) {
-		int64_t n7 = n6 + n / n6 >> 1;
-		if (n7 == n6) {
-			break;
-		}
-		n6 = n7;
-	}
-	return n6;
+	array[0] = (int)((double)n * 256.0 / mag);
+	array[1] = (int)((double)n2 * 256.0 / mag);
 }
 
 void Game::setMonsterClip(int n, int n2) {

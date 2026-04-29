@@ -1,7 +1,9 @@
 #include <stdexcept>
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <memory>
+#include <numbers>
 #include <sys/stat.h>
 #include "Log.h"
 
@@ -295,13 +297,14 @@ void Game::gsprite_update(int n) {
 							app->render->setSpriteZ(gameSprite->sprite,
 							    (short)(gameSprite->pos[2] + gameSprite->vel[2] * n2 / 1000));
 						} else {
+							double progress = (gameSprite->duration != 0)
+							                      ? (double)n2 / (double)gameSprite->duration
+							                      : 0.0;
+							double angle = progress * std::numbers::pi;
+							int delta_z = gameSprite->pos[5] - gameSprite->pos[2];
+							int z_offset = (int)(std::sin(angle) * (double)delta_z);
 							app->render->setSpriteZ(gameSprite->sprite,
-							    (short)(gameSprite->pos[2] +
-							            ((app->render
-							                  ->sinTable[(n2 << 16) / (gameSprite->duration << 8) << 1 & 0x3FF] >>
-							              8) *
-							                 (gameSprite->pos[5] - gameSprite->pos[2] << 8) >>
-							             16)));
+							    (short)(gameSprite->pos[2] + z_offset));
 						}
 						if (0x0 == (gameSprite->flags & 0x4)) {
 							app->render->relinkSprite(gameSprite->sprite);
@@ -360,17 +363,20 @@ int Game::updateLerpSprite(LerpSprite* lerpSprite) {
 	app->render->setSpriteZ(n2,
 	    (short)(lerpSprite->srcZ + (n8 * (lerpSprite->dstZ - lerpSprite->srcZ << 8) >> 16)));
 	if ((lerpSprite->flags & Enums::LS_FLAG_PARABOLA) != 0x0) {
-		int n9 = n8 << 1;
+		double progress = (lerpSprite->travelTime != 0)
+		                      ? (double)n5 / (double)lerpSprite->travelTime
+		                      : 0.0;
+		double angle = progress * std::numbers::pi;
 		if ((lerpSprite->flags & Enums::LS_FLAG_TRUNC) != 0x0) {
-			n9 = n9 * 6 / 8;
+			angle *= 0.75;
 		}
-		int n10 = app->render->sinTable[n9 & 0x3FF] >> 8;
+		int z_offset = (int)(std::sin(angle) * (double)lerpSprite->height);
 		if (!(lerpSprite->flags & Enums::LS_FLAG_S_NORELINK)) {
 			app->render->relinkSprite(n2, app->render->getSpriteX(n2) << 4,
 			                          app->render->getSpriteY(n2) << 4,
 			                          app->render->getSpriteZ(n2) << 4);
 		}
-		app->render->setSpriteZ(n2, app->render->getSpriteZ(n2) + (short)(n10 * (lerpSprite->height << 8) >> 16));
+		app->render->setSpriteZ(n2, app->render->getSpriteZ(n2) + (short)z_offset);
 	} else if (!(lerpSprite->flags & Enums::LS_FLAG_S_NORELINK)) {
 		app->render->relinkSprite(n2);
 	}

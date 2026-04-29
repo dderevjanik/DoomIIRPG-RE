@@ -1,4 +1,8 @@
 #include "TravelMapState.h"
+
+#include <cmath>
+#include <numbers>
+
 #include "CAppContainer.h"
 #include "App.h"
 #include "Canvas.h"
@@ -956,7 +960,6 @@ static void runStarFieldFrame(Canvas* canvas) {
 	unsigned int starType;
 	int radiusY;
 	signed int radiusX;
-	int* sinTable;
 	int offsetY;
 	int col;
 	int colOffset;
@@ -966,7 +969,6 @@ static void runStarFieldFrame(Canvas* canvas) {
 	unsigned int btmStarType;
 	int btmRadiusY;
 	signed int btmRadiusX;
-	int* btmSinTable;
 	int btmOffsetY;
 	int btmCol;
 	int btmColOffset;
@@ -1034,9 +1036,11 @@ static void runStarFieldFrame(Canvas* canvas) {
 					radiusX = 300;
 				}
 				zoom = canvas->starFieldZoom;
-				sinTable = canvas->app->render->sinTable;
-				offsetXResult = (sinTable[(angle + 256) & 0x3FF] * (radiusX / zoom) / halfWidth) >> 16;
-				offsetY = (sinTable[angle] * (radiusY / zoom) / halfHeight) >> 16;
+				{
+					double rad = (double)angle * (2.0 * std::numbers::pi / 1024.0);
+					offsetXResult = (int)(std::cos(rad) * (double)radiusX / (double)zoom / (double)halfWidth);
+					offsetY = (int)(std::sin(rad) * (double)radiusY / (double)zoom / (double)halfHeight);
+				}
 				if (rowOffset + offsetY >= -halfHeight && halfHeight > rowOffset + offsetY && -halfWidth <= colOffset + offsetXResult && halfWidth > colOffset + offsetXResult)
 				{
 					pixels[col + fieldWidth * (i - offsetY) + offsetXResult] = angle | ((short)starType << 10);
@@ -1085,9 +1089,11 @@ static void runStarFieldFrame(Canvas* canvas) {
 					btmRadiusX = 300;
 				}
 				btmZoom = canvas->starFieldZoom;
-				btmSinTable = canvas->app->render->sinTable;
-				btmOffsetXResult = (btmSinTable[(btmAngle + 256) & 0x3FF] * (btmRadiusX / btmZoom) / halfWidth) >> 16;
-				btmOffsetY = (btmSinTable[btmAngle] * (btmRadiusY / btmZoom) / halfHeight) >> 16;
+				{
+					double rad = (double)btmAngle * (2.0 * std::numbers::pi / 1024.0);
+					btmOffsetXResult = (int)(std::cos(rad) * (double)btmRadiusX / (double)btmZoom / (double)halfWidth);
+					btmOffsetY = (int)(std::sin(rad) * (double)btmRadiusY / (double)btmZoom / (double)halfHeight);
+				}
 				if (btmRowOffset + btmOffsetY >= -halfHeight && halfHeight > btmRowOffset + btmOffsetY && btmColOffset + btmOffsetXResult >= -halfWidth && halfWidth > btmColOffset + btmOffsetXResult)
 				{
 					btmPixels[btmCol + fieldWidth * (btmRow - btmOffsetY) + btmOffsetXResult] = btmAngle | ((short)btmStarType << 10);

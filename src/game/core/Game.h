@@ -293,7 +293,6 @@ public:
     bool isInFront(int n, int n2);
     int VecToDir(int n, int n2, bool b);
     void NormalizeVec(int n, int n2, int* array);
-    int64_t FixedSqrt(int64_t n);
     void setMonsterClip(int n, int n2);
     void unsetMonsterClip(int n, int n2);
     bool monsterClipExists(int n, int n2);

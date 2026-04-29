@@ -1,3 +1,4 @@
+#include <cmath>
 #include <stdexcept>
 
 #include "LerpSprite.h"
@@ -47,8 +48,7 @@ void LerpSprite::saveState(OutputStream* OS) {
 
 void LerpSprite::calcDist() {
 	if (!this->app) this->app = CAppContainer::getInstance()->app;
-	Applet* app = this->app;
-	this->dist = (int)(app->game->FixedSqrt((this->dstX - this->srcX) * (this->dstX - this->srcX) + (this->dstY - this->srcY) * (this->dstY - this->srcY) << 8) >> 8);
+	this->dist = (int)std::hypot((double)(this->dstX - this->srcX), (double)(this->dstY - this->srcY));
 }
 
 void LerpSprite::loadState(InputStream* IS) {

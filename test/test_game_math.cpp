@@ -1,4 +1,4 @@
-// Unit test: Game math utility functions (FixedSqrt, NormalizeVec, VecToDir)
+// Unit test: Game math utility functions (NormalizeVec, VecToDir)
 // Links against engine lib but only exercises pure math — no engine init required.
 
 #include "Game.h"
@@ -33,46 +33,6 @@ static int testsFailed = 0;
 static Game& testGame() {
     static Game g;
     return g;
-}
-
-// --- FixedSqrt ---
-// Newton-Raphson integer sqrt with 8-bit fractional shift
-
-static bool test_FixedSqrt_zero() {
-    ASSERT_EQ(testGame().FixedSqrt(0), 0, "FixedSqrt(0) should be 0");
-    return true;
-}
-
-static bool test_FixedSqrt_one() {
-    // sqrt(1) with 8-bit shift: input 1 << 8 = 256, result should be ~16 (sqrt(256)=16)
-    // But FixedSqrt shifts internally: n <<= 8, so input 1 becomes 256
-    // Newton-Raphson converges to 16
-    int64_t result = testGame().FixedSqrt(1);
-    ASSERT_EQ(result, 16, "FixedSqrt(1) should be 16 (fixed-point)");
-    return true;
-}
-
-static bool test_FixedSqrt_perfect_square() {
-    // sqrt(100) in fixed point: input 100 shifts to 25600, sqrt ≈ 160
-    int64_t result = testGame().FixedSqrt(100);
-    ASSERT_EQ(result, 160, "FixedSqrt(100) should be 160");
-    return true;
-}
-
-static bool test_FixedSqrt_large() {
-    // sqrt(10000) → input becomes 2560000, sqrt ≈ 1600
-    int64_t result = testGame().FixedSqrt(10000);
-    ASSERT_EQ(result, 1600, "FixedSqrt(10000) should be 1600");
-    return true;
-}
-
-static bool test_FixedSqrt_non_perfect() {
-    // sqrt(2) ≈ 1.414, in fixed-point (<<4 from shift): ~22-23
-    int64_t result = testGame().FixedSqrt(2);
-    // Allow small tolerance for integer approximation
-    ASSERT_TRUE(result >= 22 && result <= 23,
-        "FixedSqrt(2) should be approximately 22-23");
-    return true;
 }
 
 // --- VecToDir ---
@@ -162,11 +122,6 @@ static bool test_NormalizeVec_diagonal() {
 
 int main() {
     struct { const char* name; bool (*fn)(); } tests[] = {
-        {"FixedSqrt_zero",          test_FixedSqrt_zero},
-        {"FixedSqrt_one",           test_FixedSqrt_one},
-        {"FixedSqrt_perfect",       test_FixedSqrt_perfect_square},
-        {"FixedSqrt_large",         test_FixedSqrt_large},
-        {"FixedSqrt_non_perfect",   test_FixedSqrt_non_perfect},
         {"VecToDir_north",          test_VecToDir_north},
         {"VecToDir_south",          test_VecToDir_south},
         {"VecToDir_west",           test_VecToDir_west},
