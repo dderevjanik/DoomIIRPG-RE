@@ -25,7 +25,6 @@
 #include "Hud.h"
 #include "Utils.h"
 #include "Sound.h"
-#include "Span.h"
 #include "EntityDef.h"
 #include "SpriteDefs.h"
 
@@ -140,107 +139,34 @@ void Render::renderPortal() {
 		}
 	}
 
-	if (app->render->_gles->isInit) { // [GEC] GL Version
-		if (!this->imgPortal) {
-			this->imgPortal = app->loadImage("portal_image.bmp", true);
-		}
-
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		glColor4f(1.0f, 1.0f, 1.0f, 0.25f);
-		glDisable(GL_ALPHA_TEST);
-		glAlphaFunc(GL_GREATER, 0.0f);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		angle += 1.0f;
-
-		float pScale = (float)this->portalScale / 600.0f;
-		float sinAng = sinf((float)((float)(angle * 5.0f) * 3.14f) / 360.0f);
-		float scale = pScale * (float)((float)(sinAng * 0.1f) + 1.0f);
-
-		this->_gles->DrawPortalTexture(
-		    this->imgPortal, 0, 0, imgPortal->width, imgPortal->height,
-		    (float)((float)this->portalCX + (float)((float)(scale * (float)imgPortal->width) * -0.5f)),
-		    (float)((float)this->portalCY + (float)((float)(scale * (float)imgPortal->height) * -0.5f)), scale, angle,
-		    0);
-
-		this->_gles->DrawPortalTexture(
-		    this->imgPortal, 0, 0, imgPortal->width, imgPortal->height,
-		    (float)((float)this->portalCX +
-		            (float)((float)((float)((float)(pScale + pScale) - scale) * (float)imgPortal->width) * -0.5f)),
-		    (float)((float)this->portalCY +
-		            (float)((float)((float)((float)(pScale + pScale) - scale) * (float)imgPortal->height) * -0.5f)),
-		    (float)(pScale + pScale) - scale, -angle, 1);
-	} else { // TnyGL Version restored from J2ME/BREW
-		int n = 10;
-		int max = std::max(gameConfig->renderPortalMaxRadius * this->portalScale >> n, 1);
-		int portalCX = this->portalCX;
-		int portalCY = this->portalCY;
-		int n3 = (gameConfig->renderPortalMaxRadius - 14) * this->portalScale >> n;
-		int n4 = 11 * this->portalScale >> n;
-		int n5 = 9 * this->portalScale >> n;
-		int n6 = 6 * this->portalScale >> n;
-		int max2 = std::max(((8 * this->portalScale) >> n), 1);
-		int n7 =
-		    100 *
-		    (16 /
-		     max2); // Old (8 / max2); // [GEC] Prevents it from spinning too fast / Evita que gire demasiado rapido
-		int n8 = this->currentPortalMod >> 1;
-		for (int i = portalCY - n3 - n8; i < portalCY + n3 + n8; ++i) {
-			for (int j = portalCX - n3 - n8; j < portalCX + n3 + n8; ++j) {
-				if ((portalCX - j) * (portalCX - j) + (portalCY - i) * (portalCY - i) <= (n3 + n8) * (n3 + n8)) {
-					if (j >= 1 && j < screenWidth - 1 && i >= 1 && i < screenHeight - 1) {
-						app->canvas->graphics.drawPixelPortal(app->canvas->viewRect, j, i, 0x6f000000);
-					}
-				}
-			}
-		}
-		for (int k = -max - this->currentPortalMod; k < max + this->currentPortalMod; ++k) {
-			if (k <= -n4 || k >= n4) {
-				int n11 = (max >> 1) * this->sinTable[(k - max << 16) / max * 512 >> 16 & 0x3FF] >> 16;
-				int n12 = (max - std::abs(k) << 16) / max;
-				int n13;
-				if (k < -max || k > max) {
-					n13 = 0xAFB06E00;
-				} else {
-					n13 = ((160 * (65536 - n12) >> 16) + 15 << 24 | 0xB00000 | 55 * n12 >> 16 << 8);
-				}
-				for (int l = 0; l < 8; ++l) {
-					int n14 = l * 512 / 8 - this->currentPortalTheta;
-					int n15 = this->sinTable[n14 & 0x3FF];
-					int n16 = this->sinTable[n14 + 256 & 0x3FF];
-					int n17 = (k * n16 - n11 * n15 >> 16) + portalCX;
-					int n18 = (k * n15 + n11 * n16 >> 16) + portalCY;
-					int n19 = (n13 >> 24 & 0xFF) << 16;
-					if (n17 >= 1 && n17 < screenWidth - 1 && n18 >= 1 && n18 < screenHeight - 1) {
-						app->canvas->graphics.drawPixelPortal(app->canvas->viewRect, n17, n18, n13);
-					}
-					for (int n22 = 0; n22 < n6; ++n22) {
-						int n23 = n17 + app->nextByte() % n5 - (n5 >> 1);
-						int n24 = n18 + app->nextByte() % n5 - (n5 >> 1);
-						if (n23 >= 1 && n23 < screenWidth - 1 && n24 >= 1 && n24 < screenHeight - 1) {
-							app->canvas->graphics.drawPixelPortal(app->canvas->viewRect, n23, n24, n13);
-						}
-					}
-				}
-			}
-		}
-		if (app->time > this->nextPortalFrame) {
-			this->currentPortalTheta = (this->currentPortalTheta + 20 & 0x3FF);
-			if (this->portalModIncreasing) {
-				if (this->currentPortalMod >= max2) {
-					this->portalModIncreasing = false;
-					this->currentPortalMod = max2 - 1;
-				} else {
-					++this->currentPortalMod;
-				}
-			} else if (this->currentPortalMod <= 0) {
-				this->portalModIncreasing = true;
-				++this->currentPortalMod;
-			} else {
-				--this->currentPortalMod;
-			}
-			this->nextPortalFrame = app->time + n7;
-		}
+	if (!this->imgPortal) {
+		this->imgPortal = app->loadImage("portal_image.bmp", true);
 	}
+
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	glColor4f(1.0f, 1.0f, 1.0f, 0.25f);
+	glDisable(GL_ALPHA_TEST);
+	glAlphaFunc(GL_GREATER, 0.0f);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	angle += 1.0f;
+
+	float pScale = (float)this->portalScale / 600.0f;
+	float sinAng = sinf((float)((float)(angle * 5.0f) * 3.14f) / 360.0f);
+	float scale = pScale * (float)((float)(sinAng * 0.1f) + 1.0f);
+
+	this->_gles->DrawPortalTexture(
+	    this->imgPortal, 0, 0, imgPortal->width, imgPortal->height,
+	    (float)((float)this->portalCX + (float)((float)(scale * (float)imgPortal->width) * -0.5f)),
+	    (float)((float)this->portalCY + (float)((float)(scale * (float)imgPortal->height) * -0.5f)), scale, angle,
+	    0);
+
+	this->_gles->DrawPortalTexture(
+	    this->imgPortal, 0, 0, imgPortal->width, imgPortal->height,
+	    (float)((float)this->portalCX +
+	            (float)((float)((float)((float)(pScale + pScale) - scale) * (float)imgPortal->width) * -0.5f)),
+	    (float)((float)this->portalCY +
+	            (float)((float)((float)((float)(pScale + pScale) - scale) * (float)imgPortal->height) * -0.5f)),
+	    (float)(pScale + pScale) - scale, -angle, 1);
 }
 

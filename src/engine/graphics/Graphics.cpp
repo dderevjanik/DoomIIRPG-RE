@@ -770,32 +770,3 @@ void Graphics::fade(int* rect, int alpha, int color) {
 }
 
 
-void Graphics::drawPixelPortal(int* rect, int x, int y, uint32_t color) {
-    Applet* app = this->app;
-    int screenWidth = app->tinyGL->screenWidth;
-    int screenHeight = app->tinyGL->screenHeight;
-
-    uint32_t alpha;
-    int srcFactor;
-    uint32_t dstPixel;
-    int dstFactor;
-
-    uint16_t* pixels = &app->tinyGL->pixels[x + (y * screenWidth)];
-
-    alpha = color >> 0x18;
-    if (alpha != 0) {
-        if (alpha != 0xff) {
-            dstPixel = (uint32_t)*pixels;
-            srcFactor = alpha << 16;
-            dstFactor = -(alpha << 16) + 0xff0000;
-            alpha = (dstPixel & 0x1f) << 3;
-            dstPixel = (dstPixel & 0xf800) << 8 | (dstPixel & 0x7e0) << 5 | alpha;
-            color = (((dstPixel << 8) >> 0x18) * dstFactor + srcFactor * ((color << 8) >> 0x18) >> 0x18) << 0x10 |
-                ((int)(((dstPixel << 0x10) >> 0x18) * dstFactor + srcFactor * ((color << 0x10) >> 0x18)) >> 0x18
-                    & 0xfeU) << 8 | alpha * dstFactor + srcFactor * (color & 0xff) >> 0x18 | 0xff000000;
-        }
-        int blendedPixel = Render::upSamplePixel(color);
-        *pixels = (uint16_t)blendedPixel;
-    }
-    return;
-}

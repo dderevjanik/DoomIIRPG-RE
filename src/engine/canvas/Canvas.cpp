@@ -806,13 +806,6 @@ void Canvas::run() {
 
 	this->runInputEvents();
 
-	// [GEC]
-	if (!this->headless && (this->repaintFlags & Canvas::REPAINT_VIEW3D)) { // REPAINT_VIEW3D
-		if (!app->render->_gles->isInit) {
-			app->render->Render3dScene();
-			app->tinyGL->applyClearColorBuffer();
-		}
-	}
 
 	if ((this->state != Canvas::ST_MENU) || (app->menuSystem->menu != Menus::MENU_ENABLE_SOUNDS)) {
 		app->game->numTraceEntities = 0;

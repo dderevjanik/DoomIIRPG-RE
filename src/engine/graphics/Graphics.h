@@ -76,5 +76,4 @@ public:
 	void setScreenSpace(int x, int y, int w, int h);
 	void resetScreenSpace();
 	void fade(int* rect, int alpha, int color);
-	void drawPixelPortal(int* rect, int x, int y, uint32_t color);
 };

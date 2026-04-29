@@ -10,7 +10,6 @@
 #include "GLES.h"
 #include "Render.h"
 #include "TinyGL.h"
-#include "Span.h"
 
 
 TinyGL::TinyGL() = default;
@@ -40,7 +39,6 @@ bool TinyGL::startup(int screenWidth, int screenHeight) {
 	this->spanCalls = 0;
 	this->zeroDT = 0;
 	this->zeroDS = 0;
-	this->colorBuffer = 0; // [GEC]
 	return true;
 }
 
@@ -52,17 +50,7 @@ uint16_t* TinyGL::getFogPalette(int i) {
 }
 
 void TinyGL::clearColorBuffer(int color) {
-
-	Canvas* canvas = app->canvas.get();
-
-	if (!app->render->_gles->ClearBuffer(color)) {
-		/*canvas->graphics.fillRect(
-			canvas->viewRect[0] + this->viewportX,
-			canvas->viewRect[1] + this->viewportY, 
-			this->viewportWidth,this->viewportHeight, color);*/
-
-		this->colorBuffer = color; // [GEC]
-	}
+	app->render->_gles->ClearBuffer(color);
 }
 
 void TinyGL::buildViewMatrix(int x, int y, int z, int yaw, int pitch, int roll, int* matrix) {
@@ -221,41 +209,10 @@ void TinyGL::viewMtxMove(TGLVert* tglVert, int n, int n2, int n3) {
 }
 
 void TinyGL::drawModelVerts(TGLVert* array, int n) {
-
-
 	if ((app->render->renderMode & 0x1) == 0x0) {
 		return;
 	}
-
-	if (!app->render->_gles->DrawModelVerts(std::span(array, n))) {
-		if (this->faceCull != TinyGL::CULL_NONE) {
-			TGLVert* tglVert = &array[0];
-			TGLVert* tglVert2 = &array[1];
-			TGLVert* tglVert3 = &array[2];
-			int n2 = tglVert2->x - tglVert->x;
-			int n3 = tglVert2->y - tglVert->y;
-			int n4 = tglVert2->z - tglVert->z;
-			int n5 = tglVert3->x - tglVert->x;
-			int n6 = tglVert3->y - tglVert->y;
-			int n7 = tglVert3->z - tglVert->z;
-			int n8 = (this->viewX - tglVert->x) * (n3 * n7 - n4 * n6 >> 14) + (this->viewY - tglVert->y) * (n4 * n5 - n2 * n7 >> 14) + (this->viewZ - tglVert->z) * (n2 * n6 - n3 * n5 >> 14);
-			if ((this->faceCull == TinyGL::CULL_CCW && n8 < 0) || (this->faceCull == TinyGL::CULL_CW && n8 > 0)) {
-				++this->c_backFacedPolys;
-				return;
-			}
-		}
-		++this->c_frontFacedPolys;
-		TGLVert* transform3DVerts = this->transform3DVerts(array, n);
-		if ((app->render->renderMode & 0x2) == 0x0) {
-			return;
-		}
-		if (n == 4) {
-			this->ClipQuad(&transform3DVerts[0], &transform3DVerts[1], &transform3DVerts[2], &transform3DVerts[3]);
-		}
-		else {
-			this->ClipPolygon(0, n);
-		}
-	}
+	app->render->_gles->DrawModelVerts(std::span(array, n));
 }
 
 TGLVert* TinyGL::transform3DVerts(TGLVert* array, int n) {
@@ -531,167 +488,10 @@ void TinyGL::projectVerts(TGLVert* array, int n) {
 }
 
 void TinyGL::RasterizeConvexPolygon(int n) {
-
-
 	if ((app->render->renderMode & 0x4) == 0x0) {
 		return;
 	}
-
-	if (!app->render->_gles->RasterizeConvexPolygon(std::span(this->cv, n))) {
-		if (app->render->isSkyMap) {
-			this->swapXY = false;
-			const int xBias = this->viewportXBias;
-			const int yBias = this->viewportYBias;
-			const int xScale = this->viewportXScale;
-			const int yScale = this->viewportYScale;
-			const int sShiftAmt = (this->sShift - 8U) & 0xff;
-			const int tShiftAmt = (this->tShift + 1U) & 0xff;
-			const int skyMapXBias = (132 << 4) + (app->render->skyMapX * 2);
-			const int skyMapY = app->render->skyMapY;
-			for (int i = 0; i < n; ++i) {
-				TGLVert* tglVert = &this->cv[i];
-				const int w = tglVert->w;
-				tglVert->x = xBias + ((tglVert->x * xScale) / w);
-				tglVert->y = yBias + ((tglVert->y * yScale) / w);
-				// [GEC] It is adjusted like this to be consistent with the IOS version
-				tglVert->s = skyMapXBias + tglVert->x << sShiftAmt;
-				tglVert->t = skyMapY + tglVert->y << tShiftAmt;
-				tglVert->z = 4096;
-			}
-		}
-		else {
-			this->projectVerts(this->cv, n);
-		}
-		//++Span.countDrawn;
-		if ((app->render->renderMode & 0x8) == 0x0) {
-			return;
-		}
-		if (this->swapXY) {
-			for (int j = 0; j < n; ++j) {
-				int x = this->cv[j].x;
-				this->cv[j].x = this->cv[j].y;
-				this->cv[j].y = x;
-			}
-		}
-		int n2 = this->cv[0].y;
-		int n3 = 0;
-		for (int k = 1; k < n; ++k) {
-			if (this->cv[k].y < n2) {
-				n2 = this->cv[k].y;
-				n3 = k;
-			}
-		}
-		int n4 = n3;
-		TGLVert* tglVert2 = &this->cv[n3];
-		TGLVert* tglVert3 = &this->cv[n4];
-		int l = n2 + 7 >> 3;
-		TGLEdge* tglEdge = &this->edges[0];
-		TGLEdge* tglEdge2 = &this->edges[1];
-		TGLEdge* tglEdge3 = tglEdge;
-		TGLEdge* tglEdge4 = tglEdge2;
-		int n5 = l;
-		tglEdge4->stopY = n5;
-		tglEdge3->stopY = n5;
-		int screenWidth;
-		if (this->swapXY) {
-			screenWidth = this->screenWidth;
-		}
-		else {
-			screenWidth = 1;
-		}
-		int n6 = n3;
-		while (true) {
-			if (l == tglEdge->stopY) {
-				if (n3 == n4 && n3 != n6) {
-					break;
-				}
-				if (n3 == 0) {
-					n3 = n - 1;
-				}
-				else {
-					--n3;
-				}
-				TGLVert* tglVert4 = tglVert2;
-				tglVert2 = &this->cv[n3];
-				tglEdge->setFromVerts(tglVert4, tglVert2);
-			}
-			if (l == tglEdge2->stopY) {
-				if (n3 == n4) {
-					break;
-				}
-				if (++n4 == n) {
-					n4 = 0;
-				}
-				TGLVert* tglVert5 = tglVert3;
-				tglVert3 = &this->cv[n4];
-				tglEdge2->setFromVerts(tglVert5, tglVert3);
-			}
-			int n7 = (tglEdge->stopY < tglEdge2->stopY) ? tglEdge->stopY : tglEdge2->stopY;
-			if (l > n7) {
-				return;
-			}
-			while (l != n7) {
-				TGLEdge* tglEdge5;
-				TGLEdge* tglEdge6;
-				if (tglEdge2->fracX < tglEdge->fracX) {
-					tglEdge5 = tglEdge2;
-					tglEdge6 = tglEdge;
-				}
-				else {
-					tglEdge5 = tglEdge;
-					tglEdge6 = tglEdge2;
-				}
-				int n8 = tglEdge5->fracX + 0x7FFFF >> 19;
-				int n9 = tglEdge6->fracX + 0x7FFFF >> 19;
-				if (n9 > n8) {
-					int n10;
-					if (this->swapXY) {
-						n10 = n8 * this->screenWidth + l;
-					}
-					else {
-						n10 = l * this->screenWidth + n8;
-					}
-					int n11 = tglEdge6->fracX - tglEdge5->fracX >> 16;
-					int n12 = tglEdge5->fracZ >> 16;
-					int n13 = (tglEdge5->fracS / n12) << 16;
-					int n14 = (tglEdge5->fracT / n12) << 16;
-					int n15 = tglEdge6->fracZ >> 16;
-					int n16 = (tglEdge6->fracS / n15) << 16;
-					int n17 = (tglEdge6->fracT / n15) << 16;
-					if (n11 == 0) {
-						this->spanPalette = this->getFogPalette(app->render->isSkyMap ? 0x10000000 : tglEdge6->fracZ);
-						this->span->Span->DT(&this->pixels[n10], n16, n17, screenWidth, 0, 0, n9 - n8, this);
-					}
-					else {
-						int n18 = (n8 << 3) - (tglEdge5->fracX >> 16);
-						int n19 = (tglEdge6->fracZ - tglEdge5->fracZ) / n11;
-						int n20 = (n16 - n13) / n11;
-						int n21 = (n17 - n14) / n11;
-						this->spanPalette = this->getFogPalette(app->render->isSkyMap ? 0x10000000 : tglEdge5->fracZ);
-						if (n20 == 0) {
-							this->span->Span->DT(&this->pixels[n10], n13, n14 + n18 * n21, screenWidth, 0, n21 << 3, n9 - n8, this);
-						}
-						else if (n21 == 0) {
-							this->span->Span->DS(&this->pixels[n10], n13 + n20 * n18, n14, screenWidth, n20 << 3, 0, n9 - n8, this);
-						}
-						else {
-							this->span->Span->Normal(&this->pixels[n10], n13 + n20 * n18, n14 + n18 * n21, screenWidth, n20 << 3, n21 << 3, n9 - n8, this);
-						}
-					}
-				}
-
-				tglEdge2->fracX += tglEdge2->stepX;
-				tglEdge2->fracZ += tglEdge2->stepZ;
-				tglEdge2->fracS += tglEdge2->stepS;
-				tglEdge2->fracT += tglEdge2->stepT;
-				tglEdge->fracX += tglEdge->stepX;
-				tglEdge->fracZ += tglEdge->stepZ;
-				tglEdge->fracS += tglEdge->stepS;
-				tglEdge->fracT += tglEdge->stepT;
-				++l;
-			}
-		}
-	}
+	app->render->_gles->RasterizeConvexPolygon(std::span(this->cv, n));
 }
 
 bool TinyGL::clippedLineVisCheck(TGLVert* tglVert, TGLVert* tglVert2, bool b) {
@@ -752,102 +552,6 @@ bool TinyGL::occludeClippedLine(TGLVert* tglVert, TGLVert* tglVert2) {
 	return b;
 }
 
-void TinyGL::drawClippedSpriteLine(TGLVert* tglVert, TGLVert* tglVert2, TGLVert* tglVert3, int n, bool b) {
-
-
-	int i = 0;
-	int n2 = (tglVert->y - tglVert3->y << 12) / 176 >> 3;
-	int n3 = tglVert3->y >> 3;
-	int n4 = 16777216 / n2;
-	if (0x0 != (n & 0x40000)) {
-		n4 = -n4;
-	}
-	uint8_t* textureBase = this->textureBase;
-	int n5 = this->textureBaseSize - ((textureBase[this->textureBaseSize - 1] & 0xFF) << 8 | (textureBase[this->textureBaseSize - 2] & 0xFF)) - 2;
-	int n6 = this->imageBounds[0];
-	int n7 = this->imageBounds[1];
-	int n8 = n5 + (n7 - n6 + 1 >> 1);
-	int n9 = 0;
-	int j = tglVert->x + 7 >> 3;
-	int viewportX2 = tglVert2->x + 7 >> 3;
-	if (j < this->viewportX) {
-		j = this->viewportX;
-	}
-	if (viewportX2 > this->viewportX2) {
-		viewportX2 = this->viewportX2;
-	}
-	if (viewportX2 - j <= 0) {
-		return;
-	}
-	int n10 = (tglVert2->s - tglVert->s) / (viewportX2 - j);
-	int s = tglVert->s;
-	while (j < viewportX2) {
-		int n11 = (176 * (s / tglVert->z) + (176 * (s / tglVert->z) < 0 ? 63 : 0)) >> 10;
-		if (0x0 != (n & 0x20000)) {
-			n11 = 175 - n11;
-		}
-		if (n11 >= n6 && n11 < n7) {
-			int n12;
-			for (n12 = n11 - n6; i < n12; ++i) {
-				int n13 = textureBase[n5 + (i >> 1)] >> ((i & 0x1) << 2) & 0xF;
-				// [GEC]: Fix animated water sprite
-				{
-					app->render->fixTexels(n5 + (i >> 1), (i & 0x1), this->mediaID, &n13);
-				}
-				while (n13-- > 0) {
-					n9 += textureBase[n8 + 1];
-					n8 += 2;
-				}
-			}
-			while (i > n12) {
-				--i;
-				int n14 = textureBase[n5 + (i >> 1)] >> ((i & 0x1) << 2) & 0xF;
-				// [GEC]: Fix animated water sprite
-				{
-					app->render->fixTexels(n5 + (i >> 1), (i & 0x1), this->mediaID, &n14);
-				}
-				while (n14-- > 0) {
-					n9 -= textureBase[n8 - 1];
-					n8 -= 2;
-				}
-			}
-			int n15 = textureBase[n5 + (i >> 1)] >> ((i & 0x1) << 2) & 0xF;
-			// [GEC]: Fix animated water sprite
-			{
-				app->render->fixTexels(n5 + (i >> 1), (i & 0x1), this->mediaID, &n15);
-			}
-			while (n15-- > 0) {
-				int n16 = textureBase[n8++];
-				uint8_t b2 = textureBase[n8++];
-				int n17 = n9 << 12;
-				n9 += b2;
-				if (0x0 != (n & 0x40000)) {
-					n16 = 176 - (n16 + b2);
-					n17 += (b2 << 12) - 1;
-				}
-				int viewportY = n3 + (n16 * n2 >> 12);
-				int n18 = n2 * b2 >> 12;
-				if (viewportY < this->viewportY) {
-					int n19 = this->viewportY - viewportY;
-					n18 -= n19;
-					n17 += n19 * n4;
-					viewportY = this->viewportY;
-				}
-				if (viewportY + n18 > this->viewportY2) {
-					n18 = this->viewportY2 - viewportY;
-				}
-				if (n18 > 0) {
-					//TinyGL.span.span(j + viewportY * TinyGL.screenWidth, n17, TinyGL.screenWidth, n4, n18);
-					this->span->Span->Stretch(&this->pixels[j + this->screenWidth * viewportY], n17, n4, this->screenWidth, n18, this);
-				}
-			}
-			++i;
-		}
-		s += n10;
-		++j;
-	}
-}
-
 void TinyGL::resetCounters() {
 	this->countBackFace = 0;
 	this->countDrawn = 0;
@@ -860,17 +564,3 @@ void TinyGL::resetCounters() {
 
 // [GEC]
 
-void TinyGL::applyClearColorBuffer() {
-
-	uint16_t* pixels = this->pixels;
-	int color = this->colorBuffer;
-	int n2 = this->viewportX + this->viewportY * this->screenWidth;
-	for (int i = 0; i < this->viewportWidth; ++i) {
-		pixels[n2 + i] = Render::upSamplePixel(color);
-	}
-	int n3 = n2;
-	for (int j = 1; j < this->viewportHeight; ++j) {
-		n3 += this->screenWidth;
-		std::memcpy(&pixels[n3], &pixels[n2], this->viewportWidth * sizeof(uint16_t));
-	}
-}

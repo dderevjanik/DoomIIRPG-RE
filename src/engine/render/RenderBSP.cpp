@@ -25,7 +25,6 @@
 #include "Hud.h"
 #include "Utils.h"
 #include "Sound.h"
-#include "Span.h"
 #include "EntityDef.h"
 #include "SpriteDefs.h"
 
@@ -340,7 +339,6 @@ void Render::drawNodeGeometry(short n) {
 			}
 			app->tinyGL->drawModelVerts(app->tinyGL->mv, numVerts);
 		}
-		app->tinyGL->span = nullptr;
 	}
 }
 

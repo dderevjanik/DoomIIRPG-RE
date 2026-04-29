@@ -1,5 +1,4 @@
 #pragma once
-#include "Span.h"
 #include <cstdint>
 #include <string>
 #include <unordered_map>
@@ -282,8 +281,6 @@ public:
 	int monsterIdleTime[18] = {};
 	bool chatZoom = false;
 	bool shotsFired = false;
-	SpanType* _spanTrans = nullptr;
-	SpanType* _spanTexture = nullptr;
 	bool fogAffectsSkyMap = false;
 	int postProcessMode = 0;
 	bool brightenPostProcess = false;
@@ -444,7 +441,6 @@ public:
 	int(*getImageFrameBounds(int n, int n2, int n3, int n4))[4];
 	uint16_t* getPalette(int n, int n2, int n3);
 	void setupTexture(int n, int n2, int renderMode, int renderFlags);
-	void drawSkyMap(int n2);
 	void render(int viewX, int viewY, int viewZ, int viewAngle, int viewPitch, int viewRoll, int viewFov);
 	void unlinkSprite(int n);
 	void unlinkSprite(int n, int n2, int n3);

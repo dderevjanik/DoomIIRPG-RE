@@ -27,7 +27,6 @@
 #include "Hud.h"
 #include "Utils.h"
 #include "Sound.h"
-#include "Span.h"
 #include "EntityDef.h"
 #include "SpriteDefs.h"
 #include "stb_image.h"
@@ -81,8 +80,6 @@ bool Render::startup() {
 	LOG_INFO("Render::startup\n");
 
 	this->nodeIdxs = new short[Render::MAX_VISIBLE_NODES];
-	this->_spanTrans = new SpanType[11];
-	this->_spanTexture = new SpanType[11];
 	this->mapFlags = new uint8_t[1024];
 	this->staticFuncs = new int[12];
 	this->customSprites = new int[Render::MAX_CUSTOM_SPRITES];
@@ -90,68 +87,6 @@ bool Render::startup() {
 	this->splitSprites = new int[Render::MAX_SPLIT_SPRITES];
 	this->temp = new int[3];
 	this->renderMode = Render::RENDER_DEFAULT;
-
-	this->_spanTrans[Render::RENDER_NONE].Span = new SpanMode;
-	this->_spanTrans[Render::RENDER_NONE].Span->Normal = (SpanFunc)spanNoDraw;
-	this->_spanTrans[Render::RENDER_NONE].Span->DT = (SpanFunc)spanNoDraw;
-	this->_spanTrans[Render::RENDER_NONE].Span->DS = (SpanFunc)spanNoDraw;
-	this->_spanTrans[Render::RENDER_NONE].Span->Stretch = (SpanFuncStretch)spanNoDrawStretch;
-	this->_spanTrans[Render::RENDER_NORMAL].Span = new SpanMode;
-	this->_spanTrans[Render::RENDER_NORMAL].Span->Normal = (SpanFunc)spanTransparent;
-	this->_spanTrans[Render::RENDER_NORMAL].Span->DT = (SpanFunc)spanTransparentDT;
-	this->_spanTrans[Render::RENDER_NORMAL].Span->DS = (SpanFunc)spanTransparentDS;
-	this->_spanTrans[Render::RENDER_NORMAL].Span->Stretch = (SpanFuncStretch)spanTransparentStretch;
-	this->_spanTrans[Render::RENDER_BLEND25].Span = this->_spanTrans[Render::RENDER_NORMAL].Span;
-	this->_spanTrans[Render::RENDER_BLEND50].Span = new SpanMode;
-	this->_spanTrans[Render::RENDER_BLEND50].Span->Normal = (SpanFunc)spanBlend50Transparent;
-	this->_spanTrans[Render::RENDER_BLEND50].Span->DT = (SpanFunc)spanBlend50TransparentDT;
-	this->_spanTrans[Render::RENDER_BLEND50].Span->DS = (SpanFunc)spanBlend50TransparentDS;
-	this->_spanTrans[Render::RENDER_BLEND50].Span->Stretch = (SpanFuncStretch)spanBlend50TransparentStretch;
-	this->_spanTrans[Render::RENDER_ADD].Span = new SpanMode;
-	this->_spanTrans[Render::RENDER_ADD].Span->Normal = (SpanFunc)spanAddTransparent;
-	this->_spanTrans[Render::RENDER_ADD].Span->DT = (SpanFunc)spanAddTransparentDT;
-	this->_spanTrans[Render::RENDER_ADD].Span->DS = (SpanFunc)spanAddTransparentDS;
-	this->_spanTrans[Render::RENDER_ADD].Span->Stretch = (SpanFuncStretch)spanAddTransparentStretch;
-	this->_spanTrans[Render::RENDER_ADD75].Span = this->_spanTrans[Render::RENDER_ADD].Span;
-	this->_spanTrans[Render::RENDER_ADD50].Span = this->_spanTrans[Render::RENDER_ADD].Span;
-	this->_spanTrans[Render::RENDER_ADD25].Span = this->_spanTrans[Render::RENDER_ADD].Span;
-	this->_spanTrans[Render::RENDER_SUB].Span = new SpanMode;
-	this->_spanTrans[Render::RENDER_SUB].Span->Normal = (SpanFunc)spanSubTransparent;
-	this->_spanTrans[Render::RENDER_SUB].Span->DT = (SpanFunc)spanSubTransparentDT;
-	this->_spanTrans[Render::RENDER_SUB].Span->DS = (SpanFunc)spanSubTransparentDS;
-	this->_spanTrans[Render::RENDER_SUB].Span->Stretch = (SpanFuncStretch)spanSubTransparentStretch;
-	this->_spanTrans[Render::RENDER_PERF].Span = new SpanMode;
-	this->_spanTrans[Render::RENDER_PERF].Span->Normal = (SpanFunc)spanPerfTexture;
-	this->_spanTrans[Render::RENDER_PERF].Span->DT = (SpanFunc)spanPerfTexture;
-	this->_spanTrans[Render::RENDER_PERF].Span->DS = (SpanFunc)spanPerfTexture;
-	this->_spanTrans[Render::RENDER_PERF].Span->Stretch = (SpanFuncStretch)spanPerfTextureStretch;
-	//--------------------
-	this->_spanTexture[Render::RENDER_NONE].Span = this->_spanTrans[Render::RENDER_NONE].Span;
-	this->_spanTexture[Render::RENDER_NORMAL].Span = new SpanMode;
-	this->_spanTexture[Render::RENDER_NORMAL].Span->Normal = (SpanFunc)spanTexture;
-	this->_spanTexture[Render::RENDER_NORMAL].Span->DT = (SpanFunc)spanTextureDT;
-	this->_spanTexture[Render::RENDER_NORMAL].Span->DS = (SpanFunc)spanTextureDS;
-	this->_spanTexture[Render::RENDER_NORMAL].Span->Stretch = (SpanFuncStretch)spanNoDrawStretch;
-	this->_spanTexture[Render::RENDER_BLEND25].Span = new SpanMode;
-	this->_spanTexture[Render::RENDER_BLEND25].Span->Normal = (SpanFunc)spanBlend25Texture;
-	this->_spanTexture[Render::RENDER_BLEND25].Span->DT = (SpanFunc)spanBlend25TextureDT;
-	this->_spanTexture[Render::RENDER_BLEND25].Span->DS = (SpanFunc)spanBlend25TextureDS;
-	this->_spanTexture[Render::RENDER_BLEND25].Span->Stretch = (SpanFuncStretch)spanNoDrawStretch;
-	this->_spanTexture[Render::RENDER_BLEND50].Span = this->_spanTexture[Render::RENDER_NORMAL].Span;
-	this->_spanTexture[Render::RENDER_ADD].Span = new SpanMode;
-	this->_spanTexture[Render::RENDER_ADD].Span->Normal = (SpanFunc)spanAddTexture;
-	this->_spanTexture[Render::RENDER_ADD].Span->DT = (SpanFunc)spanAddTextureDT;
-	this->_spanTexture[Render::RENDER_ADD].Span->DS = (SpanFunc)spanAddTextureDS;
-	this->_spanTexture[Render::RENDER_ADD].Span->Stretch = (SpanFuncStretch)spanNoDrawStretch;
-	this->_spanTexture[Render::RENDER_ADD75].Span = this->_spanTexture[Render::RENDER_ADD].Span;
-	this->_spanTexture[Render::RENDER_ADD50].Span = this->_spanTexture[Render::RENDER_ADD].Span;
-	this->_spanTexture[Render::RENDER_ADD25].Span = this->_spanTexture[Render::RENDER_ADD].Span;
-	this->_spanTexture[Render::RENDER_SUB].Span = new SpanMode;
-	this->_spanTexture[Render::RENDER_SUB].Span->Normal = (SpanFunc)spanSubTexture;
-	this->_spanTexture[Render::RENDER_SUB].Span->DT = (SpanFunc)spanSubTextureDT;
-	this->_spanTexture[Render::RENDER_SUB].Span->DS = (SpanFunc)spanSubTextureDS;
-	this->_spanTexture[Render::RENDER_SUB].Span->Stretch = (SpanFuncStretch)spanNoDrawStretch;
-	this->_spanTexture[Render::RENDER_PERF].Span = this->_spanTrans[Render::RENDER_PERF].Span;
 
 	this->skipCull = false;
 	this->skipBSP = false;
@@ -1419,9 +1354,7 @@ void Render::render(int viewX, int viewY, int viewZ, int viewAngle, int viewPitc
 		if ((this->renderMode & 0x20) != 0x0) {
 			app->tinyGL->clearColorBuffer(0xFFFF00FF);
 		} else if (this->skyMapTexels != nullptr && app->game->scriptStateVars[5] != 0 && !(this->renderMode & 0x20)) {
-			if (!this->_gles->DrawSkyMap()) {
-				this->drawSkyMap((this->skyMapX >> 3) + ((this->skyMapY >> 3) << 8));
-			}
+			this->_gles->DrawSkyMap();
 		} else {
 			int fogColor = 0;
 			if (app->tinyGL->fogRange > 1) {

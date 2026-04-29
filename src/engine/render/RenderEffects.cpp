@@ -25,7 +25,6 @@
 #include "Hud.h"
 #include "Utils.h"
 #include "Sound.h"
-#include "Span.h"
 #include "EntityDef.h"
 #include "SpriteDefs.h"
 
@@ -315,12 +314,6 @@ void Render::setupTexture(int n, int n2, int renderMode, int renderFlags) {
 		this->_gles->SetupTexture(n, n2, renderMode, renderFlags);
 	}
 
-	if (n < 257 && n != 175 && n != 162 && n != 129 && n != 173 && n != 184) {
-		app->tinyGL->span = &this->_spanTrans[renderMode];
-	} else {
-		app->tinyGL->span = &this->_spanTexture[renderMode];
-	}
-
 	int n5;
 	int n6;
 	if (n == TILE_SKY_BOX) {
@@ -363,97 +356,6 @@ void Render::setupTexture(int n, int n2, int renderMode, int renderFlags) {
 	app->tinyGL->tHeight = 1 << n5;
 	app->tinyGL->tShift = 26 - (n5 + n6);
 	app->tinyGL->tMask = (app->tinyGL->tHeight - 1) * app->tinyGL->sWidth;
-}
-
-void Render::drawSkyMap(int n2) {
-
-
-	uint8_t* p_skyMapTexels;
-	uint16_t* FogPalette;
-	int16_t offsetClamped;
-	int16_t skyOffsetY;
-	int rowOffset;
-	int pixelCount;
-	int texelU;
-	uint16_t* pixels;
-	int unused15;
-	int unused16;
-
-	p_skyMapTexels = this->skyMapTexels;
-	app->tinyGL->paletteBase = this->skyMapPalette;
-	FogPalette = app->tinyGL->getFogPalette(0x10000000);
-
-	offsetClamped = n2 + 255;
-	if (n2 >= 0) {
-		offsetClamped = n2;
-	}
-	skyOffsetY = (offsetClamped & 0xFF00) + (app->tinyGL->viewportY << 8) - 256;
-
-	// Original BREW version
-#if 0
-	for (int i = app->tinyGL->viewportY; i < app->tinyGL->viewportY2; i++) {
-		rowOffset = skyOffsetY & 0xFF00;
-		pixelCount = app->tinyGL->viewportX2 - app->tinyGL->viewportX;
-		texelU = n2;
-		pixels = &app->tinyGL->pixels[app->tinyGL->viewportX + i * app->tinyGL->screenWidth];
-		while (pixelCount >= 8) {
-			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU & 255)]];
-			texelU++;
-			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU & 255)]];
-			texelU++;
-			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU & 255)]];
-			texelU++;
-			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU & 255)]];
-			texelU++;
-			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU & 255)]];
-			texelU++;
-			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU & 255)]];
-			texelU++;
-			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU & 255)]];
-			texelU++;
-			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU & 255)]];
-			texelU++;
-			pixelCount -= 8;
-		}
-		while (--pixelCount >= 0) {
-			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU & 255)]];
-			texelU++;
-		}
-		skyOffsetY = rowOffset + 256;
-	}
-#endif
-
-	// [GEC] It is adjusted like this to be consistent with the IOS version
-	for (int i = app->tinyGL->viewportY; i < app->tinyGL->viewportY2; i++) {
-		rowOffset = skyOffsetY & 0xFF00;
-		pixelCount = app->tinyGL->viewportX2 - app->tinyGL->viewportX;
-		texelU = (n2 + 132) << 8;
-		pixels = &app->tinyGL->pixels[app->tinyGL->viewportX + i * app->tinyGL->screenWidth];
-		while (pixelCount >= 8) {
-			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU >> 8 & 255)]];
-			texelU += 128;
-			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU >> 8 & 255)]];
-			texelU += 128;
-			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU >> 8 & 255)]];
-			texelU += 128;
-			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU >> 8 & 255)]];
-			texelU += 128;
-			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU >> 8 & 255)]];
-			texelU += 128;
-			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU >> 8 & 255)]];
-			texelU += 128;
-			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU >> 8 & 255)]];
-			texelU += 128;
-			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU >> 8 & 255)]];
-			texelU += 128;
-			pixelCount -= 8;
-		}
-		while (--pixelCount >= 0) {
-			*pixels++ = FogPalette[p_skyMapTexels[rowOffset | (texelU >> 8 & 255)]];
-			texelU += 128;
-		}
-		skyOffsetY = rowOffset + 256;
-	}
 }
 
 void Render::unlinkSprite(int n) {

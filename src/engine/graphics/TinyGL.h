@@ -1,7 +1,6 @@
 #pragma once
 #include <climits>
 
-#include "Span.h"
 #include "TGLVert.h"
 #include "TGLEdge.h"
 
@@ -41,7 +40,6 @@ public:
     static constexpr int COLUMN_SCALE_OCCLUDED = (INT_MAX - 1);
 
     int faceCull = 0;
-    SpanType* span = nullptr;
     uint8_t* textureBase = nullptr;
     int imageBounds[4] = {};
     uint16_t* spanPalette = nullptr;
@@ -108,7 +106,6 @@ public:
     uint32_t paletteBaseSize = 0; // [GEC] new
     int16_t paletteTransparentMask = 0;// [GEC] new
     uint32_t mediaID = 0;// [GEC] new
-    int colorBuffer = 0;// [GEC] new
 
 	// Constructor
 	TinyGL();
@@ -136,7 +133,5 @@ public:
     void RasterizeConvexPolygon(int n);
     bool clippedLineVisCheck(TGLVert* tglVert, TGLVert* tglVert2, bool b);
     bool occludeClippedLine(TGLVert* tglVert, TGLVert* tglVert2);
-    void drawClippedSpriteLine(TGLVert* tglVert, TGLVert* tglVert2, TGLVert* tglVert3, int n, bool b);
-    void resetCounters();  
-    void applyClearColorBuffer(); // [GEC]
+    void resetCounters();
 };

@@ -26,7 +26,6 @@
 #include "Hud.h"
 #include "Utils.h"
 #include "Sound.h"
-#include "Span.h"
 #include "EntityDef.h"
 #include "SpriteDefs.h"
 
@@ -105,11 +104,8 @@ void Render::draw2DSprite(int tileNum, int frame, int x, int y, int flags, int r
 	tinyGL->mv[2].z = tinyGL->mv[1].z - ((projSize * view9) >> 14);
 
 	this->_gles->SetGLState();
-	bool drawnByGLES = this->_gles->DrawWorldSpaceSpriteLine(&tinyGL->mv[0], &tinyGL->mv[1], &tinyGL->mv[2], flags ^ 0x20000);
+	this->_gles->DrawWorldSpaceSpriteLine(&tinyGL->mv[0], &tinyGL->mv[1], &tinyGL->mv[2], flags ^ 0x20000);
 	this->_gles->ResetGLState();
-	if (!drawnByGLES) {
-		app->tinyGL->drawClippedSpriteLine(vert1, vert2, vert3, flags, false);
-	}
 }
 
 void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags, int renderMode, int scaleFactor,
@@ -199,11 +195,8 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 					this->setupPalette(app->tinyGL->getFogPalette(transform3DVerts[0].z << 16), renderMode,
 					                   renderFlags);
 				}
-				if (!this->_gles->DrawWorldSpaceSpriteLine(&app->tinyGL->mv[0], &app->tinyGL->mv[1],
-				                                           &app->tinyGL->mv[2], flags)) {
-					app->tinyGL->drawClippedSpriteLine(&transform3DVerts[1], &transform3DVerts[0], &transform3DVerts[2],
-					                                   flags, true);
-				}
+				this->_gles->DrawWorldSpaceSpriteLine(&app->tinyGL->mv[0], &app->tinyGL->mv[1],
+				                                       &app->tinyGL->mv[2], flags);
 			}
 		}
 	} else {
