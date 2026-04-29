@@ -805,32 +805,28 @@ static uint32_t lastTimems = 0;
 
 void drawView(SDLGL* sdlGL) {
 
-	int cx, cy;
-	int w = sdlGL->vidWidth;
-	int h = sdlGL->vidHeight;
-
 	if (lastTimems == 0) {
 		lastTimems = CAppContainer::getInstance()->getTimeMS();
 	}
 
-	SDL_GL_GetDrawableSize(sdlGL->window, &cx, &cy);
-	if (w != cx || h != cy) {
-		w = cx;
-		h = cy;
-	}
+	// Clear the entire backbuffer (so letterbox/pillarbox bars are black) and then
+	// constrain the viewport to an aspect-correct centered rect for actual rendering.
+	int dw, dh;
+	SDL_GL_GetDrawableSize(sdlGL->window, &dw, &dh);
+	glViewport(0, 0, (GLsizei)dw, (GLsizei)dh);
+	glClearColor(0.0, 0.0, 0.0, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT);
 
-	glViewport(0, 0, (GLsizei)w, (GLsizei)h);
+	int cx, cy, cw, ch;
+	sdlGL->getContentRect(&cx, &cy, &cw, &ch);
+	glViewport(cx, cy, (GLsizei)cw, (GLsizei)ch);
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_ALPHA_TEST);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glOrtho(0.0, Applet::IOS_WIDTH, Applet::IOS_HEIGHT, 0.0, -1.0, 1.0);
-	// glRotatef(90.0, 0.0, 0.0, 1.0);
-	// glTranslatef(0.0, -320.0, 0.0);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glClearColor(0.0, 0.0, 0.0, 1.0);
-	glClear(GL_COLOR_BUFFER_BIT);
 
 	uint32_t startTime = CAppContainer::getInstance()->getTimeMS();
 	uint32_t passedTime = startTime - lastTimems;

@@ -215,20 +215,15 @@ void gles::BeginFrame(int x, int y, int w, int h, int* mtxView, int* mtxProjecti
 void gles::ResetGLState() {
 	if (this->headless) { return; }
 	SDLGL* sdlGL = this->sdlGL;
-	int width = sdlGL->vidWidth;
-	int height = sdlGL->vidHeight;
 
-	int cx, cy;
-	SDL_GL_GetDrawableSize(sdlGL->window, &cx, &cy);
-	if (width != cx || height != cy) {
-		width = cx; height = cy;
-	}
+	int cx, cy, cw, ch;
+	sdlGL->getContentRect(&cx, &cy, &cw, &ch);
 
 	this->renderMode = -1;
 	glDisable(GL_FOG);
 	glDisable(GL_BLEND);
-	glViewport(0, 0, width, height);
-	glScissor(0, 0, width, height);
+	glViewport(cx, cy, cw, ch);
+	glScissor(cx, cy, cw, ch);
 	//glViewport(0, 0, 320, 480);
 	//glScissor(0, 0, 320, 480);
 	glMatrixMode(GL_PROJECTION);

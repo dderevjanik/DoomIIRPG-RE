@@ -126,11 +126,31 @@ void SDLGL::Error(const char* fmt, ...) {
 	::Error("%s", errMsg);
 }
 
+void SDLGL::getContentRect(int* x, int* y, int* w, int* h) {
+	int dw, dh;
+	SDL_GL_GetDrawableSize(this->window, &dw, &dh);
+	const float windowAspect = (float)dw / (float)dh;
+	const float canvasAspect = (float)Applet::IOS_WIDTH / (float)Applet::IOS_HEIGHT;
+	if (windowAspect > canvasAspect) {
+		// Window is wider — pillarbox (vertical bars on left/right).
+		*h = dh;
+		*w = (int)((float)dh * canvasAspect + 0.5f);
+		*x = (dw - *w) / 2;
+		*y = 0;
+	} else {
+		// Window is taller — letterbox (horizontal bars on top/bottom).
+		*w = dw;
+		*h = (int)((float)dw / canvasAspect + 0.5f);
+		*x = 0;
+		*y = (dh - *h) / 2;
+	}
+}
+
 void SDLGL::transformCoord2f(float* x, float* y) {
-	int w, h;
-	SDL_GL_GetDrawableSize(this->window, &w, &h);
-	*x *= (float)w / (float)Applet::IOS_WIDTH;
-	*y *= (float)h / (float)Applet::IOS_HEIGHT;
+	int cx, cy, cw, ch;
+	this->getContentRect(&cx, &cy, &cw, &ch);
+	*x = (float)cx + (*x) * (float)cw / (float)Applet::IOS_WIDTH;
+	*y = (float)cy + (*y) * (float)ch / (float)Applet::IOS_HEIGHT;
 }
 
 void SDLGL::centerMouse(int x, int y) {

@@ -30,6 +30,10 @@ public:
 	void Error(const char* fmt, ...);
 
 	void transformCoord2f(float* x, float* y);
+	// Aspect-correct centered content rect inside the drawable window. The 480×320
+	// logical canvas is letterboxed/pillarboxed to preserve its 3:2 aspect on any
+	// window. Outputs are in drawable-pixel coordinates.
+	void getContentRect(int* x, int* y, int* w, int* h);
 	void centerMouse(int x, int y);
 	void updateWinVid(int w, int h);
 	void updateVideo();
