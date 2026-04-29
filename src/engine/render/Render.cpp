@@ -241,17 +241,9 @@ void Render::unloadMap() {
 
 	if (this->mediaPalettes) {
 		for (int i = 0; i < 1024; i++) {
-			for (int j = 0; j < 16; j++) {
-				if (this->mediaPalettes[i][j]) {
-					delete this->mediaPalettes[i][j];
-				}
-				this->mediaPalettes[i][j] = nullptr;
-			}
-			delete this->mediaPalettes[i];
-			this->mediaPalettes[i] = nullptr;
+			delete[] this->mediaPalettes[i];
 		}
-
-		delete this->mediaPalettes;
+		delete[] this->mediaPalettes;
 	}
 	this->mediaPalettes = nullptr;
 
@@ -346,13 +338,7 @@ void Render::unloadMap() {
 	this->skyMapTexels = nullptr;
 
 	if (this->skyMapPalette) {
-		for (int i = 0; i < 16; i++) {
-			if (this->skyMapPalette[i]) {
-				delete this->skyMapPalette[i];
-			}
-			this->skyMapPalette[i] = nullptr;
-		}
-		delete this->skyMapPalette;
+		delete[] this->skyMapPalette;
 	}
 	this->skyMapPalette = nullptr;
 
@@ -469,7 +455,7 @@ void Render::FinalizeMediaFromYaml(DataNode& palYaml, DataNode& texYaml) {
 			int numColors = this->mediaPalColors[i] & 0x3FFFFFFF;
 			this->paletteMemoryUsage += 4 * numColors;
 			this->mediaPalettesSizes[palIdx] = numColors;
-			this->mediaPalettes[palIdx][0] = new uint16_t[numColors]();
+			this->mediaPalettes[palIdx] = new uint16_t[numColors]();
 			palIdx++;
 		}
 	}
@@ -496,7 +482,7 @@ void Render::FinalizeMediaFromYaml(DataNode& palYaml, DataNode& texYaml) {
 				DataNode colors = pit->second["colors"];
 				if (colors && colors.isSequence()) {
 					for (int k = 0; k < numColors && k < colors.size(); k++) {
-						this->mediaPalettes[n5][0][k] = (uint16_t)colors[k].asInt(0);
+						this->mediaPalettes[n5][k] = (uint16_t)colors[k].asInt(0);
 					}
 				}
 			} else {
@@ -623,7 +609,7 @@ bool Render::registerAndFinalizeMedia(int id) {
 			int idx = this->nextPalIdx++;
 			this->paletteMemoryUsage += 4 * numColors;
 			this->mediaPalettesSizes[idx] = numColors;
-			this->mediaPalettes[idx][0] = new uint16_t[numColors]();
+			this->mediaPalettes[idx] = new uint16_t[numColors]();
 
 			// Load palette colours from media_palettes.yaml
 			DataNode entry = palYaml[palBase];
@@ -632,18 +618,11 @@ bool Render::registerAndFinalizeMedia(int id) {
 				if (colors && colors.isSequence()) {
 					int n = std::min(numColors, (int)colors.size());
 					for (int k = 0; k < n; ++k) {
-						this->mediaPalettes[idx][0][k] = (uint16_t)colors[k].asInt(0);
+						this->mediaPalettes[idx][k] = (uint16_t)colors[k].asInt(0);
 					}
 				}
 			} else {
 				LOG_WARN("[render] registerAndFinalizeMedia: no palette data for {}\n", palBase);
-			}
-
-			// Allocate the 15 extra tint banks that beginLoadMap sets up after
-			// FinalizeMedia — the sprite rasteriser indexes them via paletteBase.
-			for (int b = 1; b < 16; ++b) {
-				this->paletteMemoryUsage += 4 * numColors;
-				this->mediaPalettes[idx][b] = new uint16_t[numColors]();
 			}
 
 			// Resolve any forward-range refs that pointed at this slot — their
@@ -753,11 +732,8 @@ bool Render::loadSkyFromPng(const std::string& path) {
 
 	// Allocate palette with 16 fog levels
 	int palSize = (int)palette.size();
-	this->skyMapPalette = new uint16_t*[16];
-	for (int i = 0; i < 16; i++) {
-		this->skyMapPalette[i] = new uint16_t[palSize];
-	}
-	memcpy(this->skyMapPalette[0], palette.data(), palSize * sizeof(uint16_t));
+	this->skyMapPalette = new uint16_t[palSize];
+	memcpy(this->skyMapPalette, palette.data(), palSize * sizeof(uint16_t));
 
 	LOG_INFO("[render] Loaded sky from PNG: {} ({}x{}, {} colors)\n", path.c_str(), w, h, palSize);
 	return true;
@@ -823,11 +799,7 @@ bool Render::loadMap(const std::vector<uint8_t>& bin, int mapNameID, LoadOptions
 		this->mediaTexelSizes = new int[Render::MEDIA_MAX_IMAGES];
 		this->mediaTexelSizes2 = new int[Render::MEDIA_MAX_IMAGES];
 		this->mediaTexels = new uint8_t*[1024]();
-		this->mediaPalettes = new uint16_t**[1024]();
-		for (int i = 0; i < 1024; ++i) {
-			this->mediaPalettes[i] = new uint16_t*[16]();
-			for (int j = 0; j < 16; ++j) this->mediaPalettes[i][j] = nullptr;
-		}
+		this->mediaPalettes = new uint16_t*[1024]();
 
 		app->canvas->updateLoadingBar(false);
 
@@ -1174,18 +1146,7 @@ bool Render::loadMap(const std::vector<uint8_t>& bin, int mapNameID, LoadOptions
 	}
 	app->canvas->updateLoadingBar(false);
 
-	// --- Palette tint banks (full reload only — allocated once per media set) ---
 	if (!opts.keepMedia) {
-		for (int n19 = 0; n19 < 1024; n19++) {
-			if (this->mediaPalettes[n19][0] != nullptr) {
-				int length = this->mediaPalettesSizes[n19];
-				for (int n20 = 1; n20 < 16; n20++) {
-					this->paletteMemoryUsage += 4 * length;
-					this->mediaPalettes[n19][n20] = new uint16_t[length];
-				}
-			}
-		}
-
 		app->canvas->changeMapStarted = false;
 		this->destDizzy = 0;
 		this->baseDizzy = 0;

@@ -937,7 +937,7 @@ void gles::CreateTextureForMediaID(int n, int mediaID, bool b) {
 
 		int skyW = 256, skyH = 256;
 		uint8_t* texels = render->skyMapTexels;
-		uint16_t* pal = render->skyMapPalette[0];
+		uint16_t* pal = render->skyMapPalette;
 
 		uint8_t* rgbaData = (uint8_t*)std::malloc(skyW * skyH * 4);
 		for (int i = 0; i < skyW * skyH; i++) {
@@ -997,7 +997,7 @@ void gles::CreateTextureForMediaID(int n, int mediaID, bool b) {
 		v7 = render->mediaTexelSizes[mediaID] & 0x3FFF;
 		__src = render->mediaTexels[v7];
 		Size = render->mediaTexelSizes2[v7];
-		v9 = render->mediaPalettes[render->mediaPalColors[mediaID] & 0x3FFF][0];
+		v9 = render->mediaPalettes[render->mediaPalColors[mediaID] & 0x3FFF];
 		v12 = render->mediaDimensions[mediaID];
 		v8 = v12 & 0xF;
 		v10 = (v12 >> 4) & 0xF;

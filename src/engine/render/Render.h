@@ -290,7 +290,7 @@ public:
 	bool useCaldexHack = false;
 	int delayedSpriteBuffer[3] = {};
 	uint8_t* skyMapTexels = nullptr;
-	uint16_t** skyMapPalette = nullptr;
+	uint16_t* skyMapPalette = nullptr;
 	bool isSkyMap = false;
 	int skyMapX = 0;
 	int skyMapY = 0;
@@ -306,7 +306,7 @@ public:
 	short* mediaBounds = nullptr;
 	uint8_t** mediaTexels = nullptr;
 	int* mediaTexelSizes2 = nullptr;
-	uint16_t*** mediaPalettes = nullptr;
+	uint16_t** mediaPalettes = nullptr;
 	int* mediaPalettesSizes = nullptr;
 	int* splitSprites = nullptr;
 	int numSplitSprites = 0;
@@ -431,7 +431,7 @@ public:
 	void startFogLerp(int n, int n2, int fogLerpTime);
 	void buildFogTables(int fogColor);
 	int(*getImageFrameBounds(int n, int n2, int n3, int n4))[4];
-	uint16_t* getPalette(int n, int n2, int n3);
+	uint16_t* getPalette(int n, int n2);
 	void setupTexture(int n, int n2, int renderMode, int renderFlags);
 	void render(int viewX, int viewY, int viewZ, int viewAngle, int viewPitch, int viewRoll, int viewFov);
 	void unlinkSprite(int n);

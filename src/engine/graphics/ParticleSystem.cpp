@@ -247,7 +247,7 @@ void ParticleSystem::spawnMonsterBlood(Entity* entity, bool b) {
         return;
     }
     int sprite = entity->getSprite();
-    uint16_t* palette = app->render->getPalette(app->render->getSpriteTileNum(sprite), 0, 0);
+    uint16_t* palette = app->render->getPalette(app->render->getSpriteTileNum(sprite), 0);
     int palColor = palette[this->monsterColors[entity->def->monsterIdx]];
     int color = ((palColor & 0x7E0) << 5) | ((palColor & 0xF800) << 8) | ((palColor & 0x1F) << 3);
 

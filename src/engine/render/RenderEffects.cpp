@@ -98,8 +98,8 @@ int (*Render::getImageFrameBounds(int n, int n2, int n3, int n4))[4] {
 	return this->imageFrameBounds;
 }
 
-uint16_t* Render::getPalette(int n, int n2, int n3) {
-	return this->mediaPalettes[this->mediaPalColors[this->mediaMappings[n] + n2] & 0x3FFF][n3];
+uint16_t* Render::getPalette(int n, int n2) {
+	return this->mediaPalettes[this->mediaPalColors[this->mediaMappings[n] + n2] & 0x3FFF];
 }
 
 void Render::setupTexture(int n, int n2, int renderMode, int renderFlags) {
