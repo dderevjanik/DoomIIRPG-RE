@@ -60,13 +60,13 @@ public:
 	static constexpr int BUFF_TURNS = 0;
 	static constexpr int MAX_BUFF_IDS = 18; // statusEffects supports buff IDs 0-17
 
-	// Buff data loaded from effects.yaml
-	int8_t buffMaxStacks[15] = {};
-	int8_t buffBlockedBy[15] = {};     // -1 = none
-	int16_t buffApplySound[15] = {};   // -1 = none
-	int8_t buffPerTurnDamage[15] = {}; // 0 = none, >0 = flat damage per turn
+	// Buff data loaded from effects.yaml (not in save files — safe to use plain int)
+	int buffMaxStacks[15] = {};
+	int buffBlockedBy[15] = {};        // -1 = none
+	int buffApplySound[15] = {};       // -1 = none
+	int buffPerTurnDamage[15] = {};    // 0 = none, >0 = flat damage per turn
 	bool buffPerTurnHealByAmount[15] = {}; // true = heals by buff amount per turn
-	int8_t buffDuration[MAX_BUFF_IDS] = {}; // default duration in turns, loaded from effects.yaml
+	int buffDuration[MAX_BUFF_IDS] = {}; // default duration in turns
 	int buffNoAmountMask = 0;
 	int buffAmtNotDrawnMask = 0;
 	int buffWarningTime = 0;

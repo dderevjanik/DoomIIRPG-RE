@@ -60,14 +60,22 @@ public:
     int16_t* mayaTweenIndices = nullptr;
     int totalMayaCameraKeys = 0;
     int totalMayaTweens = 0;
+    // Entity pool caps. Originally sized to feature-phone RAM; bump as needed for
+    // larger encounters / mods. All loops that iterate the pools should use the
+    // matching `num*` runtime count, NOT the cap directly.
+    static constexpr int MAX_ENTITY_DB = 1024;
+    static constexpr int MAX_MONSTERS = 80;
+    static constexpr int MAX_AI_COMPONENTS = 80;
+    static constexpr int MAX_LOOT_COMPONENTS = 128;
+
     Entity* entities = nullptr;
     int numEntities = 0;
-    Entity* entityDb[1024] = {};
-    EntityMonster entityMonsters[80] = {};
+    Entity* entityDb[MAX_ENTITY_DB] = {};
+    EntityMonster entityMonsters[MAX_MONSTERS] = {};
     int numMonsters = 0;
-    AIComponent aiComponents[80] = {};
+    AIComponent aiComponents[MAX_AI_COMPONENTS] = {};
     int numAIComponents = 0;
-    LootComponent lootComponents[128] = {};
+    LootComponent lootComponents[MAX_LOOT_COMPONENTS] = {};
     int numLootComponents = 0;
     int spawnParam = 0;
     bool disableAI = false;

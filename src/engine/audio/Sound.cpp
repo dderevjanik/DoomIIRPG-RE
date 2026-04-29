@@ -201,22 +201,19 @@ void Sound::openAL_LoadSound(int resID, Sound::SoundStream* channel) {
 bool Sound::openAL_LoadWAVFromFile(ALuint bufferId, const char* fileName) {
 	ALenum error;
 	ALsizei freq;
-	ALvoid* data;
-	ALsizei size;
+	std::vector<uint8_t> data;
 	ALenum format;
 
-	data = nullptr;
 	LOG_INFO("[sound] Loading wav: {}\n", fileName);
-	if (this->openAL_LoadAudioFileData(fileName, &format, &data, &size, &freq)) {
-		alBufferData(bufferId, format, data, size, freq);
-		std::free(data);
+	if (this->openAL_LoadAudioFileData(fileName, &format, data, &freq)) {
+		alBufferData(bufferId, format, data.data(), (ALsizei)data.size(), freq);
 		OpenAL_ERROR(939);
 		return true;
 	}
 	return false;
 }
 
-bool Sound::openAL_LoadAudioFileData(const char* fileName, ALenum* format, ALvoid** data, ALsizei* size,
+bool Sound::openAL_LoadAudioFileData(const char* fileName, ALenum* format, std::vector<uint8_t>& data,
                                      ALsizei* freq) {
 	InputStream IS;
 	AudioStreamBasicDescription outPropertyData;
@@ -258,11 +255,11 @@ bool Sound::openAL_LoadAudioFileData(const char* fileName, ALenum* format, ALvoi
 		if (chunklength == 18) {                            // SpiderMastermind_sight.wav use chunklength 18
 			IS.readShort();
 		}
-		IS.readInt();         // "data" chunk.
-		*size = IS.readInt(); // Get size of the data.
+		IS.readInt();             // "data" chunk.
+		int dataSize = IS.readInt();
 
-		*data = (ALvoid*)std::malloc(*size);
-		IS.read((uint8_t*)*data, 0, *size); // Read audio data into buffer.
+		data.resize((size_t)dataSize);
+		IS.read(data.data(), 0, dataSize);
 
 		IS.close();
 		IS.~InputStream();

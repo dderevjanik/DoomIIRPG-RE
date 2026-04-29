@@ -85,7 +85,7 @@ public:
 	void openAL_PlaySound(ALuint source, ALint loop);
 	void openAL_LoadSound(int resID, Sound::SoundStream* channel);
 	bool openAL_LoadWAVFromFile(ALuint bufferId, const char* fileName);
-	bool openAL_LoadAudioFileData(const char* fileName, ALenum* format, ALvoid** data, ALsizei* size, ALsizei* freq);
+	bool openAL_LoadAudioFileData(const char* fileName, ALenum* format, std::vector<uint8_t>& data, ALsizei* freq);
 	bool openAL_OpenAudioFile(const char* fileName, InputStream* IS);
 	bool openAL_LoadAllSounds();
 
