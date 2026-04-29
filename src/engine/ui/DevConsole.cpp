@@ -175,8 +175,6 @@ void DevConsole::drawPerformance() {
 	if (render && ImGui::CollapsingHeader("Frame Breakdown")) {
 		ImGui::Text("Frame:   %3d ms", render->frameTime);
 		ImGui::Text("BSP:     %3d ms", render->bspTime);
-		ImGui::Text("Sprites: %3d ms", render->spriteTime);
-		ImGui::Text("Lines:   %3d ms", render->lineTime);
 	}
 
 	// Memory

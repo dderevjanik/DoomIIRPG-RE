@@ -33,12 +33,10 @@ public:
 	static constexpr int RENDER_ADD50 = 5;
 	static constexpr int RENDER_ADD25 = 6;
 	static constexpr int RENDER_SUB = 7;
-	static constexpr int RENDER_UNK = 8;
 	static constexpr int RENDER_PERF = 9;
 	static constexpr int RENDER_NONE = 10;
 	static constexpr int RENDER_BLEND75 = 12; // New from IOS
 	static constexpr int RENDER_BLENDSPECIALALPHA = 13; // New from IOS
-	static constexpr int RENDER_MAX = 14;
 
 	// Resolve a render mode name (e.g. "add", "blend50") to its integer constant.
 	// Falls back to parsing as integer, then defaults to RENDER_NORMAL.
@@ -59,8 +57,6 @@ public:
 
 	static constexpr int CHAT_ZOOM_SCALE = 32768;
 	static constexpr int CHAT_ZOOM_ZOFS = 15;
-	static constexpr int RENDER_FLAG_GREYSHIFT = 4;
-	static constexpr int RENDER_FLAG_WHITESHIFT = 8;
 	static constexpr int RENDER_FLAG_BLUESHIFT = 32;
 	static constexpr int RENDER_FLAG_GREENSHIFT = 64;
 	static constexpr int RENDER_FLAG_REDSHIFT = 128;
@@ -257,8 +253,6 @@ public:
 	short viewNodes = 0;
 	int currentFrameTime = 0;
 	int frameTime = 0;
-	int spriteTime = 0;
-	int lineTime = 0;
 	int bspTime = 0;
 	int clearColorBuffer = 0;
 	int fadeTime = 0;
