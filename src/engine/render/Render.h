@@ -461,7 +461,6 @@ public:
 	int convertToGrayscale(int color);
 	bool checkPortalVisibility(int x, int y, int z);
 	void renderPortal();
-	void fillWeaponRect(int n, int n2, int n3, int n4, int n5);
 	void drawRGB(Graphics* graphics);
 	void rockView(int rockViewDur, int x, int y, int z);
 	bool isNPC(int n);

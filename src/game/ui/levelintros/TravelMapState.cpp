@@ -807,6 +807,8 @@ static void initTravelMap(Canvas* canvas) {
 	canvas->starFieldHeight = canvas->imgStarField->height;
 	canvas->starFieldScrollY = 0;
 	canvas->starFieldZoom = 1;
+	canvas->starFieldBuffer.assign(
+	    (size_t)canvas->starFieldWidth * (size_t)canvas->starFieldHeight, 0);
 }
 
 
@@ -909,7 +911,7 @@ next_star_row:
 				sfHeight = canvas->starFieldHeight;
 				goto next_star_row;
 			}
-			pixelValue = canvas->app->tinyGL->pixels[i + canvas->starFieldWidth * row];
+			pixelValue = canvas->starFieldBuffer[i + canvas->starFieldWidth * row];
 			starType = pixelValue >> 10;
 			if ((pixelValue & 0x3FF) != 0)
 				break;
@@ -955,7 +957,6 @@ static void runStarFieldFrame(Canvas* canvas) {
 
 	int fieldWidth;
 	int fieldHeight;
-	TinyGL* tinyGL;
 	unsigned int pixelValue;
 	unsigned int starType;
 	int radiusY;
@@ -964,7 +965,6 @@ static void runStarFieldFrame(Canvas* canvas) {
 	int col;
 	int colOffset;
 	unsigned int rowDist;
-	TinyGL* btmTinyGL;
 	unsigned int btmPixelValue;
 	unsigned int btmStarType;
 	int btmRadiusY;
@@ -992,8 +992,6 @@ static void runStarFieldFrame(Canvas* canvas) {
 	int btmOffsetXResult;
 	int i;
 	int btmRowOffset;
-	unsigned short* btmPixels;
-	unsigned short* pixels;
 	int offsetXResult;
 	int angle;
 	int rowOffset;
@@ -1013,9 +1011,7 @@ static void runStarFieldFrame(Canvas* canvas) {
 		colOffset = -halfWidth;
 		while (col < fieldWidth)
 		{
-			tinyGL = canvas->app->tinyGL.get();
-			pixels = tinyGL->pixels;
-			pixelValue = pixels[col + fieldWidth * i];
+			pixelValue = canvas->starFieldBuffer[col + fieldWidth * i];
 			angle = pixelValue & 0x3FF;
 			if ((pixelValue & 0x3FF) != 0)
 			{
@@ -1043,12 +1039,9 @@ static void runStarFieldFrame(Canvas* canvas) {
 				}
 				if (rowOffset + offsetY >= -halfHeight && halfHeight > rowOffset + offsetY && -halfWidth <= colOffset + offsetXResult && halfWidth > colOffset + offsetXResult)
 				{
-					pixels[col + fieldWidth * (i - offsetY) + offsetXResult] = angle | ((short)starType << 10);
-					fieldWidth = canvas->starFieldWidth;
-					tinyGL = canvas->app->tinyGL.get();
+					canvas->starFieldBuffer[col + fieldWidth * (i - offsetY) + offsetXResult] = angle | ((short)starType << 10);
 				}
-				tinyGL->pixels[col + fieldWidth * i] = 0;
-				fieldWidth = canvas->starFieldWidth;
+				canvas->starFieldBuffer[col + fieldWidth * i] = 0;
 			}
 			++col;
 			++colOffset;
@@ -1066,9 +1059,7 @@ static void runStarFieldFrame(Canvas* canvas) {
 		btmSmallRadius = 20 * btmRowDist;
 		while (btmCol < fieldWidth)
 		{
-			btmTinyGL = canvas->app->tinyGL.get();
-			btmPixels = btmTinyGL->pixels;
-			btmPixelValue = btmPixels[btmCol + fieldWidth * btmRow];
+			btmPixelValue = canvas->starFieldBuffer[btmCol + fieldWidth * btmRow];
 			btmAngle = btmPixelValue & 0x3FF;
 			if ((btmPixelValue & 0x3FF) != 0)
 			{
@@ -1096,12 +1087,9 @@ static void runStarFieldFrame(Canvas* canvas) {
 				}
 				if (btmRowOffset + btmOffsetY >= -halfHeight && halfHeight > btmRowOffset + btmOffsetY && btmColOffset + btmOffsetXResult >= -halfWidth && halfWidth > btmColOffset + btmOffsetXResult)
 				{
-					btmPixels[btmCol + fieldWidth * (btmRow - btmOffsetY) + btmOffsetXResult] = btmAngle | ((short)btmStarType << 10);
-					fieldWidth = canvas->starFieldWidth;
-					btmTinyGL = canvas->app->tinyGL.get();
+					canvas->starFieldBuffer[btmCol + fieldWidth * (btmRow - btmOffsetY) + btmOffsetXResult] = btmAngle | ((short)btmStarType << 10);
 				}
-				btmTinyGL->pixels[btmCol + fieldWidth * btmRow] = 0;
-				fieldWidth = canvas->starFieldWidth;
+				canvas->starFieldBuffer[btmCol + fieldWidth * btmRow] = 0;
 			}
 			++btmCol;
 			++btmColOffset;
@@ -1126,7 +1114,7 @@ static void runStarFieldFrame(Canvas* canvas) {
 		spawnY = canvas->app->nextInt() % 15 + 1;
 		if (starAngle >= 512)
 			spawnY = -spawnY;
-		canvas->app->tinyGL->pixels[spawnX + halfWidth + canvas->starFieldWidth * (halfHeight - spawnY)] = starAngle | ((short)randType << 10);
+		canvas->starFieldBuffer[spawnX + halfWidth + canvas->starFieldWidth * (halfHeight - spawnY)] = starAngle | ((short)randType << 10);
 	}
 }
 

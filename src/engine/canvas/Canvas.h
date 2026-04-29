@@ -1,4 +1,6 @@
 #pragma once
+#include <cstdint>
+#include <vector>
 #include "Graphics.h"
 
 class Applet;
@@ -412,6 +414,9 @@ public:
 	int starFieldWidth = 0; // guessed — star field render width
 	int starFieldScrollY = 0; // guessed — star field Y scroll offset
 	int starFieldZoom = 0; // guessed — star field zoom/scale factor
+	// Star metadata buffer: each cell encodes one star (lower 10 bits = angle, upper bits = type).
+	// Sized to starFieldWidth * starFieldHeight when the travel map is initialized.
+	std::vector<uint16_t> starFieldBuffer;
 	// miniGameHelpScrollPosition and helpTextNumberOfLines moved to MinigameUI
 
 	// State object registry — states with ICanvasState implementations are dispatched through them

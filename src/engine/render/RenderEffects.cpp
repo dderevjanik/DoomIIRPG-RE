@@ -788,24 +788,6 @@ int Render::convertToGrayscale(int color) {
 	return 0xFF000000 | n3 >> 1 << 16 | n3 >> 1 << 8 | n3 >> 1;
 }
 
-void Render::fillWeaponRect(int n, int n2, int n3, int n4, int n5) {
-
-	int n6 = n2 * this->screenWidth + n;
-	int n7 = n6 + n3;
-	int i = n6;
-	int j = 0;
-	uint16_t* pixels = app->tinyGL->pixels;
-	while (j < n4) {
-		while (i < n7) {
-			pixels[i] = n5;
-			++i;
-		}
-		n6 += this->screenWidth;
-		n7 += this->screenWidth;
-		i = n6;
-		++j;
-	}
-}
 
 void Render::drawRGB(Graphics* graphics) {
 
