@@ -1712,8 +1712,9 @@ uint32_t ScriptThread::run() {
             }
 
             case Enums::EV_FOG_AFFECTS_SKYMAP: {
-                //printf("EV_FOG_AFFECTS_SKYMAP -> %d\n", this->IP);
-                this->app->render->fogAffectsSkyMap = (this->getByteArg() != 0);
+                // Legacy palette-fog opcode; consume the byte arg, ignore.
+                // Fog is shader-side now and always applies to the sky.
+                (void)this->getByteArg();
                 break;
             }
 

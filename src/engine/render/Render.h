@@ -261,14 +261,6 @@ public:
 	int lineTime = 0;
 	int bspTime = 0;
 	int clearColorBuffer = 0;
-	int dclTime = 0;
-	int preFloorTime = 0;
-	int postFloorTime = 0;
-	int stringMem = 0;
-	int nodeMem = 0;
-	int spriteMem = 0;
-	int lineMem = 0;
-	int eventMem = 0;
 	int fadeTime = 0;
 	int fadeDuration = 0;
 	int fadeFlags = 0;
@@ -281,7 +273,6 @@ public:
 	int monsterIdleTime[18] = {};
 	bool chatZoom = false;
 	bool shotsFired = false;
-	bool fogAffectsSkyMap = false;
 	int postProcessMode = 0;
 	bool brightenPostProcess = false;
 	int brightenPostProcessBeginTime = 0;

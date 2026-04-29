@@ -16,7 +16,6 @@ private:
 public:
     Applet* app = nullptr;  // Set in startup(), replaces CAppContainer::getInstance()->app
 
-    static constexpr int UNIT_SCALE = 65536;
     static constexpr int MATRIX_ONE = 16384;
     static constexpr int SCREEN_SHIFT = 3;
     static constexpr int SCREEN_ONE = 8;

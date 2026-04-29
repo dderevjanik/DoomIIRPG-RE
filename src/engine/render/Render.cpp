@@ -1165,7 +1165,6 @@ void Render::renderBSP() {
 	this->spriteCount = 0;
 	this->spriteRasterCount = 0;
 	this->lineTime = 0;
-	this->dclTime = 0;
 	this->bspTime = app->upTimeMs;
 	this->numVisibleNodes = 0;
 	this->numSplitSprites = 0;
