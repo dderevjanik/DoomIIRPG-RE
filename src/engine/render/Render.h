@@ -94,17 +94,7 @@ public:
 	static constexpr int MAPEVENTSIZE = 2;
 	static constexpr int MAX_LADDERS_PER_MAP = 10;
 	static constexpr int MAX_KEEP_PITCH_LEVEL_TILES = 20;
-	static constexpr int BITS_FOR_COORD = 5;
-	static constexpr int KEEP_PITCH_LEVEL_COORDS_MASK = 1023;
-	static constexpr int RENDER_OFF = 0;
-	static constexpr int RENDER_TRANSFORM = 1;
-	static constexpr int RENDER_CLIP = 2;
-	static constexpr int RENDER_PROJECT = 4;
-	static constexpr int RENDER_SPAN = 8;
-	static constexpr int RENDER_RASTERIZE_SPAN = 16;
-	static constexpr int RENDER_RASTERIZE_DEBUG = 32;
 	static constexpr int RENDER_DEFAULT = 31;
-	static constexpr int RENDER_DEBUG = 63;
 	static constexpr int FADE_FLAG_NONE = 0;
 	static constexpr int FADE_FLAG_FADEOUT = 1;
 	static constexpr int FADE_FLAG_FADEIN = 2;
