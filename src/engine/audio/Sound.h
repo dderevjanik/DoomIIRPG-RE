@@ -1,4 +1,5 @@
 #pragma once
+#include <vector>
 #include <al.h>
 #include <alc.h>
 
@@ -54,7 +55,8 @@ public:
 	int soundFxVolume = 0;
 	int musicVolume = 0;
 	int soundCapacity = 0; // guessed — playback blocked when 0, initialized to 100
-	SoundStream channel[10] = {};
+	static constexpr size_t MAX_CHANNELS = 64; // soft cap to bound OpenAL source pressure
+	std::vector<SoundStream> channel;
 	short resID = 0;
 	uint8_t flags = 0;
 	int priority = 0;
@@ -90,6 +92,7 @@ public:
 	bool cacheSounds();
 	void playSound(int16_t resID, uint8_t flags, int priority, bool unused); // guessed — param never read
 	int getFreeSlot(int minPriority); // guessed
+	int allocateChannel();
 	void soundStop();
 	void stopSound(int resID, bool fadeOut);
 	bool isSoundPlaying(int16_t resID);

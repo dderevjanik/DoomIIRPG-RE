@@ -230,10 +230,11 @@ void DevConsole::drawRenderStats() {
 		Sound* sound = app->sound.get();
 		if (sound) {
 			int active = 0;
-			for (int i = 0; i < 10; i++) {
+			for (size_t i = 0; i < sound->channel.size(); ++i) {
 				if (sound->channel[i].sourceId != 0) active++;
 			}
-			ImGui::Text("Channels: %d / 10 active", active);
+			ImGui::Text("Channels: %d active / %zu allocated (cap %zu)",
+				active, sound->channel.size(), Sound::MAX_CHANNELS);
 			ImGui::Text("Sounds: %s  Music: %s",
 				sound->allowSounds ? "ON" : "off",
 				sound->allowMusics ? "ON" : "off");

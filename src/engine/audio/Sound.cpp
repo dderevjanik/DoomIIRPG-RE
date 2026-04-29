@@ -45,10 +45,8 @@ bool Sound::startup() {
 
 	// sounds.yaml is already loaded in loadTables() (before menuSystem needs it)
 
-	for (int i = 0; i < 10; i++) {
-		this->channel[i].resID = -1;
-		this->channel[i].priority = 1;
-	}
+	this->channel.clear();
+	this->channel.reserve(8); // small initial reserve; channels are allocated on demand
 
 	if (!this->headless) {
 		this->openAL_Init();
@@ -89,10 +87,11 @@ void Sound::openAL_Init() {
 }
 
 void Sound::openAL_Close() {
-	for (int i = 0; i < 10; i++) {
-		alDeleteBuffers(1, &this->channel[i].bufferId);
-		alDeleteSources(1, &this->channel[i].sourceId);
+	for (auto& ch : this->channel) {
+		if (ch.bufferId != 0) { alDeleteBuffers(1, &ch.bufferId); }
+		if (ch.sourceId != 0) { alDeleteSources(1, &ch.sourceId); }
 	}
+	this->channel.clear();
 
 	alcMakeContextCurrent(nullptr);
 	if (this->alContext) {
@@ -289,20 +288,27 @@ bool Sound::openAL_OpenAudioFile(const char* fileName, InputStream* IS) {
 }
 
 bool Sound::openAL_LoadAllSounds() {
-	ALenum error;
 	if (!this->soundsLoaded) {
-		for (int i = 0; i < 10; i++) {
-			alGenBuffers(1, &this->channel[i].bufferId);
-			alGenSources(1, &this->channel[i].sourceId);
-			alSource3i(this->channel[i].sourceId, AL_POSITION, 0, 0, 0);
-			alSourcei(this->channel[i].sourceId, AL_REFERENCE_DISTANCE, 5000000);
-		}
-		OpenAL_ERROR(643);
+		// Channels are now allocated on demand by allocateChannel(); nothing to pre-create.
 		this->soundsLoaded = true;
 		return true;
 	}
 
 	return false;
+}
+
+int Sound::allocateChannel() {
+	ALenum error;
+	SoundStream s;
+	s.resID = -1;
+	s.priority = 1;
+	alGenBuffers(1, &s.bufferId);
+	alGenSources(1, &s.sourceId);
+	alSource3i(s.sourceId, AL_POSITION, 0, 0, 0);
+	alSourcei(s.sourceId, AL_REFERENCE_DISTANCE, 5000000);
+	OpenAL_ERROR(643);
+	this->channel.push_back(s);
+	return (int)this->channel.size() - 1;
 }
 
 bool Sound::cacheSounds() {
@@ -348,7 +354,7 @@ void Sound::playSound(int16_t resID, uint8_t flags, int priority, bool unused) {
 			if (this->resID == soundResID)
 				return;
 			freeSlot = -1;
-			for (chanIdx = 0; chanIdx < 10; chanIdx++) {
+			for (chanIdx = 0; chanIdx < (int)this->channel.size(); chanIdx++) {
 				if (this->channel[chanIdx].resID == soundResID) {
 					if (!this->openAL_IsPlaying(this->channel[chanIdx].sourceId)) {
 						existingSlot = chanIdx;
@@ -373,7 +379,7 @@ void Sound::playSound(int16_t resID, uint8_t flags, int priority, bool unused) {
 					return;
 			}
 			if ((flags & 2) != 0) {
-				for (stopIdx = 0; stopIdx < 10; stopIdx++) {
+				for (stopIdx = 0; stopIdx < (int)this->channel.size(); stopIdx++) {
 					alSourceStop(this->channel[stopIdx].sourceId);
 					this->channel[stopIdx].priority = 1;
 					this->channel[stopIdx].fadeInProgress = 0;
@@ -415,39 +421,36 @@ void Sound::playSound(int16_t resID, uint8_t flags, int priority, bool unused) {
 }
 
 int Sound::getFreeSlot(int minPriority) {
-	int slotIdx;
-	int bestSlot;
-	int lowestPriority;
-	int chanPriority;
-	bool isBetter;
-
-	slotIdx = 0;
-	bestSlot = -1;
-	lowestPriority = 6;
-	while (this->channel[slotIdx].resID != -1) {
-		ALint state;
-		alGetSourcei(this->channel[slotIdx].sourceId, AL_SOURCE_STATE, &state);
-		if (state != AL_PLAYING && state != AL_PAUSED) {
-			break;
+	// Reuse a slot that's free (resID == -1) or whose source has stopped playing.
+	for (size_t i = 0; i < this->channel.size(); ++i) {
+		if (this->channel[i].resID == -1) {
+			return (int)i;
 		}
-		chanPriority = this->channel[slotIdx].priority;
-		isBetter = chanPriority < minPriority;
-		if (chanPriority < minPriority)
-			isBetter = chanPriority < lowestPriority;
-		if (isBetter)
-			bestSlot = slotIdx;
-		++slotIdx;
-		if (isBetter)
-			lowestPriority = chanPriority;
-		if (slotIdx == 10)
-			return bestSlot;
+		ALint state;
+		alGetSourcei(this->channel[i].sourceId, AL_SOURCE_STATE, &state);
+		if (state != AL_PLAYING && state != AL_PAUSED) {
+			return (int)i;
+		}
 	}
-	return slotIdx;
+	// All slots are busy. Grow the pool if we're under the soft cap.
+	if (this->channel.size() < MAX_CHANNELS) {
+		return this->allocateChannel();
+	}
+	// At the cap — preempt the lowest-priority slot strictly below minPriority.
+	int bestSlot = -1;
+	int lowestPriority = minPriority;
+	for (size_t i = 0; i < this->channel.size(); ++i) {
+		if (this->channel[i].priority < lowestPriority) {
+			bestSlot = (int)i;
+			lowestPriority = this->channel[i].priority;
+		}
+	}
+	return bestSlot;
 }
 
 void Sound::soundStop() {
 	if (this->headless) { return; }
-	for (int i = 0; i < 10; i++) {
+	for (size_t i = 0; i < this->channel.size(); ++i) {
 		alSourceStop(this->channel[i].sourceId);
 		this->channel[i].priority = 1;
 		this->channel[i].fadeInProgress = false;
@@ -457,7 +460,7 @@ void Sound::soundStop() {
 void Sound::stopSound(int resID, bool fadeOut) {
 	if (this->headless) { return; }
 	int volume;
-	for (int i = 0; i < 10; i++) {
+	for (size_t i = 0; i < this->channel.size(); ++i) {
 		if (this->channel[i].resID == resID) {
 			if (fadeOut) {
 				if (!this->channel[i].fadeInProgress) {
@@ -479,7 +482,7 @@ void Sound::stopSound(int resID, bool fadeOut) {
 
 bool Sound::isSoundPlaying(int16_t resID) {
 	if (this->headless) { return false; }
-	for (int i = 0; i < 10; i++) {
+	for (size_t i = 0; i < this->channel.size(); ++i) {
 		if (this->channel[i].resID == resID) {
 			return this->openAL_IsPlaying(this->channel[i].sourceId);
 		}
@@ -491,7 +494,7 @@ void Sound::updateVolume() {
 	if (this->headless) { return; }
 	int volume;
 	if (this->soundsLoaded) {
-		for (int i = 0; i < 10; i++) {
+		for (size_t i = 0; i < this->channel.size(); ++i) {
 			if (!this->channel[i].fadeInProgress) {
 				if ((unsigned int)(this->channel[i].resID - 1067) > 4) {
 					volume = this->soundFxVolume;
