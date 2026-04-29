@@ -143,13 +143,18 @@ void gles::BeginFrame(int x, int y, int w, int h, int* mtxView, int* mtxProjecti
 	this->vPortRect[3] = gles::scale * w;
 	this->vPortRect[2] = gles::scale * h;
 #else
-	this->vPortRect[0] = gles::scale * posX;
-	this->vPortRect[1] = gles::scale * posY;
-	this->vPortRect[2] = gles::scale * w;
-	this->vPortRect[3] = gles::scale * h;
-
-	this->sdlGL->transformCoord2f((float*)&this->vPortRect[0], (float*)&this->vPortRect[1]);
-	this->sdlGL->transformCoord2f((float*)&this->vPortRect[2], (float*)&this->vPortRect[3]);
+	// Map logical (480×320 canvas) viewport coords to drawable pixels inside the
+	// aspect-correct centered content rect.
+	int cx, cy, cw, ch;
+	this->sdlGL->getContentRect(&cx, &cy, &cw, &ch);
+	const int sx = cx + posX * cw / Applet::IOS_WIDTH;
+	const int sy = cy + posY * ch / Applet::IOS_HEIGHT;
+	const int sw = w * cw / Applet::IOS_WIDTH;
+	const int sh = h * ch / Applet::IOS_HEIGHT;
+	this->vPortRect[0] = gles::scale * sx;
+	this->vPortRect[1] = gles::scale * sy;
+	this->vPortRect[2] = gles::scale * sw;
+	this->vPortRect[3] = gles::scale * sh;
 #endif
 	
 	//printf("this->vPortRect[0] %d\n", this->vPortRect[0]);

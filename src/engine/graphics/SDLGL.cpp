@@ -146,18 +146,26 @@ void SDLGL::getContentRect(int* x, int* y, int* w, int* h) {
 	}
 }
 
+// Scale logical-canvas coordinates (480×320 space) to the centered aspect-correct
+// content rect within the drawable. Pure float scalar multiply — no offset added —
+// because gles::BeginFrame relies on this being a scalar multiply (it casts int* to
+// float* and depends on small-int float bit patterns surviving a single multiply).
+// Use getContentRect() directly when you actually need the centering offset.
 void SDLGL::transformCoord2f(float* x, float* y) {
 	int cx, cy, cw, ch;
 	this->getContentRect(&cx, &cy, &cw, &ch);
-	*x = (float)cx + (*x) * (float)cw / (float)Applet::IOS_WIDTH;
-	*y = (float)cy + (*y) * (float)ch / (float)Applet::IOS_HEIGHT;
+	(void)cx;
+	(void)cy;
+	*x *= (float)cw / (float)Applet::IOS_WIDTH;
+	*y *= (float)ch / (float)Applet::IOS_HEIGHT;
 }
 
 void SDLGL::centerMouse(int x, int y) {
-	float X = (float)((Applet::IOS_WIDTH / 2) + x);
-	float Y = (float)((Applet::IOS_HEIGHT / 2) + y);
-	this->transformCoord2f(&X, &Y);
-	SDL_WarpMouseInWindow(this->window, (int)X, (int)Y);
+	int cx, cy, cw, ch;
+	this->getContentRect(&cx, &cy, &cw, &ch);
+	int targetX = cx + (Applet::IOS_WIDTH / 2 + x) * cw / Applet::IOS_WIDTH;
+	int targetY = cy + (Applet::IOS_HEIGHT / 2 + y) * ch / Applet::IOS_HEIGHT;
+	SDL_WarpMouseInWindow(this->window, targetX, targetY);
 }
 
 void SDLGL::updateWinVid(int w, int h) {
