@@ -626,7 +626,12 @@ int main(int argc, char* args[]) {
 	if (headless) {
 		sdlGL.InitializeHeadless();
 	} else {
-		sdlGL.Initialize();
+		if (!sdlGL.Initialize()) {
+			LOG_ERROR("[main] SDL/OpenGL initialization failed — engine cannot start without a GL context.\n");
+			fprintf(stderr, "[main] SDL/OpenGL initialization failed (see log). Exiting.\n");
+			logShutdown();
+			return 1;
+		}
 	}
 
 	Input input;
