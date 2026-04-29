@@ -104,6 +104,8 @@ bool Render::checkPortalVisibility(int x, int y, int z) {
 }
 
 void Render::renderPortal() {
+	if (this->headless) { return; }
+
 	static float angle = 0.f;
 
 

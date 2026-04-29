@@ -23,6 +23,7 @@ public:
 	Applet* app = nullptr; // Set in startup(), replaces CAppContainer::getInstance()->app
 	const GameConfig* gameConfig = nullptr; // Set in startup(), replaces CAppContainer::getInstance()->gameConfig
 	SDLGL* sdlGL = nullptr;
+	bool headless = false; // Set in startup(); when true, render() and renderPortal() are no-ops.
 
 	static constexpr int TEXELS_PER_FILE = 32768;
 	static constexpr int RENDER_NORMAL = 0;

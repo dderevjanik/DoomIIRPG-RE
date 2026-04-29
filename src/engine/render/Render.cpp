@@ -76,6 +76,7 @@ bool Render::startup() {
 	this->app = CAppContainer::getInstance()->app;
 	this->gameConfig = &CAppContainer::getInstance()->gameConfig;
 	this->sdlGL = CAppContainer::getInstance()->sdlGL;
+	this->headless = CAppContainer::getInstance()->headless;
 
 	LOG_INFO("Render::startup\n");
 
@@ -1301,6 +1302,7 @@ void Render::renderBSP() {
 	}
 }
 void Render::render(int viewX, int viewY, int viewZ, int viewAngle, int viewPitch, int viewRoll, int viewFov) {
+	if (this->headless) { return; }
 
 
 	// printf("Render::render\n");
