@@ -37,6 +37,12 @@ public:
 	static constexpr int RENDER_BLEND75 = 12; // New from IOS
 	static constexpr int RENDER_BLENDSPECIALALPHA = 13; // New from IOS
 
+	// Reference height (in pixels) the sprite art was authored against on the
+	// original 176×208 BREW phone target. Used as a fixed-point scale anchor in
+	// sprite-size math (`scaledHeight = SPRITE_DESIGN_HEIGHT * scaleFactor / 65536`).
+	// NOT correlated with the current canvas height — this is a design constant.
+	static constexpr int SPRITE_DESIGN_HEIGHT = 176;
+
 	// Resolve a render mode name (e.g. "add", "blend50") to its integer constant.
 	// Falls back to parsing as integer, then defaults to RENDER_NORMAL.
 	static inline int renderModeFromName(const std::string& name) {

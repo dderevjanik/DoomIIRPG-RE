@@ -227,9 +227,9 @@ void Hud::drawTopBar(Graphics* graphics) {
 	Text* smallBuffer = app->localization->getSmallBuffer();
 	int n = 2;
 	Entity* facingEntity = app->player->facingEntity;
-	graphics->drawImage(this->imgPanelTop, 240, 0, 0x11, 0, 0);
+	graphics->drawImage(this->imgPanelTop, Applet::IOS_WIDTH / 2, 0, 0x11, 0, 0);
 	if (app->player->isFamiliar) {
-		graphics->drawImage(this->imgPanelTopSentrybot, 240, 0, 0x11, 0, 0);
+		graphics->drawImage(this->imgPanelTopSentrybot, Applet::IOS_WIDTH / 2, 0, 0x11, 0, 0);
 	}
 	else {
 		graphics->drawBevel(0xFF9A9987, 0xFF1D1E0C, -app->canvas->screenRect[0], 0, app->canvas->hudRect[2] + 1, 20);

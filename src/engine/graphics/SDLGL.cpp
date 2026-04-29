@@ -126,24 +126,34 @@ void SDLGL::Error(const char* fmt, ...) {
 	::Error("%s", errMsg);
 }
 
-void SDLGL::getContentRect(int* x, int* y, int* w, int* h) {
-	int dw, dh;
-	SDL_GL_GetDrawableSize(this->window, &dw, &dh);
-	const float windowAspect = (float)dw / (float)dh;
+void SDLGL::computeContentRect(int totalW, int totalH, int* x, int* y, int* w, int* h) {
+	const float windowAspect = (float)totalW / (float)totalH;
 	const float canvasAspect = (float)Applet::IOS_WIDTH / (float)Applet::IOS_HEIGHT;
 	if (windowAspect > canvasAspect) {
 		// Window is wider — pillarbox (vertical bars on left/right).
-		*h = dh;
-		*w = (int)((float)dh * canvasAspect + 0.5f);
-		*x = (dw - *w) / 2;
+		*h = totalH;
+		*w = (int)((float)totalH * canvasAspect + 0.5f);
+		*x = (totalW - *w) / 2;
 		*y = 0;
 	} else {
 		// Window is taller — letterbox (horizontal bars on top/bottom).
-		*w = dw;
-		*h = (int)((float)dw / canvasAspect + 0.5f);
+		*w = totalW;
+		*h = (int)((float)totalW / canvasAspect + 0.5f);
 		*x = 0;
-		*y = (dh - *h) / 2;
+		*y = (totalH - *h) / 2;
 	}
+}
+
+void SDLGL::getContentRect(int* x, int* y, int* w, int* h) {
+	int dw, dh;
+	SDL_GL_GetDrawableSize(this->window, &dw, &dh);
+	computeContentRect(dw, dh, x, y, w, h);
+}
+
+void SDLGL::getContentRectInWindow(int* x, int* y, int* w, int* h) {
+	int ww, wh;
+	SDL_GetWindowSize(this->window, &ww, &wh);
+	computeContentRect(ww, wh, x, y, w, h);
 }
 
 // Scale logical-canvas coordinates (480×320 space) to the centered aspect-correct

@@ -46,7 +46,7 @@ void Render::draw2DSprite(int tileNum, int frame, int x, int y, int flags, int r
 
 	this->setupTexture(tileNum, frame, renderMode, renderFlags);
 
-	int scaledHeight = (176 * scaleFactor) / 0x10000;
+	int scaledHeight = (Render::SPRITE_DESIGN_HEIGHT * scaleFactor) / 0x10000;
 
 	vert1->x = x << 3;
 	vert1->y = y + scaledHeight << 3;

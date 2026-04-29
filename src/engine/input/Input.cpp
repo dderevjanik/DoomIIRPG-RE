@@ -905,8 +905,14 @@ void Input::handleEvents() noexcept {
             case SDL_MOUSEBUTTONDOWN: {
                 state = SDL_GetMouseState(&mX, &mY);
                 if (state & SDL_BUTTON_LMASK) {
-                    gBegMouseX = (float)((mX) * (1.0f / winVidWidth));
-                    gBegMouseY = (float)((mY) * (1.0f / winVidHeight));
+                    int cx, cy, cw, ch;
+                    sdlGL->getContentRectInWindow(&cx, &cy, &cw, &ch);
+                    // Discard clicks that fall in the letterbox/pillarbox bars.
+                    if (mX < cx || mX >= cx + cw || mY < cy || mY >= cy + ch) {
+                        break;
+                    }
+                    gBegMouseX = (float)(mX - cx) / (float)cw;
+                    gBegMouseY = (float)(mY - cy) / (float)ch;
                     CAppContainer::getInstance()->userPressed(gBegMouseX, gBegMouseY);
                 }
             }   break;
@@ -919,8 +925,16 @@ void Input::handleEvents() noexcept {
 
             case SDL_MOUSEMOTION: {
                 state = SDL_GetMouseState(&mX, &mY);
-                gCurMouseX = (float)((mX) * (1.0f / winVidWidth));
-                gCurMouseY = (float)((mY) * (1.0f / winVidHeight));
+                int cx, cy, cw, ch;
+                sdlGL->getContentRectInWindow(&cx, &cy, &cw, &ch);
+                // Skip motion events outside the content rect — keeps gCurMouse* at
+                // the last in-bounds position so a drag that wanders into a bar and
+                // releases still resolves to a valid logical coord.
+                if (mX < cx || mX >= cx + cw || mY < cy || mY >= cy + ch) {
+                    break;
+                }
+                gCurMouseX = (float)(mX - cx) / (float)cw;
+                gCurMouseY = (float)(mY - cy) / (float)ch;
                 if (state & SDL_BUTTON_LMASK) {
                     CAppContainer::getInstance()->userMoved(gCurMouseX, gCurMouseY);
                 }
