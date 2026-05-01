@@ -2070,6 +2070,16 @@ menus:
       style: dial
       default_x: 408
       default_y: 81
+    layout:
+      x: center
+      y: 126
+      w: btn_width
+      h: 176
+    yesno:
+      string_id: 107
+      select_yes: false
+      yes_action: goto
+      yes_param: 16
   main_confirmnew2_injected:
     inject: true
     menu_id: 15

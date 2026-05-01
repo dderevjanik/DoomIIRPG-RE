@@ -1,6 +1,7 @@
 #pragma once
 #include <span>
 #include "SDLGL.h"
+#include "Shader.h"
 
 using PFNGLACTIVETEXTUREPROC = void (APIENTRYP)(GLenum texture);
 using PFNGLCLIENTACTIVETEXTUREPROC = void (APIENTRYP)(GLenum texture);
@@ -63,6 +64,12 @@ private:
 	float fogEnd = 0.0f;
 	float fogColor[4] = {};
 	float fogBlack[4] = {};
+	// Programmable-pipeline migration (B2). Once compiled and validated, this
+	// shader will replace the fixed-function calls (glMatrixMode, glColor4f,
+	// glFog*, glTexEnvi, glVertexPointer) one mesh category at a time. While
+	// migrating, isShaderReady gates which path each draw uses.
+	Shader textureShader;
+	bool isShaderReady = false;
 public:
 
 	// Constructor

@@ -39,6 +39,33 @@ void gles::WindowInit() {
 void gles::SwapBuffers() {
 }
 
+// GLSL 1.10 / GLES 2.0-compatible vertex+fragment pair for textured 2D draws.
+// Used for HUD sprites, simplest case (no fog, screen-space, single texture
+// modulated by a color uniform). Subsequent B2 slices add fog and other
+// uniforms or branch into sister shaders.
+static const char* kTextureVS = R"(
+attribute vec4 a_pos;
+attribute vec2 a_uv;
+uniform mat4 u_mvp;
+varying vec2 v_uv;
+void main() {
+    gl_Position = u_mvp * a_pos;
+    v_uv = a_uv;
+}
+)";
+
+static const char* kTextureFS = R"(
+#ifdef GL_ES
+precision mediump float;
+#endif
+varying vec2 v_uv;
+uniform sampler2D u_tex;
+uniform vec4 u_color;
+void main() {
+    gl_FragColor = texture2D(u_tex, v_uv) * u_color;
+}
+)";
+
 void gles::GLInit(Render* render) {
 	this->app = CAppContainer::getInstance()->app;
 	this->headless = CAppContainer::getInstance()->headless;
@@ -48,6 +75,15 @@ void gles::GLInit(Render* render) {
 	this->render = render;
 	this->tinyGL = this->app->tinyGL.get();
 	this->isInit = true;
+
+	// Compile the migration shader. Failure is non-fatal — the fixed-function
+	// path keeps working — but logs an error so the issue is visible.
+	if (!this->headless) {
+		this->isShaderReady = this->textureShader.compile(kTextureVS, kTextureFS);
+		if (!this->isShaderReady) {
+			LOG_WARN("[gles] textureShader compile/link failed; staying on fixed-function path\n");
+		}
+	}
 
 	int j = 0;
 	for (int i = 2; i < 16; i++) {
