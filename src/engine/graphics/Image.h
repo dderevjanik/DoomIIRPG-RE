@@ -21,6 +21,13 @@ public:
 	int texHeight;
 	GLuint texture;
 
+	// Color modulator captured by setRenderMode(). The shader path reads this
+	// instead of glGetFloatv(GL_CURRENT_COLOR), since GL_REPLACE modes (0/3)
+	// don't bother setting glColor4f — the fixed-function pipeline ignores it
+	// in REPLACE mode, but the shader always multiplies texColor * u_color and
+	// would pick up stale state from a previous mode-8 (text) draw.
+	float modColor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+
 	// Constructor
 	Image();
 	// Destructor

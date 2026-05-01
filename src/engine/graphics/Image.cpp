@@ -1,3 +1,10 @@
+// Expose GL 2.0+ extension prototypes (glUniform*, glVertexAttribPointer, …)
+// for the B2 programmable-pipeline migration. macOS's <OpenGL/gl.h> ships
+// up to GL 1.4 by default and gates the rest behind this macro.
+#ifndef GL_GLEXT_PROTOTYPES
+#define GL_GLEXT_PROTOTYPES
+#endif
+
 #include <stdexcept>
 #include <cstdlib>
 
@@ -6,6 +13,20 @@
 #include "Canvas.h"
 #include "Image.h"
 #include "SDLGL.h"
+#include "GLES.h"
+// Multiply two column-major 4x4 matrices: dst = a * b. Used by the shader
+// migration (B2) to combine the fixed-function projection and modelview
+// matrices into a single u_mvp uniform.
+static void mat4Mul(float dst[16], const float a[16], const float b[16]) {
+	for (int c = 0; c < 4; c++) {
+		for (int r = 0; r < 4; r++) {
+			dst[c * 4 + r] = a[0 * 4 + r] * b[c * 4 + 0]
+			              + a[1 * 4 + r] * b[c * 4 + 1]
+			              + a[2 * 4 + r] * b[c * 4 + 2]
+			              + a[3 * 4 + r] * b[c * 4 + 3];
+		}
+	}
+}
 
 Image::Image() {
     this->app = nullptr;
@@ -119,11 +140,6 @@ void Image::DrawTexture(int texX, int texY, int texW, int texH, int posX, int po
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glVertexPointer(3, GL_FLOAT, 0, vp);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glTexCoordPointer(2, GL_FLOAT, 0, st);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY);
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
@@ -161,7 +177,50 @@ void Image::DrawTexture(int texX, int texY, int texW, int texH, int posX, int po
     default:
         break;
     }
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+    // Migration to programmable pipeline (B2): if the shader is ready, use it.
+    // Hybrid for now — fixed-function still computes the matrix stack above;
+    // we read it back via glGetFloatv and pass as u_mvp. The modulator color
+    // comes from this->modColor (set by setRenderMode); reading back via
+    // glGetFloatv(GL_CURRENT_COLOR) is unsafe because REPLACE-mode branches
+    // don't touch glColor and we'd inherit stale state from previous draws.
+    if (_glesObj && _glesObj->isShaderReady) {
+        float proj[16], mv[16], mvp[16];
+        glGetFloatv(GL_PROJECTION_MATRIX, proj);
+        glGetFloatv(GL_MODELVIEW_MATRIX, mv);
+        mat4Mul(mvp, proj, mv);
+
+        const float* color = this->modColor;
+
+        _glesObj->textureShader.use();
+        const GLint uMvp = _glesObj->textureShader.uniform("u_mvp");
+        const GLint uColor = _glesObj->textureShader.uniform("u_color");
+        const GLint uTex = _glesObj->textureShader.uniform("u_tex");
+        const GLint aPos = _glesObj->textureShader.attribute("a_pos");
+        const GLint aUv = _glesObj->textureShader.attribute("a_uv");
+        if (uMvp >= 0)   glUniformMatrix4fv(uMvp, 1, GL_FALSE, mvp);
+        if (uColor >= 0) glUniform4fv(uColor, 1, color);
+        if (uTex >= 0)   glUniform1i(uTex, 0);
+        if (aPos >= 0) {
+            glEnableVertexAttribArray(aPos);
+            glVertexAttribPointer(aPos, 3, GL_FLOAT, GL_FALSE, 0, vp);
+        }
+        if (aUv >= 0) {
+            glEnableVertexAttribArray(aUv);
+            glVertexAttribPointer(aUv, 2, GL_FLOAT, GL_FALSE, 0, st);
+        }
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        if (aPos >= 0) glDisableVertexAttribArray(aPos);
+        if (aUv >= 0)  glDisableVertexAttribArray(aUv);
+        Shader::useNone();
+    } else {
+        glVertexPointer(3, GL_FLOAT, 0, vp);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glTexCoordPointer(2, GL_FLOAT, 0, st);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glDisableClientState(GL_COLOR_ARRAY);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    }
     glPopMatrix();
 }
 
@@ -240,9 +299,16 @@ void Image::setRenderMode(int renderMode) {
     Applet* app = this->app;
     int color;
 
+    // Default for REPLACE modes — texture passes through unmodulated.
+    this->modColor[0] = 1.0f;
+    this->modColor[1] = 1.0f;
+    this->modColor[2] = 1.0f;
+    this->modColor[3] = 1.0f;
+
     switch (renderMode) {
     case 0:
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
         if (!this->isTransparentMask) {
             glDisable(GL_ALPHA_TEST);
             glDisable(GL_BLEND);
@@ -252,16 +318,19 @@ void Image::setRenderMode(int renderMode) {
         break;
     case 1:
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+        this->modColor[3] = 0.25f;
         glColor4f(1.0f, 1.0f, 1.0f, 0.25f);
         glDisable(GL_ALPHA_TEST);
         break;
     case 2:
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+        this->modColor[3] = 0.5f;
         glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
         glDisable(GL_ALPHA_TEST);
         break;
     case 3:
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
         glEnable(GL_ALPHA_TEST);
         glAlphaFunc(GL_GREATER, 0);
         glEnable(GL_BLEND);
@@ -271,15 +340,21 @@ void Image::setRenderMode(int renderMode) {
         glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
         glEnable(GL_BLEND);
         color = Graphics::charColors[app->canvas->graphics.currentCharColor];
+        this->modColor[0] = ((color >> 16) & 0xff) / 255.0f;
+        this->modColor[1] = ((color >>  8) & 0xff) / 255.0f;
+        this->modColor[2] = ( color        & 0xff) / 255.0f;
+        this->modColor[3] = ((color >> 24) & 0xff) / 255.0f;
         glColor4ub(color >> 0x10 & 0xff, color >> 8 & 0xff, color & 0xff, color >> 0x18);
         return;
     case 12:
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+        this->modColor[3] = 0.75f;
         glColor4f(1.0f, 1.0f, 1.0f, 0.75f);
         glDisable(GL_ALPHA_TEST);
         break;
     case 13:
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+        this->modColor[3] = app->canvas->blendSpecialAlpha;
         glColor4f(1.0f, 1.0f, 1.0f, app->canvas->blendSpecialAlpha);
         glDisable(GL_ALPHA_TEST);
         break;
