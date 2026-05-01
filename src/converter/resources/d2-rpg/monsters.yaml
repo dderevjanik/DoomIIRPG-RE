@@ -27,7 +27,7 @@ entities:
       attacks:
         attack1: m_machine_gun
         attack2: assault_rifle
-        chance: 0
+        attack1_chance: 0
       weakness:
         holy_water_pistol: 12.5
       sounds:
@@ -72,7 +72,7 @@ entities:
       attacks:
         attack1: m_machine_gun
         attack2: assault_rifle
-        chance: 0
+        attack1_chance: 0
       weakness:
         holy_water_pistol: 12.5
       sounds:
@@ -115,7 +115,7 @@ entities:
       attacks:
         attack1: m_flesh_throw
         attack2: assault_rifle
-        chance: 0
+        attack1_chance: 0
       weakness:
         chainsaw: 200
         holy_water_pistol: 12.5
@@ -160,7 +160,7 @@ entities:
       attacks:
         attack1: m_flesh_throw
         attack2: assault_rifle
-        chance: 0
+        attack1_chance: 0
       weakness:
         chainsaw: 200
         holy_water_pistol: 12.5
@@ -205,7 +205,7 @@ entities:
       attacks:
         attack1: m_flesh_throw
         attack2: assault_rifle
-        chance: 0
+        attack1_chance: 0
       weakness:
         chainsaw: 200
         holy_water_pistol: 12.5
@@ -252,7 +252,7 @@ entities:
       attacks:
         attack1: m_claw
         attack2: assault_rifle
-        chance: 0
+        attack1_chance: 0
       weakness:
         holy_water_pistol: 200
         super_shotgun: 200
@@ -299,7 +299,7 @@ entities:
       attacks:
         attack1: m_claw
         attack2: m_fireball
-        chance: 75
+        attack1_chance: 29
       weakness:
         holy_water_pistol: 200
         super_shotgun: 200
@@ -346,7 +346,7 @@ entities:
       attacks:
         attack1: m_claw
         attack2: m_fireball
-        chance: 50
+        attack1_chance: 20
       weakness:
         holy_water_pistol: 200
         super_shotgun: 200
@@ -402,7 +402,7 @@ entities:
       attacks:
         attack1: m_punch
         attack2: assault_rifle
-        chance: 0
+        attack1_chance: 0
       weakness:
         chainsaw: 12.5
         holy_water_pistol: 200
@@ -459,7 +459,7 @@ entities:
       attacks:
         attack1: m_punch
         attack2: assault_rifle
-        chance: 0
+        attack1_chance: 0
       weakness:
         chainsaw: 12.5
         holy_water_pistol: 200
@@ -516,7 +516,7 @@ entities:
       attacks:
         attack1: m_punch
         attack2: assault_rifle
-        chance: 0
+        attack1_chance: 0
       weakness:
         chainsaw: 12.5
         holy_water_pistol: 200
@@ -570,7 +570,7 @@ entities:
       attacks:
         attack1: m_bite
         attack2: m_charge
-        chance: 75
+        attack1_chance: 29
       weakness:
         holy_water_pistol: 200
       sounds:
@@ -622,7 +622,7 @@ entities:
       attacks:
         attack1: m_bite
         attack2: m_charge
-        chance: 75
+        attack1_chance: 29
       weakness:
         holy_water_pistol: 200
       sounds:
@@ -674,7 +674,7 @@ entities:
       attacks:
         attack1: m_bite
         attack2: m_charge
-        chance: 75
+        attack1_chance: 29
       weakness:
         holy_water_pistol: 200
       sounds:
@@ -723,7 +723,7 @@ entities:
       attacks:
         attack1: m_bite
         attack2: m_charge
-        chance: 75
+        attack1_chance: 29
       weakness:
         holy_water_pistol: 200
       sounds:
@@ -771,7 +771,7 @@ entities:
       attacks:
         attack1: m_bite
         attack2: m_charge
-        chance: 152
+        attack1_chance: 60
       weakness:
         holy_water_pistol: 200
       sounds:
@@ -819,7 +819,7 @@ entities:
       attacks:
         attack1: m_bite
         attack2: m_charge
-        chance: 178
+        attack1_chance: 70
       weakness:
         holy_water_pistol: 200
       sounds:
@@ -884,7 +884,7 @@ entities:
       attacks:
         attack1: m_rockets
         attack2: m_punch
-        chance: 178
+        attack1_chance: 70
       weakness:
         holy_water_pistol: 200
         plasma_gun: 150
@@ -949,7 +949,7 @@ entities:
       attacks:
         attack1: m_rockets
         attack2: m_punch
-        chance: 203
+        attack1_chance: 80
       weakness:
         holy_water_pistol: 200
         plasma_gun: 150
@@ -1014,7 +1014,7 @@ entities:
       attacks:
         attack1: m_rockets
         attack2: m_punch
-        chance: 229
+        attack1_chance: 90
       weakness:
         holy_water_pistol: 200
         plasma_gun: 150
@@ -1067,7 +1067,7 @@ entities:
       attacks:
         attack1: m_rockets
         attack2: assault_rifle
-        chance: 0
+        attack1_chance: 0
       weakness:
         holy_water_pistol: 200
         plasma_gun: 150
@@ -1120,7 +1120,7 @@ entities:
       attacks:
         attack1: m_rockets
         attack2: assault_rifle
-        chance: 0
+        attack1_chance: 0
       weakness:
         holy_water_pistol: 200
         plasma_gun: 150
@@ -1173,7 +1173,7 @@ entities:
       attacks:
         attack1: m_rockets
         attack2: assault_rifle
-        chance: 0
+        attack1_chance: 0
       weakness:
         holy_water_pistol: 200
         plasma_gun: 150
@@ -1223,7 +1223,7 @@ entities:
       attacks:
         attack1: m_bite
         attack2: m_plasma
-        chance: 0
+        attack1_chance: 0
       weakness:
         holy_water_pistol: 200
         chaingun: 200
@@ -1273,7 +1273,7 @@ entities:
       attacks:
         attack1: m_bite
         attack2: m_plasma
-        chance: 0
+        attack1_chance: 0
       weakness:
         holy_water_pistol: 200
         chaingun: 200
@@ -1323,7 +1323,7 @@ entities:
       attacks:
         attack1: m_bite
         attack2: m_plasma
-        chance: 0
+        attack1_chance: 0
       weakness:
         holy_water_pistol: 200
         chaingun: 200
@@ -1374,7 +1374,7 @@ entities:
       attacks:
         attack1: m_floor_strike
         attack2: assault_rifle
-        chance: 0
+        attack1_chance: 0
       weakness:
         holy_water_pistol: 200
       sounds:
@@ -1424,7 +1424,7 @@ entities:
       attacks:
         attack1: m_floor_strike
         attack2: assault_rifle
-        chance: 0
+        attack1_chance: 0
       weakness:
         holy_water_pistol: 200
       sounds:
@@ -1474,7 +1474,7 @@ entities:
       attacks:
         attack1: m_floor_strike
         attack2: assault_rifle
-        chance: 0
+        attack1_chance: 0
       weakness:
         holy_water_pistol: 200
       sounds:
@@ -1529,7 +1529,7 @@ entities:
       attacks:
         attack1: m_fire
         attack2: assault_rifle
-        chance: 0
+        attack1_chance: 0
       weakness:
         holy_water_pistol: 200
         rocket_launcher: 150
@@ -1585,7 +1585,7 @@ entities:
       attacks:
         attack1: m_fire
         attack2: assault_rifle
-        chance: 0
+        attack1_chance: 0
       weakness:
         holy_water_pistol: 200
         rocket_launcher: 150
@@ -1641,7 +1641,7 @@ entities:
       attacks:
         attack1: m_fire
         attack2: assault_rifle
-        chance: 0
+        attack1_chance: 0
       weakness:
         holy_water_pistol: 200
         rocket_launcher: 150
@@ -1693,7 +1693,7 @@ entities:
       attacks:
         attack1: m_rockets
         attack2: assault_rifle
-        chance: 0
+        attack1_chance: 0
       weakness:
         holy_water_pistol: 200
       sounds:
@@ -1739,7 +1739,7 @@ entities:
       attacks:
         attack1: m_acid_spit
         attack2: assault_rifle
-        chance: 0
+        attack1_chance: 0
       weakness:
         holy_water_pistol: 200
       sounds:
@@ -1787,7 +1787,7 @@ entities:
       attacks:
         attack1: m_vios_plasma
         attack2: assault_rifle
-        chance: 0
+        attack1_chance: 0
       weakness: {}
       sounds:
         alert1: vios_sight
@@ -1836,7 +1836,7 @@ entities:
       attacks:
         attack1: m_vios_plasma
         attack2: m_vios_lightning
-        chance: 152
+        attack1_chance: 60
       weakness: {}
       sounds:
         alert1: vios_sight
@@ -1885,7 +1885,7 @@ entities:
       attacks:
         attack1: m_vios_plasma
         attack2: m_vios_lightning
-        chance: 152
+        attack1_chance: 60
       weakness: {}
       sounds:
         alert1: vios_sight
@@ -1934,7 +1934,7 @@ entities:
       attacks:
         attack1: m_vios_plasma
         attack2: m_vios_lightning
-        chance: 152
+        attack1_chance: 60
       weakness: {}
       sounds:
         alert1: vios_sight
@@ -1983,7 +1983,7 @@ entities:
       attacks:
         attack1: m_vios_plasma
         attack2: m_vios_lightning
-        chance: 152
+        attack1_chance: 60
       weakness: {}
       sounds:
         alert1: vios_sight

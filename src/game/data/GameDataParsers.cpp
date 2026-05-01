@@ -1411,7 +1411,7 @@ std::expected<void, std::string> parseMonsterCombatFromEntities(Applet* app, con
 			int base = mi * 3;
 			app->combat->monsterAttacks[base + 0] = (short)EntityNames::weaponToIndex(atk["attack1"].asString("0").c_str());
 			app->combat->monsterAttacks[base + 1] = (short)EntityNames::weaponToIndex(atk["attack2"].asString("0").c_str());
-			app->combat->monsterAttacks[base + 2] = (short)atk["chance"].asInt(0);
+			app->combat->monsterAttacks[base + 2] = (short)atk["attack1_chance"].asInt(0);
 		}
 
 		// Weakness

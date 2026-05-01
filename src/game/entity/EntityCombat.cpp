@@ -719,7 +719,8 @@ int Entity::aiWeaponForTarget(Entity* entity) {
 
             int n17;
             if (n11 != -1 && n12 != -1) {
-                n17 = (((int)app->nextByte() <= app->combat->getMonsterField(this->def, 2)) ? monsterField2 : monsterField3);
+                // attack1_chance is 0-100 (percent). Pick attack1 with that probability when both attacks are in range.
+                n17 = (((int)(app->nextByte() % 100) < app->combat->getMonsterField(this->def, 2)) ? monsterField2 : monsterField3);
             }
             else if (n11 != -1) {
                 n17 = monsterField3;

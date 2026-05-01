@@ -401,7 +401,7 @@ entities:
       attacks:
         attack1: m_plasma_gun
         attack2: assault_rifle
-        chance: 0
+        attack1_chance: 0
       weakness: {}
       sounds:
         alert1: arachnotron_sight
@@ -450,7 +450,7 @@ entities:
       attacks:
         attack1: m_chain_gun
         attack2: assault_rifle
-        chance: 0
+        attack1_chance: 0
       weakness: {}
       sounds:
         alert1: arachnotron_sight
