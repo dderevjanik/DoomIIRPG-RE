@@ -19,18 +19,15 @@ public:
     static constexpr int CULL_EXTRA = NEAR_CLIP + 16;
     static constexpr int COLUMN_SCALE_INIT = INT_MAX;
 
+    // External read/write surface — game / render code touches these.
     int imageBounds[4] = {};
     int sWidth = 0;
     int tHeight = 0;
     uint32_t textureBaseSize = 0;
     int screenWidth = 0;
-    int screenHeight = 0;
     int* columnScale = nullptr;
     int view[16] = {};
-    int view2D[16] = {};
-    int projection[16] = {};
     int mvp[16] = {};
-    int mvp2D[16] = {};
     TGLVert cv[32] = {};
     TGLVert mv[20] = {};
     int fogMin = 0;
@@ -42,15 +39,9 @@ public:
     int viewportHeight = 0;
     int viewportClampX1 = 0;
     int viewportClampX2 = 0;
-    int viewportX2 = 0;
-    int viewportXScale = 0;
-    int viewportXBias = 0;
-    int viewportYScale = 0;
-    int viewportYBias = 0;
     int viewX = 0;
     int viewY = 0;
     int viewZ = 0;
-    int viewYaw = 0;
     int viewPitch = 0;
 
 	// Constructor
@@ -58,7 +49,7 @@ public:
 	// Destructor
 	~TinyGL();
 
-	bool startup(int screenWidth, int screenHeight);
+	bool startup(int screenWidth);
     void setViewport(int x, int y, int w, int h);
     void resetViewPort();
     void setView(int viewX, int viewY, int viewZ, int viewYaw, int viewPitch, int viewRoll, int viewFov, int viewAspect);
@@ -72,9 +63,18 @@ public:
     bool occludeClippedLine(TGLVert* tglVert, TGLVert* tglVert2);
 
 private:
-    // Internal helpers — used only inside TinyGL.cpp (matrix construction
-    // for setView, viewport math, polygon rasterization tail, polygon clip
-    // worker called from ClipQuad).
+    // Internal state — written/read only by TinyGL.cpp.
+    int view2D[16] = {};
+    int projection[16] = {};
+    int mvp2D[16] = {};
+    int viewportX2 = 0;
+    int viewportXScale = 0;
+    int viewportXBias = 0;
+    int viewportYScale = 0;
+    int viewportYBias = 0;
+    int viewYaw = 0;
+
+    // Internal helpers — matrix construction for setView, viewport math.
     void buildViewMatrix(int x, int y, int z, int yaw, int pitch, int roll, int* matrix);
     void buildProjectionMatrix(int fov, int aspect, int* matrix);
     void multMatrix(int* matrix1, int* matrix2, int* destMtx);

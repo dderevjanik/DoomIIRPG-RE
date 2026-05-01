@@ -127,7 +127,7 @@ bool Applet::startup() {
 	if (!this->localization->startup()) { LOG_ERROR("[app] Localization::startup() failed — check string files in game.yaml\n"); return false; }
 	if (!this->render->startup()) { LOG_ERROR("[app] Render::startup() failed — check texture/level assets\n"); return false; }
 	this->loadTables();
-	if (!this->tinyGL->startup(this->render->screenWidth, this->render->screenHeight)) {
+	if (!this->tinyGL->startup(this->render->screenWidth)) {
 		LOG_ERROR("[app] TinyGL::startup() failed ({}x{}) — software renderer init error\n", this->render->screenWidth, this->render->screenHeight); return false;
 	}
 

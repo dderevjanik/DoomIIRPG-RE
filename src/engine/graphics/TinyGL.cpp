@@ -17,14 +17,13 @@ TinyGL::TinyGL() = default;
 TinyGL::~TinyGL() {
 }
 
-bool TinyGL::startup(int screenWidth, int screenHeight) {
+bool TinyGL::startup(int screenWidth) {
 	this->app = CAppContainer::getInstance()->app;
 	Canvas* canvas = this->app->canvas.get();
 
-	LOG_INFO("TinyGL::startup, w [{}], h [{}]\n", screenWidth, screenHeight);
+	LOG_INFO("TinyGL::startup, w [{}]\n", screenWidth);
 
 	this->screenWidth = screenWidth;
-	this->screenHeight = screenHeight;
 	this->columnScale = new int[screenWidth];
 
 	this->setViewport(canvas->viewRect[0], canvas->viewRect[1], canvas->viewRect[2], canvas->viewRect[3]);
