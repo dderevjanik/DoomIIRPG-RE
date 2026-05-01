@@ -39,10 +39,10 @@ entities:
         idle: sentrybot_return
         pain: sentrybot_pain
         death: sentrybot_death
-      loot:
-        drop: bullets
-        quantity: 6-11
-        no_corpse_loot: true
+      loots:
+        - drop: bullets
+          quantity: 6-11
+      no_corpse_loot: true
       xp: 26
   sentry_bot:
     sprite: monster_sentry_bot
@@ -84,10 +84,10 @@ entities:
         idle: sentrybot_return
         pain: sentrybot_pain
         death: sentrybot_death
-      loot:
-        drop: bullets
-        quantity: 6-11
-        no_corpse_loot: true
+      loots:
+        - drop: bullets
+          quantity: 6-11
+      no_corpse_loot: true
       xp: 19
   zombie_worker:
     sprite: monster_zombie
@@ -130,9 +130,9 @@ entities:
         death: zombie_death1
       blood:
         color: '#E901A6'
-      loot:
-        drop: uac_credit
-        quantity: 1-3
+      loots:
+        - drop: uac_credit
+          quantity: 1-3
       xp: 18
   zombie_civilian:
     sprite: monster_zombie2
@@ -175,9 +175,9 @@ entities:
         death: zombie_death1
       blood:
         color: '#E901A6'
-      loot:
-        drop: uac_credit
-        quantity: 3-7
+      loots:
+        - drop: uac_credit
+          quantity: 3-7
       xp: 20
   zombie_tech:
     sprite: monster_zombie3
@@ -220,9 +220,9 @@ entities:
         death: zombie_death1
       blood:
         color: '#E901A6'
-      loot:
-        drop: uac_credit
-        quantity: 5-12
+      loots:
+        - drop: uac_credit
+          quantity: 5-12
       xp: 22
   impling:
     sprite: monster_imp
@@ -267,9 +267,9 @@ entities:
         death: imp_death1
       blood:
         color: '#92F59A'
-      loot:
-        drop: trinket
-        trinket: "Pock-et Lint"
+      loots:
+        - drop: trinket
+          trinket: "Pock-et Lint"
       xp: 19
   imp:
     sprite: monster_imp2
@@ -314,9 +314,9 @@ entities:
         death: imp_death1
       blood:
         color: '#92F59A'
-      loot:
-        drop: trinket
-        trinket: "Hu-man Fin-ger"
+      loots:
+        - drop: trinket
+          trinket: "Hu-man Fin-ger"
       xp: 21
   imp_lord:
     sprite: monster_imp3
@@ -361,9 +361,9 @@ entities:
         death: imp_death1
       blood:
         color: '#92F59A'
-      loot:
-        drop: trinket
-        trinket: "Rub-ber Ducky"
+      loots:
+        - drop: trinket
+          trinket: "Rub-ber Ducky"
       xp: 23
   lesser_sawcubus:
     sprite: monster_saw_goblin
@@ -418,9 +418,9 @@ entities:
         death: chainsawgoblin_death
       blood:
         color: '#27565A'
-      loot:
-        drop: trinket
-        trinket: "Ac-tion Fig-ure"
+      loots:
+        - drop: trinket
+          trinket: "Ac-tion Fig-ure"
       xp: 20
   greater_sawcubus:
     sprite: monster_saw_goblin2
@@ -475,9 +475,9 @@ entities:
         death: chainsawgoblin_death
       blood:
         color: '#27565A'
-      loot:
-        drop: trinket
-        trinket: "Dead Bat-tery"
+      loots:
+        - drop: trinket
+          trinket: "Dead Bat-tery"
       xp: 22
   chainstrosity:
     sprite: monster_saw_goblin3
@@ -532,9 +532,9 @@ entities:
         death: chainsawgoblin_death
       blood:
         color: '#27565A'
-      loot:
-        drop: trinket
-        trinket: "Hu-man Ear"
+      loots:
+        - drop: trinket
+          trinket: "Hu-man Ear"
       xp: 24
   phantom:
     sprite: monster_lost_soul
@@ -584,9 +584,9 @@ entities:
         death: fireball_impact
       blood:
         color: '#BC77AF'
-      loot:
-        drop: trinket
-        trinket: "Pu-trid En-trails"
+      loots:
+        - drop: trinket
+          trinket: "Pu-trid En-trails"
       xp: 28
   lost_soul:
     sprite: monster_lost_soul2
@@ -636,9 +636,9 @@ entities:
         death: fireball_impact
       blood:
         color: '#BC77AF'
-      loot:
-        drop: trinket
-        trinket: "Fried Cir-cui-try"
+      loots:
+        - drop: trinket
+          trinket: "Fried Cir-cui-try"
       xp: 30
   nightmare:
     sprite: monster_lost_soul3
@@ -688,9 +688,9 @@ entities:
         death: fireball_impact
       blood:
         color: '#BC77AF'
-      loot:
-        drop: trinket
-        trinket: "Bag of Bone Frag-ments"
+      loots:
+        - drop: trinket
+          trinket: "Bag of Bone Frag-ments"
       xp: 33
   bull_demon:
     sprite: monster_pinky
@@ -737,9 +737,9 @@ entities:
         death: pinky_death
       blood:
         color: '#7A7A3A'
-      loot:
-        drop: trinket
-        trinket: "Hu-man Ashes"
+      loots:
+        - drop: trinket
+          trinket: "Hu-man Ashes"
       xp: 23
   pinky:
     sprite: monster_pinky2
@@ -785,9 +785,9 @@ entities:
         death: pinky_death
       blood:
         color: '#7A7A3A'
-      loot:
-        drop: trinket
-        trinket: "Bot-tle Open-er"
+      loots:
+        - drop: trinket
+          trinket: "Bot-tle Open-er"
       xp: 25
   belphegor:
     sprite: monster_pinky3
@@ -833,9 +833,9 @@ entities:
         death: pinky_death
       blood:
         color: '#7A7A3A'
-      loot:
-        drop: trinket
-        trinket: "Green Goo"
+      loots:
+        - drop: trinket
+          trinket: "Green Goo"
       xp: 28
   ghoul:
     sprite: monster_revenant
@@ -897,9 +897,9 @@ entities:
         idle: revenant_active
         pain: monster_pain
         death: revenant_death
-      loot:
-        drop: rockets
-        quantity: 3-5
+      loots:
+        - drop: rockets
+          quantity: 3-5
       xp: 35
   fiend:
     sprite: monster_revenant2
@@ -962,9 +962,9 @@ entities:
         idle: revenant_active
         pain: monster_pain
         death: revenant_death
-      loot:
-        drop: rockets
-        quantity: 3-5
+      loots:
+        - drop: rockets
+          quantity: 3-5
       xp: 40
   revenant:
     sprite: monster_revenant3
@@ -1027,9 +1027,9 @@ entities:
         idle: revenant_active
         pain: monster_pain
         death: revenant_death
-      loot:
-        drop: rockets
-        quantity: 3-5
+      loots:
+        - drop: rockets
+          quantity: 3-5
       xp: 43
   behemoth:
     sprite: monster_mancubus
@@ -1080,9 +1080,9 @@ entities:
         idle: zombie_active
         pain: mancubus_pain
         death: mancubus_death
-      loot:
-        drop: rockets
-        quantity: 1-3
+      loots:
+        - drop: rockets
+          quantity: 1-3
       xp: 35
   mancubus:
     sprite: monster_mancubus2
@@ -1133,9 +1133,9 @@ entities:
         idle: zombie_active
         pain: mancubus_pain
         death: mancubus_death
-      loot:
-        drop: rockets
-        quantity: 1-3
+      loots:
+        - drop: rockets
+          quantity: 1-3
       xp: 37
   druj:
     sprite: monster_mancubus3
@@ -1186,9 +1186,9 @@ entities:
         idle: zombie_active
         pain: mancubus_pain
         death: mancubus_death
-      loot:
-        drop: rockets
-        quantity: 1-3
+      loots:
+        - drop: rockets
+          quantity: 1-3
       xp: 39
   malwrath:
     sprite: monster_cacodemon
@@ -1236,9 +1236,9 @@ entities:
         idle: demon_active
         pain: demon_pain
         death: cacodemon_death
-      loot:
-        drop: cells
-        quantity: 3-7
+      loots:
+        - drop: cells
+          quantity: 3-7
       xp: 26
   cacodemon:
     sprite: monster_cacodemon2
@@ -1286,9 +1286,9 @@ entities:
         idle: demon_active
         pain: demon_pain
         death: cacodemon_death
-      loot:
-        drop: cells
-        quantity: 3-7
+      loots:
+        - drop: cells
+          quantity: 3-7
       xp: 29
   wretched:
     sprite: monster_cacodemon3
@@ -1336,9 +1336,9 @@ entities:
         idle: demon_active
         pain: demon_pain
         death: cacodemon_death
-      loot:
-        drop: cells
-        quantity: 3-7
+      loots:
+        - drop: cells
+          quantity: 3-7
       xp: 31
   brier:
     sprite: monster_sentinel
@@ -1386,9 +1386,9 @@ entities:
         idle: revenant_active
         pain: sentinel_pain
         death: sentinel_death
-      loot:
-        drop: trinket
-        trinket: "Comic Book"
+      loots:
+        - drop: trinket
+          trinket: "Comic Book"
       xp: 21
   watcher:
     sprite: monster_sentinel2
@@ -1436,9 +1436,9 @@ entities:
         idle: revenant_active
         pain: sentinel_pain
         death: sentinel_death
-      loot:
-        drop: trinket
-        trinket: "Can-cun Shot Glass"
+      loots:
+        - drop: trinket
+          trinket: "Can-cun Shot Glass"
       xp: 26
   sentinel:
     sprite: monster_sentinel3
@@ -1486,9 +1486,9 @@ entities:
         idle: revenant_active
         pain: sentinel_pain
         death: sentinel_death
-      loot:
-        drop: trinket
-        trinket: "Small Fi-gur-ine"
+      loots:
+        - drop: trinket
+          trinket: "Small Fi-gur-ine"
       xp: 28
   infernis:
     sprite: monster_arch_vile
@@ -1542,9 +1542,9 @@ entities:
         idle: archvile_active
         pain: archvile_pain
         death: archvile_death
-      loot:
-        drop: trinket
-        trinket: "De-mon-ic Pa-ra-sites"
+      loots:
+        - drop: trinket
+          trinket: "De-mon-ic Pa-ra-sites"
       xp: 35
   arch_vile:
     sprite: monster_arch_vile2
@@ -1598,9 +1598,9 @@ entities:
         idle: archvile_active
         pain: archvile_pain
         death: archvile_death
-      loot:
-        drop: trinket
-        trinket: "Rot-ting Teeth"
+      loots:
+        - drop: trinket
+          trinket: "Rot-ting Teeth"
       xp: 38
   apollyon:
     sprite: monster_arch_vile3
@@ -1654,9 +1654,9 @@ entities:
         idle: archvile_active
         pain: archvile_pain
         death: archvile_death
-      loot:
-        drop: trinket
-        trinket: "20--sided Die"
+      loots:
+        - drop: trinket
+          trinket: "20--sided Die"
       xp: 41
   cyberdemon:
     sprite: boss_cyberdemon
