@@ -273,11 +273,6 @@ void Image::DrawTextureAlpha(int posX, int posY, float alpha, bool rotated, bool
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glVertexPointer(3, GL_FLOAT, 0, vp);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glTexCoordPointer(2, GL_FLOAT, 0, st);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY);
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
@@ -287,7 +282,48 @@ void Image::DrawTextureAlpha(int posX, int posY, float alpha, bool rotated, bool
     } else {
         glTranslatef(hw + (float)posX, hh + (float)posY, 0.0f);
     }
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+    // B2.4: shader path for fade-overlay quads. The matrix stack is still set
+    // up by glPushMatrix/glTranslatef above; we read the result via
+    // glGetFloatv. u_color is built directly from `alpha` (the only modulator
+    // this path takes) instead of going through GL_CURRENT_COLOR.
+    if (_glesObj && _glesObj->isShaderReady) {
+        float proj[16], mv[16], mvp[16];
+        glGetFloatv(GL_PROJECTION_MATRIX, proj);
+        glGetFloatv(GL_MODELVIEW_MATRIX, mv);
+        mat4Mul(mvp, proj, mv);
+
+        const float color[4] = {1.0f, 1.0f, 1.0f, alpha};
+
+        _glesObj->textureShader.use();
+        const GLint uMvp = _glesObj->textureShader.uniform("u_mvp");
+        const GLint uColor = _glesObj->textureShader.uniform("u_color");
+        const GLint uTex = _glesObj->textureShader.uniform("u_tex");
+        const GLint aPos = _glesObj->textureShader.attribute("a_pos");
+        const GLint aUv = _glesObj->textureShader.attribute("a_uv");
+        if (uMvp >= 0)   glUniformMatrix4fv(uMvp, 1, GL_FALSE, mvp);
+        if (uColor >= 0) glUniform4fv(uColor, 1, color);
+        if (uTex >= 0)   glUniform1i(uTex, 0);
+        if (aPos >= 0) {
+            glEnableVertexAttribArray(aPos);
+            glVertexAttribPointer(aPos, 3, GL_FLOAT, GL_FALSE, 0, vp);
+        }
+        if (aUv >= 0) {
+            glEnableVertexAttribArray(aUv);
+            glVertexAttribPointer(aUv, 2, GL_FLOAT, GL_FALSE, 0, st);
+        }
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        if (aPos >= 0) glDisableVertexAttribArray(aPos);
+        if (aUv >= 0)  glDisableVertexAttribArray(aUv);
+        Shader::useNone();
+    } else {
+        glVertexPointer(3, GL_FLOAT, 0, vp);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glTexCoordPointer(2, GL_FLOAT, 0, st);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glDisableClientState(GL_COLOR_ARRAY);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    }
     glPopMatrix();
 }
 
