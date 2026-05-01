@@ -639,16 +639,17 @@ void Canvas::backPaint(Graphics* graphics) {
 			graphics->drawString(largeBuffer2, this->viewRect[0], n3, 0);
 			n3 += Applet::FONT_HEIGHT[app->fontType];
 			if (app->render->renderMode == 63) {
+				// span/triangle counters were tied to the software rasterizer;
+				// dropped along with it in B1.3 (countBackFace/spanCalls always
+				// read zero post-deletion, so the display was meaningless).
 				largeBuffer2->setLength(0);
-				largeBuffer2->append("cnt: ");
-				largeBuffer2->append(app->tinyGL->spanCalls)->append('/');
-				largeBuffer2->append(app->tinyGL->spanPixels);
+				largeBuffer2->append("tris drawn: ");
+				largeBuffer2->append(app->tinyGL->countDrawn);
 				graphics->drawString(largeBuffer2, this->viewRect[0], n3, 0);
 				n3 += Applet::FONT_HEIGHT[app->fontType];
 				largeBuffer2->setLength(0);
-				largeBuffer2->append("tris: ");
-				largeBuffer2->append(app->tinyGL->countBackFace)->append('/');
-				largeBuffer2->append(app->tinyGL->countDrawn);
+				largeBuffer2->append("span px: ");
+				largeBuffer2->append(app->tinyGL->spanPixels);
 				graphics->drawString(largeBuffer2, this->viewRect[0], n3, 0);
 				n3 += Applet::FONT_HEIGHT[app->fontType];
 			}

@@ -2,10 +2,8 @@
 #include <climits>
 
 #include "TGLVert.h"
-#include "TGLEdge.h"
 
 class TGLVert;
-class TGLEdge;
 
 class Applet;
 
@@ -37,14 +35,11 @@ public:
     int mvp2D[16] = {};
     TGLVert cv[32] = {};
     TGLVert mv[20] = {};
-    TGLEdge edges[2] = {};
     int fogMin = 0;
     int fogRange = 0;
     int fogColor = 0;
-    int countBackFace = 0;
     int countDrawn = 0;
     int spanPixels = 0;
-    int spanCalls = 0;
     int viewportX = 0;
     int viewportY = 0;
     int viewportWidth = 0;

@@ -32,10 +32,8 @@ bool TinyGL::startup(int screenWidth, int screenHeight) {
 	this->fogMin = 32752;
 	this->fogRange = 1;
 	this->fogColor = 0;
-	this->countBackFace = 0;
 	this->countDrawn = 0;
 	this->spanPixels = 0;
-	this->spanCalls = 0;
 	return true;
 }
 
@@ -529,10 +527,8 @@ bool TinyGL::occludeClippedLine(TGLVert* tglVert, TGLVert* tglVert2) {
 }
 
 void TinyGL::resetCounters() {
-	this->countBackFace = 0;
 	this->countDrawn = 0;
 	this->spanPixels = 0;
-	this->spanCalls = 0;
 }
 
 

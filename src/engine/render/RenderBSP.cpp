@@ -14,7 +14,6 @@
 #include "Text.h"
 #include "GLES.h"
 #include "TGLVert.h"
-#include "TGLEdge.h"
 #include "TinyGL.h"
 #include "Player.h"
 #include "Game.h"
