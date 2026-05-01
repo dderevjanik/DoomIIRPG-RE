@@ -3,6 +3,7 @@
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_opengl3.h"
 #include <SDL.h>
+#include <SDL_opengl.h>
 
 #include "CAppContainer.h"
 #include "ModManager.h"
@@ -141,6 +142,15 @@ void DevConsole::render() {
 	// Always flush whatever windows were submitted this frame (may be none).
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+	// imgui_impl_opengl3 emits one GL_INVALID_OPERATION per RenderDrawData on
+	// macOS's default GL 2.1 compat profile (likely a glPolygonMode or
+	// VAO-extension call that's a no-op there). The error is benign — ImGui
+	// renders correctly — but it leaks into downstream glGetError checks in
+	// the engine. Drain it here so callers can trust their own error checks.
+	// A proper fix would request a GL 3.2 core context, but that breaks the
+	// matrix-stack glGetFloatv readback in Image::DrawTexture etc.
+	while (glGetError() != GL_NO_ERROR) {}
 }
 
 void DevConsole::drawPerformance() {

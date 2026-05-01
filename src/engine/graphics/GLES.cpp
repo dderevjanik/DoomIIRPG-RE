@@ -219,6 +219,7 @@ void gles::SetGLState() {
 void gles::BeginFrame(int x, int y, int w, int h, int* mtxView, int* mtxProjection) {
 	if (this->headless) { return; }
 
+
 	Canvas* canvas = app->canvas.get();
 	int posX, posY;
 
@@ -1492,14 +1493,6 @@ bool gles::DrawSkyMap() {
 
 	if (this->isInit) {
 		this->SetupTexture(this->render->TILE_SKY_BOX, 0, 0, 0);
-		{
-			GLenum err = glGetError();
-			if (err != GL_NO_ERROR) {
-				LOG_INFO("[gles] GL error after SetupTexture(sky): 0x{:X}\n", err);
-			}
-			int mediaID = this->render->mediaMappings[this->render->TILE_SKY_BOX];
-			LOG_INFO("[gles] DrawSkyMap: texnum={} mediaID={}\n", this->chains[mediaID].texnum, mediaID);
-		}
 		glFlush();
 		v5[0].x = -100;
 		v5[0].y = -100;

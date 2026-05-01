@@ -313,6 +313,23 @@ void MayaCamera::Render() {
     if (!this->app) this->app = CAppContainer::getInstance()->app;
     Applet* app = this->app;
 
+    // [debug] Log scripted-camera state once per ~250ms while a cinematic plays so we can
+    // verify whether the position/yaw is moving in the intended direction.
+    {
+        static int s_lastLogMs = 0;
+        const int now = app->gameTime;
+        if (now - s_lastLogMs >= 250) {
+            s_lastLogMs = now;
+            LOG_INFO("[mayacam] key={} t={} pos=({},{},{}) yaw={} pitch={} roll={} agg=({},{},{},{},{},{})\n",
+                     app->game->activeCameraKey,
+                     now - app->game->activeCameraTime,
+                     this->x, this->y, this->z,
+                     this->yaw, this->pitch, this->roll,
+                     (int)this->aggComponents[0], (int)this->aggComponents[1], (int)this->aggComponents[2],
+                     (int)this->aggComponents[3], (int)this->aggComponents[4], (int)this->aggComponents[5]);
+        }
+    }
+
     if (app->canvas->state == Canvas::ST_DIALOG) {
         app->render->render(this->x, this->y, this->z, this->yaw, this->pitch, this->roll, 290);
     }
