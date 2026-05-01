@@ -6,7 +6,7 @@
 #include "CAppContainer.h"
 #include "App.h"
 #include "DataNode.h"
-#include "JavaStream.h"
+#include "BinaryStream.h"
 #include "Resource.h"
 #include "MayaCamera.h"
 #include "Canvas.h"

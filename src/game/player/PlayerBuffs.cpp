@@ -15,7 +15,7 @@
 #include "Hud.h"
 #include "Enums.h"
 #include "TinyGL.h"
-#include "JavaStream.h"
+#include "BinaryStream.h"
 #include "Sound.h"
 #include "DataNode.h"
 #include "SoundNames.h"

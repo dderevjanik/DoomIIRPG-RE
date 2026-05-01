@@ -24,7 +24,7 @@
 #include "SpriteDefs.h"
 #include "Image.h"
 #include "Utils.h"
-#include "JavaStream.h"
+#include "BinaryStream.h"
 #include "stb_image.h"
 
 gles* _glesObj;

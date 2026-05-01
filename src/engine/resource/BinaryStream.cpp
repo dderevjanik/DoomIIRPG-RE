@@ -5,7 +5,7 @@
 #include <cstdio>
 #include "Log.h"
 
-#include "JavaStream.h"
+#include "BinaryStream.h"
 #include "CAppContainer.h"
 #include "App.h"
 #include "VFS.h"

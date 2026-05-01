@@ -6,7 +6,7 @@
 #include "App.h"
 #include "Game.h"
 #include "Render.h"
-#include "JavaStream.h"
+#include "BinaryStream.h"
 #include "Enums.h"
 
 LerpSprite::LerpSprite() {

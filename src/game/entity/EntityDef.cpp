@@ -12,7 +12,7 @@
 #include "Enums.h"
 #include "SpriteDefs.h"
 #include "Combat.h"
-#include "JavaStream.h"
+#include "BinaryStream.h"
 #include "Resource.h"
 
 // -----------------------

@@ -22,7 +22,7 @@
 #include "Resource.h"
 #include "MayaCamera.h"
 #include "LerpSprite.h"
-#include "JavaStream.h"
+#include "BinaryStream.h"
 #include "MenuSystem.h"
 #include "ParticleSystem.h"
 #include "Enums.h"

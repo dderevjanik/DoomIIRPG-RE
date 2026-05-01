@@ -22,7 +22,7 @@
 #include "Resource.h"
 #include "Render.h"
 #include "GLES.h"
-#include "JavaStream.h"
+#include "BinaryStream.h"
 
 #include "Canvas.h"
 #include "Graphics.h"

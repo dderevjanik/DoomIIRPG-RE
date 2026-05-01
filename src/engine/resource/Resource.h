@@ -1,6 +1,6 @@
 #pragma once
 #include <span>
-#include "JavaStream.h"
+#include "BinaryStream.h"
 
 class InputStream;
 

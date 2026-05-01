@@ -1,5 +1,5 @@
 #include "AIComponent.h"
-#include "JavaStream.h"
+#include "BinaryStream.h"
 
 void AIComponent::reset() {
 	this->target = nullptr;

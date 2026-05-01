@@ -5,7 +5,7 @@
 #include "CAppContainer.h"
 #include "App.h"
 #include "CombatEntity.h"
-#include "JavaStream.h"
+#include "BinaryStream.h"
 #include "EntityMonster.h"
 #include "Entity.h"
 #include "EntityDef.h"

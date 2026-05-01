@@ -16,7 +16,7 @@
 #include "Hud.h"
 #include "Text.h"
 #include "ParticleSystem.h"
-#include "JavaStream.h"
+#include "BinaryStream.h"
 #include "Enums.h"
 #include "SpriteDefs.h"
 #include "LootComponent.h"

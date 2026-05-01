@@ -4,7 +4,7 @@
 #include "CAppContainer.h"
 #include "OpcodeRegistry.h"
 #include "ScriptThread.h"
-#include "JavaStream.h"
+#include "BinaryStream.h"
 #include "Game.h"
 #include "Render.h"
 #include "Canvas.h"

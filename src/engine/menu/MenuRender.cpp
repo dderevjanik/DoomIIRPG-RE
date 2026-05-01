@@ -22,7 +22,7 @@
 #include "VendingMachine.h"
 #include "MenuItem.h"
 #include "Graphics.h"
-#include "JavaStream.h"
+#include "BinaryStream.h"
 #include "Resource.h"
 #include "Button.h"
 #include "Image.h"

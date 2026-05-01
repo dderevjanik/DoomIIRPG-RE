@@ -10,7 +10,7 @@
 #include "CAppContainer.h"
 #include "Sound.h"
 #include "Sounds.h"
-#include "JavaStream.h"
+#include "BinaryStream.h"
 
 #if defined(DRPG_HAS_VORBIS)
 #include <vorbis/vorbisfile.h>

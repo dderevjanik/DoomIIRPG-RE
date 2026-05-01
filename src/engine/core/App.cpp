@@ -32,7 +32,7 @@
 #include "MinigameUI.h"
 #include "StoryRenderer.h"
 #include "DialogManager.h"
-#include "JavaStream.h"
+#include "BinaryStream.h"
 #include "Image.h"
 #include "Graphics.h"
 #include "Input.h"
