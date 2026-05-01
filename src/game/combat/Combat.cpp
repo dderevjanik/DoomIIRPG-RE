@@ -39,9 +39,9 @@ bool Combat::startup() {
 	LOG_INFO("[combat] startup\n");
 
 	// Populate template stats in unified MonsterDef array
-	for (int n = 0, i = 0; i < this->numMonsterDefs; ++i, n += 6) {
+	for (int statOffset = 0, i = 0; i < this->numMonsterDefs; ++i, statOffset += 6) {
 		CombatEntity& tmpl = this->monsterDefs[i].templateStats;
-		tmpl = CombatEntity(5 * (this->monsterStats[n + 0] & 0xFF), this->monsterStats[n + 1], this->monsterStats[n + 2], this->monsterStats[n + 3], this->monsterStats[n + 4], this->monsterStats[n + 5]);
+		tmpl = CombatEntity(5 * (this->monsterStats[statOffset + 0] & 0xFF), this->monsterStats[statOffset + 1], this->monsterStats[statOffset + 2], this->monsterStats[statOffset + 3], this->monsterStats[statOffset + 4], this->monsterStats[statOffset + 5]);
 	}
 
 	for (int j = 0; j < 16; j++) {
@@ -121,10 +121,10 @@ void Combat::performAttack(Entity* curAttacker, Entity* curTarget, int attackX, 
     this->animEndTime = 0;
     this->animLoopCount = this->weapons[this->attackerWeapon + 7];
     if (this->curAttacker == nullptr) {
-        short n = app->player->ammo[this->weapons[this->attackerWeapon + 4]];
-        int8_t b2 = this->weapons[this->attackerWeapon + 5];
-        if (b2 > 0) {
-            this->animLoopCount = std::min(n / b2, this->animLoopCount);
+        short ammoCount = app->player->ammo[this->weapons[this->attackerWeapon + 4]];
+        int8_t ammoPerShot = this->weapons[this->attackerWeapon + 5];
+        if (ammoPerShot > 0) {
+            this->animLoopCount = std::min(ammoCount / ammoPerShot, this->animLoopCount);
         }
     }
     this->attackerWeaponProj = this->weapons[this->attackerWeapon + 6];
@@ -139,34 +139,34 @@ void Combat::performAttack(Entity* curAttacker, Entity* curTarget, int attackX, 
     short* mapSprites = app->render->mapSprites;
     if (this->getWeaponFlags(this->attackerWeaponId).chargeAttack) {
         int sprite = this->curAttacker->getSprite();
-        int n2 = mapSprites[app->render->S_X + sprite] - app->canvas->viewX;
-        int n3 = mapSprites[app->render->S_Y + sprite] - app->canvas->viewY;
-        int a = n2;
-        int a2 = n3;
-        if (a != 0) {
-            a /= std::abs(a);
+        int dxFromView = mapSprites[app->render->S_X + sprite] - app->canvas->viewX;
+        int dyFromView = mapSprites[app->render->S_Y + sprite] - app->canvas->viewY;
+        int signX = dxFromView;
+        int signY = dyFromView;
+        if (signX != 0) {
+            signX /= std::abs(signX);
         }
-        if (a2 != 0) {
-            a2 /= std::abs(a2);
+        if (signY != 0) {
+            signY /= std::abs(signY);
         }
-        int n4 = std::abs(n2 + n3) >> 6;
-        int n5 = app->canvas->viewX + a * 64;
-        int n6 = app->canvas->viewY + a2 * 64;
+        int travelTiles = std::abs(dxFromView + dyFromView) >> 6;
+        int endX = app->canvas->viewX + signX * 64;
+        int endY = app->canvas->viewY + signY * 64;
         LerpSprite* allocLerpSprite = app->game->allocLerpSprite(nullptr, sprite, true);
         allocLerpSprite->startTime = app->gameTime;
-        allocLerpSprite->travelTime = n4 * 200;
+        allocLerpSprite->travelTime = travelTiles * 200;
         allocLerpSprite->flags |= Enums::LS_FLAG_ENT_NORELINK;
         allocLerpSprite->srcScale = allocLerpSprite->dstScale = app->render->getSpriteScaleFactor(sprite);
         allocLerpSprite->srcX = mapSprites[app->render->S_X + sprite];
         allocLerpSprite->srcY = mapSprites[app->render->S_Y + sprite];
         allocLerpSprite->srcZ = mapSprites[app->render->S_Z + sprite];
-        allocLerpSprite->dstX = n5 - a * 28;
-        allocLerpSprite->dstY = n6 - a2 * 28;
+        allocLerpSprite->dstX = endX - signX * 28;
+        allocLerpSprite->dstY = endY - signY * 28;
         allocLerpSprite->dstZ = app->render->getHeight(allocLerpSprite->dstX, allocLerpSprite->dstY) + 32;
         app->render->setSpriteInfoRaw(sprite, ((app->render->getSpriteInfoRaw(sprite) & 0xFFFF00FF) | this->attackFrame << 8));
         this->curAttacker->ai->frameTime = 0x7FFFFFFF;//Integer.MAX_VALUE;
         app->game->unlinkEntity(this->curAttacker);
-        app->game->linkEntity(this->curAttacker, n5 >> 6, n6 >> 6);
+        app->game->linkEntity(this->curAttacker, endX >> 6, endY >> 6);
         this->stage = -1;
         this->nextStage = 0;
         this->nextStageTime = app->gameTime + allocLerpSprite->travelTime;
@@ -186,7 +186,7 @@ void Combat::checkMonsterFX() {
 int Combat::playerSeq() {
 
     int animLoopCount = 0;
-    bool b = false;
+    bool usesAmmo = false;
     if (this->nextStageTime != 0 && app->gameTime > this->nextStageTime && this->numActiveMissiles == 0 && app->game->animatingEffects == 0) {
         this->stage = this->nextStage;
         this->nextStageTime = 0;
@@ -213,12 +213,12 @@ int Combat::playerSeq() {
             this->crFlags |= 0x40;
         }
         if (this->weapons[this->attackerWeapon + Combat::WEAPON_FIELD_AMMOTYPE] != 0) {
-            b = true;
+            usesAmmo = true;
             if (this->weapons[this->attackerWeapon + Combat::WEAPON_FIELD_AMMOUSAGE] != 0) {
                 animLoopCount = app->player->ammo[this->weapons[this->attackerWeapon + Combat::WEAPON_FIELD_AMMOTYPE]] / this->weapons[this->attackerWeapon + Combat::WEAPON_FIELD_AMMOUSAGE];
             }
         }
-        if (b && this->targetType != 2 && !this->getWeaponFlags(this->attackerWeaponId).isThrowableItem && !app->player->weaponIsASentryBot(this->attackerWeaponId)) {
+        if (usesAmmo && this->targetType != 2 && !this->getWeaponFlags(this->attackerWeaponId).isThrowableItem && !app->player->weaponIsASentryBot(this->attackerWeaponId)) {
             if (animLoopCount == 2) {
                 app->hud->addMessage((short)62);
             }
@@ -265,15 +265,15 @@ int Combat::playerSeq() {
             }
             this->damage = damage;
         }
-        int n3 = -1;
+        int attackSoundId = -1;
         if (this->wpAttackSoundAlt != nullptr && this->wpAttackSoundAlt[this->attackerWeaponId] != -1 &&
             app->player->characterChoice == 1) {
-            n3 = this->wpAttackSoundAlt[this->attackerWeaponId];
+            attackSoundId = this->wpAttackSoundAlt[this->attackerWeaponId];
         } else if (this->wpAttackSound != nullptr) {
-            n3 = this->wpAttackSound[this->attackerWeaponId];
+            attackSoundId = this->wpAttackSound[this->attackerWeaponId];
         }
-        if (n3 != -1) {
-            app->sound->playCombatSound(n3, 0, 4);
+        if (attackSoundId != -1) {
+            app->sound->playCombatSound(attackSoundId, 0, 4);
         }
         this->totalDamage += this->damage;
         this->totalArmorDamage += this->crArmorDamage;
@@ -288,16 +288,16 @@ int Combat::playerSeq() {
         this->animEndTime = this->animStartTime + this->animTime;
         this->flashDone = false;
         this->flashDoneTime = this->animStartTime + this->flashTime;
-        if (b && animLoopCount < this->animLoopCount) {
+        if (usesAmmo && animLoopCount < this->animLoopCount) {
             this->animLoopCount = animLoopCount;
         }
         this->launchProjectile();
         if (!this->getWeaponFlags(this->attackerWeaponId).noRecoil) {
-            int n4 = 2;
+            int recoilStrength = 2;
             if (this->getWeaponFlags(this->attackerWeaponId).autoHit) {
-                n4 = 6;
+                recoilStrength = 6;
             }
-            app->render->rockView(this->animTime, app->canvas->viewX - n4 * (app->canvas->viewStepX >> 6), app->canvas->viewY - n4 * (app->canvas->viewStepY >> 6), app->canvas->viewZ);
+            app->render->rockView(this->animTime, app->canvas->viewX - recoilStrength * (app->canvas->viewStepX >> 6), app->canvas->viewY - recoilStrength * (app->canvas->viewStepY >> 6), app->canvas->viewZ);
         }
         if (this->totalDamage == 0) {
             if (this->targetType == 2) {
@@ -348,12 +348,12 @@ int Combat::playerSeq() {
             if (this->attackerWeaponProj == 5) {
                 this->checkForBFGDeaths(this->attackX >> 6, this->attackY >> 6);
             }
-            int n6 = 4385;
+            int singleAttackTargetTypeMask = 4385;
             if (this->targetKilled || (this->targetType == 2 && this->targetMonster->ce.getStat(0) <= 0)) {
                 this->curTarget->died(true, app->player->getPlayerEnt());
                 this->targetKilled = true;
             }
-            else if (--this->animLoopCount > 0 && (1 << this->targetType & n6) == 0x0 && !this->punchMissed && this->targetType != 10) {
+            else if (--this->animLoopCount > 0 && (1 << this->targetType & singleAttackTargetTypeMask) == 0x0 && !this->punchMissed && this->targetType != 10) {
                 this->stage = 0;
                 this->animEndTime = (this->animTime = 0);
                 this->nextStageTime = 0;
@@ -396,15 +396,15 @@ int Combat::playerSeq() {
 int Combat::monsterSeq() {
 
     int sprite = this->curAttacker->getSprite();
-    int n = app->render->getSpriteInfoRaw(sprite);
-    int n2 = (n & 0xFF00) >> 8;
-    int n3 = n2 & 0xF0;
-    int n4 = n2 & 0xF;
-    if ((n3 == 64 || n3 == 80) && n4 == 0) {
+    int spriteInfo = app->render->getSpriteInfoRaw(sprite);
+    int spriteFrame = (spriteInfo & 0xFF00) >> 8;
+    int attackBaseFrame = spriteFrame & 0xF0;
+    int attackSubFrame = spriteFrame & 0xF;
+    if ((attackBaseFrame == 64 || attackBaseFrame == 80) && attackSubFrame == 0) {
         if (app->time >= this->curAttacker->ai->frameTime) {
             this->curAttacker->ai->frameTime = app->time + this->weapons[this->attackerWeapon + Combat::WEAPON_FIELD_SHOTHOLD] * 10;
             this->nextStageTime = app->gameTime + this->weapons[this->attackerWeapon + Combat::WEAPON_FIELD_SHOTHOLD] * 10;
-            app->render->setSpriteInfoRaw(sprite, ((n & 0xFFFF00FF) | (n3 | n4 + 1) << 8));
+            app->render->setSpriteInfoRaw(sprite, ((spriteInfo & 0xFFFF00FF) | (attackBaseFrame | attackSubFrame + 1) << 8));
             this->launchProjectile();
         }
     }
@@ -583,15 +583,15 @@ int Combat::monsterSeq() {
 void Combat::drawEffects() {
 
     if (app->player->statusEffects[13] > 0) {
-        int n = gameConfig->combatWeaponScale;
-        int n2 = ((176 * n) / 65536);
-        app->render->draw2DSprite(234, app->time / 256 & 0x3, (app->canvas->viewRect[2] / 2) - (n2 / 2), app->canvas->viewRect[3] - ((n2 / 4) + 132), 0, 3, 0, n);
+        int weaponScale = gameConfig->combatWeaponScale;
+        int effectSize = ((176 * weaponScale) / 65536);
+        app->render->draw2DSprite(234, app->time / 256 & 0x3, (app->canvas->viewRect[2] / 2) - (effectSize / 2), app->canvas->viewRect[3] - ((effectSize / 4) + 132), 0, 3, 0, weaponScale);
     }
 }
 
 void Combat::drawWeapon(int sx, int sy) {
 
-    bool b = false;
+    bool drawFlash = false;
     int frame = 0;
     int renderFlags = 0;
     int flags = 0;
@@ -613,7 +613,7 @@ void Combat::drawWeapon(int sx, int sy) {
         scrY += loweredWeaponY;
     }
 
-    bool b2 = app->canvas->state == Canvas::ST_CAMERA && app->game->cinematicWeapon != -1;
+    bool cinematicMode = app->canvas->state == Canvas::ST_CAMERA && app->game->cinematicWeapon != -1;
     int weapon = app->player->ce->weapon;
 
     scrY += this->wpDisplayOffsetY[weapon];
@@ -625,7 +625,7 @@ void Combat::drawWeapon(int sx, int sy) {
         }
         weapon = 0;
     }
-    if (b2) {
+    if (cinematicMode) {
         weapon = app->game->cinematicWeapon;
         scrY -= app->canvas->CAMERAVIEW_BAR_HEIGHT;
     }
@@ -634,7 +634,7 @@ void Combat::drawWeapon(int sx, int sy) {
         return;
     }
     sy = -std::abs(sy);
-    if (!b2 && app->time < app->hud->damageTime && app->hud->damageCount >= 0 && this->totalDamage > 0) {
+    if (!cinematicMode && app->time < app->hud->damageTime && app->hud->damageCount >= 0 && this->totalDamage > 0) {
         renderFlags |= Render::RENDER_FLAG_BRIGHTREDSHIFT;
     }
 
@@ -656,37 +656,37 @@ void Combat::drawWeapon(int sx, int sy) {
     int wpX = wpIdleX;
     int wpY = wpIdleY;
     int gameTime = app->gameTime;
-    bool b5 = b2 || (app->canvas->state == Canvas::ST_COMBAT && this->curAttacker == nullptr && this->nextStage == 1);
-    bool b6 = false;
-    if (b5) {
+    bool isAttacking = cinematicMode || (app->canvas->state == Canvas::ST_COMBAT && this->curAttacker == nullptr && this->nextStage == 1);
+    bool useFlashFrame = false;
+    if (isAttacking) {
         wpX = wpAtkX;
         wpY = wpAtkY;
         if (!this->flashDone) {
-            b = !this->getWeaponFlags(weapon).drawDoubleSprite;
+            drawFlash = !this->getWeaponFlags(weapon).drawDoubleSprite;
             if (gameTime >= this->flashDoneTime) {
                 this->flashDone = true;
             }
         }
         else {
-            int n15 = (gameTime - this->animStartTime << 16) / this->animTime;
-            if (n15 >= 65536) {
+            int animProgress = (gameTime - this->animStartTime << 16) / this->animTime;
+            if (animProgress >= 65536) {
                 wpX = wpIdleX;
                 wpY = wpIdleY;
             }
             else if (this->getWeaponFlags(weapon).vibrateAnim) {
-                if (n15 < 43690) {
-                    wpX = wpAtkX + ((n15 & 0x8) ?  2 : 0);
-                    wpY = wpAtkY + ((n15 & 0x8) ? -1 : 0);
+                if (animProgress < 43690) {
+                    wpX = wpAtkX + ((animProgress & 0x8) ?  2 : 0);
+                    wpY = wpAtkY + ((animProgress & 0x8) ? -1 : 0);
                 }
                 else {
-                    b6 = true;
-                    wpX = 3 * ((65536 - n15) * wpAtkX + (n15 - 43690) * wpIdleX) >> 16;
-                    wpY = 3 * ((65536 - n15) * wpAtkY + (n15 - 43690) * wpIdleY) >> 16;
+                    useFlashFrame = true;
+                    wpX = 3 * ((65536 - animProgress) * wpAtkX + (animProgress - 43690) * wpIdleX) >> 16;
+                    wpY = 3 * ((65536 - animProgress) * wpAtkY + (animProgress - 43690) * wpIdleY) >> 16;
                 }
             }
             else {
-                wpX = (65536 - n15) * wpAtkX + n15 * wpIdleX >> 16;
-                wpY = (65536 - n15) * wpAtkY + n15 * wpIdleY >> 16;
+                wpX = (65536 - animProgress) * wpAtkX + animProgress * wpIdleX >> 16;
+                wpY = (65536 - animProgress) * wpAtkY + animProgress * wpIdleY >> 16;
             }
         }
     }
@@ -719,15 +719,15 @@ void Combat::drawWeapon(int sx, int sy) {
         }
     }
     if (app->player->weaponIsASentryBot(weapon)) {
-        int n21 = this->getWeaponTileNum(weapon);
-        int n22 = flags;
-        int n23 = (app->time + n21 * 1337) / 1024 & 0xF;
-        if (n23 == 0 || (n23 >= 4 && n23 <= 7) || (n23 >= 10 && n23 <= 12)) {
-            n22 ^= 0x20000;
+        int botTile = this->getWeaponTileNum(weapon);
+        int botFlags = flags;
+        int animTick = (app->time + botTile * 1337) / 1024 & 0xF;
+        if (animTick == 0 || (animTick >= 4 && animTick <= 7) || (animTick >= 10 && animTick <= 12)) {
+            botFlags ^= 0x20000;
         }
-        int n24 = (n23 & 0x2) ? 1 : 2;
-        app->render->draw2DSprite(n21, 2, x, y, flags, renderMode, renderFlags, 0x10000);
-        app->render->draw2DSprite(n21, 3, x, y + n24, n22, renderMode, renderFlags, 0x10000);
+        int yJiggle = (animTick & 0x2) ? 1 : 2;
+        app->render->draw2DSprite(botTile, 2, x, y, flags, renderMode, renderFlags, 0x10000);
+        app->render->draw2DSprite(botTile, 3, x, y + yJiggle, botFlags, renderMode, renderFlags, 0x10000);
     }
     else if (this->getWeaponFlags(weapon).isThrowableItem) {
         if (app->player->ammo[this->weapons[weapon * Combat::WEAPON_MAX_FIELDS + Combat::WEAPON_FIELD_AMMOTYPE]] > 0) {
@@ -738,10 +738,10 @@ void Combat::drawWeapon(int sx, int sy) {
         }
     }
     else {
-        if (b6 | (this->getWeaponFlags(weapon).showFlashFrame && b5)) {
+        if (useFlashFrame | (this->getWeaponFlags(weapon).showFlashFrame && isAttacking)) {
             frame = 1;
         }
-        if (b && this->getWeaponFlags(weapon).hasFlashSprite) {
+        if (drawFlash && this->getWeaponFlags(weapon).hasFlashSprite) {
             int xf = 40;
             int yf = 40;
             if (!app->render->_gles->isInit) {  // [GEC] Adjusted like this to match the XY position on the GL version
@@ -781,10 +781,10 @@ int Combat::runFrame() {
 
 int Combat::calcHit(Entity* entity) {
 
-    int n = app->player->ce->weapon * 9;
+    int weaponFieldOffset = app->player->ce->weapon * 9;
     int worldDistToTileDist = this->WorldDistToTileDist(entity->distFrom(app->canvas->destX, app->canvas->destY));
-    int8_t b = this->weapons[n + 3];
-    if (worldDistToTileDist < this->weapons[n + 2] || worldDistToTileDist > b) {
+    int8_t maxRange = this->weapons[weaponFieldOffset + 3];
+    if (worldDistToTileDist < this->weapons[weaponFieldOffset + 2] || worldDistToTileDist > maxRange) {
         this->crFlags |= 0x400;
         return 0;
     }
@@ -828,13 +828,13 @@ void Combat::explodeOnMonster() {
                 app->particleSystem->spawnMonsterBlood(this->curTarget, false);
             }
             if (this->targetMonster->ce.getStat(Enums::STAT_HEALTH) > 0) {
-                int n = 0;
+                int knockbackDist = 0;
                 if (0x0 != (this->curTarget->monsterEffects & 0x2) || (this->curTarget->monsterFlags & Enums::MFLAG_KNOCKBACK) != 0x0 || pain) {
-                    n = 0;
+                    knockbackDist = 0;
                 }
-                if (n > 0) {
+                if (knockbackDist > 0) {
                     app->player->unlink();
-                    this->curTarget->knockback(app->canvas->viewX, app->canvas->viewY, n);
+                    this->curTarget->knockback(app->canvas->viewX, app->canvas->viewY, knockbackDist);
                     app->player->link();
                 }
             }
@@ -888,9 +888,9 @@ void Combat::explodeOnPlayer() {
     if (app->hud->damageDir != 3) {
         app->canvas->staleTime = app->hud->damageTime + 1;
     }
-    bool b = false;
+    bool reflectingDamage = false;
     if (app->player->buffs[app->player->reflectBuffIdx] > 0 && !this->curAttacker->isBoss()) {
-        b = true;
+        reflectingDamage = true;
     }
     if (this->gotHit && (this->totalDamage > 0 || this->totalArmorDamage > 0)) {
         app->player->painEvent(this->curAttacker, true);
@@ -903,7 +903,7 @@ void Combat::explodeOnPlayer() {
             }
             app->player->addArmor(-this->totalArmorDamage);
             if (this->totalDamage > 0) {
-                if (!b) {
+                if (!reflectingDamage) {
                     if (app->game->difficulty != Enums::DIFFICULTY_EASY) {
                         int loadMapID = app->canvas->loadMapID;
                         if (app->game->difficulty == Enums::DIFFICULTY_NIGHTMARE) {
@@ -927,15 +927,15 @@ void Combat::explodeOnPlayer() {
                     }
                     if (app->canvas->knockbackDist == 0) {
                         int* calcPosition = this->curAttacker->calcPosition();
-                        int a = app->canvas->viewX - calcPosition[0];
-                        int a2 = app->canvas->viewY - calcPosition[1];
-                        if (a != 0) {
-                            a /= std::abs(a);
+                        int signX = app->canvas->viewX - calcPosition[0];
+                        int signY = app->canvas->viewY - calcPosition[1];
+                        if (signX != 0) {
+                            signX /= std::abs(signX);
                         }
-                        if (a2 != 0) {
-                            a2 /= std::abs(a2);
+                        if (signY != 0) {
+                            signY /= std::abs(signY);
                         }
-                        app->render->rockView(gameConfig->combatRockTimeDamage, app->canvas->viewX + a * gameConfig->combatRockDistCombat, app->canvas->viewY + a2 * gameConfig->combatRockDistCombat, app->canvas->viewZ);
+                        app->render->rockView(gameConfig->combatRockTimeDamage, app->canvas->viewX + signX * gameConfig->combatRockDistCombat, app->canvas->viewY + signY * gameConfig->combatRockDistCombat, app->canvas->viewZ);
                     }
                     if (app->player->ce->getStat(Enums::STAT_HEALTH) > 0 && app->combat->monsterBehaviors[this->curAttacker->def->monsterIdx].knockbackWeaponId >= 0 && app->combat->monsterBehaviors[this->curAttacker->def->monsterIdx].knockbackWeaponId == this->attackerWeaponId) {
                         entity->knockback(app->render->getSpriteX(sprite), app->render->getSpriteY(sprite), 1);
@@ -978,19 +978,19 @@ void Combat::explodeOnPlayer() {
     }
 }
 
-int Combat::getMonsterField(EntityDef* entityDef, int n) {
-    return this->monsterAttacks[entityDef->monsterIdx * 3 + n];
+int Combat::getMonsterField(EntityDef* entityDef, int fieldIdx) {
+    return this->monsterAttacks[entityDef->monsterIdx * 3 + fieldIdx];
 }
 
 void Combat::checkForBFGDeaths(int x, int y) {
 
-    int n3 = (x << 6) + 32;
-    int n4 = (y << 6) + 32;
-    int n5 = app->render->getHeight(x << 6, y << 6) + 32;
+    int srcX = (x << 6) + 32;
+    int srcY = (y << 6) + 32;
+    int srcZ = app->render->getHeight(x << 6, y << 6) + 32;
     for (int i = y - 1; i <= y + 1; ++i) {
         for (int j = x - 1; j <= x + 1; ++j) {
             if (j != x || i != y) {
-                app->game->trace(n3, n4, n5, (j << 6) + 32, (i << 6) + 32, app->render->getHeight(j << 6, i << 6) + 32, nullptr, 4129, 1, false);
+                app->game->trace(srcX, srcY, srcZ, (j << 6) + 32, (i << 6) + 32, app->render->getHeight(j << 6, i << 6) + 32, nullptr, 4129, 1, false);
                 if (app->game->traceEntity == nullptr) {
                     Entity* nextOnTile;
                     for (Entity* mapEntity = app->game->findMapEntity(j << 6, i << 6, 30381); mapEntity != nullptr; mapEntity = nextOnTile) {
@@ -1005,55 +1005,55 @@ void Combat::checkForBFGDeaths(int x, int y) {
     }
 }
 
-void Combat::radiusHurtEntities(int n, int n2, int n3, int n4, Entity* entity, Entity* entity2) {
+void Combat::radiusHurtEntities(int centerTileX, int centerTileY, int knockback, int damage, Entity* entity, Entity* entity2) {
 
-    int n5 = (n << 6) + 32;
-    int n6 = (n2 << 6) + 32;
-    int n7 = app->render->getHeight(n << 6, n2 << 6) + 32;
-    for (int i = n2 - 1; i <= n2 + 1; ++i) {
-        for (int j = n - 1; j <= n + 1; ++j) {
-            app->game->trace(n5, n6, n7, (j << 6) + 32, (i << 6) + 32, app->render->getHeight(j << 6, i << 6) + 32, nullptr, 4129, 1, true);
+    int centerX = (centerTileX << 6) + 32;
+    int centerY = (centerTileY << 6) + 32;
+    int centerZ = app->render->getHeight(centerTileX << 6, centerTileY << 6) + 32;
+    for (int i = centerTileY - 1; i <= centerTileY + 1; ++i) {
+        for (int j = centerTileX - 1; j <= centerTileX + 1; ++j) {
+            app->game->trace(centerX, centerY, centerZ, (j << 6) + 32, (i << 6) + 32, app->render->getHeight(j << 6, i << 6) + 32, nullptr, 4129, 1, true);
             if (app->game->traceEntity == nullptr) {
-                this->hurtEntityAt(j, i, n, n2, (j == n && i == n2) ? 0 : n3, n4, entity, entity2);
+                this->hurtEntityAt(j, i, centerTileX, centerTileY, (j == centerTileX && i == centerTileY) ? 0 : knockback, damage, entity, entity2);
             }
         }
     }
-    for (int k = n2 - 1; k <= n2 + 1; ++k) {
-        for (int l = n - 1; l <= n + 1; ++l) {
-            int n8 = 0x4004 | app->game->eventFlagForDirection(n - l, n2 - k);
-            if (app->game->doesScriptExist(l, k, n8)) {
+    for (int k = centerTileY - 1; k <= centerTileY + 1; ++k) {
+        for (int l = centerTileX - 1; l <= centerTileX + 1; ++l) {
+            int eventFlag = 0x4004 | app->game->eventFlagForDirection(centerTileX - l, centerTileY - k);
+            if (app->game->doesScriptExist(l, k, eventFlag)) {
                 ScriptThread* allocScriptThread = app->game->allocScriptThread();
-                allocScriptThread->queueTile(l, k, n8);
+                allocScriptThread->queueTile(l, k, eventFlag);
                 allocScriptThread->run();
             }
         }
     }
 }
 
-void Combat::hurtEntityAt(int n, int n2, int n3, int n4, int n5, int n6, Entity* entity, Entity* entity2) {
-    this->hurtEntityAt(n, n2, n3, n4, n5, n6, entity, false, entity2);
+void Combat::hurtEntityAt(int tileX, int tileY, int centerTileX, int centerTileY, int knockback, int damage, Entity* entity, Entity* entity2) {
+    this->hurtEntityAt(tileX, tileY, centerTileX, centerTileY, knockback, damage, entity, false, entity2);
 }
 
-void Combat::hurtEntityAt(int n, int n2, int n3, int n4, int n5, int n6, Entity* entity, bool b, Entity* entity2) {
+void Combat::hurtEntityAt(int tileX, int tileY, int centerTileX, int centerTileY, int knockback, int damage, Entity* entity, bool gibCorpses, Entity* entity2) {
 
     this->crFlags = 16;
     app->render->shotsFired = true;
     Entity* playerEnt = app->player->getPlayerEnt();
     Entity* nextOnTile;
-    for (Entity* mapEntity = app->game->findMapEntity(n << 6, n2 << 6, 30383); mapEntity != nullptr; mapEntity = nextOnTile) {
+    for (Entity* mapEntity = app->game->findMapEntity(tileX << 6, tileY << 6, 30383); mapEntity != nullptr; mapEntity = nextOnTile) {
         nextOnTile = mapEntity->nextOnTile;
         if (mapEntity != entity2 && (mapEntity->info & 0x20000) != 0x0) {
             if (mapEntity == playerEnt) {
                 if (this->attackerWeaponProj != 5) {
-                    n6 >>= 1;
-                    int min = std::min(n6 * 10 / 100, app->player->ce->getStat(Enums::STAT_ARMOR));
-                    n6 -= min;
-                    n6 -= n6 * app->player->ce->getStat(Enums::STAT_DEFENSE) / 100;
+                    damage >>= 1;
+                    int armorAbsorb = std::min(damage * 10 / 100, app->player->ce->getStat(Enums::STAT_ARMOR));
+                    damage -= armorAbsorb;
+                    damage -= damage * app->player->ce->getStat(Enums::STAT_DEFENSE) / 100;
                     app->player->painEvent(nullptr, false);
-                    playerEnt->knockback((n3 << 6) + 32, (n4 << 6) + 32, n5);
-                    if (n6 > 0) {
-                        this->crArmorDamage = min;
-                        app->player->pain(n6, nullptr, true);
+                    playerEnt->knockback((centerTileX << 6) + 32, (centerTileY << 6) + 32, knockback);
+                    if (damage > 0) {
+                        this->crArmorDamage = armorAbsorb;
+                        app->player->pain(damage, nullptr, true);
                         app->player->addArmor(-this->crArmorDamage);
                         app->player->addStatusEffect(app->player->fireBuffIdx, 5, 3);
                         app->player->translateStatusEffects();
@@ -1061,7 +1061,7 @@ void Combat::hurtEntityAt(int n, int n2, int n3, int n4, int n5, int n6, Entity*
                 }
             }
             else if (mapEntity->def->eType == Enums::ET_CORPSE) {
-                if (!b) {
+                if (!gibCorpses) {
                     return;
                 }
                 mapEntity->died(false, entity);
@@ -1073,9 +1073,9 @@ void Combat::hurtEntityAt(int n, int n2, int n3, int n4, int n5, int n6, Entity*
                 if ((mapEntity->info & 0x40000) == 0x0) {
                     app->game->activate(mapEntity, true, false, true, true);
                 }
-                int n7 = this->getWeaponWeakness(this->attackerWeaponId, mapEntity->def->monsterIdx) * n6 >> 8;
-                int n8 = n7 - (mapEntity->combat->getStatPercent(Enums::STAT_DEFENSE) * n7 >> 8);
-                if (n8 > 0) {
+                int weakenedDamage = this->getWeaponWeakness(this->attackerWeaponId, mapEntity->def->monsterIdx) * damage >> 8;
+                int finalDamage = weakenedDamage - (mapEntity->combat->getStatPercent(Enums::STAT_DEFENSE) * weakenedDamage >> 8);
+                if (finalDamage > 0) {
                     if (this->attackerWeaponProj == 5) {
                         int sprite = mapEntity->getSprite();
                         int sX = app->render->getSpriteX(sprite);
@@ -1087,17 +1087,17 @@ void Combat::hurtEntityAt(int n, int n2, int n3, int n4, int n5, int n6, Entity*
                         app->render->setSpriteRenderMode(gSprite->sprite, 4);
                         app->render->setSpriteScaleFactor(gSprite->sprite, 32);
                     }
-                    bool pain = mapEntity->pain(n8, nullptr);
+                    bool pain = mapEntity->pain(finalDamage, nullptr);
                     if ((mapEntity->monsterFlags & Enums::MFLAG_KNOCKBACK) == 0x0 && !pain) {
-                        mapEntity->knockback((n3 << 6) + 32, (n4 << 6) + 32, n5);
+                        mapEntity->knockback((centerTileX << 6) + 32, (centerTileY << 6) + 32, knockback);
                     }
                     app->localization->resetTextArgs();
                     app->localization->addTextIDArg(mapEntity->name);
-                    app->localization->addTextArg(n8);
+                    app->localization->addTextArg(finalDamage);
                     if (mapEntity->combat->getStat(Enums::STAT_HEALTH) <= 0) {
                         app->hud->addMessage((short)74);
                         if (this->attackerWeaponProj != 5) {
-                            if (b && entity != nullptr && entity->def->eType == Enums::ET_DECOR_NOCLIP && entity->def->eSubType == Enums::DECOR_DYNAMITE) {
+                            if (gibCorpses && entity != nullptr && entity->def->eType == Enums::ET_DECOR_NOCLIP && entity->def->eSubType == Enums::DECOR_DYNAMITE) {
                                 mapEntity->info |= 0x10000;
                                 app->particleSystem->spawnMonsterBlood(mapEntity, true);
                             }
@@ -1111,31 +1111,31 @@ void Combat::hurtEntityAt(int n, int n2, int n3, int n4, int n5, int n6, Entity*
             }
             else if (mapEntity->def->eType != Enums::ET_ENV_DAMAGE) {
                 if (mapEntity->def->eType == Enums::ET_ATTACK_INTERACTIVE) {}
-                mapEntity->pain(n6, entity);
+                mapEntity->pain(damage, entity);
                 mapEntity->died(true, entity);
             }
         }
     }
 }
 
-Text* Combat::getWeaponStatStr(int n) {
+Text* Combat::getWeaponStatStr(int weaponIdx) {
 
-    int n2 = n * Combat::WEAPON_MAX_FIELDS;
+    int weaponFieldOffset = weaponIdx * Combat::WEAPON_MAX_FIELDS;
     Text* largeBuffer = app->localization->getLargeBuffer();
      app->localization->resetTextArgs();
-     app->localization->addTextArg(this->weapons[n2 + Combat::WEAPON_FIELD_STRMIN]);
+     app->localization->addTextArg(this->weapons[weaponFieldOffset + Combat::WEAPON_FIELD_STRMIN]);
      app->localization->composeText((short)0, (short)77, largeBuffer);
      app->localization->resetTextArgs();
-    if (this->weapons[n2 + Combat::WEAPON_FIELD_RANGEMAX] != 1) {
-         app->localization->addTextArg(this->weapons[n2 + Combat::WEAPON_FIELD_RANGEMIN]);
-         app->localization->addTextArg(this->weapons[n2 + Combat::WEAPON_FIELD_RANGEMAX]);
+    if (this->weapons[weaponFieldOffset + Combat::WEAPON_FIELD_RANGEMAX] != 1) {
+         app->localization->addTextArg(this->weapons[weaponFieldOffset + Combat::WEAPON_FIELD_RANGEMIN]);
+         app->localization->addTextArg(this->weapons[weaponFieldOffset + Combat::WEAPON_FIELD_RANGEMAX]);
          app->localization->composeText((short)0, (short)78, largeBuffer);
     }
     else {
-         app->localization->addTextArg(this->weapons[n2 + Combat::WEAPON_FIELD_RANGEMAX]);
+         app->localization->addTextArg(this->weapons[weaponFieldOffset + Combat::WEAPON_FIELD_RANGEMAX]);
          app->localization->composeText((short)0, (short)79, largeBuffer);
     }
-    EntityDef* find = app->entityDefManager->find(6, 2, this->weapons[n2 + Combat::WEAPON_FIELD_AMMOTYPE]);
+    EntityDef* find = app->entityDefManager->find(6, 2, this->weapons[weaponFieldOffset + Combat::WEAPON_FIELD_AMMOTYPE]);
     if (find != nullptr) {
          app->localization->composeText((short)0, (short)76, largeBuffer);
          app->localization->composeText((short)1, find->name, largeBuffer);
@@ -1143,10 +1143,10 @@ Text* Combat::getWeaponStatStr(int n) {
     return largeBuffer;
 }
 
-Text* Combat::getArmorStatStr(int n) {
+Text* Combat::getArmorStatStr(int armorIdx) {
 
     Text* largeBuffer = app->localization->getLargeBuffer();
-    if (n != -1) {
+    if (armorIdx != -1) {
         app->localization->resetTextArgs();
         app->localization->addTextArg(app->player->ce->getStat(Enums::STAT_ARMOR));
         app->localization->composeText((short)0, (short)80, largeBuffer);
@@ -1155,9 +1155,9 @@ Text* Combat::getArmorStatStr(int n) {
     return largeBuffer;
 }
 
-int Combat::WorldDistToTileDist(int n) {
+int Combat::WorldDistToTileDist(int worldDist) {
 	for (int i = 0; i < (Combat::MAX_TILEDISTANCES - 1); ++i) {
-		if (n < this->tileDistances[i]) {
+		if (worldDist < this->tileDistances[i]) {
 			return i;
 		}
 	}
@@ -1322,9 +1322,9 @@ void Combat::updateProjectile() {
 
 void Combat::launchProjectile() {
 
-    int n = 256;
-    int n2;
-    int n3 = 16;
+    int speed = 256;
+    int srcOffset;
+    int dstOffset = 16;
     int renderMode = 0;
     if (this->attackerWeaponProj == 12) {
         this->soulCubeIsAttacking = true;
@@ -1332,7 +1332,7 @@ void Combat::launchProjectile() {
         return;
     }
     this->dodgeDir = (((int)app->nextInt() > 0x3FFFFFF) ? 1 : 0);
-    int n5 = ((this->dodgeDir << 1) - 1) * 16;
+    int dodgeOffset = ((this->dodgeDir << 1) - 1) * 16;
     int x1;
     int y1;
     int z1;
@@ -1340,14 +1340,14 @@ void Combat::launchProjectile() {
         x1 = app->game->viewX;
         y1 = app->game->viewY;
         z1 = app->render->getHeight(x1, y1) + 32;
-        n2 = 0;
+        srcOffset = 0;
     }
     else {
         int sprite = (this->curAttacker->info & 0xFFFF) - 1;
         x1 = app->render->getSpriteX(sprite);
         y1 = app->render->getSpriteY(sprite);
         z1 = app->render->getSpriteZ(sprite);
-        n2 = 16;
+        srcOffset = 16;
     }
     int x2;
     int y2;
@@ -1363,12 +1363,12 @@ void Combat::launchProjectile() {
         z2 = app->game->traceCollisionZ;
     }
     else {
-        int n10 = (this->curTarget->info & 0xFFFF) - 1;
-        x2 = app->render->getSpriteX(n10);
-        y2 = app->render->getSpriteY(n10);
-        z2 = app->render->getSpriteZ(n10);
+        int targetSpriteIdx = (this->curTarget->info & 0xFFFF) - 1;
+        x2 = app->render->getSpriteX(targetSpriteIdx);
+        y2 = app->render->getSpriteY(targetSpriteIdx);
+        z2 = app->render->getSpriteZ(targetSpriteIdx);
     }
-    bool b = false;
+    bool skipFlagMask = false;
 
     // Load projectile visual data from YAML-driven table
     if (this->projVisuals != nullptr && this->attackerWeaponProj >= 0 &&
@@ -1388,8 +1388,8 @@ void Combat::launchProjectile() {
         } else {
             this->missileAnim = pv.launchAnim;
         }
-        if (pv.launchSpeed > 0) n = pv.launchSpeed;
-        n += pv.launchSpeedAdd;
+        if (pv.launchSpeed > 0) speed = pv.launchSpeed;
+        speed += pv.launchSpeedAdd;
         if (pv.launchOffsetXR != 0) {
             x1 += app->game->viewRightStepX >> pv.launchOffsetXR;
             y1 += app->game->viewRightStepY >> pv.launchOffsetXR;
@@ -1397,7 +1397,7 @@ void Combat::launchProjectile() {
         z1 += pv.launchOffsetZ;
         z1 += pv.launchZOffset;
         z2 += pv.launchZOffset;
-        b = false;
+        skipFlagMask = false;
 
         // Data-driven projectile launch behaviors
         if (pv.closeRangeZAdjust &&
@@ -1405,7 +1405,7 @@ void Combat::launchProjectile() {
             z2 += pv.closeRangeZAmount;
         }
         if (pv.monsterDamageBoost && this->curAttacker != nullptr) {
-            n += n >> 1;
+            speed += speed >> 1;
         }
         if (pv.resetThornParticles) {
             this->numThornParticleSystems = 0;
@@ -1418,41 +1418,41 @@ void Combat::launchProjectile() {
     int dx = std::abs(x2 - x1);
     int dy = std::abs(y2 - y1);
     if ((this->crFlags & 0x400) != 0x0) {
-        int n11 = this->weapons[this->attackerWeapon + 3] * 64;
-        n3 = 0;
+        int maxRangeWorld = this->weapons[this->attackerWeapon + 3] * 64;
+        dstOffset = 0;
         if (dx != 0 && dx > dy) {
-            x2 = x1 + (x2 - x1) * n11 / dx;
+            x2 = x1 + (x2 - x1) * maxRangeWorld / dx;
         }
         else if (dy != 0) {
-            y2 = y1 + (y2 - y1) * n11 / dy;
+            y2 = y1 + (y2 - y1) * maxRangeWorld / dy;
         }
         dx = std::abs(x2 - x1);
         dy = std::abs(y2 - y1);
-        n5 = 0;
+        dodgeOffset = 0;
     }
     else if (this->hitType == 0) {
         if (this->targetType == 2 || this->curTarget == nullptr) {
-            n3 = 0;
+            dstOffset = 0;
         }
         else {
-            n5 = 0;
+            dodgeOffset = 0;
         }
     }
     else {
-        n5 = 0;
+        dodgeOffset = 0;
     }
 
     if (dy > dx) {
-        int n12 = (((y2 - y1) >> 31) << 1) + 1;
-        y1 +=  (n2 * n12);
-        y2 += -(n3 * n12);
-        x2 += n5;
+        int signY = (((y2 - y1) >> 31) << 1) + 1;
+        y1 +=  (srcOffset * signY);
+        y2 += -(dstOffset * signY);
+        x2 += dodgeOffset;
     }
     else {
-        int n15 = (((x2 - x1) >> 31) << 1) + 1;
-        x1 +=  (n2 * n15);
-        x2 += -(n3 * n15);
-        y2 += n5;
+        int signX = (((x2 - x1) >> 31) << 1) + 1;
+        x1 +=  (srcOffset * signX);
+        x2 += -(dstOffset * signX);
+        y2 += dodgeOffset;
     }
     if (this->attackerWeaponProj == 4) {
         if (this->curAttacker == nullptr) {
@@ -1461,15 +1461,15 @@ void Combat::launchProjectile() {
             z1 -= 5;
         }
         else {
-            int n16 = 16;
+            int sideOffset = 16;
             if ((app->render->getSpriteInfoRaw(this->curAttacker->getSprite()) & 0x20000) != 0x0) {
-                n16 = -16;
+                sideOffset = -16;
             }
-            x1 += n16 * app->canvas->viewRightStepX >> 6;
-            y1 += n16 * app->canvas->viewRightStepY >> 6;
+            x1 += sideOffset * app->canvas->viewRightStepX >> 6;
+            y1 += sideOffset * app->canvas->viewRightStepY >> 6;
         }
     }
-    GameSprite* allocMissile = this->allocMissile(x1, y1, z1, x2, y2, z2, 1000 * std::max(dx, dy) / n, renderMode);
+    GameSprite* allocMissile = this->allocMissile(x1, y1, z1, x2, y2, z2, 1000 * std::max(dx, dy) / speed, renderMode);
     if ((this->missileAnim == 4 && this->curTarget != nullptr) || this->missileAnim == 243) {
         app->render->setSpriteInfoRaw(allocMissile->sprite, ((app->render->getSpriteInfoRaw(allocMissile->sprite) & 0xFFFF00FF) | 0x1000));
         if (this->missileAnim == 243) {
@@ -1500,7 +1500,7 @@ void Combat::launchProjectile() {
         allocMissile->pos[2] = allocMissile->pos[5];
         allocMissile->vel[0] = allocMissile->vel[1] = allocMissile->vel[2] = 0;
     }
-    if (!b) {
+    if (!skipFlagMask) {
         int sprite = allocMissile->sprite;
         app->render->setSpriteInfoRaw(allocMissile->sprite, app->render->getSpriteInfoRaw(allocMissile->sprite) & 0xFFF700FF);
     }
@@ -1513,9 +1513,9 @@ GameSprite* Combat::allocMissile(int x1, int y1, int z1, int x2, int y2, int z2,
         app->Error("MAX_ACTIVE_MISSILES", Enums::ERR_MAX_MISSILES);
         return nullptr;
     }
-    int n8 = app->render->mediaMappings[this->missileAnim + 1] - app->render->mediaMappings[this->missileAnim];
+    int frameCount = app->render->mediaMappings[this->missileAnim + 1] - app->render->mediaMappings[this->missileAnim];
     int numActiveMissiles = this->numActiveMissiles;
-    GameSprite* gameSprite = app->game->gsprite_alloc(this->missileAnim, n8, 2562);
+    GameSprite* gameSprite = app->game->gsprite_alloc(this->missileAnim, frameCount, 2562);
     this->activeMissiles[this->numActiveMissiles++] = gameSprite;
 
     short* mapSprites = app->render->mapSprites;
@@ -1531,11 +1531,11 @@ GameSprite* Combat::allocMissile(int x1, int y1, int z1, int x2, int y2, int z2,
     gameSprite->duration = duration;
     if (this->attackerWeaponProj == 13) {
         gameSprite->flags |= 0x4000;
-        int n9 = 8;
+        int arcStep = 8;
         if (gameSprite->pos[5] > gameSprite->pos[2]) {
-            n9 /= 4;
+            arcStep /= 4;
         }
-        gameSprite->pos[5] += (short)(std::min(this->tileDist, 5) * n9);
+        gameSprite->pos[5] += (short)(std::min(this->tileDist, 5) * arcStep);
         if (gameSprite->pos[5] < gameSprite->pos[2]) {
             gameSprite->pos[5] = gameSprite->pos[2];
         }
@@ -1581,21 +1581,21 @@ void Combat::launchSoulCube() {
     int dx = std::abs(x2 - x1);
     int dy = std::abs(y2 - y1);
     if (dy > dx) {
-        int n4 = (((y2 - y1) >> 31) << 1) + 1;
+        int signY = (((y2 - y1) >> 31) << 1) + 1;
         if (this->soulCubeIsAttacking) {
-            y1 += (64 * n4);
+            y1 += (64 * signY);
         }
         else {
-            y2 += -(64 * n4);
+            y2 += -(64 * signY);
         }
     }
     else {
-        int n5 = (((x2 - x1) >> 31) << 1) + 1;
+        int signX = (((x2 - x1) >> 31) << 1) + 1;
         if (this->soulCubeIsAttacking) {
-            x1 += (64 * n5);
+            x1 += (64 * signX);
         }
         else {
-            x2 += -(64 * n5);
+            x2 += -(64 * signX);
         }
     }
     int duration = 1000 * std::max(dx, dy) / 256;
@@ -1603,12 +1603,12 @@ void Combat::launchSoulCube() {
     this->allocMissile(x1, y1, z1, x2, y2, z2, duration, 0);
 }
 
-int Combat::getWeaponTileNum(int n) {
-    if (this->wpViewTile != nullptr && n >= 0 && n < this->numWeaponViewTiles && this->wpViewTile[n] != 0) {
-        return this->wpViewTile[n];
+int Combat::getWeaponTileNum(int weaponIdx) {
+    if (this->wpViewTile != nullptr && weaponIdx >= 0 && weaponIdx < this->numWeaponViewTiles && this->wpViewTile[weaponIdx] != 0) {
+        return this->wpViewTile[weaponIdx];
     }
     // Fallback: sprite should be set in weapons.yaml for all weapons
-    return 1 + n;
+    return 1 + weaponIdx;
 }
 
 const Combat::FamiliarDef* Combat::getFamiliarDefByWeapon(int weaponIndex) const {
