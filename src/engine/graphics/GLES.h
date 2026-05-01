@@ -90,6 +90,12 @@ public:
 	// ortho) made HUD draws fragile across game-state transitions.
 	float ortho2D[16] = {};
 
+	// 1x1 white texture used by colored 2D primitives (fillRect/fillCircle/
+	// drawLine) when running through textureShader: with a white sampler the
+	// fragment becomes `white * u_color.rgb + u_addColor.rgb` = u_color, so
+	// we get an untextured colored draw without needing a separate shader.
+	GLuint whiteTex = 0;
+
 	// Per-mesh state captured by SetupTexture(). The shader path reads these
 	// instead of glGetFloatv(GL_CURRENT_COLOR), since (a) it's faster than a
 	// pipeline stall and (b) some renderMode branches (e.g. RENDER_NONE) leave
@@ -117,6 +123,14 @@ public:
 	// startup so 2D HUD / menu / loading-screen draws (Image::DrawTexture
 	// and friends) have a sane projection on their first call.
 	void set2DProjection();
+
+	// Draw an untextured 2D primitive (fillRect, fillCircle, drawLine) using
+	// the textureShader + whiteTex. `vp` is a tightly-packed array of `count`
+	// vec3 vertices in screen space; the modelview is identity (verts are
+	// already in screen-space pixels and ortho2D maps them to NDC). Color is
+	// in 0..1 RGBA. Does no blend-state setup; caller chose blend mode.
+	void draw2DColored(GLenum primitive, const float* vp, int vertCount,
+	                   float r, float g, float b, float a);
 	bool ClearBuffer(int color);
 	void SetGLState();
 	void BeginFrame(int x, int y, int w, int h, int* mtxView, int* mtxProjection);

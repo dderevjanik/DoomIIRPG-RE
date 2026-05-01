@@ -172,6 +172,18 @@ void gles::GLInit(Render* render) {
 	// it to the 2D ortho after each world render.
 	this->set2DProjection();
 
+	// 1x1 white texture for colored 2D primitives via textureShader.
+	if (!this->headless && this->whiteTex == 0) {
+		const uint8_t white[4] = {0xFF, 0xFF, 0xFF, 0xFF};
+		glGenTextures(1, &this->whiteTex);
+		glBindTexture(GL_TEXTURE_2D, this->whiteTex);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, white);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	}
+
 	std::memset(this->chains, 0, sizeof(this->chains));
 	this->activeChain.prev = &this->activeChain;
 	this->activeChain.next = &this->activeChain;
@@ -330,6 +342,52 @@ void gles::set2DProjection() {
 		-1,         1,         0,  1,
 	};
 	for (int i = 0; i < 16; i++) this->ortho2D[i] = ortho[i];
+}
+
+void gles::draw2DColored(GLenum primitive, const float* vp, int vertCount,
+                         float r, float g, float b, float a) {
+	if (this->headless || !this->isShaderReady) return;
+
+	// Provide explicit (0,0) UVs — relying on the constant-attrib value of a
+	// disabled array proved unreliable on macOS GL 2.1 compat (the rect would
+	// render as transparent). MAX_GLVERTS=16 covers fillCircle's 16-vert fan.
+	static constexpr int kMaxColored = 32;
+	float uv[kMaxColored * 2] = {};
+	if (vertCount > kMaxColored) vertCount = kMaxColored;
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glEnable(GL_TEXTURE_2D);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, this->whiteTex);
+
+	this->textureShader.use();
+	const GLint uMvp = this->textureShader.uniform("u_mvp");
+	const GLint uColor = this->textureShader.uniform("u_color");
+	const GLint uAddColor = this->textureShader.uniform("u_addColor");
+	const GLint uTex = this->textureShader.uniform("u_tex");
+	const GLint aPos = this->textureShader.attribute("a_pos");
+	const GLint aUv = this->textureShader.attribute("a_uv");
+	static constexpr float kZeroAdd[4] = {0, 0, 0, 0};
+	const float color[4] = {r, g, b, a};
+	if (uMvp >= 0) glUniformMatrix4fv(uMvp, 1, GL_FALSE, this->ortho2D);
+	if (uColor >= 0) glUniform4fv(uColor, 1, color);
+	if (uAddColor >= 0) glUniform4fv(uAddColor, 1, kZeroAdd);
+	if (uTex >= 0) glUniform1i(uTex, 0);
+	if (aPos >= 0) {
+		glEnableVertexAttribArray(aPos);
+		glVertexAttribPointer(aPos, 3, GL_FLOAT, GL_FALSE, 0, vp);
+	}
+	if (aUv >= 0) {
+		glEnableVertexAttribArray(aUv);
+		glVertexAttribPointer(aUv, 2, GL_FLOAT, GL_FALSE, 0, uv);
+	}
+
+	glDrawArrays(primitive, 0, vertCount);
+
+	if (aPos >= 0) glDisableVertexAttribArray(aPos);
+	if (aUv >= 0) glDisableVertexAttribArray(aUv);
+	Shader::useNone();
 }
 
 void gles::ResetGLState() {

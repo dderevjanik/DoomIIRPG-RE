@@ -9,6 +9,8 @@
 #include "TinyGL.h"
 #include "Image.h"
 #include "Canvas.h"
+#include "GLES.h"
+#include "App.h"
 #include "Text.h"
 #include "SDLGL.h"
 
@@ -34,53 +36,30 @@ void Graphics::setColor(int color) {
 }
 
 void Graphics::fillCircle(int x, int y, int rad) {
-	float r, g, b;
-	float vp[48];
-	float amount;
-	int vertIndex;
-    float scaleX, scaleY;
+	float r = COLOR_BYTE_TO_FLOAT(this->curColor >> 16 & 0xFF);
+	float g = COLOR_BYTE_TO_FLOAT(this->curColor >> 8 & 0xFF);
+	float b = COLOR_BYTE_TO_FLOAT(this->curColor & 0xFF);
 
-    r = COLOR_BYTE_TO_FLOAT(this->curColor >> 16 & 0xFF);
-    g = COLOR_BYTE_TO_FLOAT(this->curColor >> 8 & 0xFF);
-    b = COLOR_BYTE_TO_FLOAT(this->curColor & 0xFF);
-
-	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_ALPHA_TEST);
 	glDisable(GL_BLEND);
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glDisableClientState(GL_COLOR_ARRAY);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_NORMAL_ARRAY);
 
-	glPushMatrix();
-    scaleX = (float)(x);
-    scaleY = (float)(y);
-    //CAppContainer::getInstance()->sdlGL->transformCoord2f(&scaleX, &scaleY);
-
-	glTranslatef(scaleX, scaleY, 0.0f);
-
-	amount = 0.0f;
-	vertIndex = 0;
-	do
-	{
-		float angleRad = (float)(amount * 0.017444f);
-
-        scaleX = (float)(rad) * (float)cos(angleRad);
-        scaleY = (float)(rad) * (float)sin(angleRad);
-        //CAppContainer::getInstance()->sdlGL->transformCoord2f(&scaleX, &scaleY);
-
-		vp[vertIndex++] = scaleX;
-		vp[vertIndex++] = scaleY;
+	// Build the fan in screen space directly (the legacy code translated by
+	// (x,y) on the matrix stack and built radius-relative verts; equivalent).
+	float vp[48];
+	float amount = 0.0f;
+	int vertIndex = 0;
+	do {
+		float angleRad = amount * 0.017444f;
+		float dx = (float)rad * std::cos(angleRad);
+		float dy = (float)rad * std::sin(angleRad);
+		vp[vertIndex++] = (float)x + dx;
+		vp[vertIndex++] = (float)y + dy;
 		vp[vertIndex++] = 0.5f;
 		amount += 22.5f;
 	} while (vertIndex != 48);
 
-	glColor4f(r, g, b, 1.0f);
-	glVertexPointer(3, GL_FLOAT, 0, vp);
-	glDrawArrays(GL_TRIANGLE_FAN, 0, 16);
-	glEnable(GL_TEXTURE_2D);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glPopMatrix();
+	CAppContainer::getInstance()->app->render->_gles->draw2DColored(
+	    GL_TRIANGLE_FAN, vp, 16, r, g, b, 1.0f);
 }
 
 void Graphics::fillRect(int x, int y, int w, int h) {
@@ -190,7 +169,6 @@ void Graphics::FMGL_fillRect(int x, int y, int w, int h, float r, float g, float
             vp[10] = 0.0;
             vp[11] = 0.5f;
 
-            glDisable(GL_TEXTURE_2D);
             if (a >= 1.0)
             {
                 glDisable(GL_ALPHA_TEST);
@@ -208,8 +186,6 @@ void Graphics::FMGL_fillRect(int x, int y, int w, int h, float r, float g, float
             float scaleY = (float)(y);
             float scaleW = (float)(rectMaxX);
             float scaleH = (float)(rectMaxY);
-            //CAppContainer::getInstance()->sdlGL->transformCoord2f(&scaleX, &scaleY);
-            //CAppContainer::getInstance()->sdlGL->transformCoord2f(&scaleW, &scaleH);
 
             vp[0] = (float)scaleW;
             vp[6] = (float)scaleW;
@@ -220,13 +196,8 @@ void Graphics::FMGL_fillRect(int x, int y, int w, int h, float r, float g, float
             vp[7] = (float)scaleH;
             vp[10] = (float)scaleH;
 
-
-            glColor4f(r, g, b, a);
-            glVertexPointer(3, GL_FLOAT, 0, vp);
-            glEnableClientState(GL_VERTEX_ARRAY);
-            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            glDisableClientState(GL_COLOR_ARRAY);
-            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+            CAppContainer::getInstance()->app->render->_gles->draw2DColored(
+                GL_TRIANGLE_STRIP, vp, 4, r, g, b, a);
         }
     }
 }
@@ -257,37 +228,19 @@ void Graphics::eraseRgn(int* rect) {
 }
 
 void Graphics::drawLine(int x1, int y1, int x2, int y2) {
-    float v9[6];
     float r = COLOR_BYTE_TO_FLOAT(this->curColor >> 16 & 0xFF);
     float g = COLOR_BYTE_TO_FLOAT(this->curColor >> 8 & 0xFF);
     float b = COLOR_BYTE_TO_FLOAT(this->curColor & 0xFF);
 
-    glDisable(GL_TEXTURE_2D);
     glDisable(GL_ALPHA_TEST);
     glDisable(GL_BLEND);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glColor4f(r, g, b, 1.0f);
 
-    // v1
-    v9[0] = (float)x1;
-    v9[1] = (float)y1;
-    v9[2] = 0.5f;
-
-    // v2
-    v9[3] = (float)x2;
-    v9[4] = (float)y2;
-    v9[5] = 0.5f;
-
-    //CAppContainer::getInstance()->sdlGL->transformCoord2f(&v9[0], &v9[1]);
-    //CAppContainer::getInstance()->sdlGL->transformCoord2f(&v9[3], &v9[4]);
-
-    glVertexPointer(3, GL_FLOAT, 0, v9);
-    glDrawArrays(GL_LINE_LOOP, 0, 2);
-    glEnable(GL_TEXTURE_2D);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    float v[6] = {
+        (float)x1, (float)y1, 0.5f,
+        (float)x2, (float)y2, 0.5f,
+    };
+    CAppContainer::getInstance()->app->render->_gles->draw2DColored(
+        GL_LINE_LOOP, v, 2, r, g, b, 1.0f);
 }
 
 void Graphics::drawLine(int x1, int y1, int x2, int y2, int color) {
