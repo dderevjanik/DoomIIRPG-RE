@@ -68,8 +68,10 @@ precision mediump float;
 varying vec2 v_uv;
 uniform sampler2D u_tex;
 uniform vec4 u_color;
+uniform vec4 u_addColor;
 void main() {
-    gl_FragColor = texture2D(u_tex, v_uv) * u_color;
+    vec4 t = texture2D(u_tex, v_uv);
+    gl_FragColor = vec4(t.rgb * u_color.rgb + u_addColor.rgb, t.a * u_color.a);
 }
 )";
 
@@ -100,12 +102,14 @@ varying vec2 v_uv;
 varying float v_eyeZ;
 uniform sampler2D u_tex;
 uniform vec4 u_color;
+uniform vec4 u_addColor;
 uniform vec4 u_fogColor;
 uniform float u_fogStart;
 uniform float u_fogEnd;
 uniform int u_fogEnabled;
 void main() {
-    vec4 c = texture2D(u_tex, v_uv) * u_color;
+    vec4 t = texture2D(u_tex, v_uv);
+    vec4 c = vec4(t.rgb * u_color.rgb + u_addColor.rgb, t.a * u_color.a);
     if (u_fogEnabled != 0) {
         float f = clamp((u_fogEnd - v_eyeZ) / (u_fogEnd - u_fogStart), 0.0, 1.0);
         c.rgb = mix(u_fogColor.rgb, c.rgb, f);
@@ -493,11 +497,13 @@ bool gles::RasterizeConvexPolygon(std::span<TGLVert> vertsSpan) {
 			const GLint uMvp = this->textureShader.uniform("u_mvp");
 			const GLint uTex = this->textureShader.uniform("u_tex");
 			const GLint uColor = this->textureShader.uniform("u_color");
+			const GLint uAddColor = this->textureShader.uniform("u_addColor");
 			const GLint aPos = this->textureShader.attribute("a_pos");
 			const GLint aUv = this->textureShader.attribute("a_uv");
 			if (uMvp >= 0) glUniformMatrix4fv(uMvp, 1, GL_FALSE, identity);
 			if (uTex >= 0) glUniform1i(uTex, 0);
 			if (uColor >= 0) glUniform4fv(uColor, 1, this->meshColor);
+			if (uAddColor >= 0) glUniform4fv(uAddColor, 1, this->meshAddColor);
 			if (aPos >= 0) {
 				glEnableVertexAttribArray(aPos);
 				glVertexAttribPointer(aPos, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex),
@@ -607,11 +613,13 @@ bool gles::RasterizeConvexPolygon(std::span<GLVert> vertsSpan) {
 			const GLint uMvp = this->textureShader.uniform("u_mvp");
 			const GLint uTex = this->textureShader.uniform("u_tex");
 			const GLint uColor = this->textureShader.uniform("u_color");
+			const GLint uAddColor = this->textureShader.uniform("u_addColor");
 			const GLint aPos = this->textureShader.attribute("a_pos");
 			const GLint aUv = this->textureShader.attribute("a_uv");
 			if (uMvp >= 0) glUniformMatrix4fv(uMvp, 1, GL_FALSE, identity);
 			if (uTex >= 0) glUniform1i(uTex, 0);
 			if (uColor >= 0) glUniform4fv(uColor, 1, this->meshColor);
+			if (uAddColor >= 0) glUniform4fv(uAddColor, 1, this->meshAddColor);
 			if (aPos >= 0) {
 				glEnableVertexAttribArray(aPos);
 				glVertexAttribPointer(aPos, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex),
@@ -780,6 +788,7 @@ bool gles::DrawModelVerts(std::span<TGLVert> vertsSpan) {
 				const GLint uMv = this->worldShader.uniform("u_mv");
 				const GLint uTex = this->worldShader.uniform("u_tex");
 				const GLint uColor = this->worldShader.uniform("u_color");
+				const GLint uAddColor = this->worldShader.uniform("u_addColor");
 				const GLint uFogColor = this->worldShader.uniform("u_fogColor");
 				const GLint uFogStart = this->worldShader.uniform("u_fogStart");
 				const GLint uFogEnd = this->worldShader.uniform("u_fogEnd");
@@ -791,6 +800,7 @@ bool gles::DrawModelVerts(std::span<TGLVert> vertsSpan) {
 				if (uMv >= 0) glUniformMatrix4fv(uMv, 1, GL_FALSE, this->modelViewMatrix);
 				if (uTex >= 0) glUniform1i(uTex, 0);
 				if (uColor >= 0) glUniform4fv(uColor, 1, this->meshColor);
+				if (uAddColor >= 0) glUniform4fv(uAddColor, 1, this->meshAddColor);
 				if (uFogColor >= 0) glUniform4fv(uFogColor, 1, this->meshFogColor);
 				if (uFogStart >= 0) glUniform1f(uFogStart, this->fogStart);
 				if (uFogEnd >= 0) glUniform1f(uFogEnd, this->fogEnd);
@@ -859,6 +869,14 @@ void gles::SetupTexture(int n, int n2, int renderMode, int flags) {
 	if (renderMode != this->renderMode || flags != this->flags)
 	{
 		bool isMultiply = (flags & Render::RENDER_FLAG_MULTYPLYSHIFT); // [GEC]
+
+		// Reset additive tint; TexCombineShift() below will populate it for the
+		// non-multiply RED/GREEN/BLUE shift paths. Default zero is a no-op in
+		// the shader: rgb = tex.rgb * u_color.rgb + 0.
+		this->meshAddColor[0] = 0.0f;
+		this->meshAddColor[1] = 0.0f;
+		this->meshAddColor[2] = 0.0f;
+		this->meshAddColor[3] = 0.0f;
 
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE); // [GEC] Default Combiner
 
@@ -1676,11 +1694,14 @@ void gles::DrawPortalTexture(Image* img, int x, int y, int w, int h, float tx, f
 		this->textureShader.use();
 		const GLint uMvp = this->textureShader.uniform("u_mvp");
 		const GLint uColor = this->textureShader.uniform("u_color");
+		const GLint uAddColor = this->textureShader.uniform("u_addColor");
 		const GLint uTex = this->textureShader.uniform("u_tex");
 		const GLint aPos = this->textureShader.attribute("a_pos");
 		const GLint aUv = this->textureShader.attribute("a_uv");
+		static constexpr float kZeroAdd[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 		if (uMvp >= 0)   glUniformMatrix4fv(uMvp, 1, GL_FALSE, mvp);
 		if (uColor >= 0) glUniform4fv(uColor, 1, color);
+		if (uAddColor >= 0) glUniform4fv(uAddColor, 1, kZeroAdd);
 		if (uTex >= 0)   glUniform1i(uTex, 0);
 		if (aPos >= 0) {
 			glEnableVertexAttribArray(aPos);
@@ -1711,6 +1732,15 @@ void gles::TexCombineShift(int r, int g, int b) { // [GEC]
 	color[0] = ((float)r / 255.0f);
 	color[1] = ((float)g / 255.0f);
 	color[2] = ((float)b / 255.0f);
+
+	// B2.6: capture into meshAddColor so the shader path can apply the same
+	// additive RGB shift. Fixed-function GL_COMBINE_RGB+GL_ADD is invisible to
+	// shaders, so without this the J2ME-style RED/GREEN/BLUE shifts would be
+	// silently dropped on the shader path.
+	this->meshAddColor[0] = color[0];
+	this->meshAddColor[1] = color[1];
+	this->meshAddColor[2] = color[2];
+	this->meshAddColor[3] = 0.0f;
 
 	// glTexCombColorf
 	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);

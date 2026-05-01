@@ -80,7 +80,12 @@ public:
 	// pipeline stall and (b) some renderMode branches (e.g. RENDER_NONE) leave
 	// glColor untouched, so we can't trust the GL state to reflect the current
 	// SetupTexture call.
+	//
+	// meshAddColor: additive RGB tint set by TexCombineShift (the non-multiply
+	// J2ME RED/GREEN/BLUE shifts). Replaces fixed-function GL_COMBINE_RGB +
+	// GL_ADD path which shaders cannot read. Zero in all other cases.
 	float meshColor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+	float meshAddColor[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 	float meshFogColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
 	bool meshFogEnabled = false;
 

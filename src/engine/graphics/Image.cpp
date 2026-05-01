@@ -195,11 +195,14 @@ void Image::DrawTexture(int texX, int texY, int texW, int texH, int posX, int po
         _glesObj->textureShader.use();
         const GLint uMvp = _glesObj->textureShader.uniform("u_mvp");
         const GLint uColor = _glesObj->textureShader.uniform("u_color");
+        const GLint uAddColor = _glesObj->textureShader.uniform("u_addColor");
         const GLint uTex = _glesObj->textureShader.uniform("u_tex");
         const GLint aPos = _glesObj->textureShader.attribute("a_pos");
         const GLint aUv = _glesObj->textureShader.attribute("a_uv");
+        static constexpr float kZeroAdd[4] = {0.0f, 0.0f, 0.0f, 0.0f};
         if (uMvp >= 0)   glUniformMatrix4fv(uMvp, 1, GL_FALSE, mvp);
         if (uColor >= 0) glUniform4fv(uColor, 1, color);
+        if (uAddColor >= 0) glUniform4fv(uAddColor, 1, kZeroAdd);
         if (uTex >= 0)   glUniform1i(uTex, 0);
         if (aPos >= 0) {
             glEnableVertexAttribArray(aPos);
@@ -298,11 +301,14 @@ void Image::DrawTextureAlpha(int posX, int posY, float alpha, bool rotated, bool
         _glesObj->textureShader.use();
         const GLint uMvp = _glesObj->textureShader.uniform("u_mvp");
         const GLint uColor = _glesObj->textureShader.uniform("u_color");
+        const GLint uAddColor = _glesObj->textureShader.uniform("u_addColor");
         const GLint uTex = _glesObj->textureShader.uniform("u_tex");
         const GLint aPos = _glesObj->textureShader.attribute("a_pos");
         const GLint aUv = _glesObj->textureShader.attribute("a_uv");
+        static constexpr float kZeroAdd[4] = {0.0f, 0.0f, 0.0f, 0.0f};
         if (uMvp >= 0)   glUniformMatrix4fv(uMvp, 1, GL_FALSE, mvp);
         if (uColor >= 0) glUniform4fv(uColor, 1, color);
+        if (uAddColor >= 0) glUniform4fv(uAddColor, 1, kZeroAdd);
         if (uTex >= 0)   glUniform1i(uTex, 0);
         if (aPos >= 0) {
             glEnableVertexAttribArray(aPos);
