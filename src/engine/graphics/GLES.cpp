@@ -481,7 +481,40 @@ bool gles::RasterizeConvexPolygon(std::span<TGLVert> vertsSpan) {
 			}
 		}
 
-		glDrawElements(GL_TRIANGLES, (numVerts * 3) - (2 * 3), GL_UNSIGNED_SHORT, this->quad_indexes);
+		const int indexCount = (numVerts * 3) - (2 * 3);
+		// B2.5: shader path. Verts already in NDC (software perspective divide
+		// done above), so u_mvp = identity. No fog (textureShader has none —
+		// matches the dominant case where GL_FOG is disabled here anyway).
+		if (this->isShaderReady) {
+			static constexpr float identity[16] = {
+				1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1,
+			};
+			this->textureShader.use();
+			const GLint uMvp = this->textureShader.uniform("u_mvp");
+			const GLint uTex = this->textureShader.uniform("u_tex");
+			const GLint uColor = this->textureShader.uniform("u_color");
+			const GLint aPos = this->textureShader.attribute("a_pos");
+			const GLint aUv = this->textureShader.attribute("a_uv");
+			if (uMvp >= 0) glUniformMatrix4fv(uMvp, 1, GL_FALSE, identity);
+			if (uTex >= 0) glUniform1i(uTex, 0);
+			if (uColor >= 0) glUniform4fv(uColor, 1, this->meshColor);
+			if (aPos >= 0) {
+				glEnableVertexAttribArray(aPos);
+				glVertexAttribPointer(aPos, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+				                      reinterpret_cast<const void*>(this->immediate));
+			}
+			if (aUv >= 0) {
+				glEnableVertexAttribArray(aUv);
+				glVertexAttribPointer(aUv, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+				                      reinterpret_cast<const void*>(this->immediate[0].st));
+			}
+			glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_SHORT, this->quad_indexes);
+			if (aPos >= 0) glDisableVertexAttribArray(aPos);
+			if (aUv >= 0) glDisableVertexAttribArray(aUv);
+			Shader::useNone();
+		} else {
+			glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_SHORT, this->quad_indexes);
+		}
 		glMatrixMode(GL_MODELVIEW);
 		glLoadMatrixf(this->modelViewMatrix);
 		glMatrixMode(GL_PROJECTION);
@@ -565,7 +598,37 @@ bool gles::RasterizeConvexPolygon(std::span<GLVert> vertsSpan) {
 			}
 		}
 
-		glDrawElements(GL_TRIANGLES, (numVerts * 3) - (2 * 3), GL_UNSIGNED_SHORT, this->quad_indexes);
+		const int indexCount = (numVerts * 3) - (2 * 3);
+		if (this->isShaderReady) {
+			static constexpr float identity[16] = {
+				1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1,
+			};
+			this->textureShader.use();
+			const GLint uMvp = this->textureShader.uniform("u_mvp");
+			const GLint uTex = this->textureShader.uniform("u_tex");
+			const GLint uColor = this->textureShader.uniform("u_color");
+			const GLint aPos = this->textureShader.attribute("a_pos");
+			const GLint aUv = this->textureShader.attribute("a_uv");
+			if (uMvp >= 0) glUniformMatrix4fv(uMvp, 1, GL_FALSE, identity);
+			if (uTex >= 0) glUniform1i(uTex, 0);
+			if (uColor >= 0) glUniform4fv(uColor, 1, this->meshColor);
+			if (aPos >= 0) {
+				glEnableVertexAttribArray(aPos);
+				glVertexAttribPointer(aPos, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+				                      reinterpret_cast<const void*>(this->immediate));
+			}
+			if (aUv >= 0) {
+				glEnableVertexAttribArray(aUv);
+				glVertexAttribPointer(aUv, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+				                      reinterpret_cast<const void*>(this->immediate[0].st));
+			}
+			glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_SHORT, this->quad_indexes);
+			if (aPos >= 0) glDisableVertexAttribArray(aPos);
+			if (aUv >= 0) glDisableVertexAttribArray(aUv);
+			Shader::useNone();
+		} else {
+			glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_SHORT, this->quad_indexes);
+		}
 		glMatrixMode(GL_MODELVIEW);
 		glLoadMatrixf(this->modelViewMatrix);
 		glMatrixMode(GL_PROJECTION);
