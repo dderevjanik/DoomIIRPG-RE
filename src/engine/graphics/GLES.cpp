@@ -141,16 +141,17 @@ void gles::GLInit(Render* render) {
 	this->tinyGL = this->app->tinyGL.get();
 	this->isInit = true;
 
-	// Compile the migration shaders. Failure is non-fatal — the fixed-function
-	// path keeps working — but logs an error so the issue is visible.
-	// isShaderReady is the AND of all shader builds; any failure forces the
-	// whole engine back to the fixed-function path for consistency.
+	// Compile the migration shaders. After B2.8 the fixed-function paths are
+	// deleted, so a compile failure means the engine cannot render anything —
+	// mark isInit=false so all draw entry points bail out. The user sees a
+	// black screen plus a clear error in the log instead of a silent crash.
 	if (!this->headless) {
 		const bool tex = this->textureShader.compile(kTextureVS, kTextureFS);
 		const bool world = this->worldShader.compile(kWorldVS, kWorldFS);
 		this->isShaderReady = tex && world;
 		if (!this->isShaderReady) {
-			LOG_WARN("[gles] shader compile/link failed (texture={}, world={}); staying on fixed-function path\n", tex, world);
+			LOG_ERROR("[gles] shader compile/link failed (texture={}, world={}); rendering disabled\n", tex, world);
+			this->isInit = false;
 		}
 	}
 
@@ -190,12 +191,15 @@ void gles::SetGLState() {
 	if (this->headless) { return; }
 
 	PFNGLACTIVETEXTUREPROC glActiveTexture = (PFNGLACTIVETEXTUREPROC)SDL_GL_GetProcAddress("glActiveTexture");
-	PFNGLCLIENTACTIVETEXTUREPROC glClientActiveTexture = (PFNGLCLIENTACTIVETEXTUREPROC)SDL_GL_GetProcAddress("glClientActiveTexture");
 
 	LOG_INFO("[gles] SetGLState viewport: x={} y={} w={} h={}\n",
 	        this->vPortRect[0], this->vPortRect[1], this->vPortRect[2], this->vPortRect[3]);
 	glViewport(this->vPortRect[0], this->vPortRect[1], this->vPortRect[2], this->vPortRect[3]);
 	glScissor(this->vPortRect[0], this->vPortRect[1], this->vPortRect[2], this->vPortRect[3]);
+	// Image::DrawTexture / DrawTextureAlpha / DrawPortalTexture still use the
+	// fixed-function matrix stack to compose their final MVP (read back via
+	// glGetFloatv into u_mvp), so the legacy projection/modelview slots have
+	// to stay populated even though the shader pipeline ignores them.
 	glMatrixMode(GL_MODELVIEW);
 	glLoadMatrixf(this->modelViewMatrix);
 	glMatrixMode(GL_PROJECTION);
@@ -204,18 +208,7 @@ void gles::SetGLState() {
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_STENCIL_TEST);
 	glDisable(GL_ALPHA_TEST);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	glClientActiveTexture(GL_TEXTURE0);
 	glActiveTexture(GL_TEXTURE0);
-	glVertexPointer(4, GL_FLOAT, sizeof(Vertex), this->immediate);
-	glTexCoordPointer(2, GL_FLOAT, sizeof(Vertex), this->immediate[0].st);
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_COLOR_ARRAY);
-	glFogf(GL_FOG_MODE, GL_LINEAR);
-	glFogfv(GL_FOG_COLOR, this->fogColor);
-	glFogf(GL_FOG_START, this->fogStart);
-	glFogf(GL_FOG_END, this->fogEnd);
 	this->fogMode = 0;
 	glEnable(GL_BLEND);
 	glCullFace(GL_BACK);
@@ -419,26 +412,11 @@ bool gles::RasterizeConvexPolygon(std::span<TGLVert> vertsSpan) {
 	if (this->headless) { return false; }
 
 	Vertex* immediate;
-	GLfloat projectionMatrix[MAX_GLVERTS];
 	int fogMode;
 
 	if (this->isInit) {
 		fogMode = this->fogMode;
 		this->fogMode = 0;
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-		glMatrixMode(GL_PROJECTION);
-		std::memset(projectionMatrix, 0, sizeof(projectionMatrix));
-#if 0 // Iphone
-		projectionMatrix[1] = -1.0;	// {0.0, -1.0, 0.0, 0.0}
-		projectionMatrix[4] = 1.0;	// {1.0, 0.0, 0.0, 0.0}
-#else
-		projectionMatrix[0] = 1.0;	// {1.0, 0.0, 0.0, 0.0}
-		projectionMatrix[5] = 1.0;	// {0.0, 1.0, 0.0, 0.0}
-#endif
-		projectionMatrix[10] = 1.0;	// {0.0, 0.0, 1.0, 0.0}
-		projectionMatrix[15] = 1.0;	// {0.0, 0.0, 0.0, 1.0}
-		glLoadMatrixf(projectionMatrix);
 
 		assert(numVerts <= MAX_GLVERTS);
 
@@ -463,9 +441,6 @@ bool gles::RasterizeConvexPolygon(std::span<TGLVert> vertsSpan) {
 			}
 		}
 		else {
-			if(app->canvas->loadMapID != 3) {
-				glDisable(GL_FOG);
-			}
 			immediate = this->immediate;
 			for (int i = 0; i < numVerts; i++) {
 				immediate->xyzw[0] = (float)verts->x;
@@ -486,58 +461,43 @@ bool gles::RasterizeConvexPolygon(std::span<TGLVert> vertsSpan) {
 		}
 
 		const int indexCount = (numVerts * 3) - (2 * 3);
-		// B2.5: shader path. Verts already in NDC (software perspective divide
-		// done above), so u_mvp = identity. No fog (textureShader has none —
-		// matches the dominant case where GL_FOG is disabled here anyway).
-		if (this->isShaderReady) {
-			static constexpr float identity[16] = {
-				1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1,
-			};
-			// ImGui's OpenGL3 backend (B2.7) leaves a VBO/EBO bound after
-			// RenderDrawData; our client-side glVertexAttribPointer would
-			// otherwise be reinterpreted as an offset into that buffer.
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-			this->textureShader.use();
-			const GLint uMvp = this->textureShader.uniform("u_mvp");
-			const GLint uTex = this->textureShader.uniform("u_tex");
-			const GLint uColor = this->textureShader.uniform("u_color");
-			const GLint uAddColor = this->textureShader.uniform("u_addColor");
-			const GLint aPos = this->textureShader.attribute("a_pos");
-			const GLint aUv = this->textureShader.attribute("a_uv");
-			if (uMvp >= 0) glUniformMatrix4fv(uMvp, 1, GL_FALSE, identity);
-			if (uTex >= 0) glUniform1i(uTex, 0);
-			if (uColor >= 0) glUniform4fv(uColor, 1, this->meshColor);
-			if (uAddColor >= 0) glUniform4fv(uAddColor, 1, this->meshAddColor);
-			if (aPos >= 0) {
-				glEnableVertexAttribArray(aPos);
-				glVertexAttribPointer(aPos, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex),
-				                      reinterpret_cast<const void*>(this->immediate));
-			}
-			if (aUv >= 0) {
-				glEnableVertexAttribArray(aUv);
-				glVertexAttribPointer(aUv, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
-				                      reinterpret_cast<const void*>(this->immediate[0].st));
-			}
-			glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_SHORT, this->quad_indexes);
-			if (aPos >= 0) glDisableVertexAttribArray(aPos);
-			if (aUv >= 0) glDisableVertexAttribArray(aUv);
-			Shader::useNone();
-		} else {
-			glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_SHORT, this->quad_indexes);
+		// Verts already in NDC (software perspective divide done above), so
+		// u_mvp = identity. No fog (textureShader has none — matches the
+		// dominant case where fog was disabled here anyway).
+		static constexpr float identity[16] = {
+			1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1,
+		};
+		// ImGui's OpenGL3 backend leaves a VBO/EBO bound after RenderDrawData;
+		// our client-side glVertexAttribPointer would otherwise be
+		// reinterpreted as an offset into that buffer.
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		this->textureShader.use();
+		const GLint uMvp = this->textureShader.uniform("u_mvp");
+		const GLint uTex = this->textureShader.uniform("u_tex");
+		const GLint uColor = this->textureShader.uniform("u_color");
+		const GLint uAddColor = this->textureShader.uniform("u_addColor");
+		const GLint aPos = this->textureShader.attribute("a_pos");
+		const GLint aUv = this->textureShader.attribute("a_uv");
+		if (uMvp >= 0) glUniformMatrix4fv(uMvp, 1, GL_FALSE, identity);
+		if (uTex >= 0) glUniform1i(uTex, 0);
+		if (uColor >= 0) glUniform4fv(uColor, 1, this->meshColor);
+		if (uAddColor >= 0) glUniform4fv(uAddColor, 1, this->meshAddColor);
+		if (aPos >= 0) {
+			glEnableVertexAttribArray(aPos);
+			glVertexAttribPointer(aPos, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+			                      reinterpret_cast<const void*>(this->immediate));
 		}
-		glMatrixMode(GL_MODELVIEW);
-		glLoadMatrixf(this->modelViewMatrix);
-		glMatrixMode(GL_PROJECTION);
-		glLoadMatrixf(this->projectionMatrix);
+		if (aUv >= 0) {
+			glEnableVertexAttribArray(aUv);
+			glVertexAttribPointer(aUv, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+			                      reinterpret_cast<const void*>(this->immediate[0].st));
+		}
+		glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_SHORT, this->quad_indexes);
+		if (aPos >= 0) glDisableVertexAttribArray(aPos);
+		if (aUv >= 0) glDisableVertexAttribArray(aUv);
+		Shader::useNone();
 		this->fogMode = fogMode;
-		if (this->fogMode) {
-			glEnable(GL_FOG);
-			glFogfv(GL_FOG_COLOR, (this->fogMode == 1) ? this->fogBlack : this->fogColor);
-		}
-		else {
-			glDisable(GL_FOG);
-		}
 		return true;
 	}
 	return false;
@@ -547,24 +507,9 @@ bool gles::RasterizeConvexPolygon(std::span<GLVert> vertsSpan) {
 	int numVerts = static_cast<int>(vertsSpan.size());
 	GLVert* verts = vertsSpan.data();
 	Vertex* immediate;
-	GLfloat projectionMatrix[MAX_GLVERTS];
 
 	if (this->isInit) {
 		this->fogMode = 0;
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-		glMatrixMode(GL_PROJECTION);
-		std::memset(projectionMatrix, 0, sizeof(projectionMatrix));
-#if 0 // Iphone
-		projectionMatrix[1] = -1.0;	// {0.0, -1.0, 0.0, 0.0}
-		projectionMatrix[4] = 1.0;	// {1.0, 0.0, 0.0, 0.0}
-#else
-		projectionMatrix[0] = 1.0;	// {1.0, 0.0, 0.0, 0.0}
-		projectionMatrix[5] = 1.0;	// {0.0, 1.0, 0.0, 0.0}
-#endif
-		projectionMatrix[10] = 1.0;	// {0.0, 0.0, 1.0, 0.0}
-		projectionMatrix[15] = 1.0;	// {0.0, 0.0, 0.0, 1.0}
-		glLoadMatrixf(projectionMatrix);
 
 		assert(numVerts <= MAX_GLVERTS);
 
@@ -589,7 +534,6 @@ bool gles::RasterizeConvexPolygon(std::span<GLVert> vertsSpan) {
 			}
 		}
 		else {
-			glDisable(GL_FOG);
 			immediate = this->immediate;
 			for (int i = 0; i < numVerts; i++) {
 				immediate->xyzw[0] = (float)verts->x;
@@ -603,54 +547,43 @@ bool gles::RasterizeConvexPolygon(std::span<GLVert> vertsSpan) {
 				immediate->xyzw[1] /= immediate->xyzw[3];
 				immediate->xyzw[2] /= immediate->xyzw[3];
 				immediate->xyzw[3] = 1.0f;
-				
+
 				immediate++;
 				verts++;
 			}
 		}
 
 		const int indexCount = (numVerts * 3) - (2 * 3);
-		if (this->isShaderReady) {
-			static constexpr float identity[16] = {
-				1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1,
-			};
-			// ImGui's OpenGL3 backend (B2.7) leaves a VBO/EBO bound after
-			// RenderDrawData; our client-side glVertexAttribPointer would
-			// otherwise be reinterpreted as an offset into that buffer.
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-			this->textureShader.use();
-			const GLint uMvp = this->textureShader.uniform("u_mvp");
-			const GLint uTex = this->textureShader.uniform("u_tex");
-			const GLint uColor = this->textureShader.uniform("u_color");
-			const GLint uAddColor = this->textureShader.uniform("u_addColor");
-			const GLint aPos = this->textureShader.attribute("a_pos");
-			const GLint aUv = this->textureShader.attribute("a_uv");
-			if (uMvp >= 0) glUniformMatrix4fv(uMvp, 1, GL_FALSE, identity);
-			if (uTex >= 0) glUniform1i(uTex, 0);
-			if (uColor >= 0) glUniform4fv(uColor, 1, this->meshColor);
-			if (uAddColor >= 0) glUniform4fv(uAddColor, 1, this->meshAddColor);
-			if (aPos >= 0) {
-				glEnableVertexAttribArray(aPos);
-				glVertexAttribPointer(aPos, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex),
-				                      reinterpret_cast<const void*>(this->immediate));
-			}
-			if (aUv >= 0) {
-				glEnableVertexAttribArray(aUv);
-				glVertexAttribPointer(aUv, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
-				                      reinterpret_cast<const void*>(this->immediate[0].st));
-			}
-			glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_SHORT, this->quad_indexes);
-			if (aPos >= 0) glDisableVertexAttribArray(aPos);
-			if (aUv >= 0) glDisableVertexAttribArray(aUv);
-			Shader::useNone();
-		} else {
-			glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_SHORT, this->quad_indexes);
+		static constexpr float identity[16] = {
+			1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1,
+		};
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		this->textureShader.use();
+		const GLint uMvp = this->textureShader.uniform("u_mvp");
+		const GLint uTex = this->textureShader.uniform("u_tex");
+		const GLint uColor = this->textureShader.uniform("u_color");
+		const GLint uAddColor = this->textureShader.uniform("u_addColor");
+		const GLint aPos = this->textureShader.attribute("a_pos");
+		const GLint aUv = this->textureShader.attribute("a_uv");
+		if (uMvp >= 0) glUniformMatrix4fv(uMvp, 1, GL_FALSE, identity);
+		if (uTex >= 0) glUniform1i(uTex, 0);
+		if (uColor >= 0) glUniform4fv(uColor, 1, this->meshColor);
+		if (uAddColor >= 0) glUniform4fv(uAddColor, 1, this->meshAddColor);
+		if (aPos >= 0) {
+			glEnableVertexAttribArray(aPos);
+			glVertexAttribPointer(aPos, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+			                      reinterpret_cast<const void*>(this->immediate));
 		}
-		glMatrixMode(GL_MODELVIEW);
-		glLoadMatrixf(this->modelViewMatrix);
-		glMatrixMode(GL_PROJECTION);
-		glLoadMatrixf(this->projectionMatrix);
+		if (aUv >= 0) {
+			glEnableVertexAttribArray(aUv);
+			glVertexAttribPointer(aUv, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+			                      reinterpret_cast<const void*>(this->immediate[0].st));
+		}
+		glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_SHORT, this->quad_indexes);
+		if (aPos >= 0) glDisableVertexAttribArray(aPos);
+		if (aUv >= 0) glDisableVertexAttribArray(aUv);
+		Shader::useNone();
 		return true;
 	}
 	return false;
@@ -785,58 +718,51 @@ bool gles::DrawModelVerts(std::span<TGLVert> vertsSpan) {
 
 			const int indexCount = (numVerts * 3) - (2 * 3);
 
-			// B2.3: programmable-pipeline path for world geometry. We feed the
-			// same Vertex[MAX_GLVERTS] buffer through generic vertex attribs and
-			// run the worldShader (per-pixel linear fog). When isShaderReady is
-			// false, fall back to the fixed-function arrays set up by SetGLState.
-			if (this->isShaderReady) {
-				float mvp[16];
-				mat4MulGles(mvp, this->projectionMatrix, this->modelViewMatrix);
+			// World-geometry programmable path. We feed the Vertex[MAX_GLVERTS]
+			// buffer through generic vertex attribs and run worldShader for
+			// per-pixel linear fog and color modulation.
+			float mvp[16];
+			mat4MulGles(mvp, this->projectionMatrix, this->modelViewMatrix);
 
-				// See note in RasterizeConvexPolygon: ensure no leftover
-				// ImGui VBO is bound when we feed client-side pointers.
-				glBindBuffer(GL_ARRAY_BUFFER, 0);
-				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-				this->worldShader.use();
-				const GLint uMvp = this->worldShader.uniform("u_mvp");
-				const GLint uMv = this->worldShader.uniform("u_mv");
-				const GLint uTex = this->worldShader.uniform("u_tex");
-				const GLint uColor = this->worldShader.uniform("u_color");
-				const GLint uAddColor = this->worldShader.uniform("u_addColor");
-				const GLint uFogColor = this->worldShader.uniform("u_fogColor");
-				const GLint uFogStart = this->worldShader.uniform("u_fogStart");
-				const GLint uFogEnd = this->worldShader.uniform("u_fogEnd");
-				const GLint uFogEnabled = this->worldShader.uniform("u_fogEnabled");
-				const GLint aPos = this->worldShader.attribute("a_pos");
-				const GLint aUv = this->worldShader.attribute("a_uv");
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+			this->worldShader.use();
+			const GLint uMvp = this->worldShader.uniform("u_mvp");
+			const GLint uMv = this->worldShader.uniform("u_mv");
+			const GLint uTex = this->worldShader.uniform("u_tex");
+			const GLint uColor = this->worldShader.uniform("u_color");
+			const GLint uAddColor = this->worldShader.uniform("u_addColor");
+			const GLint uFogColor = this->worldShader.uniform("u_fogColor");
+			const GLint uFogStart = this->worldShader.uniform("u_fogStart");
+			const GLint uFogEnd = this->worldShader.uniform("u_fogEnd");
+			const GLint uFogEnabled = this->worldShader.uniform("u_fogEnabled");
+			const GLint aPos = this->worldShader.attribute("a_pos");
+			const GLint aUv = this->worldShader.attribute("a_uv");
 
-				if (uMvp >= 0) glUniformMatrix4fv(uMvp, 1, GL_FALSE, mvp);
-				if (uMv >= 0) glUniformMatrix4fv(uMv, 1, GL_FALSE, this->modelViewMatrix);
-				if (uTex >= 0) glUniform1i(uTex, 0);
-				if (uColor >= 0) glUniform4fv(uColor, 1, this->meshColor);
-				if (uAddColor >= 0) glUniform4fv(uAddColor, 1, this->meshAddColor);
-				if (uFogColor >= 0) glUniform4fv(uFogColor, 1, this->meshFogColor);
-				if (uFogStart >= 0) glUniform1f(uFogStart, this->fogStart);
-				if (uFogEnd >= 0) glUniform1f(uFogEnd, this->fogEnd);
-				if (uFogEnabled >= 0) glUniform1i(uFogEnabled, this->meshFogEnabled ? 1 : 0);
+			if (uMvp >= 0) glUniformMatrix4fv(uMvp, 1, GL_FALSE, mvp);
+			if (uMv >= 0) glUniformMatrix4fv(uMv, 1, GL_FALSE, this->modelViewMatrix);
+			if (uTex >= 0) glUniform1i(uTex, 0);
+			if (uColor >= 0) glUniform4fv(uColor, 1, this->meshColor);
+			if (uAddColor >= 0) glUniform4fv(uAddColor, 1, this->meshAddColor);
+			if (uFogColor >= 0) glUniform4fv(uFogColor, 1, this->meshFogColor);
+			if (uFogStart >= 0) glUniform1f(uFogStart, this->fogStart);
+			if (uFogEnd >= 0) glUniform1f(uFogEnd, this->fogEnd);
+			if (uFogEnabled >= 0) glUniform1i(uFogEnabled, this->meshFogEnabled ? 1 : 0);
 
-				if (aPos >= 0) {
-					glEnableVertexAttribArray(aPos);
-					glVertexAttribPointer(aPos, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex),
-					                      reinterpret_cast<const void*>(this->immediate));
-				}
-				if (aUv >= 0) {
-					glEnableVertexAttribArray(aUv);
-					glVertexAttribPointer(aUv, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
-					                      reinterpret_cast<const void*>(this->immediate[0].st));
-				}
-				glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_SHORT, this->quad_indexes);
-				if (aPos >= 0) glDisableVertexAttribArray(aPos);
-				if (aUv >= 0) glDisableVertexAttribArray(aUv);
-				Shader::useNone();
-			} else {
-				glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_SHORT, this->quad_indexes);
+			if (aPos >= 0) {
+				glEnableVertexAttribArray(aPos);
+				glVertexAttribPointer(aPos, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+				                      reinterpret_cast<const void*>(this->immediate));
 			}
+			if (aUv >= 0) {
+				glEnableVertexAttribArray(aUv);
+				glVertexAttribPointer(aUv, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+				                      reinterpret_cast<const void*>(this->immediate[0].st));
+			}
+			glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_SHORT, this->quad_indexes);
+			if (aPos >= 0) glDisableVertexAttribArray(aPos);
+			if (aUv >= 0) glDisableVertexAttribArray(aUv);
+			Shader::useNone();
 
 			return (this->isInit);
 		}
@@ -892,7 +818,12 @@ void gles::SetupTexture(int n, int n2, int renderMode, int flags) {
 		this->meshAddColor[2] = 0.0f;
 		this->meshAddColor[3] = 0.0f;
 
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE); // [GEC] Default Combiner
+		// Default modulator is opaque white; per-branch sets a different alpha
+		// (or full RGBA for BRIGHTREDSHIFT). Read by worldShader as u_color.
+		this->meshColor[0] = 1.0f;
+		this->meshColor[1] = 1.0f;
+		this->meshColor[2] = 1.0f;
+		this->meshColor[3] = 1.0f;
 
 		this->renderMode = renderMode;
 		this->flags = flags;
@@ -901,60 +832,61 @@ void gles::SetupTexture(int n, int n2, int renderMode, int flags) {
 			case Render::RENDER_NORMAL: {
 				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 				if (flags & Render::RENDER_FLAG_BRIGHTREDSHIFT) {
-					glColor4f(1.0f, 0.5, 0.5, 1.0f);
-				}
-				else {
-					glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+					this->meshColor[1] = 0.5f;
+					this->meshColor[2] = 0.5f;
 				}
 				this->fogMode = 2;
 				break;
 			}
 			case Render::RENDER_BLEND25: {
 				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-				glColor4f(1.0f, 1.0f, 1.0f, 0.25f);
+				this->meshColor[3] = 0.25f;
 				this->fogMode = 2;
 				break;
 			}
 			case Render::RENDER_BLEND50: {
 				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-				glColor4f(1.0f, 1.0f, 1.0f, 0.50f);
+				this->meshColor[3] = 0.5f;
 				this->fogMode = 2;
 				break;
 			}
 			case Render::RENDER_ADD: {
 				glBlendFunc(GL_SRC_ALPHA, GL_ONE); // glBlendFunc(GL_ONE, GL_ONE);
-				glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 				this->fogMode = 0;
 				break;
 			}
 			case Render::RENDER_ADD75: {
-				glBlendFunc(GL_SRC_ALPHA, GL_ONE); // glBlendFunc(GL_ONE, GL_ONE);
-				glColor4f(0.75f, 0.75f, 0.75f, 1.0f);
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+				this->meshColor[0] = 0.75f;
+				this->meshColor[1] = 0.75f;
+				this->meshColor[2] = 0.75f;
 				this->fogMode = 0;
 				break;
 			}
 			case Render::RENDER_ADD50: {
-				glBlendFunc(GL_SRC_ALPHA, GL_ONE); // glBlendFunc(GL_ONE, GL_ONE);
-				glColor4f(0.50f, 0.50f, 0.50f, 1.0f);
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+				this->meshColor[0] = 0.5f;
+				this->meshColor[1] = 0.5f;
+				this->meshColor[2] = 0.5f;
 				this->fogMode = 0;
 				break;
 			}
 			case Render::RENDER_ADD25: {
-				glBlendFunc(GL_SRC_ALPHA, GL_ONE); // glBlendFunc(GL_ONE, GL_ONE);
-				glColor4f(0.25f, 0.25f, 0.25f, 1.0f);
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+				this->meshColor[0] = 0.25f;
+				this->meshColor[1] = 0.25f;
+				this->meshColor[2] = 0.25f;
 				this->fogMode = 0;
 				break;
 			}
 			case Render::RENDER_SUB: {
 				glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-				glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 				this->fogMode = 0;
 				break;
 			}
-
 			case Render::RENDER_PERF: { // New
 				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-				glColor4f(1.0f, 1.0f, 1.0f, 0.50f);
+				this->meshColor[3] = 0.5f;
 				this->fogMode = 2;
 				break;
 			}
@@ -966,13 +898,13 @@ void gles::SetupTexture(int n, int n2, int renderMode, int flags) {
 			}
 			case Render::RENDER_BLEND75: {
 				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-				glColor4f(1.0f, 1.0f, 1.0f, 0.75f);
+				this->meshColor[3] = 0.75f;
 				this->fogMode = 2;
 				break;
 			}
 			case Render::RENDER_BLENDSPECIALALPHA: {
 				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-				glColor4f(1.0f, 1.0f, 1.0f, app->canvas->blendSpecialAlpha);
+				this->meshColor[3] = app->canvas->blendSpecialAlpha;
 				this->fogMode = 2;
 				break;
 			}
@@ -982,16 +914,6 @@ void gles::SetupTexture(int n, int n2, int renderMode, int flags) {
 			}
 		}
 
-		if (this->fogMode) {
-			glEnable(GL_FOG);
-			glFogfv(GL_FOG_COLOR, (this->fogMode == 1) ? this->fogBlack : this->fogColor);
-		}
-		else {
-			glDisable(GL_FOG);
-		}
-
-		int v28, v31, v32, v33;
-		v28 = 0;
 		if (flags & Render::RENDER_FLAG_PULSATE) {
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
@@ -1006,11 +928,18 @@ void gles::SetupTexture(int n, int n2, int renderMode, int flags) {
 				rgba = 31;
 			}
 
-			glColor4ub(rgba, rgba, rgba, rgba);
+			const float v = rgba / 255.0f;
+			this->meshColor[0] = v;
+			this->meshColor[1] = v;
+			this->meshColor[2] = v;
+			this->meshColor[3] = v;
 		}
-		else if(flags & Render::RENDER_FLAG_REDSHIFT) {
+		else if (flags & Render::RENDER_FLAG_REDSHIFT) {
 			if (isMultiply) {
-				glColor4ub(0xFF, 0x00, 0x00, 0xFF); // IOS
+				this->meshColor[0] = 1.0f;
+				this->meshColor[1] = 0.0f;
+				this->meshColor[2] = 0.0f;
+				this->meshColor[3] = 1.0f;
 			}
 			else { // [GEC] like J2ME/BREW version
 				this->TexCombineShift(64, 0, 0);
@@ -1018,26 +947,27 @@ void gles::SetupTexture(int n, int n2, int renderMode, int flags) {
 		}
 		else if (flags & Render::RENDER_FLAG_GREENSHIFT) {
 			if (isMultiply) {
-				glColor4ub(0x00, 0xFF, 0x00, 0xFF); // IOS
+				this->meshColor[0] = 0.0f;
+				this->meshColor[1] = 1.0f;
+				this->meshColor[2] = 0.0f;
+				this->meshColor[3] = 1.0f;
 			}
-			else { // [GEC] like J2ME/BREW version
+			else {
 				this->TexCombineShift(0, 64, 0);
 			}
 		}
 		else if (flags & Render::RENDER_FLAG_BLUESHIFT) {
 			if (isMultiply) {
-				glColor4ub(0x00, 0x00, 0xFF, 0xFF); // IOS
+				this->meshColor[0] = 0.0f;
+				this->meshColor[1] = 0.0f;
+				this->meshColor[2] = 1.0f;
+				this->meshColor[3] = 1.0f;
 			}
-			else { // [GEC] like J2ME/BREW version
+			else {
 				this->TexCombineShift(0, 0, 64);
 			}
 		}
 
-		// Capture the post-state into member fields so DrawModelVerts() (shader
-		// path, B2.3) can reproduce the look without round-tripping through
-		// glGetFloatv. The fog color is fogBlack when fogMode==1 (additive
-		// "darken"), the level fogColor otherwise.
-		glGetFloatv(GL_CURRENT_COLOR, this->meshColor);
 		this->meshFogEnabled = (this->fogMode != 0);
 		const float* fc = (this->fogMode == 1) ? this->fogBlack : this->fogColor;
 		for (int i = 0; i < 4; i++) this->meshFogColor[i] = fc[i];
@@ -1693,84 +1623,54 @@ void gles::DrawPortalTexture(Image* img, int x, int y, int w, int h, float tx, f
 	glTranslatef(scaleW + tx, scaleH + ty, 0.0);
 	glRotatef(angle, 0.0, 0.0, 1.0);
 
-	// B2.4: shader path. RenderPortal sets glColor4f(1,1,1,0.25) before calling
-	// us — read it back from GL_CURRENT_COLOR (safe here because the caller
-	// always sets it explicitly, unlike Image::DrawTexture's REPLACE modes).
-	if (this->isShaderReady) {
-		float proj[16], mv[16], mvp[16];
-		glGetFloatv(GL_PROJECTION_MATRIX, proj);
-		glGetFloatv(GL_MODELVIEW_MATRIX, mv);
-		mat4MulGles(mvp, proj, mv);
+	// RenderPortal sets glColor4f(1,1,1,0.25) before calling us — read it back
+	// from GL_CURRENT_COLOR (safe here because the caller always sets it
+	// explicitly, unlike Image::DrawTexture's REPLACE modes).
+	float proj[16], mv[16], mvp[16];
+	glGetFloatv(GL_PROJECTION_MATRIX, proj);
+	glGetFloatv(GL_MODELVIEW_MATRIX, mv);
+	mat4MulGles(mvp, proj, mv);
 
-		float color[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-		glGetFloatv(GL_CURRENT_COLOR, color);
+	float color[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+	glGetFloatv(GL_CURRENT_COLOR, color);
 
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-		this->textureShader.use();
-		const GLint uMvp = this->textureShader.uniform("u_mvp");
-		const GLint uColor = this->textureShader.uniform("u_color");
-		const GLint uAddColor = this->textureShader.uniform("u_addColor");
-		const GLint uTex = this->textureShader.uniform("u_tex");
-		const GLint aPos = this->textureShader.attribute("a_pos");
-		const GLint aUv = this->textureShader.attribute("a_uv");
-		static constexpr float kZeroAdd[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-		if (uMvp >= 0)   glUniformMatrix4fv(uMvp, 1, GL_FALSE, mvp);
-		if (uColor >= 0) glUniform4fv(uColor, 1, color);
-		if (uAddColor >= 0) glUniform4fv(uAddColor, 1, kZeroAdd);
-		if (uTex >= 0)   glUniform1i(uTex, 0);
-		if (aPos >= 0) {
-			glEnableVertexAttribArray(aPos);
-			glVertexAttribPointer(aPos, 3, GL_FLOAT, GL_FALSE, 0, vp);
-		}
-		if (aUv >= 0) {
-			glEnableVertexAttribArray(aUv);
-			glVertexAttribPointer(aUv, 2, GL_FLOAT, GL_FALSE, 0, st);
-		}
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-		if (aPos >= 0) glDisableVertexAttribArray(aPos);
-		if (aUv >= 0)  glDisableVertexAttribArray(aUv);
-		Shader::useNone();
-	} else {
-		glVertexPointer(3, GL_FLOAT, 0, vp);
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glTexCoordPointer(2, GL_FLOAT, 0, st);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glDisableClientState(GL_COLOR_ARRAY);
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	this->textureShader.use();
+	const GLint uMvp = this->textureShader.uniform("u_mvp");
+	const GLint uColor = this->textureShader.uniform("u_color");
+	const GLint uAddColor = this->textureShader.uniform("u_addColor");
+	const GLint uTex = this->textureShader.uniform("u_tex");
+	const GLint aPos = this->textureShader.attribute("a_pos");
+	const GLint aUv = this->textureShader.attribute("a_uv");
+	static constexpr float kZeroAdd[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+	if (uMvp >= 0)   glUniformMatrix4fv(uMvp, 1, GL_FALSE, mvp);
+	if (uColor >= 0) glUniform4fv(uColor, 1, color);
+	if (uAddColor >= 0) glUniform4fv(uAddColor, 1, kZeroAdd);
+	if (uTex >= 0)   glUniform1i(uTex, 0);
+	if (aPos >= 0) {
+		glEnableVertexAttribArray(aPos);
+		glVertexAttribPointer(aPos, 3, GL_FLOAT, GL_FALSE, 0, vp);
 	}
+	if (aUv >= 0) {
+		glEnableVertexAttribArray(aUv);
+		glVertexAttribPointer(aUv, 2, GL_FLOAT, GL_FALSE, 0, st);
+	}
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	if (aPos >= 0) glDisableVertexAttribArray(aPos);
+	if (aUv >= 0)  glDisableVertexAttribArray(aUv);
+	Shader::useNone();
 	glPopMatrix();
 }
 
 
-void gles::TexCombineShift(int r, int g, int b) { // [GEC]
-	float color[4] = { 0 };
-	color[0] = ((float)r / 255.0f);
-	color[1] = ((float)g / 255.0f);
-	color[2] = ((float)b / 255.0f);
-
-	// B2.6: capture into meshAddColor so the shader path can apply the same
-	// additive RGB shift. Fixed-function GL_COMBINE_RGB+GL_ADD is invisible to
-	// shaders, so without this the J2ME-style RED/GREEN/BLUE shifts would be
-	// silently dropped on the shader path.
-	this->meshAddColor[0] = color[0];
-	this->meshAddColor[1] = color[1];
-	this->meshAddColor[2] = color[2];
+void gles::TexCombineShift(int r, int g, int b) {
+	// Captures an additive RGB shift into meshAddColor. The shader applies it
+	// as `c.rgb = tex.rgb * u_color.rgb + u_addColor.rgb`. The fixed-function
+	// GL_COMBINE_RGB+GL_ADD chain that used to live here is gone with the
+	// programmable-pipeline cutover; only the member-field write remains.
+	this->meshAddColor[0] = (float)r / 255.0f;
+	this->meshAddColor[1] = (float)g / 255.0f;
+	this->meshAddColor[2] = (float)b / 255.0f;
 	this->meshAddColor[3] = 0.0f;
-
-	// glTexCombColorf
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
-	glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
-	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_ADD);
-	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE0);
-	glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
-	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_CONSTANT);
-	glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
-	// glTexCombReplaceAlpha
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
-	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_MODULATE);
-	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_TEXTURE0);
-	glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
-	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA, GL_PRIMARY_COLOR);
-	glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
 }
