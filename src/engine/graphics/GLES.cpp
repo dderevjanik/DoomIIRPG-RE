@@ -139,7 +139,6 @@ void gles::GLInit(Render* render) {
 
 	_glesObj = this;
 	this->render = render;
-	this->tinyGL = this->app->tinyGL.get();
 	this->isInit = true;
 
 	// Compile the migration shaders. After B2.8 the fixed-function paths are
@@ -228,7 +227,8 @@ void gles::SetGLState() {
 	this->flags = -1;
 }
 
-void gles::BeginFrame(int x, int y, int w, int h, int* mtxView, int* mtxProjection) {
+void gles::BeginFrame(int x, int y, int w, int h, int* mtxView, int* mtxProjection,
+                       int fogColorPacked, int fogMin, int fogRange) {
 	if (this->headless) { return; }
 
 
@@ -302,7 +302,7 @@ void gles::BeginFrame(int x, int y, int w, int h, int* mtxView, int* mtxProjecti
 		this->projectionMatrix[14] *= 0.5f;
 	}
 
-	uint8_t* fogColor = (uint8_t*)&this->tinyGL->fogColor;
+	uint8_t* fogColor = (uint8_t*)&fogColorPacked;
 
 	this->fogColor[2] = COLOR_BYTE_TO_FLOAT(fogColor[0]);
 	this->fogColor[1] = COLOR_BYTE_TO_FLOAT(fogColor[1]);
@@ -313,8 +313,8 @@ void gles::BeginFrame(int x, int y, int w, int h, int* mtxView, int* mtxProjecti
 		this->fogColor[3] = 1.0f;
 	}
 
-	this->fogStart = ((float)this->tinyGL->fogMin) * this->fogScale;
-	this->fogEnd = ((((float)this->tinyGL->fogRange) / this->fogColor[3]) + (float)this->tinyGL->fogMin) * this->fogScale;
+	this->fogStart = ((float)fogMin) * this->fogScale;
+	this->fogEnd = ((((float)fogRange) / this->fogColor[3]) + (float)fogMin) * this->fogScale;
 
 	if ((this->fogEnd > 0.499f) && canvas->gameConfig->isFogDisabled(canvas->loadMapID)) {
 		this->fogStart = 9999.f;
@@ -498,7 +498,7 @@ bool gles::RasterizeConvexPolygon(std::span<TGLVert> vertsSpan) {
 				immediate->xyzw[1] /= immediate->xyzw[3];
 				immediate->xyzw[2] = 1.0f;
 				immediate->xyzw[3] = 1.0f;
-				immediate->st[0] += -YAW_TO_FLOAT(this->tinyGL->viewYaw);
+				immediate->st[0] += -YAW_TO_FLOAT(this->viewYaw);
 
 				immediate++;
 				verts++;
@@ -591,7 +591,7 @@ bool gles::RasterizeConvexPolygon(std::span<GLVert> vertsSpan) {
 				immediate->xyzw[1] /= immediate->xyzw[3];
 				immediate->xyzw[2] = 1.0f;
 				immediate->xyzw[3] = 1.0f;
-				immediate->st[0] += -YAW_TO_FLOAT(this->tinyGL->viewYaw);
+				immediate->st[0] += -YAW_TO_FLOAT(this->viewYaw);
 
 				immediate++;
 				verts++;
@@ -747,8 +747,8 @@ bool gles::DrawWorldSpaceSpriteLine(TGLVert* vert1, TGLVert* vert2, TGLVert* ver
 		}
 
 		for (int i = 0; i < 4; i++) {
-			verts[i].s = (verts[i].s * 176) / this->tinyGL->sWidth;
-			verts[i].t = (verts[i].t * 176) / this->tinyGL->tHeight;
+			verts[i].s = (verts[i].s * 176) / this->spriteSWidth;
+			verts[i].t = (verts[i].t * 176) / this->spriteTHeight;
 		}
 
 		return this->DrawModelVerts(std::span(verts, 4));

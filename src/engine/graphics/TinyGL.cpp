@@ -148,13 +148,20 @@ void TinyGL::setView(int viewX, int viewY, int viewZ, int viewYaw, int viewPitch
 	this->viewZ = viewZ;
 	this->viewPitch = viewPitch & 0x3ff;
 	this->viewYaw = viewYaw & 0x3ff;
+	// Mirror viewYaw onto gles (used by RasterizeConvexPolygon's sky path
+	// for UV scrolling). Single-writer decoupling toward dropping the gles
+	// → tinyGL pointer.
+	app->render->_gles->viewYaw = this->viewYaw;
 
 	this->buildViewMatrix(viewX, viewY, viewZ, this->viewYaw, this->viewPitch, viewRoll, this->view);
 	this->buildViewMatrix(viewX, viewY, 0, this->viewYaw, 0, 0, this->view2D);
 	this->buildProjectionMatrix(viewFov, viewAspect, this->projection);
 	this->multMatrix(this->view, this->projection, this->mvp);
 
-	app->render->_gles->BeginFrame(this->viewportX, this->viewportY, this->viewportWidth, this->viewportHeight, this->view, this->projection);
+	app->render->_gles->BeginFrame(this->viewportX, this->viewportY,
+	                                this->viewportWidth, this->viewportHeight,
+	                                this->view, this->projection,
+	                                this->fogColor, this->fogMin, this->fogRange);
 
 	if (this->viewPitch > 512) {
 		this->viewPitch -= 1024;

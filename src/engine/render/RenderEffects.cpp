@@ -136,6 +136,10 @@ void Render::setupTexture(int n, int n2, int renderMode, int renderFlags) {
 	}
 	app->tinyGL->sWidth = 1 << n6;
 	app->tinyGL->tHeight = 1 << n5;
+	// Mirror sprite-tile dimensions onto gles for DrawWorldSpaceSpriteLine
+	// UV scaling (single-writer decoupling toward dropping gles → tinyGL).
+	this->_gles->spriteSWidth = app->tinyGL->sWidth;
+	this->_gles->spriteTHeight = app->tinyGL->tHeight;
 }
 
 void Render::unlinkSprite(int n) {

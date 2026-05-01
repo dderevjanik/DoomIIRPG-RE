@@ -9,8 +9,6 @@ class Applet;
 
 class TinyGL
 {
-private:
-
 public:
     Applet* app = nullptr;  // Set in startup(), replaces CAppContainer::getInstance()->app
 
@@ -65,10 +63,6 @@ public:
 	~TinyGL();
 
 	bool startup(int screenWidth, int screenHeight);
-    void buildViewMatrix(int x, int y, int z, int yaw, int pitch, int roll, int* matrix);
-    void buildProjectionMatrix(int fov, int aspect, int* matrix);
-    void multMatrix(int* matrix1, int* matrix2, int* destMtx);
-    void _setViewport(int viewportX, int viewportY, int viewportWidth, int viewportHeight);
     void setViewport(int x, int y, int w, int h);
     void resetViewPort();
     void setView(int viewX, int viewY, int viewZ, int viewYaw, int viewPitch, int viewRoll, int viewFov, int viewAspect);
@@ -77,11 +71,20 @@ public:
     TGLVert* transform3DVerts(TGLVert* array, int n);
     TGLVert* transform2DVerts(TGLVert* array, int n);
     void ClipQuad(TGLVert* tglVert, TGLVert* tglVert2, TGLVert* tglVert3, TGLVert* tglVert4);
-    void ClipPolygon(int i, int n);
     bool clipLine(TGLVert* array);
     void projectVerts(TGLVert* array, int n);
-    void RasterizeConvexPolygon(int n);
     bool clippedLineVisCheck(TGLVert* tglVert, TGLVert* tglVert2, bool b);
     bool occludeClippedLine(TGLVert* tglVert, TGLVert* tglVert2);
     void resetCounters();
+
+private:
+    // Internal helpers — used only inside TinyGL.cpp (matrix construction
+    // for setView, viewport math, polygon rasterization tail, polygon clip
+    // worker called from ClipQuad).
+    void buildViewMatrix(int x, int y, int z, int yaw, int pitch, int roll, int* matrix);
+    void buildProjectionMatrix(int fov, int aspect, int* matrix);
+    void multMatrix(int* matrix1, int* matrix2, int* destMtx);
+    void _setViewport(int viewportX, int viewportY, int viewportWidth, int viewportHeight);
+    void ClipPolygon(int i, int n);
+    void RasterizeConvexPolygon(int n);
 };

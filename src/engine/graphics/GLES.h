@@ -7,7 +7,6 @@ using PFNGLACTIVETEXTUREPROC = void (APIENTRYP)(GLenum texture);
 using PFNGLCLIENTACTIVETEXTUREPROC = void (APIENTRYP)(GLenum texture);
 
 class Render;
-class TinyGL;
 class TGLVert;
 
 struct glChain {
@@ -47,7 +46,6 @@ public:
 
 private:
 	Render* render = nullptr;
-	TinyGL* tinyGL = nullptr;
 	int activeTexels = 0;
 	Vertex immediate[MAX_GLVERTS] = {};
 	uint16_t quad_indexes[42] = {};
@@ -96,6 +94,15 @@ public:
 	// we get an untextured colored draw without needing a separate shader.
 	GLuint whiteTex = 0;
 
+	// Mirrors of TinyGL state that gles draw paths consume. Single-writer
+	// each (TinyGL::setView for viewYaw, Render::setupTexture for the
+	// sprite-size pair); writers update gles directly so the gles → tinyGL
+	// pointer can eventually go away. fog values remain on tinyGL for now
+	// (many writers, scheduled for a future slice).
+	int viewYaw = 0;
+	int spriteSWidth = 0;
+	int spriteTHeight = 0;
+
 	// Per-mesh state captured by SetupTexture(). The shader path reads these
 	// instead of glGetFloatv(GL_CURRENT_COLOR), since (a) it's faster than a
 	// pipeline stall and (b) some renderMode branches (e.g. RENDER_NONE) leave
@@ -133,7 +140,8 @@ public:
 	                   float r, float g, float b, float a);
 	bool ClearBuffer(int color);
 	void SetGLState();
-	void BeginFrame(int x, int y, int w, int h, int* mtxView, int* mtxProjection);
+	void BeginFrame(int x, int y, int w, int h, int* mtxView, int* mtxProjection,
+	                int fogColorPacked, int fogMin, int fogRange);
 	void ResetGLState();
 	void CreateFadeTexture(int mediaID);
 	void CreateAllActiveTextures();
