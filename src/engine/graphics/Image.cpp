@@ -7,6 +7,7 @@
 
 #include <stdexcept>
 #include <cstdlib>
+#include <cmath>
 
 #include "CAppContainer.h"
 #include "App.h"
@@ -26,6 +27,94 @@ static void mat4Mul(float dst[16], const float a[16], const float b[16]) {
 			              + a[3 * 4 + r] * b[c * 4 + 3];
 		}
 	}
+}
+
+// Build the 2D modelview matrix that the legacy fixed-function path used to
+// produce via glLoadIdentity / glTranslatef / glRotatef / glScalef. Replaces
+// the matrix-stack readback and lets us delete the GL_PROJECTION/GL_MODELVIEW
+// matrix-mode plumbing entirely (B2.9). Column-major to match GL convention.
+//
+// rotateMode mirrors Image::DrawTexture's switch:
+//   0=identity, 1=90°, 2=180°, 3=270°, 4=flipX, 5..7=rot+flipX, 8=flipY.
+static void buildModelView2D(float out[16], float tx, float ty, int rotateMode) {
+	// Decompose the cases into (rotation degrees, mirror-x flag, mirror-y flag).
+	int rotDeg = 0;
+	bool mirrorX = false;
+	bool mirrorY = false;
+	switch (rotateMode) {
+	case 1: rotDeg = 90;  break;
+	case 2: rotDeg = 180; break;
+	case 3: rotDeg = 270; break;
+	case 4: mirrorX = true; break;
+	case 5: rotDeg = 90;  mirrorX = true; break;
+	case 6: rotDeg = 180; mirrorX = true; break;
+	case 7: rotDeg = 270; mirrorX = true; break;
+	case 8: mirrorY = true; break;
+	default: break;
+	}
+
+	// translate(tx, ty, 0) — column-major
+	float t[16] = {
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0,
+		tx, ty, 0, 1,
+	};
+
+	// Rotation around Z by rotDeg degrees, exact integer values for sin/cos.
+	float c, s;
+	switch (rotDeg) {
+	case 0:   c = 1;  s = 0;  break;
+	case 90:  c = 0;  s = 1;  break;
+	case 180: c = -1; s = 0;  break;
+	case 270: c = 0;  s = -1; break;
+	default:  c = 1;  s = 0;  break;
+	}
+	float r[16] = {
+		 c,  s, 0, 0,
+		-s,  c, 0, 0,
+		 0,  0, 1, 0,
+		 0,  0, 0, 1,
+	};
+
+	// Combined scale for mirror flags. Both mirrors never apply simultaneously
+	// in the original switch, but the matrix handles them independently.
+	float sx = mirrorX ? -1.0f : 1.0f;
+	float sy = mirrorY ? -1.0f : 1.0f;
+	float sm[16] = {
+		sx, 0, 0, 0,
+		0, sy, 0, 0,
+		0,  0, 1, 0,
+		0,  0, 0, 1,
+	};
+
+	// out = t * r * sm   (translate first, then rotate, then mirror — matching
+	// glTranslatef -> glRotatef -> glScalef order with column-major math).
+	float tr[16];
+	mat4Mul(tr, t, r);
+	mat4Mul(out, tr, sm);
+}
+
+// Same as above but rotate by an arbitrary angle (used by DrawTextureAlpha
+// rotated mode and DrawPortalTexture). angleDeg in degrees.
+static void buildModelView2DAngle(float out[16], float tx, float ty, float angleDeg) {
+	const float pi = 3.14159265358979323846f;
+	float a = angleDeg * pi / 180.0f;
+	float c = std::cos(a);
+	float s = std::sin(a);
+	float t[16] = {
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0,
+		tx, ty, 0, 1,
+	};
+	float r[16] = {
+		 c,  s, 0, 0,
+		-s,  c, 0, 0,
+		 0,  0, 1, 0,
+		 0,  0, 0, 1,
+	};
+	mat4Mul(out, t, r);
 }
 
 Image::Image() {
@@ -139,53 +228,18 @@ void Image::DrawTexture(int texX, int texY, int texW, int texH, int posX, int po
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-    glTranslatef(scaleW + (float)(scaleX), scaleH + (float)(scaleY), 0.0);
-    switch (rotateMode)
-    {
-    case 1:
-        glRotatef(90.0f, 0.0f, 0.0f, 1.0f);
-        break;
-    case 2:
-        glRotatef(180.0f, 0.0f, 0.0f, 1.0f);
-        break;
-    case 3:
-        glRotatef(270.0f, 0.0f, 0.0f, 1.0f);
-        break;
-    case 4:
-        glScalef(-1.0f, 1.0f, 1.0f);
-        break;
-    case 5:
-        glRotatef(90.0f, 0.0f, 0.0f, 1.0f);
-        glScalef(-1.0f, 1.0f, 1.0f);
-        break;
-    case 6:
-        glRotatef(180.0f, 0.0f, 0.0f, 1.0f);
-        glScalef(-1.0f, 1.0f, 1.0f);
-        break;
-    case 7:
-        glRotatef(270.0f, 0.0f, 0.0f, 1.0f);
-        glScalef(-1.0f, 1.0f, 1.0f);
-        break;
 
-    case 8: // New
-        glScalef(1.0f, -1.0f, 1.0f);
-        break;
-    default:
-        break;
-    }
-
-    // The matrix stack is still set up via glPushMatrix/glLoadIdentity/etc
-    // above; we read it back via glGetFloatv into u_mvp. The modulator color
-    // comes from this->modColor (set by setRenderMode); reading back via
-    // glGetFloatv(GL_CURRENT_COLOR) is unsafe because REPLACE-mode branches
-    // don't touch glColor and we'd inherit stale state from previous draws.
-    float proj[16], mv[16], mvp[16];
-    glGetFloatv(GL_PROJECTION_MATRIX, proj);
-    glGetFloatv(GL_MODELVIEW_MATRIX, mv);
-    mat4Mul(mvp, proj, mv);
+    // Compose the MVP explicitly. Previously this was done via glPushMatrix /
+    // glLoadIdentity / glTranslatef / glRotatef / glScalef and read back with
+    // glGetFloatv — kept the legacy matrix mode functional. With B2.9 the
+    // shader path computes its own matrix from the gles projection member,
+    // and the GL_PROJECTION/GL_MODELVIEW state is no longer consulted.
+    float mv[16];
+    buildModelView2D(mv, scaleW + (float)scaleX, scaleH + (float)scaleY, rotateMode);
+    float mvp[16];
+    // ortho2D is the permanent 2D screen-space projection; projectionMatrix
+    // would be the 3D camera (overwritten by BeginFrame on every world render).
+    mat4Mul(mvp, _glesObj->ortho2D, mv);
 
     const float* color = this->modColor;
 
@@ -218,7 +272,6 @@ void Image::DrawTexture(int texX, int texY, int texW, int texH, int posX, int po
     if (aPos >= 0) glDisableVertexAttribArray(aPos);
     if (aUv >= 0)  glDisableVertexAttribArray(aUv);
     Shader::useNone();
-    glPopMatrix();
 }
 
 void Image::DrawTextureAlpha(int posX, int posY, float alpha, bool rotated, bool flipUV) {
@@ -268,24 +321,24 @@ void Image::DrawTextureAlpha(int posX, int posY, float alpha, bool rotated, bool
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-    if (rotated) {
-        glTranslatef((float)(hh + (float)posX) + (240.0f - hh), hw + (float)posY, 0.0f);
-        glRotatef(-90.0f, 0.0f, 0.0f, 1.0f);
-    } else {
-        glTranslatef(hw + (float)posX, hh + (float)posY, 0.0f);
-    }
 
-    // Shader path for fade-overlay quads. The matrix stack is still set up by
-    // glPushMatrix/glTranslatef above; we read the result via glGetFloatv.
-    // u_color is built directly from `alpha` (the only modulator this path
-    // takes) instead of going through GL_CURRENT_COLOR.
-    float proj[16], mv[16], mvp[16];
-    glGetFloatv(GL_PROJECTION_MATRIX, proj);
-    glGetFloatv(GL_MODELVIEW_MATRIX, mv);
-    mat4Mul(mvp, proj, mv);
+    // Compose modelview explicitly. `rotated` mode rotates -90° around Z and
+    // shifts to compose against the rotated basis; non-rotated is just a
+    // translate. Replaces the legacy glPushMatrix / glTranslatef / glRotatef
+    // chain plus GL_MODELVIEW_MATRIX readback.
+    float mv[16];
+    if (rotated) {
+        buildModelView2DAngle(mv,
+                              (float)(hh + (float)posX) + (240.0f - hh),
+                              hw + (float)posY,
+                              -90.0f);
+    } else {
+        buildModelView2D(mv, hw + (float)posX, hh + (float)posY, 0);
+    }
+    float mvp[16];
+    // ortho2D is the permanent 2D screen-space projection; projectionMatrix
+    // would be the 3D camera (overwritten by BeginFrame on every world render).
+    mat4Mul(mvp, _glesObj->ortho2D, mv);
 
     const float color[4] = {1.0f, 1.0f, 1.0f, alpha};
 
@@ -315,7 +368,6 @@ void Image::DrawTextureAlpha(int posX, int posY, float alpha, bool rotated, bool
     if (aPos >= 0) glDisableVertexAttribArray(aPos);
     if (aUv >= 0)  glDisableVertexAttribArray(aUv);
     Shader::useNone();
-    glPopMatrix();
 }
 
 void Image::setRenderMode(int renderMode) {

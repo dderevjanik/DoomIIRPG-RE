@@ -54,8 +54,6 @@ private:
 	glChain chains[MAX_MEDIA] = {};
 	glChain activeChain = {};
 	float fogScale = 0.0f;
-	float modelViewMatrix[MAX_GLVERTS] = {};
-	float projectionMatrix[MAX_GLVERTS] = {};
 	int vPortRect[4] = {};
 	int fogMode = 0;
 	int renderMode = 0;
@@ -74,6 +72,23 @@ public:
 	Shader textureShader;
 	Shader worldShader;
 	bool isShaderReady = false;
+
+	// View / projection captured by BeginFrame from the legacy TinyGL Q-format
+	// matrices. Read by every shader path to feed u_mvp / u_mv. Public so that
+	// 2D draw helpers (Image::DrawTexture, DrawPortalTexture) can compose
+	// their own modelview against this->projectionMatrix without going
+	// through the fixed-function GL_PROJECTION matrix slot.
+	float modelViewMatrix[16] = {};
+	float projectionMatrix[16] = {};
+
+	// Permanent 2D ortho (0,IOS_WIDTH,IOS_HEIGHT,0,-1,1), computed once at
+	// GLInit. Used by HUD/menu/loading/logo draws (Image::DrawTexture,
+	// DrawTextureAlpha, DrawPortalTexture) so they don't depend on whether
+	// BeginFrame has run — the legacy code achieved the same effect through
+	// glOrtho writing into GL_PROJECTION, but ordering between BeginFrame
+	// (which loaded the 3D camera) and ResetGLState (which switched back to
+	// ortho) made HUD draws fragile across game-state transitions.
+	float ortho2D[16] = {};
 
 	// Per-mesh state captured by SetupTexture(). The shader path reads these
 	// instead of glGetFloatv(GL_CURRENT_COLOR), since (a) it's faster than a
@@ -97,6 +112,11 @@ public:
 	void WindowInit();
 	void SwapBuffers();
 	void GLInit(Render* render);
+	// Populate this->projectionMatrix with a 2D ortho (0,W,H,0,-1,1) and
+	// modelview with identity. Used after every 3D scene render and at
+	// startup so 2D HUD / menu / loading-screen draws (Image::DrawTexture
+	// and friends) have a sane projection on their first call.
+	void set2DProjection();
 	bool ClearBuffer(int color);
 	void SetGLState();
 	void BeginFrame(int x, int y, int w, int h, int* mtxView, int* mtxProjection);

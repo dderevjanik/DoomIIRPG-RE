@@ -143,8 +143,9 @@ void Render::renderPortal() {
 		this->imgPortal = app->loadImage("portal_image.bmp", true);
 	}
 
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	glColor4f(1.0f, 1.0f, 1.0f, 0.25f);
+	// Blend state for the portal effect. Color is hardcoded inside
+	// DrawPortalTexture (only consumer of this state); the legacy
+	// glColor4f(1,1,1,0.25) and glTexEnvi(MODULATE) calls are gone.
 	glDisable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.0f);
 	glEnable(GL_BLEND);

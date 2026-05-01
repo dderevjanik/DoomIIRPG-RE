@@ -313,29 +313,20 @@ void MayaCamera::Render() {
     if (!this->app) this->app = CAppContainer::getInstance()->app;
     Applet* app = this->app;
 
-    // [debug] Log scripted-camera state once per ~250ms while a cinematic plays so we can
-    // verify whether the position/yaw is moving in the intended direction.
-    {
-        static int s_lastLogMs = 0;
-        const int now = app->gameTime;
-        if (now - s_lastLogMs >= 250) {
-            s_lastLogMs = now;
-            LOG_INFO("[mayacam] key={} t={} pos=({},{},{}) yaw={} pitch={} roll={} agg=({},{},{},{},{},{})\n",
-                     app->game->activeCameraKey,
-                     now - app->game->activeCameraTime,
-                     this->x, this->y, this->z,
-                     this->yaw, this->pitch, this->roll,
-                     (int)this->aggComponents[0], (int)this->aggComponents[1], (int)this->aggComponents[2],
-                     (int)this->aggComponents[3], (int)this->aggComponents[4], (int)this->aggComponents[5]);
-        }
-    }
-
+    // Render::render applies a 160-unit "pull back along view direction" nudge so the
+    // 3rd-person player avatar is visible in front of the camera. Cinematic Maya keys
+    // already specify the exact intended camera position, so the nudge double-applies
+    // a backward translation and makes scripted dollies appear to move away from their
+    // target. Skip it here and restore for the next non-cinematic render.
+    const bool savedSkipNudge = app->render->skipViewNudge;
+    app->render->skipViewNudge = true;
     if (app->canvas->state == Canvas::ST_DIALOG) {
         app->render->render(this->x, this->y, this->z, this->yaw, this->pitch, this->roll, 290);
     }
     else {
         app->render->render(this->x, this->y, this->z, this->yaw, this->pitch, this->roll, 315);
     }
+    app->render->skipViewNudge = savedSkipNudge;
     app->render->renderPortal();
     if (app->game->cinematicWeapon != -1) {
         app->combat->drawWeapon(0, 0);

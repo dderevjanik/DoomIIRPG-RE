@@ -7,6 +7,7 @@
 
 #include <span>
 #include <cstdlib>
+#include <cmath>
 #include <stdexcept>
 #include <assert.h>
 #include "Log.h"
@@ -164,6 +165,13 @@ void gles::GLInit(Render* render) {
 	}
 
 	this->fogScale = FOG_SCALE(8000);
+
+	// Seed the projection matrix with a 2D ortho so the very first 2D draw
+	// (LOGO screen, loading bar before any 3D render) has a sane projection.
+	// BeginFrame overwrites this with the 3D camera; ResetGLState restores
+	// it to the 2D ortho after each world render.
+	this->set2DProjection();
+
 	std::memset(this->chains, 0, sizeof(this->chains));
 	this->activeChain.prev = &this->activeChain;
 	this->activeChain.next = &this->activeChain;
@@ -196,14 +204,6 @@ void gles::SetGLState() {
 	        this->vPortRect[0], this->vPortRect[1], this->vPortRect[2], this->vPortRect[3]);
 	glViewport(this->vPortRect[0], this->vPortRect[1], this->vPortRect[2], this->vPortRect[3]);
 	glScissor(this->vPortRect[0], this->vPortRect[1], this->vPortRect[2], this->vPortRect[3]);
-	// Image::DrawTexture / DrawTextureAlpha / DrawPortalTexture still use the
-	// fixed-function matrix stack to compose their final MVP (read back via
-	// glGetFloatv into u_mvp), so the legacy projection/modelview slots have
-	// to stay populated even though the shader pipeline ignores them.
-	glMatrixMode(GL_MODELVIEW);
-	glLoadMatrixf(this->modelViewMatrix);
-	glMatrixMode(GL_PROJECTION);
-	glLoadMatrixf(this->projectionMatrix);
 	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_STENCIL_TEST);
@@ -316,6 +316,22 @@ void gles::BeginFrame(int x, int y, int w, int h, int* mtxView, int* mtxProjecti
 	this->SetGLState();
 }
 
+void gles::set2DProjection() {
+	// Compute the permanent 2D ortho (0, IOS_WIDTH, IOS_HEIGHT, 0, -1, 1) in
+	// column-major form, with origin top-left to match the engine's screen-
+	// space conventions. Stored in ortho2D so it survives BeginFrame
+	// overwriting projectionMatrix with the 3D camera.
+	const float W = (float)Applet::IOS_WIDTH;
+	const float H = (float)Applet::IOS_HEIGHT;
+	float ortho[16] = {
+		2.0f / W,   0,         0,  0,
+		0,         -2.0f / H,  0,  0,
+		0,          0,        -1,  0,
+		-1,         1,         0,  1,
+	};
+	for (int i = 0; i < 16; i++) this->ortho2D[i] = ortho[i];
+}
+
 void gles::ResetGLState() {
 	if (this->headless) { return; }
 	SDLGL* sdlGL = this->sdlGL;
@@ -324,20 +340,9 @@ void gles::ResetGLState() {
 	sdlGL->getContentRect(&cx, &cy, &cw, &ch);
 
 	this->renderMode = -1;
-	glDisable(GL_FOG);
 	glDisable(GL_BLEND);
 	glViewport(cx, cy, cw, ch);
 	glScissor(cx, cy, cw, ch);
-	//glViewport(0, 0, 320, 480);
-	//glScissor(0, 0, 320, 480);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0.0, (GLfloat)Applet::IOS_WIDTH, (GLfloat)Applet::IOS_HEIGHT, 0.0, -1.0, 1.0);
-	//glOrthof(0.0, 320.0, 480.0, 0.0, -1.0, 1.0);
-	//glRotatef(90.0, 0.0, 0.0, 1.0);
-	//glTranslatef(0.0, -320.0, 0.0);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
 	glDisable(GL_CULL_FACE);
 }
 
@@ -1610,22 +1615,36 @@ void gles::DrawPortalTexture(Image* img, int x, int y, int w, int h, float tx, f
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glLoadIdentity();
-	glTranslatef(scaleW + tx, scaleH + ty, 0.0);
-	glRotatef(angle, 0.0, 0.0, 1.0);
 
-	// RenderPortal sets glColor4f(1,1,1,0.25) before calling us — read it back
-	// from GL_CURRENT_COLOR (safe here because the caller always sets it
-	// explicitly, unlike Image::DrawTexture's REPLACE modes).
-	float proj[16], mv[16], mvp[16];
-	glGetFloatv(GL_PROJECTION_MATRIX, proj);
-	glGetFloatv(GL_MODELVIEW_MATRIX, mv);
-	mat4MulGles(mvp, proj, mv);
+	// Compose modelview explicitly: translate(scaleW + tx, scaleH + ty, 0) *
+	// rotateZ(angle). Replaces the legacy glPushMatrix/glLoadIdentity/
+	// glTranslatef/glRotatef chain. The caller (RenderPortal.cpp) used to also
+	// set glColor4f(1,1,1,0.25) — we hardcode that here since the portal
+	// effect is the only consumer and always wants the same translucent tint.
+	const float pi = 3.14159265358979323846f;
+	float a = angle * pi / 180.0f;
+	float cs = std::cos(a), sn = std::sin(a);
+	float t[16] = {
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0,
+		scaleW + tx, scaleH + ty, 0, 1,
+	};
+	float r[16] = {
+		 cs,  sn, 0, 0,
+		-sn,  cs, 0, 0,
+		 0,   0,  1, 0,
+		 0,   0,  0, 1,
+	};
+	float mv[16];
+	mat4MulGles(mv, t, r);
+	float mvp[16];
+	// ortho2D, not projectionMatrix — the portal effect is a 2D screen-space
+	// overlay so it must use the permanent ortho regardless of whether the
+	// 3D camera was set up this frame.
+	mat4MulGles(mvp, this->ortho2D, mv);
 
-	float color[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-	glGetFloatv(GL_CURRENT_COLOR, color);
+	const float color[4] = {1.0f, 1.0f, 1.0f, 0.25f};
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -1653,7 +1672,6 @@ void gles::DrawPortalTexture(Image* img, int x, int y, int w, int h, float tx, f
 	if (aPos >= 0) glDisableVertexAttribArray(aPos);
 	if (aUv >= 0)  glDisableVertexAttribArray(aUv);
 	Shader::useNone();
-	glPopMatrix();
 }
 
 
