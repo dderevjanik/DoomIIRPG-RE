@@ -70,7 +70,6 @@ public:
     void drawModelVerts(TGLVert* array, int n);
     TGLVert* transform3DVerts(TGLVert* array, int n);
     TGLVert* transform2DVerts(TGLVert* array, int n);
-    void ClipQuad(TGLVert* tglVert, TGLVert* tglVert2, TGLVert* tglVert3, TGLVert* tglVert4);
     bool clipLine(TGLVert* array);
     void projectVerts(TGLVert* array, int n);
     bool clippedLineVisCheck(TGLVert* tglVert, TGLVert* tglVert2, bool b);
@@ -85,6 +84,4 @@ private:
     void buildProjectionMatrix(int fov, int aspect, int* matrix);
     void multMatrix(int* matrix1, int* matrix2, int* destMtx);
     void _setViewport(int viewportX, int viewportY, int viewportWidth, int viewportHeight);
-    void ClipPolygon(int i, int n);
-    void RasterizeConvexPolygon(int n);
 };

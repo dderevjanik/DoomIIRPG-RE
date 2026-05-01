@@ -169,11 +169,14 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 			app->tinyGL->viewMtxMove(tglVert, 0, (n22 * 2 - 1) * n19, n21 * n20);
 		}
 
-		TGLVert* transform3DVerts = app->tinyGL->transform3DVerts(app->tinyGL->mv, n18);
 		if (0x0 != (flags & Enums::SPRITE_FLAG_TILE) || app->tinyGL->textureBaseSize == app->tinyGL->sWidth * app->tinyGL->tHeight) {
-			app->tinyGL->ClipQuad(&transform3DVerts[0], &transform3DVerts[1], &transform3DVerts[2],
-			                      &transform3DVerts[3]);
+			// B3.4: feed world-space verts straight to the GPU; worldShader's
+			// MVP handles projection and the hardware clipper handles partial
+			// frustum overlap. Replaces the legacy CPU path
+			// transform3DVerts → ClipQuad → RasterizeConvexPolygon.
+			this->_gles->DrawModelVerts(std::span(app->tinyGL->mv, n18));
 		} else {
+			TGLVert* transform3DVerts = app->tinyGL->transform3DVerts(app->tinyGL->mv, n18);
 			TGLVert* tglVert2 = &transform3DVerts[0];
 			if (tglVert2->w + tglVert2->z < 0) {
 				return;

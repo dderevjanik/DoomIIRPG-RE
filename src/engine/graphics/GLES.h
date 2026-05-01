@@ -145,7 +145,6 @@ public:
 	void ResetGLState();
 	void CreateFadeTexture(int mediaID);
 	void CreateAllActiveTextures();
-	bool RasterizeConvexPolygon(std::span<TGLVert> verts);
 	bool RasterizeConvexPolygon(std::span<GLVert> verts);
 	void UnloadSkyMap();
 	void ResetTextureChains();
