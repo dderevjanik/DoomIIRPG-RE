@@ -1,3 +1,10 @@
+// Expose GL 2.0+ extension prototypes (glUniform*, glVertexAttribPointer, …)
+// for the B2 programmable-pipeline migration. macOS's <OpenGL/gl.h> ships up
+// to GL 1.4 by default and gates the rest behind this macro.
+#ifndef GL_GLEXT_PROTOTYPES
+#define GL_GLEXT_PROTOTYPES
+#endif
+
 #include <span>
 #include <cstdlib>
 #include <stdexcept>
@@ -66,6 +73,60 @@ void main() {
 }
 )";
 
+// World-geometry shader: textured 3D quads with per-pixel GL_LINEAR fog.
+// Replaces fixed-function GL_FOG used by SetupTexture()/DrawModelVerts(). Eye
+// space depth is the negated z of (modelview * a_pos), matching the convention
+// classic GL_LINEAR fog uses. u_fogEnabled gates the mix() so non-fogged draws
+// (e.g. additive sprites, sky overlays) skip the math entirely.
+static const char* kWorldVS = R"(
+attribute vec4 a_pos;
+attribute vec2 a_uv;
+uniform mat4 u_mvp;
+uniform mat4 u_mv;
+varying vec2 v_uv;
+varying float v_eyeZ;
+void main() {
+    gl_Position = u_mvp * a_pos;
+    v_uv = a_uv;
+    v_eyeZ = -(u_mv * a_pos).z;
+}
+)";
+
+static const char* kWorldFS = R"(
+#ifdef GL_ES
+precision mediump float;
+#endif
+varying vec2 v_uv;
+varying float v_eyeZ;
+uniform sampler2D u_tex;
+uniform vec4 u_color;
+uniform vec4 u_fogColor;
+uniform float u_fogStart;
+uniform float u_fogEnd;
+uniform int u_fogEnabled;
+void main() {
+    vec4 c = texture2D(u_tex, v_uv) * u_color;
+    if (u_fogEnabled != 0) {
+        float f = clamp((u_fogEnd - v_eyeZ) / (u_fogEnd - u_fogStart), 0.0, 1.0);
+        c.rgb = mix(u_fogColor.rgb, c.rgb, f);
+    }
+    gl_FragColor = c;
+}
+)";
+
+// Multiply two column-major 4x4 matrices: dst = a * b. Used to combine the
+// fixed-function projection and modelview into a single u_mvp uniform.
+static void mat4MulGles(float dst[16], const float a[16], const float b[16]) {
+    for (int c = 0; c < 4; c++) {
+        for (int r = 0; r < 4; r++) {
+            dst[c * 4 + r] = a[0 * 4 + r] * b[c * 4 + 0]
+                          + a[1 * 4 + r] * b[c * 4 + 1]
+                          + a[2 * 4 + r] * b[c * 4 + 2]
+                          + a[3 * 4 + r] * b[c * 4 + 3];
+        }
+    }
+}
+
 void gles::GLInit(Render* render) {
 	this->app = CAppContainer::getInstance()->app;
 	this->headless = CAppContainer::getInstance()->headless;
@@ -76,12 +137,16 @@ void gles::GLInit(Render* render) {
 	this->tinyGL = this->app->tinyGL.get();
 	this->isInit = true;
 
-	// Compile the migration shader. Failure is non-fatal — the fixed-function
+	// Compile the migration shaders. Failure is non-fatal — the fixed-function
 	// path keeps working — but logs an error so the issue is visible.
+	// isShaderReady is the AND of all shader builds; any failure forces the
+	// whole engine back to the fixed-function path for consistency.
 	if (!this->headless) {
-		this->isShaderReady = this->textureShader.compile(kTextureVS, kTextureFS);
+		const bool tex = this->textureShader.compile(kTextureVS, kTextureFS);
+		const bool world = this->worldShader.compile(kWorldVS, kWorldFS);
+		this->isShaderReady = tex && world;
 		if (!this->isShaderReady) {
-			LOG_WARN("[gles] textureShader compile/link failed; staying on fixed-function path\n");
+			LOG_WARN("[gles] shader compile/link failed (texture={}, world={}); staying on fixed-function path\n", tex, world);
 		}
 	}
 
@@ -637,7 +702,54 @@ bool gles::DrawModelVerts(std::span<TGLVert> vertsSpan) {
 				verts++;
 			}
 
-			glDrawElements(GL_TRIANGLES, (numVerts * 3) - (2 * 3), GL_UNSIGNED_SHORT, this->quad_indexes);
+			const int indexCount = (numVerts * 3) - (2 * 3);
+
+			// B2.3: programmable-pipeline path for world geometry. We feed the
+			// same Vertex[MAX_GLVERTS] buffer through generic vertex attribs and
+			// run the worldShader (per-pixel linear fog). When isShaderReady is
+			// false, fall back to the fixed-function arrays set up by SetGLState.
+			if (this->isShaderReady) {
+				float mvp[16];
+				mat4MulGles(mvp, this->projectionMatrix, this->modelViewMatrix);
+
+				this->worldShader.use();
+				const GLint uMvp = this->worldShader.uniform("u_mvp");
+				const GLint uMv = this->worldShader.uniform("u_mv");
+				const GLint uTex = this->worldShader.uniform("u_tex");
+				const GLint uColor = this->worldShader.uniform("u_color");
+				const GLint uFogColor = this->worldShader.uniform("u_fogColor");
+				const GLint uFogStart = this->worldShader.uniform("u_fogStart");
+				const GLint uFogEnd = this->worldShader.uniform("u_fogEnd");
+				const GLint uFogEnabled = this->worldShader.uniform("u_fogEnabled");
+				const GLint aPos = this->worldShader.attribute("a_pos");
+				const GLint aUv = this->worldShader.attribute("a_uv");
+
+				if (uMvp >= 0) glUniformMatrix4fv(uMvp, 1, GL_FALSE, mvp);
+				if (uMv >= 0) glUniformMatrix4fv(uMv, 1, GL_FALSE, this->modelViewMatrix);
+				if (uTex >= 0) glUniform1i(uTex, 0);
+				if (uColor >= 0) glUniform4fv(uColor, 1, this->meshColor);
+				if (uFogColor >= 0) glUniform4fv(uFogColor, 1, this->meshFogColor);
+				if (uFogStart >= 0) glUniform1f(uFogStart, this->fogStart);
+				if (uFogEnd >= 0) glUniform1f(uFogEnd, this->fogEnd);
+				if (uFogEnabled >= 0) glUniform1i(uFogEnabled, this->meshFogEnabled ? 1 : 0);
+
+				if (aPos >= 0) {
+					glEnableVertexAttribArray(aPos);
+					glVertexAttribPointer(aPos, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+					                      reinterpret_cast<const void*>(this->immediate));
+				}
+				if (aUv >= 0) {
+					glEnableVertexAttribArray(aUv);
+					glVertexAttribPointer(aUv, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+					                      reinterpret_cast<const void*>(this->immediate[0].st));
+				}
+				glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_SHORT, this->quad_indexes);
+				if (aPos >= 0) glDisableVertexAttribArray(aPos);
+				if (aUv >= 0) glDisableVertexAttribArray(aUv);
+				Shader::useNone();
+			} else {
+				glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_SHORT, this->quad_indexes);
+			}
 
 			return (this->isInit);
 		}
@@ -825,6 +937,15 @@ void gles::SetupTexture(int n, int n2, int renderMode, int flags) {
 				this->TexCombineShift(0, 0, 64);
 			}
 		}
+
+		// Capture the post-state into member fields so DrawModelVerts() (shader
+		// path, B2.3) can reproduce the look without round-tripping through
+		// glGetFloatv. The fog color is fogBlack when fogMode==1 (additive
+		// "darken"), the level fogColor otherwise.
+		glGetFloatv(GL_CURRENT_COLOR, this->meshColor);
+		this->meshFogEnabled = (this->fogMode != 0);
+		const float* fc = (this->fogMode == 1) ? this->fogBlack : this->fogColor;
+		for (int i = 0; i < 4; i++) this->meshFogColor[i] = fc[i];
 	}
 }
 

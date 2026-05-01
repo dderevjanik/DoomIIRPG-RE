@@ -65,12 +65,24 @@ private:
 	float fogColor[4] = {};
 	float fogBlack[4] = {};
 public:
-	// Programmable-pipeline migration (B2). Once compiled and validated, this
-	// shader will replace the fixed-function calls (glMatrixMode, glColor4f,
+	// Programmable-pipeline migration (B2). Once compiled and validated, these
+	// shaders replace the fixed-function calls (glMatrixMode, glColor4f,
 	// glFog*, glTexEnvi, glVertexPointer) one mesh category at a time. While
 	// migrating, isShaderReady gates which path each draw uses.
+	//   textureShader — flat 2D textured quads (HUD/menus/sprites). B2.2.
+	//   worldShader   — perspective 3D with per-pixel linear fog.        B2.3+
 	Shader textureShader;
+	Shader worldShader;
 	bool isShaderReady = false;
+
+	// Per-mesh state captured by SetupTexture(). The shader path reads these
+	// instead of glGetFloatv(GL_CURRENT_COLOR), since (a) it's faster than a
+	// pipeline stall and (b) some renderMode branches (e.g. RENDER_NONE) leave
+	// glColor untouched, so we can't trust the GL state to reflect the current
+	// SetupTexture call.
+	float meshColor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+	float meshFogColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+	bool meshFogEnabled = false;
 
 	// Constructor
 	gles();
