@@ -211,7 +211,6 @@ void DevConsole::drawRenderStats() {
 	if (!app) return;
 
 	Render* render = app->render.get();
-	TinyGL* tinyGL = app->tinyGL.get();
 	if (!render) return;
 
 	ImGui::SetNextWindowSize(ImVec2(280, 240), ImGuiCond_FirstUseEver);
@@ -224,11 +223,6 @@ void DevConsole::drawRenderStats() {
 		ImGui::Text("BSP Nodes:  %d", render->nodeCount);
 		ImGui::Text("Sprites:    %d rendered / %d total", render->spriteRasterCount, render->spriteCount);
 		ImGui::Text("Lines:      %d rendered / %d total", render->lineRasterCount, render->lineCount);
-		if (tinyGL) {
-			ImGui::Text("Quads:      %d total (%d clipped)",
-				tinyGL->c_totalQuad, tinyGL->c_clippedQuad);
-			ImGui::Text("Drawn:      %d polys, %d span px", tinyGL->countDrawn, tinyGL->spanPixels);
-		}
 	}
 
 	if (ImGui::CollapsingHeader("Sprites")) {

@@ -36,8 +36,6 @@ public:
     int fogMin = 0;
     int fogRange = 0;
     int fogColor = 0;
-    int countDrawn = 0;
-    int spanPixels = 0;
     int viewportX = 0;
     int viewportY = 0;
     int viewportWidth = 0;
@@ -54,8 +52,6 @@ public:
     int viewZ = 0;
     int viewYaw = 0;
     int viewPitch = 0;
-    int c_totalQuad = 0;
-    int c_clippedQuad = 0;
 
 	// Constructor
 	TinyGL();
@@ -74,7 +70,6 @@ public:
     void projectVerts(TGLVert* array, int n);
     bool clippedLineVisCheck(TGLVert* tglVert, TGLVert* tglVert2, bool b);
     bool occludeClippedLine(TGLVert* tglVert, TGLVert* tglVert2);
-    void resetCounters();
 
 private:
     // Internal helpers — used only inside TinyGL.cpp (matrix construction

@@ -1171,7 +1171,6 @@ void Render::renderBSP() {
 	}
 
 	this->bspTime = app->upTimeMs - this->bspTime;
-	app->tinyGL->resetCounters();
 	for (int i = this->numVisibleNodes - 1; i >= 0; --i) {
 		this->drawNodeGeometry(this->nodeIdxs[i]);
 		this->viewSprites = -1;

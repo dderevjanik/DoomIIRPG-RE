@@ -638,21 +638,9 @@ void Canvas::backPaint(Graphics* graphics) {
 			largeBuffer2->append(app->render->numMapSprites);
 			graphics->drawString(largeBuffer2, this->viewRect[0], n3, 0);
 			n3 += Applet::FONT_HEIGHT[app->fontType];
-			if (app->render->renderMode == 63) {
-				// span/triangle counters were tied to the software rasterizer;
-				// dropped along with it in B1.3 (countBackFace/spanCalls always
-				// read zero post-deletion, so the display was meaningless).
-				largeBuffer2->setLength(0);
-				largeBuffer2->append("tris drawn: ");
-				largeBuffer2->append(app->tinyGL->countDrawn);
-				graphics->drawString(largeBuffer2, this->viewRect[0], n3, 0);
-				n3 += Applet::FONT_HEIGHT[app->fontType];
-				largeBuffer2->setLength(0);
-				largeBuffer2->append("span px: ");
-				largeBuffer2->append(app->tinyGL->spanPixels);
-				graphics->drawString(largeBuffer2, this->viewRect[0], n3, 0);
-				n3 += Applet::FONT_HEIGHT[app->fontType];
-			}
+			// Per-frame triangle / span counters were tied to the deleted
+			// software rasterizer (B1) and clipper (B3.4); the benchmark
+			// display had nothing meaningful left to show, so removed.
 			largeBuffer2->setLength(0);
 			largeBuffer2->append("OSTime: ");
 			int totalOsTime = 0;
