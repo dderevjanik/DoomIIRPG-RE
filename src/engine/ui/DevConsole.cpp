@@ -1,7 +1,7 @@
 #include "DevConsole.h"
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
-#include "imgui_impl_opengl2.h"
+#include "imgui_impl_opengl3.h"
 #include <SDL.h>
 
 #include "CAppContainer.h"
@@ -45,14 +45,18 @@ void DevConsole::init(SDL_Window* window, void* glContext) {
 	style.WindowRounding = 4.0f;
 
 	ImGui_ImplSDL2_InitForOpenGL(window, glContext);
-	ImGui_ImplOpenGL2_Init();
+	// Match the rest of the engine's shader compatibility (B2 migration uses
+	// GLSL 1.10 / GLES 2.0 dialect). The OpenGL3 backend autodetects on
+	// nullptr, but pinning to 110 keeps us off the in/out path and works on
+	// macOS's GL 2.1 compat profile alongside our textureShader/worldShader.
+	ImGui_ImplOpenGL3_Init("#version 110");
 
 	initialized = true;
 }
 
 void DevConsole::shutdown() {
 	if (!initialized) return;
-	ImGui_ImplOpenGL2_Shutdown();
+	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplSDL2_Shutdown();
 	ImGui::DestroyContext();
 	initialized = false;
@@ -93,7 +97,7 @@ void DevConsole::newFrame() {
 	// dev-console itself is hidden. The `visible` flag only gates the
 	// dev-console's own panels inside render().
 	if (!initialized) return;
-	ImGui_ImplOpenGL2_NewFrame();
+	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplSDL2_NewFrame();
 	ImGui::NewFrame();
 }
@@ -136,7 +140,7 @@ void DevConsole::render() {
 
 	// Always flush whatever windows were submitted this frame (may be none).
 	ImGui::Render();
-	ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 void DevConsole::drawPerformance() {

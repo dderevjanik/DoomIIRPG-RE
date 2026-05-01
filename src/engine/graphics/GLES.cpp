@@ -493,6 +493,11 @@ bool gles::RasterizeConvexPolygon(std::span<TGLVert> vertsSpan) {
 			static constexpr float identity[16] = {
 				1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1,
 			};
+			// ImGui's OpenGL3 backend (B2.7) leaves a VBO/EBO bound after
+			// RenderDrawData; our client-side glVertexAttribPointer would
+			// otherwise be reinterpreted as an offset into that buffer.
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 			this->textureShader.use();
 			const GLint uMvp = this->textureShader.uniform("u_mvp");
 			const GLint uTex = this->textureShader.uniform("u_tex");
@@ -609,6 +614,11 @@ bool gles::RasterizeConvexPolygon(std::span<GLVert> vertsSpan) {
 			static constexpr float identity[16] = {
 				1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1,
 			};
+			// ImGui's OpenGL3 backend (B2.7) leaves a VBO/EBO bound after
+			// RenderDrawData; our client-side glVertexAttribPointer would
+			// otherwise be reinterpreted as an offset into that buffer.
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 			this->textureShader.use();
 			const GLint uMvp = this->textureShader.uniform("u_mvp");
 			const GLint uTex = this->textureShader.uniform("u_tex");
@@ -783,6 +793,10 @@ bool gles::DrawModelVerts(std::span<TGLVert> vertsSpan) {
 				float mvp[16];
 				mat4MulGles(mvp, this->projectionMatrix, this->modelViewMatrix);
 
+				// See note in RasterizeConvexPolygon: ensure no leftover
+				// ImGui VBO is bound when we feed client-side pointers.
+				glBindBuffer(GL_ARRAY_BUFFER, 0);
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 				this->worldShader.use();
 				const GLint uMvp = this->worldShader.uniform("u_mvp");
 				const GLint uMv = this->worldShader.uniform("u_mv");
@@ -1691,6 +1705,8 @@ void gles::DrawPortalTexture(Image* img, int x, int y, int w, int h, float tx, f
 		float color[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 		glGetFloatv(GL_CURRENT_COLOR, color);
 
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		this->textureShader.use();
 		const GLint uMvp = this->textureShader.uniform("u_mvp");
 		const GLint uColor = this->textureShader.uniform("u_color");

@@ -192,6 +192,11 @@ void Image::DrawTexture(int texX, int texY, int texW, int texH, int posX, int po
 
         const float* color = this->modColor;
 
+        // ImGui's OpenGL3 backend leaves VBOs bound after RenderDrawData;
+        // unbind so our client-side glVertexAttribPointer isn't reinterpreted
+        // as an offset into ImGui's buffer.
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         _glesObj->textureShader.use();
         const GLint uMvp = _glesObj->textureShader.uniform("u_mvp");
         const GLint uColor = _glesObj->textureShader.uniform("u_color");
@@ -298,6 +303,11 @@ void Image::DrawTextureAlpha(int posX, int posY, float alpha, bool rotated, bool
 
         const float color[4] = {1.0f, 1.0f, 1.0f, alpha};
 
+        // ImGui's OpenGL3 backend leaves VBOs bound after RenderDrawData;
+        // unbind so our client-side glVertexAttribPointer isn't reinterpreted
+        // as an offset into ImGui's buffer.
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         _glesObj->textureShader.use();
         const GLint uMvp = _glesObj->textureShader.uniform("u_mvp");
         const GLint uColor = _glesObj->textureShader.uniform("u_color");
