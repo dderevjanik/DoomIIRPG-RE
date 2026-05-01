@@ -1373,7 +1373,6 @@ entities:
       long_name: 60
       description: 159
     rendering:
-      gun_flare: true
       fear_eyes:
         eye_l: -2
         eye_r: 5
@@ -1429,7 +1428,6 @@ entities:
       long_name: 61
       description: 159
     rendering:
-      gun_flare: true
       fear_eyes:
         eye_l: -2
         eye_r: 5
@@ -1485,7 +1483,6 @@ entities:
       long_name: 62
       description: 159
     rendering:
-      gun_flare: true
       fear_eyes:
         eye_l: -2
         eye_r: 5
@@ -1541,7 +1538,6 @@ entities:
       long_name: 42
       description: 159
     rendering:
-      gun_flare: true
       fear_eyes:
         eye_l: -3
         eye_r: 3
@@ -1590,7 +1586,6 @@ entities:
       long_name: 43
       description: 159
     rendering:
-      gun_flare: true
       fear_eyes:
         eye_l: -3
         eye_r: 3
@@ -1639,7 +1634,6 @@ entities:
       long_name: 44
       description: 159
     rendering:
-      gun_flare: true
       fear_eyes:
         eye_l: -3
         eye_r: 3
