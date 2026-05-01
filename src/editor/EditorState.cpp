@@ -1,6 +1,5 @@
 #include "EditorState.h"
 #include "MapCompiler.h"
-#include "GameYamlRegistrar.h"
 
 #include "Canvas.h"
 #include "CAppContainer.h"
@@ -1606,7 +1605,6 @@ void EditorState::drawSaveDialog() {
 		ImGui::InputText("Name", saveNameBuf, sizeof(saveNameBuf));
 		ImGui::InputInt ("Map ID", &saveMapId);
 		if (saveMapId < 1) saveMapId = 1;
-		ImGui::Checkbox("Register in games/<game>/game.yaml", &saveRegisterGameYaml);
 
 		ImGui::Separator();
 		std::string slug = slugify(saveNameBuf);
@@ -1689,7 +1687,13 @@ bool EditorState::performSave() {
 	writeTextFile(levelDir / "level.yaml",   cm.levelYaml);
 	writeTextFile(levelDir / "scripts.yaml",
 	              "static_funcs: {}\ntile_events: []\nbytecode: \"\"\n");
-	writeTextFile(levelDir / "strings.yaml", "english: []\n");
+	// Strings group_id follows the converter convention: per-level groups start
+	// at 4 (mapId 1 → group 4). Editor-saved levels mirror that so engine
+	// auto-discovery picks them up. Duplicate ids fail loud at startup.
+	{
+		std::string s = "id: " + std::to_string(project.mapId + 3) + "\n\nenglish: []\n";
+		writeTextFile(levelDir / "strings.yaml", s);
+	}
 
 	// Project YAML lives alongside the compiled level artifacts, so each
 	// level directory is self-contained under the active game dir.
@@ -1716,19 +1720,6 @@ bool EditorState::performSave() {
 		gc.levelInfos[project.mapId] = info;
 		// The hijack is now permanent; don't restore on exit.
 		levelInfoHijacked = false;
-	}
-
-	// Register in game.yaml if requested.
-	if (saveRegisterGameYaml) {
-		std::string stringsPath = relDir + "/strings.yaml";
-		auto r = editor::registerLevelInGameYaml("game.yaml", project.mapId,
-		                                         relDir, stringsPath);
-		if (!r.ok) {
-			LOG_WARN("[editor] game.yaml update failed: {}\n", r.error);
-		} else {
-			LOG_INFO("[editor] game.yaml: level {} stringsGroup {} (appended={})\n",
-			         project.mapId, r.stringsGroupIndex, r.stringsAppended);
-		}
 	}
 
 	LOG_INFO("[editor] saved \"{}\" → {} (map_id={})\n",

@@ -25,24 +25,10 @@ game:
   # Levels without `id:` are still on disk (editor-openable), just unreachable
   # at runtime. Duplicate ids are a fatal error.
 
-  # String tables — maps group index to YAML file path.
-  # Modders can add/reorder groups or point to custom files.
-  strings:
-    0: strings/CodeStrings.yaml
-    1: strings/EntityStrings.yaml
-    2: strings/FileStrings.yaml
-    3: strings/MenuStrings.yaml
-    4: levels/01_tycho/strings.yaml
-    5: levels/02_cichus/strings.yaml
-    6: levels/03_kepler/strings.yaml
-    7: levels/04_uac_admin/strings.yaml
-    8: levels/05_uac_labs/strings.yaml
-    9: levels/06_uac_r_d/strings.yaml
-    10: levels/07_gehenna/strings.yaml
-    11: levels/08_abaddon/strings.yaml
-    12: levels/09_vios/strings.yaml
-    13: levels/10_test_map/strings.yaml
-    14: strings/Translations.yaml
+  # String tables are auto-discovered by scanning strings/*.yaml and
+  # levels/*/strings.yaml at startup. Each file declares `id: <int>` (the
+  # bytecode group id used by STRINGID(group, index)). Duplicate ids are a
+  # fatal error.
 
   # Entity definition files — loaded and merged in order.
   entities:

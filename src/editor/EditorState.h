@@ -69,7 +69,6 @@ private:
 	bool saveDialogRequested = false;
 	char saveNameBuf[64] = {};
 	int  saveMapId = 0;
-	bool saveRegisterGameYaml = true;
 	std::string lastSaveMsg;
 	uint32_t    lastSaveMsgMs = 0;
 

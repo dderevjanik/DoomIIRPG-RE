@@ -337,15 +337,50 @@ int main(int argc, char* args[]) {
 				}
 			}
 
-			DataNode stringsNode = game["strings"];
-			if (stringsNode && stringsNode.isMap()) {
-				for (auto it = stringsNode.begin(); it != stringsNode.end(); ++it) {
-					int groupId = std::atoi(it.key().asString().c_str());
-					std::string filePath = it.value().asString("");
-					if (!filePath.empty()) {
-						gc.stringFiles[groupId] = filePath;
+			// Discover string tables by scanning strings/*.yaml + levels/*/strings.yaml.
+			// Each file declares `id: <int>` (the bytecode group id used by
+			// STRINGID(group, index)). Duplicate ids are fatal — bytecode
+			// references would otherwise silently point at the wrong table.
+			{
+				namespace fs = std::filesystem;
+				std::error_code ec;
+				auto absorb = [&](const fs::path& path) -> bool {
+					DataNode n = DataNode::loadFile(path.generic_string().c_str());
+					if (!n) return true;  // not a strings file
+					DataNode idNode = n["id"];
+					if (!idNode) return true;  // id-less: skip silently (legacy file)
+					int gid = idNode.asInt(-1);
+					if (gid < 0) {
+						LOG_ERROR("[main] {}: invalid string group id\n", path.generic_string());
+						return false;
+					}
+					std::string p = path.generic_string();
+					if (auto existing = gc.stringFiles.find(gid); existing != gc.stringFiles.end()) {
+						LOG_ERROR("[main] Duplicate string group id {} in '{}' "
+						          "(already claimed by '{}')\n",
+						          gid, p, existing->second);
+						return false;
+					}
+					gc.stringFiles[gid] = std::move(p);
+					return true;
+				};
+				if (fs::is_directory("strings", ec)) {
+					for (auto& e : fs::directory_iterator("strings", ec)) {
+						if (e.is_regular_file(ec) && e.path().extension() == ".yaml") {
+							if (!absorb(e.path())) return 1;
+						}
 					}
 				}
+				if (fs::is_directory("levels", ec)) {
+					for (auto& d : fs::directory_iterator("levels", ec)) {
+						if (!d.is_directory(ec)) continue;
+						fs::path s = d.path() / "strings.yaml";
+						if (fs::is_regular_file(s, ec)) {
+							if (!absorb(s)) return 1;
+						}
+					}
+				}
+				LOG_INFO("[main] Discovered {} string group(s)\n", gc.stringFiles.size());
 			}
 
 			// Discover levels by scanning levels/*/level.yaml. Each level.yaml may

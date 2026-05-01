@@ -199,6 +199,7 @@ static bool convertStrings(ZipFile& zip, const std::string& outDir) {
 		yaml += "#   \\x90 = pointer           \\xA0 = hard space\n";
 		yaml += "#   | = newline (in-game)     - = soft hyphen (word-break hint)\n";
 		yaml += "\n";
+		yaml += "id: " + std::to_string(grp) + "\n\n";
 
 		bool hasData = false;
 		for (int lang = 0; lang < g_game->maxLanguages; lang++) {
