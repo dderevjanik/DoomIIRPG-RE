@@ -26,8 +26,12 @@ public:
     uint32_t textureBaseSize = 0;
     int screenWidth = 0;
     int* columnScale = nullptr;
-    int view[16] = {};
-    int mvp[16] = {};
+    // 4x4 column-major matrices, regular float (no Q-format). Layout:
+    // [0..2,4..6,8..10] = rotation/scale, [12..14] = translation in world
+    // units, [3,7,11] = 0, [15] = 1 (or 0 for the perspective projection's
+    // homogeneous w cell).
+    float view[16] = {};
+    float mvp[16] = {};
     TGLVert cv[32] = {};
     TGLVert mv[20] = {};
     int fogMin = 0;
@@ -64,9 +68,9 @@ public:
 
 private:
     // Internal state — written/read only by TinyGL.cpp.
-    int view2D[16] = {};
-    int projection[16] = {};
-    int mvp2D[16] = {};
+    float view2D[16] = {};
+    float projection[16] = {};
+    float mvp2D[16] = {};
     int viewportX2 = 0;
     int viewportXScale = 0;
     int viewportXBias = 0;
@@ -75,8 +79,8 @@ private:
     int viewYaw = 0;
 
     // Internal helpers — matrix construction for setView, viewport math.
-    void buildViewMatrix(int x, int y, int z, int yaw, int pitch, int roll, int* matrix);
-    void buildProjectionMatrix(int fov, int aspect, int* matrix);
-    void multMatrix(int* matrix1, int* matrix2, int* destMtx);
+    void buildViewMatrix(int x, int y, int z, int yaw, int pitch, int roll, float* matrix);
+    void buildProjectionMatrix(int fov, int aspect, float* matrix);
+    void multMatrix(const float* matrix1, const float* matrix2, float* destMtx);
     void _setViewport(int viewportX, int viewportY, int viewportWidth, int viewportHeight);
 };

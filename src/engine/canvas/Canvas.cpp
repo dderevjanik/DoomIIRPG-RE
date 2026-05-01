@@ -1018,8 +1018,13 @@ void Canvas::checkFacingEntity() {
 	int destY = this->destY;
 	int destZ = this->destZ;
 	int n = 21741;
-	int *view = app->tinyGL->view;
-	app->game->trace(destX + (-view[2] * 28 >> 14), destY + (-view[6] * 28 >> 14), destZ + (-view[10] * 28 >> 14), destX + (6 * -view[2] >> 8), destY + (6 * -view[6] >> 8), destZ + (6 * -view[10] >> 8), nullptr, n, 2, this->isZoomedIn);
+	const float* view = app->tinyGL->view;
+	// Legacy `(-view[i] * k) >> 14` over Q14 → `(int)(-view[i] * k)` in float.
+	// Legacy `(-view[i] * 6) >> 8` over Q14 → `(int)(-view[i] * 6 * 64)`.
+	app->game->trace(
+		destX + (int)(-view[2]  * 28.0f),  destY + (int)(-view[6]  * 28.0f),  destZ + (int)(-view[10] * 28.0f),
+		destX + (int)(-view[2]  * 6.0f * 64.0f), destY + (int)(-view[6]  * 6.0f * 64.0f), destZ + (int)(-view[10] * 6.0f * 64.0f),
+		nullptr, n, 2, this->isZoomedIn);
 	Entity* traceEntity = app->game->traceEntity;
 	if (traceEntity != nullptr && traceEntity->def == nullptr) {
 		traceEntity = nullptr;
@@ -1741,9 +1746,10 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 		Entity* entity = nullptr;
 		Entity* entity2 = nullptr;
 
-		int n8 = this->viewX + (n7 * -app->tinyGL->view[2] >> 8);
-		int n9 = this->viewY + (n7 * -app->tinyGL->view[6] >> 8);
-		int n10 = this->viewZ + (n7 * -app->tinyGL->view[10] >> 8);
+		// Legacy `(n7 * -view[i]) >> 8` over Q14 → `(int)(n7 * -view[i] * 64)`.
+		int n8  = this->viewX + (int)(n7 * -app->tinyGL->view[2]  * 64.0f);
+		int n9  = this->viewY + (int)(n7 * -app->tinyGL->view[6]  * 64.0f);
+		int n10 = this->viewZ + (int)(n7 * -app->tinyGL->view[10] * 64.0f);
 		app->game->trace(this->viewX, this->viewY, this->viewZ, n8, n9, n10, nullptr, n5, 2, this->isZoomedIn);
 
 		int i = 0;

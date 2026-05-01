@@ -227,7 +227,7 @@ void gles::SetGLState() {
 	this->flags = -1;
 }
 
-void gles::BeginFrame(int x, int y, int w, int h, int* mtxView, int* mtxProjection,
+void gles::BeginFrame(int x, int y, int w, int h, const float* mtxView, const float* mtxProjection,
                        int fogColorPacked, int fogMin, int fogRange) {
 	if (this->headless) { return; }
 
@@ -273,13 +273,25 @@ void gles::BeginFrame(int x, int y, int w, int h, int* mtxView, int* mtxProjecti
 	//printf("this->vPortRect[2] %d\n", this->vPortRect[2]);
 	//printf("this->vPortRect[3] %d\n", this->vPortRect[3]);
 
-	for (int i = 0; i < 16; i++) {
-		this->modelViewMatrix[i] = VERT_COORDS_TO_FLOAT(mtxView[i]);
+	// B3.8: matrices arrive as plain floats from TinyGL. Rotation cells are
+	// in real values; translation cells [12..14] are in raw world units. The
+	// rest of gles (DrawModelVerts' VERT_COORDS_TO_FLOAT vert scaling, fog
+	// constants like the 9999/10000 fog-disable values) was authored against
+	// the legacy convention where everything was implicitly ÷ 16384, so
+	// we preserve that here by scaling just the translation column on entry.
+	constexpr float kTranslationToGles = 1.0f / 16384.0f;
+	for (int i = 0; i < 12; i++) {
+		this->modelViewMatrix[i]  = mtxView[i];
+		this->projectionMatrix[i] = mtxProjection[i];
 	}
-
-	for (int i = 0; i < 16; i++) {
-		this->projectionMatrix[i] = VERT_COORDS_TO_FLOAT(mtxProjection[i]);
-	}
+	this->modelViewMatrix[12] = mtxView[12] * kTranslationToGles;
+	this->modelViewMatrix[13] = mtxView[13] * kTranslationToGles;
+	this->modelViewMatrix[14] = mtxView[14] * kTranslationToGles;
+	this->modelViewMatrix[15] = mtxView[15];
+	this->projectionMatrix[12] = mtxProjection[12] * kTranslationToGles;
+	this->projectionMatrix[13] = mtxProjection[13] * kTranslationToGles;
+	this->projectionMatrix[14] = mtxProjection[14] * kTranslationToGles;
+	this->projectionMatrix[15] = mtxProjection[15];
 
 #if 0 //iPhone
 	float* projectionMatrix = this->projectionMatrix;

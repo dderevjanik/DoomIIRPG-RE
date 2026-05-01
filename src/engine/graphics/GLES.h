@@ -140,7 +140,7 @@ public:
 	                   float r, float g, float b, float a);
 	bool ClearBuffer(int color);
 	void SetGLState();
-	void BeginFrame(int x, int y, int w, int h, int* mtxView, int* mtxProjection,
+	void BeginFrame(int x, int y, int w, int h, const float* mtxView, const float* mtxProjection,
 	                int fogColorPacked, int fogMin, int fogRange);
 	void ResetGLState();
 	void CreateFadeTexture(int mediaID);

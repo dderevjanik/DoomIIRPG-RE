@@ -72,33 +72,37 @@ void Render::draw2DSprite(int tileNum, int frame, int x, int y, int flags, int r
 		vert2->x = app->tinyGL->viewportClampX2;
 	}
 
-	tinyGL->mv[0].x = tinyGL->viewX - ((int)(5 * ((tinyGL->view[2] & 0xFFFFFFE0) + (8 * (tinyGL->view[2] >> 5)))) >> 8);
-	tinyGL->mv[0].y = tinyGL->viewY - ((int)(5 * ((tinyGL->view[6] & 0xFFFFFFE0) + (8 * (tinyGL->view[6] >> 5)))) >> 8);
-	tinyGL->mv[0].z =
-	    tinyGL->viewZ - ((int)(5 * ((tinyGL->view[10] & 0xFFFFFFE0) + (8 * (tinyGL->view[10] >> 5)))) >> 8);
+	// Camera-back offset: legacy did 5*(view[i] & ~31 + 8*(view[i] >> 5)) >> 8
+	// over Q14 ints, which works out to ≈ view[i] * 6.25 / 256. With float
+	// matrix (Q14 factored out) the equivalent is view[i] * 400.
+	tinyGL->mv[0].x = tinyGL->viewX - (int)(tinyGL->view[2]  * 400.0f);
+	tinyGL->mv[0].y = tinyGL->viewY - (int)(tinyGL->view[6]  * 400.0f);
+	tinyGL->mv[0].z = tinyGL->viewZ - (int)(tinyGL->view[10] * 400.0f);
 
 	int projX = ((x - tinyGL->viewportWidth / 2) << 15) / tinyGL->viewportWidth;
 	int projY = (((y + scaledHeight) - tinyGL->viewportHeight / 2) << 15) / tinyGL->viewportWidth;
 	int projSize = (scaledHeight << 15) / tinyGL->viewportWidth;
 
-	int view0 = (tinyGL->view[0] >> 5);
-	int view1 = (tinyGL->view[1] >> 5);
-	int view4 = (tinyGL->view[4] >> 5);
-	int view5 = (tinyGL->view[5] >> 5);
-	int view8 = (tinyGL->view[8] >> 5);
-	int view9 = (tinyGL->view[9] >> 5);
+	// Legacy: `(int_view[i] >> 5) * proj >> 14` over Q14 ints =
+	// `proj * (float_view[i] * 16384/32) / 16384 = proj * float_view[i] / 32`.
+	const float view0 = tinyGL->view[0];
+	const float view1 = tinyGL->view[1];
+	const float view4 = tinyGL->view[4];
+	const float view5 = tinyGL->view[5];
+	const float view8 = tinyGL->view[8];
+	const float view9 = tinyGL->view[9];
 
-	tinyGL->mv[0].x += (((projY * view1) + (projX * view0)) >> 14);
-	tinyGL->mv[0].y += (((projY * view5) + (projX * view4)) >> 14);
-	tinyGL->mv[0].z += (((projY * view9) + (projX * view8)) >> 14);
+	tinyGL->mv[0].x += (int)((projY * view1 + projX * view0) / 32.0f);
+	tinyGL->mv[0].y += (int)((projY * view5 + projX * view4) / 32.0f);
+	tinyGL->mv[0].z += (int)((projY * view9 + projX * view8) / 32.0f);
 
-	tinyGL->mv[1].x = tinyGL->mv[0].x + ((projSize * view0) >> 14);
-	tinyGL->mv[1].y = tinyGL->mv[0].y + ((projSize * view4) >> 14);
-	tinyGL->mv[1].z = tinyGL->mv[0].z + ((projSize * view8) >> 14);
+	tinyGL->mv[1].x = tinyGL->mv[0].x + (int)(projSize * view0 / 32.0f);
+	tinyGL->mv[1].y = tinyGL->mv[0].y + (int)(projSize * view4 / 32.0f);
+	tinyGL->mv[1].z = tinyGL->mv[0].z + (int)(projSize * view8 / 32.0f);
 
-	tinyGL->mv[2].x = tinyGL->mv[1].x - ((projSize * view1) >> 14);
-	tinyGL->mv[2].y = tinyGL->mv[1].y - ((projSize * view5) >> 14);
-	tinyGL->mv[2].z = tinyGL->mv[1].z - ((projSize * view9) >> 14);
+	tinyGL->mv[2].x = tinyGL->mv[1].x - (int)(projSize * view1 / 32.0f);
+	tinyGL->mv[2].y = tinyGL->mv[1].y - (int)(projSize * view5 / 32.0f);
+	tinyGL->mv[2].z = tinyGL->mv[1].z - (int)(projSize * view9 / 32.0f);
 
 	this->_gles->SetGLState();
 	this->_gles->DrawWorldSpaceSpriteLine(&tinyGL->mv[0], &tinyGL->mv[1], &tinyGL->mv[2], flags ^ 0x20000);

@@ -148,8 +148,11 @@ void Render::addSprite(short n) {
 	} else {
 		short n4 = this->mapSprites[this->S_X + n];
 		short n5 = this->mapSprites[this->S_Y + n];
-		int* mvp = app->tinyGL->mvp;
-		n3 = (n4 * mvp[2] + n5 * mvp[6] + this->mapSprites[this->S_Z + n] * mvp[10] >> 14) + mvp[14];
+		// Project sprite-center Z through the column-major MVP. With float
+		// matrices the legacy `>> 14` shift drops out; mvp[14] is already in
+		// world units (was the "raw int translation column" before B3.8).
+		const float* mvp = app->tinyGL->mvp;
+		n3 = (int)((float)n4 * mvp[2] + (float)n5 * mvp[6] + (float)this->mapSprites[this->S_Z + n] * mvp[10] + mvp[14]);
 		if ((this->mapSpriteInfo[n] & Enums::SPRITE_FLAG_TILE) != 0x0) {
 			n3 += 6;
 		} else if (n2 == 240 || n2 == 246 || n2 == 245 || n2 == 247) {
