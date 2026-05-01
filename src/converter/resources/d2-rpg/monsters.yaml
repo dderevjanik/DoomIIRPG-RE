@@ -1,7 +1,7 @@
 entities:
-  sentry_bot_parm1:
+  red_sentry_bot:
     sprite: monster_red_sentry_bot
-    corpse: corpse_sentry_bot_parm1
+    corpse: corpse_red_sentry_bot
     type: monster
     subtype: sentry_bot
     parm: 1
@@ -44,9 +44,9 @@ entities:
         quantity: 6-11
         no_corpse_loot: true
       xp: 26
-  sentry_bot_parm0:
+  sentry_bot:
     sprite: monster_sentry_bot
-    corpse: corpse_sentry_bot_parm0
+    corpse: corpse_sentry_bot
     type: monster
     subtype: sentry_bot
     parm: 0
@@ -89,9 +89,9 @@ entities:
         quantity: 6-11
         no_corpse_loot: true
       xp: 19
-  zombie_parm0:
+  zombie_worker:
     sprite: monster_zombie
-    corpse: corpse_zombie_parm0
+    corpse: corpse_zombie_worker
     type: monster
     subtype: zombie
     parm: 0
@@ -134,9 +134,9 @@ entities:
         drop: uac_credit
         quantity: 1-3
       xp: 18
-  zombie_parm1:
+  zombie_civilian:
     sprite: monster_zombie2
-    corpse: corpse_zombie_parm1
+    corpse: corpse_zombie_civilian
     type: monster
     subtype: zombie
     parm: 1
@@ -179,9 +179,9 @@ entities:
         drop: uac_credit
         quantity: 3-7
       xp: 20
-  zombie_parm2:
+  zombie_tech:
     sprite: monster_zombie3
-    corpse: corpse_zombie_parm2
+    corpse: corpse_zombie_tech
     type: monster
     subtype: zombie
     parm: 2
@@ -224,9 +224,9 @@ entities:
         drop: uac_credit
         quantity: 5-12
       xp: 22
-  imp_parm0:
+  impling:
     sprite: monster_imp
-    corpse: corpse_imp_parm0
+    corpse: corpse_impling
     type: monster
     subtype: imp
     parm: 0
@@ -271,9 +271,9 @@ entities:
         drop: trinket
         trinket: "Pock-et Lint"
       xp: 19
-  imp_parm1:
+  imp:
     sprite: monster_imp2
-    corpse: corpse_imp_parm1
+    corpse: corpse_imp
     type: monster
     subtype: imp
     parm: 1
@@ -318,9 +318,9 @@ entities:
         drop: trinket
         trinket: "Hu-man Fin-ger"
       xp: 21
-  imp_parm2:
+  imp_lord:
     sprite: monster_imp3
-    corpse: corpse_imp_parm2
+    corpse: corpse_imp_lord
     type: monster
     subtype: imp
     parm: 2
@@ -365,9 +365,9 @@ entities:
         drop: trinket
         trinket: "Rub-ber Ducky"
       xp: 23
-  sawcubus_parm0:
+  lesser_sawcubus:
     sprite: monster_saw_goblin
-    corpse: corpse_sawcubus_parm0
+    corpse: corpse_lesser_sawcubus
     type: monster
     subtype: sawcubus
     parm: 0
@@ -422,9 +422,9 @@ entities:
         drop: trinket
         trinket: "Ac-tion Fig-ure"
       xp: 20
-  sawcubus_parm1:
+  greater_sawcubus:
     sprite: monster_saw_goblin2
-    corpse: corpse_sawcubus_parm1
+    corpse: corpse_greater_sawcubus
     type: monster
     subtype: sawcubus
     parm: 1
@@ -479,9 +479,9 @@ entities:
         drop: trinket
         trinket: "Dead Bat-tery"
       xp: 22
-  sawcubus_parm2:
+  chainstrosity:
     sprite: monster_saw_goblin3
-    corpse: corpse_sawcubus_parm2
+    corpse: corpse_chainstrosity
     type: monster
     subtype: sawcubus
     parm: 2
@@ -536,9 +536,9 @@ entities:
         drop: trinket
         trinket: "Hu-man Ear"
       xp: 24
-  lost_soul_parm0:
+  phantom:
     sprite: monster_lost_soul
-    corpse: corpse_lost_soul_parm0
+    corpse: corpse_phantom
     type: monster
     subtype: lost_soul
     parm: 0
@@ -588,9 +588,9 @@ entities:
         drop: trinket
         trinket: "Pu-trid En-trails"
       xp: 28
-  lost_soul_parm1:
+  lost_soul:
     sprite: monster_lost_soul2
-    corpse: corpse_lost_soul_parm1
+    corpse: corpse_lost_soul
     type: monster
     subtype: lost_soul
     parm: 1
@@ -640,9 +640,9 @@ entities:
         drop: trinket
         trinket: "Fried Cir-cui-try"
       xp: 30
-  lost_soul_parm2:
+  nightmare:
     sprite: monster_lost_soul3
-    corpse: corpse_lost_soul_parm2
+    corpse: corpse_nightmare
     type: monster
     subtype: lost_soul
     parm: 2
@@ -692,9 +692,9 @@ entities:
         drop: trinket
         trinket: "Bag of Bone Frag-ments"
       xp: 33
-  pinky_parm0:
+  bull_demon:
     sprite: monster_pinky
-    corpse: corpse_pinky_parm0
+    corpse: corpse_bull_demon
     type: monster
     subtype: pinky
     parm: 0
@@ -741,9 +741,9 @@ entities:
         drop: trinket
         trinket: "Hu-man Ashes"
       xp: 23
-  pinky_parm1:
+  pinky:
     sprite: monster_pinky2
-    corpse: corpse_pinky_parm1
+    corpse: corpse_pinky
     type: monster
     subtype: pinky
     parm: 1
@@ -789,9 +789,9 @@ entities:
         drop: trinket
         trinket: "Bot-tle Open-er"
       xp: 25
-  pinky_parm2:
+  belphegor:
     sprite: monster_pinky3
-    corpse: corpse_pinky_parm2
+    corpse: corpse_belphegor
     type: monster
     subtype: pinky
     parm: 2
@@ -837,9 +837,9 @@ entities:
         drop: trinket
         trinket: "Green Goo"
       xp: 28
-  revenant_parm0:
+  ghoul:
     sprite: monster_revenant
-    corpse: corpse_revenant_parm0
+    corpse: corpse_ghoul
     type: monster
     subtype: revenant
     parm: 0
@@ -901,9 +901,9 @@ entities:
         drop: rockets
         quantity: 3-5
       xp: 35
-  revenant_parm1:
+  fiend:
     sprite: monster_revenant2
-    corpse: corpse_revenant_parm1
+    corpse: corpse_fiend
     type: monster
     subtype: revenant
     parm: 1
@@ -966,9 +966,9 @@ entities:
         drop: rockets
         quantity: 3-5
       xp: 40
-  revenant_parm2:
+  revenant:
     sprite: monster_revenant3
-    corpse: corpse_revenant_parm2
+    corpse: corpse_revenant
     type: monster
     subtype: revenant
     parm: 2
@@ -1031,9 +1031,9 @@ entities:
         drop: rockets
         quantity: 3-5
       xp: 43
-  mancubus_parm0:
+  behemoth:
     sprite: monster_mancubus
-    corpse: corpse_mancubus_parm0
+    corpse: corpse_behemoth
     type: monster
     subtype: mancubus
     parm: 0
@@ -1084,9 +1084,9 @@ entities:
         drop: rockets
         quantity: 1-3
       xp: 35
-  mancubus_parm1:
+  mancubus:
     sprite: monster_mancubus2
-    corpse: corpse_mancubus_parm1
+    corpse: corpse_mancubus
     type: monster
     subtype: mancubus
     parm: 1
@@ -1137,9 +1137,9 @@ entities:
         drop: rockets
         quantity: 1-3
       xp: 37
-  mancubus_parm2:
+  druj:
     sprite: monster_mancubus3
-    corpse: corpse_mancubus_parm2
+    corpse: corpse_druj
     type: monster
     subtype: mancubus
     parm: 2
@@ -1190,9 +1190,9 @@ entities:
         drop: rockets
         quantity: 1-3
       xp: 39
-  cacodemon_parm0:
+  malwrath:
     sprite: monster_cacodemon
-    corpse: corpse_cacodemon_parm0
+    corpse: corpse_malwrath
     type: monster
     subtype: cacodemon
     parm: 0
@@ -1240,9 +1240,9 @@ entities:
         drop: cells
         quantity: 3-7
       xp: 26
-  cacodemon_parm1:
+  cacodemon:
     sprite: monster_cacodemon2
-    corpse: corpse_cacodemon_parm1
+    corpse: corpse_cacodemon
     type: monster
     subtype: cacodemon
     parm: 1
@@ -1290,9 +1290,9 @@ entities:
         drop: cells
         quantity: 3-7
       xp: 29
-  cacodemon_parm2:
+  wretched:
     sprite: monster_cacodemon3
-    corpse: corpse_cacodemon_parm2
+    corpse: corpse_wretched
     type: monster
     subtype: cacodemon
     parm: 2
@@ -1340,9 +1340,9 @@ entities:
         drop: cells
         quantity: 3-7
       xp: 31
-  sentinel_parm0:
+  brier:
     sprite: monster_sentinel
-    corpse: corpse_sentinel_parm0
+    corpse: corpse_brier
     type: monster
     subtype: sentinel
     parm: 0
@@ -1390,9 +1390,9 @@ entities:
         drop: trinket
         trinket: "Comic Book"
       xp: 21
-  sentinel_parm1:
+  watcher:
     sprite: monster_sentinel2
-    corpse: corpse_sentinel_parm1
+    corpse: corpse_watcher
     type: monster
     subtype: sentinel
     parm: 1
@@ -1440,9 +1440,9 @@ entities:
         drop: trinket
         trinket: "Can-cun Shot Glass"
       xp: 26
-  sentinel_parm2:
+  sentinel:
     sprite: monster_sentinel3
-    corpse: corpse_sentinel_parm2
+    corpse: corpse_sentinel
     type: monster
     subtype: sentinel
     parm: 2
@@ -1490,9 +1490,9 @@ entities:
         drop: trinket
         trinket: "Small Fi-gur-ine"
       xp: 28
-  arch_vile_parm0:
+  infernis:
     sprite: monster_arch_vile
-    corpse: corpse_arch_vile_parm0
+    corpse: corpse_infernis
     type: monster
     subtype: arch_vile
     parm: 0
@@ -1546,9 +1546,9 @@ entities:
         drop: trinket
         trinket: "De-mon-ic Pa-ra-sites"
       xp: 35
-  arch_vile_parm1:
+  arch_vile:
     sprite: monster_arch_vile2
-    corpse: corpse_arch_vile_parm1
+    corpse: corpse_arch_vile
     type: monster
     subtype: arch_vile
     parm: 1
@@ -1602,9 +1602,9 @@ entities:
         drop: trinket
         trinket: "Rot-ting Teeth"
       xp: 38
-  arch_vile_parm2:
+  apollyon:
     sprite: monster_arch_vile3
-    corpse: corpse_arch_vile_parm2
+    corpse: corpse_apollyon
     type: monster
     subtype: arch_vile
     parm: 2
@@ -1658,9 +1658,9 @@ entities:
         drop: trinket
         trinket: "20--sided Die"
       xp: 41
-  cyberdemon_parm0:
+  cyberdemon:
     sprite: boss_cyberdemon
-    corpse: corpse_cyberdemon_parm0
+    corpse: corpse_cyberdemon
     type: monster
     subtype: cyberdemon
     parm: 0
@@ -1706,9 +1706,9 @@ entities:
         pain: demon_pain
         death: cyberdemon_death
       xp: 191
-  mastermind_parm0:
+  mastermind:
     sprite: boss_pinky
-    corpse: corpse_mastermind_parm0
+    corpse: corpse_mastermind
     type: monster
     subtype: mastermind
     parm: 0
@@ -1752,9 +1752,9 @@ entities:
         pain: pinkinator_pain
         death: pinkinator_death
       xp: 179
-  boss_vios_parm0:
+  vios_phase1:
     sprite: boss_vios
-    corpse: corpse_boss_vios_parm0
+    corpse: corpse_vios_phase1
     type: monster
     subtype: boss_vios
     parm: 0
@@ -1799,9 +1799,9 @@ entities:
         pain: vios_pain
         death: vios_death
       xp: 188
-  boss_vios_parm1:
+  vios_phase2:
     sprite: boss_vios2
-    corpse: corpse_boss_vios_parm1
+    corpse: corpse_vios_phase2
     type: monster
     subtype: boss_vios
     parm: 1
@@ -1848,9 +1848,9 @@ entities:
         pain: vios_pain
         death: vios_death
       xp: 189
-  boss_vios_parm2:
+  vios_phase3:
     sprite: boss_vios3
-    corpse: corpse_boss_vios_parm2
+    corpse: corpse_vios_phase3
     type: monster
     subtype: boss_vios
     parm: 2
@@ -1897,9 +1897,9 @@ entities:
         pain: vios_pain
         death: vios_death
       xp: 190
-  boss_vios_parm3:
+  vios_phase4:
     sprite: boss_vios4
-    corpse: corpse_boss_vios_parm3
+    corpse: corpse_vios_phase4
     type: monster
     subtype: boss_vios
     parm: 3
@@ -1946,9 +1946,9 @@ entities:
         pain: vios_pain
         death: vios_death
       xp: 190
-  boss_vios_parm4:
+  vios_phase5:
     sprite: boss_vios5
-    corpse: corpse_boss_vios_parm4
+    corpse: corpse_vios_phase5
     type: monster
     subtype: boss_vios
     parm: 4

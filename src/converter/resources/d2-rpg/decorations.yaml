@@ -1,5 +1,5 @@
 entities:
-  corpse_boss_vios_parm0:
+  corpse_vios_phase1:
     sprite: 0
     type: corpse
     subtype: boss_vios
@@ -8,7 +8,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_boss_vios_parm1:
+  corpse_vios_phase2:
     sprite: 0
     type: corpse
     subtype: boss_vios
@@ -17,7 +17,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_boss_vios_parm2:
+  corpse_vios_phase3:
     sprite: 0
     type: corpse
     subtype: boss_vios
@@ -26,7 +26,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_boss_vios_parm3:
+  corpse_vios_phase4:
     sprite: 0
     type: corpse
     subtype: boss_vios
@@ -35,7 +35,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_boss_vios_parm4:
+  corpse_vios_phase5:
     sprite: 0
     type: corpse
     subtype: boss_vios
@@ -44,7 +44,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_sentry_bot_parm0:
+  corpse_sentry_bot:
     sprite: 0
     type: corpse
     subtype: sentry_bot
@@ -53,7 +53,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_sentry_bot_parm1:
+  corpse_red_sentry_bot:
     sprite: 0
     type: corpse
     subtype: sentry_bot
@@ -62,7 +62,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_zombie_parm0:
+  corpse_zombie_worker:
     sprite: 0
     type: corpse
     subtype: zombie
@@ -71,7 +71,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_zombie_parm1:
+  corpse_zombie_civilian:
     sprite: 0
     type: corpse
     subtype: zombie
@@ -80,7 +80,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_zombie_parm2:
+  corpse_zombie_tech:
     sprite: 0
     type: corpse
     subtype: zombie
@@ -89,7 +89,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_imp_parm0:
+  corpse_impling:
     sprite: 0
     type: corpse
     subtype: imp
@@ -98,7 +98,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_imp_parm1:
+  corpse_imp:
     sprite: 0
     type: corpse
     subtype: imp
@@ -107,7 +107,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_imp_parm2:
+  corpse_imp_lord:
     sprite: 0
     type: corpse
     subtype: imp
@@ -116,7 +116,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_sawcubus_parm0:
+  corpse_lesser_sawcubus:
     sprite: 0
     type: corpse
     subtype: sawcubus
@@ -125,7 +125,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_sawcubus_parm1:
+  corpse_greater_sawcubus:
     sprite: 0
     type: corpse
     subtype: sawcubus
@@ -134,7 +134,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_sawcubus_parm2:
+  corpse_chainstrosity:
     sprite: 0
     type: corpse
     subtype: sawcubus
@@ -143,7 +143,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_pinky_parm0:
+  corpse_bull_demon:
     sprite: 0
     type: corpse
     subtype: pinky
@@ -152,7 +152,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_pinky_parm1:
+  corpse_pinky:
     sprite: 0
     type: corpse
     subtype: pinky
@@ -161,7 +161,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_pinky_parm2:
+  corpse_belphegor:
     sprite: 0
     type: corpse
     subtype: pinky
@@ -170,7 +170,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_mancubus_parm0:
+  corpse_behemoth:
     sprite: 0
     type: corpse
     subtype: mancubus
@@ -179,7 +179,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_mancubus_parm1:
+  corpse_mancubus:
     sprite: 0
     type: corpse
     subtype: mancubus
@@ -188,7 +188,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_mancubus_parm2:
+  corpse_druj:
     sprite: 0
     type: corpse
     subtype: mancubus
@@ -197,7 +197,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_cacodemon_parm0:
+  corpse_malwrath:
     sprite: 0
     type: corpse
     subtype: cacodemon
@@ -206,7 +206,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_cacodemon_parm1:
+  corpse_cacodemon:
     sprite: 0
     type: corpse
     subtype: cacodemon
@@ -215,7 +215,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_cacodemon_parm2:
+  corpse_wretched:
     sprite: 0
     type: corpse
     subtype: cacodemon
@@ -224,7 +224,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_sentinel_parm0:
+  corpse_brier:
     sprite: 0
     type: corpse
     subtype: sentinel
@@ -233,7 +233,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_sentinel_parm1:
+  corpse_watcher:
     sprite: 0
     type: corpse
     subtype: sentinel
@@ -242,7 +242,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_sentinel_parm2:
+  corpse_sentinel:
     sprite: 0
     type: corpse
     subtype: sentinel
@@ -251,7 +251,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_lost_soul_parm0:
+  corpse_phantom:
     sprite: 0
     type: corpse
     subtype: lost_soul
@@ -260,7 +260,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_lost_soul_parm1:
+  corpse_lost_soul:
     sprite: 0
     type: corpse
     subtype: lost_soul
@@ -269,7 +269,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_lost_soul_parm2:
+  corpse_nightmare:
     sprite: 0
     type: corpse
     subtype: lost_soul
@@ -278,7 +278,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_arch_vile_parm0:
+  corpse_infernis:
     sprite: 0
     type: corpse
     subtype: arch_vile
@@ -287,7 +287,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_arch_vile_parm1:
+  corpse_arch_vile:
     sprite: 0
     type: corpse
     subtype: arch_vile
@@ -296,7 +296,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_arch_vile_parm2:
+  corpse_apollyon:
     sprite: 0
     type: corpse
     subtype: arch_vile
@@ -305,7 +305,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_revenant_parm0:
+  corpse_ghoul:
     sprite: 0
     type: corpse
     subtype: revenant
@@ -314,7 +314,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_revenant_parm1:
+  corpse_fiend:
     sprite: 0
     type: corpse
     subtype: revenant
@@ -323,7 +323,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_revenant_parm2:
+  corpse_revenant:
     sprite: 0
     type: corpse
     subtype: revenant
@@ -341,7 +341,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_cyberdemon_parm0:
+  corpse_cyberdemon:
     sprite: 0
     type: corpse
     subtype: cyberdemon
@@ -350,7 +350,7 @@ entities:
       name: 159
       long_name: 159
       description: 159
-  corpse_mastermind_parm0:
+  corpse_mastermind:
     sprite: 0
     type: corpse
     subtype: mastermind
