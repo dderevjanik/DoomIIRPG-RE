@@ -470,7 +470,6 @@ public:
 	inline void clearSpriteInfoFlag(int sprite, int flag) { mapSpriteInfo[sprite] &= ~flag; }
 	inline void setSpriteInfoFlag(int sprite, int flag) { mapSpriteInfo[sprite] |= flag; }
 
-	void Render3dScene(void);
 	void fixTexels(int offset, int i, int mediaID, int* rowHeight); // [GEC] New
 
 	// Cached sprite indices from SpriteDefs (initialized once at startup)

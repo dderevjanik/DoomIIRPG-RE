@@ -51,11 +51,6 @@ CAppContainer* CAppContainer::getInstance() {
 	return &_mContainer;
 }
 
-short* CAppContainer::GetBackBuffer()
-{
-	return (short*)this->app->backBuffer->pBmp;
-}
-
 void CAppContainer::DoLoop(int time) {
 	if (!this->headless) {
 		this->app->sound->startFrame();

@@ -73,9 +73,12 @@ bool Applet::startup() {
 	this->accelBaseY = 0;
 	this->accelBaseZ = 0;
 
+	// IDIB used to back a 480x320 RGB565 software framebuffer that
+	// Render3dScene blitted to the GL window. With the software path
+	// long gone (B1) and the blit deleted (B2.11), only the dimension
+	// fields are still consumed (Canvas::displayRect, Graphics::graphClipRect).
 	this->backBuffer = new IDIB;
-	this->backBuffer->pBmp = new uint8_t[Applet::IOS_WIDTH * Applet::IOS_HEIGHT * 2];
-	std::memset(this->backBuffer->pBmp, 0, Applet::IOS_WIDTH * Applet::IOS_HEIGHT * 2);
+	this->backBuffer->pBmp = nullptr;
 	this->backBuffer->pRGB888 = nullptr;
 	this->backBuffer->pRGB565 = nullptr;
 	this->backBuffer->width = this->sdlGL->vidWidth;

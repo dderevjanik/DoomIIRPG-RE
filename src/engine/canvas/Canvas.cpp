@@ -470,8 +470,6 @@ void Canvas::backPaint(Graphics* graphics) {
 			}
 		}
 		else {
-			//this->repaintFlags &= ~Canvas::REPAINT_VIEW3D;
-			//app->render->Render3dScene();
 			app->render->drawRGB(graphics);
 		}
 	}

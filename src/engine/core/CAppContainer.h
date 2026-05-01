@@ -261,7 +261,6 @@ class CAppContainer {
 	// Destructor
 	~CAppContainer();
 
-	short* GetBackBuffer();
 	void DoLoop(int time);
 	void suspendOpenAL();
 	void resumeOpenAL();
