@@ -175,22 +175,31 @@ void TinyGL::setView(int viewX, int viewY, int viewZ, int viewYaw, int viewPitch
 	// → tinyGL pointer.
 	app->render->_gles->viewYaw = this->viewYaw;
 
+	// `view2D` and `projection` were members but only ever scratch for the
+	// two multMatrix calls below; promoted to locals to drop 128 bytes of
+	// per-frame zombie state.
+	float view2D[16];
+	float projection[16];
+
 	this->buildViewMatrix(viewX, viewY, viewZ, this->viewYaw, this->viewPitch, viewRoll, this->view);
-	this->buildViewMatrix(viewX, viewY, 0, this->viewYaw, 0, 0, this->view2D);
-	this->buildProjectionMatrix(viewFov, viewAspect, this->projection);
-	this->multMatrix(this->view, this->projection, this->mvp);
+	this->buildViewMatrix(viewX, viewY, 0, this->viewYaw, 0, 0, view2D);
+	this->buildProjectionMatrix(viewFov, viewAspect, projection);
+	this->multMatrix(this->view, projection, this->mvp);
 
 	app->render->_gles->BeginFrame(this->viewportX, this->viewportY,
 	                                this->viewportWidth, this->viewportHeight,
-	                                this->view, this->projection,
+	                                this->view, projection,
 	                                this->fogColor, this->fogMin, this->fogRange);
 
 	if (this->viewPitch > 512) {
 		this->viewPitch -= 1024;
 	}
 
-	this->buildProjectionMatrix(viewFov + std::abs(this->viewPitch), viewAspect, this->projection);
-	this->multMatrix(this->view2D, this->projection, this->mvp2D);
+	// 2D mvp uses a wider FOV (compensating for the dropped pitch) and the
+	// pitch-zeroed view2D. Used only by transform2DVerts for line-visibility
+	// queries against world-axis-aligned walls.
+	this->buildProjectionMatrix(viewFov + std::abs(this->viewPitch), viewAspect, projection);
+	this->multMatrix(view2D, projection, this->mvp2D);
 }
 
 void TinyGL::viewMtxMove(TGLVert* tglVert, int n, int n2, int n3) {

@@ -68,8 +68,6 @@ public:
 
 private:
     // Internal state — written/read only by TinyGL.cpp.
-    float view2D[16] = {};
-    float projection[16] = {};
     float mvp2D[16] = {};
     int viewportX2 = 0;
     int viewportXScale = 0;
