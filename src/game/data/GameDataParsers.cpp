@@ -1569,23 +1569,22 @@ std::expected<void, std::string> parseMonsterCombatFromEntities(Applet* app, con
 			}
 		}
 
-		// Loot (stored per-tier when parm < MAX_LOOT_TIERS).
-		// Two schemas: legacy `loot:` map, or `loots:` sequence shorthand
-		// where `no_corpse_loot:` lives as a sibling under `combat:`.
-		DataNode loots = combat["loots"];
-		DataNode loot = loots ? loots : combat["loot"];
-		if (loot) {
+		// Drops (stored per-tier when parm < MAX_LOOT_TIERS).
+		// `drops:` is a sequence of drop entries; `no_corpse_loot:` is a
+		// sibling under `combat:`.
+		DataNode drops = combat["drops"];
+		if (drops) {
 			MonsterBehaviors& mb = app->combat->monsterBehaviors[mi];
 			bool hasNoCorpseSibling = (bool)combat["no_corpse_loot"];
 			bool noCorpseSibling = combat["no_corpse_loot"].asBool(false);
 			if (parm < MonsterBehaviors::MAX_LOOT_TIERS) {
 				mb.lootTiers[parm] = mb.lootConfig;
-				parseLootConfig(loot, mb.lootTiers[parm]);
+				parseLootConfig(drops, mb.lootTiers[parm]);
 				if (hasNoCorpseSibling) mb.lootTiers[parm].noCorpseLoot = noCorpseSibling;
 				mb.hasLootTiers = true;
 			}
 			if (parm == 0) {
-				parseLootConfig(loot, mb.lootConfig);
+				parseLootConfig(drops, mb.lootConfig);
 				if (hasNoCorpseSibling) mb.lootConfig.noCorpseLoot = noCorpseSibling;
 			}
 		}
