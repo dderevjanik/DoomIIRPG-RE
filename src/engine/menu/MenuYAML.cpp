@@ -281,31 +281,12 @@ bool MenuSystem::loadUIFromYAML(const char* path) {
 	imageMap["logo"] = this->imgLogo;
 	imageMap["main_bg"] = this->imgMainBG;
 
-	// Build UI sound alias -> ResID lookup from sounds.yaml ui_sounds section
-	std::unordered_map<std::string, int> soundMap;
-	{
-		DataNode sndConfig = DataNode::loadFile("sounds.yaml");
-		DataNode uiSounds = sndConfig["ui_sounds"];
-		if (uiSounds) {
-			for (auto it = uiSounds.begin(); it != uiSounds.end(); ++it) {
-				std::string alias = it.key().asString();
-				std::string soundName = it.value().asString("");
-				int resId = Sounds::getResIDByName(soundName);
-				if (resId >= 0) {
-					soundMap[alias] = resId;
-				}
-			}
-		}
-		if (!sndConfig) {
-			LOG_WARN("[menu] warning: could not load ui_sounds from sounds.yaml\n");
-		}
-	}
-
 	// Button creation helpers
 	auto resolveSound = [&](const DataNode& btn) -> int {
 		std::string sndName = btn["sound"].asString("");
-		if (auto sit = soundMap.find(sndName); sit != soundMap.end()) return sit->second;
-		return 0;
+		if (sndName.empty()) return 0;
+		int resId = Sounds::getResIDByName(sndName);
+		return resId >= 0 ? resId : 0;
 	};
 
 	auto resolveImage = [&](const std::string& imgName) -> Image* {
@@ -430,9 +411,7 @@ bool MenuSystem::loadUIFromYAML(const char* path) {
 	DataNode scrollbar = config["scrollbar"];
 	if (scrollbar) {
 		if (this->m_scrollBar) delete this->m_scrollBar;
-		std::string sndName = scrollbar["sound"].asString("");
-		int soundId = 0;
-		if (auto sit = soundMap.find(sndName); sit != soundMap.end()) soundId = sit->second;
+		int soundId = resolveSound(scrollbar);
 		bool vertical = scrollbar["vertical"].asBool(true);
 		this->m_scrollBar = new fmScrollButton(0, 0, 0, 0, vertical, soundId);
 	}

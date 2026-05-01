@@ -3,7 +3,7 @@
 
 # Scrollbar config
 scrollbar:
-  sound: scroll
+  sound: menu_scroll
   vertical: true
 
 # Screen layouts — button containers (menu | info | vending)
@@ -12,7 +12,7 @@ screens:
     menu_items:
       image: menu_btn_bg
       image_highlight: menu_btn_bg_on
-      sound: menu_highlight
+      sound: dialog_help
       render_mode: 1
       highlight_render_mode: 0
       id_range: [0, 8]
@@ -24,7 +24,7 @@ screens:
       visible: false
 
     arrow_up:
-      sound: menu_highlight
+      sound: dialog_help
       size_from_image: true
       id: 9
       x: 331
@@ -35,7 +35,7 @@ screens:
       visible: false
 
     arrow_down:
-      sound: menu_highlight
+      sound: dialog_help
       size_from_image: true
       id: 10
       x: 331
@@ -44,7 +44,7 @@ screens:
       visible: false
 
     softkey_left:
-      sound: softkey_click
+      sound: switch_exit
       id: 11
       x: 0
       y: 256
@@ -55,22 +55,22 @@ screens:
       visible: false
 
     sfx_volume_slider:
-      sound: menu_highlight
+      sound: dialog_help
       id: 12
       visible: false
 
     music_volume_slider:
-      sound: menu_highlight
+      sound: dialog_help
       id: 13
       visible: false
 
     alpha_slider:
-      sound: menu_highlight
+      sound: dialog_help
       id: 14
       visible: false
 
     softkey_right:
-      sound: softkey_click
+      sound: switch_exit
       id: 15
       x: 428
       y: 256
@@ -80,12 +80,12 @@ screens:
 
     # Controller sliders [GEC]
     vibration_slider:
-      sound: menu_highlight
+      sound: dialog_help
       id: 16
       visible: false
 
     deadzone_slider:
-      sound: menu_highlight
+      sound: dialog_help
       id: 17
       visible: false
 
@@ -93,7 +93,7 @@ screens:
     info_items:
       image: info_btn_normal
       image_highlight: info_btn_pressed
-      sound: menu_highlight
+      sound: dialog_help
       render_mode: 1
       highlight_render_mode: 0
       id_range: [0, 8]
@@ -101,7 +101,7 @@ screens:
 
   vending:
     arrow_up:
-      sound: menu_highlight
+      sound: dialog_help
       size_from_image: true
       render_mode: 1
       highlight_render_mode: 0
@@ -112,7 +112,7 @@ screens:
       visible: true
 
     arrow_down:
-      sound: menu_highlight
+      sound: dialog_help
       size_from_image: true
       render_mode: 1
       highlight_render_mode: 0

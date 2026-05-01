@@ -289,8 +289,3 @@ sounds:
     file: zombie_sight1.wav
   zombie_sight2:
     file: zombie_sight2.wav
-# UI sound aliases - maps descriptive names to sound entries above
-ui_sounds:
-  menu_highlight: dialog_help
-  softkey_click: switch_exit
-  scroll: menu_scroll
