@@ -4,6 +4,7 @@
 #include "CAppContainer.h"
 #include "App.h"
 #include "Combat.h"
+#include "ItemDefs.h"
 #include "Log.h"
 
 // Static member definitions
@@ -13,7 +14,6 @@ std::unordered_map<std::string, int> EntityNames::itemSubtypes;
 std::unordered_map<std::string, int> EntityNames::doorSubtypes;
 std::unordered_map<std::string, int> EntityNames::decorSubtypes;
 std::unordered_map<std::string, int> EntityNames::weaponNames;
-std::unordered_map<std::string, int> EntityNames::ammoParms;
 std::unordered_map<std::string, int> EntityNames::inventoryParms;
 std::vector<std::string> EntityNames::entityTypesByIndex;
 std::vector<std::string> EntityNames::weaponNamesByIndex;
@@ -139,19 +139,10 @@ std::expected<void, std::string> EntityNames::parseWeapons(const DataNode& confi
 		}
 	}
 
-	// ammo_parms still comes from weapons.yaml (data-driven)
-	ammoParms.clear();
-	DataNode ammoNode = config["ammo_parms"];
-	if (ammoNode && ammoNode.isMap()) {
-		for (auto it = ammoNode.begin(); it != ammoNode.end(); ++it) {
-			ammoParms[it.key().asString()] = it.value().asInt(0);
-		}
-	}
-
 	buildIndexVector(EntityNames::weaponNames, EntityNames::weaponNamesByIndex);
 
-	LOG_INFO("[entity_names] loaded {} weapon names, {} ammo parms\n",
-		(int)EntityNames::weaponNames.size(), (int)EntityNames::ammoParms.size());
+	LOG_INFO("[entity_names] loaded {} weapon names\n",
+		(int)EntityNames::weaponNames.size());
 	return {};
 }
 
@@ -194,8 +185,10 @@ int EntityNames::lookupParm(int eType, int eSubType, const std::string& name) {
 	if (eType == Enums::ET_ITEM || eType == Enums::ET_MONSTERBLOCK_ITEM) {
 		if (eSubType == Enums::ITEM_WEAPON)
 			return lookupInMap(weaponNames, name, 0);
-		if (eSubType == Enums::ITEM_AMMO)
-			return lookupInMap(ammoParms, name, 0);
+		if (eSubType == Enums::ITEM_AMMO) {
+			int idx = ItemDefs::getAmmoIndex(name);
+			return idx >= 0 ? idx : 0;
+		}
 		if (eSubType == Enums::ITEM_CONSUMABLE)
 			return lookupInMap(inventoryParms, name, 0);
 	}
@@ -215,7 +208,7 @@ std::string EntityNames::weaponFromIndex(int index) {
 
 std::pair<int, int> EntityNames::resolveDropName(const std::string& name) {
 	if (name == "trinket") return {6, 0};
-	if (auto it = ammoParms.find(name); it != ammoParms.end())
+	if (auto it = ItemDefs::ammoNameToIndex.find(name); it != ItemDefs::ammoNameToIndex.end())
 		return {Enums::ITEM_AMMO, it->second};
 	if (auto it = inventoryParms.find(name); it != inventoryParms.end())
 		return {Enums::ITEM_CONSUMABLE, it->second};

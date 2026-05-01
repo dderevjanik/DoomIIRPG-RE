@@ -774,11 +774,3 @@ weapons:
     projectile: bfg
     shots: 1
     shot_hold: 30
-ammo_parms:
-  none: 0
-  bullets: 1
-  shells: 2
-  holy_water: 3
-  cells: 4
-  rockets: 5
-  soul_cube: 6

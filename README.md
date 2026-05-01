@@ -94,7 +94,7 @@ The project is a game engine for classic mobile RPG formats, written in C++17:
 - **UI/Menu**: MenuSystem, Hud, Button (menu and HUD rendering)
 - **Audio**: Sound (OpenAL-based, 10 concurrent channels)
 - **Input**: Input (keyboard, mouse, and gamepad)
-- **Data**: Resource, VFS, ZipFile, JavaStream (asset loading)
+- **Data**: Resource, VFS, ZipFile, BinaryStream (asset loading)
 - **Minigames**: HackingGame, SentryBotGame, VendingMachine, ComicBook
 
 See [docs/d2-rpg/](docs/d2-rpg/) for Doom 2 RPG binary format specs and [docs/d1-rpg/](docs/d1-rpg/) for Doom 1 RPG format specs.

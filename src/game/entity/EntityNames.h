@@ -13,7 +13,6 @@ class EntityNames {
 	static std::unordered_map<std::string, int> doorSubtypes;
 	static std::unordered_map<std::string, int> decorSubtypes;
 	static std::unordered_map<std::string, int> weaponNames;
-	static std::unordered_map<std::string, int> ammoParms;
 	static std::unordered_map<std::string, int> inventoryParms;
 
 	// Index-to-name for reverse lookups (entity types, weapon names)
@@ -22,7 +21,7 @@ class EntityNames {
 
 	// Parse entity type/subtype names from a DataNode (called by ResourceManager)
 	static std::expected<void, std::string> parseTypes(const class DataNode& config);
-	// Parse weapon names and ammo parms from a DataNode (called by ResourceManager)
+	// Parse weapon names from a DataNode (called by ResourceManager)
 	static std::expected<void, std::string> parseWeapons(const class DataNode& config);
 
 	// Entity type lookups
