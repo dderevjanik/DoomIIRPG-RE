@@ -128,7 +128,8 @@ entities:
         idle: zombie_active
         pain: monster_pain
         death: zombie_death1
-      blood_color: '#E901A6'
+      blood:
+        color: '#E901A6'
       loot:
         drop: uac_credit
         quantity: 1-3
@@ -172,7 +173,8 @@ entities:
         idle: zombie_active
         pain: monster_pain
         death: zombie_death1
-      blood_color: '#E901A6'
+      blood:
+        color: '#E901A6'
       loot:
         drop: uac_credit
         quantity: 3-7
@@ -216,7 +218,8 @@ entities:
         idle: zombie_active
         pain: monster_pain
         death: zombie_death1
-      blood_color: '#E901A6'
+      blood:
+        color: '#E901A6'
       loot:
         drop: uac_credit
         quantity: 5-12
@@ -262,7 +265,8 @@ entities:
         idle: imp_active
         pain: monster_pain
         death: imp_death1
-      blood_color: '#92F59A'
+      blood:
+        color: '#92F59A'
       loot:
         drop: trinket
         trinket: "Pock-et Lint"
@@ -308,7 +312,8 @@ entities:
         idle: imp_active
         pain: monster_pain
         death: imp_death1
-      blood_color: '#92F59A'
+      blood:
+        color: '#92F59A'
       loot:
         drop: trinket
         trinket: "Hu-man Fin-ger"
@@ -354,7 +359,8 @@ entities:
         idle: imp_active
         pain: monster_pain
         death: imp_death1
-      blood_color: '#92F59A'
+      blood:
+        color: '#92F59A'
       loot:
         drop: trinket
         trinket: "Rub-ber Ducky"
@@ -410,7 +416,8 @@ entities:
         idle: imp_active
         pain: chainsawgoblin_pain
         death: chainsawgoblin_death
-      blood_color: '#27565A'
+      blood:
+        color: '#27565A'
       loot:
         drop: trinket
         trinket: "Ac-tion Fig-ure"
@@ -466,7 +473,8 @@ entities:
         idle: imp_active
         pain: chainsawgoblin_pain
         death: chainsawgoblin_death
-      blood_color: '#27565A'
+      blood:
+        color: '#27565A'
       loot:
         drop: trinket
         trinket: "Dead Bat-tery"
@@ -522,7 +530,8 @@ entities:
         idle: imp_active
         pain: chainsawgoblin_pain
         death: chainsawgoblin_death
-      blood_color: '#27565A'
+      blood:
+        color: '#27565A'
       loot:
         drop: trinket
         trinket: "Hu-man Ear"
@@ -573,7 +582,8 @@ entities:
         idle: demon_active
         pain: demon_pain
         death: fireball_impact
-      blood_color: '#BC77AF'
+      blood:
+        color: '#BC77AF'
       loot:
         drop: trinket
         trinket: "Pu-trid En-trails"
@@ -624,7 +634,8 @@ entities:
         idle: demon_active
         pain: demon_pain
         death: fireball_impact
-      blood_color: '#BC77AF'
+      blood:
+        color: '#BC77AF'
       loot:
         drop: trinket
         trinket: "Fried Cir-cui-try"
@@ -675,7 +686,8 @@ entities:
         idle: demon_active
         pain: demon_pain
         death: fireball_impact
-      blood_color: '#BC77AF'
+      blood:
+        color: '#BC77AF'
       loot:
         drop: trinket
         trinket: "Bag of Bone Frag-ments"
@@ -723,7 +735,8 @@ entities:
         idle: demon_active
         pain: demon_pain
         death: pinky_death
-      blood_color: '#7A7A3A'
+      blood:
+        color: '#7A7A3A'
       loot:
         drop: trinket
         trinket: "Hu-man Ashes"
@@ -770,7 +783,8 @@ entities:
         idle: demon_active
         pain: demon_pain
         death: pinky_death
-      blood_color: '#7A7A3A'
+      blood:
+        color: '#7A7A3A'
       loot:
         drop: trinket
         trinket: "Bot-tle Open-er"
@@ -817,7 +831,8 @@ entities:
         idle: demon_active
         pain: demon_pain
         death: pinky_death
-      blood_color: '#7A7A3A'
+      blood:
+        color: '#7A7A3A'
       loot:
         drop: trinket
         trinket: "Green Goo"

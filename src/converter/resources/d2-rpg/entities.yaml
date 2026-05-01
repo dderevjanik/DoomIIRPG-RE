@@ -757,7 +757,8 @@ entities:
         idle: zombie_active
         pain: monster_pain
         death: zombie_death1
-      blood_color: '#E901A6'
+      blood:
+        color: '#E901A6'
   zombie_parm1:
     sprite: monster_zombie2
     type: monster
@@ -794,7 +795,8 @@ entities:
         idle: zombie_active
         pain: monster_pain
         death: zombie_death1
-      blood_color: '#E901A6'
+      blood:
+        color: '#E901A6'
   zombie_parm2:
     sprite: monster_zombie3
     type: monster
@@ -831,7 +833,8 @@ entities:
         idle: zombie_active
         pain: monster_pain
         death: zombie_death1
-      blood_color: '#E901A6'
+      blood:
+        color: '#E901A6'
   imp_parm0:
     sprite: monster_imp
     type: monster
@@ -872,7 +875,8 @@ entities:
         idle: imp_active
         pain: monster_pain
         death: imp_death1
-      blood_color: '#92F59A'
+      blood:
+        color: '#92F59A'
   imp_parm1:
     sprite: monster_imp2
     type: monster
@@ -913,7 +917,8 @@ entities:
         idle: imp_active
         pain: monster_pain
         death: imp_death1
-      blood_color: '#92F59A'
+      blood:
+        color: '#92F59A'
   imp_parm2:
     sprite: monster_imp3
     type: monster
@@ -954,7 +959,8 @@ entities:
         idle: imp_active
         pain: monster_pain
         death: imp_death1
-      blood_color: '#92F59A'
+      blood:
+        color: '#92F59A'
   sawcubus_parm0:
     sprite: monster_saw_goblin
     type: monster
@@ -1003,7 +1009,8 @@ entities:
         idle: imp_active
         pain: chainsawgoblin_pain
         death: chainsawgoblin_death
-      blood_color: '#27565A'
+      blood:
+        color: '#27565A'
   sawcubus_parm1:
     sprite: monster_saw_goblin2
     type: monster
@@ -1052,7 +1059,8 @@ entities:
         idle: imp_active
         pain: chainsawgoblin_pain
         death: chainsawgoblin_death
-      blood_color: '#27565A'
+      blood:
+        color: '#27565A'
   sawcubus_parm2:
     sprite: monster_saw_goblin3
     type: monster
@@ -1101,7 +1109,8 @@ entities:
         idle: imp_active
         pain: chainsawgoblin_pain
         death: chainsawgoblin_death
-      blood_color: '#27565A'
+      blood:
+        color: '#27565A'
   lost_soul_parm0:
     sprite: monster_lost_soul
     type: monster
@@ -1143,7 +1152,8 @@ entities:
         idle: demon_active
         pain: demon_pain
         death: fireball_impact
-      blood_color: '#BC77AF'
+      blood:
+        color: '#BC77AF'
   lost_soul_parm1:
     sprite: monster_lost_soul2
     type: monster
@@ -1185,7 +1195,8 @@ entities:
         idle: demon_active
         pain: demon_pain
         death: fireball_impact
-      blood_color: '#BC77AF'
+      blood:
+        color: '#BC77AF'
   lost_soul_parm2:
     sprite: monster_lost_soul3
     type: monster
@@ -1227,7 +1238,8 @@ entities:
         idle: demon_active
         pain: demon_pain
         death: fireball_impact
-      blood_color: '#BC77AF'
+      blood:
+        color: '#BC77AF'
   pinky_parm0:
     sprite: monster_pinky
     type: monster
@@ -1267,7 +1279,8 @@ entities:
         idle: demon_active
         pain: demon_pain
         death: pinky_death
-      blood_color: '#7A7A3A'
+      blood:
+        color: '#7A7A3A'
   pinky_parm1:
     sprite: monster_pinky2
     type: monster
@@ -1307,7 +1320,8 @@ entities:
         idle: demon_active
         pain: demon_pain
         death: pinky_death
-      blood_color: '#7A7A3A'
+      blood:
+        color: '#7A7A3A'
   pinky_parm2:
     sprite: monster_pinky3
     type: monster
@@ -1347,7 +1361,8 @@ entities:
         idle: demon_active
         pain: demon_pain
         death: pinky_death
-      blood_color: '#7A7A3A'
+      blood:
+        color: '#7A7A3A'
   revenant_parm0:
     sprite: monster_revenant
     type: monster

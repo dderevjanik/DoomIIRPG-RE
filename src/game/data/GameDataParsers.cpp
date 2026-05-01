@@ -1469,9 +1469,13 @@ std::expected<void, std::string> parseMonsterCombatFromEntities(Applet* app, con
 			}
 		}
 
-		// Blood color
-		DataNode bc = combat["blood_color"];
-		if (bc) {
+		DataNode blood = combat["blood"];
+		if (blood) {
+			DataNode bc = blood["color"];
+			if (!bc) {
+				return std::unexpected("monster '" + eit.key().asString() +
+				                       "': blood block requires a 'color' field");
+			}
 			std::string hex = bc.asString("");
 			if (hex.size() == 7 && hex[0] == '#') {
 				app->particleSystem->monsterColors[mi * 3 + 0] = (uint8_t)std::stoi(hex.substr(1, 2), nullptr, 16);
