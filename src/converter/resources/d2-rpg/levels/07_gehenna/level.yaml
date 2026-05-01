@@ -1,7 +1,7 @@
 # Level configuration for gehenna
 
 name: gehenna
-map_id: 7
+id: 7
 intro:
   type: travel_map
   file: travel_map.yaml

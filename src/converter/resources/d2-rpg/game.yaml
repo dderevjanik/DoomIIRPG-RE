@@ -20,18 +20,10 @@ game:
     type: travel_map
     file: data/intro_camera.yaml
 
-  # Per-level directory mappings (map_id -> directory path)
-  levels:
-    1: levels/01_tycho
-    2: levels/02_cichus
-    3: levels/03_kepler
-    4: levels/04_uac_admin
-    5: levels/05_uac_labs
-    6: levels/06_uac_r_d
-    7: levels/07_gehenna
-    8: levels/08_abaddon
-    9: levels/09_vios
-    10: levels/10_test_map
+  # Levels are auto-discovered by scanning levels/*/level.yaml at startup.
+  # Each level.yaml may declare `id: <int>` to be addressable by the engine.
+  # Levels without `id:` are still on disk (editor-openable), just unreachable
+  # at runtime. Duplicate ids are a fatal error.
 
   # String tables — maps group index to YAML file path.
   # Modders can add/reorder groups or point to custom files.

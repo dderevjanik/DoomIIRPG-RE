@@ -1,7 +1,7 @@
 # Level configuration for kepler
 
 name: kepler
-map_id: 3
+id: 3
 intro:
   type: travel_map
   file: travel_map.yaml

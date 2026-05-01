@@ -1726,9 +1726,8 @@ bool EditorState::performSave() {
 		if (!r.ok) {
 			LOG_WARN("[editor] game.yaml update failed: {}\n", r.error);
 		} else {
-			LOG_INFO("[editor] game.yaml: level {} stringsGroup {} appended(level={} strings={})\n",
-			         project.mapId, r.stringsGroupIndex,
-			         r.levelAppended, r.stringsAppended);
+			LOG_INFO("[editor] game.yaml: level {} stringsGroup {} (appended={})\n",
+			         project.mapId, r.stringsGroupIndex, r.stringsAppended);
 		}
 	}
 

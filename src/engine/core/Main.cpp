@@ -5,6 +5,8 @@
 #include <string>
 #include <unistd.h>
 #include <climits>
+#include <algorithm>
+#include <filesystem>
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
 #endif
@@ -346,21 +348,54 @@ int main(int argc, char* args[]) {
 				}
 			}
 
-			// Parse per-level directory mappings
-			DataNode levelsNode = game["levels"];
-			if (levelsNode && levelsNode.isMap()) {
-				for (auto it = levelsNode.begin(); it != levelsNode.end(); ++it) {
-					int mapId = std::atoi(it.key().asString().c_str());
-					std::string dir = it.value().asString("");
-					if (!dir.empty() && mapId > 0) {
+			// Discover levels by scanning levels/*/level.yaml. Each level.yaml may
+			// declare `id: <int>`; ids are optional. id-bearing levels go into
+			// levelInfos so the runtime can address them by int id. Duplicate ids
+			// are a fatal error — fail loud at startup rather than silently
+			// shadowing a level. Levels without an id are still on disk and
+			// openable by editor tooling via direct file path; they're just not
+			// reachable through numeric lookups.
+			{
+				namespace fs = std::filesystem;
+				std::error_code ec;
+				fs::path levelsRoot{"levels"};
+				if (fs::is_directory(levelsRoot, ec)) {
+					std::vector<fs::directory_entry> dirs;
+					for (auto& e : fs::directory_iterator(levelsRoot, ec)) {
+						if (e.is_directory(ec)) dirs.push_back(e);
+					}
+					std::sort(dirs.begin(), dirs.end(),
+						[](const fs::directory_entry& a, const fs::directory_entry& b) {
+							return a.path().filename() < b.path().filename();
+						});
+					for (const auto& entry : dirs) {
+						std::string dir = entry.path().generic_string();
+						std::string cfgPath = dir + "/level.yaml";
+						DataNode levelCfg = DataNode::loadFile(cfgPath.c_str());
+						if (!levelCfg) continue;  // not a published level dir
+						DataNode idNode = levelCfg["id"];
+						if (!idNode) continue;  // id is optional — editor-only level
+						int mapId = idNode.asInt(-1);
+						if (mapId <= 0) {
+							LOG_ERROR("[main] {}: invalid id (must be > 0)\n", cfgPath);
+							return 1;
+						}
+						if (auto existing = gc.levelInfos.find(mapId); existing != gc.levelInfos.end()) {
+							LOG_ERROR("[main] Duplicate level id {} in '{}' "
+							          "(already claimed by '{}')\n",
+							          mapId, dir, existing->second.dir);
+							return 1;
+						}
 						LevelInfo info;
 						info.dir = dir;
 						info.mapFile = dir + "/map.bin";
 						info.modelFile = dir + "/model.bin";
-						info.configFile = dir + "/level.yaml";
+						info.configFile = cfgPath;
 						gc.levelInfos[mapId] = std::move(info);
 					}
 				}
+				LOG_INFO("[main] Discovered {} level(s) under '{}'\n",
+				         gc.levelInfos.size(), levelsRoot.generic_string());
 			}
 
 			gc.maxEntities = game["max_entities"].asInt(gc.maxEntities);

@@ -17,7 +17,7 @@ class Applet;
 class IGameModule;
 class ResourceManager;
 
-// Per-level info populated from game.yaml levels section
+// Per-level info populated by scanning levels/*/level.yaml at startup
 struct LevelInfo {
 	std::string dir;         // e.g. "levels/01_tycho"
 	std::string mapFile;     // e.g. "levels/01_tycho/map.bin"
@@ -43,7 +43,7 @@ struct GameConfig {
 	std::vector<int> noFogMaps;  // Map IDs where fog is disabled (e.g. outdoor maps)
 	std::vector<std::string> searchDirs;  // VFS search subdirectories for asset resolution
 	std::unordered_map<int, std::string> stringFiles;  // group index -> YAML file path (from game.yaml strings:)
-	std::flat_map<int, LevelInfo> levelInfos;  // map_id -> per-level paths
+	std::flat_map<int, LevelInfo> levelInfos;  // level id -> per-level paths
 	std::vector<std::string> entityFiles = {"entities.yaml"};  // entity definition files (from game.yaml entities:)
 
 	// Inventory/ammo capacity caps

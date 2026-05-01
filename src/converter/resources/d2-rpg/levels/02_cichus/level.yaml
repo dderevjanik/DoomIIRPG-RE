@@ -1,7 +1,7 @@
 # Level configuration for cichus
 
 name: cichus
-map_id: 2
+id: 2
 intro:
   type: travel_map
   file: travel_map.yaml

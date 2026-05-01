@@ -1,7 +1,7 @@
 # Level configuration for uac_admin
 
 name: uac_admin
-map_id: 4
+id: 4
 intro:
   type: travel_map
   file: travel_map.yaml

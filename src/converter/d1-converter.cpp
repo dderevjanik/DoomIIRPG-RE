@@ -227,7 +227,7 @@ static std::string generateLevelYaml(const BspToBin::Result& r, const D1LevelMap
 	std::string yaml;
 	yaml += "# D1RPG converted level: " + std::string(r.mapName) + "\n\n";
 	yaml += "name: " + std::string(lvl.levelDir) + "\n";
-	yaml += "map_id: " + std::to_string(lvl.mapId) + "\n\n";
+	yaml += "id: " + std::to_string(lvl.mapId) + "\n\n";
 
 	yaml += "player_spawn:\n";
 	yaml += "  x: " + std::to_string(spawnX) + "\n";

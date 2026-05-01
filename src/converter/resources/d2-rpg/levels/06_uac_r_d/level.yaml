@@ -1,7 +1,7 @@
 # Level configuration for uac_r_d
 
 name: uac_r_d
-map_id: 6
+id: 6
 intro:
   type: travel_map
   file: travel_map.yaml

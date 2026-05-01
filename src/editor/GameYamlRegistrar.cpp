@@ -73,17 +73,18 @@ SectionScan scanIntKeyedSection(const std::vector<std::string>& lines, int secti
 }  // namespace
 
 RegisterResult registerLevelInGameYaml(const std::string& gameYamlPath,
-                                       int mapId,
-                                       const std::string& levelDir,
+                                       int /*mapId*/,
+                                       const std::string& /*levelDir*/,
                                        const std::string& stringsPath)
 {
+	// Levels are auto-discovered from levels/*/level.yaml; nothing to register
+	// for the level itself. We only need to slot the per-level strings file
+	// into game.yaml `strings:` so it gets a stable group index.
 	RegisterResult r;
 	std::string content;
 	try { content = readFile(gameYamlPath); }
 	catch (const std::exception& e) { r.error = e.what(); return r; }
 
-	// Split into lines (preserving line endings would be ideal; for simplicity
-	// we split on '\n' and re-emit with '\n').
 	std::vector<std::string> lines;
 	{
 		std::istringstream ss(content);
@@ -91,22 +92,7 @@ RegisterResult registerLevelInGameYaml(const std::string& gameYamlPath,
 		while (std::getline(ss, ln)) lines.push_back(ln);
 	}
 
-	// --- levels: ---
-	int levelsLine = findSectionLine(lines, "levels");
-	if (levelsLine < 0) { r.error = "no `  levels:` section in " + gameYamlPath; return r; }
-	SectionScan levelsScan = scanIntKeyedSection(lines, levelsLine);
-	bool hasLevel = std::find(levelsScan.keys.begin(), levelsScan.keys.end(), mapId)
-	              != levelsScan.keys.end();
-	if (!hasLevel) {
-		std::string entry = "    " + std::to_string(mapId) + ": " + levelDir;
-		int insertAt = (levelsScan.lastEntryLine >= 0) ? levelsScan.lastEntryLine + 1
-		                                               : levelsLine + 1;
-		lines.insert(lines.begin() + insertAt, entry);
-		r.levelAppended = true;
-	}
-
 	// --- strings: ---  (indices are GROUP ids — pick max+1.)
-	// Re-scan because indices shifted if we inserted above.
 	int stringsLine = findSectionLine(lines, "strings");
 	if (stringsLine < 0) { r.error = "no `  strings:` section"; return r; }
 	SectionScan stringsScan = scanIntKeyedSection(lines, stringsLine);

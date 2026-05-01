@@ -1,7 +1,7 @@
 # Level configuration for uac_labs
 
 name: uac_labs
-map_id: 5
+id: 5
 intro:
   type: travel_map
   file: travel_map.yaml

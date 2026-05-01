@@ -1,7 +1,7 @@
 # Level configuration for vios
 
 name: vios
-map_id: 9
+id: 9
 intro:
   type: travel_map
   file: travel_map.yaml
