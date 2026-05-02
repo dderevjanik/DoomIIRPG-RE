@@ -226,13 +226,6 @@ void TinyGL::viewMtxMove(TGLVert* tglVert, int n, int n2, int n3) {
 	}
 }
 
-void TinyGL::drawModelVerts(TGLVert* array, int n) {
-	if ((app->render->renderMode & 0x1) == 0x0) {
-		return;
-	}
-	app->render->_gles->DrawModelVerts(std::span(array, n));
-}
-
 TGLVert* TinyGL::transform3DVerts(TGLVert* array, int n) {
 	const float* mvp = this->mvp;
 	for (int i = 0; i < n; ++i) {

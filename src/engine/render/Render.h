@@ -157,6 +157,15 @@ public:
 
 	int screenWidth = 0;
 	int screenHeight = 0;
+
+	// Texture-region state populated by Render::setupTexture and read by
+	// the sprite renderer. Moved here from TinyGL — they had nothing to
+	// do with the legacy Q-format pipeline; they're Render's bookkeeping.
+	int imageBounds[4] = {};
+	int sWidth = 0;
+	int tHeight = 0;
+	uint32_t textureBaseSize = 0;
+
 	int S_X = 0;
 	int S_Y = 0;
 	int S_Z = 0;

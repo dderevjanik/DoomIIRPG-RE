@@ -20,10 +20,6 @@ public:
     static constexpr int COLUMN_SCALE_INIT = INT_MAX;
 
     // External read/write surface — game / render code touches these.
-    int imageBounds[4] = {};
-    int sWidth = 0;
-    int tHeight = 0;
-    uint32_t textureBaseSize = 0;
     int screenWidth = 0;
     int* columnScale = nullptr;
     // 4x4 column-major matrices, regular float (no Q-format). Layout:
@@ -58,7 +54,6 @@ public:
     void resetViewPort();
     void setView(int viewX, int viewY, int viewZ, int viewYaw, int viewPitch, int viewRoll, int viewFov, int viewAspect);
     void viewMtxMove(TGLVert* tglVert, int n, int n2, int n3);
-    void drawModelVerts(TGLVert* array, int n);
     TGLVert* transform3DVerts(TGLVert* array, int n);
     TGLVert* transform2DVerts(TGLVert* array, int n);
     bool clipLine(TGLVert* array);

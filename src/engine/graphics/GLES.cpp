@@ -676,6 +676,11 @@ bool gles::DrawModelVerts(std::span<TGLVert> vertsSpan) {
 	TGLVert* verts = vertsSpan.data();
 	Vertex* immediate;
 
+	// Render-mode bit 0 is the "draw geometry" master switch; gating here
+	// (formerly in TinyGL::drawModelVerts) centralizes the check so the
+	// wrapper can disappear.
+	if ((this->render->renderMode & 0x1) == 0) return false;
+
 	if (this->isInit) {
 		if (!this->render->isSkyMap) {
 			if (numVerts > MAX_GLVERTS) {

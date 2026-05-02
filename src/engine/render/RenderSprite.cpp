@@ -132,19 +132,19 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 	}
 
 	this->setupTexture(tileNum, frame, renderMode, renderFlags);
-	int n11 = app->tinyGL->imageBounds[1] - app->tinyGL->imageBounds[0];
-	int n12 = app->tinyGL->imageBounds[3] - app->tinyGL->imageBounds[2];
-	int n13 = (app->tinyGL->imageBounds[0] << 10) / app->tinyGL->sWidth;
-	int n14 = (n11 << 10) / app->tinyGL->sWidth;
-	int n15 = ((app->tinyGL->tHeight - app->tinyGL->imageBounds[3]) << 10) / app->tinyGL->tHeight;
-	int n16 = (n12 << 10) / app->tinyGL->tHeight;
+	int n11 = app->render->imageBounds[1] - app->render->imageBounds[0];
+	int n12 = app->render->imageBounds[3] - app->render->imageBounds[2];
+	int n13 = (app->render->imageBounds[0] << 10) / app->render->sWidth;
+	int n14 = (n11 << 10) / app->render->sWidth;
+	int n15 = ((app->render->tHeight - app->render->imageBounds[3]) << 10) / app->render->tHeight;
+	int n16 = (n12 << 10) / app->render->tHeight;
 	if ((flags & (Enums::SPRITE_FLAG_FLAT | Enums::SPRITE_FLAGS_ORIENTED)) == 0x0) {
 		z -= 512;
 		int n17 = 0;
 		int n18 = 4;
 		int n19;
 		int n20;
-		if (0x0 != (flags & Enums::SPRITE_FLAG_TILE) || app->tinyGL->textureBaseSize == app->tinyGL->sWidth * app->tinyGL->tHeight) {
+		if (0x0 != (flags & Enums::SPRITE_FLAG_TILE) || app->render->textureBaseSize == app->render->sWidth * app->render->tHeight) {
 			n19 = ((((n11 >> 2) << 4) + 7) * scaleFactor) / 0x10000;
 			n20 = ((((n12 >> 1) << 4) + 7) * scaleFactor) / 0x10000;
 		} else {
@@ -173,7 +173,7 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 			app->tinyGL->viewMtxMove(tglVert, 0, (n22 * 2 - 1) * n19, n21 * n20);
 		}
 
-		if (0x0 != (flags & Enums::SPRITE_FLAG_TILE) || app->tinyGL->textureBaseSize == app->tinyGL->sWidth * app->tinyGL->tHeight) {
+		if (0x0 != (flags & Enums::SPRITE_FLAG_TILE) || app->render->textureBaseSize == app->render->sWidth * app->render->tHeight) {
 			// B3.4: feed world-space verts straight to the GPU; worldShader's
 			// MVP handles projection and the hardware clipper handles partial
 			// frustum overlap. Replaces the legacy CPU path
@@ -207,12 +207,12 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 		} else if ((flags & Enums::SPRITE_FLAG_SOUTH) != 0x0) {
 			n23 = 6;
 		}
-		if ((app->tinyGL->textureBaseSize == app->tinyGL->sWidth * app->tinyGL->tHeight) ||
+		if ((app->render->textureBaseSize == app->render->sWidth * app->render->tHeight) ||
 		    (tileNum == TILE_CLOSED_PORTAL_EYE) || (tileNum == TILE_EYE_PORTAL) ||
 		    (tileNum == TILE_PORTAL_SOCKET)) {
 			int n24;
 			int n25;
-			if (app->tinyGL->tHeight == 256 && app->tinyGL->sWidth == 256) {
+			if (app->render->tHeight == 256 && app->render->sWidth == 256) {
 				n24 = 64;
 				n25 = 32;
 			} else {
@@ -222,7 +222,7 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 			int n26 = n24 * scaleFactor / 65536;
 			int n27 = n25 * scaleFactor / 65536;
 			if ((flags & Enums::SPRITE_FLAG_FLAT) == 0x0) {
-				z += app->tinyGL->tHeight - app->tinyGL->imageBounds[3] << 4;
+				z += app->render->tHeight - app->render->imageBounds[3] << 4;
 				z -= 16 * (scaleFactor / 2048);
 			} else {
 				z -= 512;
@@ -288,7 +288,7 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 					}
 					z += n36;
 					n15 += n35;
-					app->tinyGL->drawModelVerts(app->tinyGL->mv, 4);
+					app->render->_gles->DrawModelVerts(std::span(app->tinyGL->mv, 4));
 				}
 			} else if ((flags & Enums::SPRITE_FLAG_FLAT) == 0x0) { // Wall
 				for (int l = 0; l < 4; ++l) {
@@ -302,7 +302,7 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 					tglVert4->s = n13 + n43 * n14;
 					tglVert4->t = n15 + n42 * n16;
 				}
-				app->tinyGL->drawModelVerts(app->tinyGL->mv, 4);
+				app->render->_gles->DrawModelVerts(std::span(app->tinyGL->mv, 4));
 			} else { // Plane
 				for (int n45 = 0; n45 < 4; n45++) {
 					int n46 = (n45 & 0x2) >> 1;
@@ -322,7 +322,7 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 							tglVert5->t += (app->time / spriteProps->texAnim.tDivisor & spriteProps->texAnim.mask);
 					}
 				}
-				app->tinyGL->drawModelVerts(app->tinyGL->mv, 4);
+				app->render->_gles->DrawModelVerts(std::span(app->tinyGL->mv, 4));
 			}
 		}
 	}
@@ -544,12 +544,12 @@ void Render::renderStreamSprite(int n) {
 		n14 = -Applet::IOS_HEIGHT;
 	}
 	this->setupTexture(n4, n5, n6, 0);
-	int n27 = app->tinyGL->imageBounds[1] - app->tinyGL->imageBounds[0];
-	int n28 = app->tinyGL->imageBounds[3] - app->tinyGL->imageBounds[2];
-	int n29 = (app->tinyGL->imageBounds[0] << 10) / app->tinyGL->sWidth;
-	int n30 = (n27 << 10) / app->tinyGL->sWidth;
-	int n31 = (app->tinyGL->tHeight - app->tinyGL->imageBounds[3] << 10) / app->tinyGL->tHeight;
-	int n32 = (n28 << 10) / app->tinyGL->tHeight * 3;
+	int n27 = app->render->imageBounds[1] - app->render->imageBounds[0];
+	int n28 = app->render->imageBounds[3] - app->render->imageBounds[2];
+	int n29 = (app->render->imageBounds[0] << 10) / app->render->sWidth;
+	int n30 = (n27 << 10) / app->render->sWidth;
+	int n31 = (app->render->tHeight - app->render->imageBounds[3] << 10) / app->render->tHeight;
+	int n32 = (n28 << 10) / app->render->tHeight * 3;
 	int n33 = ((n27 / 2) << 4) * n7 / 65536;
 	int n34 = ((n27 / 2) << 4) * n7 / 65536;
 
@@ -569,7 +569,7 @@ void Render::renderStreamSprite(int n) {
 	mv[3].t = mv[2].t = n36 + n32;
 
 	if (!this->renderStreamSpriteGL(app->tinyGL->mv, 4)) { // [GEC]
-		app->tinyGL->drawModelVerts(app->tinyGL->mv, 4);
+		app->render->_gles->DrawModelVerts(std::span(app->tinyGL->mv, 4));
 	}
 }
 

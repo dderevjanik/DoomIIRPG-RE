@@ -333,7 +333,7 @@ void Render::drawNodeGeometry(short n) {
 					app->tinyGL->mv[3].t = app->tinyGL->mv[0].t;
 				}
 			}
-			app->tinyGL->drawModelVerts(app->tinyGL->mv, numVerts);
+			app->render->_gles->DrawModelVerts(std::span(app->tinyGL->mv, numVerts));
 		}
 	}
 }

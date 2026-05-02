@@ -118,28 +118,28 @@ void Render::setupTexture(int n, int n2, int renderMode, int renderFlags) {
 	int n5;
 	int n6;
 	if (n == TILE_SKY_BOX) {
-		app->tinyGL->textureBaseSize = 256 * 256;
+		this->textureBaseSize = 256 * 256;
 		this->isSkyMap = true;
 		n5 = 8;
 		n6 = 8;
 	} else {
-		app->tinyGL->textureBaseSize = this->mediaTexelSizes2[this->mediaTexelSizes[n4] & 0x3FFF];
+		this->textureBaseSize = this->mediaTexelSizes2[this->mediaTexelSizes[n4] & 0x3FFF];
 
 		uint8_t b = this->mediaDimensions[n4];
 		n6 = (b >> 4 & 0xF);
 		n5 = (b & 0xF);
-		app->tinyGL->imageBounds[0] = (uint16_t)(this->mediaBounds[(n4 << 2) + 0] & 0xFFF);
-		app->tinyGL->imageBounds[1] = (uint16_t)(this->mediaBounds[(n4 << 2) + 1] & 0xFFF);
-		app->tinyGL->imageBounds[2] = (uint16_t)(this->mediaBounds[(n4 << 2) + 2] & 0xFFF);
-		app->tinyGL->imageBounds[3] = (uint16_t)(this->mediaBounds[(n4 << 2) + 3] & 0xFFF);
+		this->imageBounds[0] = (uint16_t)(this->mediaBounds[(n4 << 2) + 0] & 0xFFF);
+		this->imageBounds[1] = (uint16_t)(this->mediaBounds[(n4 << 2) + 1] & 0xFFF);
+		this->imageBounds[2] = (uint16_t)(this->mediaBounds[(n4 << 2) + 2] & 0xFFF);
+		this->imageBounds[3] = (uint16_t)(this->mediaBounds[(n4 << 2) + 3] & 0xFFF);
 		this->isSkyMap = false;
 	}
-	app->tinyGL->sWidth = 1 << n6;
-	app->tinyGL->tHeight = 1 << n5;
+	this->sWidth = 1 << n6;
+	this->tHeight = 1 << n5;
 	// Mirror sprite-tile dimensions onto gles for DrawWorldSpaceSpriteLine
 	// UV scaling (single-writer decoupling toward dropping gles → tinyGL).
-	this->_gles->spriteSWidth = app->tinyGL->sWidth;
-	this->_gles->spriteTHeight = app->tinyGL->tHeight;
+	this->_gles->spriteSWidth = this->sWidth;
+	this->_gles->spriteTHeight = this->tHeight;
 }
 
 void Render::unlinkSprite(int n) {
