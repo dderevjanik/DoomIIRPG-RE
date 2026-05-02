@@ -24,11 +24,11 @@
 #include "EventBus.h"
 #include "GameEvents.h"
 
-bool Player::addHealth(int i) {
-	return this->addHealth(i, true);
+bool Player::addHealth(int amount) {
+	return this->addHealth(amount, true);
 }
 
-bool Player::addHealth(int i, bool b) {
+bool Player::addHealth(int amount, bool announce) {
 
 
 	app->hud->repaintFlags |= 0x4;
@@ -41,7 +41,7 @@ bool Player::addHealth(int i, bool b) {
 		stat = this->ce->getStat(Enums::STAT_HEALTH);
 		stat2 = this->ce->getStat(Enums::STAT_MAX_HEALTH);
 	}
-	if (i > 0) {
+	if (amount > 0) {
 		if (stat == stat2) {
 			return false;
 		}
@@ -49,39 +49,39 @@ bool Player::addHealth(int i, bool b) {
 		return false;
 	}
 	if (this->isFamiliar) {
-		this->ammo[app->combat->familiarAmmoType] = (short)std::max(0, this->ammo[app->combat->familiarAmmoType] + i);
+		this->ammo[app->combat->familiarAmmoType] = (short)std::max(0, this->ammo[app->combat->familiarAmmoType] + amount);
 	} else {
 		app->hud->playerStartHealth = stat;
-		this->ce->addStat(Enums::STAT_HEALTH, i);
+		this->ce->addStat(Enums::STAT_HEALTH, amount);
 	}
-	int n2 = this->isFamiliar ? this->ammo[app->combat->familiarAmmoType] : this->ce->getStat(Enums::STAT_HEALTH);
-	if (b && n2 > stat) {
+	int newHealth = this->isFamiliar ? this->ammo[app->combat->familiarAmmoType] : this->ce->getStat(Enums::STAT_HEALTH);
+	if (announce && newHealth > stat) {
 		app->localization->resetTextArgs();
-		app->localization->addTextArg(n2 - stat);
+		app->localization->addTextArg(newHealth - stat);
 		app->hud->addMessage((short)111);
 	}
 	if (!this->isFamiliar) {
-		if (i > 0) {
-			app->eventBus->emit(PlayerHealEvent{i, stat, n2});
-		} else if (i < 0) {
-			app->eventBus->emit(PlayerDamageEvent{-i, nullptr, stat, n2});
+		if (amount > 0) {
+			app->eventBus->emit(PlayerHealEvent{amount, stat, newHealth});
+		} else if (amount < 0) {
+			app->eventBus->emit(PlayerDamageEvent{-amount, nullptr, stat, newHealth});
 		}
 	}
 	return true;
 }
 
-bool Player::addArmor(int n) {
+bool Player::addArmor(int amount) {
 
 
 	int stat = this->ce->getStat(2);
-	if (stat >= this->gameConfig->capArmor && n > 0) {
+	if (stat >= this->gameConfig->capArmor && amount > 0) {
 		return false;
 	}
-	if (n < 0 && this->god) {
+	if (amount < 0 && this->god) {
 		return false;
 	}
 	app->hud->repaintFlags |= 0x4;
-	this->ce->setStat(Enums::STAT_ARMOR, std::max(0, std::min(this->gameConfig->capArmor, stat + n)));
+	this->ce->setStat(Enums::STAT_ARMOR, std::max(0, std::min(this->gameConfig->capArmor, stat + amount)));
 	return true;
 }
 
@@ -126,7 +126,7 @@ int Player::calcDamageDir(int x1, int y1, int angle, int x2, int y2) {
 	return dir;
 }
 
-void Player::painEvent(Entity* entity, bool b) {
+void Player::painEvent(Entity* entity, bool fromMonster) {
 
 
 	if (entity == nullptr) {
@@ -144,51 +144,51 @@ void Player::painEvent(Entity* entity, bool b) {
 	}
 
 	app->hud->damageCount = 1;
-	if (!b) {
+	if (!fromMonster) {
 		app->canvas->startShake(500, 2, 150);
 	} else { // [GEC] Damage From Monster
 		app->canvas->startShake(0, 0, 150);
 	}
 }
 
-void Player::pain(int n, Entity* entity, bool b) {
+void Player::pain(int damage, Entity* entity, bool announce) {
 
-	LOG_INFO("[player] pain: dmg={} hp={}/{}\n", n, this->ce->getStat(Enums::STAT_HEALTH), this->ce->getStat(Enums::STAT_MAX_HEALTH));
+	LOG_INFO("[player] pain: dmg={} hp={}/{}\n", damage, this->ce->getStat(Enums::STAT_HEALTH), this->ce->getStat(Enums::STAT_MAX_HEALTH));
 	if (this->god) {
 		return;
 	}
-	if (b) {
+	if (announce) {
 		app->localization->resetTextArgs();
 		if (entity != nullptr) {
 			Text* smallBuffer = app->localization->getSmallBuffer();
 			app->localization->composeText((short)1, (short)(entity->def->name & 0x3FF), smallBuffer);
 			app->localization->addTextArg(smallBuffer);
-			app->localization->addTextArg(n);
+			app->localization->addTextArg(damage);
 			app->hud->addMessage((short)0, (short)112);
 			smallBuffer->dispose();
 		} else {
-			app->localization->addTextArg(n);
+			app->localization->addTextArg(damage);
 			app->hud->addMessage((short)0, (short)71);
 		}
 	}
-	if (n == 0) {
+	if (damage == 0) {
 		return;
 	}
 	if (this->isFamiliar) {
-		this->addHealth(-n);
+		this->addHealth(-damage);
 	} else {
 		int stat = this->ce->getStat(Enums::STAT_HEALTH);
-		if (n >= stat && this->noDeathFlag) {
-			n = stat - 1;
+		if (damage >= stat && this->noDeathFlag) {
+			damage = stat - 1;
 		}
-		int n2 = (stat << 16) / (this->ce->getStat(Enums::STAT_MAX_HEALTH) << 8);
-		int n3 = (stat - n << 16) / (this->ce->getStat(Enums::STAT_MAX_HEALTH) << 8);
-		if (n3 > 0) {
-			if (n2 > 26 && n3 <= 26) {
+		int oldHealthFrac = (stat << 16) / (this->ce->getStat(Enums::STAT_MAX_HEALTH) << 8);
+		int newHealthFrac = (stat - damage << 16) / (this->ce->getStat(Enums::STAT_MAX_HEALTH) << 8);
+		if (newHealthFrac > 0) {
+			if (oldHealthFrac > 26 && newHealthFrac <= 26) {
 				app->hud->addMessage((short)113, 3);
-			} else if (n2 > 78 && n3 <= 78) {
+			} else if (oldHealthFrac > 78 && newHealthFrac <= 78) {
 				app->hud->addMessage((short)114, 3);
-			} else if (n2 > 128 && n3 <= 128 && (this->helpBitmask & 0xC00) == 0x0) {
+			} else if (oldHealthFrac > 128 && newHealthFrac <= 128 && (this->helpBitmask & 0xC00) == 0x0) {
 				if (this->inventory[17] != 0 || this->inventory[16] != 0) {
 					this->showHelp((short)10, true);
 				} else {
@@ -196,7 +196,7 @@ void Player::pain(int n, Entity* entity, bool b) {
 				}
 			}
 		}
-		this->addHealth(-n);
+		this->addHealth(-damage);
 	}
 	if (app->canvas->state == Canvas::ST_AUTOMAP) {
 		app->canvas->setState(Canvas::ST_PLAYING);
@@ -229,7 +229,7 @@ void Player::died() {
 	app->game->combatMonsters = nullptr;
 }
 
-bool Player::fireWeapon(Entity* entity, int n, int n2) {
+bool Player::fireWeapon(Entity* entity, int attackX, int attackY) {
 
 
 	if (this->ce->weapon == Enums::WP_SOUL_CUBE && !entity->isMonster()) {
@@ -259,14 +259,14 @@ bool Player::fireWeapon(Entity* entity, int n, int n2) {
 		this->onWeaponKill(this->ce->weapon, false);
 	}
 
-	int weapon = this->ce->weapon * Combat::WEAPON_MAX_FIELDS;
-	if (app->combat->weapons[weapon + Combat::WEAPON_FIELD_AMMOTYPE] != 0) {
-		short n4 = this->ammo[app->combat->weapons[weapon + Combat::WEAPON_FIELD_AMMOTYPE]];
-		if (app->combat->weapons[weapon + Combat::WEAPON_FIELD_AMMOUSAGE] > 0 &&
-		    (n4 - app->combat->weapons[weapon + Combat::WEAPON_FIELD_AMMOUSAGE]) < 0) {
+	int weaponFieldOffset = this->ce->weapon * Combat::WEAPON_MAX_FIELDS;
+	if (app->combat->weapons[weaponFieldOffset + Combat::WEAPON_FIELD_AMMOTYPE] != 0) {
+		short currentAmmo = this->ammo[app->combat->weapons[weaponFieldOffset + Combat::WEAPON_FIELD_AMMOTYPE]];
+		if (app->combat->weapons[weaponFieldOffset + Combat::WEAPON_FIELD_AMMOUSAGE] > 0 &&
+		    (currentAmmo - app->combat->weapons[weaponFieldOffset + Combat::WEAPON_FIELD_AMMOUSAGE]) < 0) {
 			if (this->ce->weapon == Enums::WP_SOUL_CUBE) {
 				app->hud->addMessage((short)117, 3);
-			} else if (n4 == 0) {
+			} else if (currentAmmo == 0) {
 				app->hud->addMessage((short)115, 3);
 			} else {
 				app->hud->addMessage((short)116, 3);
@@ -274,7 +274,7 @@ bool Player::fireWeapon(Entity* entity, int n, int n2) {
 			return false;
 		}
 	}
-	app->combat->performAttack(nullptr, entity, n, n2, false);
+	app->combat->performAttack(nullptr, entity, attackX, attackY, false);
 	return true;
 }
 

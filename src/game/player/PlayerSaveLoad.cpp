@@ -72,34 +72,34 @@ bool Player::loadState(InputStream* IS) {
 	}
 	this->numStatusEffects = IS->readByte();
 	if (this->numStatusEffects == 0) {
-		for (int n3 = 0; n3 < 18; ++n3) {
-			this->statusEffects[36 + n3] = 0;
-			this->statusEffects[0 + n3] = 0;
-			this->statusEffects[18 + n3] = 0;
+		for (int effectIdx = 0; effectIdx < 18; ++effectIdx) {
+			this->statusEffects[36 + effectIdx] = 0;
+			this->statusEffects[0 + effectIdx] = 0;
+			this->statusEffects[18 + effectIdx] = 0;
 		}
 	} else {
-		for (int n4 = 0; n4 < 18; ++n4) {
-			this->statusEffects[36 + n4] = IS->readShort();
-			this->statusEffects[0 + n4] = IS->readShort();
-			this->statusEffects[18 + n4] = IS->readShort();
+		for (int effectIdx = 0; effectIdx < 18; ++effectIdx) {
+			this->statusEffects[36 + effectIdx] = IS->readShort();
+			this->statusEffects[0 + effectIdx] = IS->readShort();
+			this->statusEffects[18 + effectIdx] = IS->readShort();
 		}
 	}
 	this->numStatusEffectsCopy = (this->isFamiliar ? IS->readByte() : 0);
 	if (this->numStatusEffectsCopy == 0) {
-		for (int n5 = 0; n5 < 18; ++n5) {
-			this->statusEffectsCopy[36 + n5] = 0;
-			this->statusEffectsCopy[0 + n5] = 0;
-			this->statusEffectsCopy[18 + n5] = 0;
+		for (int effectIdx = 0; effectIdx < 18; ++effectIdx) {
+			this->statusEffectsCopy[36 + effectIdx] = 0;
+			this->statusEffectsCopy[0 + effectIdx] = 0;
+			this->statusEffectsCopy[18 + effectIdx] = 0;
 		}
 	} else {
-		for (int n6 = 0; n6 < 18; ++n6) {
-			this->statusEffectsCopy[36 + n6] = IS->readShort();
-			this->statusEffectsCopy[0 + n6] = IS->readShort();
-			this->statusEffectsCopy[18 + n6] = IS->readShort();
+		for (int effectIdx = 0; effectIdx < 18; ++effectIdx) {
+			this->statusEffectsCopy[36 + effectIdx] = IS->readShort();
+			this->statusEffectsCopy[0 + effectIdx] = IS->readShort();
+			this->statusEffectsCopy[18 + effectIdx] = IS->readShort();
 		}
 	}
-	for (int n7 = 0; n7 < 8; ++n7) {
-		this->counters[n7] = IS->readInt();
+	for (int counterIdx = 0; counterIdx < 8; ++counterIdx) {
+		this->counters[counterIdx] = IS->readInt();
 	}
 	this->gameCompleted = IS->readBoolean();
 	this->translateStatusEffects();
@@ -155,24 +155,24 @@ bool Player::saveState(OutputStream* OS) {
 	}
 	OS->writeByte(this->numStatusEffects);
 	if (this->numStatusEffects != 0) {
-		for (int n3 = 0; n3 < 18; ++n3) {
-			OS->writeShort(this->statusEffects[36 + n3]);
-			OS->writeShort(this->statusEffects[0 + n3]);
-			OS->writeShort(this->statusEffects[18 + n3]);
+		for (int effectIdx = 0; effectIdx < 18; ++effectIdx) {
+			OS->writeShort(this->statusEffects[36 + effectIdx]);
+			OS->writeShort(this->statusEffects[0 + effectIdx]);
+			OS->writeShort(this->statusEffects[18 + effectIdx]);
 		}
 	}
 	if (this->isFamiliar) {
 		OS->writeByte(this->numStatusEffectsCopy);
 		if (this->numStatusEffectsCopy != 0) {
-			for (int n4 = 0; n4 < 18; ++n4) {
-				OS->writeShort(this->statusEffectsCopy[36 + n4]);
-				OS->writeShort(this->statusEffectsCopy[0 + n4]);
-				OS->writeShort(this->statusEffectsCopy[18 + n4]);
+			for (int effectIdx = 0; effectIdx < 18; ++effectIdx) {
+				OS->writeShort(this->statusEffectsCopy[36 + effectIdx]);
+				OS->writeShort(this->statusEffectsCopy[0 + effectIdx]);
+				OS->writeShort(this->statusEffectsCopy[18 + effectIdx]);
 			}
 		}
 	}
-	for (int n5 = 0; n5 < 8; ++n5) {
-		OS->writeInt(this->counters[n5]);
+	for (int counterIdx = 0; counterIdx < 8; ++counterIdx) {
+		OS->writeInt(this->counters[counterIdx]);
 	}
 	OS->writeBoolean(this->gameCompleted);
 	return true;
@@ -254,21 +254,21 @@ void Player::reset() {
 		this->buffs[15 + l] = (this->buffs[0 + l] = 0);
 	}
 	this->numStatusEffects = 0;
-	for (int n = 0; n < 18; ++n) {
-		this->statusEffects[0 + n] = 0;
-		this->statusEffects[18 + n] = 0;
-		this->statusEffects[36 + n] = 0;
+	for (int effectIdx = 0; effectIdx < 18; ++effectIdx) {
+		this->statusEffects[0 + effectIdx] = 0;
+		this->statusEffects[18 + effectIdx] = 0;
+		this->statusEffects[36 + effectIdx] = 0;
 	}
 	this->numbuffsCopy = 0;
-	for (int n6 = 0; n6 < 15; ++n6) {
-		this->buffsCopy[0 + n6] = 0;
-		this->buffsCopy[15 + n6] = 0;
+	for (int buffIdx = 0; buffIdx < 15; ++buffIdx) {
+		this->buffsCopy[0 + buffIdx] = 0;
+		this->buffsCopy[15 + buffIdx] = 0;
 	}
 	this->numStatusEffectsCopy = 0;
-	for (int n7 = 0; n7 < 18; ++n7) {
-		this->statusEffectsCopy[0 + n7] = 0;
-		this->statusEffectsCopy[18 + n7] = 0;
-		this->statusEffectsCopy[36 + n7] = 0;
+	for (int effectIdx = 0; effectIdx < 18; ++effectIdx) {
+		this->statusEffectsCopy[0 + effectIdx] = 0;
+		this->statusEffectsCopy[18 + effectIdx] = 0;
+		this->statusEffectsCopy[36 + effectIdx] = 0;
 	}
 	this->weapons = 0;
 	this->foundSecretsLevels = 0;
@@ -387,7 +387,7 @@ void Player::restoreInventory() {
 		app->game->angryVIOS = false;
 	} else {
 		int tpWpn = this->gameConfig->tpWeaponIdx;
-		bool b = (this->weaponsCopy & (1 << tpWpn)) != 0x0;
+		bool hadTpWeapon = (this->weaponsCopy & (1 << tpWpn)) != 0x0;
 		for (int i = 0; i < Enums::MAX_AMMO; ++i) {
 			this->ammo[i] = 0;
 			this->give(2, i, this->ammoCopy[i], true);
@@ -398,7 +398,7 @@ void Player::restoreInventory() {
 			}
 		}
 		this->forceRemoveFromScopeZoom();
-		if (!b) {
+		if (!hadTpWeapon) {
 			this->give(1, tpWpn, -1);
 		}
 		this->selectWeapon(this->currentWeaponCopy);

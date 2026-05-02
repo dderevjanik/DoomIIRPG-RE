@@ -45,38 +45,38 @@ void Player::translateStatusEffects() {
 
 	this->numbuffs = 0;
 	for (int j = 0; j < 18; j++) {
-		int n = this->statusEffects[0 + j];
-		int n2 = this->statusEffects[18 + j];
-		if (n != 0) {
-			if (n > 0) {
+		int duration = this->statusEffects[0 + j];
+		int amount = this->statusEffects[18 + j];
+		if (duration != 0) {
+			if (duration > 0) {
 				switch (j) {
 					case 14: {
-						this->buffs[20] -= (short)n2;
-						this->buffs[5] = (short)n;
-						this->buffs[19] -= (short)n2;
-						this->buffs[4] = (short)n;
+						this->buffs[20] -= (short)amount;
+						this->buffs[5] = (short)duration;
+						this->buffs[19] -= (short)amount;
+						this->buffs[4] = (short)duration;
 						this->buffs[29] -= (short)(this->statusEffects[36 + j] * 4);
-						this->buffs[14] = (short)n;
+						this->buffs[14] = (short)duration;
 						break;
 					}
 					case 15:
 					case 17: {
-						this->buffs[20] += (short)n2;
-						this->buffs[5] = (short)n;
-						this->buffs[19] += (short)n2;
-						this->buffs[4] = (short)n;
-						this->buffs[22] -= (short)(n2 + (n2 / 2));
-						this->buffs[7] = (short)n;
+						this->buffs[20] += (short)amount;
+						this->buffs[5] = (short)duration;
+						this->buffs[19] += (short)amount;
+						this->buffs[4] = (short)duration;
+						this->buffs[22] -= (short)(amount + (amount / 2));
+						this->buffs[7] = (short)duration;
 						break;
 					}
 					case 16: {
-						this->buffs[22] -= (short)n2;
-						this->buffs[7] = (short)n;
+						this->buffs[22] -= (short)amount;
+						this->buffs[7] = (short)duration;
 						break;
 					}
 					default: {
-						this->buffs[15 + j] += (short)n2;
-						this->buffs[0 + j] = (short)n;
+						this->buffs[15 + j] += (short)amount;
+						this->buffs[0 + j] = (short)duration;
 						break;
 					}
 				}
@@ -96,10 +96,10 @@ void Player::translateStatusEffects() {
 	this->updateStats();
 }
 
-void Player::removeStatusEffect(int n) {
+void Player::removeStatusEffect(int effectIdx) {
 
 
-	if (n == 18) {
+	if (effectIdx == 18) {
 		this->numStatusEffects = 0;
 		for (int i = 0; i < 18; i++) {
 			this->statusEffects[0 + i] = 0;
@@ -107,47 +107,47 @@ void Player::removeStatusEffect(int n) {
 			this->statusEffects[36 + i] = 0;
 		}
 	} else {
-		if (this->statusEffects[36 + n] == 0) {
+		if (this->statusEffects[36 + effectIdx] == 0) {
 			return;
 		}
 
-		if (n == 17) {
+		if (effectIdx == 17) {
 			app->render->startFogLerp(1, 0, 2000);
 		}
 
-		this->statusEffects[18 + n] = 0;
-		this->statusEffects[36 + n] = 0;
-		this->statusEffects[0 + n] = 0;
+		this->statusEffects[18 + effectIdx] = 0;
+		this->statusEffects[36 + effectIdx] = 0;
+		this->statusEffects[0 + effectIdx] = 0;
 		this->numStatusEffects--;
 	}
 	this->translateStatusEffects();
 }
 
-bool Player::addStatusEffect(int n, int n2, int n3) {
+bool Player::addStatusEffect(int effectIdx, int amount, int duration) {
 
 
 	if (this->isFamiliar) {
 		return false;
 	}
-	if (n >= 0 && n < 15 && this->buffBlockedBy[n] >= 0) {
-		if (this->buffs[this->buffBlockedBy[n]] > 0) {
+	if (effectIdx >= 0 && effectIdx < 15 && this->buffBlockedBy[effectIdx] >= 0) {
+		if (this->buffs[this->buffBlockedBy[effectIdx]] > 0) {
 			return false;
 		}
 	}
-	if (n >= 0 && n < 15 && this->buffApplySound[n] >= 0) {
-		app->sound->playSound(this->buffApplySound[n], 0, 3, false);
+	if (effectIdx >= 0 && effectIdx < 15 && this->buffApplySound[effectIdx] >= 0) {
+		app->sound->playSound(this->buffApplySound[effectIdx], 0, 3, false);
 	}
-	int n4 = this->statusEffects[36 + n] + 1;
-	int maxStacks = (n >= 0 && n < 15) ? this->buffMaxStacks[n] : 3;
-	if (n4 > maxStacks) {
-		if (n == 14) {
-			this->statusEffects[0 + n] = n3;
+	int newStacks = this->statusEffects[36 + effectIdx] + 1;
+	int maxStacks = (effectIdx >= 0 && effectIdx < 15) ? this->buffMaxStacks[effectIdx] : 3;
+	if (newStacks > maxStacks) {
+		if (effectIdx == 14) {
+			this->statusEffects[0 + effectIdx] = duration;
 		}
 		return false;
 	}
-	if (n4 == 1) {
+	if (newStacks == 1) {
 		this->numStatusEffects++;
-		if (n == 17) {
+		if (effectIdx == 17) {
 			app->tinyGL->fogMin = 0;
 			if (app->tinyGL->fogRange > 0) {
 				app->tinyGL->fogRange = -1;
@@ -155,34 +155,34 @@ bool Player::addStatusEffect(int n, int n2, int n3) {
 			app->render->startFogLerp(1024, 0, 2000);
 		}
 	}
-	this->statusEffects[18 + n] += n2;
-	this->statusEffects[0 + n] = n3;
-	this->statusEffects[36 + n] = n4;
+	this->statusEffects[18 + effectIdx] += amount;
+	this->statusEffects[0 + effectIdx] = duration;
+	this->statusEffects[36 + effectIdx] = newStacks;
 	return true;
 }
 
-void Player::drawStatusEffectIcon(Graphics* graphics, int n, int n2, int n3, int n4, int n5) {
+void Player::drawStatusEffectIcon(Graphics* graphics, int effectIdx, int amount, int duration, int x, int y) {
 
 
 	Text* smallBuffer = app->localization->getSmallBuffer();
 	smallBuffer->setLength(0);
-	if (n == 8) {
+	if (effectIdx == 8) {
 		smallBuffer->append('%');
-		smallBuffer->append(n2);
-	} else if ((1 << n & this->buffAmtNotDrawnMask) == 0x0) {
-		if (n2 >= 0) {
+		smallBuffer->append(amount);
+	} else if ((1 << effectIdx & this->buffAmtNotDrawnMask) == 0x0) {
+		if (amount >= 0) {
 			smallBuffer->append('+');
-			smallBuffer->append(n2);
+			smallBuffer->append(amount);
 		} else {
-			smallBuffer->append(n2);
+			smallBuffer->append(amount);
 		}
 	}
-	graphics->drawString(smallBuffer, n4, n5 + 2, 24);
-	graphics->drawBuffIcon(n, n4 + 3, n5 + 1, 0);
+	graphics->drawString(smallBuffer, x, y + 2, 24);
+	graphics->drawBuffIcon(effectIdx, x + 3, y + 1, 0);
 	if (app->time - this->turnTime < 600) {
 		smallBuffer->setLength(0);
-		smallBuffer->append(n3);
-		graphics->drawString(smallBuffer, n4 + 17, n5 + 2, 17);
+		smallBuffer->append(duration);
+		graphics->drawString(smallBuffer, x + 17, y + 2, 17);
 		app->canvas->forcePump = true;
 	}
 	smallBuffer->dispose();
@@ -193,51 +193,51 @@ void Player::drawBuffs(Graphics* graphics) {
 	if (this->numbuffs == 0 || app->canvas->state == Canvas::ST_DIALOG) {
 		return;
 	}
-	int n = app->canvas->viewRect[0] + app->canvas->viewRect[2];
-	int n2 = n - 32;
-	int n3 = app->canvas->viewRect[1] + 2;
-	int n4 = 0;
-	bool b = false;
+	int viewRight = app->canvas->viewRect[0] + app->canvas->viewRect[2];
+	int boxX = viewRight - 32;
+	int rowY = app->canvas->viewRect[1] + 2;
+	int drawnCount = 0;
+	bool hasOverflow = false;
 	int numbuffs = this->numbuffs;
 	if (numbuffs > 6) {
 		numbuffs = 6;
-		b = true;
+		hasOverflow = true;
 	}
-	int n5 = numbuffs * 31 + 6;
-	for (int n6 = 0; n6 < 15 && n4 < 6; ++n6) {
-		if (this->buffs[0 + n6] > 0 && (1 << n6 & this->buffAmtNotDrawnMask) == 0x0) {
-			if (this->buffs[15 + n6] > 99 || this->buffs[15 + n6] < -99) {
-				n2 = n - 73;
+	int boxHeight = numbuffs * 31 + 6;
+	for (int i = 0; i < 15 && drawnCount < 6; ++i) {
+		if (this->buffs[0 + i] > 0 && (1 << i & this->buffAmtNotDrawnMask) == 0x0) {
+			if (this->buffs[15 + i] > 99 || this->buffs[15 + i] < -99) {
+				boxX = viewRight - 73;
 				break;
 			}
-			if (this->buffs[15 + n6] > 9 || this->buffs[15 + n6] < -9) {
-				n2 = n - 65;
-			} else if (n2 == n - 32) {
-				n2 = n - 57;
+			if (this->buffs[15 + i] > 9 || this->buffs[15 + i] < -9) {
+				boxX = viewRight - 65;
+			} else if (boxX == viewRight - 32) {
+				boxX = viewRight - 57;
 			}
 		}
 	}
-	int n7 = n - n2 + 4;
-	if (b) {
-		n5 += 5;
+	int boxWidth = viewRight - boxX + 4;
+	if (hasOverflow) {
+		boxHeight += 5;
 	}
 	graphics->setColor(0);
-	graphics->fillRect(n2 - 5, n3 - 2, n7, n5);
+	graphics->fillRect(boxX - 5, rowY - 2, boxWidth, boxHeight);
 	graphics->setColor(0xFFAAAAAA);
-	graphics->drawRect(n2 - 5, n3 - 2, n7, n5);
-	int n8 = n - 36;
-	for (int n9 = 0; n9 < 15 && n4 < 6; ++n9) {
-		if (this->buffs[0 + n9] != 0) {
-			++n4;
-			this->drawStatusEffectIcon(graphics, n9, this->buffs[15 + n9], this->buffs[0 + n9], n8, n3);
-			n3 += 31;
+	graphics->drawRect(boxX - 5, rowY - 2, boxWidth, boxHeight);
+	int iconX = viewRight - 36;
+	for (int j = 0; j < 15 && drawnCount < 6; ++j) {
+		if (this->buffs[0 + j] != 0) {
+			++drawnCount;
+			this->drawStatusEffectIcon(graphics, j, this->buffs[15 + j], this->buffs[0 + j], iconX, rowY);
+			rowY += 31;
 		}
 	}
-	if (b) {
+	if (hasOverflow) {
 		Text* smallBuffer = app->localization->getSmallBuffer();
 		smallBuffer->setLength(0);
 		smallBuffer->append('\x85');
-		graphics->drawString(smallBuffer, n2 + n7 / 2 - 4, n3 - 4, 1);
+		graphics->drawString(smallBuffer, boxX + boxWidth / 2 - 4, rowY - 4, 1);
 		smallBuffer->dispose();
 	}
 }

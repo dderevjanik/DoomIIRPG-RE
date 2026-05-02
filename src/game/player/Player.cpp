@@ -71,7 +71,7 @@ void Player::advanceTurn() {
 	this->moves++;
 	this->totalMoves++;
 	this->updateStatusEffects();
-	bool b = false;
+	bool tookDamage = false;
 
 	if (this->buffs[this->regenBuffIdx] > 0) {
 		this->addHealth(this->buffs[15 + this->regenBuffIdx], false);
@@ -79,7 +79,7 @@ void Player::advanceTurn() {
 
 	if (this->statusEffects[53] > 0) {
 		this->addHealth(-this->statusEffects[35]);
-		b = true;
+		tookDamage = true;
 	}
 
 	if (this->statusEffects[this->fireBuffIdx] > 0) {
@@ -92,7 +92,7 @@ void Player::advanceTurn() {
 		app->localization->addTextArg(fireDmg);
 		app->localization->composeText(0, 71, text);
 		app->hud->finishMessageBuffer();
-		b = true;
+		tookDamage = true;
 	}
 
 	if (this->inCombat && this->totalMoves - this->lastCombatTurn >= this->gameConfig->outOfCombatTurns) {
@@ -104,7 +104,7 @@ void Player::advanceTurn() {
 	}
 
 	this->turnTime = app->time;
-	if (b && app->canvas->state == Canvas::ST_AUTOMAP) {
+	if (tookDamage && app->canvas->state == Canvas::ST_AUTOMAP) {
 		app->canvas->setState(Canvas::ST_PLAYING);
 	}
 }
@@ -125,35 +125,35 @@ void Player::levelInit() {
 void Player::fillMonsterStats() {
 
 
-	int n = 0;
-	int n2 = 0;
+	int totalCount = 0;
+	int aliveCount = 0;
 	for (int i = 0; i < app->game->numEntities; ++i) {
 		Entity* entity = &app->game->entities[i];
 		if (entity->isMonster()) {
 			if ((entity->monsterFlags & Enums::MFLAG_NOTRACK) == 0x0) {
-				++n;
+				++totalCount;
 				if ((app->game->entities[i].info & 0x1010000) != 0x0) {
-					++n2;
+					++aliveCount;
 				}
 			}
 		}
 	}
 
-	this->monsterStats[0] = n2;
-	this->monsterStats[1] = n;
+	this->monsterStats[0] = aliveCount;
+	this->monsterStats[1] = totalCount;
 }
 
 void Player::readyWeapon() {
 	this->app->canvas->readyWeaponSound = 2;
 }
 
-void Player::selectWeapon(int i) {
+void Player::selectWeapon(int weaponIdx) {
 
-	LOG_INFO("[player] selectWeapon: {} -> {}\n", this->ce->weapon, i);
+	LOG_INFO("[player] selectWeapon: {} -> {}\n", this->ce->weapon, weaponIdx);
 	if (this->isFamiliar) {
 		return;
 	}
-	if (!app->combat->getWeaponFlags(i).isThrowableItem) {
+	if (!app->combat->getWeaponFlags(weaponIdx).isThrowableItem) {
 		int tiIdx = app->combat->throwableItemWeaponIdx;
 		if (tiIdx >= 0) {
 			this->weapons &= ~(1 << tiIdx);
@@ -163,26 +163,26 @@ void Player::selectWeapon(int i) {
 	if (app->canvas->isZoomedIn) {
 		app->canvas->zoomOut();
 	}
-	if ((this->weapons & ~this->disabledWeapons & 1 << i) == 0x0) {
-		this->ce->weapon = i;
+	if ((this->weapons & ~this->disabledWeapons & 1 << weaponIdx) == 0x0) {
+		this->ce->weapon = weaponIdx;
 		this->selectNextWeapon();
 	}
-	if (this->ce->weapon != i) {
+	if (this->ce->weapon != weaponIdx) {
 		app->canvas->invalidateRect();
 		this->prevWeapon = this->ce->weapon;
 	}
-	this->ce->weapon = i;
+	this->ce->weapon = weaponIdx;
 	if (app->canvas->state != Canvas::ST_DIALOG && app->canvas->state != Canvas::ST_CAMERA) {
 		app->canvas->drawPlayingSoftKeys();
 	}
-	if (i != this->prevWeapon) {
+	if (weaponIdx != this->prevWeapon) {
 		this->readyWeapon();
 	}
-	this->activeWeaponDef = app->entityDefManager->find(6, 1, i);
+	this->activeWeaponDef = app->entityDefManager->find(6, 1, weaponIdx);
 	app->canvas->updateFacingEntity = true;
 	app->hud->repaintFlags |= 0x4;
-	if (i != this->prevWeapon) {
-		app->eventBus->emit(WeaponSwitchEvent{this->prevWeapon, i});
+	if (weaponIdx != this->prevWeapon) {
+		app->eventBus->emit(WeaponSwitchEvent{this->prevWeapon, weaponIdx});
 	}
 }
 
@@ -190,11 +190,11 @@ void Player::selectPrevWeapon() {
 
 
 	int weapon = this->ce->weapon;
-	int n = this->weapons & ~this->disabledWeapons;
+	int availableWeapons = this->weapons & ~this->disabledWeapons;
 	for (int i = weapon - 1; i >= 0; --i) {
-		if ((n & 1 << i) != 0x0) {
-			int n2 = i * 9;
-			if (app->combat->weapons[n2 + 5] == 0 || this->ammo[app->combat->weapons[n2 + 4]] != 0 || i == 2) {
+		if ((availableWeapons & 1 << i) != 0x0) {
+			int weaponFieldOffset = i * 9;
+			if (app->combat->weapons[weaponFieldOffset + 5] == 0 || this->ammo[app->combat->weapons[weaponFieldOffset + 4]] != 0 || i == 2) {
 				this->selectWeapon(i);
 				return;
 			}
@@ -202,9 +202,9 @@ void Player::selectPrevWeapon() {
 	}
 	if (this->ce->weapon == weapon && !app->combat->getWeaponFlags(weapon).isThrowableItem) {
 		for (int j = 14; j > weapon; --j) {
-			if ((n & 1 << j) != 0x0) {
-				int n3 = j * 9;
-				if (app->combat->weapons[n3 + 5] == 0 || this->ammo[app->combat->weapons[n3 + 4]] != 0 || j == 2) {
+			if ((availableWeapons & 1 << j) != 0x0) {
+				int weaponFieldOffset = j * 9;
+				if (app->combat->weapons[weaponFieldOffset + 5] == 0 || this->ammo[app->combat->weapons[weaponFieldOffset + 4]] != 0 || j == 2) {
 					this->selectWeapon(j);
 					return;
 				}
@@ -217,11 +217,11 @@ void Player::selectNextWeapon() {
 
 
 	int weapon = this->ce->weapon;
-	int n = this->weapons & ~this->disabledWeapons;
+	int availableWeapons = this->weapons & ~this->disabledWeapons;
 	for (int i = weapon + 1; i < 15; ++i) {
-		if ((n & 1 << i) != 0x0) {
-			int n2 = i * 9;
-			if (app->combat->weapons[n2 + 5] == 0 || this->ammo[app->combat->weapons[n2 + 4]] != 0 || i == 2) {
+		if ((availableWeapons & 1 << i) != 0x0) {
+			int weaponFieldOffset = i * 9;
+			if (app->combat->weapons[weaponFieldOffset + 5] == 0 || this->ammo[app->combat->weapons[weaponFieldOffset + 4]] != 0 || i == 2) {
 				this->selectWeapon(i);
 				return;
 			}
@@ -229,9 +229,9 @@ void Player::selectNextWeapon() {
 	}
 	if (this->ce->weapon == weapon && weapon != 0) {
 		for (int j = 0; j < weapon; ++j) {
-			if ((n & 1 << j) != 0x0) {
-				int n3 = j * 9;
-				if (app->combat->weapons[n3 + 5] == 0 || this->ammo[app->combat->weapons[n3 + 4]] != 0 || j == 2) {
+			if ((availableWeapons & 1 << j) != 0x0) {
+				int weaponFieldOffset = j * 9;
+				if (app->combat->weapons[weaponFieldOffset + 5] == 0 || this->ammo[app->combat->weapons[weaponFieldOffset + 4]] != 0 || j == 2) {
 					this->selectWeapon(j);
 					return;
 				}
@@ -244,44 +244,44 @@ int Player::getHealth() {
 	return this->isFamiliar ? this->ammo[app->combat->familiarAmmoType] : this->ce->getStat(0);
 }
 
-int Player::modifyStat(int n, int n2) {
-	int n3;
-	int n4;
-	if (n == 0) {
-		n3 = this->getHealth();
-		this->addHealth(n2);
-		if (n2 < 0) {
+int Player::modifyStat(int statId, int delta) {
+	int before;
+	int after;
+	if (statId == 0) {
+		before = this->getHealth();
+		this->addHealth(delta);
+		if (delta < 0) {
 			this->painEvent(nullptr, false);
 		}
-		n4 = this->getHealth();
+		after = this->getHealth();
 	} else {
-		n3 = this->baseCe->getStat(n);
-		int n5 = (n == 7) ? 200 : 99;
-		if (n3 + n2 > n5) {
-			n2 = n5 - n3;
+		before = this->baseCe->getStat(statId);
+		int cap = (statId == 7) ? 200 : 99;
+		if (before + delta > cap) {
+			delta = cap - before;
 		}
-		if (n2 != 0) {
-			this->baseCe->setStat(n, n3 + n2);
+		if (delta != 0) {
+			this->baseCe->setStat(statId, before + delta);
 		}
 		this->updateStats();
-		n4 = this->baseCe->getStat(n);
+		after = this->baseCe->getStat(statId);
 	}
-	return n4 - n3;
+	return after - before;
 }
 
-bool Player::requireStat(int n, int n2) {
-	return this->ce->getStat(n) >= n2;
+bool Player::requireStat(int statId, int minValue) {
+	return this->ce->getStat(statId) >= minValue;
 }
 
-bool Player::requireItem(int n, int n2, int n3, int n4) {
-	int n5 = 1 << n2;
-	if (n != 1) {
-		return n == 0 && this->inventory[n2 - 0] >= n3 && this->inventory[n2 - 0] <= n4;
+bool Player::requireItem(int category, int index, int minCount, int maxCount) {
+	int bit = 1 << index;
+	if (category != 1) {
+		return category == 0 && this->inventory[index - 0] >= minCount && this->inventory[index - 0] <= maxCount;
 	}
-	if (n4 != 0) {
-		return (this->weapons & n5) != 0x0;
+	if (maxCount != 0) {
+		return (this->weapons & bit) != 0x0;
 	}
-	return (this->weapons & n5) == 0x0;
+	return (this->weapons & bit) == 0x0;
 }
 
 void Player::addXP(int xp) {
@@ -318,15 +318,15 @@ void Player::addLevel() {
 	app->localization->composeText((short)0, (short)104, textBuff);
 
 	const GameConfig& gc = *this->gameConfig;
-	int n = gc.levelUpHealth;
+	int healthBonus = gc.levelUpHealth;
 	stat = this->baseCe->getStat(1);
-	if (stat + n > 999) {
-		n = 999 - stat;
+	if (stat + healthBonus > 999) {
+		healthBonus = 999 - stat;
 	}
-	if (n != 0) {
-		this->baseCe->setStat(Enums::STAT_MAX_HEALTH, stat + n);
+	if (healthBonus != 0) {
+		this->baseCe->setStat(Enums::STAT_MAX_HEALTH, stat + healthBonus);
 		app->localization->resetTextArgs();
-		app->localization->addTextArg(n);
+		app->localization->addTextArg(healthBonus);
 		app->localization->composeText((short)0, (short)105, textBuff);
 	}
 
@@ -381,54 +381,54 @@ void Player::addLevel() {
 	}
 }
 
-int Player::calcLevelXP(int n) {
+int Player::calcLevelXP(int level) {
 	const GameConfig& gc = *this->gameConfig;
-	return gc.xpLinear * n + gc.xpCubic * ((n - 1) * (n - 1) * (n - 1) + (n - 1));
+	return gc.xpLinear * level + gc.xpCubic * ((level - 1) * (level - 1) * (level - 1) + (level - 1));
 }
 
 int Player::calcScore() {
 	const GameConfig& gc = *this->gameConfig;
 
-	int n = 0;
-	bool b = true;
+	int score = 0;
+	bool allLevelsBeaten = true;
 	int i;
 	for (i = 0; i <= 8; ++i) {
 		if ((this->killedMonstersLevels & 1 << i) != 0x0) {
-			n += gc.scorePerLevel;
+			score += gc.scorePerLevel;
 		} else {
-			b = false;
+			allLevelsBeaten = false;
 		}
 	}
-	if (b) {
-		n += gc.scoreAllLevelsBonus;
+	if (allLevelsBeaten) {
+		score += gc.scoreAllLevelsBonus;
 	}
 	if (this->totalDeaths == 0) {
-		n += gc.scoreNoDeathsBonus;
+		score += gc.scoreNoDeathsBonus;
 	} else if (this->totalDeaths < gc.scoreDeathThreshold) {
-		n += (gc.scoreDeathPenaltyBase - this->totalDeaths) * gc.scoreDeathPenaltyMult;
+		score += (gc.scoreDeathPenaltyBase - this->totalDeaths) * gc.scoreDeathPenaltyMult;
 	} else {
-		n -= gc.scoreManyDeathsPenalty;
+		score -= gc.scoreManyDeathsPenalty;
 	}
-	int n2 = (this->totalTime + (app->gameTime - this->playTime)) / 60000;
-	if (n2 < gc.scoreTimeBonusMinutes) {
-		n += (gc.scoreTimeBonusMinutes - n2) * gc.scoreTimeBonusMult;
+	int minutesPlayed = (this->totalTime + (app->gameTime - this->playTime)) / 60000;
+	if (minutesPlayed < gc.scoreTimeBonusMinutes) {
+		score += (gc.scoreTimeBonusMinutes - minutesPlayed) * gc.scoreTimeBonusMult;
 	}
 	if (this->totalMoves < gc.scoreMoveThreshold) {
-		n += (gc.scoreMoveThreshold - this->totalMoves) / gc.scoreMoveDivisor;
+		score += (gc.scoreMoveThreshold - this->totalMoves) / gc.scoreMoveDivisor;
 	}
-	bool b2 = true;
+	bool allSecretsFound = true;
 	while (i <= 8) {
 		if ((this->foundSecretsLevels & 1 << i) != 0x0) {
-			n += gc.scorePerSecret;
+			score += gc.scorePerSecret;
 		} else {
-			b2 = false;
+			allSecretsFound = false;
 		}
 		++i;
 	}
-	if (b2) {
-		n += gc.scoreAllSecretsBonus;
+	if (allSecretsFound) {
+		score += gc.scoreAllSecretsBonus;
 	}
-	return n;
+	return score;
 }
 
 
@@ -455,8 +455,8 @@ void Player::setStatsAccordingToCharacterChoice() {
 				this->baseCe->setStat(Enums::STAT_ACCURACY, c["accuracy"].asInt());
 				this->baseCe->setStat(Enums::STAT_AGILITY, c["agility"].asInt());
 				this->baseCe->setStat(Enums::STAT_IQ, c["iq"].asInt());
-				int n = c["credits"].asInt();
-				this->give(0, 24, n, true);
+				int credits = c["credits"].asInt();
+				this->give(0, 24, credits, true);
 				return;
 			}
 		}
@@ -466,13 +466,13 @@ void Player::setStatsAccordingToCharacterChoice() {
 
 
 
-bool Player::useItem(int n) {
+bool Player::useItem(int itemIdx) {
 
 	// Find item definition for this inventory index
 	const ItemDef* def = nullptr;
 	if (this->itemDefs) {
 		for (const auto& d : *this->itemDefs) {
-			if (d.index == n) {
+			if (d.index == itemIdx) {
 				def = &d;
 				break;
 			}
@@ -483,7 +483,7 @@ bool Player::useItem(int n) {
 		return false;
 	}
 
-	if (this->inventory[n] == 0 && !def->skipEmptyCheck) {
+	if (this->inventory[itemIdx] == 0 && !def->skipEmptyCheck) {
 		return false;
 	}
 
@@ -557,7 +557,7 @@ bool Player::useItem(int n) {
 
 	app->sound->playSound(Sounds::getResIDByName(SoundName::USE_ITEM), 0, 3, false);
 	if (def->consume) {
-		--this->inventory[n];
+		--this->inventory[itemIdx];
 	}
 	if (def->advanceTurn) {
 		app->game->advanceTurn();
@@ -565,99 +565,99 @@ bool Player::useItem(int n) {
 	return true;
 }
 
-bool Player::give(int n, int n2, int n3) {
-	return this->give(n, n2, n3, false);
+bool Player::give(int category, int index, int count) {
+	return this->give(category, index, count, false);
 }
 
-bool Player::give(int n, int n2, int n3, bool b) {
-	return this->give(n, n2, n3, b, false);
+bool Player::give(int category, int index, int count, bool silent) {
+	return this->give(category, index, count, silent, false);
 }
 
-bool Player::give(int n, int n2, int n3, bool b, bool b2) {
+bool Player::give(int category, int index, int count, bool silent, bool selfPickup) {
 
-	if (n3 == 0) {
+	if (count == 0) {
 		return false;
 	}
-	int n4 = 1 << (n2 & 0xffU);
-	switch (n) {
+	int bit = 1 << (index & 0xffU);
+	switch (category) {
 		case 1: {
-			if (this->weaponIsASentryBot((n2 & 0xffU)) && n3 > 0) {
+			if (this->weaponIsASentryBot((index & 0xffU)) && count > 0) {
 				if (this->isFamiliar) {
 					return false;
 				}
 				this->give(2, 7, 100, true);
 				this->weapons &= ~(8 | 16 | 32 | 64);
 			}
-			bool b3 = (this->weapons & n4) == 0x0;
-			if (n3 < 0) {
-				if (!this->isFamiliar || b2) {
-					this->weapons &= ~n4;
-					if (n2 == this->ce->weapon) {
+			bool wasNew = (this->weapons & bit) == 0x0;
+			if (count < 0) {
+				if (!this->isFamiliar || selfPickup) {
+					this->weapons &= ~bit;
+					if (index == this->ce->weapon) {
 						this->selectNextWeapon();
 					}
 				}
 				return true;
 			}
-			if (this->isFamiliar && !b2) {
-				this->weaponsCopy |= n4;
+			if (this->isFamiliar && !selfPickup) {
+				this->weaponsCopy |= bit;
 			} else {
-				this->weapons |= n4;
+				this->weapons |= bit;
 			}
-			if (!b) {
-				this->showWeaponHelp(n2, false);
+			if (!silent) {
+				this->showWeaponHelp(index, false);
 			}
-			if (b3 && !this->isFamiliar) {
-				this->selectWeapon(n2);
+			if (wasNew && !this->isFamiliar) {
+				this->selectWeapon(index);
 			}
 			break;
 		}
 		case 0: {
-			short* array = (this->isFamiliar && !b2) ? this->inventoryCopy : this->inventory;
+			short* array = (this->isFamiliar && !selfPickup) ? this->inventoryCopy : this->inventory;
 			const GameConfig& gc = *this->gameConfig;
-			int n5 = n3 + array[n2 - 0];
-			if (n2 == 24) {
-				if (n5 > gc.capCredits) {
-					n5 = gc.capCredits;
+			int newCount = count + array[index - 0];
+			if (index == 24) {
+				if (newCount > gc.capCredits) {
+					newCount = gc.capCredits;
 				}
-			} else if (n5 > gc.capInventory) {
-				n5 = gc.capInventory;
+			} else if (newCount > gc.capInventory) {
+				newCount = gc.capInventory;
 			}
-			if (n5 < 0) {
+			if (newCount < 0) {
 				return false;
 			}
-			if (n2 == 13 && (!this->isFamiliar || b2)) {
-				this->give(2, 3, n5 * 20, true, true);
+			if (index == 13 && (!this->isFamiliar || selfPickup)) {
+				this->give(2, 3, newCount * 20, true, true);
 			} else {
-				array[n2 - 0] = (short)n5;
+				array[index - 0] = (short)newCount;
 			}
-			if (!b) {
-				this->showInvHelp(n2 - 0, false);
+			if (!silent) {
+				this->showInvHelp(index - 0, false);
 				break;
 			}
 			break;
 		}
 		case 2: {
-			short* array2 = (this->isFamiliar && !b2 && n2 != 6) ? this->ammoCopy.data() : this->ammo.data();
+			short* array2 = (this->isFamiliar && !selfPickup && index != 6) ? this->ammoCopy.data() : this->ammo.data();
 			const GameConfig& gc2 = *this->gameConfig;
-			int n6 = n3 + array2[n2];
-			if (n6 > gc2.capAmmo) {
-				n6 = gc2.capAmmo;
+			int newCount = count + array2[index];
+			if (newCount > gc2.capAmmo) {
+				newCount = gc2.capAmmo;
 			}
-			if (n2 == 6 && n6 > gc2.capBotFuel) {
-				n6 = gc2.capBotFuel;
+			if (index == 6 && newCount > gc2.capBotFuel) {
+				newCount = gc2.capBotFuel;
 			}
-			if (n6 < 0) {
+			if (newCount < 0) {
 				return false;
 			}
-			array2[n2] = (short)n6;
-			if (!b) {
-				this->showAmmoHelp(n2, false);
+			array2[index] = (short)newCount;
+			if (!silent) {
+				this->showAmmoHelp(index, false);
 			}
 			app->hud->repaintFlags |= 0x4;
 			break;
 		}
 		case 3: {
-			this->addHealth(n3);
+			this->addHealth(count);
 			break;
 		}
 		default: {
@@ -667,158 +667,158 @@ bool Player::give(int n, int n2, int n3, bool b, bool b2) {
 	return true;
 }
 
-void Player::giveAmmoWeapon(int n, bool b) {
-	this->weapons |= 1 << (n & 0xffU);
-	this->selectWeapon(n);
-	if (!b) {
-		this->showWeaponHelp(n, false);
+void Player::giveAmmoWeapon(int weaponIdx, bool silent) {
+	this->weapons |= 1 << (weaponIdx & 0xffU);
+	this->selectWeapon(weaponIdx);
+	if (!silent) {
+		this->showWeaponHelp(weaponIdx, false);
 	}
 }
 
-void Player::updateQuests(short n, int n2) {
+void Player::updateQuests(short questId, int status) {
 
 
-	if (n2 == 0) {
+	if (status == 0) {
 		if (this->numNotebookIndexes == 8) {
 			// app->Error(Enums::ERR_MAX_NOTEBOOKINDEXES); // J2ME
 			return;
 		}
 		this->questComplete &= (uint8_t)~(1 << this->numNotebookIndexes);
 		this->questFailed &= (uint8_t)~(1 << this->numNotebookIndexes);
-		this->notebookIndexes[this->numNotebookIndexes++] = n;
+		this->notebookIndexes[this->numNotebookIndexes++] = questId;
 	} else {
 		for (int i = 0; i < this->numNotebookIndexes; ++i) {
-			if (n == this->notebookIndexes[i]) {
-				if (n2 == 1) {
+			if (questId == this->notebookIndexes[i]) {
+				if (status == 1) {
 					this->questComplete |= (uint8_t)(1 << i);
-				} else if (n2 == 2) {
+				} else if (status == 2) {
 					this->questFailed |= (uint8_t)(1 << i);
 				}
 				return;
 			}
 		}
-		if (n2 == 1) {
+		if (status == 1) {
 			this->questComplete |= (uint8_t)(1 << this->numNotebookIndexes);
 			this->questFailed &= (uint8_t)~(1 << this->numNotebookIndexes);
-		} else if (n2 == 2) {
+		} else if (status == 2) {
 			this->questComplete &= (uint8_t)~(1 << this->numNotebookIndexes);
 			this->questFailed |= (uint8_t)(1 << this->numNotebookIndexes);
 		}
 		this->notebookPositions[this->numNotebookIndexes] = 0;
-		this->notebookIndexes[this->numNotebookIndexes++] = n;
+		this->notebookIndexes[this->numNotebookIndexes++] = questId;
 	}
 }
 
-void Player::setQuestTile(int n, int n2, int n3) {
+void Player::setQuestTile(int questId, int tileX, int tileY) {
 	for (int i = 0; i < this->numNotebookIndexes; ++i) {
-		if (n == this->notebookIndexes[i]) {
-			this->notebookPositions[i] = (short)(n2 << 5 | n3);
+		if (questId == this->notebookIndexes[i]) {
+			this->notebookPositions[i] = (short)(tileX << 5 | tileY);
 			return;
 		}
 	}
 }
 
-bool Player::isQuestDone(int n) {
-	return (this->questComplete & 1 << n) != 0x0;
+bool Player::isQuestDone(int questIdx) {
+	return (this->questComplete & 1 << questIdx) != 0x0;
 }
 
-bool Player::isQuestFailed(int n) {
-	return (this->questFailed & 1 << n) != 0x0;
+bool Player::isQuestFailed(int questIdx) {
+	return (this->questFailed & 1 << questIdx) != 0x0;
 }
 
-void Player::formatTime(int n, Text* text) {
+void Player::formatTime(int millis, Text* text) {
 	text->setLength(0);
-	int n2 = n / 1000;
-	int n3 = n2 / 60;
-	int n4 = n3 / 60;
-	int n5 = n3 % 60;
-	text->append(n4);
+	int totalSeconds = millis / 1000;
+	int totalMinutes = totalSeconds / 60;
+	int hours = totalMinutes / 60;
+	int mins = totalMinutes % 60;
+	text->append(hours);
 	text->append(":");
-	if (n5 < 10) {
+	if (mins < 10) {
 		text->append("0");
 	}
-	text->append(n5);
+	text->append(mins);
 	text->append(":");
-	int n6 = n2 - n3 * 60;
-	if (n6 < 10) {
+	int secs = totalSeconds - totalMinutes * 60;
+	if (secs < 10) {
 		text->append("0");
 	}
-	text->append(n6);
+	text->append(secs);
 }
 
-void Player::showInvHelp(int n, bool b) {
+void Player::showInvHelp(int itemIdx, bool force) {
 
 
-	if (!this->enableHelp && !b) {
+	if (!this->enableHelp && !force) {
 		return;
 	}
-	int n2 = n - 0;
-	if ((this->invHelpBitmask & 1 << n2) != 0x0) {
+	int idx = itemIdx - 0;
+	if ((this->invHelpBitmask & 1 << idx) != 0x0) {
 		return;
 	}
-	this->invHelpBitmask |= 1 << n2;
-	app->dialogManager->enqueueHelpDialog(app->canvas.get(), app->entityDefManager->find(6, 0, n));
+	this->invHelpBitmask |= 1 << idx;
+	app->dialogManager->enqueueHelpDialog(app->canvas.get(), app->entityDefManager->find(6, 0, itemIdx));
 }
 
-void Player::showAmmoHelp(int n, bool b) {
+void Player::showAmmoHelp(int ammoType, bool force) {
 
 
-	if (!this->enableHelp && !b) {
+	if (!this->enableHelp && !force) {
 		return;
 	}
-	int n2 = 1 << n;
-	if ((this->ammoHelpBitmask & n2) != 0x0) {
+	int bit = 1 << ammoType;
+	if ((this->ammoHelpBitmask & bit) != 0x0) {
 		return;
 	}
-	this->ammoHelpBitmask |= n2;
-	app->dialogManager->enqueueHelpDialog(app->canvas.get(), app->entityDefManager->find(6, 2, n));
+	this->ammoHelpBitmask |= bit;
+	app->dialogManager->enqueueHelpDialog(app->canvas.get(), app->entityDefManager->find(6, 2, ammoType));
 }
 
-bool Player::showHelp(short n, bool b) {
+bool Player::showHelp(short helpId, bool force) {
 
 
 	if (app->game->isCameraActive()) {
 		return false;
 	}
 
-	if (!this->enableHelp && !b) {
+	if (!this->enableHelp && !force) {
 		return false;
 	}
-	if ((this->helpBitmask & 1 << n) != 0x0 && !b) {
+	if ((this->helpBitmask & 1 << helpId) != 0x0 && !force) {
 		return false;
 	}
-	this->helpBitmask |= 1 << n;
-	app->dialogManager->enqueueHelpDialog(app->canvas.get(), n);
-	if (n != 5 && (app->canvas->state == Canvas::ST_AUTOMAP || app->canvas->state == Canvas::ST_PLAYING)) {
+	this->helpBitmask |= 1 << helpId;
+	app->dialogManager->enqueueHelpDialog(app->canvas.get(), helpId);
+	if (helpId != 5 && (app->canvas->state == Canvas::ST_AUTOMAP || app->canvas->state == Canvas::ST_PLAYING)) {
 		app->dialogManager->dequeueHelpDialog(app->canvas.get());
 	}
 	return true;
 }
 
-void Player::showWeaponHelp(int n, bool b) {
+void Player::showWeaponHelp(int weaponIdx, bool force) {
 
 
-	if (!this->enableHelp && !b) {
+	if (!this->enableHelp && !force) {
 		return;
 	}
-	if ((this->weaponHelpBitmask & 1 << n) != 0x0) {
+	if ((this->weaponHelpBitmask & 1 << weaponIdx) != 0x0) {
 		return;
 	}
-	this->weaponHelpBitmask |= 1 << n;
-	app->dialogManager->enqueueHelpDialog(app->canvas.get(), app->entityDefManager->find(6, 1, n));
+	this->weaponHelpBitmask |= 1 << weaponIdx;
+	app->dialogManager->enqueueHelpDialog(app->canvas.get(), app->entityDefManager->find(6, 1, weaponIdx));
 }
 
 
-void Player::setCharacterChoice(short i) {
+void Player::setCharacterChoice(short choice) {
 
-	LOG_INFO("[player] setCharacterChoice: {}\n", i);
-	this->characterChoice = i;
-	app->game->scriptStateVars[14] = i;
+	LOG_INFO("[player] setCharacterChoice: {}\n", choice);
+	this->characterChoice = choice;
+	app->game->scriptStateVars[14] = choice;
 }
 
 
-void Player::unpause(int n) {
-	if (n <= 0) {
+void Player::unpause(int delay) {
+	if (delay <= 0) {
 		return;
 	}
 }
@@ -834,13 +834,13 @@ Entity* Player::getPlayerEnt() {
 	return &this->app->game->entities[1];
 }
 
-void Player::setPickUpWeapon(int n) {
+void Player::setPickUpWeapon(int tileIdx) {
 
 
 	EntityDef* lookup = nullptr;
 	EntityDef* find = app->entityDefManager->find(6, 1, 14);
-	if (n != 15) {
-		lookup = app->entityDefManager->lookup(n);
+	if (tileIdx != 15) {
+		lookup = app->entityDefManager->lookup(tileIdx);
 	}
 	if (lookup != nullptr) {
 		find->tileIndex = lookup->tileIndex;
@@ -861,9 +861,9 @@ void Player::giveAll() {
 	if (!this->isFamiliar) {
 		if (this->hasASentryBot()) {
 			for (int i = 0; i <= 3; ++i) {
-				int n = 3 + i;
-				if ((this->weapons & 1 << n) != 0x0) {
-					this->weapons &= ~(1 << n);
+				int botWeaponIdx = 3 + i;
+				if ((this->weapons & 1 << botWeaponIdx) != 0x0) {
+					this->weapons &= ~(1 << botWeaponIdx);
 					this->weapons |= 1 << 3 + (i + 1) % 4;
 					break;
 				}
@@ -1005,13 +1005,13 @@ int Player::distFrom(Entity* entity) {
 	return entity->distFrom(app->canvas->destX, app->canvas->destY);
 }
 
-void Player::showAchievementMessage(int n) {
+void Player::showAchievementMessage(int achievementIdx) {
 
 
 	Text* smallBuffer = app->localization->getSmallBuffer();
 	Text* smallBuffer2 = app->localization->getSmallBuffer();
 	app->localization->resetTextArgs();
-	switch (n) {
+	switch (achievementIdx) {
 		case 0: {
 			app->localization->composeText(136, smallBuffer);
 			break;
@@ -1035,46 +1035,46 @@ void Player::showAchievementMessage(int n) {
 	if (!app->dialogManager->enqueueHelpDialog(app->canvas.get(), smallBuffer2, 3)) {
 		smallBuffer2->dispose();
 	}
-	int n2 = 10;
-	if (n == 2) {
-		n2 = this->calcLevelXP(this->level) - calcLevelXP(this->level - 1) >> 4;
+	int xpReward = 10;
+	if (achievementIdx == 2) {
+		xpReward = this->calcLevelXP(this->level) - calcLevelXP(this->level - 1) >> 4;
 	}
-	this->addXP(n2);
+	this->addXP(xpReward);
 	app->sound->playSound(Sounds::getResIDByName(SoundName::CHIME), 0, 3, false);
 }
 
-short Player::gradeToString(int n) {
-	short n2 = 44;
-	switch (n) {
+short Player::gradeToString(int grade) {
+	short stringId = 44;
+	switch (grade) {
 		case 6: {
-			n2 = 38;
+			stringId = 38;
 			break;
 		}
 		case 5: {
-			n2 = 39;
+			stringId = 39;
 			break;
 		}
 		case 4: {
-			n2 = 40;
+			stringId = 40;
 			break;
 		}
 		case 3: {
-			n2 = 41;
+			stringId = 41;
 			break;
 		}
 		case 2: {
-			n2 = 42;
+			stringId = 42;
 			break;
 		}
 		case 1: {
-			n2 = 43;
+			stringId = 43;
 			break;
 		}
 	}
-	return n2;
+	return stringId;
 }
 
-int Player::levelGrade(bool b) {
+int Player::levelGrade(bool record) {
 
 
 	int currentGrade = this->getCurrentGrade(app->canvas->loadMapID);
@@ -1090,7 +1090,7 @@ int Player::levelGrade(bool b) {
 	                    1) -
 	                       this->currentLevelDeaths,
 	                   1);
-	if (b) {
+	if (record) {
 		if (max > this->getBestGrade(app->canvas->loadMapID)) {
 			this->setBestGrade(app->canvas->loadMapID, max);
 		}
@@ -1100,56 +1100,56 @@ int Player::levelGrade(bool b) {
 }
 
 int Player::finalCurrentGrade() {
-	int n = 0;
+	int total = 0;
 	for (int i = 1; i <= 9; ++i) {
-		n += this->getCurrentGrade(i);
+		total += this->getCurrentGrade(i);
 	}
-	return n / 9;
+	return total / 9;
 }
 
 int Player::finalBestGrade() {
-	int n = 0;
+	int total = 0;
 	for (int i = 1; i <= 9; ++i) {
-		n += this->getBestGrade(i);
+		total += this->getBestGrade(i);
 	}
-	return n / 9;
+	return total / 9;
 }
 
-int Player::getCurrentGrade(int n) {
-	return (this->currentGrades >> (3 * (n - 1))) & 0x7;
+int Player::getCurrentGrade(int mapId) {
+	return (this->currentGrades >> (3 * (mapId - 1))) & 0x7;
 }
 
-void Player::setCurrentGrade(int n, int n2) {
-	this->currentGrades |= n2 << (3 * (n - 1));
+void Player::setCurrentGrade(int mapId, int grade) {
+	this->currentGrades |= grade << (3 * (mapId - 1));
 }
 
-int Player::getBestGrade(int n) {
-	return (this->bestGrades >> (3 * (n - 1))) & 0x7;
+int Player::getBestGrade(int mapId) {
+	return (this->bestGrades >> (3 * (mapId - 1))) & 0x7;
 }
 
-void Player::setBestGrade(int n, int n2) {
-	this->bestGrades &= ~(7 << (3 * (n - 1)));
-	this->bestGrades |= n2 << (3 * (n - 1));
+void Player::setBestGrade(int mapId, int grade) {
+	this->bestGrades &= ~(7 << (3 * (mapId - 1)));
+	this->bestGrades |= grade << (3 * (mapId - 1));
 }
 
-bool Player::vendingMachineIsHacked(int n) {
-	return (this->hackedVendingMachines & 1 << n) == 1 << n;
+bool Player::vendingMachineIsHacked(int vmId) {
+	return (this->hackedVendingMachines & 1 << vmId) == 1 << vmId;
 }
 
-void Player::setVendingMachineHack(int n) {
-	this->hackedVendingMachines |= 1 << n;
+void Player::setVendingMachineHack(int vmId) {
+	this->hackedVendingMachines |= 1 << vmId;
 }
 
 int Player::getVendingMachineTriesLeft(int max) {
 	max = std::max(std::min(max, 18), 1);
-	int n;
+	int packed;
 	if (max > 9) {
-		n = this->vendingMachineHackTriesLeft2;
+		packed = this->vendingMachineHackTriesLeft2;
 		max -= 9;
 	} else {
-		n = this->vendingMachineHackTriesLeft1;
+		packed = this->vendingMachineHackTriesLeft1;
 	}
-	return (n >> (3 * (max - 1))) & 0x7;
+	return (packed >> (3 * (max - 1))) & 0x7;
 }
 
 void Player::removeOneVendingMachineTry(int max) {
@@ -1164,7 +1164,7 @@ void Player::removeOneVendingMachineTry(int max) {
 	}
 }
 
-void Player::enterTargetPractice(int n, int n2, int n3, ScriptThread* targetPracticeThread) {
+void Player::enterTargetPractice(int tileX, int tileY, int direction, ScriptThread* targetPracticeThread) {
 
 
 	this->inTargetPractice = true;
@@ -1174,18 +1174,18 @@ void Player::enterTargetPractice(int n, int n2, int n3, ScriptThread* targetPrac
 	app->canvas->saveZ = app->canvas->viewZ;
 	app->canvas->saveAngle = app->canvas->viewAngle;
 	int viewAngle;
-	if (n3 == 4) {
+	if (direction == 4) {
 		viewAngle = Enums::ANGLE_WEST;
-	} else if (n3 == 0) {
+	} else if (direction == 0) {
 		viewAngle = Enums::ANGLE_EAST;
-	} else if (n3 == 2) {
+	} else if (direction == 2) {
 		viewAngle = Enums::ANGLE_NORTH;
 	} else {
 		viewAngle = Enums::ANGLE_SOUTH;
 	}
 	app->canvas->destAngle = (app->canvas->viewAngle = viewAngle);
-	app->canvas->destX = (app->canvas->viewX = (n << 6) + 32);
-	app->canvas->destY = (app->canvas->viewY = (n2 << 6) + 32);
+	app->canvas->destX = (app->canvas->viewX = (tileX << 6) + 32);
+	app->canvas->destY = (app->canvas->viewY = (tileY << 6) + 32);
 	app->canvas->destZ = (app->canvas->viewZ = app->render->getHeight(app->canvas->viewX, app->canvas->viewY) + 36);
 	this->showHelp((short)17, false);
 	this->stripInventoryForTargetPractice();
@@ -1197,28 +1197,28 @@ void Player::assessTargetPracticeShot(Entity* entity) {
 
 
 	int sprite = entity->getSprite();
-	int n = app->canvas->zoomCollisionX - app->render->getSpriteX(sprite);
-	int n2 = app->canvas->zoomCollisionY - app->render->getSpriteY(sprite);
-	int n3 = app->canvas->zoomCollisionZ - app->render->getSpriteZ(sprite);
-	int n4 = app->render->getSpriteInfoRaw(sprite) >> 8 & 0xF0;
+	int dx = app->canvas->zoomCollisionX - app->render->getSpriteX(sprite);
+	int dy = app->canvas->zoomCollisionY - app->render->getSpriteY(sprite);
+	int dz = app->canvas->zoomCollisionZ - app->render->getSpriteZ(sprite);
+	int frameBaseFlags = app->render->getSpriteInfoRaw(sprite) >> 8 & 0xF0;
 	int (*imageFrameBounds)[4] = app->render->getImageFrameBounds(entity->def->tileIndex, 3, 2, 0);
-	int n5 = -1;
+	int hitZone = -1;
 	for (int i = 0; i < 3; ++i) {
-		if (n > imageFrameBounds[i][0] && n < imageFrameBounds[i][1] && n2 > imageFrameBounds[i][0] &&
-		    n2 < imageFrameBounds[i][1] && n3 > imageFrameBounds[i][2] && n3 < imageFrameBounds[i][3]) {
-			n5 = i;
+		if (dx > imageFrameBounds[i][0] && dx < imageFrameBounds[i][1] && dy > imageFrameBounds[i][0] &&
+		    dy < imageFrameBounds[i][1] && dz > imageFrameBounds[i][2] && dz < imageFrameBounds[i][3]) {
+			hitZone = i;
 			break;
 		}
 	}
-	if (n5 != -1) {
+	if (hitZone != -1) {
 		const GameConfig& gc = *this->gameConfig;
-		if (n5 == 0 || n4 == 16) {
+		if (hitZone == 0 || frameBaseFlags == 16) {
 			app->hud->addMessage((short)230, 4);
 			this->targetPracticeScore += gc.tpHeadPoints;
 			app->canvas->headShotTime = app->time + gc.tpHitDisplayMs;
 			app->canvas->bodyShotTime = 0;
 			app->canvas->legShotTime = 0;
-		} else if (n5 == 1) {
+		} else if (hitZone == 1) {
 			app->hud->addMessage((short)231, 4);
 			this->targetPracticeScore += gc.tpBodyPoints;
 			app->canvas->headShotTime = 0;
@@ -1250,11 +1250,11 @@ void Player::exitTargetPractice() {
 	app->canvas->finishRotation(false);
 	this->restoreInventory();
 	app->render->startFade(750, 2);
-	int n = 240;
+	int passingScore = 240;
 	app->localization->resetTextArgs();
 	app->localization->addTextArg(this->targetPracticeScore);
 
-	if (this->targetPracticeScore > n / 2) {
+	if (this->targetPracticeScore > passingScore / 2) {
 		int modifyStat = this->modifyStat(5, 1);
 		if (modifyStat > 0) {
 			app->localization->addTextArg(modifyStat);

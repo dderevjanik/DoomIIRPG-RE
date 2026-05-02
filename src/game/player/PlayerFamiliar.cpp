@@ -61,20 +61,20 @@ void Player::setFamiliar(short familiarType) {
 	this->clearOutFamiliarsStatusEffects();
 	this->swapStatusEffects();
 	const Combat::FamiliarDef* famDefHelp = app->combat->getFamiliarDefByType(this->familiarType);
-	bool b = this->showHelp(famDefHelp ? famDefHelp->helpId : (short)12, false);
-	if (!b) {
+	bool helpShown = this->showHelp(famDefHelp ? famDefHelp->helpId : (short)12, false);
+	if (!helpShown) {
 		app->canvas->drawPlayingSoftKeys();
 	}
 	app->sound->playSound(Sounds::getResIDByName(SoundName::SENTRYBOT_ACTIVATE), 0, 3, false);
 }
 
-short Player::unsetFamiliar(bool b) {
+short Player::unsetFamiliar(bool keepCurrentPos) {
 
 
 	app->hud->stopBrightenScreen();
 	app->hud->stopScreenSmack();
 	int saveAngle = app->canvas->saveAngle;
-	if (b) {
+	if (keepCurrentPos) {
 		if (app->canvas->saveX > app->canvas->viewX) {
 			saveAngle = Enums::ANGLE_WEST;
 		} else if (app->canvas->saveX < app->canvas->viewX) {
@@ -87,7 +87,7 @@ short Player::unsetFamiliar(bool b) {
 	}
 	app->canvas->destAngle = (app->canvas->viewAngle = saveAngle);
 	app->canvas->destPitch = (app->canvas->viewPitch = app->canvas->savePitch);
-	if (!b) {
+	if (!keepCurrentPos) {
 		app->canvas->destX = app->canvas->saveX;
 		app->canvas->destY = app->canvas->saveY;
 		app->canvas->destZ = app->canvas->saveZ;
@@ -96,7 +96,7 @@ short Player::unsetFamiliar(bool b) {
 		app->canvas->viewZ = app->canvas->destZ;
 	}
 	this->swapStatusEffects();
-	if (!b) {
+	if (!keepCurrentPos) {
 		app->render->loadPlayerFog();
 	}
 	app->render->startFade(400, 2);
@@ -176,20 +176,20 @@ void Player::familiarDied() {
 	if (famDef && famDef->explodes) {
 		this->explodeFamiliar(viewX >> 6, viewY >> 6, unsetFamiliar);
 	}
-	int n = famDef ? famDef->deathRemainsWeapon : 3;
+	int deathRemainsWeapon = famDef ? famDef->deathRemainsWeapon : 3;
 	if (this->noFamiliarRemains) {
 		this->noFamiliarRemains = false;
 	} else {
-		this->handleBotRemains(viewX, viewY, n);
+		this->handleBotRemains(viewX, viewY, deathRemainsWeapon);
 	}
-	this->give(1, n, -1, true);
+	this->give(1, deathRemainsWeapon, -1, true);
 }
 
-void Player::familiarReturnsToPlayer(bool b) {
+void Player::familiarReturnsToPlayer(bool keepCurrentPos) {
 
 	app->sound->playSound(Sounds::getResIDByName(SoundName::SENTRYBOT_RETURN), 0, 3, false);
 
-	this->unsetFamiliar(b);
+	this->unsetFamiliar(keepCurrentPos);
 	this->tookBotsInventory = this->stealFamiliarsInventory();
 }
 
@@ -198,19 +198,19 @@ void Player::forceFamiliarReturnDueToMonster() {
 	this->botReturnedDueToMonster = true;
 }
 
-void Player::explodeFamiliar(int n, int n2, int n3) {
+void Player::explodeFamiliar(int tileX, int tileY, int familiarType) {
 
 
-	const Combat::FamiliarDef* famDef = app->combat->getFamiliarDefByType(n3);
+	const Combat::FamiliarDef* famDef = app->combat->getFamiliarDefByType(familiarType);
 	app->combat->attackerWeaponId = (famDef && famDef->explodeWeaponIndex >= 0) ? famDef->explodeWeaponIndex : 4;
-	int n4 = app->combat->attackerWeaponId * 9;
+	int weaponFieldOffset = app->combat->attackerWeaponId * 9;
 
-	int n5 = app->combat->weapons[n4 + 0] & 0xFF;
-	int n6 = app->combat->weapons[n4 + 1] & 0xFF;
-	if (n5 != n6) {
-		n5 += app->nextByte() % (n6 - n5);
+	int dmg = app->combat->weapons[weaponFieldOffset + 0] & 0xFF;
+	int dmgMax = app->combat->weapons[weaponFieldOffset + 1] & 0xFF;
+	if (dmg != dmgMax) {
+		dmg += app->nextByte() % (dmgMax - dmg);
 	}
-	app->combat->radiusHurtEntities(n, n2, 0, n5, this->getPlayerEnt(), nullptr);
+	app->combat->radiusHurtEntities(tileX, tileY, 0, dmg, this->getPlayerEnt(), nullptr);
 }
 
 bool Player::stealFamiliarsInventory() {
@@ -218,44 +218,44 @@ bool Player::stealFamiliarsInventory() {
 	short* inventoryCopy = this->inventoryCopy;
 	short* ammoCopy = this->ammoCopy.data();
 
-	bool b = false;
+	bool tookAnything = false;
 	for (int i = 0; i < 26; ++i) {
 		if (inventoryCopy[i] != 0) {
 			this->give(0, i, inventoryCopy[i], true);
-			b = true;
+			tookAnything = true;
 		}
 	}
 	for (int j = 0; j < Enums::MAX_AMMO; ++j) {
 		if (ammoCopy[j] != 0) {
 			this->give(2, j, ammoCopy[j], true);
-			b = true;
+			tookAnything = true;
 		}
 	}
 	for (int k = 0; k < 15; ++k) {
 		if ((1 << k & weaponsCopy) != 0x0) {
 			this->give(1, k, 1, true);
-			b = true;
+			tookAnything = true;
 		}
 	}
-	return b;
+	return tookAnything;
 }
 
-void Player::handleBotRemains(int n, int n2, int n3) {
+void Player::handleBotRemains(int x, int y, int corpseType) {
 
 	int weaponsCopy = this->weaponsCopy;
 	short* inventoryCopy = this->inventoryCopy;
 	short* ammoCopy = this->ammoCopy.data();
-	short n4 = 0;
-	short n5 = 0;
+	short ammoLoot = 0;
+	short healthLoot = 0;
 	for (int i = 0; i < 26; ++i) {
 		if (inventoryCopy[i] != 0) {
 			if (i == 24 || (i >= 0 && i < 11)) {
-				short n6 = inventoryCopy[i];
-				this->give(0, i, n6, true, true);
+				short itemCount = inventoryCopy[i];
+				this->give(0, i, itemCount, true, true);
 				EntityDef* find = app->entityDefManager->find(6, 0, i);
 				Text* messageBuffer = app->hud->getMessageBuffer();
 				app->localization->resetTextArgs();
-				app->localization->addTextArg(n6);
+				app->localization->addTextArg(itemCount);
 				Text* smallBuffer = app->localization->getSmallBuffer();
 				app->localization->composeText((short)1, find->longName, smallBuffer);
 				app->localization->addTextArg(smallBuffer);
@@ -265,11 +265,11 @@ void Player::handleBotRemains(int n, int n2, int n3) {
 			} else {
 				switch (i) {
 					case 13: {
-						n5 += inventoryCopy[i];
+						healthLoot += inventoryCopy[i];
 						break;
 					}
 					case 16: {
-						n4 += inventoryCopy[i];
+						ammoLoot += inventoryCopy[i];
 						break;
 					}
 					case 11:
@@ -278,7 +278,7 @@ void Player::handleBotRemains(int n, int n2, int n3) {
 					case 19:
 					case 20: {
 						EntityDef* find = app->entityDefManager->find(6, 0, i);
-						app->game->spawnDropItem(n, n2, find->tileIndex, find, inventoryCopy[i], true);
+						app->game->spawnDropItem(x, y, find->tileIndex, find, inventoryCopy[i], true);
 						break;
 					}
 				}
@@ -293,7 +293,7 @@ void Player::handleBotRemains(int n, int n2, int n3) {
 				case 4:
 				case 5: {
 					EntityDef* find = app->entityDefManager->find(6, 2, j);
-					app->game->spawnDropItem(n, n2, find->tileIndex, find, ammoCopy[j], true);
+					app->game->spawnDropItem(x, y, find->tileIndex, find, ammoCopy[j], true);
 					break;
 				}
 			}
@@ -302,10 +302,10 @@ void Player::handleBotRemains(int n, int n2, int n3) {
 	for (int k = 0; k < 15; ++k) {
 		if ((1 << k & weaponsCopy) != 0x0) {
 			int weaponTileNum = app->combat->getWeaponTileNum(k);
-			app->game->spawnDropItem(n, n2, weaponTileNum, app->entityDefManager->lookup(weaponTileNum), 1, true);
+			app->game->spawnDropItem(x, y, weaponTileNum, app->entityDefManager->lookup(weaponTileNum), 1, true);
 		}
 	}
-	app->game->spawnSentryBotCorpse(n, n2, n3, n4, n5);
+	app->game->spawnSentryBotCorpse(x, y, corpseType, ammoLoot, healthLoot);
 }
 
 void Player::attemptToDeploySentryBot() {
@@ -334,15 +334,15 @@ void Player::attemptToDeploySentryBot() {
 	this->setFamiliar(familiar);
 }
 
-void Player::attemptToDiscardFamiliar(int n) {
+void Player::attemptToDiscardFamiliar(int weaponIdx) {
 
 
 	if ((app->render->mapFlags[(app->canvas->viewY >> 6) * 32 + (app->canvas->viewX >> 6)] & 0x20) != 0x0) {
 		app->hud->addMessage((short)0, (short)221, 3);
 	} else {
-		app->game->spawnDropItem(app->canvas->viewX, app->canvas->viewY, app->combat->getWeaponTileNum(n), 6, 1, n,
+		app->game->spawnDropItem(app->canvas->viewX, app->canvas->viewY, app->combat->getWeaponTileNum(weaponIdx), 6, 1, weaponIdx,
 		                         this->ammo[app->combat->familiarAmmoType], false);
-		this->give(1, n, -1);
+		this->give(1, weaponIdx, -1);
 	}
 }
 
@@ -358,8 +358,8 @@ void Player::startSelfDestructDialog() {
 	}
 }
 
-bool Player::weaponIsASentryBot(int n) {
-	return app->combat->getFamiliarDefByWeapon(n) != nullptr;
+bool Player::weaponIsASentryBot(int weaponIdx) {
+	return app->combat->getFamiliarDefByWeapon(weaponIdx) != nullptr;
 }
 
 bool Player::hasASentryBot() {
