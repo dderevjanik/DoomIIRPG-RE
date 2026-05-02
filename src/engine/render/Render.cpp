@@ -87,6 +87,12 @@ bool Render::startup() {
 	this->temp = new int[3];
 	this->renderMode = Render::RENDER_DEFAULT;
 
+	// Fog defaults — moved from TinyGL::startup. fogMin = 32752 with
+	// fogRange = 1 is the "fog effectively disabled" sentinel.
+	this->fogMin = 32752;
+	this->fogRange = 1;
+	this->fogColor = 0;
+
 	this->skipCull = false;
 	this->skipBSP = false;
 	this->skipLines = false;
@@ -1209,7 +1215,7 @@ void Render::render(int viewX, int viewY, int viewZ, int viewAngle, int viewPitc
 
 	this->currentFrameTime = app->upTimeMs;
 
-	int viewAspect = (viewFov << 14) / ((app->tinyGL->viewportWidth << 14) / app->tinyGL->viewportHeight);
+	int viewAspect = (viewFov << 14) / ((app->render->viewportWidth << 14) / app->render->viewportHeight);
 	int n6 = 0;
 	int max = std::max(app->player->statusEffects[33], app->player->statusEffects[34]);
 	if (max != this->destDizzy) {
@@ -1289,15 +1295,15 @@ void Render::render(int viewX, int viewY, int viewZ, int viewAngle, int viewPitc
 	if (this->fogLerpTime != 0) {
 		if (app->time < this->fogLerpStart + this->fogLerpTime) {
 			int n15 = (app->time - this->fogLerpStart << 12) / this->fogLerpTime;
-			app->tinyGL->fogMin = this->baseFogMin + ((this->destFogMin - this->baseFogMin) * n15 >> 12);
-			app->tinyGL->fogRange = this->baseFogRange + ((this->destFogRange - this->baseFogRange) * n15 >> 12);
-			if (app->tinyGL->fogRange == 0) {
-				app->tinyGL->fogRange = 1;
+			this->fogMin = this->baseFogMin + ((this->destFogMin - this->baseFogMin) * n15 >> 12);
+			this->fogRange = this->baseFogRange + ((this->destFogRange - this->baseFogRange) * n15 >> 12);
+			if (this->fogRange == 0) {
+				this->fogRange = 1;
 			}
 		} else {
 			this->fogLerpTime = 0;
-			app->tinyGL->fogMin = this->destFogMin;
-			app->tinyGL->fogRange = this->destFogRange;
+			this->fogMin = this->destFogMin;
+			this->fogRange = this->destFogRange;
 		}
 	}
 	for (int i = 0; i < this->screenWidth; ++i) {
@@ -1314,8 +1320,8 @@ void Render::render(int viewX, int viewY, int viewZ, int viewAngle, int viewPitc
 			this->_gles->DrawSkyMap();
 		} else {
 			int fogColor = 0;
-			if (app->tinyGL->fogRange > 1) {
-				fogColor = app->tinyGL->fogColor;
+			if (this->fogRange > 1) {
+				fogColor = this->fogColor;
 			}
 			this->_gles->ClearBuffer(fogColor);
 		}

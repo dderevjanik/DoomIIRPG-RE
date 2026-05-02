@@ -148,9 +148,9 @@ bool Player::addStatusEffect(int effectIdx, int amount, int duration) {
 	if (newStacks == 1) {
 		this->numStatusEffects++;
 		if (effectIdx == 17) {
-			app->tinyGL->fogMin = 0;
-			if (app->tinyGL->fogRange > 0) {
-				app->tinyGL->fogRange = -1;
+			app->render->fogMin = 0;
+			if (app->render->fogRange > 0) {
+				app->render->fogRange = -1;
 			}
 			app->render->startFogLerp(1024, 0, 2000);
 		}

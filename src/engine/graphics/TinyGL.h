@@ -30,19 +30,6 @@ public:
     float mvp[16] = {};
     TGLVert cv[32] = {};
     TGLVert mv[20] = {};
-    int fogMin = 0;
-    int fogRange = 0;
-    int fogColor = 0;
-    int viewportX = 0;
-    int viewportY = 0;
-    int viewportWidth = 0;
-    int viewportHeight = 0;
-    int viewportClampX1 = 0;
-    int viewportClampX2 = 0;
-    int viewX = 0;
-    int viewY = 0;
-    int viewZ = 0;
-    int viewPitch = 0;
 
 	// Constructor
 	TinyGL();
@@ -69,7 +56,6 @@ private:
     int viewportXBias = 0;
     int viewportYScale = 0;
     int viewportYBias = 0;
-    int viewYaw = 0;
 
     // Internal helpers — matrix construction for setView, viewport math.
     void buildViewMatrix(int x, int y, int z, int yaw, int pitch, int roll, float* matrix);

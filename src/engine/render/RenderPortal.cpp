@@ -85,7 +85,7 @@ bool Render::checkPortalVisibility(int x, int y, int z) {
 		this->portalScale = std::min(((transform3DVerts[1].x - transform3DVerts[2].x << 7) / 132) >> 1, 2048);
 
 		if (app->render->_gles->isInit) { // [GEC] GL Version
-			if (app->tinyGL->viewPitch != 0 && (tz < 3000)) {
+			if (app->render->viewPitch != 0 && (tz < 3000)) {
 				this->portalCY += 10;
 			}
 			this->portalCY += tz / 300;

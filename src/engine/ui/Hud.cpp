@@ -487,8 +487,8 @@ void Hud::drawCinematicText(Graphics* graphics) {
 void Hud::drawEffects(Graphics* graphics) {
 
 
-	if (app->canvas->loadMapID >= 8 && app->tinyGL->fogRange < -1) {
-		int n = (1024 + (app->tinyGL->fogRange >> 4) << 8) / 1024;
+	if (app->canvas->loadMapID >= 8 && app->render->fogRange < -1) {
+		int n = (1024 + (app->render->fogRange >> 4) << 8) / 1024;
 		int n2 = 0;
 		int n3 = -(n * app->hud->imgIce->height >> 8);
 		graphics->setScreenSpace(app->canvas->viewRect);

@@ -31,17 +31,17 @@ void Render::loadPlayerFog() {
 
 	this->fogLerpStart = 0;
 	this->fogLerpTime = 0;
-	app->tinyGL->fogMin = this->playerFogMin;
-	app->tinyGL->fogRange = this->playerFogRange;
+	this->fogMin = this->playerFogMin;
+	this->fogRange = this->playerFogRange;
 	this->buildFogTables(this->playerFogColor);
 }
 
 void Render::savePlayerFog() {
 
 	this->fogLerpStart = 0;
-	this->playerFogMin = app->tinyGL->fogMin;
-	this->playerFogRange = app->tinyGL->fogRange;
-	this->playerFogColor = app->tinyGL->fogColor;
+	this->playerFogMin = this->fogMin;
+	this->playerFogRange = this->fogRange;
+	this->playerFogColor = this->fogColor;
 }
 
 void Render::snapFogLerp() {
@@ -49,16 +49,16 @@ void Render::snapFogLerp() {
 	if (this->fogLerpTime != 0) {
 		this->fogLerpStart = 0;
 		this->fogLerpTime = 0;
-		app->tinyGL->fogMin = this->destFogMin;
-		app->tinyGL->fogRange = this->destFogRange;
+		this->fogMin = this->destFogMin;
+		this->fogRange = this->destFogRange;
 	}
 }
 
 void Render::startFogLerp(int n, int n2, int fogLerpTime) {
 
 
-	this->baseFogMin = app->tinyGL->fogMin;
-	this->baseFogRange = app->tinyGL->fogRange;
+	this->baseFogMin = this->fogMin;
+	this->baseFogRange = this->fogRange;
 	this->destFogMin = n << 4;
 	this->destFogRange = n2 - n << 4;
 	if (this->destFogRange == 0) {
@@ -70,16 +70,16 @@ void Render::startFogLerp(int n, int n2, int fogLerpTime) {
 	} else {
 		this->fogLerpStart = 0;
 		this->fogLerpTime = 0;
-		app->tinyGL->fogMin = this->destFogMin;
-		app->tinyGL->fogRange = this->destFogRange;
+		this->fogMin = this->destFogMin;
+		this->fogRange = this->destFogRange;
 	}
 }
 
 void Render::buildFogTables(int fogColor) {
-	app->tinyGL->fogColor = fogColor;
+	this->fogColor = fogColor;
 	if ((fogColor & 0xFF000000) == 0x0) {
-		app->tinyGL->fogMin = 32752;
-		app->tinyGL->fogRange = 1;
+		this->fogMin = 32752;
+		this->fogRange = 1;
 	}
 }
 
@@ -384,7 +384,7 @@ void Render::postProcessView(Graphics* graphics) {
 		int screenVScrollOffset2 = this->screenVScrollOffset;
 		int n = -(5 * (app->time - this->lastScrollChangeTime)) / 30;
 		if (this->vScrollVelocity + n < 0) {
-			if (app->tinyGL->viewportHeight - screenVScrollOffset2 <= 15 || screenVScrollOffset2 <= 15) {
+			if (app->render->viewportHeight - screenVScrollOffset2 <= 15 || screenVScrollOffset2 <= 15) {
 				screenVScrollOffset2 = 0;
 				this->vScrollVelocity = 0;
 			} else {
@@ -394,7 +394,7 @@ void Render::postProcessView(Graphics* graphics) {
 			this->vScrollVelocity += n;
 		}
 		screenVScrollOffset =
-		    (screenVScrollOffset2 + this->vScrollVelocity + app->tinyGL->viewportHeight) % app->tinyGL->viewportHeight;
+		    (screenVScrollOffset2 + this->vScrollVelocity + app->render->viewportHeight) % app->render->viewportHeight;
 	}
 	this->lastScrollChangeTime = app->time;
 	this->screenVScrollOffset = screenVScrollOffset;
@@ -483,11 +483,11 @@ void Render::drawRGB(Graphics* graphics) {
 	}
 
 	this->bltTime = app->upTimeMs;
-	int viewportX = app->canvas->viewRect[0] + app->tinyGL->viewportX;
-	int viewportY = app->canvas->viewRect[1] + app->tinyGL->viewportY;
+	int viewportX = app->canvas->viewRect[0] + app->render->viewportX;
+	int viewportY = app->canvas->viewRect[1] + app->render->viewportY;
 
-	int viewportWidth = app->tinyGL->viewportWidth;
-	int viewportHeight = app->tinyGL->viewportHeight;
+	int viewportWidth = app->render->viewportWidth;
+	int viewportHeight = app->render->viewportHeight;
 
 	if (!app->render->_gles->isInit) { // [GEC] Adjusted like this to match the Y position on the GL version
 		viewportY = 0;

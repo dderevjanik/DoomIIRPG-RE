@@ -29,9 +29,6 @@ bool TinyGL::startup(int screenWidth) {
 
 	this->setViewport(canvas->viewRect[0], canvas->viewRect[1], canvas->viewRect[2], canvas->viewRect[3]);
 	this->setView( 0, 0, 0, 0, 0, 0, 290, 290);
-	this->fogMin = 32752;
-	this->fogRange = 1;
-	this->fogColor = 0;
 	return true;
 }
 
@@ -122,13 +119,16 @@ void TinyGL::multMatrix(const float* matrix1, const float* matrix2, float* destM
 
 void TinyGL::_setViewport(int viewportX, int viewportY, int viewportWidth, int viewportHeight)
 {
-	this->viewportX = viewportX;
-	this->viewportY = viewportY;
-	this->viewportWidth = viewportWidth;
-	this->viewportHeight = viewportHeight;
+	// External viewport rect lives on Render now (B3.13). Internal scale/bias
+	// scratch stays here (consumed by clipLine/projectVerts).
+	Render* r = app->render.get();
+	r->viewportX = viewportX;
+	r->viewportY = viewportY;
+	r->viewportWidth = viewportWidth;
+	r->viewportHeight = viewportHeight;
 	this->viewportX2 = viewportX + viewportWidth;
-	this->viewportClampX1 = viewportX << TinyGL::SCREEN_SHIFT;
-	this->viewportClampX2 = (this->viewportX2 << TinyGL::SCREEN_SHIFT) + TinyGL::SCREEN_ONE - 1;
+	r->viewportClampX1 = viewportX << TinyGL::SCREEN_SHIFT;
+	r->viewportClampX2 = (this->viewportX2 << TinyGL::SCREEN_SHIFT) + TinyGL::SCREEN_ONE - 1;
 	this->viewportXScale = viewportWidth << 2;
 	this->viewportYScale = viewportHeight << 2;
 	this->viewportXBias = ((viewportX + viewportWidth / 2) << 3) - 4;
@@ -145,7 +145,8 @@ void TinyGL::setViewport(int x, int y, int w, int h) {
 		posY = 3;  // posY = app->canvas->viewRect[1];
 	}
 
-	if (this->viewportX == posX && this->viewportY == posY && this->viewportWidth == w && this->viewportHeight == h) {
+	const Render* r = app->render.get();
+	if (r->viewportX == posX && r->viewportY == posY && r->viewportWidth == w && r->viewportHeight == h) {
 		return;
 	}
 
@@ -165,41 +166,40 @@ void TinyGL::setView(int viewX, int viewY, int viewZ, int viewYaw, int viewPitch
 	
 
 
-	this->viewX = viewX;
-	this->viewY = viewY;
-	this->viewZ = viewZ;
-	this->viewPitch = viewPitch & 0x3ff;
-	this->viewYaw = viewYaw & 0x3ff;
-	// Mirror viewYaw onto gles (used by RasterizeConvexPolygon's sky path
-	// for UV scrolling). Single-writer decoupling toward dropping the gles
-	// → tinyGL pointer.
-	app->render->_gles->viewYaw = this->viewYaw;
+	const int normYaw   = viewYaw   & 0x3ff;
+	int       sgnPitch  = viewPitch & 0x3ff;
+	// Mirror normalized yaw onto gles (used by RasterizeConvexPolygon's sky
+	// path for UV scrolling).
+	app->render->_gles->viewYaw = normYaw;
 
-	// `view2D` and `projection` were members but only ever scratch for the
-	// two multMatrix calls below; promoted to locals to drop 128 bytes of
-	// per-frame zombie state.
+	// `view2D` and `projection` are local scratch for the two multMatrix
+	// calls below.
 	float view2D[16];
 	float projection[16];
 
-	this->buildViewMatrix(viewX, viewY, viewZ, this->viewYaw, this->viewPitch, viewRoll, this->view);
-	this->buildViewMatrix(viewX, viewY, 0, this->viewYaw, 0, 0, view2D);
+	this->buildViewMatrix(viewX, viewY, viewZ, normYaw, sgnPitch, viewRoll, this->view);
+	this->buildViewMatrix(viewX, viewY, 0, normYaw, 0, 0, view2D);
 	this->buildProjectionMatrix(viewFov, viewAspect, projection);
 	this->multMatrix(this->view, projection, this->mvp);
 
-	app->render->_gles->BeginFrame(this->viewportX, this->viewportY,
-	                                this->viewportWidth, this->viewportHeight,
+	app->render->_gles->BeginFrame(app->render->viewportX, app->render->viewportY,
+	                                app->render->viewportWidth, app->render->viewportHeight,
 	                                this->view, projection,
-	                                this->fogColor, this->fogMin, this->fogRange);
+	                                app->render->fogColor, app->render->fogMin, app->render->fogRange);
 
-	if (this->viewPitch > 512) {
-		this->viewPitch -= 1024;
+	if (sgnPitch > 512) {
+		sgnPitch -= 1024;
 	}
 
 	// 2D mvp uses a wider FOV (compensating for the dropped pitch) and the
 	// pitch-zeroed view2D. Used only by transform2DVerts for line-visibility
 	// queries against world-axis-aligned walls.
-	this->buildProjectionMatrix(viewFov + std::abs(this->viewPitch), viewAspect, projection);
+	this->buildProjectionMatrix(viewFov + std::abs(sgnPitch), viewAspect, projection);
 	this->multMatrix(view2D, projection, this->mvp2D);
+
+	// Mirror signed-normalized pitch onto Render so portal-visibility code
+	// can read it without coupling to TinyGL.
+	app->render->viewPitch = sgnPitch;
 }
 
 void TinyGL::viewMtxMove(TGLVert* tglVert, int n, int n2, int n3) {

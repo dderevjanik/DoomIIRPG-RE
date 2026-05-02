@@ -76,9 +76,9 @@ void Game::saveWorldState(OutputStream* OS, bool briefSave) {
 	OS->writeInt(this->totalLevelTime);
 	OS->writeByte(this->mapSecretsFound);
 	app->render->snapFogLerp();
-	OS->writeInt(app->tinyGL->fogColor);
-	OS->writeInt(app->tinyGL->fogMin);
-	OS->writeInt(app->tinyGL->fogRange);
+	OS->writeInt(app->render->fogColor);
+	OS->writeInt(app->render->fogMin);
+	OS->writeInt(app->render->fogRange);
 	OS->writeInt(app->render->playerFogColor);
 	OS->writeInt(app->render->playerFogMin);
 	OS->writeInt(app->render->playerFogRange);
@@ -248,15 +248,15 @@ bool Game::loadWorldState(InputStream* IS) {
 	if (app->render->mapCompileDate == mapCompileDate) {
 		this->totalLevelTime = IS->readInt();
 		this->mapSecretsFound = IS->readByte();
-		app->tinyGL->fogColor = IS->readInt();
-		app->tinyGL->fogMin = IS->readInt();
-		app->tinyGL->fogRange = IS->readInt();
+		app->render->fogColor = IS->readInt();
+		app->render->fogMin = IS->readInt();
+		app->render->fogRange = IS->readInt();
 		app->render->playerFogColor = IS->readInt();
 		app->render->playerFogMin = IS->readInt();
 		app->render->playerFogRange = IS->readInt();
 
 		app->canvas->updateLoadingBar(false);
-		app->render->buildFogTables(app->tinyGL->fogColor);
+		app->render->buildFogTables(app->render->fogColor);
 
 		app->canvas->updateLoadingBar(false);
 		if (app->combat->getWeaponFlags(app->player->ce->weapon).isThrowableItem) {

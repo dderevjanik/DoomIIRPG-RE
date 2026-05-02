@@ -166,6 +166,15 @@ public:
 	int tHeight = 0;
 	uint32_t textureBaseSize = 0;
 
+	// Render viewport rect (logical pixel coords). Set by TinyGL::setViewport
+	// (still owns the viewport-clamp math) and read by sprite/BSP rendering.
+	int viewportX = 0;
+	int viewportY = 0;
+	int viewportWidth = 0;
+	int viewportHeight = 0;
+	int viewportClampX1 = 0;
+	int viewportClampX2 = 0;
+
 	int S_X = 0;
 	int S_Y = 0;
 	int S_Z = 0;
@@ -242,6 +251,9 @@ public:
 	int viewY = 0;
 	int viewZ = 0;
 	int viewAngle = 0;
+	// Signed-normalized pitch (-512..511) — mirrored from TinyGL::setView so
+	// renderer code can read pitch without going through tinyGL.
+	int viewPitch = 0;
 	int viewSin = 0;
 	int viewCos = 0;
 	int viewRightStepX = 0;
@@ -293,6 +305,14 @@ public:
 	int* splitSprites = nullptr;
 	int numSplitSprites = 0;
 	int traceLine[4] = {};
+	// Active fog parameters consumed by gles::BeginFrame each frame. Moved
+	// here from TinyGL — fog has nothing to do with the legacy CPU pipeline,
+	// it's a renderer concern. Writers: PlayerBuffs (status-effect fog),
+	// Hud (low-HP fog), RenderEffects (fog lerp / save/load), GameSaveLoad.
+	int fogMin = 0;
+	int fogRange = 0;
+	int fogColor = 0;
+
 	int baseFogMin = 0;
 	int baseFogRange = 0;
 	int destFogMin = 0;

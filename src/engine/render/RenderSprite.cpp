@@ -62,26 +62,26 @@ void Render::draw2DSprite(int tileNum, int frame, int x, int y, int flags, int r
 	vert3->z = 8192;
 	vert3->s = 0;
 
-	if (vert1->x < app->tinyGL->viewportClampX1) {
-		vert1->s += (app->tinyGL->viewportClampX1 - vert1->x) * ((vert2->s - vert1->s) / (vert2->x - vert1->x));
-		vert1->x = app->tinyGL->viewportClampX1;
+	if (vert1->x < app->render->viewportClampX1) {
+		vert1->s += (app->render->viewportClampX1 - vert1->x) * ((vert2->s - vert1->s) / (vert2->x - vert1->x));
+		vert1->x = app->render->viewportClampX1;
 	}
 
-	if (vert2->x > app->tinyGL->viewportClampX2) {
-		vert2->s -= (vert2->x - app->tinyGL->viewportClampX2) * ((vert2->s - vert1->s) / (vert2->x - vert1->x));
-		vert2->x = app->tinyGL->viewportClampX2;
+	if (vert2->x > app->render->viewportClampX2) {
+		vert2->s -= (vert2->x - app->render->viewportClampX2) * ((vert2->s - vert1->s) / (vert2->x - vert1->x));
+		vert2->x = app->render->viewportClampX2;
 	}
 
 	// Camera-back offset: legacy did 5*(view[i] & ~31 + 8*(view[i] >> 5)) >> 8
 	// over Q14 ints, which works out to ≈ view[i] * 6.25 / 256. With float
 	// matrix (Q14 factored out) the equivalent is view[i] * 400.
-	tinyGL->mv[0].x = tinyGL->viewX - (int)(tinyGL->view[2]  * 400.0f);
-	tinyGL->mv[0].y = tinyGL->viewY - (int)(tinyGL->view[6]  * 400.0f);
-	tinyGL->mv[0].z = tinyGL->viewZ - (int)(tinyGL->view[10] * 400.0f);
+	tinyGL->mv[0].x = this->viewX - (int)(tinyGL->view[2]  * 400.0f);
+	tinyGL->mv[0].y = this->viewY - (int)(tinyGL->view[6]  * 400.0f);
+	tinyGL->mv[0].z = this->viewZ - (int)(tinyGL->view[10] * 400.0f);
 
-	int projX = ((x - tinyGL->viewportWidth / 2) << 15) / tinyGL->viewportWidth;
-	int projY = (((y + scaledHeight) - tinyGL->viewportHeight / 2) << 15) / tinyGL->viewportWidth;
-	int projSize = (scaledHeight << 15) / tinyGL->viewportWidth;
+	int projX = ((x - this->viewportWidth / 2) << 15) / this->viewportWidth;
+	int projY = (((y + scaledHeight) - this->viewportHeight / 2) << 15) / this->viewportWidth;
+	int projSize = (scaledHeight << 15) / this->viewportWidth;
 
 	// Legacy: `(int_view[i] >> 5) * proj >> 14` over Q14 ints =
 	// `proj * (float_view[i] * 16384/32) / 16384 = proj * float_view[i] / 32`.
