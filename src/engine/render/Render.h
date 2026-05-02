@@ -4,13 +4,14 @@
 #include <unordered_map>
 #include <vector>
 
+#include "TGLVert.h"
+
 class Image;
 class gles;
 class Graphics;
 class Applet;
 class SDLGL;
 class Entity;
-class TGLVert;
 class DataNode;
 struct GameConfig;
 
@@ -180,6 +181,14 @@ public:
 	// RenderBSP, Canvas. (B3.8 + B3.14a)
 	float view[16] = {};
 	float mvp[16] = {};
+
+	// Visibility-pipeline scratch (B3.14b — moved from TinyGL).
+	//   cv[]          — clipped-vertex output of transform3DVerts/2DVerts.
+	//   columnScale[] — 1D depth buffer indexed by screen column, used
+	//                   by clippedLineVisCheck / occludeClippedLine for
+	//                   automap fog-of-war and BSP node culling.
+	TGLVert cv[32] = {};
+	int* columnScale = nullptr;
 
 	int S_X = 0;
 	int S_Y = 0;
@@ -447,6 +456,16 @@ public:
 	void setViewport(int x, int y, int w, int h);
 	void resetViewPort();
 	void setView(int viewX, int viewY, int viewZ, int viewYaw, int viewPitch, int viewRoll, int viewFov, int viewAspect);
+
+	// CPU visibility pipeline (formerly TinyGL methods, B3.14b). Used by
+	// BSP traversal for node-culling and automap fog-of-war.
+	void viewMtxMove(TGLVert* tglVert, int n, int n2, int n3);
+	TGLVert* transform3DVerts(TGLVert* array, int n);
+	TGLVert* transform2DVerts(TGLVert* array, int n);
+	bool clipLine(TGLVert* array);
+	void projectVerts(TGLVert* array, int n);
+	bool clippedLineVisCheck(TGLVert* tglVert, TGLVert* tglVert2, bool b);
+	bool occludeClippedLine(TGLVert* tglVert, TGLVert* tglVert2);
 	void unlinkSprite(int n);
 	void unlinkSprite(int n, int n2, int n3);
 	void relinkSprite(int n);

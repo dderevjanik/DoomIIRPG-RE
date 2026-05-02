@@ -71,7 +71,7 @@ bool Render::checkPortalVisibility(int x, int y, int z) {
 		tglVert3->x = tglVert->x - (n4 << 1);
 		tglVert3->y = tglVert->y - (n5 << 1);
 		tglVert3->z = tglVert->z;
-		TGLVert* transform3DVerts = app->tinyGL->transform3DVerts(app->tinyGL->mv, 3);
+		TGLVert* transform3DVerts = app->render->transform3DVerts(app->tinyGL->mv, 3);
 		int tz = transform3DVerts[0].z;
 		if (transform3DVerts[0].w + transform3DVerts[0].z < 0 || transform3DVerts[1].w + transform3DVerts[1].z < 0 ||
 		    transform3DVerts[2].w + transform3DVerts[2].z < 0) {
@@ -79,7 +79,7 @@ bool Render::checkPortalVisibility(int x, int y, int z) {
 			this->portalState = Render::PORTAL_DNE;
 			return false;
 		}
-		app->tinyGL->projectVerts(transform3DVerts, 3);
+		app->render->projectVerts(transform3DVerts, 3);
 		this->portalCX = transform3DVerts[0].x + transform3DVerts[2].x >> 4;
 		this->portalCY = transform3DVerts[0].y + transform3DVerts[1].y >> 4;
 		this->portalScale = std::min(((transform3DVerts[1].x - transform3DVerts[2].x << 7) / 132) >> 1, 2048);

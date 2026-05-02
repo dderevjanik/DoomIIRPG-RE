@@ -42,10 +42,10 @@ void Render::drawNodeLines(short n) {
 			tglVert2->y = (this->lineYs[(i << 1) + 1] & 0xFF) << 7;
 			tglVert1->z = 0;
 			tglVert2->z = 0;
-			TGLVert* transform2DVerts = app->tinyGL->transform2DVerts(app->tinyGL->mv, 2);
-			if (app->tinyGL->clipLine(transform2DVerts)) {
-				app->tinyGL->projectVerts(transform2DVerts, 2);
-				if (app->tinyGL->occludeClippedLine(&transform2DVerts[0], &transform2DVerts[1]) &&
+			TGLVert* transform2DVerts = app->render->transform2DVerts(app->tinyGL->mv, 2);
+			if (app->render->clipLine(transform2DVerts)) {
+				app->render->projectVerts(transform2DVerts, 2);
+				if (app->render->occludeClippedLine(&transform2DVerts[0], &transform2DVerts[1]) &&
 				    app->game->updateAutomap) {
 					this->lineFlags[i >> 1] |= (uint8_t)(8 << ((i & 0x1) << 2));
 				}
@@ -123,10 +123,10 @@ bool Render::cullBoundingBox(int n, int n2, int n3, int n4, bool b) {
 	tglVert->z = 0;
 	tglVert2->z = 0;
 
-	TGLVert* transform2DVerts = app->tinyGL->transform2DVerts(app->tinyGL->mv, 2);
-	if (app->tinyGL->clipLine(transform2DVerts)) {
-		app->tinyGL->projectVerts(transform2DVerts, 2);
-		return !app->tinyGL->clippedLineVisCheck(&transform2DVerts[0], &transform2DVerts[1], b);
+	TGLVert* transform2DVerts = app->render->transform2DVerts(app->tinyGL->mv, 2);
+	if (app->render->clipLine(transform2DVerts)) {
+		app->render->projectVerts(transform2DVerts, 2);
+		return !app->render->clippedLineVisCheck(&transform2DVerts[0], &transform2DVerts[1], b);
 	}
 	return true;
 }

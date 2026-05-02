@@ -143,6 +143,11 @@ bool Render::startup() {
 		--this->screenHeight;
 	}
 
+	// Column-scale 1D z-buffer for visibility/occlusion queries (B3.14b
+	// migration from TinyGL). One int per screen column. Must come after
+	// screenWidth is set above.
+	this->columnScale = new int[this->screenWidth];
+
 	this->_gles = new gles;
 	this->_gles->WindowInit();
 	this->_gles->GLInit(this);
@@ -1307,7 +1312,7 @@ void Render::render(int viewX, int viewY, int viewZ, int viewAngle, int viewPitc
 		}
 	}
 	for (int i = 0; i < this->screenWidth; ++i) {
-		app->tinyGL->columnScale[i] = TinyGL::COLUMN_SCALE_INIT;
+		app->render->columnScale[i] = TinyGL::COLUMN_SCALE_INIT;
 	}
 
 	// app->game->scriptStateVars[5] = 1; // IOS

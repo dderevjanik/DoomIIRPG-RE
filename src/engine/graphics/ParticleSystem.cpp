@@ -69,18 +69,18 @@ void ParticleEmitter::render(Graphics* graphics, int n) {
         tglVert3->x = tglVert->x - (n5 << 1);
         tglVert3->y = tglVert->y - (n6 << 1);
         tglVert3->z = tglVert->z;
-        TGLVert* transform3DVerts = app->tinyGL->transform3DVerts(app->tinyGL->mv, 3);
+        TGLVert* transform3DVerts = app->render->transform3DVerts(app->tinyGL->mv, 3);
         if (transform3DVerts[0].w + transform3DVerts[0].z < 0 || transform3DVerts[1].w + transform3DVerts[1].z < 0 || transform3DVerts[2].w + transform3DVerts[2].z < 0) {
             return;
         }
-        app->tinyGL->projectVerts(transform3DVerts, 3);
+        app->render->projectVerts(transform3DVerts, 3);
         int x = transform3DVerts[0].x;
         int x2 = transform3DVerts[2].x;
         int n7 = x >> 3;
         int n8 = x2 >> 3;
         int n9 = 8388607 / transform3DVerts[0].z;
         int n10 = (n7 + n8) >> 1;
-        if (n10 < 0 || n10 >= app->tinyGL->screenWidth || n9 > app->tinyGL->columnScale[n10]) {
+        if (n10 < 0 || n10 >= app->render->screenWidth || n9 > app->render->columnScale[n10]) {
             return;
         }
         int n11 = transform3DVerts[1].x - transform3DVerts[2].x;

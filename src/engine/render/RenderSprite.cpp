@@ -31,11 +31,9 @@
 void Render::draw2DSprite(int tileNum, int frame, int x, int y, int flags, int renderMode, int renderFlags,
                           int scaleFactor) {
 
-	TinyGL* tinyGL = app->tinyGL.get();
-
-	TGLVert* vert1 = &tinyGL->cv[0];
-	TGLVert* vert2 = &tinyGL->cv[1];
-	TGLVert* vert3 = &tinyGL->cv[2];
+	TGLVert* vert1 = &this->cv[0];
+	TGLVert* vert2 = &this->cv[1];
+	TGLVert* vert3 = &this->cv[2];
 
 	// RENDER_FLAG_SCALE_WEAPON
 	if (renderFlags &
@@ -75,9 +73,9 @@ void Render::draw2DSprite(int tileNum, int frame, int x, int y, int flags, int r
 	// Camera-back offset: legacy did 5*(view[i] & ~31 + 8*(view[i] >> 5)) >> 8
 	// over Q14 ints, which works out to ≈ view[i] * 6.25 / 256. With float
 	// matrix (Q14 factored out) the equivalent is view[i] * 400.
-	tinyGL->mv[0].x = this->viewX - (int)(this->view[2]  * 400.0f);
-	tinyGL->mv[0].y = this->viewY - (int)(this->view[6]  * 400.0f);
-	tinyGL->mv[0].z = this->viewZ - (int)(this->view[10] * 400.0f);
+	app->tinyGL->mv[0].x = this->viewX - (int)(this->view[2]  * 400.0f);
+	app->tinyGL->mv[0].y = this->viewY - (int)(this->view[6]  * 400.0f);
+	app->tinyGL->mv[0].z = this->viewZ - (int)(this->view[10] * 400.0f);
 
 	int projX = ((x - this->viewportWidth / 2) << 15) / this->viewportWidth;
 	int projY = (((y + scaledHeight) - this->viewportHeight / 2) << 15) / this->viewportWidth;
@@ -92,20 +90,20 @@ void Render::draw2DSprite(int tileNum, int frame, int x, int y, int flags, int r
 	const float view8 = this->view[8];
 	const float view9 = this->view[9];
 
-	tinyGL->mv[0].x += (int)((projY * view1 + projX * view0) / 32.0f);
-	tinyGL->mv[0].y += (int)((projY * view5 + projX * view4) / 32.0f);
-	tinyGL->mv[0].z += (int)((projY * view9 + projX * view8) / 32.0f);
+	app->tinyGL->mv[0].x += (int)((projY * view1 + projX * view0) / 32.0f);
+	app->tinyGL->mv[0].y += (int)((projY * view5 + projX * view4) / 32.0f);
+	app->tinyGL->mv[0].z += (int)((projY * view9 + projX * view8) / 32.0f);
 
-	tinyGL->mv[1].x = tinyGL->mv[0].x + (int)(projSize * view0 / 32.0f);
-	tinyGL->mv[1].y = tinyGL->mv[0].y + (int)(projSize * view4 / 32.0f);
-	tinyGL->mv[1].z = tinyGL->mv[0].z + (int)(projSize * view8 / 32.0f);
+	app->tinyGL->mv[1].x = app->tinyGL->mv[0].x + (int)(projSize * view0 / 32.0f);
+	app->tinyGL->mv[1].y = app->tinyGL->mv[0].y + (int)(projSize * view4 / 32.0f);
+	app->tinyGL->mv[1].z = app->tinyGL->mv[0].z + (int)(projSize * view8 / 32.0f);
 
-	tinyGL->mv[2].x = tinyGL->mv[1].x - (int)(projSize * view1 / 32.0f);
-	tinyGL->mv[2].y = tinyGL->mv[1].y - (int)(projSize * view5 / 32.0f);
-	tinyGL->mv[2].z = tinyGL->mv[1].z - (int)(projSize * view9 / 32.0f);
+	app->tinyGL->mv[2].x = app->tinyGL->mv[1].x - (int)(projSize * view1 / 32.0f);
+	app->tinyGL->mv[2].y = app->tinyGL->mv[1].y - (int)(projSize * view5 / 32.0f);
+	app->tinyGL->mv[2].z = app->tinyGL->mv[1].z - (int)(projSize * view9 / 32.0f);
 
 	this->_gles->SetGLState();
-	this->_gles->DrawWorldSpaceSpriteLine(&tinyGL->mv[0], &tinyGL->mv[1], &tinyGL->mv[2], flags ^ 0x20000);
+	this->_gles->DrawWorldSpaceSpriteLine(&app->tinyGL->mv[0], &app->tinyGL->mv[1], &app->tinyGL->mv[2], flags ^ 0x20000);
 	this->_gles->ResetGLState();
 }
 
@@ -170,7 +168,7 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 			tglVert->z = z - 84;
 			tglVert->s = n13 + n22 * n14;
 			tglVert->t = n15 + n21 * n16;
-			app->tinyGL->viewMtxMove(tglVert, 0, (n22 * 2 - 1) * n19, n21 * n20);
+			app->render->viewMtxMove(tglVert, 0, (n22 * 2 - 1) * n19, n21 * n20);
 		}
 
 		if (0x0 != (flags & Enums::SPRITE_FLAG_TILE) || app->render->textureBaseSize == app->render->sWidth * app->render->tHeight) {
@@ -180,13 +178,13 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 			// transform3DVerts → ClipQuad → RasterizeConvexPolygon.
 			this->_gles->DrawModelVerts(std::span(app->tinyGL->mv, n18));
 		} else {
-			TGLVert* transform3DVerts = app->tinyGL->transform3DVerts(app->tinyGL->mv, n18);
+			TGLVert* transform3DVerts = app->render->transform3DVerts(app->tinyGL->mv, n18);
 			TGLVert* tglVert2 = &transform3DVerts[0];
 			if (tglVert2->w + tglVert2->z < 0) {
 				return;
 			}
-			if (app->tinyGL->clipLine(transform3DVerts)) {
-				app->tinyGL->projectVerts(transform3DVerts, n18);
+			if (app->render->clipLine(transform3DVerts)) {
+				app->render->projectVerts(transform3DVerts, n18);
 				this->_gles->DrawWorldSpaceSpriteLine(&app->tinyGL->mv[0], &app->tinyGL->mv[1],
 				                                       &app->tinyGL->mv[2], flags);
 			}
@@ -364,13 +362,13 @@ void Render::occludeSpriteLine(int n) {
 	app->tinyGL->mv[0].y += Canvas::viewStepValues[n7 + 1] >> 1 << 4;
 	app->tinyGL->mv[1].y -= Canvas::viewStepValues[n7 + 1] >> 1 << 4;
 
-	TGLVert* transform2DVerts = app->tinyGL->transform2DVerts(app->tinyGL->mv, 2);
-	if (app->tinyGL->clipLine(transform2DVerts)) {
-		app->tinyGL->projectVerts(transform2DVerts, 2);
+	TGLVert* transform2DVerts = app->render->transform2DVerts(app->tinyGL->mv, 2);
+	if (app->render->clipLine(transform2DVerts)) {
+		app->render->projectVerts(transform2DVerts, 2);
 		if (transform2DVerts[0].x > transform2DVerts[1].x) {
-			app->tinyGL->occludeClippedLine(&transform2DVerts[1], &transform2DVerts[0]);
+			app->render->occludeClippedLine(&transform2DVerts[1], &transform2DVerts[0]);
 		} else {
-			app->tinyGL->occludeClippedLine(&transform2DVerts[0], &transform2DVerts[1]);
+			app->render->occludeClippedLine(&transform2DVerts[0], &transform2DVerts[1]);
 		}
 	}
 }
@@ -558,10 +556,10 @@ void Render::renderStreamSprite(int n) {
 	}
 
 	int n35 = 0;
-	app->tinyGL->viewMtxMove(&mv[0], n12, n11 - (n34 / 4), (n35 / 4) + n13);
-	app->tinyGL->viewMtxMove(&mv[1], n12, n11 + (n34 / 4), n13);
-	app->tinyGL->viewMtxMove(&mv[2], 0, (n33 * 2), (n35 * 2) + n14);
-	app->tinyGL->viewMtxMove(&mv[3], 0, -(n33 * 2), n14);
+	app->render->viewMtxMove(&mv[0], n12, n11 - (n34 / 4), (n35 / 4) + n13);
+	app->render->viewMtxMove(&mv[1], n12, n11 + (n34 / 4), n13);
+	app->render->viewMtxMove(&mv[2], 0, (n33 * 2), (n35 * 2) + n14);
+	app->render->viewMtxMove(&mv[3], 0, -(n33 * 2), n14);
 	int n36 = n31 - (app->time * 3 & 0x3FF);
 	mv[3].s = mv[0].s = n29;
 	mv[1].t = mv[0].t = n36;
