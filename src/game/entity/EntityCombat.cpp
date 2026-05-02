@@ -194,72 +194,72 @@ bool Entity::touchedItem() {
     return true;
 }
 
-bool Entity::pain(int n, Entity* entity) {
+bool Entity::pain(int damage, Entity* entity) {
 
 
-    bool b = false;
+    bool triggeredPhase = false;
     int sprite = this->getSprite();
     if ((this->info & 0x20000) == 0x0) {
-        return b;
+        return triggeredPhase;
     }
     if (this->def->eType == Enums::ET_MONSTER) {
         int stat = this->combat->getStat(0);
         int stat2 = this->combat->getStat(1);
-        int n2 = stat - n;
+        int newHealth = stat - damage;
         if (this->isBoss()) {
-            int n3 = stat2 >> 1;
-            int n4 = n3 >> 1;
-            int n5 = stat2 - n4;
-            if (n2 <= n5 && n2 + n > n5) {
+            int halfHealth = stat2 >> 1;
+            int quarterHealth = halfHealth >> 1;
+            int threeQuarterHealth = stat2 - quarterHealth;
+            if (newHealth <= threeQuarterHealth && newHealth + damage > threeQuarterHealth) {
                 if (!app->canvas->combatDone) {
-                    b = (app->game->executeStaticFunc(2) != 0);
-                    if (n2 < n3) {
-                        n2 = n3 + 1;
+                    triggeredPhase = (app->game->executeStaticFunc(2) != 0);
+                    if (newHealth < halfHealth) {
+                        newHealth = halfHealth + 1;
                         this->monsterEffects &= ~1u;
                     }
                 }
                 else {
-                    n2 = this->combat->getStat(0);
+                    newHealth = this->combat->getStat(0);
                     this->monsterEffects &= ~1u;
                 }
             }
-            else if (n2 <= n3 && n2 + n > n3) {
+            else if (newHealth <= halfHealth && newHealth + damage > halfHealth) {
                 if (!app->canvas->combatDone) {
-                    b = (app->game->executeStaticFunc(3) != 0);
-                    if (n2 < n4) {
-                        n2 = n4 + 1;
+                    triggeredPhase = (app->game->executeStaticFunc(3) != 0);
+                    if (newHealth < quarterHealth) {
+                        newHealth = quarterHealth + 1;
                         this->monsterEffects &= ~1u;
                     }
                 }
                 else {
-                    n2 = this->combat->getStat(0);
+                    newHealth = this->combat->getStat(0);
                     this->monsterEffects &= ~1u;
                 }
             }
-            else if (n2 <= n4 && n2 + n > n4) {
+            else if (newHealth <= quarterHealth && newHealth + damage > quarterHealth) {
                 if (!app->canvas->combatDone) {
-                    b = (app->game->executeStaticFunc(4) != 0);
-                    if (n2 < 0) {
-                        n2 = 1;
+                    triggeredPhase = (app->game->executeStaticFunc(4) != 0);
+                    if (newHealth < 0) {
+                        newHealth = 1;
                         this->monsterEffects &= ~1u;
                     }
                 }
                 else {
-                    n2 = this->combat->getStat(0);
+                    newHealth = this->combat->getStat(0);
                     this->monsterEffects &= ~1u;
                 }
             }
-            if (b && (this->monsterFlags & Enums::MFLAG_NOTHINK) != 0x0) {
+            if (triggeredPhase && (this->monsterFlags & Enums::MFLAG_NOTHINK) != 0x0) {
                 app->combat->animLoopCount = 1;
             }
         }
 
-        if ((this->monsterFlags & Enums::MFLAG_NOKILL) != 0x0 && n2 <= 0) {
-            n2 = 1;
+        if ((this->monsterFlags & Enums::MFLAG_NOKILL) != 0x0 && newHealth <= 0) {
+            newHealth = 1;
         }
-        this->combat->setStat(0, n2);
-        app->eventBus->emit(MonsterPainEvent{this, entity, n, n2});
-        if (n2 > 0) {
+        this->combat->setStat(0, newHealth);
+        app->eventBus->emit(MonsterPainEvent{this, entity, damage, newHealth});
+        if (newHealth > 0) {
 
             int monsterSound = app->game->getMonsterSound(this->def->monsterIdx, Enums::MSOUND_PAIN);
             app->sound->playSound(monsterSound, 0, 3, 0);
@@ -298,7 +298,7 @@ bool Entity::pain(int n, Entity* entity) {
         // Convert to water spout (pickup-like behavior)
         if (dd.convertToWaterSpout) {
             app->canvas->turnEntityIntoWaterSpout(this);
-            return b;
+            return triggeredPhase;
         }
         // Unlink-only (barricade-like) vs full removal
         if (dd.unlinkOnly) {
@@ -310,21 +310,21 @@ bool Entity::pain(int n, Entity* entity) {
             app->render->setSpriteInfoFlag(sprite, 0x10000);
         }
     }
-    return b;
+    return triggeredPhase;
 }
 
-int Entity::checkMonsterDeath(bool b, bool b2) {
+int Entity::checkMonsterDeath(bool awardXP, bool playDeathSound) {
 
     int xpAwarded = 0;
-    if (b && (app->player->weapons & 0x2000) != 0x0 && app->combat->attackerWeaponId != 13) {
+    if (awardXP && (app->player->weapons & 0x2000) != 0x0 && app->combat->attackerWeaponId != 13) {
         app->player->give(2, 6, 1);
     }
     if (this->isMonster()) {
-        if (b2) {
+        if (playDeathSound) {
             int resourceID = app->game->getMonsterSound(this->def->monsterIdx, Enums::MSOUND_DEATH);
             app->sound->playSound(resourceID, 0, 5, false);
         }
-        if (b) {
+        if (awardXP) {
             xpAwarded = app->combat->monsterBehaviors[this->def->monsterIdx].xp;
             app->player->addXP(xpAwarded);
         }
@@ -339,13 +339,13 @@ int Entity::checkMonsterDeath(bool b, bool b2) {
     return xpAwarded;
 }
 
-void Entity::died(bool b, Entity* entity) {
+void Entity::died(bool awardXP, Entity* entity) {
 
     LOG_INFO("[entity] died: type={} subType={} sprite={}\n", this->def->eType, this->def->eSubType, this->getSprite());
     int sprite = this->getSprite();
-    short n = app->render->getSpriteX(sprite);
-    short n2 = app->render->getSpriteY(sprite);
-    int n3 = app->render->getSpriteInfoRaw(sprite);
+    short spriteX = app->render->getSpriteX(sprite);
+    short spriteY = app->render->getSpriteY(sprite);
+    int spriteInfo = app->render->getSpriteInfoRaw(sprite);
     if ((this->info & 0x20000) == 0x0 || (this->isMonster() && (this->monsterFlags & Enums::MFLAG_NOKILL) != 0x0)) {
         return;
     }
@@ -366,7 +366,7 @@ void Entity::died(bool b, Entity* entity) {
         }
     }
     else if (eType == Enums::ET_CORPSE) {
-        n3 |= 0x10000;
+        spriteInfo |= 0x10000;
         this->info |= 0x410000;
         this->info &= 0xFFF7FFFF;
         if (this->isMonster()) {
@@ -379,14 +379,14 @@ void Entity::died(bool b, Entity* entity) {
         this->info |= 0x400000;
         this->ai->resetGoal();
         app->game->snapLerpSprites(this->getSprite());
-        n3 = ((n3 & 0xFFFF00FF) | 0x7000);
+        spriteInfo = ((spriteInfo & 0xFFFF00FF) | 0x7000);
         this->ai->frameTime = app->time;
         if ((this->info & 0x10000) != 0x0) {
-            n3 |= 0x17000;
+            spriteInfo |= 0x17000;
         }
         else {
             this->info |= 0x1020000;
-            this->trimCorpsePile(n, n2);
+            this->trimCorpsePile(spriteX, spriteY);
         }
         if ((this->monsterEffects & 0x2) || (this->monsterEffects & 0x1)) {
             this->clearMonsterEffects();
@@ -396,9 +396,9 @@ void Entity::died(bool b, Entity* entity) {
             this->monsterEffects |= 0x220220;
         }
         if (app->game->difficulty == Enums::DIFFICULTY_NIGHTMARE && (this->monsterFlags & Enums::MFLAG_NORAISE) == 0x0) {
-            int n5 = 2 + app->nextInt() % 3;
+            int respawnTimer = 2 + app->nextInt() % 3;
             this->monsterEffects &= 0xFFFE1FFB;
-            this->monsterEffects |= n5 << 13;
+            this->monsterEffects |= respawnTimer << 13;
             this->monsterEffects |= 0x4;
         }
         app->game->deactivate(this);
@@ -408,12 +408,12 @@ void Entity::died(bool b, Entity* entity) {
             app->game->executeStaticFunc(5);
         }
         else if (app->combat->monsterBehaviors[monsterIdx].floats) {
-            app->game->gsprite_allocAnim(241, n, n2, app->render->getSpriteZ(sprite));
-            n3 |= 0x10000;
+            app->game->gsprite_allocAnim(241, spriteX, spriteY, app->render->getSpriteZ(sprite));
+            spriteInfo |= 0x10000;
             app->game->spawnDropItem(this);
         }
-        int xpAwarded = this->checkMonsterDeath(b, true);
-        app->eventBus->emit(MonsterDeathEvent{this, entity, xpAwarded, this->deathByExplosion(entity), (int)n, (int)n2});
+        int xpAwarded = this->checkMonsterDeath(awardXP, true);
+        app->eventBus->emit(MonsterDeathEvent{this, entity, xpAwarded, this->deathByExplosion(entity), (int)spriteX, (int)spriteY});
         if ((this->info & 0x10000) != 0x0 || app->combat->monsterBehaviors[monsterIdx].floats) {
             this->info = ((this->info & 0xFEFDFFFF) | 0x10000);
             app->game->unlinkEntity(this);
@@ -422,12 +422,12 @@ void Entity::died(bool b, Entity* entity) {
         this->name = (short)(this->def->name | 0x400);
         app->canvas->invalidateRect();
         if (app->game->difficulty == Enums::DIFFICULTY_NIGHTMARE && (this->monsterFlags & Enums::MFLAG_NORAISE) == 0x0 && (this->info & 0x80000) == 0x0) {
-            int n6 = 2 + app->nextInt() % 3;
-            this->monsterEffects |= n6 << 13;
+            int respawnTimer = 2 + app->nextInt() % 3;
+            this->monsterEffects |= respawnTimer << 13;
             this->monsterEffects |= 0x4;
         }
         else if ((this->info & 0x80000) != 0x0) {
-            n3 |= 0x10000;
+            spriteInfo |= 0x10000;
             this->info |= 0x410000;
             this->info &= 0xFFF7FFFF;
             app->player->counters[4]++;
@@ -443,7 +443,7 @@ void Entity::died(bool b, Entity* entity) {
         app->game->executeEntityFunc(this, this->deathByExplosion(entity));
         this->info &= 0xFDFFFFFF;
     }
-    app->render->setSpriteInfoRaw(sprite, n3);
+    app->render->setSpriteInfoRaw(sprite, spriteInfo);
     app->canvas->updateFacingEntity = true;
 }
 
@@ -452,7 +452,7 @@ bool Entity::deathByExplosion(Entity* entity) {
     return entity == app->player->getPlayerEnt() && app->combat->getWeaponFlags(app->player->ce->weapon).splashDamage;
 }
 
-void Entity::aiCalcSimpleGoal(bool b) {
+void Entity::aiCalcSimpleGoal(bool forceNewGoal) {
 
 
     if (app->combat->monsterBehaviors[this->def->monsterIdx].canResurrect && this->findRaiseTarget(app->combat->monsterBehaviors[this->def->monsterIdx].resurrectSearchRadius, 0, 0) != -1) {
@@ -464,12 +464,12 @@ void Entity::aiCalcSimpleGoal(bool b) {
         return;
     }
     int aiWeaponForTarget = this->aiWeaponForTarget(&app->game->entities[1]);
-    bool b2 = false;
+    bool canAttack = false;
     if (aiWeaponForTarget != -1) {
         this->combat->weapon = aiWeaponForTarget;
-        b2 = true;
+        canAttack = true;
     }
-    if (b2) {
+    if (canAttack) {
         this->ai->goalType = 3;
         this->ai->goalParam = 1;
         if (app->combat->monsterBehaviors[this->def->monsterIdx].evading) {
@@ -485,10 +485,10 @@ void Entity::aiCalcSimpleGoal(bool b) {
     }
 }
 
-void Entity::aiChooseNewGoal(bool b) {
+void Entity::aiChooseNewGoal(bool forceNewGoal) {
     uint8_t eSubType = this->def->eSubType;
     this->ai->resetGoal();
-    this->aiCalcSimpleGoal(b);
+    this->aiCalcSimpleGoal(forceNewGoal);
     if (app->combat->monsterBehaviors[this->def->monsterIdx].evading && this->ai->goalType == 3) {
         this->ai->goalFlags |= 0x8;
     }
@@ -545,17 +545,17 @@ bool Entity::aiIsAttackValid() {
     app->game->trace(calcPosition[0], calcPosition[1], app->game->destX, app->game->destY, this, 5295, 2);
     Entity* traceEntity = app->game->traceEntity;
     if (traceEntity != nullptr) {
-        bool b = app->combat->weapons[weapon * 9 + 3] >= app->combat->WorldDistToTileDist(this->distFrom(app->game->destX, app->game->destY));
-        bool b2 = false;
-        if (b) {
-            int n = calcPosition[0] - app->game->destX;
-            int n2 = calcPosition[1] - app->game->destY;
-            b2 = ((n != 0 || n2 != 0) && (n == 0 || n2 == 0));
+        bool inRange = app->combat->weapons[weapon * 9 + 3] >= app->combat->WorldDistToTileDist(this->distFrom(app->game->destX, app->game->destY));
+        bool inLine = false;
+        if (inRange) {
+            int dx = calcPosition[0] - app->game->destX;
+            int dy = calcPosition[1] - app->game->destY;
+            inLine = ((dx != 0 || dy != 0) && (dx == 0 || dy == 0));
         }
-        if (this->ai->target == nullptr && traceEntity->def->eType == Enums::ET_PLAYER && b && b2) {
+        if (this->ai->target == nullptr && traceEntity->def->eType == Enums::ET_PLAYER && inRange && inLine) {
             return true;
         }
-        if (this->ai->target == traceEntity && b && b2) {
+        if (this->ai->target == traceEntity && inRange && inLine) {
             return true;
         }
     }
@@ -576,11 +576,11 @@ int Entity::aiWeaponForTarget(Entity* entity) {
         viewX = app->render->getSpriteX(sprite);
         viewY = app->render->getSpriteY(sprite);
     }
-    int a = viewX - app->render->getSpriteX(sprite);
-    int a2 = viewY - app->render->getSpriteY(sprite);
+    int dx = viewX - app->render->getSpriteX(sprite);
+    int dy = viewY - app->render->getSpriteY(sprite);
     int8_t* weapons = app->combat->weapons;
     if (app->combat->monsterBehaviors[this->def->monsterIdx].orthogonalAttackOnly) {
-        if (a != 0 && a2 != 0) {
+        if (dx != 0 && dy != 0) {
             return -1;
         }
         int* calcPosition = entity->calcPosition();
@@ -598,30 +598,30 @@ int Entity::aiWeaponForTarget(Entity* entity) {
                 int cdRange = tp.cooldownMax - tp.cooldownMin;
                 this->param = (cdRange > 0) ? ((int)app->nextInt() % (cdRange + 1) + tp.cooldownMin) : tp.cooldownMin;
                 int tpDiam = tp.range * 2 + 1;
-                int n = tp.maxAttempts;
-                while (n-- > 0) {
-                    short n2 = app->render->getSpriteX(sprite);
-                    short n3 = app->render->getSpriteY(sprite);
-                    int n4 = 0;
-                    int n5 = 0;
+                int attempts = tp.maxAttempts;
+                while (attempts-- > 0) {
+                    short srcX = app->render->getSpriteX(sprite);
+                    short srcY = app->render->getSpriteY(sprite);
+                    int dxTiles = 0;
+                    int dyTiles = 0;
 
-                    while (n-- > 0 && n4 == 0 && n5 == 0){
-                        n4 = (int)app->nextInt() % tpDiam - tp.range;
-                        n5 = (int)app->nextInt() % tpDiam - tp.range;
+                    while (attempts-- > 0 && dxTiles == 0 && dyTiles == 0){
+                        dxTiles = (int)app->nextInt() % tpDiam - tp.range;
+                        dyTiles = (int)app->nextInt() % tpDiam - tp.range;
                     }
 
-                    int n6 = n2 + (n4 << 6);
-                    int n7 = n3 + (n5 << 6);
-                    app->game->trace(n2, n3, n6, n7, this, 15535, 2);
+                    int dstX = srcX + (dxTiles << 6);
+                    int dstY = srcY + (dyTiles << 6);
+                    app->game->trace(srcX, srcY, dstX, dstY, this, 15535, 2);
                     if (app->game->numTraceEntities == 0) {
                         if (tp.particleId >= 0)
                             app->particleSystem->spawnParticles(tp.particleId, -1, sprite);
                         app->sound->playSound(Sounds::getResIDByName(SoundName::TELEPORT), 0, 1, 0);
                         app->game->unlinkEntity(this);
-                        app->render->setSpriteX(sprite, (short)n6);
-                        app->render->setSpriteY(sprite, (short)n7);
-                        app->render->setSpriteZ(sprite, (short)(app->render->getHeight(n6, n7) + 32));
-                        app->game->linkEntity(this, n6 >> 6, n7 >> 6);
+                        app->render->setSpriteX(sprite, (short)dstX);
+                        app->render->setSpriteY(sprite, (short)dstY);
+                        app->render->setSpriteZ(sprite, (short)(app->render->getHeight(dstX, dstY) + 32));
+                        app->game->linkEntity(this, dstX >> 6, dstY >> 6);
                         app->render->relinkSprite(sprite);
                         if (tp.particleId >= 0)
                             app->particleSystem->spawnParticles(tp.particleId, -1, sprite);
@@ -633,12 +633,12 @@ int Entity::aiWeaponForTarget(Entity* entity) {
                 --this->param;
             }
         }
-        if (a != 0 && a2 != 0) {
+        if (dx != 0 && dy != 0) {
             if (app->combat->monsterBehaviors[this->def->monsterIdx].diagonalAttack) {
                 int monsterField = app->combat->getMonsterField(this->def, app->combat->monsterBehaviors[this->def->monsterIdx].diagonalAttackField);
-                int n8 = monsterField * 9;
+                int weaponFieldOffset = monsterField * 9;
                 int worldDistToTileDist = app->combat->WorldDistToTileDist(entity->distFrom(app->render->getSpriteX(sprite), app->render->getSpriteY(sprite)));
-                if (weapons[n8 + 2] <= worldDistToTileDist && weapons[n8 + 3] >= worldDistToTileDist) {
+                if (weapons[weaponFieldOffset + 2] <= worldDistToTileDist && weapons[weaponFieldOffset + 3] >= worldDistToTileDist) {
                     int* calcPosition2 = entity->calcPosition();
                     app->game->trace(app->render->getSpriteX(sprite), app->render->getSpriteY(sprite), calcPosition2[0], calcPosition2[1], this, 4131, 2);
                     if (app->game->traceEntity == entity) {
@@ -654,19 +654,19 @@ int Entity::aiWeaponForTarget(Entity* entity) {
             if (app->game->traceEntity != entity) {
                 return -1;
             }
-            int n9 = a;
-            int n10 = a2;
-            if (n9 != 0) {
-                n9 /= std::abs(a);
+            int signX = dx;
+            int signY = dy;
+            if (signX != 0) {
+                signX /= std::abs(dx);
             }
-            if (n10 != 0) {
-                n10 /= std::abs(a2);
+            if (signY != 0) {
+                signY /= std::abs(dy);
             }
-            app->game->trace(app->render->getSpriteX(sprite) + n9 * 18, app->render->getSpriteY(sprite) + n10 * 18, viewX, viewY, this, 15791, 2);
-            bool b = app->game->traceEntity == entity;
+            app->game->trace(app->render->getSpriteX(sprite) + signX * 18, app->render->getSpriteY(sprite) + signY * 18, viewX, viewY, this, 15791, 2);
+            bool hasLOS = app->game->traceEntity == entity;
             int monsterField2 = app->combat->getMonsterField(this->def, 0);
             int monsterField3 = app->combat->getMonsterField(this->def, 1);
-            if (!b) {
+            if (!hasLOS) {
                 if (app->combat->getWeaponFlags(monsterField2).requiresLineOfSight) {
                     monsterField2 = 0;
                 }
@@ -674,86 +674,86 @@ int Entity::aiWeaponForTarget(Entity* entity) {
                     monsterField3 = 0;
                 }
             }
-            int n12;
-            int n11 = n12 = -1;
+            int atk1Offset;
+            int atk2Offset = atk1Offset = -1;
             int worldDistToTileDist2 = app->combat->WorldDistToTileDist(entity->distFrom(app->render->getSpriteX(sprite), app->render->getSpriteY(sprite)));
             if (monsterField2 == monsterField3) {
                 monsterField3 = 0;
             }
             if (monsterField2 != 0) {
-                int n13 = monsterField2 * 9;
-                if (weapons[n13 + 2] <= worldDistToTileDist2 && weapons[n13 + 3] >= worldDistToTileDist2) {
-                    n12 = n13;
+                int wpOffset = monsterField2 * 9;
+                if (weapons[wpOffset + 2] <= worldDistToTileDist2 && weapons[wpOffset + 3] >= worldDistToTileDist2) {
+                    atk1Offset = wpOffset;
                 }
             }
             if (monsterField3 != 0) {
-                int n14 = monsterField3 * 9;
-                if (weapons[n14 + 2] <= worldDistToTileDist2 && weapons[n14 + 3] >= worldDistToTileDist2) {
-                    n11 = n14;
+                int wpOffset = monsterField3 * 9;
+                if (weapons[wpOffset + 2] <= worldDistToTileDist2 && weapons[wpOffset + 3] >= worldDistToTileDist2) {
+                    atk2Offset = wpOffset;
                 }
             }
 
             bool atk1NeedsLos = (monsterField2 >= 0 && app->combat->getWeaponFlags(monsterField2).requiresLosPath);
             bool atk2NeedsLos = (monsterField3 >= 0 && app->combat->getWeaponFlags(monsterField3).requiresLosPath);
             if (atk1NeedsLos || atk2NeedsLos) {
-                bool b2 = true;
-                int n15 = app->render->getSpriteX(sprite) >> 6;
-                int n16 = app->render->getSpriteY(sprite) >> 6;
+                bool pathClear = true;
+                int pathTileX = app->render->getSpriteX(sprite) >> 6;
+                int pathTileY = app->render->getSpriteY(sprite) >> 6;
 
                 do {
-                    if (app->game->baseVisitedTiles[n16] & 1 << n15){
-                        b2 = false;
+                    if (app->game->baseVisitedTiles[pathTileY] & 1 << pathTileX){
+                        pathClear = false;
                         break;
                     }
-                    n15 += n9;
-                    n16 += n10;
+                    pathTileX += signX;
+                    pathTileY += signY;
                 } while (--worldDistToTileDist2 > 0);
 
-                if (atk1NeedsLos && !b2) {
-                    n12 = -1;
+                if (atk1NeedsLos && !pathClear) {
+                    atk1Offset = -1;
                 }
-                if (atk2NeedsLos && !b2) {
-                    n11 = -1;
+                if (atk2NeedsLos && !pathClear) {
+                    atk2Offset = -1;
                 }
             }
 
-            int n17;
-            if (n11 != -1 && n12 != -1) {
+            int chosenAttack;
+            if (atk2Offset != -1 && atk1Offset != -1) {
                 // attack1_chance is 0-100 (percent). Pick attack1 with that probability when both attacks are in range.
-                n17 = (((int)(app->nextByte() % 100) < app->combat->getMonsterField(this->def, 2)) ? monsterField2 : monsterField3);
+                chosenAttack = (((int)(app->nextByte() % 100) < app->combat->getMonsterField(this->def, 2)) ? monsterField2 : monsterField3);
             }
-            else if (n11 != -1) {
-                n17 = monsterField3;
+            else if (atk2Offset != -1) {
+                chosenAttack = monsterField3;
             }
             else {
-                if (n12 == -1) {
+                if (atk1Offset == -1) {
                     return -1;
                 }
-                n17 = monsterField2;
+                chosenAttack = monsterField2;
             }
-            return n17;
+            return chosenAttack;
         }
     }
 }
 
-bool Entity::checkLineOfSight(int n, int n2, int n3, int n4, int n5) {
+bool Entity::checkLineOfSight(int startX, int startY, int endX, int endY, int typeMask) {
 
 
-    int a = n3 - n;
-    int a2 = n4 - n2;
-    if (a != 0 && a2 != 0) {
+    int signX = endX - startX;
+    int signY = endY - startY;
+    if (signX != 0 && signY != 0) {
         return false;
     }
-    if (a != 0) {
-        a /= std::abs(a);
+    if (signX != 0) {
+        signX /= std::abs(signX);
     }
-    if (a2 != 0) {
-        a2 /= std::abs(a2);
+    if (signY != 0) {
+        signY /= std::abs(signY);
     }
-    while (n != n3 && n2 != n4) {
-        n += a;
-        n2 += a2;
-        if (app->game->findMapEntity(n << 6, n2 << 6, n5)) {
+    while (startX != endX && startY != endY) {
+        startX += signX;
+        startY += signY;
+        if (app->game->findMapEntity(startX << 6, startY << 6, typeMask)) {
             return false;
         }
     }
@@ -794,14 +794,14 @@ void Entity::undoAttack() {
     }
 }
 
-void Entity::trimCorpsePile(int n, int n2) {
+void Entity::trimCorpsePile(int x, int y) {
 
     Entity* entity = app->game->inactiveMonsters;
     if (entity != nullptr) {
-        int n3 = 0;
+        int corpseCount = 0;
         do {
             int sprite = entity->getSprite();
-            if (app->render->getSpriteX(sprite) == n && app->render->getSpriteY(sprite) == n2 && (entity->info & 0x1010000) != 0x0 && (app->render->getSpriteInfoRaw(sprite) & 0x10000) == 0x0 && ++n3 >= 3) {
+            if (app->render->getSpriteX(sprite) == x && app->render->getSpriteY(sprite) == y && (entity->info & 0x1010000) != 0x0 && (app->render->getSpriteInfoRaw(sprite) & 0x10000) == 0x0 && ++corpseCount >= 3) {
                 app->render->setSpriteInfoFlag(sprite, 0x10000);
                 entity->info = ((entity->info & 0xFEFFFFFF) | 0x10000);
                 app->game->unlinkEntity(entity);
@@ -811,40 +811,40 @@ void Entity::trimCorpsePile(int n, int n2) {
     }
 }
 
-void Entity::knockback(int n, int n2, int n3) {
+void Entity::knockback(int srcX, int srcY, int distance) {
 
     int32_t* knockbackDelta = this->knockbackDelta;
-    if (n3 == 0) {
+    if (distance == 0) {
         return;
     }
     int destX;
     int destY;
-    int n4;
+    int traceMask;
     if (this->def->eType == Enums::ET_PLAYER) {
         destX = app->game->destX;
         destY = app->game->destY;
-        n4 = 13501;
+        traceMask = 13501;
     }
     else {
         int sprite = this->getSprite();
         destX = app->render->getSpriteX(sprite);
         destY = app->render->getSpriteY(sprite);
-        n4 = 15535;
+        traceMask = 15535;
     }
-    knockbackDelta[0] = destX - n;
-    knockbackDelta[1] = destY - n2;
+    knockbackDelta[0] = destX - srcX;
+    knockbackDelta[1] = destY - srcY;
     if (knockbackDelta[0] != 0) {
         knockbackDelta[0] /= std::abs(knockbackDelta[0]);
         app->canvas->knockbackStart = destX;
-        app->canvas->knockbackWorldDist = std::abs(64 * knockbackDelta[0] * n3);
+        app->canvas->knockbackWorldDist = std::abs(64 * knockbackDelta[0] * distance);
     }
     if (knockbackDelta[1] != 0) {
         knockbackDelta[1] /= std::abs(knockbackDelta[1]);
         app->canvas->knockbackStart = destY;
-        app->canvas->knockbackWorldDist = std::abs(64 * knockbackDelta[1] * n3);
+        app->canvas->knockbackWorldDist = std::abs(64 * knockbackDelta[1] * distance);
     }
 
-    int farthestKnockbackDist = this->getFarthestKnockbackDist(destX, destY, destX + 64 * knockbackDelta[0] * n3, destY + 64 * knockbackDelta[1] * n3, this, n4, 16, n3);
+    int farthestKnockbackDist = this->getFarthestKnockbackDist(destX, destY, destX + 64 * knockbackDelta[0] * distance, destY + 64 * knockbackDelta[1] * distance, this, traceMask, 16, distance);
     if (farthestKnockbackDist == 0 || (knockbackDelta[0] == 0 && knockbackDelta[1] == 0)) {
         return;
     }
@@ -870,27 +870,27 @@ void Entity::knockback(int n, int n2, int n3) {
     }
 }
 
-int Entity::getFarthestKnockbackDist(int n, int n2, int n3, int n4, Entity* entity, int n5, int n6, int n7) {
+int Entity::getFarthestKnockbackDist(int srcX, int srcY, int dstX, int dstY, Entity* entity, int traceMask, int radius, int maxDist) {
 
-    int n8 = n7;
-    app->game->trace(n, n2, n3, n4, entity, n5, n6);
+    int dist = maxDist;
+    app->game->trace(srcX, srcY, dstX, dstY, entity, traceMask, radius);
     if (app->game->traceEntity != nullptr) {
-        n8 = n8 * app->game->traceFracs[0] >> 14;
+        dist = dist * app->game->traceFracs[0] >> 14;
     }
-    return n8;
+    return dist;
 }
 
-int Entity::findRaiseTarget(int n, int n2, int n3) {
+int Entity::findRaiseTarget(int maxRange, int requireFlags, int excludeFlags) {
 
     Entity* inactiveMonsters = app->game->inactiveMonsters;
     int* calcPosition = this->calcPosition();
-    int n4 = calcPosition[0];
-    int n5 = calcPosition[1];
+    int myX = calcPosition[0];
+    int myY = calcPosition[1];
     if (this->param != 0) {
         --this->param;
         return -1;
     }
-    int n6 = 0;
+    int numTargets = 0;
     if (inactiveMonsters != nullptr) {
         do {
             Entity* nextOnList = inactiveMonsters->nextOnList;
@@ -899,18 +899,18 @@ int Entity::findRaiseTarget(int n, int n2, int n3) {
                 (inactiveMonsters->info & 0x8000000) == 0x0 &&
                 (inactiveMonsters->info & 0x1000000) != 0x0 &&
                 !inactiveMonsters->isBoss() &&
-                (n2 == 0 || (inactiveMonsters->monsterFlags & n2) != 0x0) &&
-                (inactiveMonsters->monsterFlags & n3) == 0x0 &&
-                inactiveMonsters->distFrom(n4, n5) <= n &&
+                (requireFlags == 0 || (inactiveMonsters->monsterFlags & requireFlags) != 0x0) &&
+                (inactiveMonsters->monsterFlags & excludeFlags) == 0x0 &&
+                inactiveMonsters->distFrom(myX, myY) <= maxRange &&
                 app->game->findMapEntity(app->render->getSpriteX(sprite), app->render->getSpriteY(sprite), 15535) == nullptr &&
                 (app->game->difficulty != Enums::DIFFICULTY_NIGHTMARE || 0x0 == (inactiveMonsters->monsterEffects & 0x4)))
             {
-                this->raiseTargets[n6++] = inactiveMonsters;
+                this->raiseTargets[numTargets++] = inactiveMonsters;
             }
             inactiveMonsters = nextOnList;
-        } while (inactiveMonsters != app->game->inactiveMonsters && n6 != 4);
-        if (n6 != 0) {
-            Entity* entity = this->raiseTargets[app->nextInt() % n6];
+        } while (inactiveMonsters != app->game->inactiveMonsters && numTargets != 4);
+        if (numTargets != 0) {
+            Entity* entity = this->raiseTargets[app->nextInt() % numTargets];
             entity->info |= 0x8000000;
             this->raiseTarget(entity->getIndex());
             this->param = 4;
@@ -920,9 +920,9 @@ int Entity::findRaiseTarget(int n, int n2, int n3) {
     return -1;
 }
 
-void Entity::raiseTarget(int n) {
+void Entity::raiseTarget(int entityIdx) {
 
-    Entity* entity = &app->game->entities[n];
+    Entity* entity = &app->game->entities[entityIdx];
     int sprite = entity->getSprite();
     app->localization->resetTextArgs();
     Text* smallBuffer = app->localization->getSmallBuffer();
@@ -945,16 +945,16 @@ void Entity::raiseTarget(int n) {
     smallBuffer2->dispose();
 }
 
-void Entity::resurrect(int n, int n2, int n3) {
+void Entity::resurrect(int x, int y, int z) {
 
-    LOG_INFO("[entity] resurrect: type={} subType={} at ({},{})\n", this->def->eType, this->def->eSubType, n, n2);
+    LOG_INFO("[entity] resurrect: type={} subType={} at ({},{})\n", this->def->eType, this->def->eSubType, x, y);
     int sprite = this->getSprite();
     this->def = this->def->monsterDef;
     this->name = (short)(this->def->name | 0x400);
     this->clearMonsterEffects();
-    app->render->setSpriteX(sprite, (short)n);
-    app->render->setSpriteY(sprite, (short)n2);
-    app->render->setSpriteZ(sprite, (short)n3);
+    app->render->setSpriteX(sprite, (short)x);
+    app->render->setSpriteY(sprite, (short)y);
+    app->render->setSpriteZ(sprite, (short)z);
     app->render->setSpriteInfoRaw(sprite, app->render->getSpriteInfoRaw(sprite) & 0xFFFC00FF);
     if ((app->nextInt() & 0x1) != 0x0) {
         app->render->setSpriteInfoFlag(sprite, 0x20000);
@@ -967,7 +967,7 @@ void Entity::resurrect(int n, int n2, int n3) {
     ce->setStat(0, ce->getStat(1));
     this->monsterFlags &= ~Enums::MFLAG_KNOCKBACK;
     app->game->unlinkEntity(this);
-    app->game->linkEntity(this, n >> 6, n2 >> 6);
+    app->game->linkEntity(this, x >> 6, y >> 6);
     app->canvas->updateFacingEntity = true;
     app->particleSystem->spawnParticles(1, -161512, sprite);
 }

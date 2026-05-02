@@ -48,14 +48,14 @@ void Entity::aiMoveToGoal() {
     }
 }
 
-void Entity::aiThink(bool b) {
+void Entity::aiThink(bool forceNewGoal) {
     EntityMonster* monster = this->monster;
     if (this->monsterFlags & Enums::MFLAG_ATTACKING) {
         this->monsterFlags &= ~Enums::MFLAG_ATTACKING;
     }
     if (!(this->monsterFlags & Enums::MFLAG_NOTHINK)) {
         if (!this->aiIsValidGoal()) {
-            this->aiChooseNewGoal(b);
+            this->aiChooseNewGoal(forceNewGoal);
         }
         ai->goalTurns++;
         this->aiMoveToGoal();
@@ -94,18 +94,18 @@ void Entity::aiFinishLerp() {
     }
 }
 
-bool Entity::calcPath(int n, int n2, int n3, int n4, int n5, bool b) {
+bool Entity::calcPath(int curTileX, int curTileY, int goalTileX, int goalTileY, int traceMask, bool retreat) {
 
 
-    int n6 = n3 - n;
-    int n7 = n4 - n2;
-    int closestPathDist = n6 * n6 + n7 * n7;
+    int dx = goalTileX - curTileX;
+    int dy = goalTileY - curTileY;
+    int closestPathDist = dx * dx + dy * dy;
     uint8_t* visitOrder = app->game->visitOrder;
     int* visitDist = app->game->visitDist;
-    app->game->visitedTiles[n2] |= 1 << n;
-    bool checkLineOfSight = this->checkLineOfSight(n, n2, n3, n4, n5 | 0x100);
+    app->game->visitedTiles[curTileY] |= 1 << curTileX;
+    bool checkLineOfSight = this->checkLineOfSight(curTileX, curTileY, goalTileX, goalTileY, traceMask | 0x100);
     if ((app->game->lineOfSight == 0 && !checkLineOfSight) || (app->game->lineOfSight == 1 && checkLineOfSight)) {
-        if (b) {
+        if (retreat) {
             closestPathDist -= 30;
         }
         else {
@@ -115,12 +115,12 @@ bool Entity::calcPath(int n, int n2, int n3, int n4, int n5, bool b) {
     if (checkLineOfSight) {
         closestPathDist += app->game->lineOfSightWeight;
     }
-    if (app->game->pathDepth > 0 && ((!b && closestPathDist < app->game->closestPathDist) || (b && closestPathDist > app->game->closestPathDist))) {
+    if (app->game->pathDepth > 0 && ((!retreat && closestPathDist < app->game->closestPathDist) || (retreat && closestPathDist > app->game->closestPathDist))) {
         app->game->closestPath = app->game->curPath;
         app->game->closestPathDepth = app->game->pathDepth;
         app->game->closestPathDist = closestPathDist;
     }
-    if (n == n3 && n2 == n4) {
+    if (curTileX == goalTileX && curTileY == goalTileY) {
         app->game->closestPath = app->game->curPath;
         app->game->closestPathDepth = app->game->pathDepth;
         app->game->closestPathDist = closestPathDist;
@@ -129,68 +129,68 @@ bool Entity::calcPath(int n, int n2, int n3, int n4, int n5, bool b) {
     if (app->game->pathDepth == app->game->pathSearchDepth) {
         return false;
     }
-    int n8 = 0;
+    int numCandidates = 0;
     const int* viewStepValues = Canvas::viewStepValues;
-    int n9 = 4;
-    uint8_t b2 = (uint8_t)(app->nextByte() & 0x3);
-    while (--n9 >= 0) {
-        b2 = (uint8_t)(b2 + 1 & 0x3);
-        int n10 = n + (viewStepValues[(b2 << 2) + 0] >> 6);
-        int n11 = n2 + (viewStepValues[(b2 << 2) + 1] >> 6);
-        if (n11 >= 0 && n11 < 32 && n10 >= 0) {
-            if (n10 >= 32) {
+    int dirsLeft = 4;
+    uint8_t dirIdx = (uint8_t)(app->nextByte() & 0x3);
+    while (--dirsLeft >= 0) {
+        dirIdx = (uint8_t)(dirIdx + 1 & 0x3);
+        int nextTileX = curTileX + (viewStepValues[(dirIdx << 2) + 0] >> 6);
+        int nextTileY = curTileY + (viewStepValues[(dirIdx << 2) + 1] >> 6);
+        if (nextTileY >= 0 && nextTileY < 32 && nextTileX >= 0) {
+            if (nextTileX >= 32) {
                 continue;
             }
-            if (app->game->findMapEntity(n10 << 6, n11 << 6, 256) != nullptr) {
+            if (app->game->findMapEntity(nextTileX << 6, nextTileY << 6, 256) != nullptr) {
                 continue;
             }
-            if ((app->game->visitedTiles[n11] & 1 << n10) != 0) {
+            if ((app->game->visitedTiles[nextTileY] & 1 << nextTileX) != 0) {
                 continue;
             }
-            visitOrder[n8] = b2;
-            int n12 = n3 - n10;
-            int n13 = n4 - n11;
-            visitDist[n8] = n12 * n12 + n13 * n13;
-            bool checkLineOfSight2 = this->checkLineOfSight(n10, n11, n3, n4, n5 | 0x100);
+            visitOrder[numCandidates] = dirIdx;
+            int candDx = goalTileX - nextTileX;
+            int candDy = goalTileY - nextTileY;
+            visitDist[numCandidates] = candDx * candDx + candDy * candDy;
+            bool checkLineOfSight2 = this->checkLineOfSight(nextTileX, nextTileY, goalTileX, goalTileY, traceMask | 0x100);
             if ((app->game->lineOfSight == 0 && !checkLineOfSight2) || (app->game->lineOfSight == 1 && checkLineOfSight2)) {
-                if (b) {
-                    visitDist[n8] -= 30;
+                if (retreat) {
+                    visitDist[numCandidates] -= 30;
                 }
                 else {
-                    visitDist[n8] += 30;
+                    visitDist[numCandidates] += 30;
                 }
             }
             if (checkLineOfSight2) {
-                visitDist[n8] += app->game->lineOfSightWeight;
+                visitDist[numCandidates] += app->game->lineOfSightWeight;
             }
-            ++n8;
+            ++numCandidates;
         }
     }
-    for (int i = 0; i < n8; ++i) {
-        for (int j = 0; j < n8 - i - 1; ++j) {
-            int n17 = visitDist[j] - visitDist[j + 1];
-            if ((!b && n17 > 0) || (b && n17 < 0)) {
-                int n18 = visitDist[j + 1];
+    for (int i = 0; i < numCandidates; ++i) {
+        for (int j = 0; j < numCandidates - i - 1; ++j) {
+            int distDiff = visitDist[j] - visitDist[j + 1];
+            if ((!retreat && distDiff > 0) || (retreat && distDiff < 0)) {
+                int tmpDist = visitDist[j + 1];
                 visitDist[j + 1] = visitDist[j];
-                visitDist[j] = n18;
-                uint8_t b3 = visitOrder[j + 1];
+                visitDist[j] = tmpDist;
+                uint8_t tmpDir = visitOrder[j + 1];
                 visitOrder[j + 1] = visitOrder[j];
-                visitOrder[j] = b3;
+                visitOrder[j] = tmpDir;
             }
         }
     }
-    int n19 = 0;
-    int n20 = 0;
-    for (int k = 0; k < n8; ++k) {
-        n19 |= (visitOrder[k] & 0x3) << n20;
-        n20 += 2;
+    int packedDirs = 0;
+    int packedShift = 0;
+    for (int k = 0; k < numCandidates; ++k) {
+        packedDirs |= (visitOrder[k] & 0x3) << packedShift;
+        packedShift += 2;
     }
-    for (int l = 0; l < n8; ++l) {
-        int n21 = n19 & 0x3;
-        n19 >>= 2;
-        int n22 = n + (viewStepValues[(n21 << 2) + 0] >> 6);
-        int n23 = n2 + (viewStepValues[(n21 << 2) + 1] >> 6);
-        app->game->trace((n << 6) + 32, (n2 << 6) + 32, (n22 << 6) + 32, (n23 << 6) + 32, app->game->skipEnt, n5, 16);
+    for (int l = 0; l < numCandidates; ++l) {
+        int dir = packedDirs & 0x3;
+        packedDirs >>= 2;
+        int stepTileX = curTileX + (viewStepValues[(dir << 2) + 0] >> 6);
+        int stepTileY = curTileY + (viewStepValues[(dir << 2) + 1] >> 6);
+        app->game->trace((curTileX << 6) + 32, (curTileY << 6) + 32, (stepTileX << 6) + 32, (stepTileY << 6) + 32, app->game->skipEnt, traceMask, 16);
         if (app->game->findEnt != nullptr && app->game->traceEntity == app->game->findEnt) {
             app->game->closestPath = app->game->curPath;
             app->game->closestPathDepth = app->game->pathDepth;
@@ -205,8 +205,8 @@ bool Entity::calcPath(int n, int n2, int n3, int n4, int n5, bool b) {
             ++app->game->pathDepth;
             app->game->curPath >>= 2;
             app->game->curPath &= 0x3FFFFFFFFFFFFFFFLL;
-            app->game->curPath |= (int64_t)n21 << 62;
-            if (this->calcPath(n22, n23, n3, n4, n5, b)) {
+            app->game->curPath |= (int64_t)dir << 62;
+            if (this->calcPath(stepTileX, stepTileY, goalTileX, goalTileY, traceMask, retreat)) {
                 return true;
             }
             --app->game->pathDepth;
@@ -219,7 +219,7 @@ bool Entity::calcPath(int n, int n2, int n3, int n4, int n5, bool b) {
 bool Entity::aiGoal_MOVE() {
 
 
-    bool b = false;
+    bool retreat = false;
     int sprite = this->getSprite();
     app->game->snapLerpSprites(sprite);
     int sX = (int)app->render->getSpriteX(sprite);
@@ -246,14 +246,14 @@ bool Entity::aiGoal_MOVE() {
         this->ai->goalX = app->game->destX >> 6;
         this->ai->goalY = app->game->destY >> 6;
         app->game->interactClipMask = 0;
-        b = true;
+        retreat = true;
         app->game->lineOfSight = 1;
         app->game->pathSearchDepth = this->ai->goalParam;
     }
     else if (this->ai->goalType == 4) {
         this->ai->goalX = app->game->destX >> 6;
         this->ai->goalY = app->game->destY >> 6;
-        b = true;
+        retreat = true;
         app->game->lineOfSight = 1;
     }
     else if (this->ai->goalType == 2) {
@@ -261,10 +261,10 @@ bool Entity::aiGoal_MOVE() {
         this->ai->goalX = app->game->findEnt->linkIndex % 32;
         this->ai->goalY = app->game->findEnt->linkIndex / 32;
     }
-    if (b) {
+    if (retreat) {
         app->game->closestPathDist = 0;
     }
-    int calcPath = this->calcPath(sX >> 6, sY >> 6, this->ai->goalX, this->ai->goalY, 15535, b) ? 1 : 0;
+    int calcPath = this->calcPath(sX >> 6, sY >> 6, this->ai->goalX, this->ai->goalY, 15535, retreat) ? 1 : 0;
     if (calcPath == 0 && app->game->closestPathDist < 999999999) {
         calcPath = 1;
         app->game->curPath = app->game->closestPath;
@@ -337,7 +337,7 @@ void Entity::aiReachedGoal_MOVE() {
     }
 }
 
-int Entity::distFrom(int n, int n2) {
+int Entity::distFrom(int x, int y) {
     int* calcPosition = this->calcPosition();
-    return std::max((n - calcPosition[0]) * (n - calcPosition[0]), (n2 - calcPosition[1]) * (n2 - calcPosition[1]));
+    return std::max((x - calcPosition[0]) * (x - calcPosition[0]), (y - calcPosition[1]) * (y - calcPosition[1]));
 }
