@@ -14,7 +14,6 @@
 #include "Text.h"
 #include "GLES.h"
 #include "TGLVert.h"
-#include "TinyGL.h"
 #include "Player.h"
 #include "Game.h"
 #include "MenuSystem.h"
@@ -59,19 +58,19 @@ bool Render::checkPortalVisibility(int x, int y, int z) {
 		}
 		x <<= 4;
 		y <<= 4;
-		TGLVert* tglVert = &app->tinyGL->mv[0];
+		TGLVert* tglVert = &app->render->mv[0];
 		tglVert->x = x + n4;
 		tglVert->y = y + n5;
 		tglVert->z = z + 1056;
-		TGLVert* tglVert2 = &app->tinyGL->mv[1];
+		TGLVert* tglVert2 = &app->render->mv[1];
 		tglVert2->x = tglVert->x;
 		tglVert2->y = tglVert->y;
 		tglVert2->z = tglVert->z - (1056 * 2);
-		TGLVert* tglVert3 = &app->tinyGL->mv[2];
+		TGLVert* tglVert3 = &app->render->mv[2];
 		tglVert3->x = tglVert->x - (n4 << 1);
 		tglVert3->y = tglVert->y - (n5 << 1);
 		tglVert3->z = tglVert->z;
-		TGLVert* transform3DVerts = app->render->transform3DVerts(app->tinyGL->mv, 3);
+		TGLVert* transform3DVerts = app->render->transform3DVerts(app->render->mv, 3);
 		int tz = transform3DVerts[0].z;
 		if (transform3DVerts[0].w + transform3DVerts[0].z < 0 || transform3DVerts[1].w + transform3DVerts[1].z < 0 ||
 		    transform3DVerts[2].w + transform3DVerts[2].z < 0) {

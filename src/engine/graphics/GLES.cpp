@@ -18,7 +18,6 @@
 #include "Canvas.h"
 #include "GLES.h"
 #include "Render.h"
-#include "TinyGL.h"
 #include "TGLVert.h"
 #include "Enums.h"
 #include "SpriteDefs.h"

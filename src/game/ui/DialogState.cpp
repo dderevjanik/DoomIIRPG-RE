@@ -5,7 +5,6 @@
 #include "Canvas.h"
 #include "Game.h"
 #include "Hud.h"
-#include "TinyGL.h"
 #include "Render.h"
 #include "Enums.h"
 #include "DialogManager.h"

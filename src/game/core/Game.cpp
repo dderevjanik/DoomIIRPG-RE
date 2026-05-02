@@ -18,7 +18,6 @@
 #include "Canvas.h"
 #include "DialogManager.h"
 #include "Render.h"
-#include "TinyGL.h"
 #include "Resource.h"
 #include "MayaCamera.h"
 #include "LerpSprite.h"

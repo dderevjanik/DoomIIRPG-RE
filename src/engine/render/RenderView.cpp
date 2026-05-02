@@ -11,7 +11,6 @@
 #include "GLES.h"
 #include "Render.h"
 #include "TGLVert.h"
-#include "TinyGL.h"
 
 void Render::buildViewMatrix(int x, int y, int z, int yaw, int pitch, int roll, float* matrix) {
 	// 10-bit angles (0..1023 = 0..2π).
@@ -71,7 +70,7 @@ void Render::buildProjectionMatrix(int fov, int aspect, float* matrix) {
 	matrix[2]  = 0.0f;
 	matrix[6]  = 0.0f;
 	matrix[10] = -1.0f;
-	matrix[14] = -(float)(2 * TinyGL::NEAR_CLIP);
+	matrix[14] = -(float)(2 * Render::NEAR_CLIP);
 	matrix[3]  = 0.0f;
 	matrix[7]  = 0.0f;
 	matrix[11] = -1.0f;
@@ -97,8 +96,8 @@ void Render::_setViewport(int viewportX, int viewportY, int viewportWidth, int v
 	this->viewportWidth = viewportWidth;
 	this->viewportHeight = viewportHeight;
 	this->viewportX2 = viewportX + viewportWidth;
-	this->viewportClampX1 = viewportX << TinyGL::SCREEN_SHIFT;
-	this->viewportClampX2 = (this->viewportX2 << TinyGL::SCREEN_SHIFT) + TinyGL::SCREEN_ONE - 1;
+	this->viewportClampX1 = viewportX << Render::SCREEN_SHIFT;
+	this->viewportClampX2 = (this->viewportX2 << Render::SCREEN_SHIFT) + Render::SCREEN_ONE - 1;
 	this->viewportXScale = viewportWidth << 2;
 	this->viewportYScale = viewportHeight << 2;
 	this->viewportXBias = ((viewportX + viewportWidth / 2) << 3) - 4;
@@ -315,7 +314,7 @@ bool Render::clippedLineVisCheck(TGLVert* tglVert, TGLVert* tglVert2, bool b) {
 		return false;
 	}
 	while (begX < endX) {
-		if (this->columnScale[begX] == TinyGL::COLUMN_SCALE_INIT) {
+		if (this->columnScale[begX] == Render::COLUMN_SCALE_INIT) {
 			return true;
 		}
 		++begX;

@@ -10,7 +10,6 @@
 #include "Hud.h"
 #include "Combat.h"
 #include "Player.h"
-#include "TinyGL.h"
 #include "ScriptThread.h"
 
 

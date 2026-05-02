@@ -29,7 +29,6 @@ class EventBus;
 class Localization;
 class Resource;
 class Render;
-class TinyGL;
 class Canvas;
 class Game;
 class MenuSystem;
@@ -109,7 +108,6 @@ public:
 	std::unique_ptr<Localization> localization;
 	std::unique_ptr<Resource> resource;
 	std::unique_ptr<Render> render;
-	std::unique_ptr<TinyGL> tinyGL;
 	std::unique_ptr<Canvas> canvas;
 	std::unique_ptr<MenuSystem> menuSystem;
 	std::unique_ptr<Sound> sound;

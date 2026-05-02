@@ -34,7 +34,6 @@
 #include "Menus.h"
 #include "SDLGL.h"
 #include "Utils.h"
-#include "TinyGL.h"
 #include "GLES.h"
 #include "SoundNames.h"
 #include "Sounds.h"

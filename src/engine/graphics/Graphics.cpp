@@ -6,7 +6,6 @@
 #include "CAppContainer.h"
 #include "Graphics.h"
 #include "Render.h"
-#include "TinyGL.h"
 #include "Image.h"
 #include "Canvas.h"
 #include "GLES.h"

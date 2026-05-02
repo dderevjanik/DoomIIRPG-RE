@@ -8,7 +8,6 @@
 #include "ParticleSystem.h"
 #include "Graphics.h"
 #include "Render.h"
-#include "TinyGL.h"
 #include "Canvas.h"
 #include "Entity.h"
 #include "EntityDef.h"
@@ -57,19 +56,19 @@ void ParticleEmitter::render(Graphics* graphics, int n) {
         int n4 = n3 * n3 >> 10;
         int n5 = 64 * app->render->sinTable[app->render->viewAngle & 0x3FF] >> 12;
         int n6 = 64 * app->render->sinTable[app->render->viewAngle + 256 & 0x3FF] >> 12;
-        TGLVert* tglVert = &app->tinyGL->mv[0];
+        TGLVert* tglVert = &app->render->mv[0];
         tglVert->x = this->pos[0] + n5;
         tglVert->y = this->pos[1] + n6;
         tglVert->z = this->pos[2] + 1024;
-        TGLVert* tglVert2 = &app->tinyGL->mv[1];
+        TGLVert* tglVert2 = &app->render->mv[1];
         tglVert2->x = tglVert->x;
         tglVert2->y = tglVert->y;
         tglVert2->z = tglVert->z - 2048;
-        TGLVert* tglVert3 = &app->tinyGL->mv[2];
+        TGLVert* tglVert3 = &app->render->mv[2];
         tglVert3->x = tglVert->x - (n5 << 1);
         tglVert3->y = tglVert->y - (n6 << 1);
         tglVert3->z = tglVert->z;
-        TGLVert* transform3DVerts = app->render->transform3DVerts(app->tinyGL->mv, 3);
+        TGLVert* transform3DVerts = app->render->transform3DVerts(app->render->mv, 3);
         if (transform3DVerts[0].w + transform3DVerts[0].z < 0 || transform3DVerts[1].w + transform3DVerts[1].z < 0 || transform3DVerts[2].w + transform3DVerts[2].z < 0) {
             return;
         }

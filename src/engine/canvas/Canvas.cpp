@@ -12,7 +12,6 @@
 #include "MayaCamera.h"
 #include "Game.h"
 #include "GLES.h"
-#include "TinyGL.h"
 #include "Hud.h"
 #include "Render.h"
 #include "Combat.h"

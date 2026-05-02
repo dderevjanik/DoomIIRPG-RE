@@ -16,7 +16,6 @@
 #include "Text.h"
 #include "GLES.h"
 #include "TGLVert.h"
-#include "TinyGL.h"
 #include "Player.h"
 #include "Game.h"
 #include "MenuSystem.h"
@@ -154,6 +153,13 @@ bool Render::startup() {
 	this->imgPortal = nullptr;
 
 	this->imgPortal = app->loadImage("portal_image2.bmp", true);
+
+	// Seed the camera so the very first DrawSkyMap (called before any
+	// gameplay setView) doesn't render through a zero matrix. Was in
+	// TinyGL::startup before B3.15.
+	this->setViewport(app->canvas->viewRect[0], app->canvas->viewRect[1],
+	                  app->canvas->viewRect[2], app->canvas->viewRect[3]);
+	this->setView(0, 0, 0, 0, 0, 0, 290, 290);
 
 	// [GEC] New
 	this->fixWaterAnim1 = false;
@@ -1312,7 +1318,7 @@ void Render::render(int viewX, int viewY, int viewZ, int viewAngle, int viewPitc
 		}
 	}
 	for (int i = 0; i < this->screenWidth; ++i) {
-		app->render->columnScale[i] = TinyGL::COLUMN_SCALE_INIT;
+		app->render->columnScale[i] = Render::COLUMN_SCALE_INIT;
 	}
 
 	// app->game->scriptStateVars[5] = 1; // IOS

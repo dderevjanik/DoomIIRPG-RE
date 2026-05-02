@@ -11,7 +11,6 @@
 #include "Input.h"
 #include "SDLGL.h"
 #include "GLES.h"
-#include "TinyGL.h"
 #include "Render.h"
 #include "MenuSystem.h"
 #include "Player.h"

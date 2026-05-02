@@ -19,7 +19,6 @@
 #include "Player.h"
 #include "Combat.h"
 #include "Render.h"
-#include "TinyGL.h"
 #include "Sound.h"
 #include "Hud.h"
 

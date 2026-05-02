@@ -1,4 +1,5 @@
 #pragma once
+#include <climits>
 #include <cstdint>
 #include <string>
 #include <unordered_map>
@@ -24,6 +25,13 @@ public:
 	const GameConfig* gameConfig = nullptr; // Set in startup(), replaces CAppContainer::getInstance()->gameConfig
 	SDLGL* sdlGL = nullptr;
 	bool headless = false; // Set in startup(); when true, render() and renderPortal() are no-ops.
+
+	// Legacy CPU-pipeline constants (B3.15 — moved from TinyGL).
+	static constexpr int SCREEN_SHIFT = 3;
+	static constexpr int SCREEN_ONE = 8;
+	static constexpr int NEAR_CLIP = 256;
+	static constexpr int CULL_EXTRA = NEAR_CLIP + 16;
+	static constexpr int COLUMN_SCALE_INIT = INT_MAX;
 
 	static constexpr int RENDER_NORMAL = 0;
 	static constexpr int RENDER_BLEND25 = 1;
@@ -187,7 +195,10 @@ public:
 	//   columnScale[] — 1D depth buffer indexed by screen column, used
 	//                   by clippedLineVisCheck / occludeClippedLine for
 	//                   automap fog-of-war and BSP node culling.
+	//   mv[]          — sprite/wall vertex scratch, populated by sprite
+	//                   builders before clip/transform (B3.14c).
 	TGLVert cv[32] = {};
+	TGLVert mv[20] = {};
 	int* columnScale = nullptr;
 
 	int S_X = 0;

@@ -13,7 +13,6 @@
 #include "Image.h"
 #include "Text.h"
 #include "Button.h"
-#include "TinyGL.h"
 #include "Sound.h"
 #include "Sounds.h"
 #include "SoundNames.h"

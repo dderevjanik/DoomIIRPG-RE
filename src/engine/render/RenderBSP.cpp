@@ -14,7 +14,6 @@
 #include "Text.h"
 #include "GLES.h"
 #include "TGLVert.h"
-#include "TinyGL.h"
 #include "Player.h"
 #include "Game.h"
 #include "MenuSystem.h"
@@ -34,15 +33,15 @@ void Render::drawNodeLines(short n) {
 	for (int n3 = (n2 & 0x3FF) + (n2 >> 10 & 0x3F), i = n2 & 0x3FF; i < n3; ++i) {
 		int n4 = this->lineFlags[i >> 1] >> ((i & 0x1) << 2) & 0xF;
 		if ((n4 & 0x7) == 0x0 || (n4 & 0x7) == 0x4) {
-			TGLVert* tglVert1 = &app->tinyGL->mv[0];
-			TGLVert* tglVert2 = &app->tinyGL->mv[1];
+			TGLVert* tglVert1 = &app->render->mv[0];
+			TGLVert* tglVert2 = &app->render->mv[1];
 			tglVert1->x = (this->lineXs[(i << 1) + 0] & 0xFF) << 7;
 			tglVert2->x = (this->lineXs[(i << 1) + 1] & 0xFF) << 7;
 			tglVert1->y = (this->lineYs[(i << 1) + 0] & 0xFF) << 7;
 			tglVert2->y = (this->lineYs[(i << 1) + 1] & 0xFF) << 7;
 			tglVert1->z = 0;
 			tglVert2->z = 0;
-			TGLVert* transform2DVerts = app->render->transform2DVerts(app->tinyGL->mv, 2);
+			TGLVert* transform2DVerts = app->render->transform2DVerts(app->render->mv, 2);
 			if (app->render->clipLine(transform2DVerts)) {
 				app->render->projectVerts(transform2DVerts, 2);
 				if (app->render->occludeClippedLine(&transform2DVerts[0], &transform2DVerts[1]) &&
@@ -66,12 +65,12 @@ bool Render::cullBoundingBox(int n, int n2, int n3, int n4, bool b) {
 	if (this->skipCull) {
 		return false;
 	}
-	if (this->viewX >= n - TinyGL::CULL_EXTRA && this->viewX <= n3 + TinyGL::CULL_EXTRA &&
-	    this->viewY >= n2 - TinyGL::CULL_EXTRA && this->viewY <= n4 + TinyGL::CULL_EXTRA) {
+	if (this->viewX >= n - Render::CULL_EXTRA && this->viewX <= n3 + Render::CULL_EXTRA &&
+	    this->viewY >= n2 - Render::CULL_EXTRA && this->viewY <= n4 + Render::CULL_EXTRA) {
 		return false;
 	}
-	TGLVert* tglVert = &app->tinyGL->mv[0];
-	TGLVert* tglVert2 = &app->tinyGL->mv[1];
+	TGLVert* tglVert = &app->render->mv[0];
+	TGLVert* tglVert2 = &app->render->mv[1];
 	if (this->viewX < n) {
 		if (this->viewY < n2) {
 			tglVert->x = n3;
@@ -123,7 +122,7 @@ bool Render::cullBoundingBox(int n, int n2, int n3, int n4, bool b) {
 	tglVert->z = 0;
 	tglVert2->z = 0;
 
-	TGLVert* transform2DVerts = app->render->transform2DVerts(app->tinyGL->mv, 2);
+	TGLVert* transform2DVerts = app->render->transform2DVerts(app->render->mv, 2);
 	if (app->render->clipLine(transform2DVerts)) {
 		app->render->projectVerts(transform2DVerts, 2);
 		return !app->render->clippedLineVisCheck(&transform2DVerts[0], &transform2DVerts[1], b);
@@ -280,7 +279,7 @@ void Render::drawNodeGeometry(short n) {
 			int polyFlags = this->nodePolys[offset++];
 			int numVerts = (polyFlags & Enums::POLY_FLAG_VERTS_MASK) + 2;
 			for (int k = 0; k < numVerts; k++) {
-				TGLVert* vert = &app->tinyGL->mv[k];
+				TGLVert* vert = &app->render->mv[k];
 				vert->x = (((uint32_t)this->nodePolys[offset + 0] & 0xFF) << 7);
 				vert->y = (((uint32_t)this->nodePolys[offset + 1] & 0xFF) << 7);
 				vert->z = (((uint32_t)this->nodePolys[offset + 2] & 0xFF) << 7) + z;
@@ -291,49 +290,49 @@ void Render::drawNodeGeometry(short n) {
 			if (numVerts == 2) {
 				numVerts = 4;
 
-				TGLVert* vert = &app->tinyGL->mv[2];
-				std::memcpy(&app->tinyGL->mv[2], &app->tinyGL->mv[1], sizeof(TGLVert));
-				std::memcpy(&app->tinyGL->mv[1], vert, sizeof(TGLVert));
+				TGLVert* vert = &app->render->mv[2];
+				std::memcpy(&app->render->mv[2], &app->render->mv[1], sizeof(TGLVert));
+				std::memcpy(&app->render->mv[1], vert, sizeof(TGLVert));
 
-				app->tinyGL->mv[2].x = app->tinyGL->mv[0].x;
-				app->tinyGL->mv[2].y = app->tinyGL->mv[0].y;
-				app->tinyGL->mv[2].z = app->tinyGL->mv[0].z;
-				app->tinyGL->mv[2].s = app->tinyGL->mv[0].s;
-				app->tinyGL->mv[2].t = app->tinyGL->mv[0].t;
+				app->render->mv[2].x = app->render->mv[0].x;
+				app->render->mv[2].y = app->render->mv[0].y;
+				app->render->mv[2].z = app->render->mv[0].z;
+				app->render->mv[2].s = app->render->mv[0].s;
+				app->render->mv[2].t = app->render->mv[0].t;
 
-				app->tinyGL->mv[3].x = app->tinyGL->mv[2].x;
-				app->tinyGL->mv[3].y = app->tinyGL->mv[2].y;
-				app->tinyGL->mv[3].z = app->tinyGL->mv[2].z;
-				app->tinyGL->mv[3].s = app->tinyGL->mv[2].s;
-				app->tinyGL->mv[3].t = app->tinyGL->mv[2].t;
+				app->render->mv[3].x = app->render->mv[2].x;
+				app->render->mv[3].y = app->render->mv[2].y;
+				app->render->mv[3].z = app->render->mv[2].z;
+				app->render->mv[3].s = app->render->mv[2].s;
+				app->render->mv[3].t = app->render->mv[2].t;
 
 				switch (polyFlags & Enums::POLY_FLAG_AXIS_MASK) {
 					case Enums::POLY_FLAG_AXIS_X: {
-						app->tinyGL->mv[1].x = app->tinyGL->mv[2].x;
-						app->tinyGL->mv[3].x = app->tinyGL->mv[0].x;
+						app->render->mv[1].x = app->render->mv[2].x;
+						app->render->mv[3].x = app->render->mv[0].x;
 						break;
 					}
 					case Enums::POLY_FLAG_AXIS_Y: {
-						app->tinyGL->mv[1].y = app->tinyGL->mv[2].y;
-						app->tinyGL->mv[3].y = app->tinyGL->mv[0].y;
+						app->render->mv[1].y = app->render->mv[2].y;
+						app->render->mv[3].y = app->render->mv[0].y;
 						break;
 					}
 					case Enums::POLY_FLAG_AXIS_Z: {
-						app->tinyGL->mv[1].z = app->tinyGL->mv[2].z;
-						app->tinyGL->mv[3].z = app->tinyGL->mv[0].z;
+						app->render->mv[1].z = app->render->mv[2].z;
+						app->render->mv[3].z = app->render->mv[0].z;
 						break;
 					}
 				}
 
 				if ((polyFlags & Enums::POLY_FLAG_UV_DELTAX)) {
-					app->tinyGL->mv[1].s = app->tinyGL->mv[2].s;
-					app->tinyGL->mv[3].s = app->tinyGL->mv[0].s;
+					app->render->mv[1].s = app->render->mv[2].s;
+					app->render->mv[3].s = app->render->mv[0].s;
 				} else {
-					app->tinyGL->mv[1].t = app->tinyGL->mv[2].t;
-					app->tinyGL->mv[3].t = app->tinyGL->mv[0].t;
+					app->render->mv[1].t = app->render->mv[2].t;
+					app->render->mv[3].t = app->render->mv[0].t;
 				}
 			}
-			app->render->_gles->DrawModelVerts(std::span(app->tinyGL->mv, numVerts));
+			app->render->_gles->DrawModelVerts(std::span(app->render->mv, numVerts));
 		}
 	}
 }

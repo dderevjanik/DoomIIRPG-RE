@@ -12,7 +12,6 @@
 #include "Player.h"
 #include "Render.h"
 #include "Button.h"
-#include "TinyGL.h"
 #include "Image.h"
 #include "Graphics.h"
 #include "Button.h"

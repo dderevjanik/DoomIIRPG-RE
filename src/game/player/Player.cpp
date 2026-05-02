@@ -15,7 +15,6 @@
 #include "Text.h"
 #include "Hud.h"
 #include "Enums.h"
-#include "TinyGL.h"
 #include "BinaryStream.h"
 #include "Sound.h"
 #include "DataNode.h"

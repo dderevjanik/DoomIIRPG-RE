@@ -5,7 +5,6 @@
 #include "Game.h"
 #include "Hud.h"
 #include "Render.h"
-#include "TinyGL.h"
 #include "MayaCamera.h"
 #include "Enums.h"
 

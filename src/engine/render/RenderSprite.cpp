@@ -15,7 +15,6 @@
 #include "Text.h"
 #include "GLES.h"
 #include "TGLVert.h"
-#include "TinyGL.h"
 #include "Player.h"
 #include "Game.h"
 #include "MenuSystem.h"
@@ -73,9 +72,9 @@ void Render::draw2DSprite(int tileNum, int frame, int x, int y, int flags, int r
 	// Camera-back offset: legacy did 5*(view[i] & ~31 + 8*(view[i] >> 5)) >> 8
 	// over Q14 ints, which works out to ≈ view[i] * 6.25 / 256. With float
 	// matrix (Q14 factored out) the equivalent is view[i] * 400.
-	app->tinyGL->mv[0].x = this->viewX - (int)(this->view[2]  * 400.0f);
-	app->tinyGL->mv[0].y = this->viewY - (int)(this->view[6]  * 400.0f);
-	app->tinyGL->mv[0].z = this->viewZ - (int)(this->view[10] * 400.0f);
+	app->render->mv[0].x = this->viewX - (int)(this->view[2]  * 400.0f);
+	app->render->mv[0].y = this->viewY - (int)(this->view[6]  * 400.0f);
+	app->render->mv[0].z = this->viewZ - (int)(this->view[10] * 400.0f);
 
 	int projX = ((x - this->viewportWidth / 2) << 15) / this->viewportWidth;
 	int projY = (((y + scaledHeight) - this->viewportHeight / 2) << 15) / this->viewportWidth;
@@ -90,20 +89,20 @@ void Render::draw2DSprite(int tileNum, int frame, int x, int y, int flags, int r
 	const float view8 = this->view[8];
 	const float view9 = this->view[9];
 
-	app->tinyGL->mv[0].x += (int)((projY * view1 + projX * view0) / 32.0f);
-	app->tinyGL->mv[0].y += (int)((projY * view5 + projX * view4) / 32.0f);
-	app->tinyGL->mv[0].z += (int)((projY * view9 + projX * view8) / 32.0f);
+	app->render->mv[0].x += (int)((projY * view1 + projX * view0) / 32.0f);
+	app->render->mv[0].y += (int)((projY * view5 + projX * view4) / 32.0f);
+	app->render->mv[0].z += (int)((projY * view9 + projX * view8) / 32.0f);
 
-	app->tinyGL->mv[1].x = app->tinyGL->mv[0].x + (int)(projSize * view0 / 32.0f);
-	app->tinyGL->mv[1].y = app->tinyGL->mv[0].y + (int)(projSize * view4 / 32.0f);
-	app->tinyGL->mv[1].z = app->tinyGL->mv[0].z + (int)(projSize * view8 / 32.0f);
+	app->render->mv[1].x = app->render->mv[0].x + (int)(projSize * view0 / 32.0f);
+	app->render->mv[1].y = app->render->mv[0].y + (int)(projSize * view4 / 32.0f);
+	app->render->mv[1].z = app->render->mv[0].z + (int)(projSize * view8 / 32.0f);
 
-	app->tinyGL->mv[2].x = app->tinyGL->mv[1].x - (int)(projSize * view1 / 32.0f);
-	app->tinyGL->mv[2].y = app->tinyGL->mv[1].y - (int)(projSize * view5 / 32.0f);
-	app->tinyGL->mv[2].z = app->tinyGL->mv[1].z - (int)(projSize * view9 / 32.0f);
+	app->render->mv[2].x = app->render->mv[1].x - (int)(projSize * view1 / 32.0f);
+	app->render->mv[2].y = app->render->mv[1].y - (int)(projSize * view5 / 32.0f);
+	app->render->mv[2].z = app->render->mv[1].z - (int)(projSize * view9 / 32.0f);
 
 	this->_gles->SetGLState();
-	this->_gles->DrawWorldSpaceSpriteLine(&app->tinyGL->mv[0], &app->tinyGL->mv[1], &app->tinyGL->mv[2], flags ^ 0x20000);
+	this->_gles->DrawWorldSpaceSpriteLine(&app->render->mv[0], &app->render->mv[1], &app->render->mv[2], flags ^ 0x20000);
 	this->_gles->ResetGLState();
 }
 
@@ -162,7 +161,7 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 		for (int i = 0; i < n18; ++i) {
 			int n21 = (i & 0x2) >> 1;
 			int n22 = (i & 0x1) ^ n21 ^ 0x1;
-			TGLVert* tglVert = &app->tinyGL->mv[i];
+			TGLVert* tglVert = &app->render->mv[i];
 			tglVert->x = x << 4;
 			tglVert->y = y << 4;
 			tglVert->z = z - 84;
@@ -176,17 +175,17 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 			// MVP handles projection and the hardware clipper handles partial
 			// frustum overlap. Replaces the legacy CPU path
 			// transform3DVerts → ClipQuad → RasterizeConvexPolygon.
-			this->_gles->DrawModelVerts(std::span(app->tinyGL->mv, n18));
+			this->_gles->DrawModelVerts(std::span(app->render->mv, n18));
 		} else {
-			TGLVert* transform3DVerts = app->render->transform3DVerts(app->tinyGL->mv, n18);
+			TGLVert* transform3DVerts = app->render->transform3DVerts(app->render->mv, n18);
 			TGLVert* tglVert2 = &transform3DVerts[0];
 			if (tglVert2->w + tglVert2->z < 0) {
 				return;
 			}
 			if (app->render->clipLine(transform3DVerts)) {
 				app->render->projectVerts(transform3DVerts, n18);
-				this->_gles->DrawWorldSpaceSpriteLine(&app->tinyGL->mv[0], &app->tinyGL->mv[1],
-				                                       &app->tinyGL->mv[2], flags);
+				this->_gles->DrawWorldSpaceSpriteLine(&app->render->mv[0], &app->render->mv[1],
+				                                       &app->render->mv[2], flags);
 			}
 		}
 	} else {
@@ -277,7 +276,7 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 						int n39 = (k & 0x1) ^ n38 ^ 0x1;
 						int n40 = (n39 * 2 - 1) * n30;
 						int n41 = (n38 * 2 - 1) * n36;
-						TGLVert* tglVert3 = &app->tinyGL->mv[k];
+						TGLVert* tglVert3 = &app->render->mv[k];
 						tglVert3->x = x + (viewStepValues[n29 + 0] >> 6) * n40;
 						tglVert3->y = y + (viewStepValues[n29 + 1] >> 6) * n40;
 						tglVert3->z = z + n38 * n41 + j * (n37 - n36 << 1);
@@ -286,13 +285,13 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 					}
 					z += n36;
 					n15 += n35;
-					app->render->_gles->DrawModelVerts(std::span(app->tinyGL->mv, 4));
+					app->render->_gles->DrawModelVerts(std::span(app->render->mv, 4));
 				}
 			} else if ((flags & Enums::SPRITE_FLAG_FLAT) == 0x0) { // Wall
 				for (int l = 0; l < 4; ++l) {
 					int n42 = (l & 0x2) >> 1;
 					int n43 = (l & 0x1) ^ n42 ^ 0x1;
-					TGLVert* tglVert4 = &app->tinyGL->mv[l];
+					TGLVert* tglVert4 = &app->render->mv[l];
 					int n44 = (n43 * 2 - 1) * n30;
 					tglVert4->x = x + (viewStepValues[n29 + 0] >> 6) * n44;
 					tglVert4->y = y + (viewStepValues[n29 + 1] >> 6) * n44;
@@ -300,12 +299,12 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 					tglVert4->s = n13 + n43 * n14;
 					tglVert4->t = n15 + n42 * n16;
 				}
-				app->render->_gles->DrawModelVerts(std::span(app->tinyGL->mv, 4));
+				app->render->_gles->DrawModelVerts(std::span(app->render->mv, 4));
 			} else { // Plane
 				for (int n45 = 0; n45 < 4; n45++) {
 					int n46 = (n45 & 0x2) >> 1;
 					int n47 = (n45 & 0x1) ^ n46 ^ 0x1;
-					TGLVert* tglVert5 = &app->tinyGL->mv[n45];
+					TGLVert* tglVert5 = &app->render->mv[n45];
 					int n48 = (n47 * 2 - 1) * n30;
 					int n49 = (n46 * 2 - 1) * n31 >> 1;
 					tglVert5->x = x + (viewStepValues[n29 + 0] >> 6) * n48 + (viewStepValues[n28 + 0] >> 6) * n49;
@@ -320,7 +319,7 @@ void Render::renderSprite(int x, int y, int z, int tileNum, int frame, int flags
 							tglVert5->t += (app->time / spriteProps->texAnim.tDivisor & spriteProps->texAnim.mask);
 					}
 				}
-				app->render->_gles->DrawModelVerts(std::span(app->tinyGL->mv, 4));
+				app->render->_gles->DrawModelVerts(std::span(app->render->mv, 4));
 			}
 		}
 	}
@@ -337,12 +336,12 @@ void Render::occludeSpriteLine(int n) {
 	int x = this->mapSprites[this->S_X + n] << 4;
 	int y = this->mapSprites[this->S_Y + n] << 4;
 
-	app->tinyGL->mv[0].x = x;
-	app->tinyGL->mv[1].x = x;
-	app->tinyGL->mv[0].y = y;
-	app->tinyGL->mv[1].y = y;
-	app->tinyGL->mv[0].z = 0;
-	app->tinyGL->mv[1].z = 0;
+	app->render->mv[0].x = x;
+	app->render->mv[1].x = x;
+	app->render->mv[0].y = y;
+	app->render->mv[1].y = y;
+	app->render->mv[0].z = 0;
+	app->render->mv[1].z = 0;
 
 	int n6 = 0;
 	if ((n2 & Enums::SPRITE_FLAG_EAST) != 0x0) {
@@ -357,12 +356,12 @@ void Render::occludeSpriteLine(int n) {
 
 	int n7 = (n6 + 2 & 0x7) << 1;
 
-	app->tinyGL->mv[0].x += Canvas::viewStepValues[n7 + 0] >> 1 << 4;
-	app->tinyGL->mv[1].x -= Canvas::viewStepValues[n7 + 0] >> 1 << 4;
-	app->tinyGL->mv[0].y += Canvas::viewStepValues[n7 + 1] >> 1 << 4;
-	app->tinyGL->mv[1].y -= Canvas::viewStepValues[n7 + 1] >> 1 << 4;
+	app->render->mv[0].x += Canvas::viewStepValues[n7 + 0] >> 1 << 4;
+	app->render->mv[1].x -= Canvas::viewStepValues[n7 + 0] >> 1 << 4;
+	app->render->mv[0].y += Canvas::viewStepValues[n7 + 1] >> 1 << 4;
+	app->render->mv[1].y -= Canvas::viewStepValues[n7 + 1] >> 1 << 4;
 
-	TGLVert* transform2DVerts = app->render->transform2DVerts(app->tinyGL->mv, 2);
+	TGLVert* transform2DVerts = app->render->transform2DVerts(app->render->mv, 2);
 	if (app->render->clipLine(transform2DVerts)) {
 		app->render->projectVerts(transform2DVerts, 2);
 		if (transform2DVerts[0].x > transform2DVerts[1].x) {
@@ -493,7 +492,7 @@ bool Render::renderStreamSpriteGL(TGLVert* array, int n) {
 void Render::renderStreamSprite(int n) {
 
 
-	TGLVert* mv = app->tinyGL->mv;
+	TGLVert* mv = app->render->mv;
 	int n2 = this->mapSpriteInfo[n];
 	short n3 = this->mapSprites[this->S_ENT + n];
 	int n4 = n2 & 0xFF;
@@ -566,8 +565,8 @@ void Render::renderStreamSprite(int n) {
 	mv[2].s = mv[1].s = n29 + n30;
 	mv[3].t = mv[2].t = n36 + n32;
 
-	if (!this->renderStreamSpriteGL(app->tinyGL->mv, 4)) { // [GEC]
-		app->render->_gles->DrawModelVerts(std::span(app->tinyGL->mv, 4));
+	if (!this->renderStreamSpriteGL(app->render->mv, 4)) { // [GEC]
+		app->render->_gles->DrawModelVerts(std::span(app->render->mv, 4));
 	}
 }
 

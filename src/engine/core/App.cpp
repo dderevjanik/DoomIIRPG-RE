@@ -14,7 +14,6 @@
 #include "Text.h"
 #include "Resource.h"
 #include "Render.h"
-#include "TinyGL.h"
 #include "Canvas.h"
 #include "Combat.h"
 #include "Game.h"
@@ -98,7 +97,6 @@ bool Applet::startup() {
 	this->resource = std::make_unique<Resource>();
 	this->localization = std::make_unique<Localization>();
 	this->render = std::make_unique<Render>();
-	this->tinyGL = std::make_unique<TinyGL>();
 	this->menuSystem = std::make_unique<MenuSystem>();
 	this->sound = std::make_unique<Sound>();
 	this->hud = std::make_unique<Hud>();
@@ -127,9 +125,6 @@ bool Applet::startup() {
 	if (!this->localization->startup()) { LOG_ERROR("[app] Localization::startup() failed — check string files in game.yaml\n"); return false; }
 	if (!this->render->startup()) { LOG_ERROR("[app] Render::startup() failed — check texture/level assets\n"); return false; }
 	this->loadTables();
-	if (!this->tinyGL->startup(this->render->screenWidth)) {
-		LOG_ERROR("[app] TinyGL::startup() failed ({}x{}) — software renderer init error\n", this->render->screenWidth, this->render->screenHeight); return false;
-	}
 
 	// Game module startup (EntityDefManager -> Player -> Game -> Combat)
 	if (!this->gameModule->startup(this)) { LOG_ERROR("[app] GameModule::startup() failed — check entity definitions and game data\n"); return false; }

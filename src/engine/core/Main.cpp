@@ -32,7 +32,6 @@
 #include "Game.h"
 #include "Graphics.h"
 #include "Utils.h"
-#include "TinyGL.h"
 #include "Input.h"
 #include "GameScript.h"
 #include "CrashHandler.h"
