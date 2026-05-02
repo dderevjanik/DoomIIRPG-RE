@@ -166,14 +166,20 @@ public:
 	int tHeight = 0;
 	uint32_t textureBaseSize = 0;
 
-	// Render viewport rect (logical pixel coords). Set by TinyGL::setViewport
-	// (still owns the viewport-clamp math) and read by sprite/BSP rendering.
+	// Render viewport rect (logical pixel coords). Set by Render::setViewport
+	// and read by sprite/BSP rendering.
 	int viewportX = 0;
 	int viewportY = 0;
 	int viewportWidth = 0;
 	int viewportHeight = 0;
 	int viewportClampX1 = 0;
 	int viewportClampX2 = 0;
+
+	// Per-frame world view + projection*view matrices, plain float column-
+	// major. Built by Render::setView. external readers: RenderSprite,
+	// RenderBSP, Canvas. (B3.8 + B3.14a)
+	float view[16] = {};
+	float mvp[16] = {};
 
 	int S_X = 0;
 	int S_Y = 0;
@@ -436,6 +442,11 @@ public:
 	uint16_t* getPalette(int n, int n2);
 	void setupTexture(int n, int n2, int renderMode, int renderFlags);
 	void render(int viewX, int viewY, int viewZ, int viewAngle, int viewPitch, int viewRoll, int viewFov);
+
+	// View / viewport setup (formerly TinyGL methods, B3.14a)
+	void setViewport(int x, int y, int w, int h);
+	void resetViewPort();
+	void setView(int viewX, int viewY, int viewZ, int viewYaw, int viewPitch, int viewRoll, int viewFov, int viewAspect);
 	void unlinkSprite(int n);
 	void unlinkSprite(int n, int n2, int n3);
 	void relinkSprite(int n);
@@ -539,4 +550,21 @@ public:
 	int TILE_SHADOW = 0;
 	int TILE_GLASS = 0;
 
+	// View-system scratch (B3.14a). mvp2D + viewport bias/scale used by
+	// the (still TinyGL-resident) visibility pipeline. Public until the
+	// visibility pipeline migrates over and these become truly private.
+	float mvp2D[16] = {};
+	int viewportX2 = 0;
+	int viewportXScale = 0;
+	int viewportXBias = 0;
+	int viewportYScale = 0;
+	int viewportYBias = 0;
+
+private:
+	// Matrix-construction helpers (Q14 sin-table replaced with std::sin/cos
+	// in B3.8). Pure functions over the params + the float[16] output.
+	void buildViewMatrix(int x, int y, int z, int yaw, int pitch, int roll, float* matrix);
+	void buildProjectionMatrix(int fov, int aspect, float* matrix);
+	void multMatrix(const float* matrix1, const float* matrix2, float* destMtx);
+	void _setViewport(int viewportX, int viewportY, int viewportWidth, int viewportHeight);
 };

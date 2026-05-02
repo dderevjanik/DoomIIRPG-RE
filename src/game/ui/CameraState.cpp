@@ -18,7 +18,7 @@ void CameraState::onEnter(Canvas* canvas) {
 	canvas->repaintFlags |= Canvas::REPAINT_HUD;
 	app->hud->repaintFlags = 24;
 	canvas->clearSoftKeys();
-	app->tinyGL->setViewport(canvas->cinRect[0], canvas->cinRect[1], canvas->cinRect[2], canvas->cinRect[3]);
+	app->render->setViewport(canvas->cinRect[0], canvas->cinRect[1], canvas->cinRect[2], canvas->cinRect[3]);
 }
 
 void CameraState::onExit(Canvas* canvas) {

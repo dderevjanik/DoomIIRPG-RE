@@ -669,13 +669,13 @@ void MenuSystem::selectVideoSettings(int i) {
 			break;
 		case Menus::ACTION_TOG_TINYGL: {
 			Canvas* canvas = app->canvas.get();
-			TinyGL* tinyGL = app->tinyGL.get();
+			Render* render = app->render.get();
 			_glesObj->isInit = !_glesObj->isInit;
 			if (canvas->state == Canvas::ST_CAMERA) {
-				tinyGL->setViewport(canvas->cinRect[0], canvas->cinRect[1], canvas->cinRect[2], canvas->cinRect[3]);
+				render->setViewport(canvas->cinRect[0], canvas->cinRect[1], canvas->cinRect[2], canvas->cinRect[3]);
 			}
 			else {
-				tinyGL->resetViewPort();
+				render->resetViewPort();
 			}
 			break;
 		}

@@ -400,7 +400,7 @@ void MayaCamera::Snap(int i) {
     if (canvas->state != Canvas::ST_CAMERA/*&& canvas->state != Canvas::ST_INTER_CAMERA*/) {
         return;
     }
-    app->tinyGL->resetViewPort();
+    app->render->resetViewPort();
     canvas->setState(Canvas::ST_PLAYING);
     canvas->updateFacingEntity = true;
     if (app->player->unsetFamiliarOnceOutOfCinematic) {

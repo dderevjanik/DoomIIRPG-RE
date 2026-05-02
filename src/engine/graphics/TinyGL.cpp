@@ -27,179 +27,11 @@ bool TinyGL::startup(int screenWidth) {
 	this->screenWidth = screenWidth;
 	this->columnScale = new int[screenWidth];
 
-	this->setViewport(canvas->viewRect[0], canvas->viewRect[1], canvas->viewRect[2], canvas->viewRect[3]);
-	this->setView( 0, 0, 0, 0, 0, 0, 290, 290);
+	// setView/setViewport now live on Render (B3.14a).
+	Render* r = this->app->render.get();
+	r->setViewport(canvas->viewRect[0], canvas->viewRect[1], canvas->viewRect[2], canvas->viewRect[3]);
+	r->setView(0, 0, 0, 0, 0, 0, 290, 290);
 	return true;
-}
-
-void TinyGL::buildViewMatrix(int x, int y, int z, int yaw, int pitch, int roll, float* matrix) {
-	// 10-bit angles (0..1023 = 0..2π). Replaces the legacy Q14 sinTable
-	// lookup-and-shift gymnastics. std::sin/std::cos at this call rate is a
-	// fraction of a microsecond; the FPU is plenty fast for it.
-	//
-	// CAREFUL: the legacy variables `cosYaw`/`sinYaw`/`cosPitch`/`sinPitch`
-	// are MISNAMED — they index into the sin table at +512 / +256 offsets,
-	// which gives `sin(angle + π) = -sin(angle)` and `sin(angle + π/2) =
-	// cos(angle)` respectively. We preserve the legacy semantics (the matrix
-	// formulas below depend on the misnaming) but compute the values from
-	// honest trig.  Roll's two variables ARE named correctly.
-	constexpr float kAngleToRad = 3.14159265358979323846f / 512.0f;
-	const float cosYaw   = -std::sin(yaw   * kAngleToRad);  // legacy var: -sin
-	const float sinYaw   =  std::cos(yaw   * kAngleToRad);  // legacy var: cos
-	const float cosPitch = -std::sin(pitch * kAngleToRad);  // legacy var: -sin
-	const float sinPitch =  std::cos(pitch * kAngleToRad);  // legacy var: cos
-	const float sinRoll  =  std::sin(roll  * kAngleToRad);
-	const float cosRoll  =  std::cos(roll  * kAngleToRad);
-
-	const float n13 = sinRoll * cosPitch;
-	const float n14 = cosRoll * cosPitch;
-	matrix[0]  = n13 * sinYaw + cosRoll * -cosYaw;
-	matrix[4]  = n13 * cosYaw + cosRoll *  sinYaw;
-	matrix[8]  = sinRoll * sinPitch;
-	matrix[1]  = -(n14 * sinYaw + -sinRoll * -cosYaw);
-	matrix[5]  = -(n14 * cosYaw + -sinRoll *  sinYaw);
-	matrix[9]  = -(cosRoll * sinPitch);
-	matrix[2]  = -(sinPitch * sinYaw);
-	matrix[6]  = -(sinPitch * cosYaw);
-	matrix[10] = cosPitch;
-
-	// Translation column: -(R · (x,y,z)) — apply rotation to the eye-position
-	// and negate, the standard view-matrix translation.
-	for (int i = 0; i < 3; ++i) {
-		matrix[12 + i] = -((float)x * matrix[0 + i] + (float)y * matrix[4 + i] + (float)z * matrix[8 + i]);
-	}
-
-	matrix[3]  = 0.0f;
-	matrix[7]  = 0.0f;
-	matrix[11] = 0.0f;
-	matrix[15] = 1.0f;
-}
-
-void TinyGL::buildProjectionMatrix(int fov, int aspect, float* matrix) {
-	// Half-FOV for the legacy projection. `aspect` is a 10-bit half-range
-	// angle so n3 is the half-FOV; the engine's convention matches the
-	// original Q14 builder, just expressed in float now.
-	constexpr float kAngleToRad = 3.14159265358979323846f / 512.0f;
-	const int   n3 = aspect >> 1;
-	const float n4 = (float)fov / (float)aspect;
-	const float n5 = std::sin(n3 * kAngleToRad);
-	const float n6 = std::cos(n3 * kAngleToRad);
-
-	matrix[0]  = n6 / (n4 * n5);
-	matrix[4]  = 0.0f;
-	matrix[8]  = 0.0f;
-	matrix[12] = 0.0f;
-	matrix[1]  = 0.0f;
-	matrix[5]  = n6 / n5;
-	matrix[9]  = 0.0f;
-	matrix[13] = 0.0f;
-	matrix[2]  = 0.0f;
-	matrix[6]  = 0.0f;
-	matrix[10] = -1.0f;
-	matrix[14] = -(float)(2 * TinyGL::NEAR_CLIP);
-	matrix[3]  = 0.0f;
-	matrix[7]  = 0.0f;
-	matrix[11] = -1.0f;
-	matrix[15] = 0.0f;
-}
-
-void TinyGL::multMatrix(const float* matrix1, const float* matrix2, float* destMtx) {
-	// Same loop layout as the legacy Q14 version (column-major; computes
-	// destMtx = matrix2 * matrix1 in math order, i.e. mvp = projection * view).
-	// No `>> 14` since both operands are pure floats.
-	for (int i = 0; i < 4; ++i) {
-		for (int j = 0; j < 4; ++j) {
-			destMtx[i * 4 + j] = matrix1[i * 4 + 0] * matrix2[0 + j]
-			                  + matrix1[i * 4 + 1] * matrix2[4 + j]
-			                  + matrix1[i * 4 + 2] * matrix2[8 + j]
-			                  + matrix1[i * 4 + 3] * matrix2[12 + j];
-		}
-	}
-}
-
-void TinyGL::_setViewport(int viewportX, int viewportY, int viewportWidth, int viewportHeight)
-{
-	// External viewport rect lives on Render now (B3.13). Internal scale/bias
-	// scratch stays here (consumed by clipLine/projectVerts).
-	Render* r = app->render.get();
-	r->viewportX = viewportX;
-	r->viewportY = viewportY;
-	r->viewportWidth = viewportWidth;
-	r->viewportHeight = viewportHeight;
-	this->viewportX2 = viewportX + viewportWidth;
-	r->viewportClampX1 = viewportX << TinyGL::SCREEN_SHIFT;
-	r->viewportClampX2 = (this->viewportX2 << TinyGL::SCREEN_SHIFT) + TinyGL::SCREEN_ONE - 1;
-	this->viewportXScale = viewportWidth << 2;
-	this->viewportYScale = viewportHeight << 2;
-	this->viewportXBias = ((viewportX + viewportWidth / 2) << 3) - 4;
-	this->viewportYBias = ((viewportY + viewportHeight / 2) << 3) - 4;
-}
-
-void TinyGL::setViewport(int x, int y, int w, int h) {
-
-
-	int posX = x - app->canvas->viewRect[0];
-	int posY = y - app->canvas->viewRect[1];
-
-	if (!app->render->_gles->isInit) { // [GEC] Adjusted like this to match the Y position on the GL version
-		posY = 3;  // posY = app->canvas->viewRect[1];
-	}
-
-	const Render* r = app->render.get();
-	if (r->viewportX == posX && r->viewportY == posY && r->viewportWidth == w && r->viewportHeight == h) {
-		return;
-	}
-
-	this->_setViewport(posX + 1, posY + 1, w - 2, h - 2);
-
-	if (app->render->_gles->isInit) { // [GEC] <- adding new line code
-		app->canvas->repaintFlags &= ~Canvas::REPAINT_VIEW3D;
-	}
-}
-
-void TinyGL::resetViewPort() {
-
-	this->setViewport(app->canvas->viewRect[0], app->canvas->viewRect[1], app->canvas->viewRect[2], app->canvas->viewRect[3]);
-}
-
-void TinyGL::setView(int viewX, int viewY, int viewZ, int viewYaw, int viewPitch, int viewRoll, int viewFov, int viewAspect) {
-	
-
-
-	const int normYaw   = viewYaw   & 0x3ff;
-	int       sgnPitch  = viewPitch & 0x3ff;
-	// Mirror normalized yaw onto gles (used by RasterizeConvexPolygon's sky
-	// path for UV scrolling).
-	app->render->_gles->viewYaw = normYaw;
-
-	// `view2D` and `projection` are local scratch for the two multMatrix
-	// calls below.
-	float view2D[16];
-	float projection[16];
-
-	this->buildViewMatrix(viewX, viewY, viewZ, normYaw, sgnPitch, viewRoll, this->view);
-	this->buildViewMatrix(viewX, viewY, 0, normYaw, 0, 0, view2D);
-	this->buildProjectionMatrix(viewFov, viewAspect, projection);
-	this->multMatrix(this->view, projection, this->mvp);
-
-	app->render->_gles->BeginFrame(app->render->viewportX, app->render->viewportY,
-	                                app->render->viewportWidth, app->render->viewportHeight,
-	                                this->view, projection,
-	                                app->render->fogColor, app->render->fogMin, app->render->fogRange);
-
-	if (sgnPitch > 512) {
-		sgnPitch -= 1024;
-	}
-
-	// 2D mvp uses a wider FOV (compensating for the dropped pitch) and the
-	// pitch-zeroed view2D. Used only by transform2DVerts for line-visibility
-	// queries against world-axis-aligned walls.
-	this->buildProjectionMatrix(viewFov + std::abs(sgnPitch), viewAspect, projection);
-	this->multMatrix(view2D, projection, this->mvp2D);
-
-	// Mirror signed-normalized pitch onto Render so portal-visibility code
-	// can read it without coupling to TinyGL.
-	app->render->viewPitch = sgnPitch;
 }
 
 void TinyGL::viewMtxMove(TGLVert* tglVert, int n, int n2, int n3) {
@@ -208,26 +40,26 @@ void TinyGL::viewMtxMove(TGLVert* tglVert, int n, int n2, int n3) {
 	// into a plain `(int)(view[i] * delta)`.
 	if (n != 0) {
 		const float fn = (float)(-n);
-		tglVert->x += (int)(this->view[2]  * fn);
-		tglVert->y += (int)(this->view[6]  * fn);
-		tglVert->z += (int)(this->view[10] * fn);
+		tglVert->x += (int)(app->render->view[2]  * fn);
+		tglVert->y += (int)(app->render->view[6]  * fn);
+		tglVert->z += (int)(app->render->view[10] * fn);
 	}
 	if (n2 != 0) {
 		const float fn = (float)n2;
-		tglVert->x += (int)(this->view[0] * fn);
-		tglVert->y += (int)(this->view[4] * fn);
-		tglVert->z += (int)(this->view[8] * fn);
+		tglVert->x += (int)(app->render->view[0] * fn);
+		tglVert->y += (int)(app->render->view[4] * fn);
+		tglVert->z += (int)(app->render->view[8] * fn);
 	}
 	if (n3 != 0) {
 		const float fn = (float)(-n3);
-		tglVert->x += (int)(this->view[1] * fn);
-		tglVert->y += (int)(this->view[5] * fn);
-		tglVert->z += (int)(this->view[9] * fn);
+		tglVert->x += (int)(app->render->view[1] * fn);
+		tglVert->y += (int)(app->render->view[5] * fn);
+		tglVert->z += (int)(app->render->view[9] * fn);
 	}
 }
 
 TGLVert* TinyGL::transform3DVerts(TGLVert* array, int n) {
-	const float* mvp = this->mvp;
+	const float* mvp = app->render->mvp;
 	for (int i = 0; i < n; ++i) {
 		TGLVert* tglVert = &array[i];
 		TGLVert* tglVert2 = &this->cv[i];
@@ -245,7 +77,7 @@ TGLVert* TinyGL::transform3DVerts(TGLVert* array, int n) {
 }
 
 TGLVert* TinyGL::transform2DVerts(TGLVert* array, int n) {
-	const float* mvp2D = this->mvp2D;
+	const float* mvp2D = app->render->mvp2D;
 	for (int i = 0; i < n; ++i) {
 		TGLVert* tglVert = &array[i];
 		TGLVert* tglVert2 = &this->cv[i];
@@ -320,10 +152,12 @@ bool TinyGL::clipLine(TGLVert* array) {
 
 
 void TinyGL::projectVerts(TGLVert* array, int n) {
-	const int xBias = this->viewportXBias;
-	const int yBias = this->viewportYBias;
-	const int xScale = this->viewportXScale;
-	const int yScale = this->viewportYScale;
+	// Viewport scratch lives on Render now (B3.14a).
+	const Render* r = app->render.get();
+	const int xBias = r->viewportXBias;
+	const int yBias = r->viewportYBias;
+	const int xScale = r->viewportXScale;
+	const int yScale = r->viewportYScale;
 	for (int i = 0; i < n; i++) {
 		TGLVert* tglVert = &array[i];
 		const int w = tglVert->w;

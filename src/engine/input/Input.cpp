@@ -12,6 +12,7 @@
 #include "SDLGL.h"
 #include "GLES.h"
 #include "TinyGL.h"
+#include "Render.h"
 #include "MenuSystem.h"
 #include "Player.h"
 #include "Game.h"
@@ -871,14 +872,14 @@ void Input::handleEvents() noexcept {
 
                     if (scancode == SDL_SCANCODE_F1) {
                         Canvas* canvas = this->app->canvas.get();
-                        TinyGL* tinyGL = this->app->tinyGL.get();
+                        Render* render = this->app->render.get();
                         _glesObj->isInit = !_glesObj->isInit;
 
                         if (canvas->state == Canvas::ST_CAMERA) {
-                            tinyGL->setViewport(canvas->cinRect[0], canvas->cinRect[1], canvas->cinRect[2], canvas->cinRect[3]);
+                            render->setViewport(canvas->cinRect[0], canvas->cinRect[1], canvas->cinRect[2], canvas->cinRect[3]);
                         }
                         else {
-                            tinyGL->resetViewPort();
+                            render->resetViewPort();
                         }
                         this->app->game->saveConfig();
                         break;

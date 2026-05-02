@@ -6,6 +6,7 @@
 #include "Game.h"
 #include "Hud.h"
 #include "TinyGL.h"
+#include "Render.h"
 #include "Enums.h"
 #include "DialogManager.h"
 
@@ -15,7 +16,7 @@ void DialogState::onEnter(Canvas* canvas) {
 		canvas->isZoomedIn = 0;
 		app->StopAccelerometer();
 		canvas->destAngle = canvas->viewAngle = (canvas->viewAngle + canvas->zoomAngle + 127) & 0xFFFFFF00;
-		app->tinyGL->resetViewPort();
+		app->render->resetViewPort();
 		canvas->drawPlayingSoftKeys();
 	}
 	if (app->game->isCameraActive()) {
@@ -23,7 +24,7 @@ void DialogState::onEnter(Canvas* canvas) {
 	}
 	app->hud->repaintFlags = 47;
 	canvas->repaintFlags |= Canvas::REPAINT_HUD;
-	app->tinyGL->resetViewPort();
+	app->render->resetViewPort();
 	canvas->clearSoftKeys();
 	canvas->clearEvents(1);
 }

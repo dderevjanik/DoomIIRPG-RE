@@ -20,7 +20,7 @@ void DyingState::onEnter(Canvas* canvas) {
 		canvas->viewAngle += canvas->zoomAngle;
 		int n3 = 255;
 		canvas->destAngle = (canvas->viewAngle = (canvas->viewAngle + (n3 >> 1) & ~n3));
-		app->tinyGL->resetViewPort();
+		app->render->resetViewPort();
 		canvas->drawPlayingSoftKeys();
 	}
 	canvas->clearSoftKeys();

@@ -1291,7 +1291,7 @@ void Render::render(int viewX, int viewY, int viewZ, int viewAngle, int viewPitc
 	this->viewY = viewY;
 	this->viewZ = viewZ;
 	this->viewAngle = viewAngle;
-	app->tinyGL->setView(this->viewX, this->viewY, this->viewZ, viewAngle, viewPitch, viewRoll, viewFov, viewAspect);
+	app->render->setView(this->viewX, this->viewY, this->viewZ, viewAngle, viewPitch, viewRoll, viewFov, viewAspect);
 	if (this->fogLerpTime != 0) {
 		if (app->time < this->fogLerpStart + this->fogLerpTime) {
 			int n15 = (app->time - this->fogLerpStart << 12) / this->fogLerpTime;

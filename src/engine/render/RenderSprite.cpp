@@ -75,9 +75,9 @@ void Render::draw2DSprite(int tileNum, int frame, int x, int y, int flags, int r
 	// Camera-back offset: legacy did 5*(view[i] & ~31 + 8*(view[i] >> 5)) >> 8
 	// over Q14 ints, which works out to ≈ view[i] * 6.25 / 256. With float
 	// matrix (Q14 factored out) the equivalent is view[i] * 400.
-	tinyGL->mv[0].x = this->viewX - (int)(tinyGL->view[2]  * 400.0f);
-	tinyGL->mv[0].y = this->viewY - (int)(tinyGL->view[6]  * 400.0f);
-	tinyGL->mv[0].z = this->viewZ - (int)(tinyGL->view[10] * 400.0f);
+	tinyGL->mv[0].x = this->viewX - (int)(this->view[2]  * 400.0f);
+	tinyGL->mv[0].y = this->viewY - (int)(this->view[6]  * 400.0f);
+	tinyGL->mv[0].z = this->viewZ - (int)(this->view[10] * 400.0f);
 
 	int projX = ((x - this->viewportWidth / 2) << 15) / this->viewportWidth;
 	int projY = (((y + scaledHeight) - this->viewportHeight / 2) << 15) / this->viewportWidth;
@@ -85,12 +85,12 @@ void Render::draw2DSprite(int tileNum, int frame, int x, int y, int flags, int r
 
 	// Legacy: `(int_view[i] >> 5) * proj >> 14` over Q14 ints =
 	// `proj * (float_view[i] * 16384/32) / 16384 = proj * float_view[i] / 32`.
-	const float view0 = tinyGL->view[0];
-	const float view1 = tinyGL->view[1];
-	const float view4 = tinyGL->view[4];
-	const float view5 = tinyGL->view[5];
-	const float view8 = tinyGL->view[8];
-	const float view9 = tinyGL->view[9];
+	const float view0 = this->view[0];
+	const float view1 = this->view[1];
+	const float view4 = this->view[4];
+	const float view5 = this->view[5];
+	const float view8 = this->view[8];
+	const float view9 = this->view[9];
 
 	tinyGL->mv[0].x += (int)((projY * view1 + projX * view0) / 32.0f);
 	tinyGL->mv[0].y += (int)((projY * view5 + projX * view4) / 32.0f);

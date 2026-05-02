@@ -1018,7 +1018,7 @@ void Canvas::checkFacingEntity() {
 	int destY = this->destY;
 	int destZ = this->destZ;
 	int n = 21741;
-	const float* view = app->tinyGL->view;
+	const float* view = app->render->view;
 	// Legacy `(-view[i] * k) >> 14` over Q14 → `(int)(-view[i] * k)` in float.
 	// Legacy `(-view[i] * 6) >> 8` over Q14 → `(int)(-view[i] * 6 * 64)`.
 	app->game->trace(
@@ -1747,9 +1747,9 @@ bool Canvas::handlePlayingEvents(int key, int action) {
 		Entity* entity2 = nullptr;
 
 		// Legacy `(n7 * -view[i]) >> 8` over Q14 → `(int)(n7 * -view[i] * 64)`.
-		int n8  = this->viewX + (int)(n7 * -app->tinyGL->view[2]  * 64.0f);
-		int n9  = this->viewY + (int)(n7 * -app->tinyGL->view[6]  * 64.0f);
-		int n10 = this->viewZ + (int)(n7 * -app->tinyGL->view[10] * 64.0f);
+		int n8  = this->viewX + (int)(n7 * -app->render->view[2]  * 64.0f);
+		int n9  = this->viewY + (int)(n7 * -app->render->view[6]  * 64.0f);
+		int n10 = this->viewZ + (int)(n7 * -app->render->view[10] * 64.0f);
 		app->game->trace(this->viewX, this->viewY, this->viewZ, n8, n9, n10, nullptr, n5, 2, this->isZoomedIn);
 
 		int i = 0;
@@ -2210,7 +2210,7 @@ bool Canvas::loadMedia() {
 	this->displaySoftKeys = false;
 	this->isZoomedIn = false;
 	app->StopAccelerometer();
-	app->tinyGL->resetViewPort();
+	app->render->resetViewPort();
 
 	for (int i = 0; i < 128; ++i) {
 		if (i != 15) {
@@ -2996,7 +2996,7 @@ void Canvas::zoomOut() {
 	this->destAngle = this->viewAngle = ((this->viewAngle + (n >> 1)) & ~n);
 	app->render->startFade(500, 2);
 	this->finishRotation(true);
-	app->tinyGL->resetViewPort();
+	app->render->resetViewPort();
 	this->drawPlayingSoftKeys();
 }
 
