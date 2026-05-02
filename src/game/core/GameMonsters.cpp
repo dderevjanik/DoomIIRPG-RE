@@ -39,19 +39,19 @@
 void Game::prepareMonsters() {
 
 
-	int n = app->canvas->loadMapID - 1;
+	int mapIdx = app->canvas->loadMapID - 1;
 	app->player->fillMonsterStats();
-	if (!this->isLoaded && 0x0 != (app->player->completedLevels & 1 << n) &&
+	if (!this->isLoaded && 0x0 != (app->player->completedLevels & 1 << mapIdx) &&
 	    app->player->monsterStats[0] == app->player->monsterStats[1]) {
-		int n2 = 0;
-		int n3 = app->player->monsterStats[1];
-		int n4 = n3 - app->player->monsterStats[0];
+		int respawnedThisCall = 0;
+		int totalMonsters = app->player->monsterStats[1];
+		int respawnQuota = totalMonsters - app->player->monsterStats[0];
 		for (int i = 0; i < this->numEntities; ++i) {
 			Entity* entity = &this->entities[i];
 			if (entity->isMonster()) {
 				int sprite = entity->getSprite();
 				EntityMonster* monster = entity->monster;
-				if (0x0 != (entity->info & 0x1010000) && 0x0 == (entity->monsterFlags & (Enums::MFLAG_NOTRACK | Enums::MFLAG_NORESPAWN)) && n4 < n3 / 2 && n2 < 8 &&
+				if (0x0 != (entity->info & 0x1010000) && 0x0 == (entity->monsterFlags & (Enums::MFLAG_NOTRACK | Enums::MFLAG_NORESPAWN)) && respawnQuota < totalMonsters / 2 && respawnedThisCall < 8 &&
 				    app->nextByte() <= 100) {
 					Render* render = app->render.get();
 					if (this->findMapEntity(render->getSpriteX(sprite),
@@ -59,8 +59,8 @@ void Game::prepareMonsters() {
 						entity->resurrect(render->getSpriteX(sprite),
 						                  render->getSpriteY(sprite), 32);
 						entity->info &= 0xFFBFFFFF;
-						++n4;
-						++n2;
+						++respawnQuota;
+						++respawnedThisCall;
 					}
 				}
 			}
@@ -72,14 +72,14 @@ void Game::activate(Entity* entity) {
 	this->activate(entity, true, false, true, false);
 }
 
-void Game::activate(Entity* entity, bool b, bool b2, bool b3, bool b4) {
+void Game::activate(Entity* entity, bool triggerScript, bool checkRange, bool playAlertSound, bool b4) {
 
 
 	EntityMonster* monster = entity->monster;
 	if ((app->render->getSpriteFrame(entity->getSprite()) & 0xF0) == 16 && !app->render->shotsFired) {
 		return;
 	}
-	if (b2 && entity->distFrom(app->canvas->viewX, app->canvas->viewY) > app->combat->tileDistances[3]) {
+	if (checkRange && entity->distFrom(app->canvas->viewX, app->canvas->viewY) > app->combat->tileDistances[3]) {
 		return;
 	}
 	entity->info |= 0x400000;
@@ -114,11 +114,11 @@ void Game::activate(Entity* entity, bool b, bool b2, bool b3, bool b4) {
 	}
 	entity->info |= 0x40000;
 	entity->monsterFlags &= ~Enums::MFLAG_NOACTIVATE;
-	if (b && 0x0 != (entity->monsterFlags & Enums::MFLAG_TRIGGERONACTIVATE)) {
+	if (triggerScript && 0x0 != (entity->monsterFlags & Enums::MFLAG_TRIGGERONACTIVATE)) {
 		this->executeStaticFunc(9);
 		entity->monsterFlags &= ~Enums::MFLAG_TRIGGERONACTIVATE;
 	}
-	if (app->canvas->state == Canvas::ST_PLAYING && b3) {
+	if (app->canvas->state == Canvas::ST_PLAYING && playAlertSound) {
 		int MonsterSound = this->getMonsterSound(entity->def->monsterIdx, Enums::MSOUND_ALERT1);
 		app->sound->playSound(MonsterSound, 0, 3, 0);
 	}
@@ -180,7 +180,7 @@ void Game::monsterAI() {
 	this->monstersUpdated = true;
 	this->combatMonsters = nullptr;
 	if (this->activeMonsters != nullptr) {
-		int i = 0;
+		int needsRevalidation = 0;
 		Entity* activeMonsters = this->activeMonsters;
 		do {
 			Entity* nextOnList = activeMonsters->nextOnList;
@@ -188,13 +188,13 @@ void Game::monsterAI() {
 			    (this->monstersTurn == 1 || (this->monstersTurn == 2 && activeMonsters->isHasteResistant()))) {
 				activeMonsters->aiThink(false);
 				if ((activeMonsters->ai->goalFlags & 0x1) != 0x0) {
-					i = 1;
+					needsRevalidation = 1;
 				}
 			}
 			activeMonsters = nextOnList;
 		} while (activeMonsters != this->activeMonsters && this->activeMonsters != nullptr);
-		while (i != 0) {
-			i = 0;
+		while (needsRevalidation != 0) {
+			needsRevalidation = 0;
 			Entity* nextAttacker;
 			for (Entity* combatMonsters = this->combatMonsters; combatMonsters != nullptr;
 			     combatMonsters = nextAttacker) {
@@ -203,7 +203,7 @@ void Game::monsterAI() {
 					combatMonsters->undoAttack();
 					combatMonsters->aiThink(false);
 					if ((combatMonsters->ai->goalFlags & 0x1) != 0x0) {
-						i = 1;
+						needsRevalidation = 1;
 					}
 				}
 			}
@@ -215,7 +215,7 @@ void Game::monsterLerp() {
 
 
 	bool interpolatingMonsters = false;
-	int n = 0;
+	int anyVisible = 0;
 	if (!this->interpolatingMonsters) {
 		return;
 	}
@@ -224,14 +224,14 @@ void Game::monsterLerp() {
 		do {
 			if ((entity->ai->goalFlags & 0x1) != 0x0) {
 				interpolatingMonsters = true;
-				if (n == 0 && app->render->checkTileVisibilty(entity->ai->goalX, entity->ai->goalY)) {
-					n = 1;
+				if (anyVisible == 0 && app->render->checkTileVisibilty(entity->ai->goalX, entity->ai->goalY)) {
+					anyVisible = 1;
 				}
 			}
 			entity = entity->nextOnList;
 		} while (entity != this->activeMonsters);
 	}
-	if (interpolatingMonsters && n != 0) {
+	if (interpolatingMonsters && anyVisible != 0) {
 		app->canvas->invalidateRect();
 	}
 	this->interpolatingMonsters = interpolatingMonsters;
@@ -254,7 +254,7 @@ bool Game::canSnapMonsters() {
 	return true;
 }
 
-bool Game::snapMonsters(bool b) {
+bool Game::snapMonsters(bool forceSnap) {
 
 
 	if (this->animatingEffects != 0) {
@@ -262,24 +262,24 @@ bool Game::snapMonsters(bool b) {
 			LerpSprite* lerpSprite = &this->lerpSprites[i];
 			if (lerpSprite->hSprite != 0) {
 				if ((lerpSprite->flags & Enums::LS_FLAG_ANIMATING_EFFECT) != 0x0) {
-					short n = app->render->getSpriteEnt(lerpSprite->hSprite - 1);
-					if (n == -1) {
+					short entIdx = app->render->getSpriteEnt(lerpSprite->hSprite - 1);
+					if (entIdx == -1) {
 						return false;
 					}
-					if (this->entities[n].def->eType != Enums::ET_MONSTER) {
+					if (this->entities[entIdx].def->eType != Enums::ET_MONSTER) {
 						return false;
 					}
 				}
 			}
 		}
 	}
-	bool b2 = b;
+	bool canSnap = forceSnap;
 	if (this->monstersTurn == 0) {
-		if (!b) {
-			b2 = this->canSnapMonsters();
+		if (!forceSnap) {
+			canSnap = this->canSnapMonsters();
 		}
 		Entity* activeMonsters = this->activeMonsters;
-		if (b2 && activeMonsters != nullptr) {
+		if (canSnap && activeMonsters != nullptr) {
 			do {
 				Entity* nextOnList = activeMonsters->nextOnList;
 				this->snapLerpSprites(activeMonsters->getSprite());
@@ -291,13 +291,13 @@ bool Game::snapMonsters(bool b) {
 		}
 		app->canvas->updateFacingEntity = true;
 		app->canvas->invalidateRect();
-		return b2;
+		return canSnap;
 	}
 	this->monsterAI();
-	if (!b) {
-		b2 = this->canSnapMonsters();
+	if (!forceSnap) {
+		canSnap = this->canSnapMonsters();
 	}
-	if (b2 && this->activeMonsters != nullptr) {
+	if (canSnap && this->activeMonsters != nullptr) {
 		Entity* entity = this->activeMonsters;
 		do {
 			this->snapLerpSprites(entity->getSprite());
@@ -311,7 +311,7 @@ bool Game::snapMonsters(bool b) {
 		app->combat->performAttack(this->combatMonsters, this->combatMonsters->ai->target, 0, 0, false);
 		return false;
 	}
-	return b2;
+	return canSnap;
 }
 
 void Game::endMonstersTurn() {
@@ -351,20 +351,20 @@ void Game::updateBombs() {
 	for (int i = 0; i < 4; ++i) {
 		if (this->placedBombs[i] != 0) {
 			Entity* entity = &this->entities[placedBombs[i]];
-			int n = entity->param & 0xFF;
-			if (--n < 0) {
+			int bombTimer = entity->param & 0xFF;
+			if (--bombTimer < 0) {
 				if ((entity->info & 0x100000) != 0x0) {
 					entity->pain(1, nullptr);
 				}
 				this->placedBombs[i] = 0;
 			} else {
-				entity->param = ((entity->param & 0xFFFFFF00) | n);
+				entity->param = ((entity->param & 0xFFFFFF00) | bombTimer);
 			}
 		}
 	}
 }
 
-int Game::setDynamite(int x, int y, bool b) {
+int Game::setDynamite(int x, int y, bool centered) {
 
 
 	int nextBombIndex = this->getNextBombIndex();
@@ -372,7 +372,7 @@ int Game::setDynamite(int x, int y, bool b) {
 		app->Error("Too many bombs placed");
 	}
 	int flags = 0;
-	if (!b) {
+	if (!centered) {
 		switch (this->destAngle & 0x3FF) {
 			case Enums::ANGLE_EAST: {
 				flags |= Enums::SPRITE_FLAG_WEST;
@@ -398,7 +398,7 @@ int Game::setDynamite(int x, int y, bool b) {
 	} else {
 		flags |= (Enums::SPRITE_FLAG_TWO_SIDED | Enums::SPRITE_FLAG_HIDDEN);
 	}
-	this->allocDynamite((short)x, (short)y, (short)(app->render->getHeight(x, y) + (b ? 31 : 32)), flags, nextBombIndex,
+	this->allocDynamite((short)x, (short)y, (short)(app->render->getHeight(x, y) + (centered ? 31 : 32)), flags, nextBombIndex,
 	                    0);
 	return nextBombIndex;
 }
@@ -419,37 +419,37 @@ Entity* Game::getFreeDropEnt() {
 	return &this->entities[lastDropEntIndex];
 }
 
-void Game::allocDynamite(int n, int n2, int n3, int n4, int n5, int n6) {
+void Game::allocDynamite(int x, int y, int z, int spriteFlags, int bombSlotIdx, int bombTimer) {
 
 
 	Entity* freeDropEnt = this->getFreeDropEnt();
 	freeDropEnt->def = app->entityDefManager->find(14, 6);
 	freeDropEnt->name = (short)(freeDropEnt->def->name | 0x400);
-	freeDropEnt->param = (n6 << 8 | 0x3);
+	freeDropEnt->param = (bombTimer << 8 | 0x3);
 	if (0x0 != (freeDropEnt->info & 0x100000)) {
 		this->unlinkEntity(freeDropEnt);
 	}
-	this->linkEntity(freeDropEnt, n >> 6, n2 >> 6);
+	this->linkEntity(freeDropEnt, x >> 6, y >> 6);
 	freeDropEnt->info |= 0x420000;
 	int sprite = freeDropEnt->getSprite();
-	app->render->setSpriteX(sprite, (short)n);
-	app->render->setSpriteY(sprite, (short)n2);
-	app->render->setSpriteZ(sprite, (short)n3);
+	app->render->setSpriteX(sprite, (short)x);
+	app->render->setSpriteY(sprite, (short)y);
+	app->render->setSpriteZ(sprite, (short)z);
 	app->render->setSpriteScaleFactor(sprite, 32);
 	app->render->setSpriteRenderMode(sprite, 0);
-	app->render->setSpriteInfoRaw(sprite, n4 | freeDropEnt->def->tileIndex);
+	app->render->setSpriteInfoRaw(sprite, spriteFlags | freeDropEnt->def->tileIndex);
 	app->render->relinkSprite(sprite);
-	this->placedBombs[n5] = this->lastDropEntIndex;
+	this->placedBombs[bombSlotIdx] = this->lastDropEntIndex;
 }
 
-Entity* Game::spawnDropItem(int n, int n2, int n3, EntityDef* def, int param, bool b) {
+Entity* Game::spawnDropItem(int x, int y, int tileIdx, EntityDef* def, int param, bool throwAnim) {
 
 
 	Entity* freeDropEnt = this->getFreeDropEnt();
 	freeDropEnt->def = def;
 	freeDropEnt->name = (short)(freeDropEnt->def->name | 0x400);
-	if (n3 >= 1 && n3 < 14) {
-		n3 |= 0x200;
+	if (tileIdx >= 1 && tileIdx < 14) {
+		tileIdx |= 0x200;
 	}
 	if (0x0 != (freeDropEnt->info & 0x100000)) {
 		this->unlinkEntity(freeDropEnt);
@@ -460,28 +460,28 @@ Entity* Game::spawnDropItem(int n, int n2, int n3, EntityDef* def, int param, bo
 		freeDropEnt->info |= 0x20000;
 	}
 	int sprite = freeDropEnt->getSprite();
-	int height = app->render->getHeight(n, n2);
-	app->render->setSpriteInfoRaw(sprite, n3);
-	app->render->setSpriteX(sprite, (short)n);
-	app->render->setSpriteY(sprite, (short)n2);
+	int height = app->render->getHeight(x, y);
+	app->render->setSpriteInfoRaw(sprite, tileIdx);
+	app->render->setSpriteX(sprite, (short)x);
+	app->render->setSpriteY(sprite, (short)y);
 	app->render->setSpriteZ(sprite, (short)(32 + height));
 	app->render->setSpriteEnt(sprite, (short)this->lastDropEntIndex);
 	app->render->setSpriteScaleFactor(sprite, 64);
 	freeDropEnt->param = param;
 	app->render->relinkSprite(sprite);
-	this->linkEntity(freeDropEnt, n >> 6, n2 >> 6);
-	if (b) {
-		this->throwDropItem(n, n2, height, freeDropEnt);
+	this->linkEntity(freeDropEnt, x >> 6, y >> 6);
+	if (throwAnim) {
+		this->throwDropItem(x, y, height, freeDropEnt);
 	}
 	return freeDropEnt;
 }
 
-Entity* Game::spawnDropItem(int n, int n2, int n3, int n4, int n5, int n6, int n7, bool b) {
+Entity* Game::spawnDropItem(int x, int y, int tileIdx, int eType, int eSubType, int defParm, int param, bool throwAnim) {
 
 
-	EntityDef* find = app->entityDefManager->find(n4, n5, n6);
+	EntityDef* find = app->entityDefManager->find(eType, eSubType, defParm);
 	if (find != nullptr) {
-		return spawnDropItem(n, n2, n3, find, n7, b);
+		return spawnDropItem(x, y, tileIdx, find, param, throwAnim);
 	}
 	app->Error("Cannot find a def for the spawnDropItem.");
 	return nullptr;
@@ -490,29 +490,29 @@ Entity* Game::spawnDropItem(int n, int n2, int n3, int n4, int n5, int n6, int n
 void Game::spawnDropItem(Entity* entity) {
 
 
-	bool b = entity->loot != nullptr;
-	bool b2;
+	bool hasLoot = entity->loot != nullptr;
+	bool shouldDrop;
 	if (!entity->isMonster()) {
-		b2 = (b & entity->param == 0);
+		shouldDrop = (hasLoot & entity->param == 0);
 	} else {
-		b2 = (b & (entity->monsterFlags & Enums::MFLAG_LOOTED) == 0x0);
+		shouldDrop = (hasLoot & (entity->monsterFlags & Enums::MFLAG_LOOTED) == 0x0);
 	}
-	if (b2) {
+	if (shouldDrop) {
 		for (int i = 0; i < LootComponent::MAX_SLOTS; ++i) {
-			int n = entity->loot->lootSet[i];
-			if (n == 0) break; // sentinel: zero terminates the slot list
-			int n2 = n >> 12 & 0xF;
-			if (n2 == 6) continue; // trinket — handled elsewhere
-			int n3 = (n & 0xFC0) >> 6;
-			int n4 = n & 0x3F;
-			if (n4 <= 0) continue;
-			EntityDef* find = app->entityDefManager->find(6, n2, n3);
+			int lootEntry = entity->loot->lootSet[i];
+			if (lootEntry == 0) break; // sentinel: zero terminates the slot list
+			int lootCategory = lootEntry >> 12 & 0xF;
+			if (lootCategory == 6) continue; // trinket — handled elsewhere
+			int lootItemIdx = (lootEntry & 0xFC0) >> 6;
+			int lootCount = lootEntry & 0x3F;
+			if (lootCount <= 0) continue;
+			EntityDef* find = app->entityDefManager->find(6, lootCategory, lootItemIdx);
 			if (find != nullptr) {
 				if (find->tileIndex != 0) {
 					int sprite = entity->getSprite();
 					this->spawnDropItem(app->render->getSpriteX(sprite),
 					                    app->render->getSpriteY(sprite), find->tileIndex, find,
-					                    n4, false);
+					                    lootCount, false);
 				}
 			} else {
 				app->Error("Cannot find a def for the dropItem.", 117); // ERR_ENT_LOOTSET
@@ -521,110 +521,110 @@ void Game::spawnDropItem(Entity* entity) {
 	}
 }
 
-Entity* Game::spawnPlayerEntityCopy(int n, int n2) {
+Entity* Game::spawnPlayerEntityCopy(int x, int y) {
 
 
-	int n3 = 72;
-	int n4 = 224;
+	int defLookup = 72;
+	int nameId = 224;
 	switch (app->player->characterChoice) {
 		case 1: {
-			n3 = 68;
-			n4 = 224;
+			defLookup = 68;
+			nameId = 224;
 			break;
 		}
 		case 3: {
-			n3 = 66;
-			n4 = 225;
+			defLookup = 66;
+			nameId = 225;
 			break;
 		}
 		case 2: {
-			n3 = 72;
-			n4 = 226;
+			defLookup = 72;
+			nameId = 226;
 			break;
 		}
 	}
 	Entity* freeDropEnt = this->getFreeDropEnt();
-	freeDropEnt->def = app->entityDefManager->lookup(n3);
-	freeDropEnt->name = (short)(n4 | 0x0);
+	freeDropEnt->def = app->entityDefManager->lookup(defLookup);
+	freeDropEnt->name = (short)(nameId | 0x0);
 	if (0x0 != (freeDropEnt->info & 0x100000)) {
 		this->unlinkEntity(freeDropEnt);
 	}
 	freeDropEnt->info &= 0xFFFF;
 	freeDropEnt->info |= 0x400000;
 	int sprite = freeDropEnt->getSprite();
-	int height = app->render->getHeight(n, n2);
-	app->render->setSpriteInfoRaw(sprite, n3);
-	app->render->setSpriteX(sprite, (short)n);
-	app->render->setSpriteY(sprite, (short)n2);
+	int height = app->render->getHeight(x, y);
+	app->render->setSpriteInfoRaw(sprite, defLookup);
+	app->render->setSpriteX(sprite, (short)x);
+	app->render->setSpriteY(sprite, (short)y);
 	app->render->setSpriteZ(sprite, (short)(32 + height));
 	app->render->setSpriteEnt(sprite, (short)this->lastDropEntIndex);
 	app->render->setSpriteRenderMode(sprite, 0);
 	app->render->setSpriteScaleFactor(sprite, 64);
 	freeDropEnt->param = 0;
 	app->render->relinkSprite(sprite);
-	this->linkEntity(freeDropEnt, n >> 6, n2 >> 6);
+	this->linkEntity(freeDropEnt, x >> 6, y >> 6);
 	return freeDropEnt;
 }
 
-Entity* Game::spawnSentryBotCorpse(int n, int n2, int n3, int n4, int n5) {
+Entity* Game::spawnSentryBotCorpse(int x, int y, int botSubType, int ammoLoot, int healthLoot) {
 
 
-	int n6 = 19;
-	int n7 = 0;
-	switch (n3) {
+	int corpseTile = 19;
+	int corpseVariant = 0;
+	switch (botSubType) {
 		case 3:
 		case 4: {
-			n6 = 19;
-			n7 = 0;
+			corpseTile = 19;
+			corpseVariant = 0;
 			break;
 		}
 		case 5:
 		case 6: {
-			n6 = 18;
-			n7 = 1;
+			corpseTile = 18;
+			corpseVariant = 1;
 			break;
 		}
 	}
 	Entity* freeDropEnt = this->getFreeDropEnt();
-	freeDropEnt->def = app->entityDefManager->find(Enums::ET_MONSTER, 11, n7)->corpseDef;
+	freeDropEnt->def = app->entityDefManager->find(Enums::ET_MONSTER, 11, corpseVariant)->corpseDef;
 	freeDropEnt->name = (short)(freeDropEnt->def->name | 0x400);
 	freeDropEnt->populateDefaultLootSet();
 	freeDropEnt->param = 0;
-	if (n3 == 3 || n3 == 5) {
+	if (botSubType == 3 || botSubType == 5) {
 		freeDropEnt->addToLootSet(2, 1, 10);
 	} else {
 		freeDropEnt->addToLootSet(0, 12, 1);
 	}
-	freeDropEnt->addToLootSet(0, 16, n4);
-	freeDropEnt->addToLootSet(0, 13, n5);
+	freeDropEnt->addToLootSet(0, 16, ammoLoot);
+	freeDropEnt->addToLootSet(0, 13, healthLoot);
 	if (0x0 != (freeDropEnt->info & 0x100000)) {
 		this->unlinkEntity(freeDropEnt);
 	}
 	freeDropEnt->info &= 0xFFFF;
 	freeDropEnt->info |= 0x1420000;
 	int sprite = freeDropEnt->getSprite();
-	int height = app->render->getHeight(n, n2);
-	app->render->setSpriteInfoRaw(sprite, n6);
+	int height = app->render->getHeight(x, y);
+	app->render->setSpriteInfoRaw(sprite, corpseTile);
 	app->render->setSpriteInfoFlag(sprite, 0xD00);
-	app->render->setSpriteX(sprite, (short)n);
-	app->render->setSpriteY(sprite, (short)n2);
+	app->render->setSpriteX(sprite, (short)x);
+	app->render->setSpriteY(sprite, (short)y);
 	app->render->setSpriteZ(sprite, (short)(32 + height));
 	app->render->setSpriteEnt(sprite, (short)this->lastDropEntIndex);
 	app->render->setSpriteRenderMode(sprite, 0);
 	app->render->setSpriteScaleFactor(sprite, 64);
 	app->render->relinkSprite(sprite);
-	this->linkEntity(freeDropEnt, n >> 6, n2 >> 6);
+	this->linkEntity(freeDropEnt, x >> 6, y >> 6);
 	return freeDropEnt;
 }
 
-void Game::throwDropItem(int dstX, int dstY, int n, Entity* entity) {
+void Game::throwDropItem(int dstX, int dstY, int height, Entity* entity) {
 
 
 	LerpSprite* allocLerpSprite = this->allocLerpSprite(nullptr, entity->getSprite(), entity->def->eType != Enums::ET_ITEM);
 	if (allocLerpSprite != nullptr) {
 		allocLerpSprite->srcX = dstX;
 		allocLerpSprite->srcY = dstY;
-		allocLerpSprite->srcZ = (short)(32 + n);
+		allocLerpSprite->srcZ = (short)(32 + height);
 		allocLerpSprite->dstX = dstX;
 		allocLerpSprite->dstY = dstY;
 		allocLerpSprite->dstZ = allocLerpSprite->srcZ;
@@ -634,11 +634,11 @@ void Game::throwDropItem(int dstX, int dstY, int n, Entity* entity) {
 		    app->render->getSpriteScaleFactor(entity->getSprite());
 		allocLerpSprite->startTime = app->gameTime;
 		allocLerpSprite->travelTime = 850;
-		int n3 = app->nextByte() & 0x7;
-		int n4 = 8;
-		while (--n4 >= 0) {
-			dstX = allocLerpSprite->srcX + this->dropDirs[n3 << 1];
-			dstY = allocLerpSprite->srcY + this->dropDirs[(n3 << 1) + 1];
+		int dirIdx = app->nextByte() & 0x7;
+		int triesLeft = 8;
+		while (--triesLeft >= 0) {
+			dstX = allocLerpSprite->srcX + this->dropDirs[dirIdx << 1];
+			dstY = allocLerpSprite->srcY + this->dropDirs[(dirIdx << 1) + 1];
 			this->trace(allocLerpSprite->srcX, allocLerpSprite->srcY, dstX, dstY, entity, 15855, 25);
 			if (this->traceEntity == nullptr && (this->baseVisitedTiles[dstY >> 6] & 1 << (dstX >> 6)) == 0x0) {
 				allocLerpSprite->dstX = dstX;
@@ -647,49 +647,49 @@ void Game::throwDropItem(int dstX, int dstY, int n, Entity* entity) {
 				    (short)(app->render->getHeight(allocLerpSprite->dstX, allocLerpSprite->dstY) + 32);
 				break;
 			}
-			n3 = (n3 + 1 & 0x7);
+			dirIdx = (dirIdx + 1 & 0x7);
 		}
 	}
 }
 
-bool Game::tileObstructsAttack(int n, int n2) {
+bool Game::tileObstructsAttack(int tileX, int tileY) {
 
 
-	int n3 = app->canvas->destX >> 6;
-	int n4 = app->canvas->destY >> 6;
-	if (n != n3 && n2 != n4) {
+	int playerTileX = app->canvas->destX >> 6;
+	int playerTileY = app->canvas->destY >> 6;
+	if (tileX != playerTileX && tileY != playerTileY) {
 		return false;
 	}
 	for (Entity* entity = this->combatMonsters; entity != nullptr; entity = entity->nextAttacker) {
 		int* calcPosition = entity->calcPosition();
-		int n5 = calcPosition[0] >> 6;
-		int n6 = calcPosition[1] >> 6;
-		if (n5 == n || n6 == n2) {
-			if (n5 != n3) {
-				int n7 = 0;
-				int n8 = 0;
-				if (n5 < n3) {
-					n7 = n5;
-					n8 = n3;
-				} else if (n5 > n3) {
-					n7 = n3;
-					n8 = n5;
+		int monsterTileX = calcPosition[0] >> 6;
+		int monsterTileY = calcPosition[1] >> 6;
+		if (monsterTileX == tileX || monsterTileY == tileY) {
+			if (monsterTileX != playerTileX) {
+				int minX = 0;
+				int maxX = 0;
+				if (monsterTileX < playerTileX) {
+					minX = monsterTileX;
+					maxX = playerTileX;
+				} else if (monsterTileX > playerTileX) {
+					minX = playerTileX;
+					maxX = monsterTileX;
 				}
-				if (n > n7 && n < n8) {
+				if (tileX > minX && tileX < maxX) {
 					return true;
 				}
 			}
-			if (n6 != n4) {
-				int n9 = 0;
-				int n10 = 0;
-				if (n6 < n4) {
-					n9 = n6;
-					n10 = n4;
-				} else if (n6 > n4) {
-					n9 = n4;
-					n10 = n6;
+			if (monsterTileY != playerTileY) {
+				int minY = 0;
+				int maxY = 0;
+				if (monsterTileY < playerTileY) {
+					minY = monsterTileY;
+					maxY = playerTileY;
+				} else if (monsterTileY > playerTileY) {
+					minY = playerTileY;
+					maxY = monsterTileY;
 				}
-				if (n2 > n9 && n2 < n10) {
+				if (tileY > minY && tileY < maxY) {
 					return true;
 				}
 			}
@@ -698,14 +698,14 @@ bool Game::tileObstructsAttack(int n, int n2) {
 	return false;
 }
 
-void Game::awardSecret(bool b) {
+void Game::awardSecret(bool playSecretSound) {
 
 
 	LOG_INFO("[game] awardSecret: {}/{} on map {}\n", this->mapSecretsFound + 1, this->totalSecrets, app->canvas->loadMapID);
 	app->hud->addMessage((short)119);
 	this->mapSecretsFound++;
 
-	if (b) {
+	if (playSecretSound) {
 		app->sound->playSound(Sounds::getResIDByName(SoundName::SECRET), 0, 3, 0);
 	} else {
 		app->sound->playSound(Sounds::getResIDByName(SoundName::CHIME), 0, 3, 0);
@@ -720,14 +720,14 @@ void Game::awardSecret(bool b) {
 	}
 }
 
-void Game::addEntityDeathFunc(Entity* entity, int n) {
+void Game::addEntityDeathFunc(Entity* entity, int funcId) {
 
 
 	int i;
 	for (i = 0; i < 64; ++i) {
 		if (this->entityDeathFunctions[i * 2] == -1) {
 			this->entityDeathFunctions[i * 2 + 0] = (short)entity->getSprite();
-			this->entityDeathFunctions[i * 2 + 1] = (short)n;
+			this->entityDeathFunctions[i * 2 + 1] = (short)funcId;
 			break;
 		}
 	}
@@ -739,41 +739,41 @@ void Game::addEntityDeathFunc(Entity* entity, int n) {
 
 void Game::removeEntityFunc(Entity* entity) {
 	int sprite;
-	int n;
-	for (sprite = entity->getSprite(), n = 0; n < 64 && this->entityDeathFunctions[n * 2] != sprite; ++n) {
+	int slot;
+	for (sprite = entity->getSprite(), slot = 0; slot < 64 && this->entityDeathFunctions[slot * 2] != sprite; ++slot) {
 	}
-	if (n != 64) {
-		this->entityDeathFunctions[n * 2 + 0] = -1;
-		this->entityDeathFunctions[n * 2 + 1] = -1;
+	if (slot != 64) {
+		this->entityDeathFunctions[slot * 2 + 0] = -1;
+		this->entityDeathFunctions[slot * 2 + 1] = -1;
 	}
 	entity->info &= 0xFDFFFFFF;
 }
 
 void Game::executeEntityFunc(Entity* entity, bool throwAwayLoot) {
 	int sprite;
-	int n;
-	for (sprite = entity->getSprite(), n = 0; n < 64 && this->entityDeathFunctions[n * 2] != sprite; ++n) {
+	int slot;
+	for (sprite = entity->getSprite(), slot = 0; slot < 64 && this->entityDeathFunctions[slot * 2] != sprite; ++slot) {
 	}
-	if (n != 64) {
+	if (slot != 64) {
 		ScriptThread* allocScriptThread = this->allocScriptThread();
 		allocScriptThread->throwAwayLoot = throwAwayLoot;
-		allocScriptThread->alloc(this->entityDeathFunctions[n * 2 + 1]);
+		allocScriptThread->alloc(this->entityDeathFunctions[slot * 2 + 1]);
 		allocScriptThread->run();
-		this->entityDeathFunctions[n * 2 + 1] = (this->entityDeathFunctions[n * 2 + 0] = -1);
+		this->entityDeathFunctions[slot * 2 + 1] = (this->entityDeathFunctions[slot * 2 + 0] = -1);
 	}
 }
 
-void Game::foundLoot(int n, int n2) {
+void Game::foundLoot(int sprite, int lootValue) {
 
-	this->foundLoot(app->render->getSpriteX(n), app->render->getSpriteY(n),
-	                app->render->getSpriteZ(n), n2);
+	this->foundLoot(app->render->getSpriteX(sprite), app->render->getSpriteY(sprite),
+	                app->render->getSpriteZ(sprite), lootValue);
 }
 
-void Game::foundLoot(int n, int n2, int n3, int n4) {
-	this->lootFound += (short)n4;
+void Game::foundLoot(int x, int y, int z, int lootValue) {
+	this->lootFound += (short)lootValue;
 }
 
-void Game::destroyedObject(int n) {
+void Game::destroyedObject(int unused) {
 	this->destroyedObj++;
 }
 
@@ -781,7 +781,7 @@ void Game::raiseCorpses() {
 
 
 	Entity* inactiveMonsters = this->inactiveMonsters;
-	int n = 0;
+	int numToRaise = 0;
 	if (inactiveMonsters != nullptr) {
 		do {
 			Entity* nextOnList = inactiveMonsters->nextOnList;
@@ -792,14 +792,14 @@ void Game::raiseCorpses() {
 			    this->findMapEntity(app->render->getSpriteX(sprite),
 			                        app->render->getSpriteY(sprite), 15535) == nullptr &&
 			    (this->difficulty != Enums::DIFFICULTY_NIGHTMARE || 0x0 == (inactiveMonsters->monsterEffects & 0x4))) {
-				this->gridEntities[n++] = inactiveMonsters;
-				if (n == 9) {
+				this->gridEntities[numToRaise++] = inactiveMonsters;
+				if (numToRaise == 9) {
 					break;
 				}
 			}
 			inactiveMonsters = nextOnList;
-		} while (inactiveMonsters != this->inactiveMonsters && n != 4);
-		for (int i = 0; i < n; ++i) {
+		} while (inactiveMonsters != this->inactiveMonsters && numToRaise != 4);
+		for (int i = 0; i < numToRaise; ++i) {
 			Entity* entity = this->gridEntities[i];
 			entity->info |= 0x8000000;
 			int sprite = entity->getSprite();
@@ -821,69 +821,69 @@ void Game::raiseCorpses() {
 	}
 }
 
-bool Game::isInFront(int n, int n2) {
+bool Game::isInFront(int tileX, int tileY) {
 
 
-	int n3 = 256 - (app->canvas->viewAngle & 0x3FF);
-	int n4 = (n << 6) + 32 - app->canvas->viewX;
-	int n5 = (n2 << 6) + 32 - app->canvas->viewY;
-	if (n4 == 0 && n5 == 0) {
+	int viewAngleOffset = 256 - (app->canvas->viewAngle & 0x3FF);
+	int dx = (tileX << 6) + 32 - app->canvas->viewX;
+	int dy = (tileY << 6) + 32 - app->canvas->viewY;
+	if (dx == 0 && dy == 0) {
 		return true;
 	}
-	int n6 = this->VecToDir(n4, n5, true) + n3 & 0x3FF;
-	return n6 >= 128 && n6 <= 384;
+	int relativeAngle = this->VecToDir(dx, dy, true) + viewAngleOffset & 0x3FF;
+	return relativeAngle >= 128 && relativeAngle <= 384;
 }
 
-int Game::VecToDir(int n, int n2, bool b) {
-	int n3 = -1;
-	int n4 = b ? 7 : 0;
-	if (n <= -32) {
-		n3 = 4;
-	} else if (n >= 32) {
-		n3 = 0;
+int Game::VecToDir(int dx, int dy, bool highShift) {
+	int dir = -1;
+	int shift = highShift ? 7 : 0;
+	if (dx <= -32) {
+		dir = 4;
+	} else if (dx >= 32) {
+		dir = 0;
 	}
-	if (n2 >= 32) {
-		if (n3 == 4) {
-			n3 = 5;
-		} else if (n3 == 0) {
-			n3 = 7;
+	if (dy >= 32) {
+		if (dir == 4) {
+			dir = 5;
+		} else if (dir == 0) {
+			dir = 7;
 		} else {
-			n3 = 6;
+			dir = 6;
 		}
-	} else if (n2 <= -32) {
-		if (n3 == 4) {
-			n3 = 3;
-		} else if (n3 == 0) {
-			n3 = 1;
+	} else if (dy <= -32) {
+		if (dir == 4) {
+			dir = 3;
+		} else if (dir == 0) {
+			dir = 1;
 		} else {
-			n3 = 2;
+			dir = 2;
 		}
 	}
-	return n3 << n4;
+	return dir << shift;
 }
 
-void Game::NormalizeVec(int n, int n2, int* array) {
-	// Returns the unit vector (n, n2) scaled by 256 (Q8 fixed-point).
-	double mag = std::hypot((double)n, (double)n2);
+void Game::NormalizeVec(int vecX, int vecY, int* array) {
+	// Returns the unit vector (vecX, vecY) scaled by 256 (Q8 fixed-point).
+	double mag = std::hypot((double)vecX, (double)vecY);
 	if (mag == 0.0) {
 		array[0] = 0;
 		array[1] = 0;
 		return;
 	}
-	array[0] = (int)((double)n * 256.0 / mag);
-	array[1] = (int)((double)n2 * 256.0 / mag);
+	array[0] = (int)((double)vecX * 256.0 / mag);
+	array[1] = (int)((double)vecY * 256.0 / mag);
 }
 
-void Game::setMonsterClip(int n, int n2) {
-	this->baseVisitedTiles[n2] |= 1 << n;
+void Game::setMonsterClip(int tileX, int tileY) {
+	this->baseVisitedTiles[tileY] |= 1 << tileX;
 }
 
-void Game::unsetMonsterClip(int n, int n2) {
-	this->baseVisitedTiles[n2] &= ~(1 << n);
+void Game::unsetMonsterClip(int tileX, int tileY) {
+	this->baseVisitedTiles[tileY] &= ~(1 << tileX);
 }
 
-bool Game::monsterClipExists(int n, int n2) {
-	return (this->baseVisitedTiles[n2] >> n & 0x1) == 0x1;
+bool Game::monsterClipExists(int tileX, int tileY) {
+	return (this->baseVisitedTiles[tileY] >> tileX & 0x1) == 0x1;
 }
 
 int Game::getMonsterSound(int monsterIdx, int soundType) {

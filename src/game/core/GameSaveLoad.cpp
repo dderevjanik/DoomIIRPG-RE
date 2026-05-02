@@ -62,7 +62,7 @@ static int resolutionFromString(const std::string& str) {
 // Helpers `inputCodeToName`/`inputCodeFromName` and `keyBindingNames[]` live in Input.cpp/Input.h
 // so the controls.yaml defaults parser can share them with the save-game settings round-trip.
 
-void Game::saveWorldState(OutputStream* OS, bool b) {
+void Game::saveWorldState(OutputStream* OS, bool briefSave) {
 
 	const char* name;
 
@@ -86,38 +86,38 @@ void Game::saveWorldState(OutputStream* OS, bool b) {
 		OS->writeByte((uint8_t)app->player->activeWeaponDef->tileIndex);
 	}
 	for (int i = 0; i < 4; ++i) {
-		if (!b) {
+		if (!briefSave) {
 			OS->writeShort(this->placedBombs[i]);
 		} else {
 			OS->writeShort(0);
 		}
 	}
-	this->saveEntityStates(OS, b);
+	this->saveEntityStates(OS, briefSave);
 	app->canvas->updateLoadingBar(false);
 	int numLines = app->render->numLines;
-	int n = 0;
-	int n2 = 0;
+	int bitPack = 0;
+	int bitIdx = 0;
 	for (int j = 0; j < numLines; ++j) {
-		if (n2 == 8) {
-			OS->writeByte((uint8_t)n);
-			n2 = 0;
-			n = 0;
+		if (bitIdx == 8) {
+			OS->writeByte((uint8_t)bitPack);
+			bitIdx = 0;
+			bitPack = 0;
 		}
 		if ((app->render->lineFlags[j >> 1] & 8 << ((j & 0x1) << 2)) != 0x0) {
-			n |= 1 << n2;
+			bitPack |= 1 << bitIdx;
 		}
-		++n2;
+		++bitIdx;
 	}
-	if (n2 != 0) {
-		OS->writeByte((uint8_t)n);
+	if (bitIdx != 0) {
+		OS->writeByte((uint8_t)bitPack);
 	}
-	int b2 = 0;
+	int numDeathFuncs = 0;
 	for (int k = 0; k < 64; ++k) {
 		if (this->entityDeathFunctions[k * 2] != -1) {
-			b2 = (uint8_t)(b2 + 1);
+			numDeathFuncs = (uint8_t)(numDeathFuncs + 1);
 		}
 	}
-	OS->writeByte(b2);
+	OS->writeByte(numDeathFuncs);
 	for (int l = 0; l < 64; ++l) {
 		if (this->entityDeathFunctions[l * 2] != -1) {
 			OS->writeShort(this->entityDeathFunctions[l * 2 + 0]);
@@ -125,82 +125,82 @@ void Game::saveWorldState(OutputStream* OS, bool b) {
 		}
 	}
 	int numMapSprites = app->render->numMapSprites;
-	int n3 = 0;
-	while (n3 < numMapSprites) {
-		int v = 0;
-		for (int n4 = 0; n4 < 8; ++n4, ++n3) {
-			int n5 = 0;
-			if (b && mapSprites[app->render->S_ENT + n3] != -1) {
-				Entity* entity = &this->entities[mapSprites[app->render->S_ENT + n3]];
+	int spriteIdx = 0;
+	while (spriteIdx < numMapSprites) {
+		int packedByte = 0;
+		for (int spriteBitIdx = 0; spriteBitIdx < 8; ++spriteBitIdx, ++spriteIdx) {
+			int hideBit = 0;
+			if (briefSave && mapSprites[app->render->S_ENT + spriteIdx] != -1) {
+				Entity* entity = &this->entities[mapSprites[app->render->S_ENT + spriteIdx]];
 				EntityDef* def = entity->def;
 				if (def->eType == Enums::ET_CORPSE && def->eSubType != Enums::CORPSE_SKELETON && entity->isMonster() && (entity->monsterFlags & Enums::MFLAG_NOTRACK) == 0x0) {
-					n5 = 1;
+					hideBit = 1;
 				}
 			}
-			if (n5 == 0 && 0x0 != (app->render->getSpriteInfoRaw(n3) & 0x10000)) {
-				n5 = 1;
+			if (hideBit == 0 && 0x0 != (app->render->getSpriteInfoRaw(spriteIdx) & 0x10000)) {
+				hideBit = 1;
 			}
-			if (n5 != 0) {
-				v |= 1 << n4;
+			if (hideBit != 0) {
+				packedByte |= 1 << spriteBitIdx;
 			}
-			++n4;
-			if (0x0 != (mapSpriteInfo[n3] & 0x200000)) {
-				v |= 1 << n4;
+			++spriteBitIdx;
+			if (0x0 != (mapSpriteInfo[spriteIdx] & 0x200000)) {
+				packedByte |= 1 << spriteBitIdx;
 			}
 		}
-		OS->writeByte(v);
+		OS->writeByte(packedByte);
 	}
-	for (int n6 = 1024, n7 = 0; n7 < n6; n7 += 8) {
+	for (int numCells = 1024, cellIdx = 0; cellIdx < numCells; cellIdx += 8) {
 		int flagBits = 0;
-		for (int n8 = 0; n8 < 8; ++n8) {
-			if (0x0 != (app->render->mapFlags[n7 + n8] & 0x80)) {
-				flagBits |= 1 << n8;
+		for (int cellBitIdx = 0; cellBitIdx < 8; ++cellBitIdx) {
+			if (0x0 != (app->render->mapFlags[cellIdx + cellBitIdx] & 0x80)) {
+				flagBits |= 1 << cellBitIdx;
 			}
 		}
 		OS->writeByte(flagBits);
 	}
 	short* scriptStateVars = this->scriptStateVars;
-	for (int n9 = 0; n9 < 128; ++n9) {
-		if (n9 != 15) {
-			OS->writeShort(scriptStateVars[n9]);
+	for (int varIdx = 0; varIdx < 128; ++varIdx) {
+		if (varIdx != 15) {
+			OS->writeShort(scriptStateVars[varIdx]);
 		}
 	}
 	int numTileEvents = app->render->numTileEvents;
-	int n10 = 0;
-	int n11 = 0;
-	for (int n12 = 0; n12 < numTileEvents; ++n12) {
-		n11 = n12 % 32;
-		n10 |= (app->render->tileEvents[n12 * 2 + 1] & 0x80000) >> 19 << n11;
-		if (n11 == 31) {
-			OS->writeInt(n10);
-			n10 = 0;
+	int eventBits = 0;
+	int eventBitIdx = 0;
+	for (int eventIdx = 0; eventIdx < numTileEvents; ++eventIdx) {
+		eventBitIdx = eventIdx % 32;
+		eventBits |= (app->render->tileEvents[eventIdx * 2 + 1] & 0x80000) >> 19 << eventBitIdx;
+		if (eventBitIdx == 31) {
+			OS->writeInt(eventBits);
+			eventBits = 0;
 		}
 	}
-	if (n11 != 31) {
-		OS->writeInt(n10);
+	if (eventBitIdx != 31) {
+		OS->writeInt(eventBits);
 	}
 	app->canvas->updateLoadingBar(false);
 	OS->writeByte(this->numLerpSprites);
-	int n13 = 0;
-	for (int n14 = 0; n14 < 16; ++n14) {
-		LerpSprite lerpSprite = this->lerpSprites[n14];
+	int savedLerpCount = 0;
+	for (int lerpIdx = 0; lerpIdx < 16; ++lerpIdx) {
+		LerpSprite lerpSprite = this->lerpSprites[lerpIdx];
 		if (lerpSprite.hSprite != 0) {
 			lerpSprite.saveState(OS);
-			++n13;
+			++savedLerpCount;
 		}
 	}
 	OS->writeByte(this->numScriptThreads);
-	for (int n15 = 0; n15 < 20; ++n15) {
-		this->scriptThreads[n15].saveState(OS);
+	for (int threadIdx = 0; threadIdx < 20; ++threadIdx) {
+		this->scriptThreads[threadIdx].saveState(OS);
 	}
 	OS->writeInt(this->dropIndex);
 	OS->writeInt(app->player->moves);
 	OS->writeByte((uint8_t)app->player->numNotebookIndexes);
 	OS->writeByte(app->player->questComplete);
 	OS->writeByte(app->player->questFailed);
-	for (int n16 = 0; n16 < 8; ++n16) {
-		OS->writeShort(app->player->notebookIndexes[n16]);
-		OS->writeShort(app->player->notebookPositions[n16]);
+	for (int noteIdx = 0; noteIdx < 8; ++noteIdx) {
+		OS->writeShort(app->player->notebookIndexes[noteIdx]);
+		OS->writeShort(app->player->notebookPositions[noteIdx]);
 	}
 	OS->writeByte(app->render->mapFlagsBitmask);
 	OS->writeByte((uint8_t)(app->render->useMastermindHack ? 1 : 0));
@@ -269,75 +269,75 @@ bool Game::loadWorldState(InputStream* IS) {
 
 		app->canvas->updateLoadingBar(false);
 		int numLines = app->render->numLines;
-		uint8_t byte1 = 0;
-		int n = 8;
+		uint8_t lineByte = 0;
+		int bitIdx = 8;
 		for (int j = 0; j < numLines; ++j) {
-			if (n == 8) {
-				byte1 = IS->readByte();
-				n = 0;
+			if (bitIdx == 8) {
+				lineByte = IS->readByte();
+				bitIdx = 0;
 			}
-			if ((byte1 & 1 << n) != 0x0) {
+			if ((lineByte & 1 << bitIdx) != 0x0) {
 				app->render->lineFlags[j >> 1] |= (uint8_t)(8 << ((j & 0x1) << 2));
 			}
-			++n;
+			++bitIdx;
 		}
-		for (uint8_t byte2 = IS->readByte(), b = 0; b < byte2; ++b) {
-			this->entityDeathFunctions[b * 2 + 0] = IS->readShort();
-			this->entityDeathFunctions[b * 2 + 1] = IS->readShort();
+		for (uint8_t numDeathFuncs = IS->readByte(), funcIdx = 0; funcIdx < numDeathFuncs; ++funcIdx) {
+			this->entityDeathFunctions[funcIdx * 2 + 0] = IS->readShort();
+			this->entityDeathFunctions[funcIdx * 2 + 1] = IS->readShort();
 		}
 
 		app->canvas->updateLoadingBar(false);
 		int numMapSprites = app->render->numMapSprites;
-		int k = 0;
-		while (k < numMapSprites) {
-			uint8_t byte3 = IS->readByte();
-			for (int l = 0; l < 8; ++l, ++k) {
-				if ((byte3 & 1 << l) != 0x0) {
-					app->render->setSpriteInfoFlag(k, 0x10000);
+		int spriteIdx = 0;
+		while (spriteIdx < numMapSprites) {
+			uint8_t spriteByte = IS->readByte();
+			for (int spriteBitIdx = 0; spriteBitIdx < 8; ++spriteBitIdx, ++spriteIdx) {
+				if ((spriteByte & 1 << spriteBitIdx) != 0x0) {
+					app->render->setSpriteInfoFlag(spriteIdx, 0x10000);
 				} else {
-					app->render->setSpriteInfoRaw(k, app->render->getSpriteInfoRaw(k) & ~0x10000);
+					app->render->setSpriteInfoRaw(spriteIdx, app->render->getSpriteInfoRaw(spriteIdx) & ~0x10000);
 				}
-				++l;
-				if ((byte3 & 1 << l) != 0x0) {
-					app->render->setSpriteInfoFlag(k, 0x200000);
+				++spriteBitIdx;
+				if ((spriteByte & 1 << spriteBitIdx) != 0x0) {
+					app->render->setSpriteInfoFlag(spriteIdx, 0x200000);
 				} else {
-					app->render->setSpriteInfoRaw(k, app->render->getSpriteInfoRaw(k) & ~0x200000);
+					app->render->setSpriteInfoRaw(spriteIdx, app->render->getSpriteInfoRaw(spriteIdx) & ~0x200000);
 				}
 			}
 		}
 
 		app->canvas->updateLoadingBar(false);
-		for (int n7 = 1024, n8 = 0; n8 < n7; n8 += 8) {
-			uint8_t byte4 = IS->readByte();
-			for (int n9 = 0; n9 < 8; ++n9) {
-				if ((byte4 & 1 << n9) != 0x0) {
-					app->render->mapFlags[n8 + n9] |= (uint8_t)0x80;
+		for (int numCells = 1024, cellIdx = 0; cellIdx < numCells; cellIdx += 8) {
+			uint8_t flagByte = IS->readByte();
+			for (int cellBitIdx = 0; cellBitIdx < 8; ++cellBitIdx) {
+				if ((flagByte & 1 << cellBitIdx) != 0x0) {
+					app->render->mapFlags[cellIdx + cellBitIdx] |= (uint8_t)0x80;
 				}
 			}
 		}
 		short* scriptStateVars = this->scriptStateVars;
-		for (int n11 = 0; n11 < 128; ++n11) {
-			if (n11 != 15) {
-				scriptStateVars[n11] = IS->readShort();
+		for (int varIdx = 0; varIdx < 128; ++varIdx) {
+			if (varIdx != 15) {
+				scriptStateVars[varIdx] = IS->readShort();
 			}
 		}
 
 		app->canvas->updateLoadingBar(false);
 		int numTileEvents = app->render->numTileEvents;
-		int n12 = IS->readInt();
-		for (int n13 = 0; n13 < numTileEvents; ++n13) {
-			int n14 = n13 % 32;
-			app->render->tileEvents[n13 * 2 + 1] =
-			    ((app->render->tileEvents[n13 * 2 + 1] & 0xFFF7FFFF) | (n12 >> n14 & 0x1) << 19);
-			if (n14 == 31 && n13 < numTileEvents - 1) {
-				n12 = IS->readInt();
+		int eventBits = IS->readInt();
+		for (int eventIdx = 0; eventIdx < numTileEvents; ++eventIdx) {
+			int eventBitIdx = eventIdx % 32;
+			app->render->tileEvents[eventIdx * 2 + 1] =
+			    ((app->render->tileEvents[eventIdx * 2 + 1] & 0xFFF7FFFF) | (eventBits >> eventBitIdx & 0x1) << 19);
+			if (eventBitIdx == 31 && eventIdx < numTileEvents - 1) {
+				eventBits = IS->readInt();
 			}
 		}
 
 		this->numLerpSprites = IS->readByte();
-		for (int n15 = 0; n15 < 16; ++n15) {
-			LerpSprite* lerpSprite = &this->lerpSprites[n15];
-			if (n15 < this->numLerpSprites) {
+		for (int lerpIdx = 0; lerpIdx < 16; ++lerpIdx) {
+			LerpSprite* lerpSprite = &this->lerpSprites[lerpIdx];
+			if (lerpIdx < this->numLerpSprites) {
 				lerpSprite->loadState(IS);
 			} else {
 				lerpSprite->hSprite = 0;
@@ -345,8 +345,8 @@ bool Game::loadWorldState(InputStream* IS) {
 		}
 
 		this->numScriptThreads = IS->readByte();
-		for (int n16 = 0; n16 < 20; ++n16) {
-			ScriptThread* scriptThread = &this->scriptThreads[n16];
+		for (int threadIdx = 0; threadIdx < 20; ++threadIdx) {
+			ScriptThread* scriptThread = &this->scriptThreads[threadIdx];
 			scriptThread->loadState(IS);
 			if (scriptThread->stackPtr > 0) {
 				scriptThread->inuse = true;
@@ -362,16 +362,16 @@ bool Game::loadWorldState(InputStream* IS) {
 		app->player->numNotebookIndexes = IS->readByte();
 		app->player->questComplete = IS->readByte();
 		app->player->questFailed = IS->readByte();
-		for (int n17 = 0; n17 < 8; ++n17) {
-			app->player->notebookIndexes[n17] = IS->readShort();
-			app->player->notebookPositions[n17] = IS->readShort();
+		for (int noteIdx = 0; noteIdx < 8; ++noteIdx) {
+			app->player->notebookIndexes[noteIdx] = IS->readShort();
+			app->player->notebookPositions[noteIdx] = IS->readShort();
 		}
 		app->render->mapFlagsBitmask = IS->readByte();
 		app->render->useMastermindHack = (IS->readByte() == 1);
 		app->render->useCaldexHack = (IS->readByte() == 1);
-		short short1 = IS->readShort();
-		if (short1 != -1) {
-			this->watchLine = &this->entities[short1];
+		short watchLineIdx = IS->readShort();
+		if (watchLineIdx != -1) {
+			this->watchLine = &this->entities[watchLineIdx];
 		}
 		int numMallocsForVIOS = IS->readInt();
 		this->numMallocsForVIOS = (numMallocsForVIOS & 0x3fffffff);
@@ -777,17 +777,17 @@ bool Game::hasSavedState() {
 	return false;
 }
 
-void Game::removeState(bool b) {
+void Game::removeState(bool showProgress) {
 
 	char* namePath;
 
-	if (b) {
+	if (showProgress) {
 		app->canvas->updateLoadingBar(false);
 	}
 
 	this->saveEmptyConfig();
 
-	if (b) {
+	if (showProgress) {
 		app->canvas->updateLoadingBar(false);
 	}
 
@@ -797,7 +797,7 @@ void Game::removeState(bool b) {
 		delete[] namePath;
 	}
 
-	if (b) {
+	if (showProgress) {
 		app->canvas->updateLoadingBar(false);
 	}
 
@@ -807,7 +807,7 @@ void Game::removeState(bool b) {
 		delete[] namePath;
 	}
 
-	if (b) {
+	if (showProgress) {
 		app->canvas->updateLoadingBar(false);
 	}
 
@@ -817,7 +817,7 @@ void Game::removeState(bool b) {
 		delete[] namePath;
 	}
 
-	if (b) {
+	if (showProgress) {
 		app->canvas->updateLoadingBar(false);
 	}
 	for (int i = 0; i < 10; i++) {
@@ -826,7 +826,7 @@ void Game::removeState(bool b) {
 		if (namePath) {
 			delete[] namePath;
 		}
-		if (b) {
+		if (showProgress) {
 			app->canvas->updateLoadingBar(false);
 		}
 	}
@@ -924,13 +924,13 @@ int Game::getSaveVersion() {
 
 void Game::loadEntityStates(InputStream* IS) {
 
-	for (short short1 = IS->readShort(), n = 0; n < short1; ++n) {
+	for (short numStates = IS->readShort(), entityIdx = 0; entityIdx < numStates; ++entityIdx) {
 		app->resource->readMarker(IS);
 		int index = IS->readInt();
 		this->entities[index & 0xFFFF].loadState(IS, index);
 	}
 }
-void Game::saveEntityStates(OutputStream* OS, bool b) {
+void Game::saveEntityStates(OutputStream* OS, bool briefSave) {
 
 	int indices[Game::DEFAULT_MAX_ENTITIES > 0 ? Game::DEFAULT_MAX_ENTITIES : 275];
 	// Use heap if maxEntities exceeds default
@@ -943,7 +943,7 @@ void Game::saveEntityStates(OutputStream* OS, bool b) {
 
 	int16_t stateCount = 0;
 	for (int i = 0; i < this->numEntities; i++) {
-		int saveHandle = this->entities[i].getSaveHandle(b);
+		int saveHandle = this->entities[i].getSaveHandle(briefSave);
 		if (saveHandle != -1) {
 			indicesPtr[stateCount++] = saveHandle;
 		}
@@ -957,9 +957,9 @@ void Game::saveEntityStates(OutputStream* OS, bool b) {
 	}
 }
 
-const char* Game::GetSaveFile(int i, int i2) {
+const char* Game::GetSaveFile(int fileType, int mapIdx) {
 	const char* name;
-	switch (i) {
+	switch (fileType) {
 		case 0: // SDFWORLD
 			name = "FWORLD";
 			break;
@@ -972,10 +972,10 @@ const char* Game::GetSaveFile(int i, int i2) {
 		case 3: // SDFPLAYER
 			name = "FULLPLAYER";
 			break;
-		case 4: // SDBWORLD — per-level brief snapshot ("SB_<N>" for map ID N = i2 + 1)
-			if (i2 >= 0) {
+		case 4: // SDBWORLD — per-level brief snapshot ("SB_<N>" for map ID N = mapIdx + 1)
+			if (mapIdx >= 0) {
 				thread_local char sbBuf[16];
-				std::snprintf(sbBuf, sizeof(sbBuf), "SB_%d", i2 + 1);
+				std::snprintf(sbBuf, sizeof(sbBuf), "SB_%d", mapIdx + 1);
 				name = sbBuf;
 			} else {
 				name = nullptr;

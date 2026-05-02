@@ -40,19 +40,19 @@ void Game::uncoverAutomapAt(int destX, int destY) {
 	if (!this->updateAutomap) {
 		return;
 	}
-	int n = destX >> 6;
-	int n2 = destY >> 6;
-	if (n < 0 || n >= 32 || n2 < 0 || n2 >= 32) {
+	int tileX = destX >> 6;
+	int tileY = destY >> 6;
+	if (tileX < 0 || tileX >= 32 || tileY < 0 || tileY >= 32) {
 		return;
 	}
-	for (int i = n2 - 1; i <= n2 + 1; ++i) {
+	for (int i = tileY - 1; i <= tileY + 1; ++i) {
 		if (i >= 0) {
 			if (i < 31) {
-				for (int j = n - 1; j <= n + 1; ++j) {
+				for (int j = tileX - 1; j <= tileX + 1; ++j) {
 					if (j >= 0) {
 						if (j < 31) {
-							uint8_t b = app->render->mapFlags[i * 32 + j];
-							if ((j == n && i == n2) || (b & 0x2) == 0x0) {
+							uint8_t mapFlag = app->render->mapFlags[i * 32 + j];
+							if ((j == tileX && i == tileY) || (mapFlag & 0x2) == 0x0) {
 								app->render->mapFlags[i * 32 + j] |= (uint8_t)128;
 							}
 						}
@@ -86,9 +86,9 @@ void Game::unlinkEntity(Entity* entity) {
 	entity->info &= 0xFFEFFFFF;
 }
 
-void Game::linkEntity(Entity* entity, int i, int i2) {
+void Game::linkEntity(Entity* entity, int tileX, int tileY) {
 
-	short linkIndex = (short)(i2 * 32 + i);
+	short linkIndex = (short)(tileY * 32 + tileX);
 
 	if (entity == &this->entities[0]) {
 		app->Error(3); // ERR_BADLINKWORLD
@@ -112,14 +112,14 @@ void Game::linkEntity(Entity* entity, int i, int i2) {
 	entity->info |= 0x100000;
 }
 
-void Game::unlinkWorldEntity(int i, int i2) {
+void Game::unlinkWorldEntity(int tileX, int tileY) {
 
 
-	short linkIndex = (short)(i2 * 32 + i);
+	short linkIndex = (short)(tileY * 32 + tileX);
 	Entity* nextOnTile = this->entityDb[linkIndex];
 
 	Entity* entity = &this->entities[0];
-	this->baseVisitedTiles[i2] &= ~(1 << i);
+	this->baseVisitedTiles[tileY] &= ~(1 << tileX);
 	if (nextOnTile == entity) {
 		this->entityDb[linkIndex] = nullptr;
 		app->render->mapFlags[linkIndex] &= 0xFFFFFFFE;
@@ -142,10 +142,10 @@ void Game::unlinkWorldEntity(int i, int i2) {
 	app->Error(52); // ERR_UNLINKWORLD
 }
 
-void Game::linkWorldEntity(int i, int i2) {
+void Game::linkWorldEntity(int tileX, int tileY) {
 
 
-	short linkIndex = (short)(i2 * 32 + i);
+	short linkIndex = (short)(tileY * 32 + tileX);
 	Entity* nextOnTile = this->entityDb[linkIndex];
 	Entity* nextEntity = nullptr;
 
@@ -169,7 +169,7 @@ void Game::linkWorldEntity(int i, int i2) {
 	entity->prevOnTile = nullptr;
 	entity->linkIndex = linkIndex;
 
-	this->baseVisitedTiles[i2] |= 1 << i;
+	this->baseVisitedTiles[tileY] |= 1 << tileX;
 	app->render->mapFlags[linkIndex] |= 0x1;
 }
 
@@ -185,12 +185,12 @@ void Game::removeEntity(Entity* entity) {
 	app->player->facingEntity = nullptr;
 }
 
-void Game::trace(int n, int n2, int n3, int n4, Entity* entity, int n5, int n6) {
-	this->trace(n, n2, -1, n3, n4, -1, entity, n5, n6, false);
+void Game::trace(int startX, int startY, int endX, int endY, Entity* entity, int typeMask, int radius) {
+	this->trace(startX, startY, -1, endX, endY, -1, entity, typeMask, radius, false);
 }
 
-void Game::trace(int n, int n2, int n3, int traceCollisionX, int traceCollisionY, int traceCollisionZ, Entity* entity,
-                 int n4, int n5, bool b) {
+void Game::trace(int startX, int startY, int startZ, int traceCollisionX, int traceCollisionY, int traceCollisionZ, Entity* entity,
+                 int typeMask, int radius, bool checkZ) {
 
 
 	int* tracePoints = this->tracePoints;
@@ -199,20 +199,20 @@ void Game::trace(int n, int n2, int n3, int traceCollisionX, int traceCollisionY
 	Entity** traceEntities = this->traceEntities;
 	this->traceEntity = nullptr;
 	this->numTraceEntities = 0;
-	tracePoints[0] = n;
-	tracePoints[1] = n2;
+	tracePoints[0] = startX;
+	tracePoints[1] = startY;
 	tracePoints[2] = traceCollisionX;
 	tracePoints[3] = traceCollisionY;
-	traceBoundingBox[0] = std::max(std::min(n - n5, traceCollisionX - n5), 0);
-	traceBoundingBox[1] = std::max(std::min(n2 - n5, traceCollisionY - n5), 0);
-	traceBoundingBox[2] = std::min(std::max(n + n5, traceCollisionX + n5), 2047);
-	traceBoundingBox[3] = std::min(std::max(n2 + n5, traceCollisionY + n5), 2047);
+	traceBoundingBox[0] = std::max(std::min(startX - radius, traceCollisionX - radius), 0);
+	traceBoundingBox[1] = std::max(std::min(startY - radius, traceCollisionY - radius), 0);
+	traceBoundingBox[2] = std::min(std::max(startX + radius, traceCollisionX + radius), 2047);
+	traceBoundingBox[3] = std::min(std::max(startY + radius, traceCollisionY + radius), 2047);
 	for (int i = traceBoundingBox[0] >> 6; i < (traceBoundingBox[2] >> 6) + 1; ++i) {
 		for (int j = traceBoundingBox[1] >> 6; j < (traceBoundingBox[3] >> 6) + 1; ++j) {
 			Entity* nextOnTile = this->entityDb[i + 32 * j];
 			if (nextOnTile != nullptr) {
 				while (nextOnTile != nullptr) {
-					if (nextOnTile != entity && nextOnTile->def != nullptr && 0x0 != (n4 & 1 << nextOnTile->def->eType)) {
+					if (nextOnTile != entity && nextOnTile->def != nullptr && 0x0 != (typeMask & 1 << nextOnTile->def->eType)) {
 						if (nextOnTile->def->eType != Enums::ET_WORLD) {
 							int sprite = nextOnTile->getSprite();
 							int destX;
@@ -238,36 +238,36 @@ void Game::trace(int n, int n2, int n3, int traceCollisionX, int traceCollisionY
 								destZ = app->render->getSpriteZ(sprite);
 							}
 							if (sprite != -1 && 0x0 != (app->render->getSpriteInfoRaw(sprite) & 0xF000000)) {
-								int n6 = destX;
-								int n7 = destY;
+								int bbX2 = destX;
+								int bbY2 = destY;
 								if (0x0 != (app->render->getSpriteInfoRaw(sprite) & 0x3000000)) {
 									destX -= 32;
-									n6 += 32;
+									bbX2 += 32;
 								} else {
 									destY -= 32;
-									n7 += 32;
+									bbY2 += 32;
 								}
 								app->render->traceLine[0] = destX;
 								app->render->traceLine[1] = destY;
-								app->render->traceLine[2] = n6;
-								app->render->traceLine[3] = n7;
+								app->render->traceLine[2] = bbX2;
+								app->render->traceLine[3] = bbY2;
 								int capsuleToLineTrace =
-								    app->render->CapsuleToLineTrace(tracePoints, n5 * n5, app->render->traceLine);
+								    app->render->CapsuleToLineTrace(tracePoints, radius * radius, app->render->traceLine);
 								if (capsuleToLineTrace < 16384) {
 									traceFracs[this->numTraceEntities] = capsuleToLineTrace;
 									traceEntities[this->numTraceEntities++] = nextOnTile;
 								}
 							} else {
-								int n8 = 625;
+								int circleRadiusSq = 625;
 								if (nextOnTile->def->eType == Enums::ET_ENV_DAMAGE) {
-									n8 = 256;
+									circleRadiusSq = 256;
 								}
 								int capsuleToCircleTrace =
-								    app->render->CapsuleToCircleTrace(tracePoints, n5 * n5, destX, destY, n8);
+								    app->render->CapsuleToCircleTrace(tracePoints, radius * radius, destX, destY, circleRadiusSq);
 								if (capsuleToCircleTrace < 16384) {
-									if (n3 >= 0 && traceCollisionZ >= 0 && b) {
-										int n9 = n3 + ((traceCollisionZ - n3) * capsuleToCircleTrace >> 14) - destZ;
-										if (n9 > -(32 + n5) && n9 < 32 + n5) {
+									if (startZ >= 0 && traceCollisionZ >= 0 && checkZ) {
+										int relZ = startZ + ((traceCollisionZ - startZ) * capsuleToCircleTrace >> 14) - destZ;
+										if (relZ > -(32 + radius) && relZ < 32 + radius) {
 											traceFracs[this->numTraceEntities] = capsuleToCircleTrace;
 											traceEntities[this->numTraceEntities++] = nextOnTile;
 										}
@@ -284,14 +284,14 @@ void Game::trace(int n, int n2, int n3, int traceCollisionX, int traceCollisionY
 			}
 		}
 	}
-	if (0x0 != (n4 & 0x1)) {
-		int traceWorld = app->render->traceWorld(0, tracePoints, n5, traceBoundingBox, n4);
+	if (0x0 != (typeMask & 0x1)) {
+		int traceWorld = app->render->traceWorld(0, tracePoints, radius, traceBoundingBox, typeMask);
 		if (traceWorld < 16384) {
 			traceFracs[this->numTraceEntities] = traceWorld;
 			traceEntities[this->numTraceEntities++] = &this->entities[0];
-			this->traceCollisionX = n + ((traceWorld * (traceCollisionX - n)) >> 14);
-			this->traceCollisionY = n2 + ((traceWorld * (traceCollisionY - n2)) >> 14);
-			this->traceCollisionZ = n3 + ((traceWorld * (traceCollisionZ - n3)) >> 14);
+			this->traceCollisionX = startX + ((traceWorld * (traceCollisionX - startX)) >> 14);
+			this->traceCollisionY = startY + ((traceWorld * (traceCollisionY - startY)) >> 14);
+			this->traceCollisionZ = startZ + ((traceWorld * (traceCollisionZ - startZ)) >> 14);
 		} else {
 			this->traceCollisionX = traceCollisionX;
 			this->traceCollisionY = traceCollisionY;
@@ -302,9 +302,9 @@ void Game::trace(int n, int n2, int n3, int traceCollisionX, int traceCollisionY
 		for (int k = 0; k < this->numTraceEntities - 1; ++k) {
 			for (int l = 0; l < this->numTraceEntities - 1 - k; ++l) {
 				if (traceFracs[l + 1] < traceFracs[l]) {
-					int n10 = traceFracs[l];
+					int tmpFrac = traceFracs[l];
 					traceFracs[l] = traceFracs[l + 1];
-					traceFracs[l + 1] = n10;
+					traceFracs[l + 1] = tmpFrac;
 					Entity* entity2 = traceEntities[l];
 					traceEntities[l] = traceEntities[l + 1];
 					traceEntities[l + 1] = entity2;
@@ -315,74 +315,74 @@ void Game::trace(int n, int n2, int n3, int traceCollisionX, int traceCollisionY
 	}
 }
 
-bool Game::touchTile(int n, int n2, bool b) {
-	bool b2 = false;
+bool Game::touchTile(int worldX, int worldY, bool touchAll) {
+	bool touched = false;
 	Entity* nextOnTile;
-	// printf("touchTile %d, %d\n", n, n2);
-	for (Entity* mapEntity = this->findMapEntity(n, n2); mapEntity != nullptr; mapEntity = nextOnTile) {
+	// printf("touchTile %d, %d\n", worldX, worldY);
+	for (Entity* mapEntity = this->findMapEntity(worldX, worldY); mapEntity != nullptr; mapEntity = nextOnTile) {
 		nextOnTile = mapEntity->nextOnTile;
-		if (b || mapEntity->def->eType == Enums::ET_ENV_DAMAGE) {
+		if (touchAll || mapEntity->def->eType == Enums::ET_ENV_DAMAGE) {
 			mapEntity->touched();
-			b2 = true;
+			touched = true;
 		}
 	}
-	return b2;
+	return touched;
 }
 
-Entity* Game::findMapEntity(int n, int n2) {
-	n >>= 6;
-	n2 >>= 6;
-	if (n < 0 || n >= 32 || n2 < 0 || n2 >= 32) {
+Entity* Game::findMapEntity(int worldX, int worldY) {
+	worldX >>= 6;
+	worldY >>= 6;
+	if (worldX < 0 || worldX >= 32 || worldY < 0 || worldY >= 32) {
 		return nullptr;
 	}
-	return this->entityDb[n2 * 32 + n];
+	return this->entityDb[worldY * 32 + worldX];
 }
 
-Entity* Game::findMapEntity(int n, int n2, int n3) {
+Entity* Game::findMapEntity(int worldX, int worldY, int typeMask) {
 
 
-	if ((n3 & 0x2) != 0x0 && n >> 6 == app->canvas->destX >> 6 && n2 >> 6 == app->canvas->destY >> 6) {
+	if ((typeMask & 0x2) != 0x0 && worldX >> 6 == app->canvas->destX >> 6 && worldY >> 6 == app->canvas->destY >> 6) {
 		return &this->entities[1];
 	}
-	for (Entity* entity = this->findMapEntity(n, n2); entity != nullptr; entity = entity->nextOnTile) {
-		if ((n3 & 1 << entity->def->eType) != 0x0) {
+	for (Entity* entity = this->findMapEntity(worldX, worldY); entity != nullptr; entity = entity->nextOnTile) {
+		if ((typeMask & 1 << entity->def->eType) != 0x0) {
 			return entity;
 		}
 	}
 	return nullptr;
 }
 
-bool Game::performDoorEvent(int n, Entity* entity, int n2) {
-	return this->performDoorEvent(n, entity, n2, false);
+bool Game::performDoorEvent(int action, Entity* entity, int snapMode) {
+	return this->performDoorEvent(action, entity, snapMode, false);
 }
 
-bool Game::performDoorEvent(int n, Entity* entity, int n2, bool b) {
-	return this->performDoorEvent(n, nullptr, entity, n2, b);
+bool Game::performDoorEvent(int action, Entity* entity, int snapMode, bool isSecret) {
+	return this->performDoorEvent(action, nullptr, entity, snapMode, isSecret);
 }
 
-bool Game::performDoorEvent(int n, ScriptThread* scriptThread, Entity* watchLine, int n2, bool b) {
+bool Game::performDoorEvent(int action, ScriptThread* scriptThread, Entity* watchLine, int snapMode, bool isSecret) {
 
 
 	int sprite = watchLine->getSprite();
-	int n3 = app->render->getSpriteInfoRaw(sprite);
-	int n4 = n3 & 0xFF;
-	bool b2 = (watchLine->info & 0x100000) == 0x0;
-	if ((n3 & 0x400000) != 0x0) {
-		n4 += 257;
+	int spriteInfo = app->render->getSpriteInfoRaw(sprite);
+	int doorState = spriteInfo & 0xFF;
+	bool unblocked = (watchLine->info & 0x100000) == 0x0;
+	if ((spriteInfo & 0x400000) != 0x0) {
+		doorState += 257;
 	}
 
-	bool b3 = n4 >= 271 && n4 < 281;
+	bool isAnimatedDoor = doorState >= 271 && doorState < 281;
 	if (watchLine->def->eSubType == Enums::DOOR_LOCKED) {
 		return false;
 	}
-	if (n == 0 && b2 && b3) {
+	if (action == 0 && unblocked && isAnimatedDoor) {
 		this->updatePlayerDoors(watchLine, true);
 		return false;
 	}
-	if (n == 1 && !b2) {
+	if (action == 1 && !unblocked) {
 		return false;
 	}
-	if (b2 && b3) {
+	if (unblocked && isAnimatedDoor) {
 		for (Entity* entity = this->findMapEntity(watchLine->linkIndex % 32 << 6, watchLine->linkIndex / 32 << 6);
 		     entity != nullptr; entity = entity->nextOnTile) {
 			if (entity->def->eType == Enums::ET_MONSTER && entity->def->eSubType != Enums::CORPSE_SKELETON) {
@@ -396,8 +396,8 @@ bool Game::performDoorEvent(int n, ScriptThread* scriptThread, Entity* watchLine
 		this->linkEntity(watchLine, watchLine->linkIndex % 32, watchLine->linkIndex / 32);
 	}
 	LerpSprite* allocLerpSprite = this->allocLerpSprite(scriptThread, sprite, true);
-	app->render->setSpriteInfoRaw(sprite, (n3 & 0xFFFEFFFF));
-	if (b) {
+	app->render->setSpriteInfoRaw(sprite, (spriteInfo & 0xFFFEFFFF));
+	if (isSecret) {
 		this->secretActive = true;
 		allocLerpSprite->flags |= Enums::LS_FLAG_SECRET_OPEN;
 	} else {
@@ -411,44 +411,44 @@ bool Game::performDoorEvent(int n, ScriptThread* scriptThread, Entity* watchLine
 	allocLerpSprite->dstScale = allocLerpSprite->srcScale =
 	    app->render->getSpriteScaleFactor(sprite);
 
-	int n10 = 32;
-	if (n == 1) {
-		n10 = -n10;
+	int slideDist = 32;
+	if (action == 1) {
+		slideDist = -slideDist;
 	}
-	if (0x0 != (n3 & 0x3000000)) {
-		if (b) {
-			if ((n3 & 0x1000000) != 0x0) {
-				allocLerpSprite->dstY += n10;
+	if (0x0 != (spriteInfo & 0x3000000)) {
+		if (isSecret) {
+			if ((spriteInfo & 0x1000000) != 0x0) {
+				allocLerpSprite->dstY += slideDist;
 			} else {
-				allocLerpSprite->dstY -= n10;
+				allocLerpSprite->dstY -= slideDist;
 			}
 		} else if ((watchLine->def->parm & 0x1) == 0x0) {
-			allocLerpSprite->dstX += n10;
+			allocLerpSprite->dstX += slideDist;
 		}
-	} else if (0x0 != (n3 & 0xC000000)) {
-		if (b) {
-			if ((n3 & 0x8000000) != 0x0) {
-				allocLerpSprite->dstX += n10;
+	} else if (0x0 != (spriteInfo & 0xC000000)) {
+		if (isSecret) {
+			if ((spriteInfo & 0x8000000) != 0x0) {
+				allocLerpSprite->dstX += slideDist;
 			} else {
-				allocLerpSprite->dstX -= n10;
+				allocLerpSprite->dstX -= slideDist;
 			}
 		} else if ((watchLine->def->parm & 0x1) == 0x0) {
-			allocLerpSprite->dstY += n10;
+			allocLerpSprite->dstY += slideDist;
 		}
 	}
 	allocLerpSprite->startTime = app->gameTime;
 	allocLerpSprite->travelTime = 750;
 	allocLerpSprite->flags |= (Enums::LS_FLAG_ENT_NORELINK | Enums::LS_FLAG_S_NORELINK);
-	if (n == 1) {
+	if (action == 1) {
 		allocLerpSprite->flags &= ~(Enums::LS_FLAG_ENT_NORELINK | Enums::LS_FLAG_DOOROPEN);
 		allocLerpSprite->flags |= Enums::LS_FLAG_DOORCLOSE;
 		allocLerpSprite->dstScale = 64;
-		if (!b && b3) {
+		if (!isSecret && isAnimatedDoor) {
 			this->updatePlayerDoors(watchLine, false);
 		}
 		app->sound->playSound(Sounds::getResIDByName(SoundName::DOOR_CLOSE), 0, 3, 0);
-	} else if (n == 0 && !b) {
-		if (b3) {
+	} else if (action == 0 && !isSecret) {
+		if (isAnimatedDoor) {
 			this->updatePlayerDoors(watchLine, true);
 		}
 		allocLerpSprite->dstScale = 0;
@@ -458,65 +458,65 @@ bool Game::performDoorEvent(int n, ScriptThread* scriptThread, Entity* watchLine
 	app->render->setSpriteX(sprite, (short)allocLerpSprite->srcX);
 	app->render->setSpriteY(sprite, (short)allocLerpSprite->srcY);
 	app->render->setSpriteZ(sprite, (short)allocLerpSprite->srcZ);
-	if (b3 && !(allocLerpSprite->flags & Enums::LS_FLAG_DOORCLOSE)) {
+	if (isAnimatedDoor && !(allocLerpSprite->flags & Enums::LS_FLAG_DOORCLOSE)) {
 		app->render->setSpriteInfoRaw(sprite, ((app->render->getSpriteInfoRaw(sprite) & 0xFFFF00FF) | 0x100));
 	}
-	if (n2 == 0 || app->canvas->state == Canvas::ST_AUTOMAP ||
-	    (n2 == 2 && app->render->cullBoundingBox(allocLerpSprite->srcX + allocLerpSprite->dstX >> 1,
+	if (snapMode == 0 || app->canvas->state == Canvas::ST_AUTOMAP ||
+	    (snapMode == 2 && app->render->cullBoundingBox(allocLerpSprite->srcX + allocLerpSprite->dstX >> 1,
 	                                             allocLerpSprite->srcY + allocLerpSprite->dstY >> 1, true))) {
 		this->snapLerpSprites(sprite);
 	}
-	app->eventBus->emit(DoorEvent{watchLine, (n == 0), (int)allocLerpSprite->srcX, (int)allocLerpSprite->srcY});
+	app->eventBus->emit(DoorEvent{watchLine, (action == 0), (int)allocLerpSprite->srcX, (int)allocLerpSprite->srcY});
 	return true;
 }
 
-void Game::lerpSpriteAsDoor(int n, int n2, ScriptThread* scriptThread) {
+void Game::lerpSpriteAsDoor(int sprite, int action, ScriptThread* scriptThread) {
 
 
-	LerpSprite* allocLerpSprite = this->allocLerpSprite(scriptThread, n, false);
+	LerpSprite* allocLerpSprite = this->allocLerpSprite(scriptThread, sprite, false);
 
-	app->render->setSpriteInfoRaw(n, app->render->getSpriteInfoRaw(n) & 0xFFFEFFFF);
-	int n3 = app->render->getSpriteInfoRaw(n);
-	int n4 = 64;
-	if (n2 == 1) {
-		n4 = -n4;
+	app->render->setSpriteInfoRaw(sprite, app->render->getSpriteInfoRaw(sprite) & 0xFFFEFFFF);
+	int spriteInfo = app->render->getSpriteInfoRaw(sprite);
+	int slideDist = 64;
+	if (action == 1) {
+		slideDist = -slideDist;
 	}
 	allocLerpSprite->flags |= Enums::LS_FLAG_DOOROPEN;
-	app->render->setSpriteInfoFlag(n, 0x80000000);
-	app->render->setSpriteScaleFactor(n, 256);
-	allocLerpSprite->dstX = allocLerpSprite->srcX = app->render->getSpriteX(n);
-	allocLerpSprite->dstY = allocLerpSprite->srcY = app->render->getSpriteY(n);
-	allocLerpSprite->dstZ = allocLerpSprite->srcZ = app->render->getSpriteZ(n);
+	app->render->setSpriteInfoFlag(sprite, 0x80000000);
+	app->render->setSpriteScaleFactor(sprite, 256);
+	allocLerpSprite->dstX = allocLerpSprite->srcX = app->render->getSpriteX(sprite);
+	allocLerpSprite->dstY = allocLerpSprite->srcY = app->render->getSpriteY(sprite);
+	allocLerpSprite->dstZ = allocLerpSprite->srcZ = app->render->getSpriteZ(sprite);
 	allocLerpSprite->dstScale = allocLerpSprite->srcScale = 64;
-	if (0x0 != (n3 & 0x3000000)) {
+	if (0x0 != (spriteInfo & 0x3000000)) {
 
-		allocLerpSprite->dstX += n4;
-	} else if (0x0 != (n3 & 0xC000000)) {
-		allocLerpSprite->dstY += n4;
+		allocLerpSprite->dstX += slideDist;
+	} else if (0x0 != (spriteInfo & 0xC000000)) {
+		allocLerpSprite->dstY += slideDist;
 	}
 	allocLerpSprite->startTime = app->gameTime;
 	allocLerpSprite->travelTime = 750;
 	allocLerpSprite->flags |= (Enums::LS_FLAG_ENT_NORELINK | Enums::LS_FLAG_S_NORELINK);
-	if (n2 == 1) {
+	if (action == 1) {
 		allocLerpSprite->flags &= ~(Enums::LS_FLAG_ENT_NORELINK | Enums::LS_FLAG_DOOROPEN);
 		allocLerpSprite->flags |= Enums::LS_FLAG_DOORCLOSE;
 	}
-	app->render->setSpriteX(n, (short)allocLerpSprite->srcX);
-	app->render->setSpriteY(n, (short)allocLerpSprite->srcY);
-	app->render->setSpriteZ(n, (short)allocLerpSprite->srcZ);
+	app->render->setSpriteX(sprite, (short)allocLerpSprite->srcX);
+	app->render->setSpriteY(sprite, (short)allocLerpSprite->srcY);
+	app->render->setSpriteZ(sprite, (short)allocLerpSprite->srcZ);
 }
 
-void Game::updatePlayerDoors(Entity* entity, bool b) {
-	bool b2 = false;
+void Game::updatePlayerDoors(Entity* entity, bool addDoor) {
+	bool foundSlot = false;
 	int i;
 	for (i = 0; i < 6; ++i) {
-		if ((b && this->openDoors[i] == nullptr) || (!b && this->openDoors[i] == entity)) {
-			b2 = true;
+		if ((addDoor && this->openDoors[i] == nullptr) || (!addDoor && this->openDoors[i] == entity)) {
+			foundSlot = true;
 			break;
 		}
 	}
-	if (b2) {
-		if (b) {
+	if (foundSlot) {
+		if (addDoor) {
 			this->openDoors[i] = entity;
 		} else {
 			this->openDoors[i] = nullptr;
@@ -530,39 +530,39 @@ bool Game::CanCloseDoor(Entity* entity) {
 	if (app->player->isFamiliar) {
 		return false;
 	}
-	int n = (entity->linkIndex % 32 << 6) + 32;
-	int n2 = (entity->linkIndex / 32 << 6) + 32;
+	int centerX = (entity->linkIndex % 32 << 6) + 32;
+	int centerY = (entity->linkIndex / 32 << 6) + 32;
 	int sprite = entity->getSprite();
-	if (this->findMapEntity(n, n2, 6) != nullptr) {
+	if (this->findMapEntity(centerX, centerY, 6) != nullptr) {
 		return false;
 	}
-	int n3 = 64;
-	int n4 = 64;
+	int offsetX = 64;
+	int offsetY = 64;
 	if ((app->render->getSpriteInfoRaw(sprite) & 0x3000000) == 0x0) {
-		n4 = 0;
+		offsetY = 0;
 	} else {
-		n3 = 0;
+		offsetX = 0;
 	}
-	return ((this->findMapEntity(n + n3, n2 + n4, 6) == nullptr) && (findMapEntity(n - n3, n2 - n4, 6) == nullptr));
+	return ((this->findMapEntity(centerX + offsetX, centerY + offsetY, 6) == nullptr) && (findMapEntity(centerX - offsetX, centerY - offsetY, 6) == nullptr));
 }
 
-void Game::setLineLocked(Entity* entity, bool b) {
+void Game::setLineLocked(Entity* entity, bool lock) {
 
 
 	int sprite = entity->getSprite();
-	int n = app->render->getSpriteInfoRaw(sprite) & 0xFF;
-	int n2;
-	if (b) {
-		n2 = (n & 0xFFFFFFFE);
+	int lineFlags = app->render->getSpriteInfoRaw(sprite) & 0xFF;
+	int newFlags;
+	if (lock) {
+		newFlags = (lineFlags & 0xFFFFFFFE);
 	} else {
-		n2 = (n | 0x1);
+		newFlags = (lineFlags | 0x1);
 	}
-	app->render->setSpriteInfoRaw(sprite, ((app->render->getSpriteInfoRaw(sprite) & 0xFFFFFF00) | n2));
-	n2 += 257;
+	app->render->setSpriteInfoRaw(sprite, ((app->render->getSpriteInfoRaw(sprite) & 0xFFFFFF00) | newFlags));
+	newFlags += 257;
 	if (entity->def->name == (entity->name & 0x3FF)) {
-		entity->def = app->entityDefManager->lookup(n2);
+		entity->def = app->entityDefManager->lookup(newFlags);
 		entity->name = (short)(entity->def->name | 0x400);
 	} else {
-		entity->def = app->entityDefManager->lookup(n2);
+		entity->def = app->entityDefManager->lookup(newFlags);
 	}
 }
