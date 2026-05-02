@@ -59,18 +59,18 @@ void SentryBotGame::initGame(ScriptThread* scriptThread, short botType) {
     if (this->botType != 0 && this->botType != 1) {
         this->botType = 0;
     }
-    int n = 2;
-    int n2 = 6;
-    int n3 = this->gamePlayedFromMainMenu ? 0 : app->player->ce->getIQPercent();
-    int n4 = (10000 * n + (n2 - n) * (100 - n3) * (100 - n3)) / 10000;
+    int minSkipCode = 2;
+    int maxSkipCode = 6;
+    int iqPercent = this->gamePlayedFromMainMenu ? 0 : app->player->ce->getIQPercent();
+    int skipCodeRange = (10000 * minSkipCode + (maxSkipCode - minSkipCode) * (100 - iqPercent) * (100 - iqPercent)) / 10000;
     do {
-        this->skipCode = app->nextInt() % n4 + 1;
+        this->skipCode = app->nextInt() % skipCodeRange + 1;
     } while (this->skipCode == app->player->lastSkipCode);
     app->player->lastSkipCode = (uint8_t)this->skipCode;
-    bool b = this->gamePlayedFromMainMenu || app->player->ce->getIQPercent() < 50;
+    bool allowDuplicates = this->gamePlayedFromMainMenu || app->player->ce->getIQPercent() < 50;
     for (int i = 0; i < 16; ++i) {
         this->gameBoard[i] = app->nextInt() % 6 + 1;
-        if (this->gameBoard[i] == this->skipCode && !b) {
+        if (this->gameBoard[i] == this->skipCode && !allowDuplicates) {
             --i;
         }
     }
@@ -343,47 +343,47 @@ void SentryBotGame::drawFailureScreen(Graphics* graphics) {
     graphics->drawImage(this->imgMatrixSkip_BG, 0, 0, 0, 0, 0);
     app->canvas->setLeftSoftKey((short)0, (short)30);
     Text* smallBuffer = app->localization->getSmallBuffer();
-    int n = (app->canvas->screenRect[2] - app->canvas->screenRect[0]) / 2;
-    int n2 = 0;
-    this->drawPlayersGuess(n, n2 + 26, false, smallBuffer, graphics);
+    int centerX = (app->canvas->screenRect[2] - app->canvas->screenRect[0]) / 2;
+    int posY = 0;
+    this->drawPlayersGuess(centerX, posY + 26, false, smallBuffer, graphics);
     smallBuffer->setLength(0);
     app->localization->composeText((short)0, (short)(this->failedEarly ? 179 : 178), smallBuffer);
     smallBuffer->dehyphenate();
-    graphics->drawString(smallBuffer, n, n2 + 15, 3);
-    n2 += 59;
+    graphics->drawString(smallBuffer, centerX, posY + 15, 3);
+    posY += 59;
     smallBuffer->setLength(0);
     app->localization->composeText((short)0, (short)240, smallBuffer);
     smallBuffer->dehyphenate();
-    graphics->drawString(smallBuffer, n, n2 + 12, 3);
-    short n3;
-    short n4;
+    graphics->drawString(smallBuffer, centerX, posY + 12, 3);
+    short stringId;
+    short labelY;
     if (this->botType == 1) {
-        graphics->fillRect(n - 53, n2 + 80 - 26, 107, 52, -10747893);
-        graphics->fillRect(n - 50, n2 + 80 - 23, 101, 46, -13354445);
-        graphics->fillRect(n - 40, n2 + 80 - 13, 80, 26, -10747893);
-        graphics->fillRect(n - 33, n2 + 80 - 6, 66, 12, -13354445);
+        graphics->fillRect(centerX - 53, posY + 80 - 26, 107, 52, -10747893);
+        graphics->fillRect(centerX - 50, posY + 80 - 23, 101, 46, -13354445);
+        graphics->fillRect(centerX - 40, posY + 80 - 13, 80, 26, -10747893);
+        graphics->fillRect(centerX - 33, posY + 80 - 6, 66, 12, -13354445);
         smallBuffer->setLength(0);
         app->localization->composeText((short)0, (short)186, smallBuffer);
         smallBuffer->dehyphenate();
-        graphics->drawString(smallBuffer, n, n2 + 50 + 2, 3);
+        graphics->drawString(smallBuffer, centerX, posY + 50 + 2, 3);
         if (this->botType == 1) {
-            n4 = 129;
-            n3 = 187;
+            labelY = 129;
+            stringId = 187;
         }
         else {
-            n4 = 109;
-            n3 = 188;
+            labelY = 109;
+            stringId = 188;
         }
     }
     else {
-        n4 = 59;
-        n3 = 188;
+        labelY = 59;
+        stringId = 188;
     }
 
     smallBuffer->setLength(0);
-    app->localization->composeText((short)0, n3, smallBuffer);
+    app->localization->composeText((short)0, stringId, smallBuffer);
     smallBuffer->wrapText(22, '\n');
-    graphics->drawString(smallBuffer, n, n4 + 80, 3);
+    graphics->drawString(smallBuffer, centerX, labelY + 80, 3);
     smallBuffer->dispose();
 }
 
@@ -395,24 +395,24 @@ void SentryBotGame::drawSuccessScreen(Graphics* graphics) {
     graphics->drawImage(this->imgMatrixSkip_BG, 0, 0, 0, 0, 0);
     app->canvas->setLeftSoftKey((short)0, (short)30);
     Text* smallBuffer = app->localization->getSmallBuffer();
-    int n = (app->canvas->screenRect[2] - app->canvas->screenRect[0]) / 2;
-    int n2 = 0;
+    int centerX = (app->canvas->screenRect[2] - app->canvas->screenRect[0]) / 2;
+    int posY = 0;
     int w = 0;
-    this->drawPlayersGuess(n, n2 + 26, false, smallBuffer, graphics);
+    this->drawPlayersGuess(centerX, posY + 26, false, smallBuffer, graphics);
     smallBuffer->setLength(0);
     app->localization->composeText((short)0, (short)177, smallBuffer);
     smallBuffer->dehyphenate();
-    graphics->drawString(smallBuffer, n, n2 + 15, 3);
+    graphics->drawString(smallBuffer, centerX, posY + 15, 3);
     if (this->gamePlayedFromMainMenu) {
-        n2 += 59;
+        posY += 59;
         smallBuffer->setLength(0);
         app->localization->composeText((short)0, (short)239, smallBuffer);
         smallBuffer->dehyphenate();
-        graphics->drawString(smallBuffer, n, n2 + 12, 3);
+        graphics->drawString(smallBuffer, centerX, posY + 12, 3);
         smallBuffer->setLength(0);
         app->localization->composeText((short)0, (short)188, smallBuffer);
         smallBuffer->wrapText(22, '\n');
-        graphics->drawString(smallBuffer, n, n2 + 80, 3);
+        graphics->drawString(smallBuffer, centerX, posY + 80, 3);
 
         if (SentryBotGame::wasTouched) {
             if (this->touched) {
@@ -427,11 +427,11 @@ void SentryBotGame::drawSuccessScreen(Graphics* graphics) {
         }
     }
     else {
-        n2 += 95;
+        posY += 95;
         smallBuffer->setLength(0);
         app->localization->composeText((short)0, (short)180, smallBuffer);
         smallBuffer->dehyphenate();
-        graphics->drawString(smallBuffer, n, n2, 3);
+        graphics->drawString(smallBuffer, centerX, posY, 3);
         this->m_sentryBotButtons->GetButton(2)->Render(graphics);
         this->m_sentryBotButtons->GetButton(3)->Render(graphics);
         //this->bot_selection_cursor = -1; // [GEC] Block this line
@@ -443,11 +443,11 @@ void SentryBotGame::drawSuccessScreen(Graphics* graphics) {
         if (this->m_sentryBotButtons->GetButton(3)->highlighted) {
             this->bot_selection_cursor = 0;
         }
-        graphics->drawString(smallBuffer, n - 180, n2 + 45, 3);
+        graphics->drawString(smallBuffer, centerX - 180, posY + 45, 3);
 
         int xPos = 0;
         if (this->bot_selection_cursor == 0) {
-            xPos = ((n - 180) - (w /2)) - 5;
+            xPos = ((centerX - 180) - (w /2)) - 5;
         }
 
         smallBuffer->setLength(0);
@@ -457,36 +457,36 @@ void SentryBotGame::drawSuccessScreen(Graphics* graphics) {
         if (this->m_sentryBotButtons->GetButton(2)->highlighted) {
             this->bot_selection_cursor = 1;
         }
-        graphics->drawString(smallBuffer, n + 180, n2 + 45, 3);
+        graphics->drawString(smallBuffer, centerX + 180, posY + 45, 3);
 
         if (this->bot_selection_cursor == 1) {
-            xPos = ((n + 180) - (w / 2)) - 5;
+            xPos = ((centerX + 180) - (w / 2)) - 5;
         }
 
-        graphics->drawCursor(xPos + app->canvas->OSC_CYCLE[(app->time / 100) % 4], n2 + 45, 10); // [GEC] Restored from J2ME/BREW
+        graphics->drawCursor(xPos + app->canvas->OSC_CYCLE[(app->time / 100) % 4], posY + 45, 10); // [GEC] Restored from J2ME/BREW
 
-        int n3 = app->canvas->screenRect[3] - 10 - 140;
-        int n4 = app->canvas->screenRect[0] + 12;
-        graphics->fillRect(n4, n3, app->canvas->screenRect[2] - app->canvas->screenRect[0] - 24, 140, 0xFF464C43);
+        int panelTop = app->canvas->screenRect[3] - 10 - 140;
+        int panelLeft = app->canvas->screenRect[0] + 12;
+        graphics->fillRect(panelLeft, panelTop, app->canvas->screenRect[2] - app->canvas->screenRect[0] - 24, 140, 0xFF464C43);
         smallBuffer->setLength(0);
         smallBuffer->append("Shooting Bot:");
         smallBuffer->dehyphenate();
-        graphics->drawString(smallBuffer, n4 + 10, n3 + 8, 20);
+        graphics->drawString(smallBuffer, panelLeft + 10, panelTop + 8, 20);
         smallBuffer->setLength(0);
         app->localization->composeText((short)0, (short)183, smallBuffer);
         smallBuffer->dehyphenate();
         smallBuffer->wrapText(50, '\n');
-        graphics->drawString(smallBuffer, n4 + 10, n3 + 27, 20);
+        graphics->drawString(smallBuffer, panelLeft + 10, panelTop + 27, 20);
 
         smallBuffer->setLength(0);
         smallBuffer->append("Exploding Bot:");
         smallBuffer->dehyphenate();
-        graphics->drawString(smallBuffer, n4 + 10, n3 + 73, 20);
+        graphics->drawString(smallBuffer, panelLeft + 10, panelTop + 73, 20);
         smallBuffer->setLength(0);
         app->localization->composeText((short)0, (short)184, smallBuffer);
         smallBuffer->dehyphenate();
         smallBuffer->wrapText(50, '\n');
-        graphics->drawString(smallBuffer, n4 + 10, n3 + 92, 20);
+        graphics->drawString(smallBuffer, panelLeft + 10, panelTop + 92, 20);
     }
     smallBuffer->dispose();
 }
@@ -509,27 +509,27 @@ void SentryBotGame::drawHelpScreen(Graphics* graphics) {
 void SentryBotGame::drawGameScreen(Graphics* graphics) {
 
     Applet* app = this->app;
-    int n = (app->canvas->screenRect[2] - app->canvas->screenRect[0]) / 2;
-    int n2 = app->canvas->screenRect[1];
-    n2 += 50;
+    int centerX = (app->canvas->screenRect[2] - app->canvas->screenRect[0]) / 2;
+    int gridY = app->canvas->screenRect[1];
+    gridY += 50;
     Text* smallBuffer = app->localization->getSmallBuffer();
     graphics->drawImage(this->imgMatrixSkip_BG, 0, 0, 0, 0, 0);
-    graphics->drawRegion(this->imgGameAssets, 53, 0, 91, 91, n - 91, n2, 20, 0, 0);
-    graphics->drawRegion(this->imgGameAssets, 53, 0, 91, 91, n, n2, 20, 4, 0);
-    graphics->drawRegion(this->imgGameAssets, 53, 0, 91, 91, n - 91, n2 + 91, 20, 6, 0);
-    graphics->drawRegion(this->imgGameAssets, 53, 0, 91, 91, n, n2 + 91, 20, 2, 0);
+    graphics->drawRegion(this->imgGameAssets, 53, 0, 91, 91, centerX - 91, gridY, 20, 0, 0);
+    graphics->drawRegion(this->imgGameAssets, 53, 0, 91, 91, centerX, gridY, 20, 4, 0);
+    graphics->drawRegion(this->imgGameAssets, 53, 0, 91, 91, centerX - 91, gridY + 91, 20, 6, 0);
+    graphics->drawRegion(this->imgGameAssets, 53, 0, 91, 91, centerX, gridY + 91, 20, 2, 0);
     if (this->player_cursor == -1) {
-        graphics->drawRegion(this->imgGameAssets, 144, 0, 41, 37, n - 120, n2 + 8, 20, 0, 0);
+        graphics->drawRegion(this->imgGameAssets, 144, 0, 41, 37, centerX - 120, gridY + 8, 20, 0, 0);
     }
     for (int i = 0; i < 16; ++i) {
-        int n3 = n  + i % 4 * 42;
-        int n4 = n2 + i / 4 * 44;
+        int tileX = centerX  + i % 4 * 42;
+        int tileY = gridY + i / 4 * 44;
         smallBuffer->setLength(0);
         smallBuffer->append(this->gameBoard[i]);
 
-        if (this->touched && pointInRectangle(this->currentPress_x, this->currentPress_y, n3 - 84, n4 + 6, 43-1, 43-1)) {
+        if (this->touched && pointInRectangle(this->currentPress_x, this->currentPress_y, tileX - 84, tileY + 6, 43-1, 43-1)) {
             int v9, rotateMode, posX, posY;
-            v9 = n3 - 84;
+            v9 = tileX - 84;
             if (i != this->player_cursor) {
                 app->menuSystem->soundClick();
             }
@@ -541,40 +541,40 @@ void SentryBotGame::drawGameScreen(Graphics* graphics) {
                 case 0: {
                     imgButton = this->imgButton2;
                     rotateMode = 4;
-                    posX = n3 - 84;
-                    posY = n4 + 6;
+                    posX = tileX - 84;
+                    posY = tileY + 6;
                     graphics->drawImage(imgButton, posX, posY, 0, rotateMode, 0);
                     break;
                 }
                 case 1: {
                     imgButton = this->imgButton;
                     rotateMode = 0;
-                    posX = n3 - 85;
-                    posY = n4 + 6;
+                    posX = tileX - 85;
+                    posY = tileY + 6;
                     graphics->drawImage(imgButton, posX, posY, 0, rotateMode, 0);
                     break;
                 }
                 case 2: {
                     imgButton = this->imgButton;
                     rotateMode = 0;
-                    posX = n3 - 84;
-                    posY = n4 + 6;
+                    posX = tileX - 84;
+                    posY = tileY + 6;
                     graphics->drawImage(imgButton, posX, posY, 0, rotateMode, 0);
                     break;
                 }
                 case 3: {
                     imgButton = this->imgButton2;
                     rotateMode = 0;
-                    posX = n3 - 84;
-                    posY = n4 + 6;
+                    posX = tileX - 84;
+                    posY = tileY + 6;
                     graphics->drawImage(imgButton, posX, posY, 0, rotateMode, 0);
                     break;
                 }
                 case 4: {
                     imgButton = this->imgButton3;
                     rotateMode = 6;
-                    posX = n3 - 84;
-                    posY = n4 + 4;
+                    posX = tileX - 84;
+                    posY = tileY + 4;
                     graphics->drawImage(imgButton, posX, posY, 0, rotateMode, 0);
                     break;
                 }
@@ -583,13 +583,13 @@ void SentryBotGame::drawGameScreen(Graphics* graphics) {
                 case 13: {
                     imgButton = this->imgButton;
                     rotateMode = 0;
-                    posX = n3 - 86;
-                    posY = n4 + 3;
+                    posX = tileX - 86;
+                    posY = tileY + 3;
                     if (i == 5) { // [GEC] new
-                        posY = n4 + 4;
+                        posY = tileY + 4;
                     }
                     if (i == 13) { // [GEC] new
-                        posY = n4 + 2;
+                        posY = tileY + 2;
                     }
                     graphics->drawImage(imgButton, posX, posY, 0, rotateMode, 0);
                     break;
@@ -600,13 +600,13 @@ void SentryBotGame::drawGameScreen(Graphics* graphics) {
                 case 14: {
                     imgButton = this->imgButton;
                     rotateMode = 0;
-                    posX = n3 - 84;
-                    posY = n4 + 3;
+                    posX = tileX - 84;
+                    posY = tileY + 3;
                     if (i == 6) { // [GEC] new
-                        posY = n4 + 4;
+                        posY = tileY + 4;
                     }
                     if (i == 14) { // [GEC] new
-                        posY = n4 + 2;
+                        posY = tileY + 2;
                     }
                     graphics->drawImage(imgButton, posX, posY, 0, rotateMode, 0);
                     break;
@@ -614,77 +614,77 @@ void SentryBotGame::drawGameScreen(Graphics* graphics) {
                 case 7: {
                     imgButton = this->imgButton3;
                     rotateMode = 2;
-                    posX = n3 - 84 + 1;
-                    posY = n4 + 4; // Old 3
+                    posX = tileX - 84 + 1;
+                    posY = tileY + 4; // Old 3
                     graphics->drawImage(imgButton, posX, posY, 0, rotateMode, 0);
                     break;
                 }
                 case 8: {
                     imgButton = this->imgButton3;
                     rotateMode = 0;
-                    posX = n3 - 84;
-                    posY = n4 + 3;
+                    posX = tileX - 84;
+                    posY = tileY + 3;
                     graphics->drawImage(imgButton, posX, posY, 0, rotateMode, 0);
                     break;
                 }
                 case 11: {
                     imgButton = this->imgButton3;
                     rotateMode = 4;
-                    posX = n3 - 84 + 1;
-                    posY = n4 + 3;
+                    posX = tileX - 84 + 1;
+                    posY = tileY + 3;
                     graphics->drawImage(imgButton, posX, posY, 0, rotateMode, 0);
                     break;
                 }
                 case 12: {
                     imgButton = this->imgButton2;
                     rotateMode = 2;
-                    posX = n3 - 84;
-                    posY = n4 + 2; // Old 3
+                    posX = tileX - 84;
+                    posY = tileY + 2; // Old 3
                     graphics->drawImage(imgButton, posX, posY, 0, rotateMode, 0);
                     break;
                 }
                 case 15: {
                     imgButton = this->imgButton2;
                     rotateMode = 8; // Old 1
-                    posX = n3 - 83;
-                    posY = n4 + 2; // Old 3
+                    posX = tileX - 83;
+                    posY = tileY + 2; // Old 3
                     graphics->drawImage(imgButton, posX, posY, 0, rotateMode, 0);
                     break;
                 }
             }
         }
 
-        graphics->drawString(smallBuffer, n3 - 63, n4 + 6 + 21, 3);
+        graphics->drawString(smallBuffer, tileX - 63, tileY + 6 + 21, 3);
         if (this->player_cursor != -1 && this->player_cursor == i) {
-           this->drawCursor(n3 - 63, n4 + 5 + 21, true, graphics);
+           this->drawCursor(tileX - 63, tileY + 5 + 21, true, graphics);
         }
     }
 
     if (this->player_cursor == -1) {
-        this->drawCursor(((n - 63) - 21) - 18, n2 + 5 + 21, true, graphics);
+        this->drawCursor(((centerX - 63) - 21) - 18, gridY + 5 + 21, true, graphics);
     }
 
-    
-    n2 += 199;
-    this->drawPlayersGuess(n, n2, true, smallBuffer, graphics);
 
-    int n5 = app->canvas->screenRect[1];
+    gridY += 199;
+    this->drawPlayersGuess(centerX, gridY, true, smallBuffer, graphics);
+
+    int topY = app->canvas->screenRect[1];
     smallBuffer->setLength(0);
     app->localization->composeText((short)0, (short)173, smallBuffer);
     app->localization->composeText((short)0, (short)174, smallBuffer);
     smallBuffer->append((int)this->skipCode);
     smallBuffer->dehyphenate();
-    graphics->drawString(smallBuffer, n, n5 + 30, 3);
+    graphics->drawString(smallBuffer, centerX, topY + 30, 3);
 
     smallBuffer->setLength(0);
     app->localization->composeText((short)0, (short)175, smallBuffer);
     smallBuffer->dehyphenate();
-    graphics->drawString(smallBuffer, n, n5 + 241, 3);
+    graphics->drawString(smallBuffer, centerX, topY + 241, 3);
 
     smallBuffer->setLength(0);
     app->localization->composeText((short)0, (short)176, smallBuffer);
     smallBuffer->dehyphenate();
-    graphics->drawString(smallBuffer, n, n5 + 294, 3);
+    graphics->drawString(smallBuffer, centerX, topY + 294, 3);
 
     smallBuffer->setLength(0);
     smallBuffer->append("Back");
@@ -747,32 +747,32 @@ void SentryBotGame::drawGameScreen(Graphics* graphics) {
     app->setFontRenderMode(0);
 }
 
-void SentryBotGame::drawPlayersGuess(int n, int n2, bool b, Text* text, Graphics* graphics) {
+void SentryBotGame::drawPlayersGuess(int centerX, int topY, bool showCursor, Text* text, Graphics* graphics) {
 
     Applet* app = this->app;
-    graphics->drawRegion(this->imgGameAssets, 0, 91, 95, 33, n - 95, n2, 20, 0, 0);
-    graphics->drawRegion(this->imgGameAssets, 0, 91, 95, 33, n, n2, 20, 4, 0);
-    int n3 = n2 + 12 + 4;
+    graphics->drawRegion(this->imgGameAssets, 0, 91, 95, 33, centerX - 95, topY, 20, 0, 0);
+    graphics->drawRegion(this->imgGameAssets, 0, 91, 95, 33, centerX, topY, 20, 4, 0);
+    int digitY = topY + 12 + 4;
     for (int i = 0; i < 4; ++i) {
-        int n4 = n - 67 + i % 4 * 45;
-        int n5 = this->usersGuess[i];
-        if (n5 != 0) {
+        int digitX = centerX - 67 + i % 4 * 45;
+        int digit = this->usersGuess[i];
+        if (digit != 0) {
             text->setLength(0);
-            text->append(n5);
-            graphics->drawString(text, n4, n3, 3);
+            text->append(digit);
+            graphics->drawString(text, digitX, digitY, 3);
         }
-        graphics->drawLine(n4 - 6, n3 + 8, n4 + 6, n3 + 8, 0xFF6C834A);
-        if (b && this->answer_cursor == i) {
-            this->drawCursor(n4, n2 + 12 + 4, false, graphics);
+        graphics->drawLine(digitX - 6, digitY + 8, digitX + 6, digitY + 8, 0xFF6C834A);
+        if (showCursor && this->answer_cursor == i) {
+            this->drawCursor(digitX, topY + 12 + 4, false, graphics);
         }
     }
 }
 
-void SentryBotGame::drawCursor(int n, int n2, bool b, Graphics* graphics) {
+void SentryBotGame::drawCursor(int x, int y, bool blinking, Graphics* graphics) {
 
     Applet* app = this->app;
-    if (!b || (app->time - this->timeSinceLastCursorMove & 0x200) == 0x0) {
-        graphics->drawRegion(this->imgGameAssets, 95, 91, 22, 22, n + 1, n2, 3, 0, 0);
+    if (!blinking || (app->time - this->timeSinceLastCursorMove & 0x200) == 0x0) {
+        graphics->drawRegion(this->imgGameAssets, 95, 91, 22, 22, x + 1, y, 3, 0, 0);
     }
 }
 
@@ -805,7 +805,7 @@ void SentryBotGame::forceWin() {
     app->canvas->clearSoftKeys();
 }
 
-void SentryBotGame::awardSentryBot(int n) {
+void SentryBotGame::awardSentryBot(int weaponIdx) {
 
     Applet* app = this->app;
 
@@ -817,18 +817,18 @@ void SentryBotGame::awardSentryBot(int n) {
             break;
         }
     }
-    app->player->give(1, n, 1);
+    app->player->give(1, weaponIdx, 1);
 }
 
-void SentryBotGame::endGame(int n) {
+void SentryBotGame::endGame(int result) {
 
     Applet* app = this->app;
 
-    app->sound->playSound((n == 1) ? 1043 : 1040, 0, 3, 0);
+    app->sound->playSound((result == 1) ? 1043 : 1040, 0, 3, 0);
 
     if (!this->gamePlayedFromMainMenu) {
-        app->minigameUI->evaluateResults(n);
-        app->game->scriptStateVars[7] = (short)n;
+        app->minigameUI->evaluateResults(result);
+        app->game->scriptStateVars[7] = (short)result;
     }
     if (!this->gamePlayedFromMainMenu) {
         app->canvas->setState(Canvas::ST_PLAYING);

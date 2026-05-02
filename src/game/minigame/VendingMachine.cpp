@@ -161,18 +161,18 @@ void VendingMachine::randomizeGame() {
         this->maximums[j] = gc.vendSliderMax;
         this->chevronAnimationOffset[j] = 0;
     }
-    int n = this->gamePlayedFromMainMenu ? 0 : app->player->ce->getIQPercent();
-    int k = 0;
+    int iqPercent = this->gamePlayedFromMainMenu ? 0 : app->player->ce->getIQPercent();
+    int targetHints = 0;
     for (const auto& hint : gc.vendIQHints) {
-        if (n >= hint.iq) {
-            k = hint.hints;
+        if (iqPercent >= hint.iq) {
+            targetHints = hint.hints;
             break;
         }
     }
-    while (k > this->numbersCorrect()) {
-        int n2 = app->nextInt() % 4;
-        this->correctSum -= this->solution[n2] - gc.vendSliderStart;
-        this->solution[n2] = gc.vendSliderStart;
+    while (targetHints > this->numbersCorrect()) {
+        int randomSlot = app->nextInt() % 4;
+        this->correctSum -= this->solution[randomSlot] - gc.vendSliderStart;
+        this->solution[randomSlot] = gc.vendSliderStart;
     }
     this->machineHasBeenHacked = false;
 }
@@ -282,9 +282,9 @@ void VendingMachine::handleInputForGame(int action) {
             }
             else {
                 this->gameCursor = 0;
-                for (int n3 = 0; n3 < 4; n3++) {
-                    if (this->playersGuess[n3] != this->solution[n3]) {
-                        this->playersGuess[n3] = -1;
+                for (int slotIdx = 0; slotIdx < 4; slotIdx++) {
+                    if (this->playersGuess[slotIdx] != this->solution[slotIdx]) {
+                        this->playersGuess[slotIdx] = -1;
                     }
                 }
                 while (this->playersGuess[this->gameCursor] != -1) {
@@ -384,11 +384,11 @@ void VendingMachine::handleInputForGame(int action) {
 
 void VendingMachine::updateHighLowState() {
     for (int i = 0; i < 4; ++i) {
-        int n = this->sliderPositions[i] - this->solution[i];
-        if (n > 0) {
+        int delta = this->sliderPositions[i] - this->solution[i];
+        if (delta > 0) {
             this->maximums[i] = std::min(this->sliderPositions[i] - 1, this->maximums[i]);
         }
-        else if (n < 0) {
+        else if (delta < 0) {
             this->minimums[i] = std::max(this->sliderPositions[i] + 1, this->minimums[i]);
         }
         else {
@@ -467,9 +467,9 @@ void VendingMachine::drawGameResults(Graphics* graphics) {
 
     smallBuffer->wrapText(20, '\n');
     int stringWidth = smallBuffer->getStringWidth();
-    int n = smallBuffer->getNumLines() * 16;
-    graphics->fillRect(app->canvas->SCR_CX - (stringWidth / 2) - 6, app->canvas->SCR_CY - (n / 2) - 4, stringWidth + 12, n + 8, 0xFF000000);
-    graphics->drawRect(app->canvas->SCR_CX - (stringWidth / 2) - 6, app->canvas->SCR_CY - (n / 2) - 4, stringWidth + 12, n + 8, 0xFFFFFFFF);
+    int boxHeight = smallBuffer->getNumLines() * 16;
+    graphics->fillRect(app->canvas->SCR_CX - (stringWidth / 2) - 6, app->canvas->SCR_CY - (boxHeight / 2) - 4, stringWidth + 12, boxHeight + 8, 0xFF000000);
+    graphics->drawRect(app->canvas->SCR_CX - (stringWidth / 2) - 6, app->canvas->SCR_CY - (boxHeight / 2) - 4, stringWidth + 12, boxHeight + 8, 0xFFFFFFFF);
     graphics->drawString(smallBuffer, app->canvas->SCR_CX, app->canvas->SCR_CY, 3);
     smallBuffer->dispose();
 }
@@ -478,15 +478,15 @@ void VendingMachine::drawMainScreen(Graphics* graphics) {
     Applet* app = this->app;
 
     this->drawVendingMachineBackground(graphics, true);
-    int n = 14;
-    int n2 = 1;
+    int titleY = 14;
+    int xOffset = 1;
     Text* smallBuffer = app->localization->getSmallBuffer();
     smallBuffer->setLength(0);
     app->localization->composeText(Strings::FILE_MENUSTRINGS, MenuStrings::VENDING_MACHINE_TITLE, smallBuffer);
     smallBuffer->dehyphenate();
     app->menuSystem->buildDivider(smallBuffer, smallBuffer->length() + 10);
-    graphics->drawString(smallBuffer, app->canvas->SCR_CX + n2, n, 1);
-    n += 16; // Old 13
+    graphics->drawString(smallBuffer, app->canvas->SCR_CX + xOffset, titleY, 1);
+    titleY += 16; // Old 13
     app->localization->resetTextArgs();
     smallBuffer->setLength(0);
     smallBuffer->append(app->player->inventory[24]);
@@ -494,8 +494,8 @@ void VendingMachine::drawMainScreen(Graphics* graphics) {
     smallBuffer->setLength(0);
     app->localization->composeText(Strings::FILE_CODESTRINGS, (short)197, smallBuffer);
     smallBuffer->dehyphenate();
-    graphics->drawString(smallBuffer, app->canvas->SCR_CX + n2, n, 17);
-    int n3 = 60;
+    graphics->drawString(smallBuffer, app->canvas->SCR_CX + xOffset, titleY, 17);
+    int descY = 60;
     smallBuffer->setLength(0);
     if (this->machineCanBeHacked()) {
         app->localization->composeText((short)0, (short)198, smallBuffer);
@@ -508,17 +508,17 @@ void VendingMachine::drawMainScreen(Graphics* graphics) {
         app->localization->composeText((short)0, (short)199, smallBuffer);
     }
     smallBuffer->wrapText(26, '\n');
-    graphics->drawString(smallBuffer, 240, n3, 17);
+    graphics->drawString(smallBuffer, 240, descY, 17);
 
-    short n4;
-    short n5;
+    short leftBtnTextId;
+    short rightBtnTextId;
     if (this->machineCanBeHacked()) {
-        n4 = 202;
-        n5 = 203;
+        leftBtnTextId = 202;
+        rightBtnTextId = 203;
     }
     else {
-        n4 = 141;
-        n5 = 140;
+        leftBtnTextId = 141;
+        rightBtnTextId = 140;
     }
 
     int oldMainTerminalCursor = this->mainTerminalCursor;
@@ -544,10 +544,10 @@ void VendingMachine::drawMainScreen(Graphics* graphics) {
     graphics->drawImage(this->imgVending_button_small, posX, posY - height, 0, 0, renderMode);
 
     smallBuffer->setLength(0);
-    app->localization->composeText((short)0, n4, smallBuffer);
+    app->localization->composeText((short)0, leftBtnTextId, smallBuffer);
     smallBuffer->dehyphenate();
     graphics->drawString(smallBuffer, posX + (width / 2), posY, 3);
-    
+
     int cursorX = cursorX = ((posX + (width / 2)) - (smallBuffer->getStringWidth() / 2)) - 5;
     int cursorY = posY;
 
@@ -566,7 +566,7 @@ void VendingMachine::drawMainScreen(Graphics* graphics) {
     graphics->drawImage(this->imgVending_button_small, posX, posY - height, 0, 0, renderMode);
 
     smallBuffer->setLength(0);
-    app->localization->composeText((short)0, n5, smallBuffer);
+    app->localization->composeText((short)0, rightBtnTextId, smallBuffer);
     smallBuffer->dehyphenate();
     graphics->drawString(smallBuffer, posX + (width / 2), posY, 3);
 
@@ -703,7 +703,7 @@ void VendingMachine::drawGameTopBar(Graphics* graphics, Text* text) {
     text->append("Current Sum");
     graphics->drawString(text, 240, 9, 3);
 
-    int n4 = this->widthOfContainingBox - 33;
+    int colSpacing = this->widthOfContainingBox - 33;
     for (int i = 0; i < 5; ++i) {
         graphics->drawRegion(this->imgVendingGame, 38, 37, 33, 29, x, y + 17,0, 0, 0);
         text->setLength(0);
@@ -724,9 +724,9 @@ void VendingMachine::drawGameTopBar(Graphics* graphics, Text* text) {
             else {
                 text->append("+");
             }
-            graphics->drawString(text, x - n4 / 2 - 1, y + 31, 3);
+            graphics->drawString(text, x - colSpacing / 2 - 1, y + 31, 3);
         }
-        x += 33 + n4;
+        x += 33 + colSpacing;
     }
 
     text->setLength(0);
@@ -810,22 +810,22 @@ void VendingMachine::drawGameMiddleBar(Graphics* graphics, Text* text) {
     }
 }
 
-bool VendingMachine::drinkInThisVendingMachine(int n) {
-    return (this->energyDrinkData[(n - 0) * 3 + 2] & 1 << this->currentMapNumber) == 1 << this->currentMapNumber;
+bool VendingMachine::drinkInThisVendingMachine(int drinkIdx) {
+    return (this->energyDrinkData[(drinkIdx - 0) * 3 + 2] & 1 << this->currentMapNumber) == 1 << this->currentMapNumber;
 }
 
-short VendingMachine::getDrinkPrice(int n) {
-    return this->energyDrinkData[(n - 0) * 3 + (this->machineHasBeenHacked ? 1 : 0)];
+short VendingMachine::getDrinkPrice(int drinkIdx) {
+    return this->energyDrinkData[(drinkIdx - 0) * 3 + (this->machineHasBeenHacked ? 1 : 0)];
 }
 
-bool VendingMachine::buyDrink(int n) {
+bool VendingMachine::buyDrink(int drinkIdx) {
     Applet* app = this->app;
     if (app->player->inventory[24] < this->currentItemPrice * this->currentItemQuantity) {
         return false;
     }
     for (int i = 0; i < this->currentItemQuantity; ++i) {
         app->player->inventory[24] -= (short)this->currentItemPrice;
-        app->player->give(0, n, 1, false);
+        app->player->give(0, drinkIdx, 1, false);
     }
     return true;
 }
@@ -835,13 +835,13 @@ int VendingMachine::getSnackPrice() {
 }
 
 int VendingMachine::numbersCorrect() {
-    int n = 0;
+    int count = 0;
     for (int i = 0; i < 4; ++i) {
         if (this->sliderPositions[i] == this->solution[i]) {
-            ++n;
+            ++count;
         }
     }
-    return n;
+    return count;
 }
 
 bool VendingMachine::playerHasWon() {
@@ -855,10 +855,10 @@ void VendingMachine::forceWin() {
     this->updateHighLowState();
 }
 
-void VendingMachine::endGame(int n) {
+void VendingMachine::endGame(int result) {
     Applet* app = this->app;
     if (!this->gamePlayedFromMainMenu) {
-        app->game->scriptStateVars[7] = (short)n;
+        app->game->scriptStateVars[7] = (short)result;
     }
     if (!this->gamePlayedFromMainMenu) {
         app->canvas->setState(Canvas::ST_PLAYING);

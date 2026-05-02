@@ -47,21 +47,21 @@ public:
 
 	void playFromMainMenu() override;
 	void setupGlobalData();
-	void initGame(ScriptThread* scriptThread, int i);
-	void initGame(ScriptThread* scriptThread, int i, int i2);
-	void fillGameBoardRandomly(short array[5][6], int n, int n2, int n3);
-	void fillGameBoardRandomly(short array[5][6], int n, int n2, int n3, int n4);
+	void initGame(ScriptThread* scriptThread, int numColumns);
+	void initGame(ScriptThread* scriptThread, int numColumns, int turns);
+	void fillGameBoardRandomly(short array[5][6], int numRows, int numCols, int numPiecesPerCol);
+	void fillGameBoardRandomly(short array[5][6], int numRows, int numCols, int numPiecesPerCol, int numShuffles);
 	void handleInput(int action) override;
-	void attemptToMove(short n);
+	void attemptToMove(short targetCol);
 	void updateGame(Graphics* graphics) override;
 	void drawHelpScreen(Graphics* graphics);
 	void drawGameScreen(Graphics* graphics);
 	void drawGoalTextAndBars(Graphics* graphics, Text* text);
 	void drawGamePieces(Graphics* graphics, int x, int y);
 	bool gameIsSolved(short array[5][6]);
-	void drawPiece(int i, int x, int y, Graphics* graphics);
+	void drawPiece(int colorIdx, int x, int y, Graphics* graphics);
 	void forceWin() override;
-	void endGame(int n) override;
+	void endGame(int result) override;
 	void touchStart(int x, int y) override;
 	void touchMove(int x, int y) override;
 	void touchEnd(int x, int y) override;

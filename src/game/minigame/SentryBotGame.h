@@ -57,13 +57,13 @@ public:
 	void drawHelpScreen(Graphics* graphics);
 	void drawGameScreen(Graphics* graphics);
 
-	void drawPlayersGuess(int n, int n2, bool b, Text* text, Graphics* graphics);
-	void drawCursor(int n, int n2, bool b, Graphics* graphics);
+	void drawPlayersGuess(int centerX, int topY, bool showCursor, Text* text, Graphics* graphics);
+	void drawCursor(int x, int y, bool blinking, Graphics* graphics);
 	bool playerHasWon();
 	bool playerCouldStillWin();
 	void forceWin() override;
-	void awardSentryBot(int n);
-	void endGame(int n) override;
+	void awardSentryBot(int weaponIdx);
+	void endGame(int result) override;
 	void touchStart(int pressX, int pressY) override;
 	void touchMove(int pressX, int pressY) override;
 	void touchEnd(int pressX, int pressY) override;

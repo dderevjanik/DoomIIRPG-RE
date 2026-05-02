@@ -55,21 +55,21 @@ void HackingGame::setupGlobalData() {
 	this->selected = false;
 }
 
-void HackingGame::initGame(ScriptThread* scriptThread, int i) {
-	this->initGame(scriptThread, i, 30);
+void HackingGame::initGame(ScriptThread* scriptThread, int numColumns) {
+	this->initGame(scriptThread, numColumns, 30);
 }
 
-void HackingGame::initGame(ScriptThread* scriptThread, int i, int i2) {
+void HackingGame::initGame(ScriptThread* scriptThread, int numColumns, int turns) {
 	if (!this->app) this->app = CAppContainer::getInstance()->app;
 
-	this->columnCount = std::max(3, std::min(i, 6));
+	this->columnCount = std::max(3, std::min(numColumns, 6));
 	this->callingThread = scriptThread;
 	this->gamePlayedFromMainMenu = (this->callingThread == nullptr);
 
-	int n2 = this->gamePlayedFromMainMenu ? 0 : app->player->ce->getIQPercent();
-	this->fillGameBoardRandomly(this->gameBoard, 5, this->columnCount, 3, (10000 * i2 + i2 * (100 - n2) * (100 - n2)) / 20000);
+	int iqPercent = this->gamePlayedFromMainMenu ? 0 : app->player->ce->getIQPercent();
+	this->fillGameBoardRandomly(this->gameBoard, 5, this->columnCount, 3, (10000 * turns + turns * (100 - iqPercent) * (100 - iqPercent)) / 20000);
 	this->setupGlobalData();
-	this->turnsLeft = (short)i2;
+	this->turnsLeft = (short)turns;
 	this->selectedRow = -1;
 	for (int j = 0; j < this->columnCount; j++) {
 		for (int k = 0; k < 5; k++) {
@@ -104,83 +104,83 @@ void HackingGame::initGame(ScriptThread* scriptThread, int i, int i2) {
 	this->m_hackingButtons->AddButton(button02);
 }
 
-void  HackingGame::fillGameBoardRandomly(short array[5][6], int n, int n2, int n3) {
+void  HackingGame::fillGameBoardRandomly(short array[5][6], int numRows, int numCols, int numPiecesPerCol) {
 
 	for (int i = 0; i < 5; ++i) {
 		for (int j = 0; j < 6; ++j) {
 			array[i][j] = 0;
 		}
 	}
-	for (int k = 0; k < n2; ++k) {
-		for (int l = 0; l < n3; ++l) {
-			int n4 = app->nextByte() / ((255 + n) / n);
-			int n5 = app->nextByte() / ((255 + n2) / n2);
-			if (array[n4][n5] == 0) {
-				array[n4][n5] = (short)(k + 1);
+	for (int k = 0; k < numCols; ++k) {
+		for (int l = 0; l < numPiecesPerCol; ++l) {
+			int randRow = app->nextByte() / ((255 + numRows) / numRows);
+			int randCol = app->nextByte() / ((255 + numCols) / numCols);
+			if (array[randRow][randCol] == 0) {
+				array[randRow][randCol] = (short)(k + 1);
 			}
 			else {
 				--l;
 			}
 		}
 	}
-	for (int n6 = 0; n6 < n2; ++n6) {
-		for (int n7 = 0; n7 < n - 1; ++n7) {
-			if (array[n7][n6] != 0 && array[n7 + 1][n6] == 0) {
-				for (int n8 = n7; n8 >= 0; --n8) {
-					array[n8 + 1][n6] = array[n8][n6];
+	for (int colIdx = 0; colIdx < numCols; ++colIdx) {
+		for (int rowIdx = 0; rowIdx < numRows - 1; ++rowIdx) {
+			if (array[rowIdx][colIdx] != 0 && array[rowIdx + 1][colIdx] == 0) {
+				for (int srcRow = rowIdx; srcRow >= 0; --srcRow) {
+					array[srcRow + 1][colIdx] = array[srcRow][colIdx];
 				}
-				array[0][n6] = 0;
+				array[0][colIdx] = 0;
 			}
 		}
 	}
 }
 
-void HackingGame::fillGameBoardRandomly(short array[5][6], int n, int n2, int n3, int n4) {
+void HackingGame::fillGameBoardRandomly(short array[5][6], int numRows, int numCols, int numPiecesPerCol, int numShuffles) {
 
 	for (int i = 0; i < 5; ++i) {
 		for (int j = 0; j < 6; ++j) {
 			array[i][j] = 0;
 		}
 	}
-	for (int k = 0; k < n2; ++k) {
-		for (int l = 0; l < n3; ++l) {
-			array[n - l - 1][k] = (short)(k + 1);
+	for (int k = 0; k < numCols; ++k) {
+		for (int l = 0; l < numPiecesPerCol; ++l) {
+			array[numRows - l - 1][k] = (short)(k + 1);
 		}
 	}
-	uint8_t b = 0;
-	for (uint8_t b2 = 0; b2 < this->columnCount; ++b2) {
-		this->mostRecentSrc[b2] = b2;
-		this->mostRecentDest[b2] = b2;
+	uint8_t lastDstCol = 0;
+	for (uint8_t colIdx = 0; colIdx < this->columnCount; ++colIdx) {
+		this->mostRecentSrc[colIdx] = colIdx;
+		this->mostRecentDest[colIdx] = colIdx;
 	}
-	for (int n5 = 0; n5 < n4; ++n5) {
-		int n6 = app->nextByte() / ((255 + n2) / n2);
-		int n7 = app->nextByte() / ((255 + n2) / n2);
-		if (n6 == n7) {
-			--n5;
+	for (int shuffleIdx = 0; shuffleIdx < numShuffles; ++shuffleIdx) {
+		int srcCol = app->nextByte() / ((255 + numCols) / numCols);
+		int dstCol = app->nextByte() / ((255 + numCols) / numCols);
+		if (srcCol == dstCol) {
+			--shuffleIdx;
 		}
-		else if (n6 == b) {
-			--n5;
+		else if (srcCol == lastDstCol) {
+			--shuffleIdx;
 		}
-		else if (this->mostRecentDest[n6] == n7 && this->mostRecentSrc[n7] == n6) {
-			--n5;
+		else if (this->mostRecentDest[srcCol] == dstCol && this->mostRecentSrc[dstCol] == srcCol) {
+			--shuffleIdx;
 		}
-		else if (array[n - 1][n6] == 0 || array[0][n7] != 0) {
-			--n5;
+		else if (array[numRows - 1][srcCol] == 0 || array[0][dstCol] != 0) {
+			--shuffleIdx;
 		}
 		else {
-			int n8;
-			for (n8 = n - 1; n8 > 0 && array[n8 - 1][n6] != 0; --n8) {}
-			int n9;
-			for (n9 = n - 1; array[n9][n7] != 0; --n9) {}
-			array[n9][n7] = array[n8][n6];
-			array[n8][n6] = 0;
-			this->mostRecentSrc[n6] = (uint8_t)n7;
-			this->mostRecentDest[n7] = (uint8_t)n6;
-			b = (uint8_t)n7;
+			int srcRow;
+			for (srcRow = numRows - 1; srcRow > 0 && array[srcRow - 1][srcCol] != 0; --srcRow) {}
+			int dstRow;
+			for (dstRow = numRows - 1; array[dstRow][dstCol] != 0; --dstRow) {}
+			array[dstRow][dstCol] = array[srcRow][srcCol];
+			array[srcRow][srcCol] = 0;
+			this->mostRecentSrc[srcCol] = (uint8_t)dstCol;
+			this->mostRecentDest[dstCol] = (uint8_t)srcCol;
+			lastDstCol = (uint8_t)dstCol;
 		}
 	}
 	if (this->gameIsSolved(array)) {
-		this->fillGameBoardRandomly(array, n, n2, n3, n4);
+		this->fillGameBoardRandomly(array, numRows, numCols, numPiecesPerCol, numShuffles);
 	}
 }
 
@@ -305,33 +305,33 @@ void HackingGame::handleInput(int action) {
 	}
 }
 
-void HackingGame::attemptToMove(short n) {
-	short selectedColumn = (short)((n + this->columnCount) % this->columnCount);
+void HackingGame::attemptToMove(short targetCol) {
+	short selectedColumn = (short)((targetCol + this->columnCount) % this->columnCount);
 	if (this->selectedColumn != selectedColumn) {
-		int n2 = -1;
+		int dstRow = -1;
 		for (int i = 4; i >= 0; --i) {
 			if (this->gameBoard[i][selectedColumn] == 0) {
-				n2 = (short)i;
+				dstRow = (short)i;
 				break;
 			}
 		}
 		if (this->selected) {
-			short n3;
-			short n4;
-			for (n3 = (short)(selectedColumn - this->selectedColumn), n4 = (short)((selectedColumn + n3 + this->columnCount) % this->columnCount); n4 != this->selectedColumn && n2 == -1; n4 = (short)((n4 + n3 + this->columnCount) % this->columnCount)) {
+			short step;
+			short searchCol;
+			for (step = (short)(selectedColumn - this->selectedColumn), searchCol = (short)((selectedColumn + step + this->columnCount) % this->columnCount); searchCol != this->selectedColumn && dstRow == -1; searchCol = (short)((searchCol + step + this->columnCount) % this->columnCount)) {
 				for (int j = 4; j >= 0; --j) {
-					if (this->gameBoard[j][n4] == 0) {
-						n2 = (short)j;
+					if (this->gameBoard[j][searchCol] == 0) {
+						dstRow = (short)j;
 						break;
 					}
 				}
 			}
-			short selectedColumn2 = (short)((n4 - n3 + this->columnCount) % this->columnCount);
+			short selectedColumn2 = (short)((searchCol - step + this->columnCount) % this->columnCount);
 
-			if (n2 != -1) {
-				this->gameBoard[n2][selectedColumn2] = this->gameBoard[this->selectedRow][this->selectedColumn];
+			if (dstRow != -1) {
+				this->gameBoard[dstRow][selectedColumn2] = this->gameBoard[this->selectedRow][this->selectedColumn];
 				this->gameBoard[this->selectedRow][this->selectedColumn] = 0;
-				this->selectedRow = n2;
+				this->selectedRow = dstRow;
 				this->selectedColumn = selectedColumn2;
 			}
 			else {
@@ -339,10 +339,10 @@ void HackingGame::attemptToMove(short n) {
 			}
 		}
 		else {
-			if (n2 != 4) {
-				n2 = (short)(n2 + 1);
+			if (dstRow != 4) {
+				dstRow = (short)(dstRow + 1);
 			}
-			this->selectedRow = n2;
+			this->selectedRow = dstRow;
 			this->selectedColumn = selectedColumn;
 		}
 	}
@@ -507,8 +507,8 @@ void HackingGame::drawGameScreen(Graphics* graphics) {
 		app->localization->composeText(3, 198, smallBuffer);
 		graphics->drawString(smallBuffer, 270, 245, 4);
 
-		int n11 = ((this->confirmationCursor == 1) ? 142-6 : 258-6) + app->canvas->OSC_CYCLE[app->time / 100 % 4];
-		graphics->drawCursor(n11, 245, 8);
+		int cursorX = ((this->confirmationCursor == 1) ? 142-6 : 258-6) + app->canvas->OSC_CYCLE[app->time / 100 % 4];
+		graphics->drawCursor(cursorX, 245, 8);
 	}
 
 	smallBuffer->dispose();
@@ -518,7 +518,7 @@ void HackingGame::drawGameScreen(Graphics* graphics) {
 void HackingGame::drawGoalTextAndBars(Graphics* graphics, Text* text) {
 
 
-	int n = 335 - (5 + 9 * (this->columnCount - 1)) / 2;
+	int barsStartX = 335 - (5 + 9 * (this->columnCount - 1)) / 2;
 	text->setLength(0);
 	app->localization->composeText(0, 168, text);
 	text->dehyphenate();
@@ -552,7 +552,7 @@ void HackingGame::drawGoalTextAndBars(Graphics* graphics, Text* text) {
 				break;
 			}
 		}
-		graphics->fillRect(n + i * 9, 22, 5, 15, color);
+		graphics->fillRect(barsStartX + i * 9, 22, 5, 15, color);
 	}
 }
 
@@ -561,23 +561,23 @@ void HackingGame::drawGamePieces(Graphics* graphics, int x, int y) {
 
 	for (int i = 0; i < 5; ++i) {
 		for (int j = 0; j < this->columnCount; ++j) {
-			short n = this->gameBoard[i][j];
-			if (n != 0) {
-				this->drawPiece(n, x + (j * (this->CORE_WIDTH + 44)), y + (i * 19), graphics);
+			short pieceColor = this->gameBoard[i][j];
+			if (pieceColor != 0) {
+				this->drawPiece(pieceColor, x + (j * (this->CORE_WIDTH + 44)), y + (i * 19), graphics);
 			}
 		}
 	}
 	int posX = x + this->selectedColumn * (this->CORE_WIDTH + 44);
 	int posY = y + this->selectedRow * 19;
 	int time = app->time & 0x3FF;
-	int i;
+	int pulse;
 	if (time < 511) {
-		i = (95 * time >> 9) + 160;
+		pulse = (95 * time >> 9) + 160;
 	}
 	else {
-		i = (-95 * (time - 511) >> 9) + 255;
+		pulse = (-95 * (time - 511) >> 9) + 255;
 	}
-	int color = 0xFF000000 | i << 16 | i << 8 | i;
+	int color = 0xFF000000 | pulse << 16 | pulse << 8 | pulse;
 	if (this->selected) {
 		graphics->drawRect(posX, posY, 18, 18, color);
 		graphics->drawRect(posX + 1, posY + 1, 16, 16, color);
@@ -598,8 +598,8 @@ bool HackingGame::gameIsSolved(short array[5][6]) {
 	return true;
 }
 
-void HackingGame::drawPiece(int i, int x, int y, Graphics* graphics) {
-	graphics->drawRegion(this->imgGameColors, (i * 18) - 18, 0, 18, 18, x, y, 0, 0, 0);
+void HackingGame::drawPiece(int colorIdx, int x, int y, Graphics* graphics) {
+	graphics->drawRegion(this->imgGameColors, (colorIdx * 18) - 18, 0, 18, 18, x, y, 0, 0, 0);
 }
 
 void HackingGame::forceWin() {
@@ -622,13 +622,13 @@ void HackingGame::forceWin() {
 	app->canvas->clearSoftKeys();
 }
 
-void HackingGame::endGame(int n) {
+void HackingGame::endGame(int result) {
 
 
-	app->sound->playSound((n == 1) ? 1043 : 1040, '\0', 3, false);
+	app->sound->playSound((result == 1) ? 1043 : 1040, '\0', 3, false);
 	if (!this->gamePlayedFromMainMenu) {
-		app->minigameUI->evaluateResults(n);
-		app->game->scriptStateVars[7] = (short)n;
+		app->minigameUI->evaluateResults(result);
+		app->game->scriptStateVars[7] = (short)result;
 	}
 	if (!this->gamePlayedFromMainMenu) {
 		app->canvas->setState(Canvas::ST_PLAYING);

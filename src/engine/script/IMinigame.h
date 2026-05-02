@@ -25,5 +25,5 @@ public:
 	virtual void forceWin() = 0;
 
 	// End the game: 0=loss, 1=win, 2=quit
-	virtual void endGame(int n) = 0;
+	virtual void endGame(int result) = 0;
 };

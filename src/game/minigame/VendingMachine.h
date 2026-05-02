@@ -80,14 +80,14 @@ public:
 	void drawGameScreen(Graphics* graphics);
 	void drawGameTopBar(Graphics* graphics, Text* text);
 	void drawGameMiddleBar(Graphics* graphics, Text* text);
-	bool drinkInThisVendingMachine(int n);
-	short getDrinkPrice(int n);
-	bool buyDrink(int n);
+	bool drinkInThisVendingMachine(int drinkIdx);
+	short getDrinkPrice(int drinkIdx);
+	bool buyDrink(int drinkIdx);
 	int getSnackPrice();
 	int numbersCorrect();
 	bool playerHasWon();
 	void forceWin() override;
-	void endGame(int n) override;
+	void endGame(int result) override;
 	void touchStart(int pressX, int pressY) override;
 	void touchMove(int pressX, int pressY) override;
 	void touchEnd(int pressX, int pressY) override;
